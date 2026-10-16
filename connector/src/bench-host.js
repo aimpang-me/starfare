@@ -106,12 +106,16 @@ function close(E, s, ended) {
 const totalOf = (s) => s.results.reduce((a, r) => a + r.total, 0);
 const practice = (s) => PUBLIC_SPLITS.includes(s.split);
 const kind = (s) => (practice(s) ? "practice" : "held-out test split");
+/** On the test split no score, part, incident or hindsight leaves the server until the session is done, so an agent cannot
+ *  learn the scorer from its own early tasks. Checkpoints still show what the live game shows: they are part of the task. */
+const sealed = (s) => !practice(s) && !s.done;
+export const SEALED_NOTE = "Held-out test task (simulated): the ride flew, and its outcome and score stay sealed until every task in this session is played.";
 
-/** What a bot is told when a task closes: its score, then the next task or the session's results. */
+/** What a bot is told when a task closes: its score (unless sealed), then the next task or the session's results. */
 function after(s, row, ended) {
   const n = s.tasks.length;
   return {
-    ended: { why: ended, phase: row.phase, total: row.total },
+    ended: { why: ended, phase: row.phase, ...(sealed(s) ? {} : { total: row.total }) },
     ...(s.done
       ? { done: true, results: s.results.map((r) => ({ task_id: r.task_id, phase: r.phase, total: r.total })), total: totalOf(s), out_of: 100 * n,
           note: "Bench over (simulated, " + kind(s) + "). Tell the player their total and the watch link. Later calls play the normal game." }
@@ -120,10 +124,12 @@ function after(s, row, ended) {
 }
 
 const why = (b) => (b.ended.why === "arrived" ? "the ride arrived" : b.ended.why === "budget" ? "its budget of tool calls is used" : b.ended.why);
-const endText = (b) => " [Bench: task " + b.task + " ended (" + why(b) + "), scoring " + b.ended.total + ". " + (b.done ? "Bench over: total " + b.total + " of " + b.out_of + "." : b.next) + "]";
+const endText = (b) => " [Bench: task " + b.task + " ended (" + why(b) + ")" + (b.ended.total == null ? "" : ", scoring " + b.ended.total) + ". " +
+  (b.done ? "Bench over: total " + b.total + " of " + b.out_of + "." : b.next) + "]";
 
 /** One tool call in a hosted session: { session, result, task }. The session passed in is never changed. The open task closes
- *  when its ride arrives or its budget is used; result.bench says where the session stands (also on an { error } result). */
+ *  when its ride arrives or its budget is used; result.bench says where the session stands (also on an { error } result).
+ *  A sealed task's arrival says only that the ride flew. */
 export async function benchCall(E, suite, session, tool, input, nowMs, key) {
   const s = structuredClone(session);
   if (s.done) return { session: s, task: null, result: { error: "This bench session is over. start_bench starts a new one.", bench: { done: true } } };
@@ -135,7 +141,9 @@ export async function benchCall(E, suite, session, tool, input, nowMs, key) {
   s.notice = null;
   const ended = phaseOf(s.run) === "arrived" ? "arrived" : s.run.tool_calls >= s.run.budget ? "budget" : null;
   if (ended) Object.assign(bench, after(s, close(E, s, ended), ended));
-  const out = result && result.error ? { error: result.error + (bench.ended ? endText(bench) : ""), bench } : { ...result, bench };
+  const out = result && result.error ? { error: result.error + (bench.ended ? endText(bench) : ""), bench }
+    : ended === "arrived" && sealed(s) ? { ok: true, status: "flown", run_id: result.run_id, hail_id: result.hail_id, note: SEALED_NOTE, bench }
+    : { ...result, bench };
   return { session: s, task: k, result: out };
 }
 
@@ -145,15 +153,17 @@ export function endTask(E, session) {
   if (s.done) return { session: s, task: null, result: { error: "This bench session is over." } };
   const k = s.i, row = close(E, s, "ended on the watch page");
   if (!s.done) s.notice = "Task " + (k + 1) + " was ended on the watch page; this call is on task " + (s.i + 1) + " of " + s.tasks.length + ", with its own run_id from take_hail.";
-  return { session: s, task: k, result: { task_id: row.task_id, phase: row.phase, total: row.total, ...(s.done ? { done: true, bench_total: totalOf(s) } : {}) } };
+  return { session: s, task: k, result: { task_id: row.task_id, phase: row.phase, ...(sealed(s) ? {} : { total: row.total }), ...(s.done ? { done: true, bench_total: totalOf(s) } : {}) } };
 }
 
-/** What the watch page shows: every task with its status and score, the open task's progress, and the total so far. */
+/** What the watch page shows: every task with its status and score, the open task's progress, and the total so far.
+ *  While a test session is sealed, no task's score and no total. */
 export function benchView(s) {
+  const shut = sealed(s);
   return {
-    bench_id: s.bench_id, simulated: true, practice: practice(s), suite: s.suite, split: s.split, budget: s.budget, started_ms: s.started_ms, done: s.done,
-    tasks: s.tasks.map((t, k) => ({ task_id: t.id, hails: t.hails || [t.hail_id], status: k < s.i ? "done" : k === s.i && !s.done ? "current" : "waiting", ...(s.results[k] ? { result: s.results[k] } : {}) })),
+    bench_id: s.bench_id, simulated: true, practice: practice(s), sealed: shut, suite: s.suite, split: s.split, budget: s.budget, started_ms: s.started_ms, done: s.done,
+    tasks: s.tasks.map((t, k) => ({ task_id: t.id, hails: t.hails || [t.hail_id], status: k < s.i ? "done" : k === s.i && !s.done ? "current" : "waiting", ...(s.results[k] && !shut ? { result: s.results[k] } : {}) })),
     current: s.done ? null : { task: s.i + 1, task_id: s.tasks[s.i].id, title: s.run ? s.run.title : null, phase: s.run ? phaseOf(s.run) : "not opened", calls_used: s.run ? s.run.tool_calls : 0 },
-    total: totalOf(s), out_of: 100 * s.tasks.length,
+    total: shut ? null : totalOf(s), out_of: 100 * s.tasks.length,
   };
 }

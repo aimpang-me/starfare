@@ -15,7 +15,7 @@ import { SUITE_FORMAT, loadSuite, seedFor } from "../src/suite.js";
 import { BenchBackend, loadEngine, openTask } from "../bench/backend.mjs";
 import { naive, random, reference, rngOf } from "../bench/agents.mjs";
 import { runSuite } from "../bench/run.mjs";
-import { benchCall, benchView, endTask, newRunId, newSession } from "../src/bench-host.js";
+import { SEALED_NOTE, benchCall, benchView, endTask, newRunId, newSession } from "../src/bench-host.js";
 import { publicTask } from "../bench/make-suite.mjs";
 
 const E = loadEngine();
@@ -156,6 +156,30 @@ test("a test task flies the world keyed by STARFARE_BENCH_KEY, under the run_id 
   assert.notEqual(seed, await seedFor(TEST_SUITE, "dev", HELD, 0));
   const shown = JSON.stringify([seen, benchView(s)]);
   for (const secret of [KEY, seed, seed.slice(3)]) assert.ok(!shown.includes(secret), "shown output holds " + secret);
+});
+
+const keysIn = (o, out = new Set()) => { if (o && typeof o === "object") for (const [k, v] of Object.entries(o)) { out.add(k); keysIn(v, out); } return out; };
+
+test("a test session seals every score until its last task closes; practice shows each score at once", async () => {
+  const held2 = { ...HELD, id: "iss-crew/held-2" }, suite = { ...TEST_SUITE, splits: { ...TEST_SUITE.splits, test: [HELD, held2] } };
+  let s = { ...newSession(suite, "b_t", null, 0, { split: "test", key: KEY }), tasks: [HELD, held2] };
+  const seen = [];
+  const call = async (tool, input) => { const r = await benchCall(E, suite, s, tool, input, 0, KEY); s = r.session; seen.push(r.result); return r.result; };
+  await naive(call, E);
+  assert.deepEqual(seen.at(-1), { ok: true, status: "flown", run_id: s.run_ids[0], hail_id: "iss-crew", note: SEALED_NOTE,
+    bench: { task: "1 of 2", task_id: "iss-crew/held", calls_used: 7, budget: 60, ended: { why: "arrived", phase: "arrived" }, next: "Task 2 of 2 is next. Call list_hails to open it; it has its own run_id." } });
+  const v = benchView(s);
+  assert.deepEqual([v.sealed, v.total, v.tasks.map((t) => [t.status, "result" in t])], [true, null, [["done", false], ["current", false]]]);
+  const shown = keysIn([seen, v]);
+  for (const k of ["parts", "incidents", "hindsight", "score", "log"]) assert.ok(!shown.has(k), "sealed output shows " + k);
+
+  const e = endTask(E, s);
+  s = e.session;
+  const hidden = s.results[0].total;
+  assert.equal(typeof hidden, "number");
+  assert.deepEqual(e.result, { task_id: "iss-crew/held-2", phase: "not started", total: 0, done: true, bench_total: hidden });
+  const done = benchView(s);
+  assert.deepEqual([done.sealed, done.total, done.tasks.map((t) => t.result.total)], [false, hidden, [hidden, 0]]);
 });
 
 test("make-suite's test cut writes only id, hail or hails and sky day to the suite, and its scores only outside the repo", () => {
