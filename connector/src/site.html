@@ -222,6 +222,17 @@ code.tool{display:block;font:500 12px var(--mono);background:#030407;border:1px 
 .live li{padding:12px}
 .live .t{font-weight:600;font-size:13.5px;display:flex;justify-content:space-between;gap:8px;align-items:center}
 .live .m{font:500 11px var(--mono);color:var(--ink-3);margin-top:4px}
+.livebtn{pointer-events:auto;display:inline-flex;gap:6px;align-items:center;cursor:pointer;margin-bottom:6px;background:rgba(6,8,12,.55);border:1px solid var(--line);border-radius:999px;padding:3px 8px 3px 6px;font:600 9.5px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.livebtn i{width:8px;height:8px;border-radius:50%;background:var(--sim);border:1px solid var(--ink-3)}
+.livebtn[aria-pressed="true"] i{background:var(--ride);border-color:var(--ride);box-shadow:0 0 6px var(--ride)}
+.pool{margin-top:10px;width:100%;text-align:left;display:block;padding:10px 11px;border-radius:11px;border:1px dashed rgba(255,207,122,.45);background:rgba(255,207,122,.04);cursor:pointer;color:var(--ink)}
+.pool[aria-pressed="true"]{border-style:solid;border-color:var(--me);background:rgba(255,207,122,.08)}
+.pool .t{font-weight:600;font-size:13px}
+.pool .d{display:block;font-size:12px;color:var(--ink-2);margin-top:2px}
+.stops{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.stops li{display:grid;grid-template-columns:26px 1fr;gap:2px 8px;font-size:12.5px}
+.stops .wp{grid-row:span 2;width:22px;height:22px;border:1.5px solid var(--me);color:var(--me);display:grid;place-items:center;font:600 10px var(--mono);border-radius:4px}
+.stops .m{font:500 11px var(--mono);color:var(--ink-2)}
 .sparts{display:grid;gap:10px;margin-top:10px}
 .sp{display:grid;grid-template-columns:160px minmax(0,1fr) 70px;gap:4px 12px;align-items:center}
 .sp .lb{font-weight:600;font-size:13px}
@@ -308,6 +319,7 @@ code.tool{display:block;font:500 12px var(--mono);background:#030407;border:1px 
     <div class="pb">
       <p class="sub">Open bookings right now. Pick one to see the engine's par plan and the Starseekers that can fly it. Each place is marked Real or Fictional (made up for the game), and distances are computed live from where those places are in the sky today.</p>
       <ul id="hails" class="hails"></ul>
+      <button type="button" class="pool" id="poolBtn" aria-pressed="false"><span class="t"><span class="tag fict">Concept</span> Pooled flight (not built yet)</span><span class="d">One Starseeker, two pickups, one drop-off. The engine plans each leg live.</span></button>
       <div id="hailDetail"></div>
       <div class="cta">
         <h3>Ask your agent to take this booking</h3>
@@ -330,11 +342,12 @@ code.tool{display:block;font:500 12px var(--mono);background:#030407;border:1px 
     <div class="mapbox" id="homeBox">
       <canvas id="cvHome" role="img" aria-label="Live, read-only plot of the solar system at the current sky time. Planet positions are real, from NASA JPL DE421; the fleet and bookings are simulated. Drag to pan, scroll or pinch to zoom, tap a body for range and bearing."></canvas>
       <div class="hud tl"><div class="hudbox"><div class="caps">Sky clock &#xB7; UTC</div><div class="big" id="clk">--</div><div id="ssn"></div><div>1 s = 1 sky day</div></div></div>
-      <div class="hud tr"><div class="hudbox">
+      <div class="hud tr"><button type="button" class="livebtn" id="liveBtn" aria-pressed="true" hidden><i></i><span>Live flights</span></button><div class="hudbox">
         <div class="lg">Planet or moon, real position <i style="border-radius:50%;background:#a3abb6"></i></div>
         <div class="lg">Station, real <i style="border:1px solid #86d9a8"></i> &#xB7; fictional <i style="border:1px solid #ffb65c;transform:rotate(45deg)"></i></div>
         <div class="lg">Booking pickup, simulated <i style="background:#ffcf7a;transform:rotate(45deg)"></i></div>
         <div class="lg">Starseeker, simulated <i style="border-radius:50%;background:#9cc3ff"></i></div>
+        <div class="lg" id="liveLg" hidden>Live flight, simulated <i style="border:1px solid #9cc3ff"></i></div>
       </div></div>
       <div class="hud bl"><div class="caps">Range scale</div><div class="sbar" id="sbar"></div><div>Square-root scale. Sizes and distances not to scale.</div></div>
       <div class="hud br" id="ro"></div>
@@ -545,8 +558,8 @@ function shipWords(s) {
   return s;
 }
 function ic(n) { return '<svg class="si" aria-hidden="true" focusable="false"><use href="#si-' + n + '"/></svg>'; }
-var SEATS = "Seats: 4 (placeholder, not set yet)";
-var PARTY = "Party: not set yet (1–3, placeholder)";
+var SEATS = "Seats: not set yet";
+var PARTY = "Party: not set yet";
 function manifest(nm) {
   return '<div class="mani"><div class="mh"><span class="caps">Manifest</span><span class="dim mono">' + SEATS + "</span></div><ul>" +
     '<li>' + ic("passenger") + '<span class="pn">' + esc(nm || "Passenger not in the data") + '</span><span class="tag sim">Simulated</span></li>' +
@@ -599,28 +612,72 @@ function loadBoard() {
 }
 
 /* ---------- live flights (/live.json; the section stays hidden until it answers) ---------- */
-// No shape is fixed yet, so read loosely: a list, or { flights: [...] }, of objects with
-// name|car, title|hail, from, to (ids or {id,name}), dep_jd|arr_jd or depart|arrive, status, player_tag, run_id.
-var liveTimer = 0;
-function pname(x) { return x && typeof x === "object" ? (x.name || name(x.id)) : (x ? name(x) : ""); }
-function when(v) { return typeof v === "number" ? iso(v) : v ? String(v).slice(0, 16).replace("T", " ") : ""; }
+// { simulated, now_ms, flights: [{ run_id, title, ship, home, legs: [{ from, to, dep_jd, arr_jd }], track: [[wall_ms, jd], ...] }] }
+// A flight's sky time comes from its track at the wall clock, held at the last point (a flight on hold stays there).
+var LIVE = { on: true, list: [], arcs: {}, budget: 0 }, liveTimer = 0, RUN_ID = /^run_[0-9a-f]{20}$/;
+function liveJd(f, ms) {
+  var tr = f.track;
+  if (ms <= tr[0][0]) return tr[0][1];
+  for (var i = 1; i < tr.length; i++) if (ms <= tr[i][0]) { var a = tr[i - 1], b = tr[i]; return a[1] + (b[1] - a[1]) * (ms - a[0]) / Math.max(1, b[0] - a[0]); }
+  return tr[tr.length - 1][1];
+}
+// Where the flight is at sky time jd: at a place, or on leg i, u of the way along.
+function liveWhere(f, jd) {
+  var L = f.legs;
+  if (!L.length) return { at: f.home };
+  if (jd < L[0].dep_jd) return { at: L[0].from, next: L[0] };
+  for (var i = 0; i < L.length; i++) {
+    if (jd <= L[i].arr_jd) return jd >= L[i].dep_jd ? { leg: i, u: (jd - L[i].dep_jd) / Math.max(1e-9, L[i].arr_jd - L[i].dep_jd) } : { at: L[i].from, next: L[i] };
+  }
+  return { at: L[L.length - 1].to, landed: true };
+}
+// The leg's path, re-planned by the engine for its exact departure and arrival (a few ms), else a straight line.
+function liveArc(f, i) {
+  var L = f.legs[i], key = f.run_id + ":" + i + ":" + L.dep_jd + ":" + L.arr_jd, A = LIVE.arcs[key];
+  if (A === undefined && LIVE.budget-- > 0) {
+    try { var b = E.planRide({ place: L.from }, L.to, { depFrom: L.dep_jd, depTo: L.dep_jd, arriveBy: L.arr_jd, objective: "energy", allLocal: true }); A = b && b.arc_au && b.arc_au.length > 1 ? b.arc_au : null; } catch (e) { A = null; }
+    LIVE.arcs[key] = A;
+  }
+  return A || [pos(L.from, L.dep_jd), pos(L.to, L.arr_jd)];
+}
+function livePos(f, w) {
+  if (w.leg == null) return null;
+  var A = liveArc(f, w.leg), x = w.u * (A.length - 1), k = Math.min(A.length - 2, Math.floor(x)), t = x - k;
+  return [A[k][0] + (A[k + 1][0] - A[k][0]) * t, A[k][1] + (A[k + 1][1] - A[k][1]) * t, A[k][2] + (A[k + 1][2] - A[k][2]) * t];
+}
+function liveStatus(f, w) {
+  if (w.leg != null) { var L = f.legs[w.leg]; return "Leg " + (w.leg + 1) + " of " + f.legs.length + ": " + name(L.from) + " → " + name(L.to) + " · lands " + iso(L.arr_jd); }
+  if (w.landed) return "Landed at " + name(w.at);
+  return "At " + name(w.at) + (w.next ? " · leaves " + iso(w.next.dep_jd) : "");
+}
+function liveOk(f) {
+  return f && typeof f.run_id === "string" && Array.isArray(f.legs) && Array.isArray(f.track) && f.track.length &&
+    f.legs.every(function (L) { return PID[L.from] && PID[L.to] && isFinite(L.dep_jd) && isFinite(L.arr_jd); }) && (f.legs.length || PID[f.home]);
+}
+function renderLive() {
+  var ms = Date.now();
+  $("#liveList").innerHTML = LIVE.list.length ? LIVE.list.slice(0, 12).map(function (f) {
+    var w = liveWhere(f, liveJd(f, ms)), link = RUN_ID.test(f.run_id);
+    var body = '<div class="t"><span>' + ic("flying") + " " + esc(shipWords(f.title || "Flight")) + '</span><span class="tag sim">Simulated</span></div>' +
+      '<div class="m">' + esc(SHIP + " " + (f.ship || "")) + "</div>" +
+      '<div class="m">' + esc(liveStatus(f, w)) + "</div>";
+    return '<li class="panel">' + (link ? '<a href="/flight/' + f.run_id + '" style="text-decoration:none;color:inherit;display:block">' + body + '<div class="m" style="color:var(--ride)">Watch the flight →</div></a>' : body) + "</li>";
+  }).join("") : '<li class="empty">No flights in the air right now.</li>';
+  var b = $("#liveBtn"), n = LIVE.list.length;
+  b.hidden = !n; $("#liveLg").hidden = !n || !LIVE.on;
+  $("span", b).textContent = "Live flights (" + n + ")";
+}
 function loadLive() {
   fetch("/live.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
-    var list = Array.isArray(j) ? j : j && Array.isArray(j.flights) ? j.flights : null;
-    if (!list) throw new Error("shape");
+    if (!E || !j || !Array.isArray(j.flights)) throw new Error("shape");
+    LIVE.list = j.flights.filter(liveOk);
     $("#live").hidden = false;
-    $("#liveList").innerHTML = list.length ? list.slice(0, 12).map(function (f) {
-      var hl = SITE.hails.filter(function (h) { return h.hail_id === (f.hail || f.hail_id); })[0];
-      var title = f.title || (hl && hl.title) || "Flight", ship = f.name || (f.car ? fleetName(f.car) : "");
-      var dep = when(f.dep_jd != null ? f.dep_jd : f.depart), arr = when(f.arr_jd != null ? f.arr_jd : f.arrive);
-      var body = '<div class="t"><span>' + ic("flying") + " " + esc(shipWords(title)) + '</span><span class="tag sim">Simulated</span></div>' +
-        '<div class="m">' + (ship ? esc(SHIP + " " + ship) + " · " : "") + esc(pname(f.from)) + " → " + esc(pname(f.to)) + "</div>" +
-        ((dep || arr) ? '<div class="m">' + esc(dep) + (arr ? " → " + esc(arr) : "") + "</div>" : "") +
-        ((f.status || f.player_tag) ? '<div class="m">' + esc(shipWords(f.status || "")) + (f.status && f.player_tag ? " · " : "") + (f.player_tag ? "player " + esc(f.player_tag) : "") + "</div>" : "");
-      return '<li class="panel">' + (f.run_id ? '<a href="/flight/' + encodeURIComponent(f.run_id) + '" style="text-decoration:none;color:inherit;display:block">' + body + '<div class="m" style="color:var(--ride)">Watch the flight →</div></a>' : body) + "</li>";
-    }).join("") : '<li class="empty">No flights in the air right now.</li>';
+    renderLive();
     if (!liveTimer) liveTimer = setInterval(function () { if (!document.hidden) loadLive(); }, 30000);
-  }).catch(function () { $("#live").hidden = true; if (liveTimer) { clearInterval(liveTimer); liveTimer = 0; } });
+  }).catch(function () {
+    LIVE.list = []; $("#live").hidden = true; $("#liveBtn").hidden = true; $("#liveLg").hidden = true;
+    if (liveTimer) { clearInterval(liveTimer); liveTimer = 0; }
+  });
 }
 
 /* ---------- copy the MCP URL ---------- */
@@ -957,7 +1014,7 @@ function chooseEmpty() {
 }
 function selectHail(id) {
   HOME.hail = id; HOME.plan = null; HOME.route = null; HOME.target = null;
-  renderDesk(true);
+  renderDesk(true); $("#poolBtn").setAttribute("aria-pressed", "false");
   var h = HOME.desk.filter(function (x) { return x.id === id; })[0]; if (!h) return;
   $("#toolCall").textContent = 'take_hail {"hail_id":"' + id + '"}';
   var wait = '<div class="planning" role="status"><i></i>Engine planning…</div>';
@@ -1023,8 +1080,8 @@ function seatsHtml(on) {
   var cells = "";
   for (var k = 0; k < SEAT_N; k++) cells += '<span class="seat' + (cls[k] ? " " + cls[k] : "") + '"></span>';
   var txt = on.length
-    ? "Seats in use <b>" + on.length + " lead passenger" + (on.length > 1 ? "s" : "") + "</b> + party not set yet / <b>4</b> (placeholder)"
-    : "Seats in use <b>0</b>, cabin empty / <b>4</b> (placeholder)";
+    ? "Seats in use <b>" + on.length + " lead passenger" + (on.length > 1 ? "s" : "") + "</b> + party; seat count not set yet"
+    : "Seats in use <b>0</b>, cabin empty";
   return cells + '<span class="st">' + txt + "</span>";
 }
 function renderPax(p) {
@@ -1032,7 +1089,7 @@ function renderPax(p) {
   var html = '<p class="sub">Who boards and who gets off at each stop of the par plan, flown by ' + esc(fleetName(p.par.car)) + ".</p>" +
     '<div class="seats">' + seatsHtml(peak) + "</div>" + '<ol class="pstops">' + P.stops.map(function (s, k) {
     var ev = [];
-    s.board.forEach(function (b) { ev.push('<li><span class="bd">' + ic("passenger") + "Boards</span>booking <b class=\"mono\">" + esc(b.id) + "</b> · lead " + esc(b.lead || "not in the data") + " · party not set yet (1–3, placeholder)</li>"); });
+    s.board.forEach(function (b) { ev.push('<li><span class="bd">' + ic("passenger") + "Boards</span>booking <b class=\"mono\">" + esc(b.id) + "</b> · lead " + esc(b.lead || "not in the data") + " · party not set yet</li>"); });
     s.alight.forEach(function (b) { ev.push('<li><span class="al">' + ic("pad") + "Gets off</span>booking <b class=\"mono\">" + esc(b.id) + "</b></li>"); });
     if (!ev.length) ev.push('<li class="dim">' + (k === 0 ? "Parked here, cabin empty" : "No one boards or gets off") + "</li>");
     var tm = k === 0 ? "leaves " + iso(s.leave) : "arrives " + iso(s.arrive) + (s.leave ? " · leaves " + iso(s.leave) : " · end of flight");
@@ -1044,7 +1101,7 @@ function renderPax(p) {
     return out;
   }).join("") + "</ol>" +
     '<div class="caps" style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">Cabin <span class="tag sim">Placeholder, not set yet</span></div>' +
-    "<dl class=\"kv\"><dt>Bookings on this flight</dt><dd>" + P.bookings.length + "</dd><dt>Bookings per flight</dt><dd>up to 3 (placeholder)</dd><dt>Seats on the " + SHIP + "</dt><dd>4 (placeholder)</dd><dt>Party per booking</dt><dd>1–3 (placeholder)</dd></dl>";
+    "<dl class=\"kv\"><dt>Bookings on this flight</dt><dd>" + P.bookings.length + "</dd><dt>Bookings per flight</dt><dd>not set yet</dd><dt>Seats on the " + SHIP + "</dt><dd>not set yet</dd><dt>Party per booking</dt><dd>not set yet</dd></dl>";
   $("#pax").innerHTML = html;
 }
 function buildRoute(p) {
@@ -1067,6 +1124,87 @@ function buildRoute(p) {
   HOME.route.marks = [{ v: HOME.route.pick, label: "PICKUP", col: "#ffcf7a" }, { v: HOME.route.drop, label: "DROP-OFF", col: "#9cc3ff" }];
   setPreset("route");
   $$("#presets button").forEach(function (b) { b.setAttribute("aria-pressed", "false"); });
+}
+
+/* ---------- concept: a pooled flight (not built yet) ----------
+   The stops are real places in the data and the engine plans each leg live. Only the first pickup
+   is a booking in the data; the second party is a concept. */
+var POOL = { car: "sf-01", hail: "iss-crew", stops: [
+  { id: "iss", what: "pickup" },
+  { id: "tiangong", what: "pickup (concept)" },
+  { id: "lunar-data-center", what: "drop-off, both parties" }] };
+function poolHead() { return '<div style="display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap"><span class="caps">Concept: pooled flight (not built yet)</span><span class="tag sim">Engine legs, simulated</span></div>'; }
+function selectPool() {
+  HOME.hail = "pool"; HOME.plan = null; HOME.route = null; HOME.target = null;
+  renderDesk(true); $("#poolBtn").setAttribute("aria-pressed", "true");
+  $("#toolCall").textContent = '# No pooling tool yet. Today: one booking per call.\ntake_hail {"hail_id":"' + POOL.hail + '"}';
+  var wait = '<div class="planning" role="status"><i></i>Engine planning…</div>';
+  $("#hailDetail").innerHTML = '<div class="box2">' + poolHead() + wait + "</div>";
+  $("#choose").innerHTML = wait; $("#pax").innerHTML = wait;
+  setTimeout(function () {
+    if (HOME.hail !== "pool") return;
+    var f = SITE.fleet.filter(function (x) { return x.car === POOL.car; })[0] || SITE.fleet[0];
+    var at = f.parked_at.id, t = sky().jd, legs = [], err = null;
+    POOL.stops.forEach(function (st) {
+      if (err) return;
+      try {
+        var b = R.planLeg(at, st.id, t, "energy", SEASON_END);
+        if (!b) throw new Error("No leg from " + name(at) + " to " + name(st.id) + " before the season ends.");
+        legs.push({ from: at, to: st.id, dep_jd: b.dep_jd, arr_jd: b.arr_jd, kwh: b.battery.energy_kwh, fare: b.fare.total_usd, local: !!b.local, arc: b.arc_au || [], st: st });
+        at = st.id; t = b.arr_jd;
+      } catch (e) { err = e.message; }
+    });
+    if (HOME.hail !== "pool") return;
+    if (err) {
+      $("#hailDetail").innerHTML = '<div class="box2">' + poolHead() + '<p style="color:var(--bad)">' + esc(shipWords(err)) + "</p></div>";
+      $("#choose").innerHTML = chooseEmpty(); $("#pax").innerHTML = '<div class="empty">No passenger list: ' + esc(shipWords(err)) + "</div>";
+      return;
+    }
+    showPool(f, legs);
+  }, 60);
+}
+function showPool(f, legs) {
+  var lead = SITE.hails.filter(function (h) { return h.hail_id === POOL.hail; })[0];
+  var sumK = legs.reduce(function (a, L) { return a + L.kwh; }, 0), sumF = legs.reduce(function (a, L) { return a + L.fare; }, 0);
+  $("#hailDetail").innerHTML = '<div class="box2">' + poolHead() +
+    '<p style="margin:6px 0 4px;color:var(--ink-2);font-size:12.5px">' + esc(f.name) + " leaves " + esc(name(f.parked_at.id)) + ", picks up at two stations and drops both parties at " + esc(name("lunar-data-center")) + ". Pooling rules, seats and party sizes are not set yet.</p>" +
+    '<ol class="stops">' + legs.map(function (L, i) {
+      return '<li><span class="wp">' + (i + 1) + "</span><span>" + placeH(L.to) + " · " + esc(L.st.what) + '</span><span class="m">' + iso(L.dep_jd) + " → " + iso(L.arr_jd) + " · " + kwh(L.kwh) + " · " + money(L.fare) + (L.local ? " · local hop" : "") + "</span></li>";
+    }).join("") + "</ol>" +
+    '<dl class="kv"><dt>Legs, summed</dt><dd>' + kwh(sumK) + " · " + money(sumF) + "</dd></dl>" +
+    '<p class="dim" style="margin:6px 0 0;font-size:11.5px">The engine plans each leg for least energy, leaving when the last one lands. No time at the stops is added.</p></div>';
+  $("#choose").innerHTML = '<p class="sub">One ' + SHIP + ", several bookings. The agent would choose who flies together.</p>" +
+    '<div class="cards"><article class="scard par"><span class="tag me badge">Concept</span>' +
+    '<div class="hd"><div class="art">' + SHIP_SVG + '</div><div><div class="caps">' + SHIP + '</div><div class="nm">' + esc(f.name) + "</div></div></div>" +
+    '<dl class="kv"><dt>Parked at</dt><dd style="font-family:Inter">' + placeH(f.parked_at.id) + "</dd><dt>Stops</dt><dd>" + legs.length + "</dd><dt>Lands last</dt><dd>" + iso(legs[legs.length - 1].arr_jd) + "</dd></dl>" +
+    '<div class="mani"><div class="mh"><span class="caps">Manifest</span><span class="dim mono">' + SEATS + "</span></div><ul>" +
+      '<li><span class="pn">WPT 1 · ' + esc(lead ? lead.rider : "Passenger not in the data") + '</span><span class="tag sim">Simulated</span><span class="dim">booking ' + esc(POOL.hail) + "</span></li>" +
+      '<li class="dim">' + PARTY + "</li>" +
+      '<li><span class="pn">WPT 2 · second party at ' + esc(name("tiangong")) + '</span><span class="tag me">Concept, not in the data</span></li>' +
+      '<li class="dim">' + PARTY + "</li></ul></div></article></div>";
+  $("#pax").innerHTML = '<p class="sub">Concept: who would board and get off at each stop. Only the first party is a booking in the data.</p><ol class="pstops">' +
+    '<li class="pst"><span class="wp">0</span><div class="nm">' + placeH(f.parked_at.id) + '</div><div class="m">Stop 0, parked · leaves ' + iso(legs[0].dep_jd) + '</div><ul><li class="dim">Parked here, cabin empty</li></ul></li>' +
+    legs.map(function (L, i) {
+      var ev = i === 0 ? '<li><span class="bd">' + ic("passenger") + 'Boards</span>booking <b class="mono">' + esc(POOL.hail) + "</b> · lead " + esc(lead ? (lead.rider || "").split(",")[0] : "not in the data") + "</li>"
+        : i === 1 ? '<li><span class="bd">' + ic("passenger") + 'Boards</span>second party <span class="tag me">Concept</span></li>'
+        : '<li><span class="al">' + ic("pad") + "Gets off</span>both parties</li>";
+      return '<li class="pst"><span class="wp">' + (i + 1) + '</span><div class="nm">' + placeH(L.to) + '</div><div class="m">Stop ' + (i + 1) + " · arrives " + iso(L.arr_jd) + "</div><ul>" + ev + "</ul></li>";
+    }).join("") + "</ol>";
+  var focus = "earth", pts = [], rl = [];
+  function rel(a, t) { var o = pos(focus, t); return [(a[0] - o[0]) * AU, (a[1] - o[1]) * AU, (a[2] - o[2]) * AU]; }
+  legs.forEach(function (L, i) {
+    var A = L.arc.length ? L.arc : [pos(L.from, L.dep_jd), pos(L.to, L.arr_jd)];
+    var seg = A.map(function (a, k) { return rel(a, L.dep_jd + (L.arr_jd - L.dep_jd) * k / Math.max(1, A.length - 1)); });
+    pts = pts.concat(seg); rl.push({ pts: seg, ride: i > 0 });
+  });
+  var first = legs[0], last = legs[legs.length - 1];
+  HOME.route = { focus: focus, pts: pts, legs: rl, from: first.to, to: last.to, pool: true,
+    pick: rel(pos(first.to, first.arr_jd), first.arr_jd), drop: rel(pos(last.to, last.arr_jd), last.arr_jd), t0: first.arr_jd, t1: last.arr_jd,
+    marks: legs.map(function (L, i) { var end = i === legs.length - 1; return { v: rel(pos(L.to, L.arr_jd), L.arr_jd), label: "WPT " + (i + 1) + (end ? " · DROP-OFF" : " · PICKUP"), col: end ? "#9cc3ff" : "#ffcf7a" }; }) };
+  HOME.plan = { pool: true };
+  setPreset("route");
+  $$("#presets button").forEach(function (b) { b.setAttribute("aria-pressed", "false"); });
+  $("#frameLbl").textContent = frameText(focus) + " · concept: pooled flight";
 }
 
 /* ---------- the map frame ---------- */
@@ -1110,10 +1248,41 @@ function drawHome(now) {
     T.pick.push({ x: x, y: y, id: h.id, type: "hail" });
     T.label(x, y, "Booking · " + shipWords(h.title), sel ? 8 : 4, "rgba(255,207,122,.95)");
   });
+  drawLive(jd);
   if (onRoute) r.marks.forEach(function (m) { var q = T.P(T.comp(m.v)); T.bracket(q[0], q[1], 13, m.col, m.label); });
   T.flush();
   T.scaleBar($("#sbar"));
   if (now - hudT > 200) { hudT = now; hud(s, jd); }
+}
+// Live flights from /live.json. Each keeps its own sky time; a flight near a planet is drawn
+// relative to that planet, so it sits by the planet the map shows now.
+function drawLive(jd) {
+  if (!LIVE.on || !LIVE.list.length) return;
+  var T = H, c = T.ctx, ms = Date.now(), n = 0;
+  LIVE.budget = 2;
+  LIVE.list.forEach(function (f) {
+    var tj = liveJd(f, ms), w = liveWhere(f, tj), L = w.leg != null ? f.legs[w.leg] : null;
+    var sys = L ? (system(L.from) === system(L.to) ? system(L.from) : "sun") : system(w.at);
+    if (T.local() && sys !== T.focus) return;
+    function at(t, p) {
+      if (T.local()) { var o = pos(T.focus, t); return [(p[0] - o[0]) * AU, (p[1] - o[1]) * AU, (p[2] - o[2]) * AU]; }
+      if (sys !== "sun") { var a = pos(sys, t), b = pos(sys, jd); return [p[0] - a[0] + b[0], p[1] - a[1] + b[1], p[2] - a[2] + b[2]]; }
+      return p;
+    }
+    var trail = [];
+    if (L) {
+      var D = L.arr_jd - L.dep_jd;
+      for (var k = 0; k < 16; k++) { var t = Math.max(L.dep_jd, tj - k * D / 140); trail.push(T.P(T.comp(at(t, livePos(f, { leg: w.leg, u: D > 0 ? (t - L.dep_jd) / D : 1 }))))); }
+      for (var j = trail.length - 1; j > 0; j--) { c.strokeStyle = "rgba(156,195,255," + (0.6 * (1 - j / trail.length)).toFixed(2) + ")"; c.beginPath(); c.moveTo(trail[j][0], trail[j][1]); c.lineTo(trail[j - 1][0], trail[j - 1][1]); c.stroke(); }
+    } else trail.push(T.P(T.comp(at(tj, pos(w.at, tj)))));
+    var hd = trail[1] && Math.hypot(trail[0][0] - trail[1][0], trail[0][1] - trail[1][1]) > 0.3 ? Math.atan2(trail[0][1] - trail[1][1], trail[0][0] - trail[1][0]) : 0;
+    var x = trail[0][0], y = trail[0][1];
+    if (!L || (!T.local() && sys !== "sun")) { x += 12; y -= 12 + n * 6; n++; }
+    c.strokeStyle = "rgba(156,195,255,.85)"; c.beginPath(); c.arc(x, y, 10, 0, TAU); c.stroke();
+    T.ship(x, y, hd, 18, 1);
+    T.pick.push({ x: x, y: y, id: f.run_id, type: "live" });
+    T.label(x, y, (f.ship || SHIP) + " · live flight", 3, "rgba(156,195,255,.95)");
+  });
 }
 function hud(s, jd) {
   var t = iso(jd);
@@ -1173,6 +1342,7 @@ H = new Tac($("#cvHome"), {
   onPick: function (p) {
     if (!p) { HOME.target = null; return; }
     if (p.type === "hail") return selectHail(p.id);
+    if (p.type === "live") { if (RUN_ID.test(p.id)) location.href = "/flight/" + p.id; return; }
     HOME.target = p.id;
   },
   onResize: function () { if (H && !H.user) setPreset(HOME.preset === "route" && !HOME.route ? "outer" : HOME.preset); }
@@ -1181,6 +1351,8 @@ setPreset("outer");
 $("#presets").addEventListener("click", function (e) { var b = e.target.closest("[data-p]"); if (b) setPreset(b.dataset.p); });
 $$(".c-map .zb").forEach(function (b) { b.addEventListener("click", function () { H.zoomTo(H.k * (b.dataset.z === "1" ? 1.35 : 1 / 1.35)); }); });
 $("#hails").addEventListener("click", function (e) { var b = e.target.closest("[data-h]"); if (b) selectHail(b.dataset.h); });
+$("#poolBtn").addEventListener("click", selectPool);
+$("#liveBtn").addEventListener("click", function () { LIVE.on = !LIVE.on; this.setAttribute("aria-pressed", LIVE.on); $("#liveLg").hidden = !LIVE.on; });
 $("#choose").innerHTML = chooseEmpty();
 renderDesk(true);
 document.addEventListener("visibilitychange", function () { if (document.hidden) skyStop(); else skyStart(); });
