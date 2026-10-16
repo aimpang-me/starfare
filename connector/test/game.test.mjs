@@ -377,7 +377,7 @@ test("a flare at launch: replan is a plan and beats waiting; a leg the checker r
   const rp = w.out.situation.options.find((o) => o.action === "replan");
   assert.deepEqual([rp.depart_after_min, rp.plans_used, rp.plans_left, rp.free_plans_left], ["2032-03-28 04:02", 2, MAX_PLANS_PER_RUN - 2, 4]);
   const waited = await decide(E, w.run, { checkpoint: 1, action: "wait" });
-  assert.deepEqual([waited.status, waited.used_kwh, waited.arrive], ["arrived", 115317, "2034-02-04 23:07"]);
+  assert.deepEqual([waited.status, waited.used_kwh, waited.arrive], ["arrived", 115213, "2034-02-04 16:34"]);
 
   const { run } = await ceresRide("run_replan");
   await assert.rejects(decide(E, run, { checkpoint: 1, action: "hold" }), /a launch_hold checkpoint takes wait or replan, not hold/);
@@ -394,8 +394,8 @@ test("a flare at launch: replan is a plan and beats waiting; a leg the checker r
     out = await decide(E, run, { checkpoint: out.situation.checkpoint, action: out.situation.default.action });
   }
   assert.deepEqual(seen, []);
-  assert.deepEqual([out.used_kwh, out.arrive, out.parts.find((x) => x.key === "economy").note], [82493, "2034-03-10 05:11", "4 plans, 6 free"]);
-  assert.deepEqual(out.log.checkpoints[0].decision, { action: "replan", depart: "2032-06-25 20:51", kwh: 81995 });
+  assert.deepEqual([out.used_kwh, out.arrive, out.parts.find((x) => x.key === "economy").note], [82666, "2034-03-09 06:56", "4 plans, 6 free"]);
+  assert.deepEqual(out.log.checkpoints[0].decision, { action: "replan", depart: "2032-06-24 08:22", kwh: 82168 });
   assert.deepEqual(out.log.planned.filter((L) => L.replan_of).map((L) => [L.leg, L.replan_of, L.gate]), [["leg3", 1, "FAIL"], ["leg4", 1, "PASS"]]);
   const capped = await ceresRide("run_cap");
   capped.run.calls = MAX_PLANS_PER_RUN;
@@ -510,7 +510,7 @@ async function sharedLegs(call) {
 
 test("shared flight: the run carries every booking, par from the pooled flight, and get_hail lists the bookings and seats", async () => {
   const s = await sharedRun(), run = s.run;
-  assert.deepEqual([run.id, run.hails, run.t0, run.par_kwh, run.par_car], ["ceres-shift", SHARED, 2461700.5, 99908, "sf-04"]);
+  assert.deepEqual([run.id, run.hails, run.t0, run.par_kwh, run.par_car], ["ceres-shift", SHARED, 2461700.5, 99775, "sf-04"]);
   const info = await s.call("get_hail", {});
   assert.deepEqual(info.bookings.map((b) => [b.hail_id, b.party, b.pickup_at.id, b.destination.id, b.rider_ready, b.arrive_by]), [
     ["ceres-shift", 1, "ceres-port", "mars-base", "2027-10-22 00:00", "2031-12-09 00:00"],
@@ -527,8 +527,8 @@ test("shared flight: plan_leg chains one car's legs; the one-booking tools and s
   const [l1, l2, , l4] = await sharedLegs(s.call);
   assert.deepEqual([l1, l2, l4].map((l) => [l.kind, l.car, l.from, l.to, l.depart, l.arrive]), [
     ["leg", "sf-04", "Ceres", "Ceres Port", "2027-10-22 00:00", "2027-10-22 02:21"],
-    ["leg", "sf-04", "Ceres Port", "Mars Base", "2028-02-19 03:33", "2030-07-23 06:50"],
-    ["leg", "sf-04", "Phobos", "Mars Base", "2030-07-23 10:16", "2030-07-23 12:30"]]);
+    ["leg", "sf-04", "Ceres Port", "Mars Base", "2028-02-19 03:33", "2030-07-23 00:22"],
+    ["leg", "sf-04", "Phobos", "Mars Base", "2030-07-23 03:48", "2030-07-23 06:02"]]);
   assert.equal((await s.call("plan_leg", { after_leg: l1.leg_id, car: "sf-01", to: "mars-base" })).error, "leg1 flies SF-04; a flight is one ship");
   assert.equal((await s.call("plan_leg", { after_leg: l1.leg_id, to: "ceres-port" })).error, "this leg would start and end at Ceres Port");
   const one = await openRun(E, suiteInstance(E, { hail_id: "iss-crew" }, { seed: "2", clockJd: 2461550.0, tag: "t", budget: null }), "run_00000000000000000002", 0);
@@ -542,15 +542,15 @@ test("shared flight: dispatch with legs, stops and quotes scores each booking an
     stops: [{ board: ["ceres-shift"] }, { alight: ["ceres-shift"] }, { board: ["phobos-commute"] }, { alight: ["phobos-commute"] }],
     quotes: { "ceres-shift": { fare_usd: l2.fare_usd, arrival: l2.arrive }, "phobos-commute": { fare_usd: l4.fare_usd, arrival: l4.arrive } },
   });
-  assert.deepEqual([out.status, out.total, out.car, out.used_kwh, out.par_kwh, out.planned_pickup, out.promised_arrival], ["arrived", 79, "SF-04", 99908, 99908, "2027-10-22 02:21", "2030-07-23 06:50"]);
+  assert.deepEqual([out.status, out.total, out.car, out.used_kwh, out.par_kwh, out.planned_pickup, out.promised_arrival], ["arrived", 80, "SF-04", 99775, 99775, "2027-10-22 02:21", "2030-07-23 00:22"]);
   assert.deepEqual(out.bookings.map((b) => [b.hail_id, b.pickup, b.arrive, b.promise_slip_hours, b.fare_usd, b.parts.map((x) => x.got)]), [
-    ["ceres-shift", "2027-10-22 02:21", "2030-07-23 06:50", 0, 518971.32, [20, 20, 15, 10]],
-    ["phobos-commute", "2030-07-23 09:04", "2030-07-23 13:00", 0.5, 1811.11, [0, 0, 13.8, 10]]]);
+    ["ceres-shift", "2027-10-22 02:21", "2030-07-23 01:00", 0.6, 518809.49, [20, 20, 14.6, 10]],
+    ["phobos-commute", "2030-07-23 02:36", "2030-07-23 06:02", 0, 1811.11, [0, 0, 15, 10]]]);
   assert.deepEqual(out.passengers.map((p) => [p.place.id, p.board, p.alight, p.aboard, p.seats]), [
     ["ceres", [], [], 0, 4], ["ceres-port", ["ceres-shift"], [], 1, 4], ["mars-base", [], ["ceres-shift"], 0, 4],
     ["phobos", ["phobos-commute"], [], 1, 4], ["mars-base", [], ["phobos-commute"], 0, 4]]);
   assert.deepEqual([out.log.hails, out.log.dispatched, Object.keys(out.log.bookings)], [SHARED, ["leg1", "leg2", "leg3", "leg4"], SHARED]);
-  assert.deepEqual(out.log.bookings["phobos-commute"].parts, { pickup: 0, on_time: 0, promise: 13.8, fare: 10 });
+  assert.deepEqual(out.log.bookings["phobos-commute"].parts, { pickup: 0, on_time: 0, promise: 15, fare: 10 });
   assert.deepEqual((await s.call("get_hail", {})).passengers.map((p) => p.aboard), [0, 1, 0, 1, 0]);
 });
 
