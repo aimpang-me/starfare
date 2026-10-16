@@ -33,8 +33,8 @@ const SESSION_TOOLS = {
     return left ? { ...r, previous_run: left } : r;
   },
 
-  async start_bench(agent) {
-    const id = "b_" + hex(10), r = await benchStub(agent.env, id).create(id, playerOf(agent));
+  async start_bench(agent, input) {
+    const id = "b_" + hex(10), r = await benchStub(agent.env, id).create(id, playerOf(agent), (input && input.split) || "dev");
     if (r.error) return r;
     const prev = agent.state && agent.state.run_id, left = prev ? await runStub(agent.env, prev).leave() : null;
     agent.setState({ run_id: null, bench_id: id });

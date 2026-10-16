@@ -152,9 +152,12 @@ const answer = (r) => (r && r.error
 export const HOSTED_TOOLS = {
   ...TOOLS,
   start_bench: {
-    description: "Start a Starfare bench session (simulated, practice): a few tasks from the public bench suite, played one after another with these same tools. " +
+    description: "Start a Starfare bench session (simulated): a few tasks from the bench suite, played one after another with these same tools. " +
       "Returns a watch link that shows the player every tool call live. Call it when the player asks to play the bench.",
-    inputSchema: {},
+    inputSchema: {
+      split: z.enum(["dev", "test"]).describe("dev (default): practice tasks from the public split, each score shown when its ride arrives. " +
+        "test: the held-out split; every score stays sealed until all its tasks are played. Use test only when the player asks for it.").optional(),
+    },
   },
 };
 
@@ -163,7 +166,8 @@ export const HOSTED_INSTRUCTIONS = INSTRUCTIONS + "\n" +
   "list_hails shows the open task's one hail (or one shared flight) and its task_id, take_hail gives that task's run_id, and sky time is paused for the task. " +
   "Every call counts against the task's budget, list_hails and take_hail included. Every result's bench field says which task you are on, calls used and the budget; " +
   "when a task ends (its ride arrived or its budget is used) it says so, and the next call opens the next task. When bench.done is set, tell the player the total; later calls play the normal game. " +
-  "Bench scores are practice and do not go to /board.";
+  "Bench scores never go to /board. start_bench plays the practice (dev) split unless the player asks for the held-out test split (split \"test\"); " +
+  "there a task's score stays sealed until every task is played: a ride that arrives says only that it flew, and the next call opens the next task.";
 
 export function registerTools(server, backend, tools = TOOLS) {
   for (const [name, def] of Object.entries(tools)) server.registerTool(name, def, async (input) => answer(await backend.call(name, input)));

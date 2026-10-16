@@ -505,6 +505,7 @@ Each step uses the one before it. **[inferred]**
    - Add `/bench/sessions`, `/bench/<token>/mcp` and the hub tables, with sealed outcomes and replay verification.
    - Put `STARFARE_BENCH_KEY` in a Wrangler secret.
    - This needs a deploy and a Cloudflare change, so it needs Alvin's go.
+   - **The test split's task list is public.** It sits in the suite file as `splits.test`, each task only an id, its hail or hails and its sky day, because what a test task hides is its world (the hazards drawn from the keyed seed), every task shows its hail and sky day in `list_hails` the moment it opens anyway, and a public list lets anyone check which tasks a test session was played on. The stratum and anchor flags stay out of it, since each says how naive fared in a hidden world; those and every score go only to the selection file, which `make-suite.mjs --test-selection` refuses to write inside the repo.
 7. **Later:**
    - more hail templates with a held-out template split (gap 10);
    - a scored provenance column (gap 9);

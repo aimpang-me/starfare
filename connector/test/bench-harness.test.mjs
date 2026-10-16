@@ -2,6 +2,7 @@
 // Run: node build.mjs && node --test test/bench-harness.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -14,7 +15,8 @@ import { SUITE_FORMAT, loadSuite, seedFor } from "../src/suite.js";
 import { BenchBackend, loadEngine, openTask } from "../bench/backend.mjs";
 import { naive, random, reference, rngOf } from "../bench/agents.mjs";
 import { runSuite } from "../bench/run.mjs";
-import { benchCall, benchView, endTask, newSession } from "../src/bench-host.js";
+import { benchCall, benchView, endTask, newRunId, newSession } from "../src/bench-host.js";
+import { publicTask } from "../bench/make-suite.mjs";
 
 const E = loadEngine();
 const SOLO = { id: "iss-crew/fixture", hail_id: "iss-crew", clock_jd: 2461550.0 };
@@ -92,7 +94,7 @@ test("run.mjs runs naive over a split and writes one row and one ride record per
 test("hosted session: tasks in order, each closed on arrival or from the watch page, then the session refuses calls", async () => {
   const tasks = [SOLO, { ...SOLO, id: "iss-crew/fixture-2" }, { ...SOLO, id: "iss-crew/fixture-3" }];
   const suite = { ...SUITE, splits: { dev: tasks } };
-  let s = { ...newSession(suite, "b_test", null, 0), tasks };
+  let s = { ...newSession(suite, "b_test", null, 0), tasks, run_ids: tasks.map(newRunId) };
   const results = [];
   const call = async (tool, input) => {
     const r = await benchCall(E, suite, s, tool, input, 0);
@@ -123,6 +125,47 @@ test("hosted session: tasks in order, each closed on arrival or from the watch p
     ["iss-crew/fixture-2", "done", "not started", "ended on the watch page"],
     ["iss-crew/fixture-3", "done", "planning", "ended on the watch page"],
   ]);
+});
+
+const KEY = "fixture-bench-key";
+const HELD = { id: "iss-crew/held", hail_id: "iss-crew", clock_jd: 2461550.0 };
+const TEST_SUITE = { ...SUITE, splits: { dev: [SOLO], test: [HELD] } };
+
+test("a test session needs the server's key and a test split; practice works without either", () => {
+  const dev = " start_bench with split dev (practice) still works.";
+  assert.deepEqual(newSession(TEST_SUITE, "b_t", null, 0, { split: "test" }), { error: "The test split needs STARFARE_BENCH_KEY on this server, and it has none." + dev });
+  assert.deepEqual(newSession(SUITE, "b_t", null, 0, { split: "test", key: KEY }), { error: "Suite fixture has no test split yet." + dev });
+  assert.deepEqual(newSession(TEST_SUITE, "b_t", null, 0, { split: "train", key: KEY }), { error: "split is dev (practice) or test (held out), not train." });
+  const d = newSession(TEST_SUITE, "b_t", null, 0);
+  assert.deepEqual([d.split, d.tasks, benchView(d).practice], ["dev", [SOLO], true]);
+  const t = newSession(TEST_SUITE, "b_t", null, 0, { split: "test", key: KEY });
+  assert.deepEqual([t.split, t.tasks, benchView(t).practice], ["test", [HELD], false]);
+  assert.match(t.run_ids[0], /^run_[0-9a-f]{20}$/);
+});
+
+test("a test task flies the world keyed by STARFARE_BENCH_KEY, under the run_id drawn at start, and no result shows the key or the seed", async () => {
+  let s = newSession(TEST_SUITE, "b_t", null, 0, { split: "test", key: KEY });
+  const seen = [];
+  for (const [tool, input] of [["list_hails", {}], ["take_hail", { hail_id: "iss-crew" }]]) {
+    const r = await benchCall(E, TEST_SUITE, s, tool, input, 0, KEY);
+    s = r.session;
+    seen.push(r.result);
+  }
+  const seed = await seedFor(TEST_SUITE, "test", HELD, 0, KEY);
+  assert.deepEqual([s.run.seed, s.run.run_id, seen[1].run_id], [seed, s.run_ids[0], s.run_ids[0]]);
+  assert.notEqual(seed, await seedFor(TEST_SUITE, "dev", HELD, 0));
+  const shown = JSON.stringify([seen, benchView(s)]);
+  for (const secret of [KEY, seed, seed.slice(3)]) assert.ok(!shown.includes(secret), "shown output holds " + secret);
+});
+
+test("make-suite's test cut writes only id, hail or hails and sky day to the suite, and its scores only outside the repo", () => {
+  assert.deepEqual(publicTask({ ...SOLO, stratum: "quick/hazard", anchor: true }), SOLO);
+  assert.deepEqual(publicTask({ ...SHARED, stratum: "long/clear" }), SHARED);
+  const cli = (args, env) => spawnSync(process.execPath, [fileURLToPath(new URL("../bench/make-suite.mjs", import.meta.url)), ...args], { encoding: "utf8", env: { ...process.env, STARFARE_BENCH_KEY: "", ...env } });
+  assert.match(cli(["--test-into", "x.json", "--test-selection", join(tmpdir(), "sel.json")]).stderr, /--test-into needs STARFARE_BENCH_KEY in the environment/);
+  const inside = cli(["--test-into", "x.json", "--test-selection", fileURLToPath(new URL("../sel.json", import.meta.url))], { STARFARE_BENCH_KEY: KEY });
+  assert.notEqual(inside.status, 0);
+  assert.match(inside.stderr, /--test-selection must be a path outside the repo: it holds the test split's scores/);
 });
 
 test("serve.mjs over MCP stdio: an agent plays a dev task to arrival", async () => {

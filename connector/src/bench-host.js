@@ -3,7 +3,7 @@
 // A hosted session (start_bench on the connector) plays a few tasks one after another; benchCall is its reducer and the
 // StarfareBench Durable Object only stores what it returns. Worker-safe: bench/backend.mjs re-exports this for Node.
 import { GameError, applyTool, hailInfo, isoJD, leaveRun, listHails, openRun, phaseOf, runFleet, spend } from "./game.js";
-import { instanceFor, seedFor } from "./suite.js";
+import { PUBLIC_SPLITS, instanceFor, seedFor } from "./suite.js";
 
 export const hex = (n) => [...crypto.getRandomValues(new Uint8Array(n))].map((b) => b.toString(16).padStart(2, "0")).join("");
 export const newRunId = () => "run_" + hex(10);
@@ -14,7 +14,7 @@ export const BENCH_NOTE =
   "and the forecasts included, and once the budget is used no more calls are answered. There is no ride history and no /board: the score goes to the bench results only.";
 
 /** A run in planning for one attempt at a task. */
-export const openTask = (E, suite, task, seed) => openRun(E, instanceFor(E, suite, task, seed), newRunId(), Date.now());
+export const openTask = (E, suite, task, seed, runId = newRunId()) => openRun(E, instanceFor(E, suite, task, seed), runId, Date.now());
 
 const SESSION_TOOLS = {
   list_hails(E, run) {
@@ -72,12 +72,20 @@ export class BenchBackend {
 
 export const BENCH_TASKS = 5;
 
-/** A hosted session: n tasks drawn at random from the suite's public dev split, played in order. run is the open task's run
- *  (null until its first call); results holds one row per closed task, in task order. */
-export function newSession(suite, benchId, player, nowMs, n = BENCH_TASKS) {
-  const pool = [...suite.splits.dev], tasks = [];
+export const BENCH_SPLITS = ["dev", "test"];
+
+/** A hosted session: n tasks drawn at random from one split, played in order. dev is practice; test is the held-out split,
+ *  whose worlds come from key (STARFARE_BENCH_KEY), so the server refuses it without one. Each task's run_id is drawn here so
+ *  a replay opens the same runs. run is the open task's run (null until its first call); results holds one row per closed
+ *  task, in task order. An { error } when the split cannot be played. */
+export function newSession(suite, benchId, player, nowMs, { split = "dev", key, n = BENCH_TASKS } = {}) {
+  const dev = " start_bench with split dev (practice) still works.";
+  if (!BENCH_SPLITS.includes(split)) return { error: "split is dev (practice) or test (held out), not " + split + "." };
+  if (!PUBLIC_SPLITS.includes(split) && !key) return { error: "The " + split + " split needs STARFARE_BENCH_KEY on this server, and it has none." + dev };
+  const pool = [...((suite.splits && suite.splits[split]) || [])], tasks = [];
+  if (!pool.length) return { error: "Suite " + suite.id + " has no " + split + " split yet." + dev };
   while (tasks.length < n && pool.length) tasks.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-  return { bench_id: benchId, player, suite: suite.id, split: "dev", budget: suite.budget, tasks, i: 0, run: null, results: [], notice: null, started_ms: nowMs, done: false };
+  return { bench_id: benchId, player, suite: suite.id, split, budget: suite.budget, tasks, run_ids: tasks.map(() => newRunId()), i: 0, run: null, results: [], notice: null, started_ms: nowMs, done: false };
 }
 
 /** Scores the open task (a ride stopped at a checkpoint flies on with the defaults) and moves to the next. Changes s. */
@@ -96,6 +104,8 @@ function close(E, s, ended) {
 }
 
 const totalOf = (s) => s.results.reduce((a, r) => a + r.total, 0);
+const practice = (s) => PUBLIC_SPLITS.includes(s.split);
+const kind = (s) => (practice(s) ? "practice" : "held-out test split");
 
 /** What a bot is told when a task closes: its score, then the next task or the session's results. */
 function after(s, row, ended) {
@@ -104,7 +114,7 @@ function after(s, row, ended) {
     ended: { why: ended, phase: row.phase, total: row.total },
     ...(s.done
       ? { done: true, results: s.results.map((r) => ({ task_id: r.task_id, phase: r.phase, total: r.total })), total: totalOf(s), out_of: 100 * n,
-          note: "Bench over (simulated, practice). Tell the player their total and the watch link. Later calls play the normal game." }
+          note: "Bench over (simulated, " + kind(s) + "). Tell the player their total and the watch link. Later calls play the normal game." }
       : { next: "Task " + (s.i + 1) + " of " + n + " is next. Call list_hails to open it; it has its own run_id." }),
   };
 }
@@ -114,11 +124,11 @@ const endText = (b) => " [Bench: task " + b.task + " ended (" + why(b) + "), sco
 
 /** One tool call in a hosted session: { session, result, task }. The session passed in is never changed. The open task closes
  *  when its ride arrives or its budget is used; result.bench says where the session stands (also on an { error } result). */
-export async function benchCall(E, suite, session, tool, input, nowMs) {
+export async function benchCall(E, suite, session, tool, input, nowMs, key) {
   const s = structuredClone(session);
   if (s.done) return { session: s, task: null, result: { error: "This bench session is over. start_bench starts a new one.", bench: { done: true } } };
   const k = s.i, t = s.tasks[k];
-  if (!s.run) s.run = await openTask(E, suite, t, await seedFor(suite, s.split, t, 0));
+  if (!s.run) s.run = await openTask(E, suite, t, await seedFor(suite, s.split, t, 0, key), s.run_ids[k]);
   const b = new BenchBackend(E, s.run), result = await b.call(tool, input);
   s.run = b.run;
   const bench = { task: k + 1 + " of " + s.tasks.length, task_id: t.id, calls_used: s.run.tool_calls, budget: s.run.budget, ...(s.notice ? { notice: s.notice } : {}) };
@@ -141,7 +151,7 @@ export function endTask(E, session) {
 /** What the watch page shows: every task with its status and score, the open task's progress, and the total so far. */
 export function benchView(s) {
   return {
-    bench_id: s.bench_id, simulated: true, practice: true, suite: s.suite, split: s.split, budget: s.budget, started_ms: s.started_ms, done: s.done,
+    bench_id: s.bench_id, simulated: true, practice: practice(s), suite: s.suite, split: s.split, budget: s.budget, started_ms: s.started_ms, done: s.done,
     tasks: s.tasks.map((t, k) => ({ task_id: t.id, hails: t.hails || [t.hail_id], status: k < s.i ? "done" : k === s.i && !s.done ? "current" : "waiting", ...(s.results[k] ? { result: s.results[k] } : {}) })),
     current: s.done ? null : { task: s.i + 1, task_id: s.tasks[s.i].id, title: s.run ? s.run.title : null, phase: s.run ? phaseOf(s.run) : "not opened", calls_used: s.run ? s.run.tool_calls : 0 },
     total: totalOf(s), out_of: 100 * s.tasks.length,
