@@ -2,10 +2,13 @@
 
 Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi game for flying cars across the solar system. Riders, the fleet, weather and traffic are simulated; planet positions are real (NASA JPL DE421).
 
+Read first: `docs/HANDOFF.md` (state, decisions, next steps), `docs/OPEN-QUESTIONS.md`, `docs/WEBSITES.md`, `docs/DESIGN.md`, `docs/HISTORY.md`, `docs/SPEC.md`.
+
 ## Layout
 - `world/engine/`: the engine. `sol-engine.js` (planner, n-body re-fly checker), `sol-rides.js` (ride hails, hazards, scoring), `sol-missions.js` (older delivery game). `python3 world/bundle.py` bundles them into `engine/sol-page.js`.
 - `world/template.html` -> `python3 world/build.py` -> `world/open-sky.html` (the Open Sky page, published as a claude.ai artifact).
 - `connector/`: the Grok MCP connector, a Cloudflare Worker named `starfare`. `node build.mjs` copies the engine bundle into `src/engine/`. `GET /` is the public website (`src/site.html`): a live read-only sky map running the engine in the browser (served at `/engine.js`), the scoreboard and how to connect Grok. Docs: `DEPLOY.md`, `TEST.md`.
+- `day5/` (Stranded at Titan page), `site/` (Dispatch Desk page), `teaser/` (Ride to the Roadster page).
 - `code/`, `day1`-`day6/`, `audit/`, `receipts/`: the original Python planner, checker, evals.
 
 ## Tests
@@ -22,7 +25,7 @@ Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi gam
 
 ## Open items (2026-10-16)
 - Done: merged with the live connector (DO classes StarfareMcp/Run/Hub/Auth, STARFARE_OAUTH); MCP server named "starfare"; live Worker version 31d63a4c (main c9b50df). Don't rename the DO classes again without a wrangler migration.
-- See docs/HANDOFF.md for the game's vision, decisions and build order.
+- See docs/HANDOFF.md (vision, decisions, build order), docs/WEBSITES.md (every page, link, build, publish) and docs/DESIGN.md (look, tokens, mockups) and docs/OPEN-QUESTIONS.md (decisions waiting on Alvin; ask him and record answers).
 - Old Worker `sol-connector` still running; delete only when Alvin says.
 - Done and deployed: mid-ride checkpoints (launch_hold, pad_closed) with the `decide` tool, on the connector and the Open Sky page; get_my_rides with ride history and run logs.
 - Built, not deployed: the public website at the connector's `/` (branch claude/mystifying-germain-497196). Deploy only with Alvin's go.
