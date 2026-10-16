@@ -20,17 +20,17 @@ EXTRA = {  # page-side look and feel only: colours, spawn pool, default zoom, al
 def main():
     mock = sys.argv[sys.argv.index("--mock") + 1] if "--mock" in sys.argv else None
     eng_dir = os.path.join(H, "engine")
-    src = open(mock).read() if mock else open(os.path.join(eng_dir, "sol-page.js")).read()
-    places = json.load(open(os.path.join(os.path.dirname(mock), "places.json") if mock else os.path.join(eng_dir, "places.json")))
+    src = open(mock, encoding="utf-8").read() if mock else open(os.path.join(eng_dir, "sol-page.js"), encoding="utf-8").read()
+    places = json.load(open(os.path.join(os.path.dirname(mock), "places.json") if mock else os.path.join(eng_dir, "places.json"), encoding="utf-8"))
     places = places["places"] if isinstance(places, dict) else places
     for p in places:
         p.update(EXTRA.get(p["id"], {}))
         if p.get("parent") == "sun": p["parent"] = None
-    sim = json.load(open(os.path.join(os.path.dirname(mock) if mock else H, "sim_rides.json")))
+    sim = json.load(open(os.path.join(os.path.dirname(mock) if mock else H, "sim_rides.json"), encoding="utf-8"))
     world = {"places": places, "planets": [p["id"] for p in places if p["kind"] == "planet"], "sim": sim, "window_days": 120,
              "sky": {"t0_ms": 1792108800000, "jd0": 2461329.5, "len_days": 7000}}
-    t = open(os.path.join(H, "template.html")).read()
+    t = open(os.path.join(H, "template.html"), encoding="utf-8").read()
     out = t.replace("/*__ENGINE__*/", src.replace("</script", "<\\/script")).replace("__WORLD__", json.dumps(world, separators=(",", ":")))
     dst = os.path.join(H, "open-sky.html") if not mock else os.path.join(os.path.dirname(mock), "open-sky-mock.html")
-    open(dst, "w").write(out); print(dst, os.path.getsize(dst))
+    open(dst, "w", encoding="utf-8", newline="\n").write(out); print(dst, os.path.getsize(dst))
 if __name__ == "__main__": main()
