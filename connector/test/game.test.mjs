@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { SKY, SEASON_END, MAX_PLANS_PER_RUN, sky, isoJD, jdOfIso, newRun, hailInfo, legPub, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, seedOf, phaseOf, abandonRun, computeLeg, GameError,
+import { SKY, SEASON_END, MAX_PLANS_PER_RUN, sky, isoJD, jdOfIso, newRun, hailInfo, legPub, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, seedOf, phaseOf, leaveRun, computeLeg, GameError,
   RIDE_FORMAT, rideSummary, rideRecord, rideStats, rideCursor, rideCursorOf } from "../src/game.js";
 
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
@@ -388,6 +388,16 @@ test("ask_after_hours is checked; \"never\" flies the defaults and arrives at on
   assert.equal(out.log.checkpoints, undefined);
 });
 
+test("leaving a ride at a checkpoint flies it on the defaults, so it still arrives and is scored", async () => {
+  const { run } = await dustRide("run_leave");
+  const out = leaveRun(E, run);
+  assert.deepEqual([out.status, out.used_kwh, out.arrive, out.checkpoints, out.left_at_checkpoint, phaseOf(run)], ["arrived", 45505, "2029-02-12 00:44", 1, 1, "arrived"]);
+  assert.equal(out.note, "A newer hail was taken at checkpoint 1, so the rest of this ride flew on the default answers.");
+  assert.deepEqual(out.log.checkpoints.map((c) => c.decision), [{ action: "hold" }]);
+  assert.equal(leaveRun(E, run), null);
+  assert.equal(dispatch(E, run, {}, DUST_NOW).already_dispatched, true);
+});
+
 test("runs stored before phases existed keep working", async () => {
   const done = { ...(await play("iss-crew")).run };
   done.started = true; delete done.phase;
@@ -397,8 +407,8 @@ test("runs stored before phases existed keep working", async () => {
   const old = await newRun(E, "iss-crew", NOW, "run_old");
   delete old.phase;
   assert.equal(hailInfo(E, old, NOW).phase, "planning");
-  assert.equal(abandonRun(old), true);
-  assert.deepEqual([old.phase, "abandoned" in old, abandonRun(old)], ["abandoned", false, false]);
+  assert.deepEqual(leaveRun(E, old), { ok: true, status: "abandoned", run_id: "run_old" });
+  assert.deepEqual([old.phase, "abandoned" in old, leaveRun(E, old)], ["abandoned", false, null]);
   assert.throws(() => dispatch(E, { ...old, phase: undefined, abandoned: true }, {}, NOW), /abandoned/);
 });
 
@@ -434,7 +444,7 @@ test("ride history: planning, abandoned (newer hail, cold) rows carry only what 
   const a = await newRun(E, "iss-crew", NOW, "run_plan");
   const s = rideSummary(E, a);
   assert.deepEqual([s.phase, s.total, s.parts, s.reason], ["planning", undefined, undefined, undefined]);
-  assert.equal(abandonRun(a), true);
+  assert.equal(leaveRun(E, a).status, "abandoned");
   assert.deepEqual([rideSummary(E, a).phase, rideSummary(E, a).reason, rideRecord(E, a).reason, rideRecord(E, a).score], ["abandoned", "newer_hail", "newer_hail", null]);
   const run = await newRun(E, "ceres-shift", NOW, "run_cold2");
   const p = (await planPickup(E, run, { car: "sf-04" })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;

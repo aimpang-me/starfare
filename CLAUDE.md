@@ -11,7 +11,7 @@ Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi gam
 ## Tests
 - Engine hazards: `node world/engine/test-hazards.js` (7 checks).
 - Engine checkpoints: `node world/engine/test-reroute.js` (8 checks, about a minute; one replays 100 fixture hails). `node world/engine/find-reroute-cases.js` finds the dust-storm rides it pins.
-- Connector: `cd connector && npm ci && node build.mjs && node --test test/game.test.mjs` (26) and `node test/e2e.mjs` (36, runs wrangler dev; fails in the last minute of a 7000-sky-day season, about 1.9 h real time, so rerun).
+- Connector: `cd connector && npm ci && node build.mjs && node --test test/game.test.mjs` (27) and `node test/e2e.mjs` (36, runs wrangler dev; fails in the last minute of a 7000-sky-day season, about 1.9 h real time, so rerun).
 
 ## Rules from Alvin
 - Never deploy, delete a Worker, or change Cloudflare without Alvin's go in this session.

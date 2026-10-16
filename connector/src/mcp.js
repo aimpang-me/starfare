@@ -51,7 +51,7 @@ export class StarfareMcp extends McpAgent {
     }, async () => { const E = await engine(); return json({ hails: listHails(E), fleet: fleet(E), board: "/board" }); });
 
     s.registerTool("take_hail", {
-      description: "Take a ride hail. Returns a run_id and the terms: where and when the rider is ready, the destination, the arrive_by time, the fleet and the scoring rules. One run per bot: taking a new hail abandons this session's undispatched run.",
+      description: "Take a ride hail. Returns a run_id and the terms: where and when the rider is ready, the destination, the arrive_by time, the fleet and the scoring rules. One run per bot: taking a new hail abandons this session's undispatched run, or flies a ride waiting at a checkpoint on to arrive with the default answers (scored). The result's previous_run says which.",
       inputSchema: { hail_id: z.string().describe("hail id from list_hails, e.g. iss-crew") },
     }, async ({ hail_id }) => {
       const prev = this.state && this.state.run_id;
@@ -59,9 +59,9 @@ export class StarfareMcp extends McpAgent {
       // With STARFARE_OAUTH on, the grant's anonymous player id rides along on the run (to the board and the player's history).
       const r = await runStub(this.env, id).create(id, hail_id, this.#player());
       if (r.error) return err(r.error);
-      if (prev) await runStub(this.env, prev).abandon();
+      const left = prev ? await runStub(this.env, prev).leave() : null;
       this.setState({ run_id: id });
-      return json(r);
+      return json(left ? { ...r, previous_run: left } : r);
     });
 
     s.registerTool("get_hail", {

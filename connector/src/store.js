@@ -9,8 +9,8 @@
 import { DurableObject } from "cloudflare:workers";
 import { engine } from "./engine.js";
 import {
-  GameError, abandonRun, checkPad, computeLeg, decide, dispatch, hailInfo, legKey, legPub, newRun, phaseOf, planPickup, planRideLeg, rideCursor, rideCursorOf,
-  rideRecord, rideStats, rideSummary, spaceWeather,
+  GameError, checkPad, computeLeg, decide, dispatch, hailInfo, leaveRun, legKey, legPub, newRun, phaseOf, planPickup, planRideLeg, rideCursor,
+  rideCursorOf, rideRecord, rideStats, rideSummary, spaceWeather,
 } from "./game.js";
 
 export const RUN_ID = /^run_[0-9a-f]{20}$/;
@@ -144,11 +144,16 @@ export class StarfareRun extends DurableObject {
     });
   }
 
-  /** One bot holds one run at a time: taking a new hail in the same MCP session abandons the open one if it is still planning. */
-  async abandon() {
+  /** One bot holds one run at a time. Taking a new hail in the same MCP session abandons the open run if it is still planning,
+   *  or flies it on the defaults to arrive if it is at a checkpoint, scored and on the board. */
+  async leave() {
     const run = await this.#run();
-    if (run && abandonRun(run)) { await this.#save(run); await this.#index(await engine(), run); }
-    return { ok: true };
+    const E = await engine(), r = run ? leaveRun(E, run) : null;
+    if (!r) return null;
+    await this.#save(run);
+    if (r.status === "arrived") await this.#record(run, r);
+    await this.#index(E, run);
+    return { run_id: r.run_id, status: r.status, ...(r.status === "arrived" ? { total: r.total, note: r.note } : {}) };
   }
 
   /** The full ride record, for its owner only (get_my_rides detail mode). Another player's run reads as not found. */

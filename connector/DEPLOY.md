@@ -34,7 +34,7 @@ Score out of 100, computed by `SOLE.R.score` unchanged from what actually happen
 Tools:
 
 - `list_hails`: the hails (id, title, rider, pickup, destination, quick or long haul) and the fleet.
-- `take_hail(hail_id)`: starts a run. Returns `run_id`, `rider_ready`, `arrive_by`, `season` (the hazard seed), the fleet (each car `busy_until` a time or `"free"`), `boarding_hours` and the rules. One run per bot: a new `take_hail` abandons the session's undispatched run.
+- `take_hail(hail_id)`: starts a run. Returns `run_id`, `rider_ready`, `arrive_by`, `season` (the hazard seed), the fleet (each car `busy_until` a time or `"free"`), `boarding_hours` and the rules. One run per bot: a new `take_hail` abandons the session's undispatched run, or flies a ride stopped at a checkpoint on to arrive with each checkpoint's default answer (scored, on the board, and its log notes the checkpoint it was left at). `previous_run` in the result says which.
 - `get_hail(run_id)`: the same terms again, plus `sky_now`, `plans_used`, `dispatched`, `phase` (`planning`, `in_flight`, `arrived` or `abandoned`) and, in flight, the open checkpoint's `situation`.
 - `check_pad(run_id, place, hours?, from?)`: forecast for a pad, by place id or name: berths, booked berths per hour (1 to 72 hours, default 24, from `rider_ready` or `from`, `YYYY-MM-DD HH:MM`; in flight, from the open checkpoint's time), and dust or haze odds for Mars, Mars Base, Titan and Titan Dock. Scheduled traffic only. Free.
 - `space_weather(run_id, days?, from?)`: flare odds per sky day (1 to 60 days, default 10). Free.
@@ -155,7 +155,7 @@ If it fails, the useful facts are where it stopped (URL rejected, an OAuth promp
 
 - Whether grok.com accepts a connector with no auth at all. If it insists on OAuth, see "Turning OAuth on".
 - Which MCP transport Grok uses. Both are served on `/mcp` and both passed with the SDK client.
-- Whether Grok keeps one MCP session for a whole chat. Nothing depends on it: every tool takes the `run_id`. The session only remembers its latest run so that a new `take_hail` abandons the old one.
+- Whether Grok keeps one MCP session for a whole chat. Nothing depends on it: every tool takes the `run_id`. The session only remembers its latest run so that a new `take_hail` can settle the old one.
 - How long Grok takes per tool call. The sky clock runs 1 sky day per real second. If a pickup or ride flies between planets and its departure passes before `dispatch`, the hail goes cold and has to be taken again. A long-haul rider is ready 150 sky days (2.5 real minutes) after `take_hail`, which is time enough for a few plans. On a quick hail the rider is ready about one real second after `take_hail`, so a car sent from another planet often goes cold before a bot can dispatch it (its energy-best departure is often right at the ready time); the nearby cars fly local hops, which never go cold. A slow bot can use `wait_days` to plan a later departure.
 - From which IPs grok.com calls, and so how the per-IP limit behaves (see above).
 
