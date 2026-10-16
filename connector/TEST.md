@@ -1,6 +1,13 @@
 # Testing the Starfare connector
 
-**Latest run: the hazard layer (2026-10-16, later the same day).** The engine (`sol/world/engine/sol-rides.js`) gained a simulated hazard layer: busy pads with hidden unscheduled traffic, solar flares, Mars dust, Titan haze, correction burns and busy cars, seeded per season, and a score taken from what actually happened (`R.fly`). The connector now seeds every engine call with the season number, adds `check_pad` and `space_weather`, and scores dispatches from `R.fly`. Results of that run, same sandbox and versions:
+**Latest run: checkpoints and `decide` (2026-10-16, branch `worktree-agent-a3e7a2c61cdef21c8`, Windows 11, Node, local `wrangler dev`; nothing deployed).** A dispatched ride now stops at a checkpoint when a flare grounds a launch or a pad is closed on arrival for longer than `ask_after_hours`, and the bot answers with the ninth tool, `decide`. Results:
+
+- Build: `engine copied: 511448 bytes, sha256 17ecbd6fcb24e011…`.
+- Engine: `node world/engine/test-hazards.js` 7 passed; `node world/engine/test-reroute.js` 8 passed (par with hindsight never needs more energy than par without it on 100 fixture hails; par fell on 6 of them).
+- `node --test test/game.test.mjs`: **22 of 22** (was 17). New: the engine's pinned dust-storm ride at Mars Base through the connector (hold 45,505 kWh arriving 2029-02-12 00:44; divert to Phobos with 88.4 h on the ground 44,358 kWh, 22,054 of them on divert hops, arriving 00:47; the log's hindsight names the divert as best), `decide` idempotency and refusals, the Ceres Shift flare (wait 110,481 kWh; a replan asked for after 2028-01-10 22:57 counts as a plan, plans a 64,696 kWh leg leaving 2028-05-09 22:57, and with the defaults after it lands at 71,619 kWh; a leg the checker rejects is counted and leaves the checkpoint open; the plan cap), `ask_after_hours` validation and `"never"`, and runs stored before phases existed.
+- `node test/e2e.mjs`: **31 of 31** (off 20 of 20, on 11 of 11). New off check: `dispatch` with `ask_after_hours: 0` over cars until a ride stops (this run: iss-crew with SF-02, checkpoint 1 `pad_closed` `pad_full` at the ISS 2028-04-18 23:34), then `get_hail` shows the same situation, `check_pad` starts from the checkpoint's time, each default answer is sent twice through `decide` (the second returns `already_decided`), and the arrived score matches `R.fly` + `R.score` in Node part by part (46, 76,513 kWh; hindsight best "divert to Tiangong, wait 0 h"). Every other scored dispatch passes `ask_after_hours: "never"`, which flies the defaults like `R.fly`.
+
+**Earlier run: the hazard layer (2026-10-16, later the same day).** The engine (`sol/world/engine/sol-rides.js`) gained a simulated hazard layer: busy pads with hidden unscheduled traffic, solar flares, Mars dust, Titan haze, correction burns and busy cars, seeded per season, and a score taken from what actually happened (`R.fly`). The connector now seeds every engine call with the season number, adds `check_pad` and `space_weather`, and scores dispatches from `R.fly`. Results of that run, same sandbox and versions:
 
 - Build: `engine copied: 493178 bytes, sha256 e8634d4297c3f306…`.
 - `node --test test/game.test.mjs`: **17 of 17** (was 10). New: the season seed, fleet `busy_until`, the score from `R.fly` part by part on 18 dispatches, a clean 100 when nothing is in the way, the promise (late, kept, early, wrong), the busy-car rule in `plan_pickup` and `dispatch`, `check_pad` never showing unscheduled traffic, `space_weather` showing odds only, forecast input validation and the run log, determinism per season seed.
@@ -101,13 +108,14 @@ node test/e2e.mjs --mode=on                    # or: npm run e2e:on
 Run of `npm test` (build, the Node tests, then `node test/e2e.mjs` in both modes), checks:
 
 ```
-== STARFARE_OAUTH=off ==
-wrangler dev up at http://127.0.0.1:41967
-PASS  tools/list is exactly the eight ride-hail tools
+== STARFARE_OAUTH=off (default) ==
+wrangler dev up at http://127.0.0.1:63032
+PASS  tools/list is exactly the nine ride-hail tools
 PASS  list_hails returns the engine's hails (SOLE.R.HAILS) and the fleet
 PASS  iss-crew: take_hail, plan_pickup (par car), plan_ride, dispatch with the leg's fare and arrival; the result says what actually happened
 PASS  iss-crew score matches SOLE.R.fly + SOLE.R.score run directly in Node on the same legs and season seed
 PASS  after dispatch the run is locked; a second dispatch returns the same locked score
+PASS  a ride that stops at checkpoints (ask_after_hours 0), answered with decide's defaults, lands where R.fly does in Node; get_hail shows the open checkpoint
 PASS  iss-crew with a farther car (SF-02 from the Lunar Data Center) scores lower, and matches Node
 PASS  a wrong quote (fare and an arrival years early) loses the fare 10 and the promise 15; a fare $5 off loses the fare 10; both match Node
 PASS  get_hail fleet: every car is free or busy_until, as SOLE.R.fleetState says for the run's season seed
@@ -123,10 +131,10 @@ PASS  GET /board and /board.json: best per hail with hail titles, labelled plann
 PASS  off: no OAuth: /mcp needs no token, OAuth endpoints are 404, runs carry no player_id
 PASS  per-IP rate limit answers 429 past RATE_PER_MIN
 == STARFARE_OAUTH=on ==
-wrangler dev up at http://127.0.0.1:45741
+wrangler dev up at http://127.0.0.1:63109
 PASS  on: /, /board and /board.json stay public; /mcp without a token is 401
 PASS  on: the 401 points at protected-resource metadata; authorization-server metadata has DCR, PKCE S256, scope play
-PASS  on: SDK OAuth flow: 401, discovery, dynamic registration, PKCE S256, one-click Allow, token, then tools/list is the eight ride-hail tools
+PASS  on: SDK OAuth flow: 401, discovery, dynamic registration, PKCE S256, one-click Allow, token, then tools/list is the nine ride-hail tools
 PASS  on: iss-crew over OAuth: take_hail, plan_pickup, plan_ride, dispatch; the run carries the grant's player id; the score matches Node
 PASS  on: a second grant is a different anonymous player; run_id rules unchanged (any session can address a run by its id, unknown ids rejected)
 PASS  on: /board shows the best run with its player tag
@@ -135,12 +143,12 @@ PASS  on: a refreshed access token works and keeps the same player id
 PASS  on: Deny redirects back with access_denied and the same state
 PASS  on: a wrong PKCE verifier is refused at /token
 PASS  on: the per-IP rate limit covers /mcp and the OAuth endpoints
-off: 19 of 19 checks passed
+off: 20 of 20 checks passed
 on: 11 of 11 checks passed
-30 of 30 checks passed
+31 of 31 checks passed
 ```
 
-This run was repeated three times in full, 30 of 30 each time. (The earlier run also passed `--mode=off` and `--mode=on` on their own.)
+This is the checkpoint branch's run, once in full. The hazard-layer run before it was repeated three times, 30 of 30 each time. (The run before that also passed `--mode=off` and `--mode=on` on their own.)
 
 Off-mode details of the earlier run, before the hazard layer (the full JSON is printed by the test; this run's example is at the top of this file):
 

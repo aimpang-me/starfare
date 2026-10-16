@@ -10,7 +10,8 @@ Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi gam
 
 ## Tests
 - Engine hazards: `node world/engine/test-hazards.js` (7 checks).
-- Connector: `cd connector && npm ci && node build.mjs && node --test test/game.test.mjs` (17) and `node test/e2e.mjs` (30, runs wrangler dev; fails in the last minute of a 7000-sky-day season, about 1.9 h real time, so rerun).
+- Engine checkpoints: `node world/engine/test-reroute.js` (8 checks, about a minute; one replays 100 fixture hails). `node world/engine/find-reroute-cases.js` finds the dust-storm rides it pins.
+- Connector: `cd connector && npm ci && node build.mjs && node --test test/game.test.mjs` (22) and `node test/e2e.mjs` (31, runs wrangler dev; fails in the last minute of a 7000-sky-day season, about 1.9 h real time, so rerun).
 
 ## Rules from Alvin
 - Never deploy, delete a Worker, or change Cloudflare without Alvin's go in this session.
@@ -23,4 +24,5 @@ Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi gam
 - Done: merged with the live connector (DO classes StarfareMcp/Run/Hub/Auth, STARFARE_OAUTH); MCP server named "starfare"; live Worker version 37989da3. Don't rename the DO classes again without a wrangler migration.
 - See docs/HANDOFF.md for the game's vision, decisions and build order.
 - Old Worker `sol-connector` still running; delete only when Alvin says.
-- Later ideas: mid-ride events and rerouting, get_my_rides / run-log history, leaderboard by model + skills, daily seed, dispatch bidding, comfort max-g, charging stops, pooling.
+- Mid-ride checkpoints (launch_hold, pad_closed) and the `decide` tool are built on branch `worktree-agent-a3e7a2c61cdef21c8`, not deployed. The Open Sky page does not show checkpoints yet.
+- Later ideas: get_my_rides / run-log history, leaderboard by model + skills, daily seed, dispatch bidding, comfort max-g, charging stops, pooling.
