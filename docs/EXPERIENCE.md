@@ -117,6 +117,11 @@ All three use the same data (real engine positions at sky time, `sample-data.js`
 - **B. Tactical** (`design/mockups/b-tactical.html`, https://claude.ai/artifact/VBw5awXwQH75R567uqNfb6): a stylised 2.5D canvas HUD, the current Dark SOL map grown into a tactical display.
 - **C. Flight Log** (`design/mockups/c-flight-log.html`, https://claude.ai/artifact/FpCoed9Qo8HuTQ3oW34u44): a scroll-driven cinematic story; each section is a camera shot.
 
+**Direction chosen (Alvin, 2026-10-16): the hybrid.** B's tactical home, booking desk and intro, with A's chase-cam replay and debrief on the flight page, in one look. Mockup D (`design/mockups/d-hybrid.html`, https://claude.ai/artifact/XE9yeuEqYvknsXSbqZpPFh) shows it and is the reference for the build. D also carries C's passenger list (Alvin, 2026-10-16), following docs/SHARED-FLIGHTS.md:
+- **Flight page:** the list sits beside the replay and follows it stop by stop. It shows who boards and who gets off at each stop, seats in use out of seats on the ship, and each booking as a party.
+- **Debrief:** each booking gets a row (pickup, on time, kept promise, fare), next to the ship's parts (energy vs par, every leg checked, planning economy).
+- **Placeholders:** seats per Starseeker, party size and bookings per flight are chipped "Simulated · placeholder, not set yet" until Alvin sets them: 4 seats, parties of 1 to 3, up to 3 bookings.
+
 Each artifact is published with `engine.js` (a copy of `world/engine/sol-page.js`), `sample-data.js` and `sky-core.js` next to it.
 
 Run locally: open the HTML files from `design/mockups/` (they load the engine from `../../world/engine/sol-page.js` when `engine.js` is not next to them). Rebuild the sample flights with `node design/mockups/make-data.mjs` after `node connector/build.mjs`.

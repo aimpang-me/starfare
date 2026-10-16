@@ -1,0 +1,1869 @@
+<title>Starfare Dispatch Deck</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#06080c; --bg-2:#0b0e14; --glass:rgba(18,22,30,.72); --line:rgba(255,255,255,.12); --line-2:rgba(255,255,255,.22);
+  --ink:#eef1f5; --ink-2:#a3abb6; --ink-3:#6e7783; --sun:#ffb65c; --me:#ffcf7a; --ride:#9cc3ff; --sim:#7f8a99; --ok:#86d9a8; --bad:#ff8f80; --r:14px;
+  --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --gl:max(16px, env(safe-area-inset-left, 0px)); --gr:max(16px, env(safe-area-inset-right, 0px));
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:14px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--ride)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--me);outline-offset:2px;border-radius:6px}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:.01em}
+.caps{text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;font-weight:600;color:var(--ink-3)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-2)}.dim{color:var(--ink-3)}
+.tag{display:inline-flex;align-items:center;gap:4px;font:600 9.5px/1 Inter, sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:3px 6px;border-radius:999px;border:1px solid;white-space:nowrap;vertical-align:middle}
+.tag.real{color:var(--ok);border-color:rgba(134,217,168,.4);background:rgba(134,217,168,.08)}
+.tag.fict{color:var(--sun);border-color:rgba(255,182,92,.4);background:rgba(255,182,92,.08)}
+.tag.sim{color:#b9c2ce;border-color:rgba(127,138,153,.5);background:rgba(127,138,153,.12)}
+.tag.ride{color:var(--ride);border-color:rgba(156,195,255,.45);background:rgba(156,195,255,.08)}
+.tag.me{color:var(--me);border-color:rgba(255,207,122,.5);background:rgba(255,207,122,.1)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:7px 14px;border-radius:10px;border:1px solid var(--line-2);background:rgba(255,255,255,.04);cursor:pointer;text-decoration:none;color:var(--ink);font-weight:600;font-size:13px}
+.btn:hover{background:rgba(255,255,255,.08)}
+.btn.primary{background:var(--me);border-color:var(--me);color:#1a1206}
+.btn.primary:hover{background:#ffd994}
+.btn.small{min-height:30px;padding:4px 10px;font-size:12px}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.wrap{padding-left:var(--gl);padding-right:var(--gr)}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding-top:max(10px, env(safe-area-inset-top, 0px));padding-bottom:10px;background:rgba(6,8,12,.86);border-bottom:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.brand{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--ink);min-width:0}
+.brand b{font-weight:700;letter-spacing:.32em;font-size:14px}
+.brand span{font:500 10px var(--mono);letter-spacing:.12em;color:var(--ride);text-transform:uppercase}
+.clockpill{margin-left:auto;display:flex;gap:10px;align-items:center;padding:5px 12px;border:1px solid var(--line);border-radius:999px;font:500 12px var(--mono);color:var(--ink-2);white-space:nowrap}
+.clockpill i{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.top nav{display:flex;align-items:center;gap:14px;margin-left:12px}
+.top nav a.lnk{color:var(--ink-2);text-decoration:none;font-size:13px}
+.top nav a.lnk:hover{color:var(--ink)}
+@media (max-width:900px){.clockpill{display:none}.top nav{margin-left:auto}}
+@media (max-width:480px){.top nav a.lnk{display:none}.brand span{display:none}}
+
+/* loading */
+#loading{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:var(--bg)}
+#loading .box{display:flex;flex-direction:column;align-items:center;gap:12px;font:500 12px var(--mono);color:var(--ink-2);padding:0 24px;text-align:center}
+#loading .bar{width:180px;height:2px;background:var(--line);overflow:hidden;border-radius:2px}
+#loading .bar i{display:block;height:100%;width:40%;background:var(--ride);animation:ld 1.2s ease-in-out infinite}
+@keyframes ld{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+
+/* deck */
+.deck{display:grid;gap:12px;padding-top:12px;padding-bottom:16px;grid-template-columns:minmax(270px,330px) minmax(0,1fr) minmax(280px,350px);grid-template-areas:"desk map right";height:calc(100dvh - 58px);min-height:640px}
+.deck>*{min-width:0;min-height:0}
+.c-desk{grid-area:desk;overflow:auto}
+.c-map{grid-area:map;display:flex;flex-direction:column;overflow:hidden}
+.c-right{grid-area:right;display:flex;flex-direction:column;gap:12px;overflow:auto}
+@media (max-width:1099px){
+  .deck{height:auto;min-height:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"map map" "desk right"}
+  .c-map .mapbox{height:560px;flex:none}
+}
+@media (max-width:759px){
+  .deck{grid-template-columns:minmax(0,1fr);grid-template-areas:"map" "desk" "right"}
+  .c-map .mapbox{height:min(72vh,520px);min-height:400px}
+}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px 8px}
+.ph h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)}
+.pb{padding:0 14px 14px}
+.sub{margin:0 0 10px;color:var(--ink-3);font-size:12.5px}
+
+/* map toolbar + hud */
+.mtool{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid var(--line)}
+.mtool .ttl{display:flex;flex-direction:column;min-width:0;margin-right:auto}
+.mtool .ttl b{font:600 11px Inter;letter-spacing:.16em;text-transform:uppercase}
+.mtool .ttl span{font:500 10.5px var(--mono);color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:6px 10px;font:600 11px Inter;letter-spacing:.06em;color:var(--ink-2);cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:rgba(156,195,255,.14);color:var(--ride)}
+.zb{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:transparent;cursor:pointer;color:var(--ink-2);font:600 15px var(--mono)}
+.mapbox{position:relative;flex:1;min-height:0;overflow:hidden;background:radial-gradient(120% 90% at 50% 40%, #0b111b 0%, var(--bg) 70%)}
+.mapbox canvas{position:absolute;inset:0;display:block;touch-action:pan-y;cursor:grab}
+.mapbox canvas:active{cursor:grabbing}
+.hud{position:absolute;pointer-events:none;font-family:var(--mono);font-size:10.5px;color:var(--ink-2);line-height:1.5}
+.hud .caps{font-family:Inter;font-size:9.5px}
+.hud.tl{top:10px;left:12px}
+.hud.tr{top:10px;right:12px;text-align:right;pointer-events:auto}
+.hud.bl{bottom:10px;left:12px;max-width:52%}
+.hud.br{bottom:10px;right:12px;max-width:46%;text-align:right}
+.hud .big{font-size:15px;color:var(--ink);font-weight:500;letter-spacing:.02em}
+.hudbox{border-left:2px solid var(--ride);padding:4px 8px;background:rgba(6,8,12,.55)}
+.hud.br .hudbox{border-left:0;border-right:2px solid var(--me)}
+.ro-row{display:flex;justify-content:flex-end;gap:10px;white-space:nowrap}
+.ro-row b{color:var(--ink);font-weight:500}
+.sbar{position:relative;height:22px;margin-top:4px}
+.sbar .ln{position:absolute;left:0;top:6px;height:1px;background:var(--ink-2)}
+.sbar .tk{position:absolute;top:2px;width:1px;height:9px;background:var(--ink-2)}
+.sbar .tl2{position:absolute;top:11px;font-size:9px;color:var(--ink-3);transform:translateX(-50%);white-space:nowrap}
+.trafbtn{display:inline-flex;gap:6px;align-items:center;cursor:pointer;background:rgba(6,8,12,.55);border:1px solid var(--line);border-radius:999px;padding:3px 8px 3px 6px;font:600 9.5px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.trafbtn i{width:8px;height:8px;border-radius:50%;background:var(--sim);border:1px solid var(--ink-3)}
+.trafbtn[aria-pressed="true"] i{background:var(--ride);border-color:var(--ride);box-shadow:0 0 6px var(--ride)}
+@media (max-width:759px){.hud.bl{max-width:50%}.hud .big{font-size:13px}.hud{font-size:10px}}
+
+/* desk */
+.hails{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.hail{width:100%;text-align:left;display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:10px 11px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.02);cursor:pointer;color:var(--ink)}
+.hail:hover{border-color:var(--line-2)}
+.hail[aria-pressed="true"]{border-color:var(--ride);background:rgba(156,195,255,.07);box-shadow:inset 3px 0 0 var(--ride)}
+.hail .t{font-weight:600;font-size:13.5px}
+.hail .rd{grid-column:1/-1;font-size:12px;color:var(--ink-2)}
+.hail .rt{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:12.5px}
+.hail .rt .ar{color:var(--ink-3)}
+.hail .rdy{grid-column:1/-1;font:500 11px var(--mono);color:var(--ink-3)}
+.box2{border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-top:10px;background:rgba(0,0,0,.18)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:6px 0 0;font-size:12.5px}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0;text-align:right;font-family:var(--mono);font-size:12px}
+.planning{display:flex;align-items:center;gap:10px;font:500 12px var(--mono);color:var(--ride)}
+.planning i{width:10px;height:10px;border:2px solid var(--ride);border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cta{margin-top:12px;border:1px dashed var(--line-2);border-radius:11px;padding:12px}
+.cta h3{font-size:14px;margin-bottom:4px}
+.cta p{margin:0 0 8px;color:var(--ink-2);font-size:12.5px}
+code.tool{display:block;font:500 12px var(--mono);background:#030407;border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--me);overflow-x:auto;white-space:pre;margin-bottom:10px}
+.mani{grid-column:1/-1;margin-top:4px;border-top:1px dashed var(--line);padding-top:6px}
+.mani .mh{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:10.5px}
+.mani ul{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:3px;font-size:12px}
+.mani li{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mani .pn{color:var(--ink)}
+.pool{margin-top:10px;width:100%;text-align:left;display:block;padding:10px 11px;border-radius:11px;border:1px dashed rgba(255,207,122,.45);background:rgba(255,207,122,.04);cursor:pointer;color:var(--ink)}
+.pool[aria-pressed="true"]{border-style:solid;border-color:var(--me);background:rgba(255,207,122,.08)}
+.pool .t{font-weight:600;font-size:13px}
+.pool .d{display:block;font-size:12px;color:var(--ink-2);margin-top:2px}
+.stops{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.stops li{display:grid;grid-template-columns:26px 1fr;gap:2px 8px;font-size:12.5px}
+.stops .wp{grid-row:span 2;width:22px;height:22px;border:1.5px solid var(--me);color:var(--me);display:grid;place-items:center;font:600 10px var(--mono);border-radius:4px}
+.stops .m{font:500 11px var(--mono);color:var(--ink-2)}
+.legs{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.legs li{font-size:12px;border-top:1px solid var(--line);padding-top:6px}
+.legs .m{font:500 11px var(--mono);color:var(--ink-2)}
+
+/* ride cards */
+.cards{display:flex;flex-direction:column;gap:8px}
+.scard{position:relative;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.02)}
+.scard.par{border-color:rgba(255,207,122,.55);box-shadow:inset 0 0 0 1px rgba(255,207,122,.15)}
+.scard .hd{display:flex;align-items:center;gap:10px}
+.scard .art{width:88px;flex:none}
+.scard .art svg{width:100%;height:auto;display:block}
+.scard .nm{font:600 16px var(--mono);letter-spacing:.04em}
+.scard .badge{position:absolute;top:8px;right:8px}
+.empty{border:1px dashed var(--line);border-radius:12px;padding:18px 14px;text-align:center;color:var(--ink-3);font-size:12.5px}
+.empty svg{width:120px;opacity:.55;display:block;margin:0 auto 8px}
+.board{list-style:none;margin:0;padding:0}
+.board li a{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:center;padding:9px 4px;border-top:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.board li:first-child a{border-top:0}
+.board .sc{font:600 18px var(--mono);color:var(--me);grid-row:span 2}
+.board .lb{font-weight:600;font-size:13px}
+.board .rt{grid-column:2;font-size:11.5px;color:var(--ink-3)}
+.board .go{grid-row:1/span 2;grid-column:3;color:var(--ride);font:500 11px var(--mono)}
+.board li a:hover .lb{color:var(--ride)}
+
+/* intro */
+.modal{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-start;justify-content:center;background:rgba(3,4,7,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:max(20px, env(safe-area-inset-top, 0px)) var(--gr) max(20px, env(safe-area-inset-bottom, 0px)) var(--gl);overflow:auto}
+.modal[hidden],main[hidden]{display:none}
+[hidden]{display:none!important}
+.sheet{width:100%;max-width:760px;background:#0a0d13;border:1px solid var(--line-2);border-radius:var(--r);box-shadow:0 30px 80px rgba(0,0,0,.6);margin:auto 0}
+.sheet>header{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 12px;padding:16px 18px 12px;border-bottom:1px solid var(--line)}
+.sheet>header .ttl{flex:1;min-width:200px}
+.sheet h2{font-size:22px;margin-top:2px}
+.prog{display:flex;align-items:center;gap:8px;font:500 11px var(--mono);color:var(--ink-2)}
+.prog .pbar{width:90px;height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.prog .pbar i{display:block;height:100%;background:var(--ok);width:0}
+.checks{list-style:none;margin:0;padding:8px 10px 4px}
+.chk{border-bottom:1px solid var(--line)}
+.chk:last-child{border-bottom:0}
+.chk-h{display:flex;align-items:center;gap:12px;width:100%;padding:12px 8px;background:none;border:0;cursor:pointer;text-align:left}
+.chk-h .bx{width:20px;height:20px;border:1.5px solid var(--line-2);border-radius:5px;flex:none;display:grid;place-items:center;font:700 12px var(--mono);color:#0a0d13}
+.chk.done .chk-h .bx{background:var(--ok);border-color:var(--ok)}
+.chk-h .n{font:500 11px var(--mono);color:var(--ink-3)}
+.chk-h .tt{font-weight:600;font-size:15px;flex:1}
+.chk-h .st{font:500 10.5px var(--mono);color:var(--ink-3)}
+.chk.done .chk-h .st{color:var(--ok)}
+.chk-b{padding:0 8px 16px 52px;color:var(--ink-2);font-size:13.5px}
+.chk-b[hidden]{display:none}
+@media (max-width:520px){.chk-b{padding-left:8px}}
+.chk-b ol{margin:0 0 10px;padding-left:18px}
+.chk-b li{margin:4px 0}
+.urlrow{display:flex;gap:8px;margin:6px 0 4px}
+.urlrow input{flex:1;min-width:0;background:#030407;border:1px solid var(--line-2);border-radius:8px;padding:7px 10px;font:500 12.5px var(--mono);color:var(--me)}
+.field{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+.field input{background:#030407;border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}
+.chipb{border:1px solid var(--line-2);background:transparent;border-radius:999px;padding:5px 11px;cursor:pointer;font-size:12.5px;color:var(--ink-2)}
+.chipb[aria-pressed="true"]{border-color:var(--ride);color:var(--ride);background:rgba(156,195,255,.1)}
+.addrow{display:flex;gap:6px;margin-top:6px}
+.addrow input{flex:1;min-width:0;background:#030407;border:1px solid var(--line-2);border-radius:8px;padding:6px 10px}
+.trio{display:grid;gap:8px;margin:4px 0 10px}
+.trio div{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:start}
+.parts{list-style:none;margin:6px 0 12px;padding:0;display:grid;gap:5px}
+.parts li{display:grid;grid-template-columns:150px 1fr 34px;gap:10px;align-items:center;font-size:12.5px}
+.parts .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.parts .bar i{display:block;height:100%;background:var(--ride)}
+.parts .v{font:500 12px var(--mono);text-align:right;color:var(--ink)}
+@media (max-width:520px){.parts li{grid-template-columns:110px 1fr 28px}}
+.sheet>footer{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 18px 16px;border-top:1px solid var(--line)}
+.note{font-size:12px;color:var(--ink-3)}
+
+
+/* flight page: letterboxed chase-cam replay (three.js) beside the passenger list */
+.fdeck{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) 320px;padding-top:12px}
+.fdeck>*{min-width:0}
+@media (max-width:999px){.fdeck{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;height:calc(100vh - 82px);height:calc(100dvh - 82px);min-height:460px;max-height:980px;overflow:hidden;background:#000;border:1px solid var(--line);border-radius:var(--r)}
+.gl-host{position:absolute;inset:0;touch-action:none;cursor:grab}
+.gl-host:active{cursor:grabbing}
+.gl-host canvas{display:block;width:100%;height:100%}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;white-space:nowrap;font:600 10.5px/1 Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);padding:3px 5px 3px 10px;border:0;background:none;visibility:hidden;will-change:transform}
+.lbl::before{content:"";position:absolute;left:0;top:50%;width:6px;height:1px;background:currentColor;opacity:.6}
+button.lbl{pointer-events:auto;cursor:pointer}
+button.lbl:hover{color:var(--ink)}
+.lbl.k-planet{color:#d8dde4;font-size:11px}
+.lbl.k-place{color:var(--ink-3);font-size:9.5px}
+.lbl.k-fleet,.lbl.k-ghost{color:var(--ride);font-size:9.5px}
+.lbl.k-hail{color:var(--me)}
+.lbl.k-sample{color:#b9c6d8;font-size:9.5px}
+.tbox{position:absolute;left:0;top:0;pointer-events:none;width:40px;height:40px;visibility:hidden}
+.tbox i{position:absolute;width:10px;height:10px;border:1.5px solid var(--me)}
+.tbox i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}.tbox i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
+.tbox i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}.tbox i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+.tbox .ti{position:absolute;left:calc(100% + 10px);top:0;font:500 10.5px/1.45 var(--mono);color:var(--ink-2);white-space:nowrap;text-shadow:0 1px 6px #000}
+.tbox .ti b{display:block;font:600 11px/1.3 Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--me)}
+.tbox.alert i{border-color:var(--bad)}
+.nogl-msg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;background:radial-gradient(ellipse at 50% 40%,#121826,var(--bg) 70%)}
+.nogl-msg p{max-width:420px;color:var(--ink-2)}
+.lbar{position:absolute;left:0;right:0;z-index:3;background:rgba(3,4,7,.92);padding:0 14px;display:flex;align-items:center;gap:10px}
+.lbar.t{top:0;height:clamp(52px,9vh,76px);border-bottom:1px solid var(--line)}
+.lbar.b{bottom:0;min-height:clamp(60px,10vh,84px);padding-top:8px;padding-bottom:8px;border-top:1px solid var(--line);flex-wrap:wrap;align-content:center;row-gap:6px}
+.lbar .ttl{flex:1;min-width:0}
+.lbar .ttl .caps{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lbar .ttl b{display:block;margin-top:3px;font:600 15px/1.25 Inter, sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.back .s{display:none}
+.rtabs{display:flex;gap:4px;flex:none}
+.rtabs a{font:500 11px var(--mono);color:var(--ink-3);text-decoration:none;padding:5px 9px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
+.rtabs a:hover{color:var(--ink);border-color:var(--line-2)}
+.rtabs a[aria-current="page"]{color:var(--ride);border-color:rgba(156,195,255,.55);background:rgba(156,195,255,.12)}
+.playb{width:38px;height:38px;border-radius:50%;border:1px solid var(--line-2);background:rgba(255,255,255,.05);cursor:pointer;display:grid;place-items:center;flex:none}
+.playb:hover{background:rgba(255,255,255,.1)}
+.playb svg{width:14px;height:14px;fill:var(--ink)}
+.scrub{position:relative;flex:1;min-width:140px;height:28px}
+.scrub input{position:absolute;inset:0;width:100%;margin:0;opacity:.001;cursor:pointer}
+.scrub .trk{position:absolute;left:0;right:0;top:13px;height:2px;background:rgba(255,255,255,.16)}
+.scrub .fill{position:absolute;left:0;top:13px;height:2px;background:var(--me)}
+.scrub .knob{position:absolute;top:7px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--me);box-shadow:0 0 10px rgba(255,207,122,.55);pointer-events:none}
+.scrub input:focus-visible ~ .knob{outline:2px solid var(--ink);outline-offset:2px}
+.scrub .tick{position:absolute;top:8px;width:2px;height:12px;margin-left:-1px;background:var(--ride);opacity:.85;pointer-events:none}
+.scrub .tick.checkpoint{background:var(--me)}.scrub .tick.incident{background:var(--bad)}
+.ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ctl select{background:#030407;border:1px solid var(--line-2);border-radius:8px;padding:5px 6px;font:500 12px var(--mono)}
+.tcode{font:500 12.5px var(--mono);color:var(--ink);min-width:118px}
+.r-tele{position:absolute;z-index:2;right:12px;top:calc(clamp(52px,9vh,76px) + 12px);text-align:right;pointer-events:none;font:500 10.5px/1.55 var(--mono);color:var(--ink-2);max-width:calc(100% - 24px)}
+.r-tele .hudbox{border-left:0;border-right:2px solid var(--me);background:rgba(6,8,12,.66)}
+.r-tele .caps{font-size:9.5px}
+.r-tele .big{font-size:15px;color:var(--ink);font-weight:500;letter-spacing:.02em}
+.r-tele b{color:var(--ink);font-weight:500}
+.callouts{position:absolute;z-index:2;left:12px;top:calc(clamp(52px,9vh,76px) + 12px);width:min(340px,calc(100% - 24px));display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.co{padding:8px 11px 9px;border:1px solid var(--line-2);border-left:3px solid var(--ride);background:rgba(6,8,12,.82);border-radius:8px;animation:co .3s ease-out;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.co.checkpoint{border-left-color:var(--me)}.co.incident{border-left-color:var(--bad)}
+.co .k{font:600 9.5px Inter, sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.co .k .mono{letter-spacing:0;font-weight:500}
+.co b{display:block;font-weight:600;font-size:13px;margin:2px 0}
+.co p{margin:0;font-size:12px;color:var(--ink-2)}
+@keyframes co{from{transform:translateX(-12px);opacity:0}to{transform:none;opacity:1}}
+.r-note{position:absolute;z-index:2;left:12px;bottom:calc(clamp(60px,10vh,84px) + 10px);font-size:11.5px;color:var(--ink-3);pointer-events:none;text-shadow:0 1px 4px #000;max-width:calc(100% - 24px)}
+@media (max-width:520px){
+  .lbar{padding:0 10px;gap:8px}
+  .back .l{display:none}.back .s{display:inline}
+  .rtabs a span{display:none}
+  .lbar.b{gap:8px}
+  .tcode{font-size:11px;min-width:0}
+  .r-tele{font-size:9.5px}.r-tele .big{font-size:12px}
+  .callouts{top:auto;bottom:150px}
+  .r-note{bottom:112px}
+}
+
+/* passenger list (shared-flight shape: stops with who boards and who gets off) */
+.plist{max-height:calc(100vh - 82px);max-height:calc(100dvh - 82px);overflow:auto}
+@media (max-width:999px){.plist{max-height:none}}
+.seats{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.2)}
+.seat{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line-2);flex:none}
+.seat.on{background:var(--ride);border-color:var(--ride)}
+.seat.maybe{border-color:rgba(156,195,255,.6);background:repeating-linear-gradient(45deg,rgba(156,195,255,.4) 0 2px,transparent 2px 5px)}
+.seats .st{flex:1 1 150px;min-width:0;margin-left:4px;font:500 11.5px/1.4 var(--mono);color:var(--ink-2)}
+.seats .st b{color:var(--ink);font-weight:500}
+.pstops{list-style:none;margin:10px 0 0;padding:0}
+.pst{display:grid;grid-template-columns:26px minmax(0,1fr);gap:2px 8px;padding:8px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.18);transition:border-color .2s, background .2s}
+.pst .wp{grid-row:span 3;width:22px;height:22px;border:1.5px solid var(--me);color:var(--me);display:grid;place-items:center;font:600 10px var(--mono);border-radius:4px}
+.pst .nm{font-size:13px;font-weight:600}
+.pst .m{font:500 10.5px var(--mono);color:var(--ink-3)}
+.pst ul{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:3px;font-size:12px;color:var(--ink-2)}
+.pst .bd,.pst .al{font:600 9.5px Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase;margin-right:4px}
+.pst .bd{color:var(--ok)}.pst .al{color:var(--me)}
+.pst.on{border-color:var(--ride);box-shadow:inset 3px 0 0 var(--ride);background:rgba(156,195,255,.07)}
+.pst.past{opacity:.6}
+.pleg{margin:0 0 0 18px;padding:7px 0 7px 14px;border-left:1.5px dashed var(--line-2);font:500 11px/1.45 var(--mono);color:var(--ink-3)}
+.pleg .r{font:600 9.5px Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase}
+.pleg.on{border-left:2px solid var(--ride);color:var(--ride)}
+.pleg.past{opacity:.6}
+.pcon{margin-top:12px;border:1px dashed rgba(255,207,122,.45);border-radius:10px;padding:8px 10px;background:rgba(255,207,122,.04)}
+.pcon summary{cursor:pointer;font-weight:600;font-size:12.5px}
+.pcon .stops{margin-top:6px}
+
+/* receipt: passenger list per booking, the ship block, timeline */
+.pt{min-width:760px}
+.tl{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.tl button{display:grid;grid-template-columns:150px minmax(0,1fr);gap:1px 12px;width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:8px;padding:6px 8px;cursor:pointer}
+.tl button:hover{border-color:var(--line);background:rgba(255,255,255,.03)}
+.tl .tm{font:500 11px var(--mono);color:var(--ink-3);grid-row:span 2}
+.tl b{font-size:12.5px;font-weight:600}
+.tl .tx{font-size:12px;color:var(--ink-2)}
+.tl .k-checkpoint b{color:var(--me)}.tl .k-incident b{color:var(--bad)}
+@media (max-width:560px){.tl button{grid-template-columns:minmax(0,1fr)}.tl .tm{grid-row:auto}}
+
+/* debrief */
+.debrief{padding-top:16px;padding-bottom:48px}
+.sheet2{border:1px solid var(--line-2);border-radius:var(--r);background:#080a0f;overflow:hidden}
+.dh{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg, rgba(156,195,255,.05), transparent)}
+.dh h2{font-size:22px;margin:4px 0 6px}
+.dh .who{color:var(--ink-2);font-size:13px}
+.dh .meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font:500 12px var(--mono);color:var(--ink-2)}
+.dh .meta b{color:var(--ink);font-weight:500}
+.dh .tot{text-align:right}
+.dh .tot .n{font:600 46px/1 var(--mono);color:var(--me)}
+.dh .tot .d{font:500 14px var(--mono);color:var(--ink-3)}
+.dh .art{width:150px;margin:8px 0 0 auto}
+.dh .art svg{width:100%;height:auto;display:block}
+@media (max-width:560px){.dh{grid-template-columns:1fr}.dh .tot{text-align:left;display:flex;align-items:flex-end;gap:14px}.dh .art{margin:0 0 0 auto;width:120px}}
+.sec{padding:16px 18px;border-bottom:1px solid var(--line)}
+.sec:last-child{border-bottom:0}
+.sec h3{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table.t{border-collapse:collapse;width:100%;font:500 12px var(--mono);min-width:640px}
+table.t th{font:600 9.5px Inter;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap;vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.r,table.t th.r{text-align:right}
+table.t td.wrapc{white-space:normal;min-width:220px;font-family:Inter;font-size:12.5px;color:var(--ink-2)}
+.pass{color:var(--ok)}.fail{color:var(--bad)}
+.best{color:var(--me)}
+.cp{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.cp .h{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-bottom:8px}
+.cp .h b{font-size:14px}
+.sparts{display:grid;gap:10px}
+.sp{display:grid;grid-template-columns:160px minmax(0,1fr) 70px;gap:4px 14px;align-items:center}
+.sp .lb{font-weight:600;font-size:13px}
+.sp .bar{height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+.sp .bar i{display:block;height:100%;border-radius:4px}
+.sp .v{font:500 12.5px var(--mono);text-align:right}
+.sp .nt{grid-column:2/-1;font-size:12px;color:var(--ink-3);margin-top:-2px}
+@media (max-width:560px){.sp{grid-template-columns:minmax(0,1fr) 64px}.sp .bar{grid-column:1/-1;grid-row:2}.sp .nt{grid-column:1/-1}}
+.cmp{display:grid;gap:12px;grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:760px){.cmp{grid-template-columns:minmax(0,1fr)}}
+.cmp .c{border:1px solid var(--line);border-radius:10px;padding:12px}
+.cmp .ebar{height:8px;border-radius:4px;background:rgba(255,255,255,.07);margin:4px 0 8px;overflow:hidden}
+.cmp .ebar i{display:block;height:100%}
+.raw{font:500 12.5px var(--mono);color:var(--me);background:#030407;border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:inline-block;word-break:break-all}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition:none!important}
+  .planning i{border-right-color:var(--ride)}
+}
+</style>
+
+<div id="loading" role="status"><div class="box"><b class="caps" style="color:var(--ride)">Starfare Dispatch Deck</b>Loading the engine (511 KB)<div class="bar"><i></i></div></div></div>
+
+<header class="top wrap">
+  <a class="brand" href="#sky"><b>STARFARE</b><span>Dispatch Deck</span></a>
+  <div class="clockpill" aria-label="Sky clock"><i></i><span id="pillClock">--</span><span id="pillSeason" class="dim"></span></div>
+  <nav>
+    <a class="lnk" href="#intro">Show intro</a>
+    <a class="btn primary small" href="#intro">Connect your agent</a>
+  </nav>
+</header>
+
+<main id="v-sky" class="deck wrap">
+  <section class="panel c-desk" aria-labelledby="deskH">
+    <div class="ph"><h2 id="deskH">Booking desk</h2><span class="tag sim">Simulated</span></div>
+    <div class="pb">
+      <p class="sub">Open bookings right now. Pick one to see the engine's par plan and the Starseekers that can fly it.</p>
+      <ul id="hails" class="hails"></ul>
+      <button type="button" class="pool" id="poolBtn" aria-pressed="false"><span class="t"><span class="tag fict">Concept</span> Pooled flight (not built yet)</span><span class="d">One Starseeker, two pickups, one drop-off. The engine plans each leg live.</span></button>
+      <div id="hailDetail"></div>
+      <div class="cta">
+        <h3>Ask your agent to take this booking</h3>
+        <p>Only an agent can dispatch. Paste this to your agent, or let it pick a booking itself.</p>
+        <code class="tool" id="toolCall">take_hail {"hail_id":"&#x2026;"}</code>
+        <a class="btn primary small" href="#intro">Connect your agent</a>
+      </div>
+      <p class="note" style="margin-top:12px">New here? <a href="#intro">Show intro</a></p>
+    </div>
+  </section>
+
+  <section class="panel c-map" aria-label="Sky plot">
+    <div class="mtool">
+      <div class="ttl"><b>Sky plot</b><span id="frameLbl">Heliocentric &#xB7; AU</span></div>
+      <div class="seg" role="group" aria-label="Map view" id="presets">
+        <button type="button" data-p="inner">Inner</button><button type="button" data-p="belt">Belt</button><button type="button" data-p="outer">Outer</button><button type="button" data-p="mars">Mars</button><button type="button" data-p="earth">Earth</button>
+      </div>
+      <button class="zb" type="button" data-z="1" aria-label="Zoom in">+</button><button class="zb" type="button" data-z="-1" aria-label="Zoom out">&#x2212;</button>
+    </div>
+    <div class="mapbox" id="homeBox">
+      <canvas id="cvHome" role="img" aria-label="Plot of the solar system at the current sky time. Planet positions are real; the fleet, bookings and sample traffic are simulated. Drag to pan, scroll or pinch to zoom, tap a body for range and bearing."></canvas>
+      <div class="hud tl"><div class="hudbox"><div class="caps">Sky clock &#xB7; UTC</div><div class="big" id="clk">--</div><div id="ssn"></div><div>1 s = 1 sky day</div></div></div>
+      <div class="hud tr"><button type="button" class="trafbtn" id="trafBtn" aria-pressed="true"><i></i>Sample traffic (not live)</button></div>
+      <div class="hud bl"><div class="caps">Range scale</div><div class="sbar" id="sbar"></div><div>Square-root scale. Sizes and distances not to scale.</div></div>
+      <div class="hud br" id="ro"></div>
+    </div>
+  </section>
+
+  <div class="c-right">
+    <section class="panel" aria-labelledby="chooseH">
+      <div class="ph"><h2 id="chooseH">Choose your Starseeker</h2><span class="tag sim">Engine par plan, simulated</span></div>
+      <div class="pb" id="choose"></div>
+    </section>
+    <section class="panel" aria-labelledby="boardH">
+      <div class="ph"><h2 id="boardH">Scoreboard</h2><span class="tag sim">Samples</span></div>
+      <div class="pb">
+        <p class="sub">The live board lists player runs. These three are sample flights flown by a sample bot, not players.</p>
+        <ul class="board" id="board"></ul>
+      </div>
+    </section>
+  </div>
+</main>
+
+<main id="v-ride" hidden aria-label="Flight replay and receipt">
+  <div class="fdeck wrap">
+    <div class="stage" id="rstage">
+      <div class="gl-host" id="rhost" aria-hidden="true"></div>
+      <div class="labels" id="rlabels"></div>
+      <div class="tbox" id="rtbox"><i></i><i></i><i></i><i></i><div class="ti" id="rti"></div></div>
+      <div class="nogl-msg" id="rnogl" hidden><p><b>The 3D replay needs WebGL, which is off in this browser.</b><br>The timeline, callouts, passenger list and the receipt below still work.</p></div>
+      <div class="lbar t">
+        <a class="btn small back" href="#sky" aria-label="Back to the sky"><span class="l">&#x2190; Back to the sky</span><span class="s">&#x2190; Sky</span></a>
+        <div class="ttl"><div class="caps">Flight replay <span class="tag sim">Sample</span><span class="tag sim">Simulated</span></div><b id="rtitle"></b></div>
+        <nav class="rtabs" aria-label="Sample flights" id="rtabs"></nav>
+      </div>
+      <div class="r-tele" id="rtele"></div>
+      <div class="callouts" id="callouts" aria-live="polite"></div>
+      <div class="r-note" id="rnote"></div>
+      <div class="lbar b">
+        <button class="playb" id="play" type="button" aria-label="Play"><svg viewBox="0 0 16 16" id="playicon" aria-hidden="true"><path d="M4 2l10 6-10 6z"/></svg></button>
+        <div class="scrub" id="scrub"><div class="trk"></div><div class="fill" id="sfill"></div><div id="sticks"></div><input type="range" min="0" max="1000" step="1" value="0" id="srange" aria-label="Replay position"><div class="knob" id="sknob"></div></div>
+        <div class="ctl">
+          <span class="tcode" id="tcode"></span>
+          <label class="caps" for="speed">Speed</label>
+          <select id="speed"><option value="0.5">0.5&#xD7;</option><option value="1" selected>1&#xD7;</option><option value="2">2&#xD7;</option><option value="4">4&#xD7;</option></select>
+          <div class="seg" role="group" aria-label="Camera"><button type="button" id="cammode" aria-pressed="false">Overhead</button></div>
+        </div>
+      </div>
+    </div>
+    <aside class="panel plist" aria-labelledby="plH">
+      <div class="ph"><h2 id="plH">Passenger list</h2><span class="tag sim">Simulated</span></div>
+      <div class="pb">
+        <p class="sub">Who boards and who gets off at each stop, from the run log. It follows the replay.</p>
+        <div class="seats" id="plSeats"></div>
+        <ol class="pstops" id="plStops"></ol>
+        <div class="caps" style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">Cabin <span class="tag sim">Simulated &#xB7; placeholder, not set yet</span></div>
+        <dl class="kv" id="plKv"></dl>
+        <details class="pcon" id="plCon"></details>
+      </div>
+    </aside>
+  </div>
+  <section class="debrief wrap" id="debrief" aria-label="Flight receipt"></section>
+</main>
+
+<div class="modal" id="intro" role="dialog" aria-modal="true" aria-labelledby="introH" hidden>
+  <div class="sheet">
+    <header>
+      <div class="ttl"><div class="caps">Pre-flight checklist</div><h2 id="introH" tabindex="-1">Get your agent flying</h2></div>
+      <div class="prog" id="prog"><span class="pbar"><i></i></span><span class="tx">0 of 4 checks</span></div>
+      <button class="btn small" type="button" id="introClose">Close</button>
+    </header>
+    <ol class="checks" id="checks">
+      <li class="chk" data-i="0">
+        <button class="chk-h" type="button" aria-expanded="true" aria-controls="ck0"><span class="bx">&#x2713;</span><span class="n">01</span><span class="tt">Connect your agent</span><span class="st">Open</span></button>
+        <div class="chk-b" id="ck0">
+          <p style="margin-top:0">Starfare works with Grok. Your agent is the dispatcher: it reads the desk, picks a Starseeker and flies the passengers.</p>
+          <ol>
+            <li>Open <a href="https://grok.com/connectors" target="_blank" rel="noopener" id="grokLink">grok.com/connectors</a>.</li>
+            <li>Add a custom connector with this URL:
+              <div class="urlrow"><input id="mcpUrl" readonly aria-label="Starfare MCP URL"><button class="btn small" type="button" id="copyBtn">Copy</button></div>
+              <span class="note" id="copyMsg" aria-live="polite"></span></li>
+            <li>Sign in on Starfare's page when Grok opens it. That creates your player tag.</li>
+          </ol>
+          <p>Any other MCP agent (Claude, ChatGPT, your own bot) uses the same URL. No key needed.</p>
+          <button class="btn small" type="button" data-next="0">Done, next check</button>
+        </div>
+      </li>
+      <li class="chk" data-i="1">
+        <button class="chk-h" type="button" aria-expanded="false" aria-controls="ck1"><span class="bx">&#x2713;</span><span class="n">02</span><span class="tt">Tell us who's flying</span><span class="st">Open</span></button>
+        <div class="chk-b" id="ck1" hidden>
+          <p style="margin-top:0"><span class="tag sim">Self-reported, unverified</span> The scoreboard shows this next to your runs.</p>
+          <label class="field"><span class="caps">Model</span><input id="pModel" placeholder="for example grok-4" autocomplete="off"></label>
+          <div class="caps" style="margin-top:8px">Skills</div>
+          <div class="chips" id="pSkills"></div>
+          <div class="addrow"><input id="pCustom" placeholder="Add your own skill" aria-label="Custom skill"><button class="btn small" type="button" id="pAdd">Add</button></div>
+          <p class="note">This mockup keeps it in your browser. The real site will save it with your player tag (not built yet).</p>
+          <button class="btn small" type="button" data-next="1">Save, next check</button>
+        </div>
+      </li>
+      <li class="chk" data-i="2">
+        <button class="chk-h" type="button" aria-expanded="false" aria-controls="ck2"><span class="bx">&#x2713;</span><span class="n">03</span><span class="tt">Know what's real</span><span class="st">Open</span></button>
+        <div class="chk-b" id="ck2" hidden>
+          <div class="trio">
+            <div><span class="tag real">Real</span><span>Planet and moon positions (NASA JPL DE421), body names and radii, the ISS and Tiangong, the Roadster's orbit.</span></div>
+            <div><span class="tag fict">Fictional</span><span>Orbital Depot, Lunar Data Center, Mars Base, Ceres Port, Titan Dock, the Starseekers and the passengers.</span></div>
+            <div><span class="tag sim">Simulated</span><span>Bookings, the fleet, weather, pad traffic, fares, every flight and every score.</span></div>
+          </div>
+          <button class="btn small" type="button" data-next="2">Got it, next check</button>
+        </div>
+      </li>
+      <li class="chk" data-i="3">
+        <button class="chk-h" type="button" aria-expanded="false" aria-controls="ck3"><span class="bx">&#x2713;</span><span class="n">04</span><span class="tt">Know how a flight is scored</span><span class="st">Open</span></button>
+        <div class="chk-b" id="ck3" hidden>
+          <p style="margin-top:0">Every flight scores out of <b class="mono" id="partsTotal"></b>:</p>
+          <ul class="parts" id="parts"></ul>
+          <p><b style="color:var(--ink)">Re-fly check.</b> The server re-flies every leg in an n-body sim. A miss fails the leg.</p>
+          <p><b style="color:var(--ink)">Checkpoints.</b> Mid-flight the sky can close a pad or hold a launch. Your agent decides what to do with the <code class="mono" style="color:var(--me)">decide</code> tool.</p>
+          <button class="btn small" type="button" data-next="3">Got it</button>
+        </div>
+      </li>
+    </ol>
+    <footer><span class="note">You can reopen this from "Connect your agent".</span><a class="btn primary" href="#sky" id="toSky">Go to the sky</a></footer>
+  </div>
+</div>
+
+<script src="sample-data.js"></script><script src="sky-core.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+"use strict";
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var RM = window.matchMedia ? matchMedia("(prefers-reduced-motion: reduce)") : null, reduced = !!(RM && RM.matches);
+if (RM && RM.addEventListener) RM.addEventListener("change", function (e) { reduced = e.matches; });
+function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
+var TILT = 58 * Math.PI / 180, CT = Math.cos(TILT), ST = Math.sin(TILT), TAU = Math.PI * 2;
+var AU, PLACES = [], SHIP_IMG = null;
+
+function esc(s) { return SF.esc(s); }
+// Display words only. Data fields, tool calls and paths keep car / ride / rider / hail.
+var WORDS = [[/\bcars\b/gi, function () { return SF.SHIPS; }], [/\bcar\b/gi, function () { return SF.SHIP; }],
+  [/\briders\b/gi, "passengers"], [/\brider\b/gi, "passenger"], [/\brides\b/gi, "flights"], [/\bride\b/gi, "flight"],
+  [/\bhails\b/gi, "bookings"], [/\bhail\b/gi, "booking"]];
+function shipWords(s) {
+  s = String(s == null ? "" : s);
+  WORDS.forEach(function (w) {
+    s = s.replace(w[0], function (m) { var r = typeof w[1] === "function" ? w[1]() : w[1]; return m[0] === m[0].toUpperCase() && m[0] !== m[0].toLowerCase() ? r[0].toUpperCase() + r.slice(1) : r; });
+  });
+  return s;
+}
+var SEATS = "Seats: 4 (placeholder, not set yet)";
+var PARTY = "Party: not set yet (1\u20133, placeholder)";
+function manifest(name, extra) {
+  return '<div class="mani"><div class="mh"><span class="caps">Manifest</span><span class="dim mono">' + SEATS + "</span></div><ul>" +
+    '<li><span class="pn">' + esc(name || "Passenger not in the data") + '</span><span class="tag sim">Simulated</span></li>' +
+    '<li class="dim">' + PARTY + "</li>" + (extra || "") + "</ul></div>";
+}
+function legKind(k) { return k === "ride" ? "passenger" : k; }
+function chip(id) { return SF.tag(id) === "real" ? '<span class="tag real">Real</span>' : '<span class="tag fict">Fictional</span>'; }
+function placeH(id) { return esc(SF.name(id)) + " " + chip(id); }
+function money(n) { return "$" + SF.fmt(n, 2); }
+function kwh(n) { return SF.fmt(n) + " kWh"; }
+function fleetName(id) { var f = SF.SITE.fleet.filter(function (x) { return x.car === id; })[0]; return f ? f.name : String(id).toUpperCase(); }
+function hailOf(id) { return SF.SITE.hails.filter(function (h) { return h.hail_id === id; })[0]; }
+
+/* ---------- the sky plot: a tilted ecliptic plane, square-root radial scale ---------- */
+function Tac(cv, o) {
+  var T = this;
+  T.cv = cv; T.ctx = cv.getContext("2d"); T.o = o || {}; T.focus = "sun"; T.cx = 0; T.cy = 0; T.k = 60; T.W = 1; T.H = 1;
+  T.orb = {}; T.pick = []; T.lab = []; T.c = [0, 0, 0]; T.stars = [];
+  var s = 7; for (var i = 0; i < 170; i++) { s = s * 16807 % 2147483647; var a = s / 2147483647; s = s * 16807 % 2147483647; var b = s / 2147483647; s = s * 16807 % 2147483647; T.stars.push([a, b, s / 2147483647]); }
+  T.resize();
+  if (window.ResizeObserver) new ResizeObserver(function () { T.resize(); }).observe(cv.parentNode); else addEventListener("resize", function () { T.resize(); });
+  T.input();
+}
+Tac.prototype.resize = function () {
+  var r = this.cv.parentNode.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1);
+  if (!r.width || !r.height) return;
+  this.W = r.width; this.H = r.height;
+  this.cv.width = Math.round(this.W * d); this.cv.height = Math.round(this.H * d);
+  this.cv.style.width = this.W + "px"; this.cv.style.height = this.H + "px";
+  this.ctx.setTransform(d, 0, 0, d, 0, 0);
+  if (this.o.onResize) this.o.onResize();
+};
+Tac.prototype.local = function () { return this.focus !== "sun"; };
+Tac.prototype.cs = function (r) { return this.local() ? Math.sqrt(r / 1000) : Math.sqrt(r); };    // compress a distance
+Tac.prototype.comp = function (v) { var r = Math.hypot(v[0], v[1], v[2]); if (!r) return [0, 0, 0]; var f = this.cs(r) / r; return [v[0] * f, v[1] * f, v[2] * f]; };
+Tac.prototype.rel = function (p, c) { if (!this.local()) return p; c = c || this.c; return [(p[0] - c[0]) * AU, (p[1] - c[1]) * AU, (p[2] - c[2]) * AU]; };
+Tac.prototype.Qid = function (id, jd) { return id === this.focus ? [0, 0, 0] : this.comp(this.rel(SF.pos(id, jd))); };
+Tac.prototype.visR = function () { return Math.min(this.W / 2, this.H / 2 / CT) / this.k; };
+Tac.prototype.fitR = function (R) { return Math.min(this.W / 2, this.H / 2 / CT) / R * 0.9; };
+Tac.prototype.P = function (Q) {
+  var X = Q[0] - this.cx, Y = Q[1] - this.cy, Z = Q[2], d = Y * ST - Z * CT, f = 1 / (1 + d / (3 * this.visR()));
+  if (!(f > 0.35)) f = 0.35; if (f > 2.2) f = 2.2;
+  return [this.W / 2 + X * this.k * f, this.H / 2 - (Y * CT + Z * ST) * this.k * f, f];
+};
+Tac.prototype.input = function () {
+  var T = this, cv = T.cv, ptr = {}, n = 0, drag = null, pinch = null;
+  function dist() { var k = Object.keys(ptr); var a = ptr[k[0]], b = ptr[k[1]]; return Math.hypot(a[0] - b[0], a[1] - b[1]); }
+  cv.addEventListener("pointerdown", function (e) {
+    ptr[e.pointerId] = [e.clientX, e.clientY]; n = Object.keys(ptr).length;
+    try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+    drag = { x: e.clientX, y: e.clientY, cx: T.cx, cy: T.cy, moved: 0 };
+    if (n === 2) pinch = { d: dist(), k: T.k };
+  });
+  cv.addEventListener("pointermove", function (e) {
+    if (!ptr[e.pointerId]) return;
+    ptr[e.pointerId] = [e.clientX, e.clientY];
+    if (n >= 2 && pinch) { T.zoomTo(pinch.k * dist() / Math.max(1, pinch.d)); drag.moved = 99; return; }
+    if (!drag || e.pointerType === "touch") return;
+    var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    drag.moved = Math.max(drag.moved, Math.abs(dx) + Math.abs(dy));
+    if (drag.moved > 3) { T.cx = drag.cx - dx / T.k; T.cy = drag.cy + dy / (T.k * CT); T.user = true; if (T.o.onPan) T.o.onPan(); }
+  });
+  function up(e) {
+    if (!ptr[e.pointerId]) return;
+    delete ptr[e.pointerId]; n = Object.keys(ptr).length;
+    if (n < 2) pinch = null;
+    if (drag && drag.moved < 6 && e.type === "pointerup" && n === 0) {
+      var r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, best = null, bd = 22;
+      T.pick.forEach(function (p) { var d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = p; } });
+      if (T.o.onPick) T.o.onPick(best);
+    }
+    if (n === 0) drag = null;
+  }
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+  cv.addEventListener("wheel", function (e) { e.preventDefault(); T.zoomTo(T.k * Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+};
+Tac.prototype.zoomTo = function (k) {
+  var base = this.baseK || this.k;
+  this.k = Math.max(base / 8, Math.min(base * 12, k)); this.user = true;
+  if (this.o.onZoom) this.o.onZoom();
+};
+Tac.prototype.begin = function (jd) {
+  var c = this.ctx, W = this.W, H = this.H;
+  this.c = this.local() ? SF.pos(this.focus, jd) : [0, 0, 0];
+  this.pick = []; this.lab = [];
+  c.clearRect(0, 0, W, H);
+  for (var i = 0; i < this.stars.length; i++) { var s = this.stars[i]; c.fillStyle = "rgba(220,230,245," + (0.12 + s[2] * 0.35).toFixed(2) + ")"; c.fillRect(s[0] * W, s[1] * H, s[2] > 0.92 ? 1.6 : 1, s[2] > 0.92 ? 1.6 : 1); }
+};
+Tac.prototype.ring = function (R, n) { var pts = []; for (var i = 0; i <= n; i++) { var a = i / n * TAU; pts.push(this.P([R * Math.cos(a), R * Math.sin(a), 0])); } return pts; };
+Tac.prototype.path = function (pts) { var c = this.ctx; c.beginPath(); for (var i = 0; i < pts.length; i++) i ? c.lineTo(pts[i][0], pts[i][1]) : c.moveTo(pts[i][0], pts[i][1]); };
+Tac.prototype.grid = function (now) {
+  var T = this, c = T.ctx, vr = T.visR(), B = vr * 0.9, loc = T.local();
+  var list = loc ? [500, 1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5, 2e5, 5e5, 1e6, 2e6] : [0.25, 0.5, 1, 2, 5, 10, 20, 30, 40];
+  T.rings = [];
+  // range rings
+  c.lineWidth = 1; c.font = '500 9.5px "JetBrains Mono", monospace'; c.textBaseline = "middle";
+  var lastPx = -99;
+  list.forEach(function (r) {
+    var R = T.cs(r), px = R * T.k;
+    if (R > B * 0.97 || px < 18 || px - lastPx < 16) return;
+    lastPx = px; T.rings.push(r);
+    T.path(T.ring(R, 120)); c.strokeStyle = "rgba(255,255,255,.075)"; c.stroke();
+    var lp = T.P([R * Math.cos(-0.42), R * Math.sin(-0.42), 0]);
+    c.fillStyle = "rgba(163,171,182,.55)"; c.fillText(loc ? SF.fmt(r) + " km" : r + " AU", lp[0] + 4, lp[1]);
+  });
+  // axes
+  c.strokeStyle = "rgba(156,195,255,.07)";
+  [0, 1, 2, 3].forEach(function (q) { var a = q * Math.PI / 2, p0 = T.P([0, 0, 0]), p1 = T.P([B * Math.cos(a), B * Math.sin(a), 0]); c.beginPath(); c.moveTo(p0[0], p0[1]); c.lineTo(p1[0], p1[1]); c.stroke(); });
+  // scan sweep (stops under reduced motion)
+  if (!reduced) {
+    var a0 = (now / 1000 * 0.42) % TAU, o = T.P([0, 0, 0]);
+    for (var s = 0; s < 12; s++) {
+      var a1 = a0 - s * 0.045, a2 = a1 - 0.045, p1 = T.P([B * Math.cos(a1), B * Math.sin(a1), 0]), pm = T.P([B * Math.cos((a1 + a2) / 2), B * Math.sin((a1 + a2) / 2), 0]), p2 = T.P([B * Math.cos(a2), B * Math.sin(a2), 0]);
+      c.beginPath(); c.moveTo(o[0], o[1]); c.lineTo(p1[0], p1[1]); c.lineTo(pm[0], pm[1]); c.lineTo(p2[0], p2[1]); c.closePath();
+      c.fillStyle = "rgba(156,195,255," + (0.075 * (1 - s / 12)).toFixed(3) + ")"; c.fill();
+    }
+    var pe = T.P([B * Math.cos(a0), B * Math.sin(a0), 0]);
+    c.strokeStyle = "rgba(156,195,255,.38)"; c.beginPath(); c.moveTo(o[0], o[1]); c.lineTo(pe[0], pe[1]); c.stroke();
+  }
+  // bearing ring
+  T.path(T.ring(B, 180)); c.strokeStyle = "rgba(156,195,255,.24)"; c.stroke();
+  c.textAlign = "center";
+  for (var d = 0; d < 360; d += 5) {
+    var a = d * Math.PI / 180, L = d % 30 === 0 ? 0.045 : d % 10 === 0 ? 0.025 : 0.012;
+    var q0 = T.P([B * Math.cos(a), B * Math.sin(a), 0]), q1 = T.P([B * (1 - L) * Math.cos(a), B * (1 - L) * Math.sin(a), 0]);
+    c.strokeStyle = d % 30 === 0 ? "rgba(156,195,255,.5)" : "rgba(156,195,255,.22)";
+    c.beginPath(); c.moveTo(q0[0], q0[1]); c.lineTo(q1[0], q1[1]); c.stroke();
+    if (d % 30 === 0) { var ql = T.P([B * 1.055 * Math.cos(a), B * 1.055 * Math.sin(a), 0]); c.fillStyle = "rgba(156,195,255,.6)"; c.fillText(("00" + d).slice(-3), ql[0], ql[1]); }
+  }
+  c.textAlign = "left";
+};
+Tac.prototype.orbits = function (jd, hi) {
+  var T = this, c = T.ctx, key = T.focus;
+  if (!T.orb[key]) {
+    var ids = T.local() ? PLACES.filter(function (p) { return p.parent === key; }).map(function (p) { return p.id; }) : SF.PLANETS.concat(["ceres", "roadster"]);
+    T.orb[key] = [];
+    ids.forEach(function (id) {
+      try { var pts = SF.orbit(id, jd, T.local() ? 120 : 180); if (pts.length) T.orb[key].push({ id: id, pts: pts.map(function (p) { return T.local() ? T.comp([p[0] * AU, p[1] * AU, p[2] * AU]) : T.comp(p); }) }); } catch (e) {}
+    });
+  }
+  T.orb[key].forEach(function (o) {
+    T.path(o.pts.map(function (q) { return T.P(q); }));
+    c.setLineDash(o.id === "roadster" ? [2, 4] : []);
+    c.strokeStyle = o.id === hi ? "rgba(255,207,122,.55)" : "rgba(163,171,182," + (o.id === "roadster" ? ".16" : ".2") + ")";
+    c.lineWidth = o.id === hi ? 1.4 : 1; c.stroke();
+  });
+  c.setLineDash([]); c.lineWidth = 1;
+};
+Tac.prototype.label = function (x, y, t, pri, col) { this.lab.push({ x: x, y: y, t: t, pri: pri || 0, col: col || "rgba(238,241,245,.85)" }); };
+Tac.prototype.flush = function () {
+  var c = this.ctx, placed = [];
+  c.font = '500 10.5px Inter, sans-serif'; c.textBaseline = "middle";
+  this.lab.sort(function (a, b) { return b.pri - a.pri; }).forEach(function (L) {
+    var w = c.measureText(L.t).width, opts = [[L.x + 9, L.y - 9], [L.x - 9 - w, L.y - 9], [L.x + 9, L.y + 10], [L.x - 9 - w, L.y + 10]];
+    for (var i = 0; i < opts.length; i++) {
+      var r = [opts[i][0] - 2, opts[i][1] - 7, w + 4, 14], hit = placed.some(function (q) { return r[0] < q[0] + q[2] && q[0] < r[0] + r[2] && r[1] < q[1] + q[3] && q[1] < r[1] + r[3]; });
+      if (!hit) { placed.push(r); c.fillStyle = "rgba(6,8,12,.55)"; c.fillRect(r[0], r[1], r[2], r[3]); c.fillStyle = L.col; c.fillText(L.t, opts[i][0], opts[i][1]); return; }
+    }
+  });
+};
+Tac.prototype.body = function (id, Q, r, sel, pri) {
+  var T = this, c = T.ctx, p = T.P(Q), f = T.P([Q[0], Q[1], 0]), pl = SF.place(id) || {}, col = SF.color(id), fict = SF.tag(id) === "fict";
+  c.strokeStyle = "rgba(255,255,255,.16)"; c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(f[0], f[1]); c.stroke();
+  c.fillStyle = "rgba(255,255,255,.22)"; c.fillRect(f[0] - 1.5, f[1] - 0.5, 3, 1);
+  var rr = r * Math.max(0.7, Math.min(1.3, p[2]));
+  if (pl.kind === "station") {
+    c.save(); c.translate(p[0], p[1]); if (fict) c.rotate(Math.PI / 4);
+    c.fillStyle = fict ? "rgba(255,182,92,.25)" : "rgba(134,217,168,.25)"; c.strokeStyle = fict ? "#ffb65c" : "#86d9a8";
+    c.fillRect(-rr, -rr, rr * 2, rr * 2); c.strokeRect(-rr, -rr, rr * 2, rr * 2); c.restore();
+  } else {
+    if (r >= 5) { var g = c.createRadialGradient(p[0], p[1], 0, p[0], p[1], rr * 3); g.addColorStop(0, col + "55"); g.addColorStop(1, col + "00"); c.fillStyle = g; c.beginPath(); c.arc(p[0], p[1], rr * 3, 0, TAU); c.fill(); }
+    c.fillStyle = col; c.beginPath(); c.arc(p[0], p[1], rr, 0, TAU); c.fill();
+  }
+  if (sel) { c.strokeStyle = "#ffcf7a"; c.lineWidth = 1.2; c.beginPath(); c.arc(p[0], p[1], rr + 6, 0, TAU); c.stroke(); c.lineWidth = 1; }
+  T.pick.push({ x: p[0], y: p[1], id: id, type: "body" });
+  T.label(p[0], p[1], SF.name(id), pri, fict ? "rgba(255,182,92,.9)" : undefined);
+  return p;
+};
+Tac.prototype.bodies = function (jd, sel) {
+  var T = this, c = T.ctx;
+  if (!T.local()) {
+    var o = T.P([0, 0, 0]), g = c.createRadialGradient(o[0], o[1], 0, o[0], o[1], 26);
+    g.addColorStop(0, "rgba(255,206,140,.95)"); g.addColorStop(0.25, "rgba(255,182,92,.45)"); g.addColorStop(1, "rgba(255,182,92,0)");
+    c.fillStyle = g; c.beginPath(); c.arc(o[0], o[1], 26, 0, TAU); c.fill();
+    T.label(o[0], o[1], "Sun", 9, "rgba(255,182,92,.95)");
+    SF.PLANETS.concat(["ceres", "roadster", "bennu"]).forEach(function (id) {
+      var L = SF.SITE.look[id]; T.body(id, T.Qid(id, jd), L && L.big ? 5 : SF.PLANETS.indexOf(id) >= 0 ? 4 : 2.6, sel === id, SF.PLANETS.indexOf(id) >= 0 ? 6 : 3);
+    });
+  } else {
+    var o2 = T.P([0, 0, 0]), col = SF.color(T.focus), g2 = c.createRadialGradient(o2[0], o2[1], 0, o2[0], o2[1], 30);
+    g2.addColorStop(0, col + "66"); g2.addColorStop(1, col + "00"); c.fillStyle = g2; c.beginPath(); c.arc(o2[0], o2[1], 30, 0, TAU); c.fill();
+    c.fillStyle = col; c.beginPath(); c.arc(o2[0], o2[1], 10, 0, TAU); c.fill();
+    T.pick.push({ x: o2[0], y: o2[1], id: T.focus, type: "body" });
+    T.label(o2[0], o2[1], SF.name(T.focus), 9);
+    T.sysPlaces().forEach(function (id) { var pl = SF.place(id); T.body(id, T.Qid(id, jd), pl.kind === "station" ? 3.2 : 4.2, sel === id, pl.kind === "station" ? 4 : 5); });
+  }
+};
+Tac.prototype.sysPlaces = function () { var f = this.focus; return PLACES.filter(function (p) { return p.id !== f && SF.system(p.id) === f; }).map(function (p) { return p.id; }); };
+// Where to draw a place in this frame: exact in its own system, at its planet otherwise.
+Tac.prototype.anchor = function (id, jd) {
+  if (this.local()) return SF.system(id) === this.focus ? { Q: this.Qid(id, jd), exact: true } : null;
+  var s = SF.system(id); return { Q: this.Qid(s, jd), exact: s === id };
+};
+Tac.prototype.bracket = function (x, y, s, col, txt) {
+  var c = this.ctx, L = s * 0.45;
+  c.strokeStyle = col; c.lineWidth = 1.5;
+  [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(function (q) {
+    c.beginPath(); c.moveTo(x + q[0] * s, y + q[1] * (s - L)); c.lineTo(x + q[0] * s, y + q[1] * s); c.lineTo(x + q[0] * (s - L), y + q[1] * s); c.stroke();
+  });
+  c.lineWidth = 1;
+  if (txt) { c.font = '600 9px Inter, sans-serif'; c.fillStyle = col; c.textBaseline = "bottom"; c.fillText(txt, x - s, y - s - 3); c.textBaseline = "middle"; }
+};
+Tac.prototype.ship = function (x, y, ang, w, alpha) {
+  var c = this.ctx; c.save(); c.globalAlpha = alpha == null ? 1 : alpha; c.translate(x, y); c.rotate(ang);
+  if (SHIP_IMG && SHIP_IMG.complete && SHIP_IMG.naturalWidth) c.drawImage(SHIP_IMG, -w / 2, -w / 3, w, w * 2 / 3);
+  else { c.fillStyle = "#9cc3ff"; c.beginPath(); c.arc(0, 0, 3, 0, TAU); c.fill(); }
+  c.restore();
+};
+Tac.prototype.scaleBar = function (el) {
+  var T = this, max = Math.min(170, T.W * 0.38), loc = T.local();
+  var list = loc ? [0, 1e3, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6, 2e6] : [0, 0.5, 1, 2, 5, 10, 20, 30];
+  var key = T.k.toFixed(3) + T.focus + max; if (el._k === key) return; el._k = key;
+  var h = "", last = -99, end = 0;
+  list.forEach(function (r) {
+    var x = T.cs(r) * T.k; if (x > max) return; end = x;
+    h += '<i class="tk" style="left:' + x.toFixed(1) + 'px"></i>';
+    if (x - last >= 34 || r === 0) { h += '<span class="tl2" style="left:' + x.toFixed(1) + 'px">' + (r === 0 ? "0" : loc ? (r >= 1e6 ? SF.fmt(r / 1e6) + "M" : SF.fmt(r / 1e3) + "k") : r) + "</span>"; last = x; }
+  });
+  el.innerHTML = '<i class="ln" style="width:' + end.toFixed(1) + 'px"></i>' + h + '<span class="tl2" style="left:' + (end + 16).toFixed(1) + 'px;transform:none">' + (loc ? "km" : "AU") + "</span>";
+};
+
+/* ---------- state ---------- */
+var H, HOME = { preset: "outer", hail: null, plan: null, route: null, target: null, traffic: true, desk: [], deskKey: "" };
+var TRAFFIC = [];
+var view = "sky";
+
+function frameText(f) { return f === "sun" ? "Heliocentric \u00B7 AU \u00B7 ecliptic plane" : SF.name(f) + "-centred \u00B7 km \u00B7 ecliptic plane"; }
+function setPreset(p, keepUser) {
+  HOME.preset = p;
+  $$("#presets button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.p === p ? "true" : "false"); });
+  var jd = SF.sky().jd;
+  if (p === "mars" || p === "earth") { H.focus = p; } else H.focus = "sun";
+  if (p === "route") { H.focus = HOME.route.focus; }
+  $("#frameLbl").textContent = frameText(H.focus) + (p === "route" ? " \u00B7 framed on the route" : "");
+  H.cx = 0; H.cy = 0; H.user = false;
+  var R;
+  if (p === "inner") R = Math.hypot.apply(null, H.Qid("mars", jd)) * 1.12;
+  else if (p === "belt") R = Math.hypot.apply(null, H.Qid("jupiter", jd)) * 1.08;
+  else if (p === "outer") R = Math.hypot.apply(null, H.Qid("neptune", jd)) * 1.04;
+  else if (p === "route") { frameRoute(); return; }
+  else { H.c = SF.pos(H.focus, jd); R = Math.max.apply(null, H.sysPlaces().map(function (id) { return Math.hypot.apply(null, H.Qid(id, jd)); })) * 1.12; }
+  H.k = H.baseK = H.fitR(R);
+}
+function frameRoute() {
+  var r = HOME.route; if (!r) return;
+  var Qs = r.pts.map(function (p) { return H.comp(p); }).concat(r.marks.map(function (m) { return H.comp(m.v); })).concat(r.focus === "sun" ? [] : [[0, 0, 0]]);
+  var x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  Qs.forEach(function (q) { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); });
+  H.cx = (x0 + x1) / 2; H.cy = (y0 + y1) / 2;
+  var R = Math.max((x1 - x0) / 2 * 1.25, (y1 - y0) / 2 * 1.25, r.focus === "sun" ? 0.35 : 1.2);
+  H.k = H.baseK = H.fitR(R); H.user = false;
+}
+
+/* ---------- desk ---------- */
+function renderDesk(force) {
+  var d = SF.desk(), key = d.map(function (x) { return x.id + x.ready_jd + x.open; }).join("|") + HOME.hail;
+  HOME.desk = d;
+  if (!force && key === HOME.deskKey) return; HOME.deskKey = key;
+  $("#hails").innerHTML = d.map(function (h) {
+    return '<li><button type="button" class="hail" data-h="' + esc(h.id) + '" aria-pressed="' + (HOME.hail === h.id) + '">' +
+      '<span class="t">' + esc(h.title) + '</span><span class="tag ' + (h.kind === "quick" ? "ride" : "me") + '">' + esc(h.kind) + "</span>" +
+      '<span class="rt">' + placeH(h.from) + ' <span class="ar">\u2192</span> ' + placeH(h.to) + "</span>" +
+      '<span class="rdy">Ready ' + SF.iso(h.ready_jd) + (h.open ? "" : " \u00B7 closed this season") + "</span>" +
+      '<span class="mani"><span class="mh"><span class="caps">Manifest</span><span class="dim mono">Party size: not in the data yet</span></span><span class="rd" style="display:block;margin-top:2px">' + esc(h.rider) + "</span></span></button></li>";
+  }).join("");
+}
+function selectHail(id) {
+  HOME.hail = id; HOME.plan = null; HOME.route = null; HOME.target = null;
+  renderDesk(true); $("#poolBtn").setAttribute("aria-pressed", "false");
+  var h = HOME.desk.filter(function (x) { return x.id === id; })[0];
+  $("#toolCall").textContent = 'take_hail {"hail_id":"' + id + '"}';
+  var plan = '<div class="planning" role="status"><i></i>Engine planning\u2026</div>';
+  $("#hailDetail").innerHTML = '<div class="box2"><div class="caps">' + esc(h.title) + '</div><p style="margin:6px 0 8px;color:var(--ink-2);font-size:12.5px">' + esc(shipWords(h.blurb)) + "</p>" + plan + "</div>";
+  $("#choose").innerHTML = plan;
+  setTimeout(function () {
+    var p; try { p = SF.plan(id); } catch (e) { p = { hail: h, closed: "The engine could not plan this hail: " + e.message }; }
+    if (HOME.hail !== id) return;
+    HOME.plan = p; showPlan(p);
+  }, 60);
+}
+function showPlan(p) {
+  var h = p.hail;
+  var head = '<div class="caps">' + esc(h.title) + '</div><p style="margin:6px 0 8px;color:var(--ink-2);font-size:12.5px">' + esc(shipWords(h.blurb)) + "</p>";
+  if (p.closed) {
+    $("#hailDetail").innerHTML = '<div class="box2">' + head + '<p style="margin:0;color:var(--bad)">' + esc(shipWords(p.closed)) + "</p></div>";
+    $("#choose").innerHTML = '<div class="empty">' + esc(shipWords(p.closed)) + "</div>";
+    return;
+  }
+  $("#hailDetail").innerHTML = '<div class="box2">' + head +
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap"><span class="caps">Par plan</span><span class="tag sim">Engine par plan, simulated</span></div>' +
+    '<dl class="kv"><dt>Passenger ready</dt><dd>' + SF.iso(h.ready_jd) + "</dd><dt>Par " + SF.SHIP + "</dt><dd>" + esc(fleetName(p.par.car)) + "</dd><dt>Par arrival</dt><dd>" + SF.iso(p.par.arr_jd) +
+    "</dd><dt>Arrive by</dt><dd>" + SF.iso(p.arrive_by_jd) + "</dd><dt>Par energy</dt><dd>" + kwh(p.par.kwh) + "</dd></dl>" +
+    '<ol class="legs">' + p.par.legs.map(function (L, i) {
+      return "<li><div>" + (i + 1) + ". " + placeH(L.from) + " \u2192 " + placeH(L.to) + (L.local ? ' <span class="dim">local hop</span>' : "") + '</div><div class="m">' + SF.iso(L.dep_jd) + " \u2192 " + SF.iso(L.arr_jd) + " \u00B7 " + kwh(L.kwh) + " \u00B7 " + money(L.fare) + "</div></li>";
+    }).join("") + "</ol></div>";
+  $("#choose").innerHTML = '<p class="sub">' + SF.SHIPS + " near the pickup, as the engine plans them now. Seats and party sizes are not set yet.</p>" + '<div class="cards">' + p.cars.map(function (c) {
+    var L = c.pickup;
+    return '<article class="scard' + (c.par ? " par" : "") + '">' + (c.par ? '<span class="tag me badge">Par pick</span>' : "") +
+      '<div class="hd"><div class="art">' + SF.SHIP_SVG + '</div><div><div class="caps">' + SF.SHIP + '</div><div class="nm">' + esc(c.name) + "</div></div></div>" +
+      '<dl class="kv"><dt>Parked at</dt><dd style="font-family:Inter">' + placeH(c.at) + "</dd><dt>Status</dt><dd>" + (c.busy_until_jd ? "Busy until " + SF.iso(c.busy_until_jd) : '<span class="pass">Free</span>') + "</dd>" +
+      (L ? "<dt>Pickup leg</dt><dd>" + SF.iso(L.dep_jd) + "</dd><dt>At pickup</dt><dd>" + SF.iso(L.arr_jd) + "</dd><dt>Energy</dt><dd>" + kwh(L.kwh) + "</dd><dt>Fare</dt><dd>" + money(L.fare) + (L.local ? ' <span class="dim">\u00B7 local hop</span>' : "") + "</dd>"
+         : "<dt>Pickup leg</dt><dd>No leg before the season ends</dd>") +
+      "</dl>" + manifest(h.rider) + "</article>";
+  }).join("") + "</div>";
+  buildRoute(p);
+}
+function buildRoute(p) {
+  var h = p.hail, sf = SF.system(h.from), st = SF.system(h.to), focus = sf === st ? sf : "sun";
+  if (focus === "ceres") focus = "sun";
+  var pts = [], legs = [];
+  p.par.legs.forEach(function (L) {
+    var A = L.arc && L.arc.length ? L.arc : [SF.pos(L.from, L.dep_jd), SF.pos(L.to, L.arr_jd)], seg = [];
+    A.forEach(function (a, i) {
+      var t = L.dep_jd + (L.arr_jd - L.dep_jd) * i / Math.max(1, A.length - 1);
+      var v = focus === "sun" ? a : (function (c) { return [(a[0] - c[0]) * AU, (a[1] - c[1]) * AU, (a[2] - c[2]) * AU]; })(SF.pos(focus, t));
+      seg.push(v); pts.push(v);
+    });
+    legs.push({ pts: seg, ride: L.from === h.from });
+  });
+  var rideLeg = p.par.legs.filter(function (L) { return L.from === h.from; })[0] || p.par.legs[p.par.legs.length - 1];
+  var last = p.par.legs[p.par.legs.length - 1];
+  function at(id, t) { var a = SF.pos(id, t); if (focus === "sun") return a; var c = SF.pos(focus, t); return [(a[0] - c[0]) * AU, (a[1] - c[1]) * AU, (a[2] - c[2]) * AU]; }
+  HOME.route = { focus: focus, pts: pts, legs: legs, from: h.from, to: h.to, pick: at(h.from, rideLeg.dep_jd), drop: at(h.to, last.arr_jd), t0: rideLeg.dep_jd, t1: last.arr_jd };
+  HOME.route.marks = [{ v: HOME.route.pick, label: "PICKUP", col: "#ffcf7a" }, { v: HOME.route.drop, label: "DROP-OFF", col: "#9cc3ff" }];
+  setPreset("route");
+  $$("#presets button").forEach(function (b) { b.setAttribute("aria-pressed", "false"); });
+}
+
+/* ---------- concept: a pooled flight (not built yet) ---------- */
+// The stops are real places in the data and each leg is planned live by the engine.
+// Only the first pickup is a booking in the data; the second party is a concept.
+var POOL = { car: "sf-01", stops: [
+  { id: "iss", what: "pickup" },
+  { id: "tiangong", what: "pickup (concept)" },
+  { id: "lunar-data-center", what: "drop-off, both parties" }] };
+function poolHead() { return '<div style="display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap"><span class="caps">Concept: pooled flight (not built yet)</span><span class="tag sim">Engine legs, simulated</span></div>'; }
+function selectPool() {
+  HOME.hail = "pool"; HOME.plan = null; HOME.route = null; HOME.target = null;
+  renderDesk(true); $("#poolBtn").setAttribute("aria-pressed", "true");
+  $("#toolCall").textContent = '# No pooling tool yet. Today: one booking per call.\ntake_hail {"hail_id":"iss-crew"}';
+  var wait = '<div class="planning" role="status"><i></i>Engine planning\u2026</div>';
+  $("#hailDetail").innerHTML = '<div class="box2">' + poolHead() + wait + "</div>";
+  $("#choose").innerHTML = wait;
+  setTimeout(function () {
+    if (HOME.hail !== "pool") return;
+    var f = SF.SITE.fleet.filter(function (x) { return x.car === POOL.car; })[0] || SF.SITE.fleet[0];
+    var at = f.parked_at.id, t = SF.sky().jd, legs = [], err = null;
+    POOL.stops.forEach(function (st) {
+      if (err) return;
+      try {
+        var b = SF.R.planLeg(at, st.id, t, "energy", SF.SEASON_END);
+        if (!b) throw new Error("No leg from " + SF.name(at) + " to " + SF.name(st.id) + " before the season ends.");
+        legs.push({ from: at, to: st.id, dep_jd: b.dep_jd, arr_jd: b.arr_jd, kwh: b.battery.energy_kwh, fare: b.fare.total_usd, local: !!b.local, arc: b.arc_au || [], st: st });
+        at = st.id; t = b.arr_jd;
+      } catch (e) { err = e.message; }
+    });
+    if (HOME.hail !== "pool") return;
+    if (err) { $("#hailDetail").innerHTML = '<div class="box2">' + poolHead() + '<p style="color:var(--bad)">' + esc(shipWords(err)) + "</p></div>"; $("#choose").innerHTML = ""; return; }
+    showPool(f, legs);
+  }, 60);
+}
+function showPool(f, legs) {
+  var dana = hailOf("iss-crew");
+  var sumK = legs.reduce(function (a, L) { return a + L.kwh; }, 0), sumF = legs.reduce(function (a, L) { return a + L.fare; }, 0);
+  $("#hailDetail").innerHTML = '<div class="box2">' + poolHead() +
+    '<p style="margin:6px 0 4px;color:var(--ink-2);font-size:12.5px">' + esc(f.name) + " leaves " + esc(SF.name(f.parked_at.id)) + ", picks up at two stations and drops both parties at the " + esc(SF.name("lunar-data-center")) + ". Pooling rules, seats and party sizes are not set yet.</p>" +
+    '<ol class="stops">' + legs.map(function (L, i) {
+      return '<li><span class="wp">' + (i + 1) + "</span><span>" + placeH(L.to) + " \u00B7 " + esc(L.st.what) + '</span><span class="m">' + SF.iso(L.dep_jd) + " \u2192 " + SF.iso(L.arr_jd) + " \u00B7 " + kwh(L.kwh) + " \u00B7 " + money(L.fare) + (L.local ? " \u00B7 local hop" : "") + "</span></li>";
+    }).join("") + "</ol>" +
+    '<dl class="kv"><dt>Legs, summed</dt><dd>' + kwh(sumK) + " \u00B7 " + money(sumF) + "</dd></dl>" +
+    '<p class="dim" style="margin:6px 0 0;font-size:11.5px">Each leg is SF.R.planLeg, least energy, leaving when the last one lands. No time at the stops is added.</p></div>';
+  $("#choose").innerHTML = '<p class="sub">One ' + SF.SHIP + ", several bookings. The agent would choose who flies together.</p>" +
+    '<div class="cards"><article class="scard par"><span class="tag me badge">Concept</span>' +
+    '<div class="hd"><div class="art">' + SF.SHIP_SVG + '</div><div><div class="caps">' + SF.SHIP + '</div><div class="nm">' + esc(f.name) + "</div></div></div>" +
+    '<dl class="kv"><dt>Parked at</dt><dd style="font-family:Inter">' + placeH(f.parked_at.id) + "</dd><dt>Stops</dt><dd>" + legs.length + "</dd><dt>Lands last</dt><dd>" + SF.iso(legs[legs.length - 1].arr_jd) + "</dd></dl>" +
+    '<div class="mani"><div class="mh"><span class="caps">Manifest</span><span class="dim mono">' + SEATS + "</span></div><ul>" +
+      '<li><span class="pn">WPT 1 \u00B7 ' + esc(dana ? dana.rider : "Passenger not in the data") + '</span><span class="tag sim">Simulated</span><span class="dim">booking iss-crew</span></li>' +
+      '<li class="dim">' + PARTY + "</li>" +
+      '<li><span class="pn">WPT 2 \u00B7 second party at ' + esc(SF.name("tiangong")) + '</span><span class="tag me">Concept, not in the data</span></li>' +
+      '<li class="dim">' + PARTY + "</li></ul></div></article></div>";
+  var focus = "earth", pts = [], rl = [];
+  function rel(a, t) { var c = SF.pos(focus, t); return [(a[0] - c[0]) * AU, (a[1] - c[1]) * AU, (a[2] - c[2]) * AU]; }
+  legs.forEach(function (L, i) {
+    var A = L.arc.length ? L.arc : [SF.pos(L.from, L.dep_jd), SF.pos(L.to, L.arr_jd)];
+    var seg = A.map(function (a, k) { return rel(a, L.dep_jd + (L.arr_jd - L.dep_jd) * k / Math.max(1, A.length - 1)); });
+    pts = pts.concat(seg); rl.push({ pts: seg, ride: i > 0 });
+  });
+  var first = legs[0], last = legs[legs.length - 1];
+  HOME.route = { focus: focus, pts: pts, legs: rl, from: first.to, to: last.to, pool: true,
+    pick: rel(SF.pos(first.to, first.arr_jd), first.arr_jd), drop: rel(SF.pos(last.to, last.arr_jd), last.arr_jd), t0: first.arr_jd, t1: last.arr_jd,
+    marks: legs.map(function (L, i) { var end = i === legs.length - 1; return { v: rel(SF.pos(L.to, L.arr_jd), L.arr_jd), label: "WPT " + (i + 1) + (end ? " \u00B7 DROP-OFF" : " \u00B7 PICKUP"), col: end ? "#9cc3ff" : "#ffcf7a" }; }) };
+  HOME.plan = { pool: true };
+  setPreset("route");
+  $$("#presets button").forEach(function (b) { b.setAttribute("aria-pressed", "false"); });
+  $("#frameLbl").textContent = frameText(focus) + " \u00B7 concept: pooled flight";
+}
+
+/* ---------- scoreboard ---------- */
+function renderBoard() {
+  $("#board").innerHTML = SF.RIDES.map(function (r, i) {
+    var lg = r.record.log;
+    return '<li><a href="#flight' + (i + 1) + '"><span class="sc">' + SF.fmt(r.record.score.total) + '</span><span class="lb">' + esc(shipWords(r.label)) + '</span><span class="rt">' + esc(SF.name(lg.from)) + " \u2192 " + esc(SF.name(lg.to)) + " \u00B7 " + SF.SHIP + " " + esc(r.record.score.car) + " \u00B7 season " + r.record.season + '</span><span class="go">Replay \u2192</span></a></li>';
+  }).join("");
+}
+
+/* ---------- home map frame ---------- */
+var hudT = 0;
+function drawHome(now) {
+  var s = SF.sky(), jd = s.jd, T = H, c = T.ctx, r = HOME.route, onRoute = r && r.focus === T.focus;
+  T.begin(jd); T.grid(now);
+  T.orbits(jd, HOME.target);
+  if (onRoute) {
+    var dash = reduced ? 0 : -(now / 60) % 20;
+    r.legs.forEach(function (L) {
+      var P = L.pts.map(function (v) { return T.P(T.comp(v)); });
+      T.path(P); c.strokeStyle = L.ride ? "rgba(156,195,255,.25)" : "rgba(255,207,122,.2)"; c.lineWidth = 6; c.stroke();
+      T.path(P); c.setLineDash(L.ride ? [7, 6] : [3, 5]); c.lineDashOffset = dash; c.lineWidth = 1.6; c.strokeStyle = L.ride ? "#9cc3ff" : "#ffcf7a"; c.stroke();
+      c.setLineDash([]); c.lineWidth = 1;
+    });
+  }
+  T.bodies(jd, HOME.target);
+  // fleet
+  var groups = {};
+  SF.SITE.fleet.forEach(function (f) {
+    var a = T.anchor(f.parked_at.id, jd); if (!a) return;
+    var key = a.Q.map(function (v) { return v.toFixed(4); }).join(), g = groups[key] || (groups[key] = []); g.push({ f: f, a: a });
+  });
+  Object.keys(groups).forEach(function (key) {
+    groups[key].forEach(function (o, i) {
+      var p = T.P(o.a.Q), ang = -0.9 + i * 0.75, rr = o.a.exact ? 14 : 18, x = p[0] + Math.cos(ang) * rr, y = p[1] + Math.sin(ang) * rr;
+      c.strokeStyle = "rgba(156,195,255,.35)"; c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(x, y); c.stroke();
+      T.ship(x, y, 0, 20, 0.95);
+      T.pick.push({ x: x, y: y, id: o.f.parked_at.id, type: "fleet", name: o.f.name });
+      T.label(x + 4, y, o.f.name, 2, "rgba(156,195,255,.9)");
+    });
+  });
+  // hails at their pickups
+  HOME.desk.forEach(function (h, i) {
+    var a = T.anchor(h.from, jd); if (!a) return;
+    var p = T.P(a.Q), x = p[0] + (a.exact ? 0 : -16), y = p[1] + (a.exact ? 0 : 14 + (i % 2) * 6), sel = HOME.hail === h.id;
+    var pulse = reduced ? 0.5 : (now / 1400 + i * 0.27) % 1;
+    c.strokeStyle = "rgba(255,207,122," + (0.7 * (1 - pulse)).toFixed(2) + ")"; c.beginPath(); c.arc(x, y, 5 + pulse * 12, 0, TAU); c.stroke();
+    c.save(); c.translate(x, y); c.rotate(Math.PI / 4); c.fillStyle = sel ? "#ffcf7a" : "rgba(255,207,122,.75)"; c.fillRect(-4, -4, 8, 8); c.restore();
+    T.pick.push({ x: x, y: y, id: h.id, type: "hail" });
+    T.label(x, y, "Booking \u00B7 " + h.title, sel ? 8 : 4, "rgba(255,207,122,.95)");
+  });
+  if (HOME.traffic) drawTraffic(now, jd);
+  if (onRoute) {
+    r.marks.forEach(function (m) { var q = T.P(T.comp(m.v)); T.bracket(q[0], q[1], 13, m.col, m.label); });
+  }
+  T.flush();
+  T.scaleBar($("#sbar"));
+  if (now - hudT > 200) { hudT = now; hud(s, jd); }
+}
+function drawTraffic(now, jd) {
+  var T = H, c = T.ctx;
+  TRAFFIC.forEach(function (o, n) {
+    var rp = o.rp, D = rp.end - rp.start, u = reduced ? 0.55 : ((now / 1000) / 24 + n * 0.31) % 1;
+    var tj = rp.start + u * D, trail = [];
+    var inFrame = T.local() ? rp.focus === T.focus : true;
+    if (!inFrame) return;
+    for (var k = 0; k < 16; k++) {
+      var t = Math.max(rp.start, tj - k * D / 140), p = rp.at(t).p, v;
+      if (T.local()) { var cc = SF.pos(T.focus, t); v = [(p[0] - cc[0]) * AU, (p[1] - cc[1]) * AU, (p[2] - cc[2]) * AU]; }
+      else if (rp.focus !== "sun") { var a = SF.pos(rp.focus, t), b = SF.pos(rp.focus, jd); v = [p[0] - a[0] + b[0], p[1] - a[1] + b[1], p[2] - a[2] + b[2]]; }
+      else v = p;
+      trail.push(T.P(T.comp(v)));
+    }
+    for (var j = trail.length - 1; j > 0; j--) { c.strokeStyle = "rgba(156,195,255," + (0.5 * (1 - j / trail.length)).toFixed(2) + ")"; c.beginPath(); c.moveTo(trail[j][0], trail[j][1]); c.lineTo(trail[j - 1][0], trail[j - 1][1]); c.stroke(); }
+    var hd = trail[1] && Math.hypot(trail[0][0] - trail[1][0], trail[0][1] - trail[1][1]) > 0.3 ? Math.atan2(trail[0][1] - trail[1][1], trail[0][0] - trail[1][0]) : 0;
+    var x = trail[0][0], y = trail[0][1];
+    if (!T.local() && rp.focus !== "sun") { x += 12; y -= 12 + n * 6; }
+    c.strokeStyle = "rgba(156,195,255,.6)"; c.setLineDash([2, 2]); c.strokeRect(x - 8, y - 8, 16, 16); c.setLineDash([]);
+    T.ship(x, y, hd, 18, 0.9);
+    T.pick.push({ x: x, y: y, id: "traffic" + n, type: "traffic", ride: n });
+    T.label(x, y, "Sample " + rp.record.score.car + " \u00B7 " + SF.iso(tj).slice(0, 10) + " (not live)", 1, "rgba(127,138,153,.95)");
+  });
+}
+function hud(s, jd) {
+  var t = SF.iso(jd);
+  $("#clk").textContent = t; $("#pillClock").textContent = t + " UTC";
+  var sl = "Season " + s.season + " \u00B7 day " + SF.fmt(s.day) + " of " + SF.fmt(SF.SKY.len_days);
+  $("#ssn").textContent = sl; $("#pillSeason").textContent = "S" + s.season;
+  renderDesk(false);
+  readout(jd);
+}
+function readout(jd) {
+  var el = $("#ro"), id = HOME.target, html = "";
+  function row(k, v) { return '<div class="ro-row"><span>' + k + "</span><b>" + v + "</b></div>"; }
+  function deg(a) { return SF.fmt((a * 180 / Math.PI + 360) % 360, 1) + "\u00B0"; }
+  if (id) {
+    var p = SF.pos(id, jd), o = H.local() ? SF.pos(H.focus, jd) : [0, 0, 0], v = [p[0] - o[0], p[1] - o[1], p[2] - o[2]], r = Math.hypot(v[0], v[1], v[2]);
+    var from = H.local() ? SF.name(H.focus) : "Sun";
+    html += '<div class="caps">Target \u00B7 ' + esc(SF.name(id)) + " " + chip(id) + "</div>";
+    html += row("Range from " + esc(from), H.local() ? SF.fmt(r * AU) + " km" : SF.fmt(r, 3) + " AU");
+    html += row("Bearing", deg(Math.atan2(v[1], v[0])));
+    html += row("Elevation", SF.fmt(r ? Math.asin(v[2] / r) * 180 / Math.PI : 0, 2) + "\u00B0");
+    if (!H.local() && id !== "earth") { var e = SF.pos("earth", jd); html += row("Range from Earth", SF.fmt(Math.hypot(p[0] - e[0], p[1] - e[1], p[2] - e[2]), 3) + " AU"); }
+  } else if (HOME.route && HOME.plan && !HOME.plan.closed) {
+    var R = HOME.route, a = R.pick, b = R.drop, d = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    html += '<div class="caps">Route \u00B7 ' + (R.pool ? "concept, engine legs" : "engine par plan") + ', simulated</div>';
+    html += row(esc(SF.name(R.from)) + " \u2192 " + esc(SF.name(R.to)), R.focus === "sun" ? SF.fmt(d, 3) + " AU" : SF.fmt(d) + " km");
+    html += row("Straight-line, at", SF.iso(R.t0).slice(0, 10) + " / " + SF.iso(R.t1).slice(0, 10));
+  } else html = '<div class="caps">Target</div><div>Tap a body for range and bearing</div>';
+  html += '<div class="dim" style="margin-top:2px">From engine positions</div>';
+  if (el._h !== html) { el._h = html; el.innerHTML = '<div class="hudbox">' + html + "</div>"; }
+}
+
+/* =========================================================
+   FLIGHT PAGE: letterboxed chase-cam replay (three.js r128)
+   ========================================================= */
+var GL = null, RS = null;
+function fmt(n, d) { return SF.fmt(n, d); }
+function iso(jd) { return SF.iso(jd); }
+function dist(km) { return km >= 0.05 * AU ? fmt(km / AU, 2) + " AU" : km >= 1e6 ? fmt(km / 1e6, 2) + " million km" : fmt(km) + " km"; }
+function W(t) { return esc(shipWords(t)); }
+
+function initGL() {
+  function fail() { GL = null; $("#rnogl").hidden = false; }
+  if (!window.THREE) return fail();
+  try {
+    var c = document.createElement("canvas");
+    var ok = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+    if (!ok) return fail();
+    var r = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance", logarithmicDepthBuffer: true });
+    r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    r.setClearColor(0x06080c, 1);
+    GL = { r: r, tex: {} };
+  } catch (e) { return fail(); }
+}
+function attachCanvas(host) {
+  if (GL.r.domElement.parentNode !== host) host.appendChild(GL.r.domElement);
+  onResize();
+}
+function onResize() {
+  if (!GL) return;
+  var host = GL.r.domElement.parentNode; if (!host || !host.clientWidth) return;
+  var w = host.clientWidth || 1, h = host.clientHeight || 1;
+  GL.r.setSize(w, h);
+  if (RS && RS.cam) { RS.cam.aspect = w / h; RS.cam.updateProjectionMatrix(); }
+  GL.W = w; GL.H = h; GUT = null;
+}
+/* ---------- textures and meshes ---------- */
+function V(x, y, z) { return new THREE.Vector3(x || 0, y || 0, z || 0); }
+function prng(seed) { var s = seed >>> 0 || 1; return function () { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 100000) / 100000; }; }
+function hash(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h; }
+function glowTex(inner, outer) {
+  var k = inner + outer; if (GL.tex[k]) return GL.tex[k];
+  var c = document.createElement("canvas"); c.width = c.height = 128; var g = c.getContext("2d");
+  var gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, inner); gr.addColorStop(0.25, outer); gr.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  return (GL.tex[k] = new THREE.CanvasTexture(c));
+}
+function planetTex(id) {
+  if (GL.tex["p" + id]) return GL.tex["p" + id];
+  var c = document.createElement("canvas"); c.width = 256; c.height = 128; var g = c.getContext("2d"), col = new THREE.Color(SF.color(id)), rnd = prng(hash(id));
+  function sh(k, a) { return "rgba(" + Math.round(Math.min(1, col.r * (1 + k)) * 255) + "," + Math.round(Math.min(1, col.g * (1 + k)) * 255) + "," + Math.round(Math.min(1, col.b * (1 + k)) * 255) + "," + (a == null ? 1 : a) + ")"; }
+  g.fillStyle = sh(0); g.fillRect(0, 0, 256, 128);
+  if (/^(jupiter|saturn|uranus|neptune)$/.test(id)) {
+    var amp = id === "jupiter" ? 0.32 : id === "saturn" ? 0.18 : 0.08;
+    for (var y = 0; y < 128;) { var hgt = 2 + Math.floor(rnd() * 7); g.fillStyle = sh((rnd() - 0.5) * amp * 2); g.fillRect(0, y, 256, hgt); y += hgt; }
+    if (id === "jupiter") { g.fillStyle = "rgba(200,110,80,.7)"; g.beginPath(); g.ellipse(170, 80, 16, 8, 0, 0, 7); g.fill(); }
+  } else if (id === "earth") {
+    g.fillStyle = "#1d4f9c"; g.fillRect(0, 0, 256, 128);
+    for (var i = 0; i < 26; i++) { g.fillStyle = rnd() < 0.5 ? "#4f7d4a" : "#7a8a55"; g.beginPath(); g.ellipse(rnd() * 256, 20 + rnd() * 88, 6 + rnd() * 26, 4 + rnd() * 14, rnd() * 3, 0, 7); g.fill(); }
+    for (i = 0; i < 40; i++) { g.fillStyle = "rgba(255,255,255," + (0.25 + rnd() * 0.4) + ")"; g.beginPath(); g.ellipse(rnd() * 256, rnd() * 128, 4 + rnd() * 22, 1 + rnd() * 4, 0, 0, 7); g.fill(); }
+    g.fillStyle = "rgba(255,255,255,.85)"; g.fillRect(0, 0, 256, 6); g.fillRect(0, 122, 256, 6);
+  } else {
+    for (i = 0; i < 180; i++) { g.fillStyle = sh((rnd() - 0.55) * 0.5, 0.45); g.beginPath(); g.arc(rnd() * 256, rnd() * 128, 1 + rnd() * 10, 0, 7); g.fill(); }
+  }
+  var t = new THREE.CanvasTexture(c); return (GL.tex["p" + id] = t);
+}
+var GEO = {};
+function sphereGeo() { return GEO.s || (GEO.s = new THREE.SphereGeometry(1, 40, 20)); }
+function stars() {
+  var n = 2600, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), rnd = prng(7);
+  for (var i = 0; i < n; i++) {
+    var u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, s = Math.sqrt(1 - u * u), R = 3600;
+    pos[i * 3] = R * s * Math.cos(th); pos[i * 3 + 1] = R * u; pos[i * 3 + 2] = R * s * Math.sin(th);
+    var b = 0.35 + rnd() * 0.65, w = rnd(); col[i * 3] = b * (w > 0.85 ? 1 : 0.85); col[i * 3 + 1] = b * 0.9; col[i * 3 + 2] = b * (w < 0.2 ? 1 : 0.95);
+  }
+  var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  return new THREE.Points(g, new THREE.PointsMaterial({ size: 1.5, sizeAttenuation: false, vertexColors: true, depthWrite: false }));
+}
+function sunObj(r) {
+  var g = new THREE.Group();
+  g.add(new THREE.Mesh(sphereGeo(), new THREE.MeshBasicMaterial({ color: 0xffe2b0 })));
+  g.children[0].scale.setScalar(r);
+  var s1 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(255,236,200,1)", "rgba(255,170,80,.45)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  s1.scale.setScalar(r * 7); g.add(s1);
+  var s2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(255,190,110,.35)", "rgba(255,140,60,.08)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  s2.scale.setScalar(r * 22); g.add(s2);
+  return g;
+}
+function planetMesh(id) {
+  var m = new THREE.Mesh(sphereGeo(), new THREE.MeshLambertMaterial({ map: planetTex(id), emissive: new THREE.Color(SF.color(id)).multiplyScalar(0.05) }));
+  if (id === "saturn") {
+    var rg = new THREE.RingGeometry(1.35, 2.3, 64);
+    var ring = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ color: 0xd9c79a, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false }));
+    ring.rotation.x = -Math.PI / 2 + 0.47; m.add(ring);
+  }
+  m.rotation.z = 0.35;
+  return m;
+}
+function atmo(color, r) {
+  var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(0,0,0,0)", color), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  s.scale.setScalar(r * 2.9); return s;
+}
+function lineOf(pts, color, opacity, dashed) {
+  var g = new THREE.BufferGeometry().setFromPoints(pts);
+  var m = dashed ? new THREE.LineDashedMaterial({ color: color, transparent: true, opacity: opacity, dashSize: 1.2, gapSize: 1.2, depthWrite: false })
+    : new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: opacity, depthWrite: false });
+  var l = new THREE.Line(g, m); if (dashed) l.computeLineDistances(); return l;
+}
+function glowPoints(n, color, size) {
+  var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  return new THREE.Points(g, new THREE.PointsMaterial({ size: size, sizeAttenuation: false, map: glowTex("rgba(255,255,255,1)", "rgba(156,195,255,.5)"), color: color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+}
+function setPts(obj, pts) {
+  var a = obj.geometry.attributes.position, n = Math.min(pts.length, a.count);
+  for (var i = 0; i < n; i++) a.setXYZ(i, pts[i].x, pts[i].y, pts[i].z);
+  a.needsUpdate = true; obj.geometry.setDrawRange(0, n); obj.geometry.computeBoundingSphere();
+}
+
+/* The Starseeker: lifting-body hull (lathe teardrop, widest behind the middle), blue window band, swept stub wings,
+   a dorsal fin and one round aft thruster. Nose along +z, length 1. Built from primitives; original design. */
+var SHIPMAT = null;
+function makeShip() {
+  if (!SHIPMAT) {
+    var pts = [], N = 22;
+    function rr(t) { return 0.15 * (t < 0.36 ? 0.6 + 0.4 * Math.sin(t / 0.36 * Math.PI / 2) : Math.pow(Math.cos((t - 0.36) / 0.64 * Math.PI / 2), 0.85)); }
+    pts.push(new THREE.Vector2(0.001, -0.5));
+    for (var i = 0; i <= N; i++) { var t = i / N; pts.push(new THREE.Vector2(Math.max(0.001, rr(t)), -0.5 + t)); }
+    var hull = new THREE.LatheGeometry(pts, 20); hull.rotateX(Math.PI / 2); hull.scale(1.25, 0.52, 1);
+    var fin = new THREE.Shape(); fin.moveTo(0, 0); fin.lineTo(0.2, 0); fin.lineTo(0.02, 0.13); fin.lineTo(-0.03, 0.13); fin.lineTo(0, 0);
+    var finG = new THREE.ExtrudeGeometry(fin, { depth: 0.012, bevelEnabled: false }); finG.translate(0, 0, -0.006); finG.rotateY(-Math.PI / 2);
+    var stripe = [];
+    for (i = 2; i <= 20; i++) { var tt = i / 22; stripe.push(V(rr(tt) * 1.25 * 1.01, -0.012, -0.5 + tt)); }
+    SHIPMAT = {
+      hull: hull, finG: finG, stripe: stripe,
+      wingG: new THREE.BoxGeometry(0.3, 0.012, 0.12),
+      hullM: new THREE.MeshStandardMaterial({ color: 0x2b3446, metalness: 0.55, roughness: 0.38, flatShading: true, emissive: 0x0b0f16 }),
+      wingM: new THREE.MeshStandardMaterial({ color: 0x1a202c, metalness: 0.5, roughness: 0.5, flatShading: true }),
+      winM: new THREE.MeshStandardMaterial({ color: 0x2a4266, emissive: 0x9cc3ff, emissiveIntensity: 0.55, metalness: 0.2, roughness: 0.15 }),
+      thrM: new THREE.MeshBasicMaterial({ color: 0xffcf7a }),
+      stripeM: new THREE.LineBasicMaterial({ color: 0x9cc3ff, transparent: true, opacity: 0.9 }),
+      glow: glowTex("rgba(255,230,180,1)", "rgba(255,182,92,.55)")
+    };
+  }
+  var S_ = SHIPMAT, g = new THREE.Group();
+  g.add(new THREE.Mesh(S_.hull, S_.hullM));
+  var band = new THREE.Mesh(sphereGeo(), S_.winM); band.scale.set(0.07, 0.034, 0.3); band.position.set(0, 0.052, 0.07); g.add(band);
+  [1, -1].forEach(function (s) {
+    var w = new THREE.Mesh(S_.wingG, S_.wingM); w.position.set(s * 0.22, -0.04, -0.1); w.rotation.y = s * 0.5; w.rotation.z = s * -0.08; g.add(w);
+    var st = lineOf(S_.stripe.map(function (p) { return V(p.x * s, p.y, p.z); }), 0x9cc3ff, 0.9); st.material = S_.stripeM; g.add(st);
+  });
+  var f = new THREE.Mesh(S_.finG, S_.wingM); f.position.set(0, 0.055, -0.42); g.add(f);
+  var tor = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.012, 8, 24), S_.thrM); tor.position.z = -0.5; g.add(tor);
+  var disc = new THREE.Mesh(new THREE.CircleGeometry(0.05, 20), S_.thrM); disc.position.z = -0.502; disc.rotation.y = Math.PI; g.add(disc);
+  var gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: S_.glow, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  gl.position.z = -0.58; gl.scale.setScalar(0.42); g.add(gl); g.userData.glow = gl;
+  return g;
+}
+
+/* ---------- compressed solar-system scale ---------- */
+var K = 30;
+var SIZE = { sun: 5, mercury: 0.45, venus: 0.8, earth: 0.85, mars: 0.6, jupiter: 2.4, saturn: 2.0, uranus: 1.3, neptune: 1.3, ceres: 0.3, bennu: 0.1, roadster: 0.1, moon: 0.25, phobos: 0.12, io: 0.2, europa: 0.2, ganymede: 0.25, callisto: 0.22, enceladus: 0.12, titan: 0.25, triton: 0.18 };
+function dispR(id) { return SIZE[id] || 0.08; }
+function axes(v, s) { return V(v[0] * s, v[2] * s, -v[1] * s); }
+function S(p) { var r = Math.hypot(p[0], p[1], p[2]); return r ? axes(p, K / Math.sqrt(r)) : V(); }
+function localOff(rel, par) {
+  var au = Math.hypot(rel[0], rel[1], rel[2]); if (!au) return V();
+  var P = SF.place(par), R = (P && P.radius_km) || 1000, km = au * AU;
+  return axes(rel, dispR(par) * (1.3 + 0.9 * Math.log10(1 + km / R)) / au);
+}
+function d3(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+var MEMO = {}, MEMON = 0;
+function marker(id, jd) {
+  var k = id + "|" + jd, m = MEMO[k]; if (m) return m;
+  if (++MEMON > 6000) { MEMO = {}; MEMON = 0; }
+  var P = SF.place(id), v;
+  if (id === "sun" || !P) v = V();
+  else if (P.parent === "sun") v = S(SF.pos(id, jd));
+  else v = marker(P.parent, jd).clone().add(localOff(d3(SF.pos(id, jd), SF.pos(P.parent, jd)), P.parent));
+  return (MEMO[k] = v);
+}
+// Where a replayed Starseeker is drawn in the compressed scene. Local hops are drawn around their planet at jdNow.
+function shipC(rp, jd, jdNow) {
+  if (jdNow == null) jdNow = jd;
+  var s = rp.at(jd), L = s.leg;
+  if (s.phase !== "flight") return { v: marker(s.phase === "arrived" ? L.to : L.from, jdNow).clone(), s: s };
+  var f = s.f;
+  if (L.sys) {
+    var sys = L.sys, base = function (p) { return localOff(d3(p, SF.pos(sys, jd)), sys); }, an = marker(sys, jdNow);
+    var v = base(s.p);
+    var e0 = marker(L.from, jdNow).clone().sub(an).sub(base(SF.pos(L.from, jd)));
+    var e1 = marker(L.to, jdNow).clone().sub(an).sub(base(SF.pos(L.to, jd)));
+    return { v: v.add(e0.multiplyScalar(1 - f)).add(e1.multiplyScalar(f)).add(an), s: s };
+  }
+  // Moon and station offsets are exaggerated in the scene; take them at departure and arrival, so a moon's orbit doesn't wobble the path.
+  var w = S(s.p), c0 = marker(L.from, L.dep).clone().sub(S(SF.pos(L.from, L.dep))), c1 = marker(L.to, L.arr).clone().sub(S(SF.pos(L.to, L.arr)));
+  return { v: w.add(c0.multiplyScalar(1 - f)).add(c1.multiplyScalar(f)), s: s };
+}
+// Osculating orbit ring from a state vector (km, km/s): points relative to the attractor, in km.
+function kring(r, v, mu, n) {
+  function cr(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+  function ln(a) { return Math.hypot(a[0], a[1], a[2]); }
+  function sc(a, k) { return [a[0] * k, a[1] * k, a[2] * k]; }
+  var h = cr(r, v), hm = ln(h), rm = ln(r), vh = cr(v, h);
+  var ev = [vh[0] / mu - r[0] / rm, vh[1] / mu - r[1] / rm, vh[2] / mu - r[2] / rm], e = ln(ev);
+  if (e >= 0.98 || !hm) return [];
+  var p = hm * hm / mu, P = e > 1e-6 ? sc(ev, 1 / e) : sc(r, 1 / rm), W = sc(h, 1 / hm), Q = cr(W, P), out = [];
+  for (var i = 0; i <= n; i++) { var nu = 2 * Math.PI * i / n, rad = p / (1 + e * Math.cos(nu)), c = Math.cos(nu) * rad, s = Math.sin(nu) * rad; out.push([P[0] * c + Q[0] * s, P[1] * c + Q[1] * s, P[2] * c + Q[2] * s]); }
+  return out;
+}
+function relState(id, jd) {
+  var P = SF.place(id), a = SF.E.placeState(id, jd), mu, r = a.r, v = a.v;
+  if (P.parent === "sun") mu = SF.E.MU_SUN;
+  else { var b = SF.E.placeState(P.parent, jd); r = d3(a.r, b.r); v = d3(a.v, b.v); mu = SF.place(P.parent).mu; }
+  return { r: r, v: v, mu: mu };
+}
+
+/* ---------- labels and the target box ---------- */
+function LabelSet(root) {
+  var items = [], pv = null;
+  return {
+    add: function (o) {
+      var el = document.createElement(o.click ? "button" : "div");
+      el.className = "lbl " + (o.cls || ""); el.innerHTML = o.html;
+      if (o.click) { el.type = "button"; el.addEventListener("click", o.click); }
+      root.appendChild(el); o.el = el; o.w = 0; o.on = false;
+      items.push(o); items.sort(function (a, b) { return b.pri - a.pri; }); return o;
+    },
+    clear: function () { items.forEach(function (o) { o.el.remove(); }); items = []; },
+    remove: function (o) { o.el.remove(); items = items.filter(function (x) { return x !== o; }); },
+    update: function (cam, W, H) {
+      pv = pv || V(); var placed = [];
+      for (var i = 0; i < items.length; i++) {
+        var o = items[i], p = o.hide && o.hide() ? null : o.pos(), show = false;
+        if (p) {
+          pv.copy(p).project(cam);
+          if (pv.z < 1 && pv.z > -1 && Math.abs(pv.x) < 1.05 && Math.abs(pv.y) < 1.05) {
+            if (!o.w) { o.w = o.el.offsetWidth || 60; o.h = o.el.offsetHeight || 16; }
+            var g = gut(), ok = true;
+            var x = clamp((pv.x + 1) / 2 * W + 4, g.l, W - g.r - o.w), y = clamp((1 - pv.y) / 2 * H - o.h / 2, g.t, H - g.b - o.h);
+            for (var j = 0; ok && j < placed.length; j++) { var r = placed[j]; if (x < r[2] && x + o.w > r[0] && y < r[3] && y + o.h > r[1]) ok = false; }
+            if (ok) { placed.push([x, y, x + o.w, y + o.h]); o.el.style.transform = "translate3d(" + x.toFixed(1) + "px," + y.toFixed(1) + "px,0)"; show = true; }
+          }
+        }
+        if (show !== o.on) { o.el.style.visibility = show ? "visible" : "hidden"; o.on = show; }
+      }
+    }
+  };
+}
+var TV = null;
+function tbox(el, cam, W, H, p, rad, minPx) {
+  if (!p) { el.style.visibility = "hidden"; return; }
+  TV = TV || V(); TV.copy(p).project(cam);
+  if (TV.z >= 1 || Math.abs(TV.x) > 1.2 || Math.abs(TV.y) > 1.2) { el.style.visibility = "hidden"; return; }
+  var d = cam.position.distanceTo(p), rpx = rad / (d * Math.tan(cam.fov * Math.PI / 360)) * H / 2;
+  var s = Math.max(minPx || 34, rpx * 2.6), x = (TV.x + 1) / 2 * W, y = (1 - TV.y) / 2 * H;
+  el.style.width = el.style.height = s.toFixed(0) + "px";
+  el.style.transform = "translate3d(" + (x - s / 2).toFixed(1) + "px," + (y - s / 2).toFixed(1) + "px,0)";
+  el.style.visibility = "visible";
+  // Keep the box's caption on screen: flip it to the left of the box near the right edge, then clamp to the safe gutters.
+  var ti = el.querySelector(".ti");
+  if (ti) {
+    var g = gut(), tw = ti.offsetWidth, th = ti.offsetHeight, bx = x - s / 2, by = y - s / 2, lx = bx + s + 10;
+    if (lx + tw > W - g.r) lx = bx - 10 - tw;
+    lx = clamp(lx, g.l, W - g.r - tw);
+    ti.style.left = (lx - bx).toFixed(1) + "px"; ti.style.top = (clamp(by, g.t, H - g.b - th) - by).toFixed(1) + "px";
+  }
+}
+function clamp(v, a, b) { return b < a ? a : v < a ? a : v > b ? b : v; }
+// Safe-area gutters for things drawn over the scene: at least 16px at the sides.
+var GUT = null;
+function gut() {
+  if (GUT) return GUT;
+  var d = document.createElement("div"), n = function (v) { return parseFloat(v) || 0; };
+  d.style.cssText = "position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)";
+  document.body.appendChild(d);
+  var cs = getComputedStyle(d);
+  GUT = { l: Math.max(16, n(cs.paddingLeft)), r: Math.max(16, n(cs.paddingRight)), t: 8 + n(cs.paddingTop), b: 8 + n(cs.paddingBottom) };
+  d.remove(); return GUT;
+}
+function pxw(cam, v, H) { return cam.position.distanceTo(v) * 2 * Math.tan(cam.fov * Math.PI / 360) / H; }
+
+/* ---------- pointer rig (drag to orbit, wheel / pinch to zoom) ---------- */
+function bindRig(host, rig) {
+  var ptrs = {}, last = null, pinch = 0;
+  host.addEventListener("pointerdown", function (e) { ptrs[e.pointerId] = [e.clientX, e.clientY]; host.setPointerCapture(e.pointerId); rig.touched = performance.now(); });
+  host.addEventListener("pointermove", function (e) {
+    if (!ptrs[e.pointerId]) return;
+    var prev = ptrs[e.pointerId]; ptrs[e.pointerId] = [e.clientX, e.clientY];
+    var ids = Object.keys(ptrs);
+    if (ids.length === 2) {
+      var a = ptrs[ids[0]], b = ptrs[ids[1]], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      if (pinch) rig.zoom(pinch / d); pinch = d;
+    } else {
+      rig.az -= (e.clientX - prev[0]) * 0.006; rig.el = Math.max(-1.35, Math.min(1.45, rig.el + (e.clientY - prev[1]) * 0.005));
+    }
+    rig.touched = performance.now();
+  });
+  function up(e) { delete ptrs[e.pointerId]; pinch = 0; }
+  host.addEventListener("pointerup", up); host.addEventListener("pointercancel", up);
+  host.addEventListener("wheel", function (e) { e.preventDefault(); rig.zoom(Math.exp(e.deltaY * 0.0012)); rig.touched = performance.now(); }, { passive: false });
+}
+
+/* ---------- loops: the 3D loop runs only on the flight page, the plot loop only on the sky ---------- */
+var glRaf = 0, glLast = 0, rHudT = 0, skyRaf = 0;
+function glFrame(t) {
+  glRaf = requestAnimationFrame(glFrame);
+  var dt = Math.min(0.1, Math.max(0, (t - glLast) / 1000)); glLast = t; MEMO = {}; MEMON = 0;
+  try { rideFrame(dt, t); } catch (e) { if (!glFrame.err) { glFrame.err = 1; console.error(e); } }
+}
+function glStart() { if (!glRaf && !document.hidden && view === "ride") { glLast = performance.now(); glRaf = requestAnimationFrame(glFrame); } }
+function glStop() { if (glRaf) cancelAnimationFrame(glRaf); glRaf = 0; }
+function skyFrame(now) {
+  skyRaf = 0;
+  if (view !== "sky" || document.hidden) return;
+  try { drawHome(now); } catch (e) { if (!skyFrame.err) { skyFrame.err = 1; console.error(e); } }
+  skyRaf = requestAnimationFrame(skyFrame);
+}
+function skyStart() { if (!skyRaf && view === "sky" && !document.hidden) skyRaf = requestAnimationFrame(skyFrame); }
+function skyStop() { if (skyRaf) cancelAnimationFrame(skyRaf); skyRaf = 0; }
+
+/* ---------- passenger list ----------
+   The shared-flight shape (docs/SHARED-FLIGHTS.md): stop 0 is where the Starseeker is parked; each later stop is
+   { at, board: [bookings], alight: [bookings] }. Each booking boards once and gets off once, at its own from and to.
+   A leg is a pickup while the cabin is empty and a passenger leg once anyone is aboard. The sample flights carry one
+   booking each. Seats, party size and bookings per flight are placeholders from that note, not in the data. */
+var SEAT_N = 4, PARTY_MAX = 3;
+var POOL_C = [["orbital-depot", "Booking A boards"], ["iss", "Booking A gets off, booking B boards"], ["lunar-data-center", "Booking B gets off"]];
+function passengerList(i) {
+  var lg = SF.RIDES[i].record.log, fl = lg.flown || [], h = hailOf(lg.hail) || {};
+  var bk = { id: lg.hail, lead: (h.rider || "").split(",")[0], from: lg.from, to: lg.to, b: -1, a: -1 };
+  var stops = fl.length ? [{ at: fl[0].from, arrive: null, leave: fl[0].depart, board: [], alight: [] }] : [];
+  fl.forEach(function (f, k) { stops.push({ at: f.to, arrive: f.arrive, leave: fl[k + 1] ? fl[k + 1].depart : null, board: [], alight: [] }); });
+  stops.forEach(function (s, k) {
+    if (bk.b < 0 && s.at === bk.from) bk.b = k;
+    else if (bk.b >= 0 && bk.a < 0 && s.at === bk.to) bk.a = k;
+  });
+  if (bk.b >= 0) stops[bk.b].board.push(bk);
+  if (bk.a >= 0) stops[bk.a].alight.push(bk);
+  return { stops: stops, bookings: [bk], legs: fl };
+}
+// Bookings in the cabin once the Starseeker has reached stop r (and while it flies the leg after it).
+function aboardAt(P, r) { return P.bookings.filter(function (b) { return b.b >= 0 && b.b <= r && (b.a < 0 || r < b.a); }); }
+function seatsHtml(on) {
+  var cls = [];
+  on.forEach(function () { cls.push("on"); for (var k = 1; k < PARTY_MAX; k++) cls.push("maybe"); });
+  var cells = "";
+  for (var k = 0; k < SEAT_N; k++) cells += '<span class="seat' + (cls[k] ? " " + cls[k] : "") + '"></span>';
+  var txt = on.length
+    ? "Seats in use <b>" + on.length + " lead passenger" + (on.length > 1 ? "s" : "") + "</b> + party not set yet / <b>4</b> (placeholder)"
+    : "Seats in use <b>0</b>, cabin empty / <b>4</b> (placeholder)";
+  return cells + '<span class="st">' + txt + "</span>";
+}
+function renderPlist() {
+  var P = RS.pl, n = P.stops.length - 1;
+  $("#plStops").innerHTML = P.stops.map(function (s, k) {
+    var ev = [];
+    s.board.forEach(function (b) { ev.push('<li><span class="bd">Boards</span>booking <b class="mono">' + esc(b.id) + "</b> \u00B7 lead " + esc(b.lead || "not in the data") + " \u00B7 party not set yet (1\u20133, placeholder)</li>"); });
+    s.alight.forEach(function (b) { ev.push('<li><span class="al">Gets off</span>booking <b class="mono">' + esc(b.id) + "</b></li>"); });
+    if (!ev.length) ev.push('<li class="dim">' + (k === 0 ? "Parked here, cabin empty" : "No one boards or gets off") + "</li>");
+    var tm = k === 0 ? "leaves " + s.leave : "arrives " + s.arrive + (s.leave ? " \u00B7 leaves " + s.leave : " \u00B7 end of flight");
+    var out = '<li class="pst" data-k="' + k + '"><span class="wp">' + k + '</span><div class="nm">' + placeH(s.at) + '</div><div class="m">Stop ' + k + (k === 0 ? ", parked" : "") + " \u00B7 " + esc(tm) + "</div><ul>" + ev.join("") + "</ul></li>";
+    if (k < n) {
+      var on = aboardAt(P, k), f = P.legs[k];
+      out += '<li class="pleg" data-l="' + k + '"><span class="r">Leg ' + (k + 1) + " \u00B7 " + (on.length ? "passenger leg" : "pickup") + "</span><br>" + (on.length ? on.length + " booking aboard" : "cabin empty") + " \u00B7 " + fmt(f.kwh) + " kWh flown</li>";
+    }
+    return out;
+  }).join("");
+  $("#plKv").innerHTML = "<dt>Bookings on this flight</dt><dd>" + P.bookings.length + " (run log)</dd><dt>Bookings per flight</dt><dd>up to 3 (placeholder)</dd><dt>Seats on the " + esc(SF.SHIP) + "</dt><dd>4 (placeholder)</dd><dt>Party per booking</dt><dd>1\u20133 (placeholder)</dd>";
+  $("#plCon").innerHTML = '<summary>Concept: pooled flight <span class="tag sim">Concept, not built yet</span></summary>' +
+    '<p class="note" style="margin:6px 0 0">How one ' + esc(SF.SHIP) + " could carry more than one booking. Stops picked by hand from places in the data; no legs planned and no numbers.</p>" +
+    '<ol class="stops">' + POOL_C.map(function (s, k) { return '<li><span class="wp">' + (k + 1) + "</span><span>" + placeH(s[0]) + '</span><span class="m">' + esc(s[1]) + "</span></li>"; }).join("") + "</ol>";
+  RS.plKey = null;
+}
+function plistTick(st) {
+  var P = RS.pl, n = P.stops.length - 1, fl = st.phase === "flight";
+  var r = st.phase === "arrived" ? n : st.phase === "parked" ? 0 : st.i;
+  var key = r + st.phase;
+  if (key === RS.plKey) return;
+  RS.plKey = key;
+  $$("#plStops .pst").forEach(function (li, k) {
+    var on = !fl && k === r;
+    li.classList.toggle("on", on); li.classList.toggle("past", k < r || (fl && k === r));
+    if (on) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
+  });
+  $$("#plStops .pleg").forEach(function (li, k) { li.classList.toggle("on", fl && k === r); li.classList.toggle("past", k < r); });
+  $("#plSeats").innerHTML = seatsHtml(aboardAt(P, r));
+}
+
+/* ---------- replay ---------- */
+function bindRide() {
+  $("#rtabs").innerHTML = SF.RIDES.map(function (r, i) { var h = hailOf(r.record.hail_id) || {}; return '<a href="#flight' + (i + 1) + '">' + (i + 1) + "<span> " + esc(h.title || "") + "</span></a>"; }).join("");
+  $("#play").addEventListener("click", function () { if (!RS) return; if (RS.cur >= RS.rp.end) RS.cur = RS.rp.start; RS.playing = !RS.playing; playIcon(); });
+  $("#srange").addEventListener("input", function () { if (!RS) return; RS.cur = RS.rp.start + (RS.rp.end - RS.rp.start) * (+this.value / 1000); RS.scrubbed = true; });
+  $("#speed").addEventListener("change", function () { if (RS) RS.speed = +this.value; });
+  $("#cammode").addEventListener("click", function () { if (!RS) return; RS.over = !RS.over; this.setAttribute("aria-pressed", String(RS.over)); });
+  bindRig($("#rhost"), { set az(v) { if (RS) RS.yaw = v; }, get az() { return RS ? RS.yaw : 0; }, set el(v) { if (RS) RS.pitch = v; }, get el() { return RS ? RS.pitch : 0; }, zoom: function (k) { if (RS) RS.zf = Math.max(0.25, Math.min(8, RS.zf * k)); } });
+}
+function playIcon() {
+  $("#playicon").innerHTML = RS && RS.playing ? '<path d="M3 2h4v12H3zM9 2h4v12H9z"/>' : '<path d="M4 2l10 6-10 6z"/>';
+  $("#play").setAttribute("aria-label", RS && RS.playing ? "Pause" : "Play");
+}
+function loadRide(i) {
+  if (RS && RS.i === i) return;
+  var ride = SF.RIDES[i], rp = SF.replay(ride), rec = rp.record, h = hailOf(rec.hail_id) || {};
+  var span = rp.end - rp.start, local = rp.focus !== "sun";
+  // Local scenes open further out and higher, so the planet frames the shot instead of filling it.
+  RS = { pax: (h.rider || "").split(",")[0] || "passenger", i: i, rp: rp, cur: rp.start, playing: !reduced, speed: +$("#speed").value, rate: span / 28, over: false,
+    yaw: 0, pitch: local ? 0.55 : 0.3, zf: rp.focus === "earth" ? 2.6 : local ? 1.6 : 1, fwd: window.THREE ? V(0, 0, 1) : null, camp: null, local: local };
+  RS.pl = passengerList(i);
+  $("#cammode").setAttribute("aria-pressed", "false");
+  $$("#rtabs a").forEach(function (a, k) { if (k === i) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  $("#rtitle").textContent = shipWords(h.title || rec.hail_id) + " \u00B7 " + SF.name(rec.log.from) + " \u2192 " + SF.name(rec.log.to);
+  $("#rnote").textContent = local ? "Centred on " + SF.name(rp.focus) + ", distances in km. Not to scale: the " + SF.SHIP + " and small moons are enlarged. The flight is simulated."
+    : "Not to scale: distances compressed, sizes exaggerated. Planet positions are real; the flight is simulated.";
+  $("#sticks").innerHTML = rp.events.map(function (e) { return '<span class="tick ' + e.kind + '" style="left:' + ((e.jd - rp.start) / span * 100).toFixed(2) + '%" title="' + W(e.title) + '"></span>'; }).join("");
+  $("#callouts").innerHTML = ""; RS.ckey = null;
+  playIcon();
+  renderPlist();
+  renderDebrief(i);
+  if (GL) {
+    buildRideScene();
+    var L0 = rp.legs[0], d0 = shipPos(L0.arr).sub(shipPos(L0.dep)); // face along the first leg from the start
+    if (d0.lengthSq() > 1e-12) RS.fwd.copy(d0.normalize());
+  }
+}
+function placeK(id, jd) { var b = SF.pos(RS.rp.focus, jd); return axes(d3(SF.pos(id, jd), b), AU / 1000); }
+function buildRideScene() {
+  if (RS.sc) return;
+  var rp = RS.rp, focus = rp.focus, sc = new THREE.Scene(), local = focus !== "sun";
+  var cam = new THREE.PerspectiveCamera(50, (GL.W || 1) / (GL.H || 1), local ? 0.002 : 0.02, 9000);
+  if (RS.labels) RS.labels.clear();
+  $("#rlabels").textContent = ""; // drop the last flight's labels
+  var labels = LabelSet($("#rlabels")); RS.labels = labels; RS.sc = sc; RS.cam = cam; RS.bodies = [];
+  sc.add(stars());
+  if (local) {
+    sc.add(new THREE.AmbientLight(0x2c3442, 0.7));
+    var dl = new THREE.DirectionalLight(0xfff1dc, 1.5); sc.add(dl); sc.add(dl.target); RS.dl = dl;
+    var sun = sunObj(30); sc.add(sun); RS.sun = sun;
+    var P = SF.place(focus), R = P.radius_km / 1000, pm = planetMesh(focus); pm.scale.setScalar(R); sc.add(pm);
+    pm.add(atmo(focus === "earth" ? "rgba(120,170,255,.35)" : "rgba(230,140,100,.22)", 1));
+    RS.bodies.push({ id: focus, m: pm, r: R });
+    labels.add({ html: esc(SF.name(focus)), cls: "k-planet", pri: 50, pos: function () { return V(); } });
+    SF.E.PLACES.forEach(function (Q) {
+      if (Q.id === focus || SF.system(Q.id) !== focus) return;
+      var id = Q.id, m, r;
+      if (Q.kind === "moon") { r = Math.max(0.05, Q.radius_km / 1000); m = planetMesh(id); m.scale.setScalar(r); }
+      else { r = 0.03; m = new THREE.Mesh(GEO.oct || (GEO.oct = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: Q.real ? 0xdfe6ee : 0xffb65c, wireframe: true })); m.scale.setScalar(r); }
+      sc.add(m); RS.bodies.push({ id: id, m: m, r: r });
+      var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 160).map(function (q) { return axes(q, 1 / 1000); });
+      if (ring.length) { var g = new THREE.Group(); g.add(lineOf(ring, 0xffffff, 0.14)); sc.add(g); RS.bodies.push({ id: Q.parent, ringOf: id, m: g, r: 0 }); }
+      labels.add({ html: esc(SF.name(id)), cls: Q.kind === "moon" ? "k-planet" : "k-place", pri: Q.kind === "moon" ? 40 : 30, pos: function () { return placeK(id, RS.cur); } });
+    });
+  } else {
+    sc.add(new THREE.AmbientLight(0x3a4252, 0.6)); sc.add(new THREE.PointLight(0xfff1dc, 1.7, 0)); sc.add(sunObj(SIZE.sun));
+    var used = {}; rp.legs.forEach(function (L) { used[L.from] = used[L.to] = 1; });
+    SF.E.PLACES.forEach(function (Q) {
+      var id = Q.id, m, minPx = 2;
+      if (Q.kind === "planet" || id === "ceres") {
+        m = planetMesh(id); minPx = 2.6;
+        var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 180).map(function (q) { return S([q[0] / AU, q[1] / AU, q[2] / AU]); });
+        if (ring.length) sc.add(lineOf(ring, 0xffffff, 0.12));
+      } else if (Q.kind === "moon" && used[id]) m = planetMesh(id);
+      else if (used[id]) m = new THREE.Mesh(GEO.oct || (GEO.oct = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: Q.real ? 0xdfe6ee : 0xffb65c, wireframe: true }));
+      else return;
+      m.scale.setScalar(dispR(id)); sc.add(m);
+      RS.bodies.push({ id: id, m: m, r: Q.kind === "station" ? 0.05 : dispR(id), minPx: minPx, helio: true });
+      labels.add({ html: esc(SF.name(id)), cls: Q.kind === "planet" ? "k-planet" : "k-place", pri: used[id] ? 60 : 40, pos: function () { return marker(id, RS.cur); } });
+    });
+  }
+  // The flown path, dim in full and bright up to now. Only the flights are drawn: a parked Starseeker rides its moon
+  // or station around the planet, and months of that sampled coarsely would scribble zigzags over the scene.
+  var pts = [], ts = [], fly = rp.legs.reduce(function (a, L) { return a + (L.arr - L.dep); }, 0) || 1;
+  rp.legs.forEach(function (L) {
+    var n = Math.max(8, Math.round(600 * (L.arr - L.dep) / fly));
+    for (var k = 0; k <= n; k++) { var j = L.dep + (L.arr - L.dep) * k / n; ts.push(j); pts.push(shipPos(j)); }
+  });
+  RS.path = lineOf(pts, 0x9cc3ff, 0.22); RS.done = lineOf(pts, 0x9cc3ff, 1); RS.done.geometry.setDrawRange(0, 0); RS.ts = ts;
+  sc.add(RS.path); sc.add(RS.done);
+  RS.ship = makeShip(); sc.add(RS.ship);
+  RS.shipScale = local ? 0.14 : 0.55;
+  RS.ship.scale.setScalar(RS.shipScale);
+  onResize();
+}
+var NEAR = 0.06;
+function shipPos(jd) {
+  if (RS.rp.focus === "sun") return shipC(RS.rp, jd).v;
+  var s = RS.rp.at(jd), b = SF.pos(RS.rp.focus, jd); return axes(d3(s.p, b), AU / 1000);
+}
+// Sky days per real second. In the heliocentric scene a parked or waiting Starseeker circles its moon every few
+// days, so those stretches play slower: each takes at least about 8 s at 1x.
+function effRate() {
+  var rp = RS.rp, base = RS.rate * RS.speed;
+  if (RS.local) return base;
+  var st = rp.at(RS.cur), w;
+  if (st.phase === "parked") w = rp.legs[0].dep - rp.start;
+  else if (st.phase === "dwell" && st.i > 0) w = rp.legs[st.i].dep - rp.legs[st.i - 1].arr;
+  else return base;
+  return Math.min(base, Math.max(w / 8, 0.25) * RS.speed);
+}
+function rideFrame(dt, t) {
+  if (!RS) return;
+  var rp = RS.rp, span = rp.end - rp.start, er = effRate();
+  if (RS.playing) { RS.cur += dt * er; if (RS.cur >= rp.end) { RS.cur = rp.end; RS.playing = false; playIcon(); } }
+  var jd = RS.cur, f = (jd - rp.start) / span, st = rp.at(jd), L = st.leg, jump = !!RS.scrubbed; // a scrub jumps the camera, no swoop
+  var fl = st.phase === "flight";
+  if (t - rHudT > 90 || RS.scrubbed) {
+    rHudT = t; RS.scrubbed = false;
+    if (document.activeElement !== $("#srange")) $("#srange").value = String(Math.round(f * 1000));
+    $("#sfill").style.width = (f * 100).toFixed(2) + "%"; $("#sknob").style.left = (f * 100).toFixed(2) + "%";
+    $("#tcode").textContent = iso(jd);
+    plistTick(st);
+    var P = RS.pl, r = st.phase === "arrived" ? P.stops.length - 1 : st.phase === "parked" ? 0 : st.i, on = aboardAt(P, r);
+    var dkm = Math.hypot.apply(null, d3(SF.pos(L.to, jd), st.p)) * AU;
+    $("#rtele").innerHTML = '<div class="hudbox"><div class="caps">Sky time \u00B7 UTC \u00B7 simulated</div><div class="big">' + iso(jd) + "</div>1 s = <b>" + SF.dur(er) + "</b>" + (er < RS.rate * RS.speed - 1e-9 ? " (slowed while waiting)" : "") + "<br>" +
+      esc(SF.SHIP) + " <b>" + esc(rp.record.score.car) + "</b><br>Leg <b>" + (st.i + 1) + "/" + rp.legs.length + "</b> \u00B7 " + esc(on.length || fl && L.kind !== "pickup" ? "passenger" : legKind(L.kind)) + " \u00B7 <b>" + esc(st.phase) + "</b><br>" +
+      esc(SF.name(L.from)) + " \u2192 " + esc(SF.name(L.to)) + "<br>To " + esc(SF.name(L.to)) + " <b>" + (st.phase === "arrived" ? "arrived" : dist(dkm)) + "</b><br>" +
+      (on.length ? "Aboard <b>" + esc(RS.pax) + "</b> \u00B7 party not set yet" : "Cabin empty \u00B7 picking up <b>" + esc(RS.pax) + "</b>") + "<br>Seats <b>4</b> (placeholder)</div>";
+    var win = er * 6, vis = rp.events.filter(function (e) { return e.jd <= jd && jd - e.jd <= Math.max(win, span * 0.02); }).slice(-3);
+    var key = vis.map(function (e) { return e.jd + e.kind; }).join();
+    if (key !== RS.ckey) {
+      RS.ckey = key;
+      $("#callouts").innerHTML = vis.map(function (e) { return '<div class="co ' + e.kind + '"><div class="k">' + esc(e.kind) + ' \u00B7 <span class="mono">' + iso(e.jd) + "</span></div><b>" + W(e.title) + "</b><p>" + W(e.text) + "</p></div>"; }).join("");
+      RS.alert = vis.some(function (e) { return e.kind === "checkpoint" || e.kind === "incident"; });
+    }
+    if (t - (RS.pillT || -1e9) > 1000) { RS.pillT = t; var s = SF.sky(); $("#pillClock").textContent = iso(s.jd) + " UTC"; $("#pillSeason").textContent = "S" + s.season; }
+  }
+  if (!GL || !RS.sc) return;
+  var cam = RS.cam, GW = GL.W, GH = GL.H, p = shipPos(jd);
+  // Bodies. In the compressed heliocentric scene, a body near the Starseeker shrinks to a fraction of its distance
+  // from the ship, so the ship stays the subject (the scene is already labelled "not to scale").
+  RS.bodies.forEach(function (b) {
+    if (RS.local) {
+      if (b.ringOf) { b.m.position.copy(b.id === rp.focus ? V() : placeK(b.id, jd)); return; }
+      if (b.id !== rp.focus) b.m.position.copy(placeK(b.id, jd));
+    } else {
+      var v = marker(b.id, jd), rr = Math.min(b.r, Math.max(0.03, v.distanceTo(p) * NEAR));
+      b.m.position.copy(v); b.m.scale.setScalar(Math.max(rr, pxw(cam, v, GH) * (b.minPx || 2)));
+    }
+  });
+  if (RS.local) {
+    var sd = axes(d3([0, 0, 0], SF.pos(rp.focus, jd)), 1); sd.normalize();
+    RS.dl.position.copy(sd.clone().multiplyScalar(100)); RS.sun.position.copy(sd.clone().multiplyScalar(3000));
+  }
+  var q = shipPos(Math.min(rp.end, jd + span / 900)), d = q.clone().sub(p);
+  // Near a planet a parked Starseeker rides its station's orbit, often several laps per second of replay. The camera
+  // then rides with it, locked to the orbit (ahead along the motion, up away from the planet), instead of chasing.
+  var snap = reduced || jump || (RS.local && !fl);
+  if (d.lengthSq() > 1e-12 && (fl || RS.local)) RS.fwd.lerp(d.normalize(), snap ? 1 : 1 - Math.exp(-dt * 6)).normalize();
+  RS.ship.position.copy(p); RS.ship.lookAt(p.clone().add(RS.fwd));
+  RS.ship.userData.glow.material.opacity = fl ? 1 : 0.2;
+  RS.ship.userData.glow.scale.setScalar(fl ? 0.42 + (reduced ? 0 : 0.06 * Math.sin(t / 45)) : 0.25);
+  var nd = 0; while (nd < RS.ts.length && RS.ts[nd] <= jd) nd++;
+  RS.done.geometry.setDrawRange(0, nd);
+  // Camera: chase (behind and above) or overhead. In the heliocentric scene a parked or waiting Starseeker circles
+  // its moon fast, so the camera holds on that planet's system instead of chasing the ship around it.
+  var D = (RS.local ? 0.75 : 3.2) * RS.zf, want, look, hold = null;
+  if (!RS.local && !RS.over && !fl) { var pl = st.phase === "arrived" ? L.to : L.from, sys = SF.system(pl); if (sys && sys !== pl && sys !== "sun") hold = sys; }
+  if (hold) {
+    var c = marker(hold, jd), R = Math.max(c.distanceTo(p) * 3.5, D * 1.2), cp = Math.cos(RS.pitch);
+    want = c.clone().add(V(Math.sin(RS.yaw) * cp, Math.sin(RS.pitch) + 0.1, Math.cos(RS.yaw) * cp).multiplyScalar(R)); look = c.clone();
+  } else if (!RS.over) {
+    // Near a planet "up" is away from its centre, so a low orbit opens on the ship over the limb, not on a wall of planet.
+    var up = RS.local && p.lengthSq() > 1e-12 ? p.clone().normalize() : V(0, 1, 0);
+    var back = RS.fwd.clone().multiplyScalar(-1).applyAxisAngle(up, RS.yaw);
+    want = p.clone().add(back.multiplyScalar(D)).add(up.clone().multiplyScalar(D * Math.max(0.05, Math.sin(RS.pitch) + 0.1)));
+    look = p.clone().add(RS.fwd.clone().multiplyScalar(D * 0.6));
+    if (RS.local) {
+      var Rp = SF.place(rp.focus).radius_km / 1000 * 1.06; if (want.length() < Rp) want.setLength(Rp); // never inside the planet
+      RS.up = RS.up && !snap ? RS.up.lerp(up, 1 - Math.exp(-dt * 3)).normalize() : up.clone();
+    }
+  } else {
+    var Hgt = (RS.local ? SF.place(rp.focus).radius_km / 1000 * 7 : 70) * RS.zf;
+    want = p.clone().add(V(Math.sin(RS.yaw) * Hgt * 0.15, Hgt, Math.cos(RS.yaw) * Hgt * 0.15)); look = p.clone();
+  }
+  if (!RS.camp || snap) RS.camp = want.clone(); else RS.camp.lerp(want, 1 - Math.exp(-dt * 5));
+  if (!RS.look || snap) RS.look = look.clone(); else RS.look.lerp(look, 1 - Math.exp(-dt * 5));
+  if (RS.camp.distanceTo(p) > D * 30 && !RS.over && !hold) { RS.camp.copy(want); RS.look.copy(look); }
+  cam.up.copy(RS.local && !RS.over && !hold && RS.up ? RS.up : V(0, 1, 0));
+  cam.position.copy(RS.camp); cam.lookAt(RS.look);
+  RS.labels.update(cam, GW, GH);
+  var tb = $("#rtbox"); tb.classList.toggle("alert", !!RS.alert);
+  tbox(tb, cam, GW, GH, p, RS.shipScale * 0.6, 44);
+  if (t - (RS.tt || 0) > 150) { RS.tt = t; $("#rti").innerHTML = "<b>" + esc(SF.SHIP) + " " + esc(rp.record.score.car) + "</b>" + esc(st.phase) + " \u00B7 " + (fl ? Math.round(st.f * 100) + "% of leg" : esc(SF.name(st.phase === "arrived" ? L.to : L.from))); }
+  GL.r.render(RS.sc, cam);
+}
+
+/* ---------- receipt ---------- */
+function partOf(sc, k) { return sc.parts.filter(function (p) { return p.key === k; })[0]; }
+function partCell(p) {
+  if (!p) return '<span class="dim">not scored</span>';
+  var f = p.got / p.max, c = f >= 0.999 ? "pass" : f >= 0.5 ? "best" : "fail";
+  return '<span class="' + c + '" title="' + esc(shipWords(p.note)) + '">' + fmt(p.got, p.got % 1 ? 1 : 0) + " / " + p.max + "</span>";
+}
+function renderDebrief(i) {
+  $("#debrief").innerHTML = debrief(i);
+  $$("#debrief [data-ev]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var e = RS.rp.events[+b.dataset.ev];
+      RS.cur = Math.min(RS.rp.end, e.jd + (RS.rp.end - RS.rp.start) * 0.001); RS.playing = false; RS.scrubbed = true; playIcon();
+      window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+    });
+  });
+}
+function debrief(i) {
+  var r = SF.RIDES[i], rec = r.record, sc = rec.score, lg = rec.log, h = hailOf(lg.hail) || {}, P = RS.pl;
+  var parts = sc.parts.map(function (p) {
+    var f = p.got / p.max, col = f >= 0.999 ? "var(--ok)" : f >= 0.5 ? "var(--sun)" : "var(--bad)";
+    return '<div class="sp"><span class="lb">' + esc(p.label) + '</span><span class="bar"><i style="width:' + (f * 100).toFixed(1) + "%;background:" + col + '"></i></span><span class="v">' + fmt(p.got, p.got % 1 ? 1 : 0) + " / " + p.max + '</span><span class="nt">' + esc(shipWords(p.note)) + "</span></div>";
+  }).join("");
+  var legRows = r.legs.map(function (L, j) {
+    var f = lg.flown[j] || {}, rf = L.refly || {}, ok = rf.result === "PASS";
+    var rfTxt = ok ? '<span class="pass">PASS</span> \u00B7 miss ' + fmt(rf.final_miss_km, 1) + " km" : /local/.test(rf.result || "") ? '<span class="dim">Local hop</span>' : '<span class="fail">' + esc(rf.result || "") + "</span>";
+    return "<tr><td>" + esc(L.leg_id) + " \u00B7 " + esc(legKind(L.kind)) + '</td><td style="font-family:Inter">' + (f.from ? placeH(f.from) : esc(L.from)) + " \u2192 " + (f.to ? placeH(f.to) : esc(L.to)) + "</td><td>" + esc(L.depart) + "</td><td>" + esc(L.arrive) + '</td><td class="r">' + SF.dur(L.tof_days) + '</td><td class="r">' + fmt(L.battery_kwh) + '</td><td class="r">' + money(L.fare_usd) + "</td><td>" + rfTxt + "</td></tr>";
+  }).join("");
+  var flownRows = lg.flown.map(function (f) {
+    return "<tr><td>" + esc(legKind(f.leg)) + '</td><td style="font-family:Inter">' + placeH(f.from) + " \u2192 " + placeH(f.to) + "</td><td>" + esc(f.depart) + "</td><td>" + esc(f.arrive) + '</td><td class="r">' + fmt(f.kwh) + "</td><td>" + (f.gate === "PASS" ? '<span class="pass">PASS</span>' : f.gate === "local" ? '<span class="dim">Local hop</span>' : esc(f.gate)) + "</td></tr>";
+  }).join("");
+  var cps = (lg.checkpoints || []).map(function (cp) {
+    var rows = cp.options_hindsight.map(function (o) {
+      var chosen = o.option.indexOf(cp.decision.action) === 0, best = o.option === cp.best;
+      return "<tr><td" + (best ? ' class="best"' : "") + ">" + (best ? "\u2605 " : "") + esc(shipWords(o.option)) + "</td><td>" + (chosen ? '<span class="tag ride">Agent chose</span>' : "") + (best ? ' <span class="tag me">Best</span>' : "") + '</td><td class="r">' + fmt(o.used_kwh) + "</td><td>" + esc(o.arrive) + "</td></tr>";
+    }).join("");
+    return '<div class="cp"><div class="h"><span class="tag me">Checkpoint ' + cp.n + "</span><b>" + esc(cp.kind.replace("_", " ")) + " at " + esc(SF.name(cp.place)) + '</b><span class="mono dim">' + esc(cp.at) + " \u00B7 " + esc(legKind(cp.leg)) + " leg \u00B7 cause " + esc(cp.cause.replace("_", " ")) + "</span></div>" +
+      '<p style="margin:0 0 8px">The agent called <code class="mono" style="color:var(--me)">decide</code> and chose <b>' + esc(cp.decision.action) + "</b>. Best in hindsight: <b class=\"best\">" + esc(cp.best) + "</b>.</p>" +
+      '<div class="tw"><table class="t"><thead><tr><th>Option (hindsight)</th><th></th><th class="r">Energy used, kWh</th><th>Arrival</th></tr></thead><tbody>' + rows + "</tbody></table></div></div>";
+  }).join("") || '<p class="dim" style="margin:0">No checkpoints on this flight.</p>';
+  var inc = sc.incidents.length ? '<div class="tw"><table class="t"><thead><tr><th>Incident</th><th>Leg</th><th>Place</th><th>At</th><th class="r">Hours</th><th class="r">kWh</th><th>Note</th></tr></thead><tbody>' + sc.incidents.map(function (x) {
+    return "<tr><td>" + esc(x.kind.replace("_", " ")) + "</td><td>" + esc(legKind(x.leg)) + "</td><td>" + esc(SF.name(x.place)) + "</td><td>" + esc(x.at) + '</td><td class="r">' + fmt(x.hours, 1) + '</td><td class="r">' + fmt(x.kwh) + '</td><td class="wrapc">' + esc(shipWords(x.note)) + "</td></tr>";
+  }).join("") + "</tbody></table></div>" : '<p class="dim" style="margin:0">No incidents.</p>';
+  // Passenger list per booking (the booking half of the score) and the ship block (the flight half).
+  var paxRows = P.bookings.map(function (b) {
+    return '<tr><td class="mono">' + esc(b.id) + '</td><td style="font-family:Inter">' + esc(b.lead || "not in the data") + '</td><td class="dim">not set yet (1\u20133, placeholder)</td><td style="font-family:Inter">' + (b.b >= 0 ? placeH(P.stops[b.b].at) + ' <span class="dim">stop ' + b.b + "</span>" : '<span class="dim">not in the log</span>') + '</td><td style="font-family:Inter">' + (b.a >= 0 ? placeH(P.stops[b.a].at) + ' <span class="dim">stop ' + b.a + "</span>" : '<span class="dim">not in the log</span>') +
+      '</td><td class="r">' + partCell(partOf(sc, "pickup")) + '</td><td class="r">' + partCell(partOf(sc, "on_time")) + '</td><td class="r">' + partCell(partOf(sc, "promise")) + '</td><td class="r">' + partCell(partOf(sc, "fare")) + "</td></tr>";
+  }).join("");
+  var pe = partOf(sc, "energy"), pc = partOf(sc, "checker"), pn = partOf(sc, "economy");
+  var nPass = r.legs.filter(function (L) { return (L.refly || {}).result === "PASS"; }).length, nLocal = r.legs.filter(function (L) { return /local/.test((L.refly || {}).result || ""); }).length;
+  var mx = Math.max(sc.used_kwh, sc.par_kwh), over = sc.used_kwh - sc.par_kwh;
+  var onTime = SF.jdOf(sc.arrive) <= SF.jdOf(sc.arrive_by);
+  var stopsList = P.stops.map(function (s, k) {
+    var what = s.board.map(function (b) { return "booking " + esc(b.id) + " boards"; }).concat(s.alight.map(function (b) { return "booking " + esc(b.id) + " gets off"; })).join(", ") || (k === 0 ? "parked here, cabin empty" : "no one boards or gets off");
+    return '<li><span class="wp">' + k + "</span><span>" + placeH(s.at) + " \u00B7 " + what + '</span><span class="m">' + esc(k === 0 ? "leaves " + s.leave : "arrives " + s.arrive) + "</span></li>";
+  }).join("");
+  var evs = RS.rp.events.map(function (e, k) { return '<li><button type="button" class="k-' + e.kind + '" data-ev="' + k + '"><span class="tm">' + iso(e.jd) + "</span><b>" + W(e.title) + '</b><span class="tx">' + W(e.text) + "</span></button></li>"; }).join("");
+  return '<div class="sheet2">' +
+    '<div class="dh"><div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="caps">Flight receipt</span><span class="tag sim">Simulated</span><span class="tag sim">Sample</span></div>' +
+      "<h2>" + esc(SF.name(lg.from)) + " \u2192 " + esc(SF.name(lg.to)) + "</h2>" +
+      '<div class="who">' + esc(h.rider || "") + " \u00B7 " + chip(lg.from) + " \u2192 " + chip(lg.to) + '</div><div class="who" style="margin-top:4px">Sample flight flown by a sample bot, not a player.</div>' +
+      '<div class="meta"><span>' + SF.SHIP + " <b>" + esc(sc.car) + "</b></span><span>Season <b>" + rec.season + "</b></span><span>Run <b>" + esc(rec.run_id) + "</b></span><span>Booking <b>" + esc(lg.hail) + "</b></span></div>" +
+      '<div class="note" style="margin-top:8px">' + esc(shipWords(rec.note)) + "</div></div>" +
+      '<div class="tot"><div><div class="caps">Total</div><span class="n">' + fmt(sc.total) + '</span><span class="d"> /' + sc.out_of + '</span></div><div class="art">' + SF.SHIP_SVG + "</div></div></div>" +
+    '<div class="sec"><h3>Passenger list <span class="tag sim">Simulated</span><span class="tag sim">Simulated \u00B7 placeholder, not set yet</span></h3>' +
+      '<p class="note" style="margin:0 0 8px">Each booking is scored on its own: fast pickup, on time, kept promise, honest fare. Hover a score for its note. Party size is a placeholder; bookings per flight: up to 3 (placeholder). This sample flight carries ' + P.bookings.length + " booking.</p>" +
+      '<div class="tw"><table class="t pt"><thead><tr><th>Booking</th><th>Lead passenger</th><th>Party</th><th>Boards at</th><th>Gets off at</th><th class="r">Fast pickup</th><th class="r">On time</th><th class="r">Kept promise</th><th class="r">Honest fare</th></tr></thead><tbody>' + paxRows + "</tbody></table></div>" +
+      '<div class="cmp" style="margin-top:12px">' +
+        '<div class="c"><div class="caps">Ship \u00B7 energy vs par</div><div class="mono" style="font-size:12px;margin:6px 0 2px">' + esc(pe ? pe.label : "Energy") + " " + partCell(pe) + '</div><div class="mono" style="font-size:12px">Used ' + kwh(sc.used_kwh) + '</div><div class="ebar"><i style="width:' + (sc.used_kwh / mx * 100).toFixed(1) + '%;background:var(--sun)"></i></div><div class="mono" style="font-size:12px">Par ' + kwh(sc.par_kwh) + '</div><div class="ebar"><i style="width:' + (sc.par_kwh / mx * 100).toFixed(1) + '%;background:var(--ride)"></i></div><div class="mono dim" style="font-size:11.5px">' + (sc.beat_par ? "beat par" : "over par by " + kwh(over)) + "</div></div>" +
+        '<div class="c"><div class="caps">Ship \u00B7 every leg checked</div><div class="mono" style="font-size:12px;margin:6px 0 2px">' + esc(pc ? pc.label : "Checker") + " " + partCell(pc) + '</div><dl class="kv"><dt>Re-fly PASS</dt><dd>' + nPass + " of " + r.legs.length + " legs</dd><dt>Local hops, not re-flown</dt><dd>" + nLocal + '</dd></dl><div class="note" style="margin-top:6px">' + esc(shipWords(pc ? pc.note : "")) + "</div></div>" +
+        '<div class="c"><div class="caps">Ship \u00B7 planning economy</div><div class="mono" style="font-size:12px;margin:6px 0 2px">' + esc(pn ? pn.label : "Economy") + " " + partCell(pn) + '</div><div class="note" style="margin-top:6px">' + esc(shipWords(pn ? pn.note : "")) + "</div></div>" +
+      "</div>" +
+      '<div class="caps" style="margin-top:14px">Stops</div><ol class="stops">' + stopsList + "</ol>" +
+    "</div>" +
+    '<div class="sec"><h3>Legs <span class="tag sim">As planned and checked</span></h3><div class="tw"><table class="t"><thead><tr><th>Leg</th><th>Route</th><th>Depart</th><th>Arrive</th><th class="r">Duration</th><th class="r">kWh</th><th class="r">Fare</th><th>Re-fly</th></tr></thead><tbody>' + legRows + "</tbody></table></div>" +
+      '<h3 style="margin-top:14px">As flown <span class="tag sim">After holds and checkpoints</span></h3><div class="tw"><table class="t"><thead><tr><th>Leg</th><th>Route</th><th>Depart</th><th>Arrive</th><th class="r">kWh</th><th>Gate</th></tr></thead><tbody>' + flownRows + "</tbody></table></div></div>" +
+    '<div class="sec"><h3>Checkpoints</h3>' + cps + "</div>" +
+    '<div class="sec"><h3>Incidents</h3>' + inc + "</div>" +
+    '<div class="sec"><h3>Score <span class="mono" style="color:var(--me);letter-spacing:0">' + fmt(sc.total) + " / " + sc.out_of + '</span></h3><div class="sparts">' + parts + "</div></div>" +
+    '<div class="sec"><h3>Promise vs actual</h3><div class="cmp">' +
+      '<div class="c"><div class="caps">Pickup</div><dl class="kv"><dt>Planned</dt><dd>' + esc(sc.planned_pickup) + "</dd><dt>Actual</dt><dd>" + esc(sc.pickup) + "</dd></dl></div>" +
+      '<div class="c"><div class="caps">Arrival</div><dl class="kv"><dt>Quoted</dt><dd>' + esc(sc.promised_arrival) + "</dd><dt>Actual</dt><dd>" + esc(sc.arrive) + "</dd><dt>Slip</dt><dd" + (sc.promise_slip_hours > 0 ? ' class="fail"' : "") + ">" + fmt(sc.promise_slip_hours, 1) + " h</dd><dt>Arrive by</dt><dd>" + esc(sc.arrive_by) + (onTime ? ' <span class="pass">met</span>' : ' <span class="fail">missed</span>') + "</dd></dl></div>" +
+      '<div class="c"><div class="caps">Fare</div><dl class="kv"><dt>Quoted</dt><dd>' + money(lg.quote.fare_usd) + "</dd><dt>Charged</dt><dd>" + money(sc.fare_usd) + "</dd></dl></div>" +
+    "</div></div>" +
+    '<div class="sec"><h3>Timeline <span class="tag sim">From the run log</span></h3><ol class="tl">' + evs + '</ol><p class="note" style="margin:8px 0 0">Pick an event to jump the replay there.</p></div>' +
+    '<div class="sec"><h3>Raw log</h3><span class="raw">/rides/' + esc(rec.run_id) + '.json</span><p class="note" style="margin:8px 0 0">The live site serves the full run log (starfare.ride/1) at this path. The mockup shows it as text.</p></div>' +
+  "</div>";
+}
+/* ---------- intro ---------- */
+var CK = store("sf-tac-checks") || [false, false, false, false];
+function renderChecks(open) {
+  $$("#checks .chk").forEach(function (li, i) {
+    li.classList.toggle("done", !!CK[i]);
+    $(".st", li).textContent = CK[i] ? "Checked" : "Open";
+    if (open != null) { var b = $(".chk-b", li), on = i === open; b.hidden = !on; $(".chk-h", li).setAttribute("aria-expanded", on ? "true" : "false"); }
+  });
+  var n = CK.filter(Boolean).length;
+  $("#prog .tx").textContent = n + " of 4 checks"; $("#prog .pbar i").style.width = n * 25 + "%";
+  store("sf-tac-checks", CK);
+}
+function tick(i, next) { CK[i] = true; renderChecks(next); }
+var PILOT = store("sf-tac-pilot") || { model: "", skills: [] }, SKILLS = ["planning", "weather", "pricing"];
+function renderSkills() {
+  var all = SKILLS.concat(PILOT.skills.filter(function (s) { return SKILLS.indexOf(s) < 0; }));
+  $("#pSkills").innerHTML = all.map(function (s) { return '<button type="button" class="chipb" data-s="' + esc(s) + '" aria-pressed="' + (PILOT.skills.indexOf(s) >= 0) + '">' + esc(s) + "</button>"; }).join("");
+}
+function initIntro() {
+  $("#mcpUrl").value = SF.MCP_URL;
+  $("#partsTotal").textContent = SF.SCORE_PARTS.reduce(function (a, p) { return a + p[2]; }, 0);
+  var mx = Math.max.apply(null, SF.SCORE_PARTS.map(function (p) { return p[2]; }));
+  $("#parts").innerHTML = SF.SCORE_PARTS.map(function (p) { return "<li><span>" + esc(p[1]) + '</span><span class="bar"><i style="width:' + (p[2] / mx * 100) + '%"></i></span><span class="v">' + p[2] + "</span></li>"; }).join("");
+  $("#pModel").value = PILOT.model || "";
+  renderSkills(); renderChecks(0);
+  $("#copyBtn").addEventListener("click", function () {
+    var inp = $("#mcpUrl"), msg = $("#copyMsg");
+    function fallback() { inp.focus(); inp.select(); msg.textContent = "Selected. Press Ctrl+C or Cmd+C to copy."; }
+    try {
+      navigator.clipboard.writeText(SF.MCP_URL).then(function () { msg.textContent = "Copied."; CK[0] = true; renderChecks(); }, fallback);
+    } catch (e) { fallback(); }
+  });
+  $("#grokLink").addEventListener("click", function () { CK[0] = true; renderChecks(); });
+  $("#pSkills").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-s]"); if (!b) return;
+    var s = b.dataset.s, k = PILOT.skills.indexOf(s);
+    if (k >= 0) PILOT.skills.splice(k, 1); else PILOT.skills.push(s);
+    store("sf-tac-pilot", PILOT); renderSkills();
+  });
+  $("#pAdd").addEventListener("click", function () {
+    var v = $("#pCustom").value.trim().toLowerCase().slice(0, 24); if (!v) return;
+    if (PILOT.skills.indexOf(v) < 0) PILOT.skills.push(v);
+    $("#pCustom").value = ""; store("sf-tac-pilot", PILOT); renderSkills();
+  });
+  $("#pCustom").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("#pAdd").click(); } });
+  $("#pModel").addEventListener("input", function () { PILOT.model = this.value.slice(0, 60); store("sf-tac-pilot", PILOT); });
+  $$("[data-next]").forEach(function (b) { b.addEventListener("click", function () { var i = +b.dataset.next; if (i === 1) store("sf-tac-pilot", PILOT); tick(i, i < 3 ? i + 1 : -1); if (i === 3) $("#toSky").focus(); }); });
+  $$(".chk-h").forEach(function (b, i) { b.addEventListener("click", function () { var open = b.getAttribute("aria-expanded") === "true"; renderChecks(open ? -1 : i); }); });
+  $("#introClose").addEventListener("click", closeIntro);
+  $("#toSky").addEventListener("click", function () { store("sf-tac-seen", 1); });
+  $("#intro").addEventListener("click", function (e) { if (e.target === $("#intro")) closeIntro(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("#intro").hidden) closeIntro(); });
+}
+function closeIntro() { store("sf-tac-seen", 1); location.hash = RETURN || "#sky"; }
+var RETURN = "#sky";
+
+/* ---------- routing ---------- */
+function route() {
+  var h = (location.hash || "#sky").slice(1), m = /^(?:flight|ride)([1-9])$/.exec(h);
+  var intro = h === "intro";
+  $("#intro").hidden = !intro;
+  if (intro) { setTimeout(function () { $("#introH").focus(); }, 0); if (view === "ride") glStart(); else skyStart(); return; }
+  if (m && SF.RIDES[+m[1] - 1]) {
+    RETURN = "#" + h; view = "ride"; skyStop();
+    $("#v-sky").hidden = true; $("#v-ride").hidden = false;
+    loadRide(+m[1] - 1);
+    if (GL) attachCanvas($("#rhost"));
+    glStart(); window.scrollTo(0, 0);
+  } else {
+    RETURN = "#sky"; view = "sky"; glStop();
+    if (RS) { RS.playing = false; playIcon(); }
+    $("#v-ride").hidden = true; $("#v-sky").hidden = false; H.resize(); skyStart();
+  }
+}
+
+/* ---------- start ---------- */
+function start() {
+  AU = SF.AU; PLACES = SF.E.PLACES;
+  SHIP_IMG = new Image();
+  SHIP_IMG.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SF.SHIP_TOP_SVG.indexOf("xmlns") < 0 ? SF.SHIP_TOP_SVG.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ') : SF.SHIP_TOP_SVG);
+  TRAFFIC = SF.RIDES.map(function (r) { return { rp: SF.replay(r) }; });
+  H = new Tac($("#cvHome"), {
+    onPick: function (p) {
+      if (!p) { HOME.target = null; return; }
+      if (p.type === "hail") return selectHail(p.id);
+      if (p.type === "traffic") { location.hash = "#flight" + (p.ride + 1); return; }
+      HOME.target = p.id;
+    },
+    onResize: function () { if (H && !H.user) setPreset(HOME.preset === "route" && HOME.route ? "route" : HOME.preset === "route" ? "outer" : HOME.preset); }
+  });
+  setPreset("outer");
+  $("#presets").addEventListener("click", function (e) { var b = e.target.closest("[data-p]"); if (b) setPreset(b.dataset.p); });
+  $$(".c-map .zb").forEach(function (b) { b.addEventListener("click", function () { H.zoomTo(H.k * (b.dataset.z === "1" ? 1.35 : 1 / 1.35)); }); });
+  $("#trafBtn").addEventListener("click", function () { HOME.traffic = !HOME.traffic; this.setAttribute("aria-pressed", HOME.traffic); });
+  $("#hails").addEventListener("click", function (e) { var b = e.target.closest("[data-h]"); if (b) selectHail(b.dataset.h); });
+  $("#poolBtn").addEventListener("click", selectPool);
+  $("#choose").innerHTML = '<div class="empty">' + SF.SHIP_SVG + "Pick a booking on the desk. The engine plans it and lists the " + SF.SHIPS + " that can fly it.</div>";
+  renderDesk(true); renderBoard(); initIntro();
+  // flight page: three.js chase-cam (or the no-WebGL note), controls, sizing
+  initGL(); bindRide();
+  if (window.ResizeObserver) new ResizeObserver(onResize).observe($("#rstage")); else addEventListener("resize", onResize);
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) { glStop(); skyStop(); } else if (view === "ride") glStart(); else skyStart();
+  });
+  addEventListener("hashchange", route);
+  if (!store("sf-tac-seen") && (!location.hash || location.hash === "#sky")) history.replaceState(null, "", "#intro");
+  route();
+  $("#loading").remove();
+}
+SF.loadEngine().then(start).catch(function (e) {
+  $("#loading .box").innerHTML = "The engine did not load (" + SF.esc(e && e.message) + "). Reload to try again.";
+});
+})();
+</script>
