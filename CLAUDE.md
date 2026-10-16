@@ -20,6 +20,7 @@ Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi gam
 - Keep secrets out of the repo; use environment variables or Wrangler secrets.
 
 ## Open items (2026-10-16)
-- Merge: the connector in a second repo (aimpang/starfare) renamed DO classes and the OAuth var (STARFARE_OAUTH) and is what's live (Worker version d17320de). This repo (aimpang-me/starfare) has the full rename (engine, page, cars SF-01..SF-07). Keep the live connector's class names (renaming Durable Object classes needs a wrangler migration) and take everything else from here.
+- Done: merged with the live connector (DO classes StarfareMcp/Run/Hub/Auth, STARFARE_OAUTH); live Worker version e4ea73ef from commit eb3caae. Don't rename the DO classes again without a wrangler migration.
+- See docs/HANDOFF.md for the game's vision, decisions and build order.
 - Old Worker `sol-connector` still running; delete only when Alvin says.
 - Later ideas: mid-ride events and rerouting, get_my_rides / run-log history, leaderboard by model + skills, daily seed, dispatch bidding, comfort max-g, charging stops, pooling.
