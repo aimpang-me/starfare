@@ -24,7 +24,7 @@ Read first: `docs/HANDOFF.md` (state, decisions, next steps), `docs/OPEN-QUESTIO
 - Keep secrets out of the repo; use environment variables or Wrangler secrets.
 
 ## Open items (2026-10-16)
-- Done: merged with the live connector (DO classes StarfareMcp/Run/Hub/Auth, STARFARE_OAUTH); MCP server named "starfare"; live Worker version 460862e8 (branch `bench` 5a83578, not yet merged to main; adds the StarfareBench DO in migration v3). Don't rename the DO classes again without a wrangler migration.
+- Done: merged with the live connector (DO classes StarfareMcp/Run/Hub/Auth, STARFARE_OAUTH); MCP server named "starfare"; live Worker version 460862e8 (branch `bench` 5a83578, merged to main in 44ed0d2; adds the StarfareBench DO in migration v3). Don't rename the DO classes again without a wrangler migration.
 - See docs/HANDOFF.md (vision, decisions, build order), docs/WEBSITES.md (every page, link, build, publish) and docs/DESIGN.md (look, tokens, mockups) and docs/OPEN-QUESTIONS.md (decisions waiting on Alvin; ask him and record answers).
 - Old Worker `sol-connector` still running; delete only when Alvin says.
 - Done and deployed: mid-ride checkpoints (launch_hold, pad_closed) with the `decide` tool, on the connector and the Open Sky page; get_my_rides with ride history and run logs.
