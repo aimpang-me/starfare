@@ -1,13 +1,14 @@
 // Durable Objects that hold the connector's state.
 //   StarfareRun: one per run_id. Holds the run and does the planning, so one run's tool calls are serialized
 //           and different players plan in parallel.
-//   StarfareHub: one global instance. Plan+re-fly cache, hail-terms cache (keyed by hail, t0, season end and hazard seed),
+//   StarfareHub: one global instance. Plan+re-fly cache, hail-terms cache (keyed by hail, t0, season end, hazard seed and engine),
 //           best score per hail, per-IP rate limit, and each signed-in player's ride history (an index row and summary per run;
 //           the full log stays in the run's StarfareRun) plus 24-hour export tokens.
 //           (The best table's key column is still called mission_id; it holds the hail id.)
 // Every RPC method returns plain data; game errors come back as { error } instead of throwing across RPC.
 import { DurableObject } from "cloudflare:workers";
 import { engine } from "./engine.js";
+import META from "./engine/meta.json" with { type: "json" };
 import {
   GameError, checkPad, computeLeg, decide, dispatch, hailInfo, leaveRun, legKey, legPub, openRun, phaseOf, planPickup, planRideLeg, rideCursor,
   rideCursorOf, rideRecord, rideStats, rideSummary, seasonInstance, spaceWeather,
@@ -18,6 +19,7 @@ export const hub = (env) => env.STARFARE_HUB.get(env.STARFARE_HUB.idFromName("hu
 export const runStub = (env, runId) => env.STARFARE_RUN.get(env.STARFARE_RUN.idFromName(runId));
 
 const CACHE_MAX = 5000;
+const termsKey = (id, t0, end, seed) => `${id}|${t0}|${end}|s${seed}|e${META.sha256.slice(0, 16)}`;
 const RIDES_MAX = 1000; // index rows kept per player, newest first
 const EXPORT_MAX = 500; // newest arrived rides in one export file (each is one RPC to its run)
 const EXPORT_MS = 24 * 3600 * 1000;
@@ -192,10 +194,10 @@ export class StarfareHub extends DurableObject {
 
   legGet(k) { const v = this.#get("legcache", k); this.#bump(v ? "leg_hit" : "leg_miss"); return v; }
   legPut(k, v) { this.#put("legcache", k, v); }
-  // Terms depend on the hazard seed (par flies the season's hazards), so the seed is part of the key.
-  // p2: par now answers each checkpoint with hindsight, so terms cached before that are stale.
-  termsGet(id, t0, end, seed) { const v = this.#get("termscache", `${id}|${t0}|${end}|s${seed}|p2`); this.#bump(v ? "terms_hit" : "terms_miss"); return v; }
-  termsPut(id, t0, end, seed, v) { this.#put("termscache", `${id}|${t0}|${end}|s${seed}|p2`, v); }
+  // Terms depend on the hazard seed (par flies the season's hazards) and on the engine that computed them,
+  // so a new engine build never answers from terms an older one cached.
+  termsGet(id, t0, end, seed) { const v = this.#get("termscache", termsKey(id, t0, end, seed)); this.#bump(v ? "terms_hit" : "terms_miss"); return v; }
+  termsPut(id, t0, end, seed, v) { this.#put("termscache", termsKey(id, t0, end, seed), v); }
 
   /** Fixed one-minute window per IP. Returns { ok, n, limit }. */
   hit(ip, limit) {
