@@ -126,7 +126,7 @@ const rules = (E) =>
   "If every berth is taken when the car arrives, it holds in orbit until one frees up, and holding costs 250 kWh an hour. " +
   "Solar radiation storms (space_weather gives the odds per day at a place) hold any launch with a rider aboard until the storm passes; an empty car on its pickup can fly through. " +
   "A storm's particles leave the Sun at 1500 km/s (a fast CME), so a storm reaches Earth about a day after it erupts and Saturn about 11 days after, and fewer reach far out (1/r^2). " +
-  "You dispatch from Earth: at a checkpoint the car acts on your answer only when it arrives, after the light-time there and back (minutes at Mars, over two hours at Saturn). " +
+  "You dispatch from HQ on Earth, which controls every station and car: at a checkpoint the car acts on your answer only when it arrives, after the light-time there and back (minutes at Mars, over two hours at Saturn). " +
   "Mars dust storms (Mars, Mars Base) and Titan haze (Titan, Titan Dock) close those pads: the car waits on the ground, or holds in orbit if it is arriving. check_pad gives their odds. " +
   "A leg between planets that leaves late needs a correction burn (2% of its energy per hour late, up to 30%). " +
   "Score out of 100, from what actually happened: fast pickup 20 (versus the quickest nearby car), arrived on time 20 (falls to 0 at half the trip's allowed time late), " +
@@ -343,7 +343,7 @@ function situation(E, run) {
     options, default: cp.default, checkpoints_left: R.MAX_CHECKPOINTS - ride.checkpoints.length, ask_after_hours: ride.ask_after_hours,
     incidents: incidentsPub(E, ride.incidents),
     hidden: "You never see when a storm or haze ends, nor the unscheduled traffic. check_pad and space_weather forecast from this checkpoint's sky time.",
-    signal: "You dispatch from Earth. This checkpoint's news took signal_delay_minutes to reach you, and your answer takes as long back: the car acts on it at reply_arrives, and holds or waits on the default until then.",
+    signal: "You dispatch from HQ on Earth, which controls every station and car. This checkpoint's news took signal_delay_minutes to reach you, and your answer takes as long back: the car acts on it at reply_arrives, and holds or waits on the default until then.",
     note: "Simulated. The ride's clock is stopped here until you decide.",
     how_to_answer: how,
   };

@@ -520,7 +520,7 @@ function hailRules(){
     "Hazards are simulated and seeded, and you only see forecasts, never what will happen. Before dispatching, check_pad the pickup around the pickup's arrive and the destination around the ride's arrive, and call space_weather from the ride's depart. " +
     "Both are free and don't count as plans. A full pad means the car holds in orbit at " + RR.HOLD_KWH + " kWh an hour, and about " + Math.round(UNSCHED * 100) + "% of traffic is unscheduled and not in the forecast. " +
     "A solar flare holds launches with a rider aboard (an empty car still flies); Mars dust storms and Titan haze close pads; a leg between planets that leaves late needs a correction burn. " +
-    "A storm erupts at the Sun and its particles travel out at 1500 km/s, so it reaches Earth about a day later and Saturn about 11 days later, and fewer reach far out. You dispatch from Earth, so at a checkpoint the car acts on your answer only when it arrives (light-time there and back). " +
+    "A storm erupts at the Sun and its particles travel out at 1500 km/s, so it reaches Earth about a day later and Saturn about 11 days later, and fewer reach far out. You dispatch from HQ on Earth, which controls every station and car, so at a checkpoint the car acts on your answer only when it arrives (light-time there and back). " +
     "If the forecast looks bad, you may replan with wait_days to dodge it, but waiting costs pickup or arrival points.\n" +
     "Then dispatch with the pickup leg, the ride leg, quoted_fare_usd copied exactly from the ride leg's fare_usd, and quoted_arrival: an arrival you can keep, YYYY-MM-DD HH:MM. Start from the ride leg's arrive; you may add a buffer for likely holds. " +
     "The promise score falls to 0 at 6 h after the promised time on quick hails and 1 day on long hauls, and arriving early costs a quarter as much.\n" +
@@ -734,7 +734,7 @@ function hailRulesText(){ return "Pick a car from the fleet; a car on another ri
   "plan_ride flies the rider from the pickup to the destination, after boarding. Then dispatch with the pickup leg, the ride leg, the ride leg's fare, and the arrival you promise the rider. " +
   "Hazards are simulated and seeded per season, and you only see forecasts: check_pad shows booked berths per hour (about " + Math.round(UNSCHED * 100) + "% of traffic is unscheduled and not shown; with every berth taken the car holds in orbit at " + RR.HOLD_KWH + " kWh an hour), " +
   "space_weather shows solar flare odds at a place (a flare holds launches with a rider aboard) and Mars dust or Titan haze odds (they close the pad). A leg between planets that leaves late needs a correction burn. " +
-  "A storm erupts at the Sun and its particles travel out at 1500 km/s, so it reaches Earth about a day later and Saturn about 11 days later, and fewer reach far out. You dispatch from Earth, so at a checkpoint the car acts on your answer only when it reaches it (light-time there and back). " +
+  "A storm erupts at the Sun and its particles travel out at 1500 km/s, so it reaches Earth about a day later and Saturn about 11 days later, and fewer reach far out. You dispatch from HQ on Earth, which controls every station and car, so at a checkpoint the car acts on your answer only when it reaches it (light-time there and back). " +
   "A hold or closed pad longer than an hour stops the ride at a checkpoint: wait or replan a held launch, hold or divert at a closed pad. Once it arrives, the result shows what each choice would have cost. " +
   "Score out of 100, from what actually happens: fast pickup 20 (versus the quickest nearby car), arrived on time 20 (falls to 0 at half the trip's allowed time late), energy flown including holds and corrections versus par 20, " +
   "kept the promise 15 (falls to 0 at 6 h after the promised arrival on quick hails, 1 day on long hauls; arriving early costs a quarter as much), every leg checked 10, honest fare 10 (within $1 of the ride leg's fare_usd), " +
@@ -863,7 +863,7 @@ function cpOut(H){
     signal_delay_minutes: cp.signal_delay_minutes, reply_arrives: isoM(cp.reply_jd), car: cp.car, rider_aboard: cp.rider_aboard,
     held_hours: rnd(cp.held_hours, 1), behind_plan_hours: rnd(cp.behind_plan_hours, 1), extra_kwh: cp.extra_kwh, used_kwh: cp.used_kwh, options: options, default: cp.default,
     checkpoints_left: RR.MAX_CHECKPOINTS - H.ride.checkpoints.length, simulated: true,
-    note: "The ride's clock is stopped here until you decide. You dispatch from Earth: your answer reaches the car at reply_arrives, and it holds or waits until then. You never see when a storm or haze ends, nor the unscheduled traffic." };
+    note: "The ride's clock is stopped here until you decide. You dispatch from HQ on Earth, which controls every station and car: your answer reaches the car at reply_arrives, and it holds or waits until then. You never see when a storm or haze ends, nor the unscheduled traffic." };
 }
 // connector decide(): the same answers, checked the same way. A replan plans a fresh leg (it counts as a plan).
 function decideHail(inp){

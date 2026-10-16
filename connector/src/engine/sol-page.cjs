@@ -1191,7 +1191,8 @@ var C_KMS = 299792.458;    // speed of light, exact (SI)
 var AU_KM = 149597870.7;   // astronomical unit (IAU 2012)
 var CME_KMS = 1500;        // a fast CME, held at constant speed (real CMEs slow down on the way out)
 var CRUISE_MSV_DAY = 1.84; // dose inside a spacecraft in deep space (Curiosity RAD, cruise to Mars; Zeitlin et al. 2013)
-// The dispatcher works from Earth (a simulated assumption): every answer to a checkpoint crosses the real light time.
+// Dispatch HQ is on Earth and controls every station and car (a simulated assumption): every answer to a checkpoint
+// crosses the real light time.
 var DIST = new Map();
 function helioAt(place, jd){ var R = E.EPHEM_RANGE; return E.placeState(place, Math.min(R[1], Math.max(R[0], jd))).r; }
 function sunKm(place, day){ var key = place + "|" + day;

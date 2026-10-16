@@ -316,7 +316,7 @@ test("a pad closed on arrival stops the ride at a checkpoint; diverting to Phobo
   assert.deepEqual([s.checkpoint, s.kind, s.cause, s.place.id, s.leg, s.sky_at, s.car, s.rider_aboard, s.held_hours, s.ask_after_hours, s.checkpoints_left],
     [1, "pad_closed", "dust_storm", "mars-base", "ride", "2029-02-08 03:56", "holding in orbit at Mars Base", true, 1, 1, 7]);
   assert.deepEqual(s.options.map((o) => o.action), ["hold", "divert"]);
-  assert.deepEqual([s.signal_delay_minutes, s.reply_arrives], [7.3, "2029-02-08 04:10"]); assert.match(s.signal, /dispatch from Earth/);
+  assert.deepEqual([s.signal_delay_minutes, s.reply_arrives], [7.3, "2029-02-08 04:10"]); assert.match(s.signal, /dispatch from HQ on Earth, which controls every station and car/);
   assert.deepEqual(s.options[1].alternates, [{ place: "phobos", name: "Phobos", hop_kwh: 11027, hop_hours: 2.2, berths: 3, booked_now: 1 }]);
   assert.deepEqual(s.default, { action: "hold" });
   assert.deepEqual(hailInfo(E, a.run, DUST_NOW).situation, s);
