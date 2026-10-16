@@ -37,7 +37,7 @@ Alvin's game loop, in his words (2026-10-16):
 5. Later: dispatch bidding, comfort (max g), battery and charging stops, pooling.
 
 ## Housekeeping
-- Loose ends: rename the MCP server from "sol" to "starfare" in `connector/src/mcp.js`; delete the old `sol-connector` Worker, the `aimpang/starfare` repo and `Documents\starfare-mine` once Alvin says so.
+- Loose ends: delete the old `sol-connector` Worker, the `aimpang/starfare` repo and `Documents\starfare-mine` once Alvin says so.
 - This repo is public as of 2026-10-16; Alvin may make it private.
 - Windows: `.gitattributes` keeps LF so the engine copy stays byte-identical. `connector/test/e2e.mjs` stop() needs a Windows fallback (if `process.kill(-pid)` throws, `child.kill('SIGKILL')`; wrap `rmSync` in try with `maxRetries: 5`), or cleanup fails with EBUSY. Alvin's PC has this as an uncommitted local change; commit it.
 - The Open Sky pill fix is already in (pills lock while Claude answers, each pill starts fresh, the gate trusts the page's sky date).

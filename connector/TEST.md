@@ -233,7 +233,7 @@ What the checks cover, in the order the brief asked:
 ## 5. Bundle
 
 ```sh
-node node_modules/wrangler/bin/wrangler.js deploy --dry-run --outdir /tmp/sol-connector-dry
+node node_modules/wrangler/bin/wrangler.js deploy --dry-run --outdir /tmp/starfare-dry
 ```
 
 ```
@@ -265,7 +265,7 @@ Content-Type: text/event-stream
 mcp-session-id: e4a4980f16e24dcd826f9387946c978a49ab0ab9a29c32aa4556e1862e09502e
 
 event: message
-data: {"result":{"protocolVersion":"2025-03-26","capabilities":{"tools":{"listChanged":true}},"serverInfo":{"name":"sol","version":"0.1.0"},"instructions":"Starfare is a concept robotaxi service for flying roadsters across the solar system. You are the dispatcher. ...
+data: {"result":{"protocolVersion":"2025-03-26","capabilities":{"tools":{"listChanged":true}},"serverInfo":{"name":"starfare","version":"0.1.0"},"instructions":"Starfare is a concept robotaxi service for flying roadsters across the solar system. You are the dispatcher. ...
 <!doctype html><html lang="en"><head><meta charset="utf-8"> ... <title>Starfare Dispatcher Board</title> ...
 ```
 

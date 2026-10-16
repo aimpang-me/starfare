@@ -32,7 +32,7 @@ const err = (msg) => ({ content: [{ type: "text", text: msg }], isError: true })
 const out = (r) => (r && r.error ? err(r.error) : json(r));
 
 export class StarfareMcp extends McpAgent {
-  server = new McpServer({ name: "sol", version: "0.1.0" }, { instructions: INSTRUCTIONS });
+  server = new McpServer({ name: "starfare", version: "0.1.0" }, { instructions: INSTRUCTIONS });
   initialState = { run_id: null };
 
   async init() {

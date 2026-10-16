@@ -1,6 +1,6 @@
 # Deploying the Starfare connector ("bring your own Grok bot")
 
-This puts the `sol-connector` Worker on `https://sol-connector.<your-subdomain>.workers.dev` so a player can add it to Grok as a custom connector. Their Grok bot then works as Starfare's robotaxi dispatcher through eight MCP tools: simulated riders hail a ride, the bot picks a car from the simulated fleet, checks the forecasts for the simulated hazards, plans the pickup and the ride, quotes the rider a fare and promises an arrival, and dispatches. Starfare scores the dispatch with the engine's own ride-hail rules (`SOLE.R`). It is not the xAI API: nobody needs an xAI key, and Starfare never calls Grok. Grok calls Starfare.
+This puts the `starfare` Worker on `https://starfare.<your-subdomain>.workers.dev` so a player can add it to Grok as a custom connector. Their Grok bot then works as Starfare's robotaxi dispatcher through eight MCP tools: simulated riders hail a ride, the bot picks a car from the simulated fleet, checks the forecasts for the simulated hazards, plans the pickup and the ride, quotes the rider a fare and promises an arrival, and dispatches. Starfare scores the dispatch with the engine's own ride-hail rules (`SOLE.R`). It is not the xAI API: nobody needs an xAI key, and Starfare never calls Grok. Grok calls Starfare.
 
 Legend: **[verified]** means I ran it in the build sandbox against `wrangler dev` (local workerd) or plain Node. **[not verified]** means it needs a Cloudflare account or grok.com, neither of which the sandbox can reach. Nothing here has been deployed.
 
@@ -116,14 +116,14 @@ npm run build
 node node_modules/wrangler/bin/wrangler.js deploy
 ```
 
-No databases or KV namespaces to create: all state is in Durable Objects (`StarfareMcp` per MCP session, `StarfareRun` per run, one `StarfareHub`, and one `StarfareAuth` that only OAuth mode uses), created by the `v1` and `v2` migrations on first deploy. The first deploy may ask you to register a workers.dev subdomain. It prints the URL, for example `https://sol-connector.alvin.workers.dev`. Call it `$URL` below. `npm run dry-run` bundles cleanly [verified]: 4,036 KiB, 974 KiB gzipped, under the free plan's 3 MB gzipped limit and the paid plan's 10 MB.
+No databases or KV namespaces to create: all state is in Durable Objects (`StarfareMcp` per MCP session, `StarfareRun` per run, one `StarfareHub`, and one `StarfareAuth` that only OAuth mode uses), created by the `v1` and `v2` migrations on first deploy. The first deploy may ask you to register a workers.dev subdomain. It prints the URL, for example `https://starfare.alvin.workers.dev`. Call it `$URL` below. `npm run dry-run` bundles cleanly [verified]: 4,036 KiB, 974 KiB gzipped, under the free plan's 3 MB gzipped limit and the paid plan's 10 MB.
 
 ### 3. Check the deployment from your terminal
 
 These requests were run against `wrangler dev` [verified]; against workers.dev they are [not verified].
 
 ```sh
-URL=https://sol-connector.<your-subdomain>.workers.dev
+URL=https://starfare.<your-subdomain>.workers.dev
 curl -s $URL/
 curl -si -X POST $URL/mcp \
   -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
@@ -148,7 +148,7 @@ Following xAI's page (docs.x.ai/grok/connectors) and Wingbot's DEPLOY.md:
 5. Start a chat, turn the connector on, and ask, for example: "Take the Starfare hail iss-crew and get the best score." Others to try: "Use Starfare. List the hails, take phobos-commute, try the nearby cars for pickup, and dispatch the best one with an honest quote." and, for a long haul, "Take the Starfare hail ceres-shift, compare SF-03 and SF-04, and dispatch the better one before its departure passes." The player's own skills and instructions decide how the bot compares cars and objectives; that is the game.
 6. Open `$URL/board`. The run shows up under the hail's title as "planned by Grok bot".
 
-What to check: Grok lists the tools, calls `take_hail`, passes the pickup's `leg_id` as `after_leg` to `plan_ride`, copies the ride leg's `fare_usd` into `dispatch` with a promised arrival, and `dispatch` returns a score with what happened (incidents, actual arrival). Run `node node_modules/wrangler/bin/wrangler.js tail sol-connector` in another terminal to see what reached the Worker.
+What to check: Grok lists the tools, calls `take_hail`, passes the pickup's `leg_id` as `after_leg` to `plan_ride`, copies the ride leg's `fare_usd` into `dispatch` with a promised arrival, and `dispatch` returns a score with what happened (incidents, actual arrival). Run `node node_modules/wrangler/bin/wrangler.js tail starfare` in another terminal to see what reached the Worker.
 
 If it fails, the useful facts are where it stopped (URL rejected, an OAuth prompt appeared, tool list empty, a call failed, 429s) and the `wrangler tail` lines for that moment. Things I could not check and that may matter:
 
@@ -189,7 +189,7 @@ What it does not protect: anyone can click Allow, so anyone can get a player id.
    ```
 
 4. In Grok, remove the old Starfare connector if it is there, then add it again with the same URL, `$URL/mcp`, and leave the client id fields empty (Grok registers itself, as it did with Wingbot) [not verified]. Grok opens the Starfare consent page; press Allow. Then play as in step 5 above. On `/board` the run shows a player tag.
-5. Watch `node node_modules/wrangler/bin/wrangler.js tail sol-connector` while connecting. You should see `POST /mcp 401`, the two `/.well-known` requests, `POST /register`, `GET /authorize`, `POST /authorize`, `POST /token`, then `POST /mcp` with 200s [verified against `wrangler dev` with the MCP SDK client; not verified with Grok].
+5. Watch `node node_modules/wrangler/bin/wrangler.js tail starfare` while connecting. You should see `POST /mcp 401`, the two `/.well-known` requests, `POST /register`, `GET /authorize`, `POST /authorize`, `POST /token`, then `POST /mcp` with 200s [verified against `wrangler dev` with the MCP SDK client; not verified with Grok].
 
 **Turning it off again:** set `"STARFARE_OAUTH": "off"` and deploy [verified locally that `off` serves `/mcp` with no auth and answers 404 on every OAuth path]. Grok then no longer needs its token; whether it reconnects without one, or needs the connector added again, is [not verified].
 
