@@ -39,13 +39,14 @@ Built as `parSet(ids, t0, endJd, seed)` and `termsSet` in `sol-rides.js` (`test-
 ## Benchmark impact
 `Instance.hail_id` becomes `hails: [ids]`, and a suite task is a set of bookings. That is what lifts the saturation in BENCHMARK-GAPS gap 2. A suite can still hold one-booking tasks, so today's five hails stay as the easy class.
 
-## Open numbers for Alvin (placeholders until he sets them)
-1. Seats per Starseeker. Placeholder: 4 for every ship.
-2. Party sizes for new bookings. Placeholder: 1 to 3.
-3. Most bookings in one task. Placeholder: 3 (par cost grows with the stop orders).
-4. Pooled fare. Placeholder: each booking pays the fare of its own leg as the planner prices it; a fare split by seat-distance is the alternative.
-5. How booking scores combine into the flight's total. Placeholder: the mean over bookings weighted by party size, plus the ship parts.
-6. A detour limit (how much later a pooled passenger may arrive than flying alone). Placeholder: none; the on-time part already prices it.
+## Numbers
+Alvin kept all six placeholders as the rules on 2026-10-16. The engine comments still call them placeholders; they change with the next engine edit, since a comment-only change would move the engine sha and force a suite re-cut.
+1. Seats per Starseeker: 4 for every ship.
+2. Party sizes for new bookings: 1 to 3.
+3. Most bookings in one task: 3 (par cost grows with the stop orders).
+4. Pooled fare: each booking pays the fare of its own leg as the planner prices it. A fare split by seat-distance was the alternative.
+5. How booking scores combine into the flight's total: the mean over bookings weighted by party size, plus the ship parts.
+6. A detour limit (how much later a pooled passenger may arrive than flying alone): none; the on-time part already prices it.
 
 ## Build order
 1. Engine core in `world/engine/sol-rides.js`: seats, party, the stops plan, occupancy roles, per-booking times, `check`, `score`. Guarded by the three suites above, unchanged.
