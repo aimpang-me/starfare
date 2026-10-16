@@ -9,7 +9,7 @@ Dark space UI over a live solar-system map: glass panels, thin hairlines, one sa
   `--ok #86d9a8`, `--bad #ff8f80`, radius `--r 14px`, gutter `max(16px, safe-area)`.
 - Layout: top nav (logo, Sky / Ride hails / Riders / Stations / How it works, season + sky date pill, online count); map full-bleed with zoom chips (System, You, Inner, Outer, Tilt); left "Ride request" desk with chat and suggestion pills; right "Choose your ride" / hail panel; sections below for hails, fleet, scoreboard, riders, stations, how a ride is checked.
 - Car art: generic dark coupe SVG (`CAR` in the template). Not a real car. To be replaced by a Starseeker ship (see the decision below).
-- Tags: Real / Fictional / Simulated chips on every place, car and rider. Struck-through numbers with "[no tool made this]" are the provenance gate.
+- Tags: Real / Fictional / Simulated chips on every place, ship and rider. Struck-through numbers with "[no tool made this]" are the provenance gate.
 - Mobile: works at 360 px with no horizontal scroll.
 
 ## Alvin's reference mockups
@@ -23,6 +23,11 @@ Dark SOL for the game and the landing page. Alvin compared a mock of the landing
 
 ## Decision: the ships are Starseekers (2026-10-16)
 The vehicles are ships called **Starseekers**, not flying cars ("Starseeker SF-07 is en route to Titan"). Copy and art say Starseeker; "ship" is the generic word; fleet call signs (SF-07) stay. The art is an original ship design: not SpaceX Starship's steel rocket shape, not a Tesla, not a copy of any Star Citizen ship. Agent-facing tool fields and run-log JSON (`car`, `par_car`, ...) keep their names so Grok runs, old ride logs and tests keep working. Names rejected as taken: Starship (SpaceX), Starfarer (Star Citizen), Starfinder (Paizo), Cutter (Star Citizen). Open check: a trademark search on "Starseeker" before launch.
+
+Shared flights (decided the same day): a Starseeker carries several people. A booking can be a party, a ship has seats, and one ship can pool several bookings with several stops. Art and copy should show a cabin with seats and a passenger manifest, not a single passenger.
+
+## Decision: flights, not rides (2026-10-16)
+Copy says **flight** for the journey, **booking** for a request (was "hail") and **passengers** (was "riders"): "Flight SF-07 to Titan, 4 passengers". "Ride", "ride hail" and "rider" leave all user-facing copy. As with `car`, agent-facing tool names and fields and run-log JSON (`take_hail`, `ride`, `rider`, `starfare.ride/1`) keep their names until a versioned rename, so Grok runs, old logs and tests keep working.
 
 ## Rules
 No Tesla/SpaceX/xAI logos or claims; "Works with Grok" as text only. Label everything simulated. Keep the honesty gate visible.

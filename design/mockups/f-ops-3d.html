@@ -1,0 +1,1824 @@
+<title>Starfare Fleet Operations</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#050a14; --bg-2:#0a1222; --glass:rgba(12,22,40,.72); --line:rgba(120,180,255,.14); --line-2:rgba(120,190,255,.28);
+  --ink:#e8f0fa; --ink-2:#9fb0c6; --ink-3:#66788f; --cy:#5cc8ff; --ride:#8ec5ff; --sun:#ffb65c; --me:#ffcf7a; --ok:#6fe0a8; --bad:#ff8f80; --sim:#7f8a99;
+  --r:6px; --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; --cond:Rajdhani, "Arial Narrow", Inter, sans-serif;
+  --gl:max(16px, env(safe-area-inset-left, 0px)); --gr:max(16px, env(safe-area-inset-right, 0px));
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{background:radial-gradient(1200px 700px at 50% -10%, #0c1a33 0%, var(--bg) 60%) fixed, var(--bg);font:14px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--ride)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--me);outline-offset:2px;border-radius:4px}
+h1,h2,h3{margin:0;font-weight:600}
+[hidden]{display:none!important}
+.caps{text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;font-weight:600;color:var(--ink-3)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-2)}.dim{color:var(--ink-3)}
+.note{font-size:12px;color:var(--ink-3)}
+.tag{display:inline-flex;align-items:center;gap:4px;font:600 9.5px/1 Inter, sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:3px 6px;border-radius:999px;border:1px solid;white-space:nowrap;vertical-align:middle}
+.tag.real{color:var(--ok);border-color:rgba(111,224,168,.4);background:rgba(111,224,168,.08)}
+.tag.fict{color:var(--sun);border-color:rgba(255,182,92,.4);background:rgba(255,182,92,.08)}
+.tag.sim{color:#b9c2ce;border-color:rgba(127,138,153,.5);background:rgba(127,138,153,.12)}
+.tag.ride{color:var(--ride);border-color:rgba(142,197,255,.45);background:rgba(142,197,255,.08)}
+.tag.me{color:var(--me);border-color:rgba(255,207,122,.5);background:rgba(255,207,122,.1)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:34px;padding:6px 13px;border-radius:4px;border:1px solid var(--line-2);background:rgba(92,200,255,.05);cursor:pointer;text-decoration:none;color:var(--ink);font:600 12px/1 Inter, sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.btn:hover{background:rgba(92,200,255,.12);border-color:rgba(92,200,255,.5)}
+.btn.primary{background:var(--cy);border-color:var(--cy);color:#04121f}
+.btn.primary:hover{background:#86d8ff}
+.btn.small{min-height:28px;padding:4px 10px;font-size:11px}
+.btn[aria-pressed="true"]{background:rgba(92,200,255,.18);border-color:var(--cy);color:var(--cy)}
+.wrap{padding-left:var(--gl);padding-right:var(--gr)}
+
+/* panels: navy glass, thin cyan line, cyan and amber corner ticks */
+.panel{position:relative;background:var(--glass);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);min-width:0}
+.panel::before,.panel::after{content:"";position:absolute;width:12px;height:12px;pointer-events:none}
+.panel::before{left:-1px;top:-1px;border-left:2px solid var(--cy);border-top:2px solid var(--cy);border-top-left-radius:var(--r)}
+.panel::after{right:-1px;bottom:-1px;border-right:2px solid var(--sun);border-bottom:2px solid var(--sun);border-bottom-right-radius:var(--r)}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 13px 8px;border-bottom:1px solid var(--line)}
+.ph h2{font:700 14px/1.1 var(--cond);letter-spacing:.2em;text-transform:uppercase;color:var(--ink)}
+.ph .tags{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.pb{padding:10px 13px 13px}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top, 0px);z-index:20;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;padding-top:9px;padding-bottom:9px;background:rgba(5,10,20,.88);border-bottom:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(92,200,255,.6) 30%,rgba(255,182,92,.5) 70%,transparent)}
+.brand{display:flex;flex-direction:column;min-width:0}
+.brand b{font:700 18px/1 var(--cond);letter-spacing:.34em}
+.brand span{font:600 10px/1.2 var(--mono);letter-spacing:.14em;color:var(--cy);text-transform:uppercase;margin-top:3px}
+.ctr{text-align:center}
+.ctr b{display:block;font:700 19px/1 var(--cond);letter-spacing:.3em}
+.ctr span{font:500 10.5px var(--mono);color:var(--ink-3);letter-spacing:.08em}
+.topr{display:flex;align-items:center;justify-content:flex-end;gap:14px;min-width:0}
+.clock{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;min-width:0}
+.clock b{font:500 13px var(--mono);color:var(--ink)}
+.clock .caps{font-size:9px;letter-spacing:.12em;white-space:nowrap}
+.clock .s{white-space:nowrap}
+.clock .s{font:500 10px var(--mono);color:var(--ink-3)}
+.stat{display:flex;align-items:center;gap:7px;font:600 10px Inter;letter-spacing:.12em;text-transform:uppercase;color:var(--ok);white-space:nowrap}
+.stat i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+@media (max-width:1180px){.stat{display:none}}
+@media (max-width:900px){.top{grid-template-columns:minmax(0,1fr) auto}.ctr{display:none}}
+@media (max-width:560px){.clock .caps,.clock .s{display:none}.clock b{font-size:11px}.brand b{font-size:15px;letter-spacing:.26em}.topr{gap:8px}}
+@media (max-width:440px){.clock{display:none}.brand span{white-space:nowrap}}
+
+/* loading */
+#loading{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:var(--bg)}
+#loading .box{display:flex;flex-direction:column;align-items:center;gap:12px;font:500 12px var(--mono);color:var(--ink-2);padding:0 24px;text-align:center}
+#loading .bar{width:180px;height:2px;background:var(--line);overflow:hidden;border-radius:2px}
+#loading .bar i{display:block;height:100%;width:40%;background:var(--cy);animation:ld 1.2s ease-in-out infinite}
+@keyframes ld{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+
+/* layout */
+.ops{display:grid;gap:10px;padding-top:10px;padding-bottom:18px;grid-template-columns:300px minmax(0,1fr) 300px;grid-template-rows:clamp(560px, calc(100dvh - 250px), 860px) auto;grid-template-areas:"fl map sk" "bot bot bot"}
+.ops>*{min-width:0;min-height:0}
+.c-fl{grid-area:fl;display:flex;flex-direction:column}
+.c-sk{grid-area:sk;display:flex;flex-direction:column}
+.c-fl .scroll,.c-sk .scroll{flex:1;min-height:0;overflow:auto}
+.c-map{grid-area:map;display:flex;flex-direction:column}
+.bot{grid-area:bot;display:grid;gap:10px;grid-template-columns:minmax(0,1.4fr) minmax(0,.9fr) minmax(0,1.25fr) minmax(0,.8fr)}
+@media (max-width:1300px){
+  .ops{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto;grid-template-areas:"map map" "fl sk" "bot bot"}
+  .c-map{height:620px}
+  .c-fl,.c-sk{max-height:560px}
+  .bot{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+}
+@media (max-width:760px){
+  .ops{grid-template-columns:minmax(0,1fr);grid-template-areas:"map" "fl" "sk" "bot"}
+  .c-map{height:auto}
+  .c-fl,.c-sk{max-height:none}
+  .bot{grid-template-columns:minmax(0,1fr)}
+}
+
+/* flights and bookings */
+.tabs{display:flex;gap:0;margin:10px 13px 0;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.tabs button{flex:1;border:0;background:transparent;padding:7px 6px;cursor:pointer;font:600 10.5px Inter;letter-spacing:.08em;white-space:nowrap;text-transform:uppercase;color:var(--ink-2);border-right:1px solid var(--line)}
+.tabs button:last-child{border-right:0}
+.tabs button[aria-selected="true"]{background:rgba(92,200,255,.14);color:var(--cy)}
+.tabs .n{font-family:var(--mono);color:var(--ink-3);margin-left:4px}
+.cards{list-style:none;margin:0;padding:10px 13px 13px;display:flex;flex-direction:column;gap:8px}
+.fc{width:100%;text-align:left;display:block;padding:10px 11px;border-radius:4px;border:1px solid var(--line);background:rgba(5,12,24,.5);cursor:pointer;color:var(--ink);position:relative}
+.fc:hover{border-color:var(--line-2)}
+.fc[aria-pressed="true"]{border-color:var(--cy);background:rgba(92,200,255,.07);box-shadow:inset 3px 0 0 var(--cy)}
+.fc .r1{display:flex;align-items:center;gap:8px}
+.fc .cs{font:600 15px var(--mono);letter-spacing:.06em}
+.fc .r1 .st{margin-left:auto}
+.fc .rt{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px;margin-top:6px;font-size:12.5px}
+.fc .rt .ar{color:var(--ink-3)}
+.fc .lb{font-size:12px;color:var(--ink-2);margin-top:3px}
+.fc .pbar{height:3px;background:rgba(120,180,255,.12);margin-top:8px;border-radius:2px;overflow:hidden}
+.fc .pbar i{display:block;height:100%;width:0;background:var(--cy);box-shadow:0 0 6px var(--cy)}
+.fc .r3{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;margin-top:6px;font:500 11px var(--mono);color:var(--ink-2)}
+.fc .r3 b{color:var(--ink);font-weight:500}
+.fc .r3 .eta{text-align:center}
+.fc .tg{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}
+.fc .rdy,.fc .pl{font:500 11px var(--mono);color:var(--ink-3);margin-top:5px}
+.fc .pl b{color:var(--me);font-weight:500}
+.st{display:inline-flex;align-items:center;gap:5px;font:700 10px/1 Inter;letter-spacing:.12em;text-transform:uppercase;padding:4px 7px;border-radius:3px;border:1px solid;white-space:nowrap}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ico::before{display:none}
+.al li .si{margin-right:5px}.tl b .si{margin-right:5px}.skg .caps .si{margin-right:4px}
+.lgn.cred{margin-top:4px;font-size:9.5px;opacity:.8}
+.st-pick{color:var(--ride);border-color:rgba(142,197,255,.45);background:rgba(142,197,255,.08)}
+.st-fly{color:var(--cy);border-color:rgba(92,200,255,.5);background:rgba(92,200,255,.1)}
+.st-hold{color:var(--sun);border-color:rgba(255,182,92,.5);background:rgba(255,182,92,.1)}
+.st-closed{color:var(--bad);border-color:rgba(255,143,128,.5);background:rgba(255,143,128,.1)}
+.st-arr{color:var(--ok);border-color:rgba(111,224,168,.45);background:rgba(111,224,168,.08)}
+.planning{display:flex;align-items:center;gap:10px;font:500 12px var(--mono);color:var(--cy)}
+.planning i{width:10px;height:10px;border:2px solid var(--cy);border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* map */
+.mtool{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid var(--line)}
+.mtool .ttl{display:flex;flex-direction:column;min-width:0;margin-right:auto}
+.mtool .ttl b{font:700 14px/1.1 var(--cond);letter-spacing:.2em;text-transform:uppercase}
+.mtool .ttl span{font:500 10.5px var(--mono);color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow-x:auto;max-width:100%;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:none;border:0;background:transparent;padding:6px 9px;font:600 10.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);cursor:pointer;border-right:1px solid var(--line);white-space:nowrap}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:rgba(92,200,255,.16);color:var(--cy)}
+.pop{position:relative}
+.popm{position:absolute;right:0;top:calc(100% + 6px);z-index:8;width:230px;padding:10px 12px;background:#081224;border:1px solid var(--line-2);border-radius:4px;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+.popm label{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12.5px;cursor:pointer}
+.popm input{accent-color:var(--cy);width:15px;height:15px}
+.popm .caps{margin-bottom:4px}
+.mapwrap{position:relative;flex:1;min-height:0}
+.mapbox{position:absolute;inset:0;overflow:hidden;background:radial-gradient(110% 90% at 50% 45%, #0b1730 0%, #050a14 70%);border-bottom-left-radius:var(--r);border-bottom-right-radius:var(--r)}
+.gl-host{position:absolute;inset:0;touch-action:none;cursor:grab}
+.gl-host:active{cursor:grabbing}
+.gl-host canvas{display:block;width:100%;height:100%}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;white-space:nowrap;font:600 10.5px/1 Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);padding:3px 5px 3px 10px;border:0;background:none;visibility:hidden;will-change:transform}
+.lbl::before{content:"";position:absolute;left:0;top:50%;width:6px;height:1px;background:currentColor;opacity:.6}
+button.lbl{pointer-events:auto;cursor:pointer}
+button.lbl:hover{color:var(--ink)}
+.lbl.k-planet{color:#d8e2ee;font-size:11px}
+.lbl.k-place{color:var(--ink-3);font-size:9.5px}
+.lbl.k-ring{color:rgba(92,200,255,.55);font:500 9.5px var(--mono);letter-spacing:.02em;text-transform:none;padding-left:4px}
+.lbl.k-ring::before{display:none}
+.lbl.k-fleet{color:var(--cy);font-size:9.5px}
+.lbl.k-busy{color:var(--sim);font-size:9.5px}
+.lbl.k-hail{color:var(--me);font-size:9.5px}
+.lbl.k-sample{color:#cfe6ff;font:600 10.5px/1 var(--mono);letter-spacing:.06em;background:rgba(5,10,20,.6);border:1px solid rgba(92,200,255,.35);border-radius:3px;padding:3px 6px 3px 12px}
+.lbl.k-sample.on{color:var(--cy);border-color:var(--cy)}
+.tbox{position:absolute;left:0;top:0;pointer-events:none;width:40px;height:40px;visibility:hidden}
+.tbox i{position:absolute;width:9px;height:9px;border:1.5px solid var(--cy)}
+.tbox i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}.tbox i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
+.tbox i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}.tbox i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+.tbox.hold i{border-color:var(--sun)}.tbox.closed i{border-color:var(--bad)}
+.nogl-msg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;background:radial-gradient(ellipse at 50% 40%,#0e1a30,var(--bg) 70%)}
+.nogl-msg p{max-width:420px;color:var(--ink-2)}
+.hud{position:absolute;font-family:var(--mono);font-size:10.5px;color:var(--ink-2);line-height:1.5;pointer-events:none}
+.hud.tl{top:10px;right:12px;max-width:calc(100% - 300px);text-align:right}
+.hud.tl .hudbox{border-left:0;border-right:2px solid var(--cy)}
+.hudbox{border-left:2px solid var(--cy);padding:5px 9px;background:rgba(5,10,20,.66)}
+.hudbox b{color:var(--ink);font-weight:500}
+.hudbox .caps{font-family:Inter;font-size:9.5px}
+.hud .btn{pointer-events:auto;margin-top:6px}
+.ov{position:absolute;z-index:3;background:rgba(6,14,28,.84);border:1px solid var(--line-2);border-radius:4px;padding:9px 11px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.ov.info{left:10px;bottom:10px;width:262px;max-height:calc(100% - 128px);overflow:auto}
+.ov.legend{left:10px;top:10px;width:330px;max-width:calc(100% - 300px);padding:7px 10px}
+.ov.legend .lg{grid-template-columns:repeat(2,minmax(0,1fr));gap:3px 10px}
+.ov.scale{right:10px;bottom:10px;width:250px}
+.ov .caps{font-size:9.5px}
+.ihd{display:flex;align-items:center;gap:10px;margin-top:6px}
+.ihd .art{width:58px;flex:none}
+.ihd .art svg{width:100%;height:auto;display:block}
+.ihd .nm{font:600 16px var(--mono);letter-spacing:.05em}
+.ihd .st{margin-left:auto;align-self:flex-start}
+.irt{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px;margin-top:6px;font-size:12px}
+.ipb{height:3px;background:rgba(120,180,255,.12);margin-top:8px;border-radius:2px;overflow:hidden}
+.ipb i{display:block;height:100%;width:0;background:var(--cy)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:6px 0 0;font-size:12px}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0;text-align:right;font-family:var(--mono);font-size:11.5px}
+.irow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.lg{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:2px;font-size:11px;color:var(--ink-2)}
+.lg li{display:flex;align-items:center;gap:8px}
+.lg .sw{width:26px;height:0;border-top:2px solid var(--cy);flex:none}
+.lg .sw.d{border-top-style:dashed;opacity:.8}
+.lg .sw.a{border-top:2px dashed var(--sun)}
+.lg .dm{width:9px;height:9px;transform:rotate(45deg);border:1.5px solid var(--me);margin:0 8px;flex:none}
+.lg .dt{width:8px;height:8px;border-radius:50%;background:var(--cy);box-shadow:0 0 6px var(--cy);margin:0 9px;flex:none}
+.lg .dt.b{background:var(--sim);box-shadow:none}
+.lg .sh{width:26px;flex:none}
+.lg .sh svg{width:100%;height:auto;display:block}
+.lgn{margin:5px 0 0;font-size:10.5px;line-height:1.35;color:var(--ink-3)}
+.sbar{position:relative;height:22px;margin-top:4px}
+.sbar .ln{position:absolute;left:0;top:6px;height:1px;background:var(--ink-2)}
+.sbar .tk{position:absolute;top:2px;width:1px;height:9px;background:var(--ink-2)}
+.sbar .t2{position:absolute;top:11px;font:500 9.5px var(--mono);color:var(--ink-3);transform:translateX(-50%);white-space:nowrap}
+.sct{font:500 11px var(--mono);color:var(--ink-2)}
+.sct b{color:var(--ink);font-weight:500}
+@media (max-width:760px){
+  .mtool .seg{order:3;width:100%}
+  .mapwrap{display:flex;flex-direction:column;gap:8px;padding:0 0 8px}
+  .mapbox{position:relative;inset:auto;height:60vh;min-height:340px;border-radius:0}
+  .gl-host{touch-action:pan-y}
+  .ov{position:static;width:auto!important;max-width:none!important;max-height:none!important;margin:0 8px}
+  .hud.tl{max-width:calc(100% - 24px)}
+}
+
+/* starseekers */
+.sk{list-style:none;margin:0;padding:6px 13px 13px}
+.skg{margin-top:10px}
+.skg>.caps{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.skg ul{list-style:none;margin:0;padding:0}
+.ski{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:2px 10px;align-items:center;width:100%;text-align:left;padding:8px 2px;border:0;border-bottom:1px solid rgba(120,180,255,.07);background:none;cursor:pointer;color:var(--ink)}
+.ski:hover{background:rgba(92,200,255,.05)}
+.ski .ic svg{width:34px;height:auto;display:block}
+.ski b{font:600 13px var(--mono);letter-spacing:.05em}
+.ski .m{font:500 10.5px/1.4 var(--mono);color:var(--ink-3);grid-column:2}
+.ski .m .tag{margin-left:2px}
+.ski .dot{width:8px;height:8px;border-radius:50%;grid-row:1/span 3;grid-column:3}
+.dot.ready{background:var(--cy);box-shadow:0 0 6px var(--cy)}
+.dot.busy{background:var(--sim)}
+.dot.fly{background:var(--me);box-shadow:0 0 6px var(--me)}
+.skn{font-size:11.5px;color:var(--ink-3);margin:10px 0 0}
+
+/* bottom row */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:760px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{display:flex;flex-direction:column;gap:4px;text-align:left;padding:9px 10px;border:1px solid var(--line);border-radius:4px;background:rgba(5,12,24,.5);cursor:pointer;color:var(--ink);min-width:0}
+.tile:hover{border-color:rgba(92,200,255,.5)}
+.tile[aria-pressed="true"]{border-color:var(--cy);background:rgba(92,200,255,.08)}
+.tile code{font:600 12px var(--mono);color:var(--cy);overflow-wrap:anywhere}
+.tile span{font-size:11.5px;color:var(--ink-2);line-height:1.35}
+.ask{margin-top:10px;border:1px dashed rgba(92,200,255,.45);border-radius:4px;padding:9px 10px;background:rgba(92,200,255,.04)}
+.ask textarea{display:block;width:100%;resize:none;border:0;background:transparent;font:500 13px/1.4 Inter;color:var(--ink);padding:4px 0;min-height:40px}
+.ask .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.alc{display:flex;align-items:baseline;gap:10px}
+.alc .n{font:600 40px/1 var(--cond);color:var(--sun)}
+.alc .n.zero{color:var(--ok)}
+.al{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px;max-height:180px;overflow:auto}
+.al li{border-left:2px solid var(--sun);padding:3px 0 3px 8px;font-size:12px}
+.al li.k-flare{border-left-color:var(--bad)}
+.al li b{display:block;font-weight:600;font-size:12.5px}
+.al li span{font:500 10.5px var(--mono);color:var(--ink-3)}
+.wave{display:block;width:100%;height:46px;margin-top:2px;border:1px solid var(--line);border-radius:3px;background:rgba(3,8,16,.6)}
+.feed{list-style:none;margin:8px 0 0;padding:0;height:170px;overflow:auto;font:500 11px/1.45 var(--mono);color:var(--ink-2)}
+.feed li{padding:3px 0;border-bottom:1px solid rgba(120,180,255,.06);animation:fin .35s ease-out}
+.feed .tm{color:var(--ink-3);margin-right:6px}
+.feed b{color:var(--cy);font-weight:600;margin-right:6px}
+.feed .k-checkpoint b{color:var(--me)}.feed .k-incident b,.feed .k-alert b{color:var(--sun)}.feed .k-clear b{color:var(--ok)}
+@keyframes fin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.rep{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.rep button{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 10px;align-items:center;text-align:left;padding:7px 8px;border:1px solid var(--line);border-radius:4px;background:rgba(5,12,24,.5);cursor:pointer;color:var(--ink)}
+.rep button:hover{border-color:rgba(92,200,255,.5)}
+.rep .sc{font:600 18px var(--mono);color:var(--me);grid-row:span 2}
+.rep .t{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rep .d{font:500 10.5px var(--mono);color:var(--ink-3)}
+
+/* modals: intro, log & reports */
+.modal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;justify-content:center;background:rgba(2,5,10,.74);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:max(20px, env(safe-area-inset-top, 0px)) var(--gr) max(20px, env(safe-area-inset-bottom, 0px)) var(--gl);overflow:auto}
+.sheet{width:100%;max-width:760px;background:#07101f;border:1px solid var(--line-2);border-radius:var(--r);box-shadow:0 30px 80px rgba(0,0,0,.6);margin:auto 0}
+.sheet>header{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 12px;padding:16px 18px 12px;border-bottom:1px solid var(--line)}
+.sheet>header .ttl{flex:1;min-width:200px}
+.sheet h2{font:700 24px/1.1 var(--cond);letter-spacing:.06em;margin-top:2px}
+.sheet .bd{padding:14px 18px}
+.prog{display:flex;align-items:center;gap:8px;font:500 11px var(--mono);color:var(--ink-2)}
+.prog .pbar{width:90px;height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.prog .pbar i{display:block;height:100%;background:var(--ok);width:0}
+.checks{list-style:none;margin:0;padding:8px 10px 4px}
+.chk{border-bottom:1px solid var(--line)}
+.chk:last-child{border-bottom:0}
+.chk-h{display:flex;align-items:center;gap:12px;width:100%;padding:12px 8px;background:none;border:0;cursor:pointer;text-align:left}
+.chk-h .bx{width:20px;height:20px;border:1.5px solid var(--line-2);border-radius:4px;flex:none;display:grid;place-items:center;font:700 12px var(--mono);color:#07101f}
+.chk.done .chk-h .bx{background:var(--ok);border-color:var(--ok)}
+.chk-h .n{font:500 11px var(--mono);color:var(--ink-3)}
+.chk-h .tt{font-weight:600;font-size:15px;flex:1}
+.chk-h .st2{font:500 10.5px var(--mono);color:var(--ink-3)}
+.chk.done .chk-h .st2{color:var(--ok)}
+.chk-b{padding:0 8px 16px 52px;color:var(--ink-2);font-size:13.5px}
+@media (max-width:520px){.chk-b{padding-left:8px}}
+.chk-b ol{margin:0 0 10px;padding-left:18px}
+.chk-b li{margin:4px 0}
+.urlrow{display:flex;gap:8px;margin:6px 0 4px}
+.urlrow input{flex:1;min-width:0;background:#02060c;border:1px solid var(--line-2);border-radius:4px;padding:7px 10px;font:500 12.5px var(--mono);color:var(--me)}
+.field{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+.field input{background:#02060c;border:1px solid var(--line-2);border-radius:4px;padding:8px 10px;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}
+.chipb{border:1px solid var(--line-2);background:transparent;border-radius:999px;padding:5px 11px;cursor:pointer;font-size:12.5px;color:var(--ink-2)}
+.chipb[aria-pressed="true"]{border-color:var(--cy);color:var(--cy);background:rgba(92,200,255,.1)}
+.addrow{display:flex;gap:6px;margin-top:6px}
+.addrow input{flex:1;min-width:0;background:#02060c;border:1px solid var(--line-2);border-radius:4px;padding:6px 10px}
+.trio{display:grid;gap:8px;margin:4px 0 10px}
+.trio div{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:start}
+.parts{list-style:none;margin:6px 0 12px;padding:0;display:grid;gap:5px}
+.parts li{display:grid;grid-template-columns:150px 1fr 34px;gap:10px;align-items:center;font-size:12.5px}
+.parts .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.parts .bar i{display:block;height:100%;background:var(--cy)}
+.parts .v{font:500 12px var(--mono);text-align:right;color:var(--ink)}
+@media (max-width:520px){.parts li{grid-template-columns:110px 1fr 28px}}
+.sheet>footer{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 18px 16px;border-top:1px solid var(--line)}
+
+/* receipt drawer */
+.scrim{position:fixed;inset:0;z-index:44;background:rgba(2,5,10,.6)}
+.drawer{position:fixed;top:0;right:0;bottom:0;z-index:45;width:min(860px,100%);background:#060d1a;border-left:1px solid var(--line-2);box-shadow:-30px 0 80px rgba(0,0,0,.55);overflow:auto;overscroll-behavior:contain}
+.drh{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:max(12px, env(safe-area-inset-top, 0px)) var(--gr) 12px 18px;background:rgba(6,13,26,.95);border-bottom:1px solid var(--line)}
+.drh>div{flex:1;min-width:0}
+.drh b{display:block;font:700 17px/1.2 var(--cond);letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drb{padding:14px var(--gr) 40px 18px}
+.sheet2{border:1px solid var(--line-2);border-radius:var(--r);background:#050b16;overflow:hidden}
+.dh{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg, rgba(92,200,255,.06), transparent)}
+.dh h2{font:700 24px/1.15 var(--cond);letter-spacing:.04em;margin:4px 0 6px}
+.dh .who{color:var(--ink-2);font-size:13px}
+.dh .meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font:500 12px var(--mono);color:var(--ink-2)}
+.dh .meta b{color:var(--ink);font-weight:500}
+.dh .tot{text-align:right}
+.dh .tot .n{font:600 46px/1 var(--mono);color:var(--me)}
+.dh .tot .d{font:500 14px var(--mono);color:var(--ink-3)}
+.dh .art{width:150px;margin:8px 0 0 auto}
+.dh .art svg{width:100%;height:auto;display:block}
+@media (max-width:560px){.dh{grid-template-columns:1fr}.dh .tot{text-align:left;display:flex;align-items:flex-end;gap:14px}.dh .art{margin:0 0 0 auto;width:120px}}
+.sec{padding:16px 18px;border-bottom:1px solid var(--line)}
+.sec:last-child{border-bottom:0}
+.sec h3{font:700 13px/1.2 var(--cond);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:4px}
+table.t{border-collapse:collapse;width:100%;font:500 12px var(--mono);min-width:640px}
+table.t th{font:600 9.5px Inter;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td{padding:8px 10px;border-bottom:1px solid rgba(120,180,255,.07);white-space:nowrap;vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.r,table.t th.r{text-align:right}
+table.t td.wrapc{white-space:normal;min-width:220px;font-family:Inter;font-size:12.5px;color:var(--ink-2)}
+.pt{min-width:760px}
+.pass{color:var(--ok)}.fail{color:var(--bad)}.best{color:var(--me)}
+.cp{border:1px solid var(--line);border-radius:4px;padding:12px;margin-bottom:10px}
+.cp .h{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-bottom:8px}
+.cp .h b{font-size:14px}
+.sparts{display:grid;gap:10px}
+.sp{display:grid;grid-template-columns:160px minmax(0,1fr) 70px;gap:4px 14px;align-items:center}
+.sp .lb{font-weight:600;font-size:13px}
+.sp .bar{height:8px;background:rgba(120,180,255,.08);border-radius:4px;overflow:hidden}
+.sp .bar i{display:block;height:100%;border-radius:4px}
+.sp .v{font:500 12.5px var(--mono);text-align:right}
+.sp .nt{grid-column:2/-1;font-size:12px;color:var(--ink-3);margin-top:-2px}
+@media (max-width:560px){.sp{grid-template-columns:minmax(0,1fr) 64px}.sp .bar{grid-column:1/-1;grid-row:2}.sp .nt{grid-column:1/-1}}
+.cmp{display:grid;gap:12px;grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:760px){.cmp{grid-template-columns:minmax(0,1fr)}}
+.cmp .c{border:1px solid var(--line);border-radius:4px;padding:12px}
+.cmp .ebar{height:8px;border-radius:4px;background:rgba(120,180,255,.08);margin:4px 0 8px;overflow:hidden}
+.cmp .ebar i{display:block;height:100%}
+.stops{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.stops li{display:grid;grid-template-columns:26px 1fr;gap:2px 8px;font-size:12.5px}
+.stops .wp{grid-row:span 2;width:20px;height:20px;border:1.5px solid var(--me);color:var(--me);display:grid;place-items:center;font:600 10px var(--mono);transform:rotate(45deg)}
+.stops .wp b{transform:rotate(-45deg);font-weight:600}
+.stops .m{font:500 11px var(--mono);color:var(--ink-2)}
+.seats{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:rgba(0,0,0,.2);margin-bottom:10px}
+.seat{width:16px;height:16px;border-radius:3px;border:1.5px solid var(--line-2);flex:none}
+.seat.on{background:var(--ride);border-color:var(--ride)}
+.seat.maybe{border-color:rgba(142,197,255,.6);background:repeating-linear-gradient(45deg,rgba(142,197,255,.4) 0 2px,transparent 2px 5px)}
+.seats .st3{flex:1 1 150px;min-width:0;margin-left:4px;font:500 11.5px/1.4 var(--mono);color:var(--ink-2)}
+.seats .st3 b{color:var(--ink);font-weight:500}
+.tl{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.tl button{display:grid;grid-template-columns:150px minmax(0,1fr);gap:1px 12px;width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:4px;padding:6px 8px;cursor:pointer}
+.tl button:hover{border-color:var(--line);background:rgba(92,200,255,.04)}
+.tl .tm{font:500 11px var(--mono);color:var(--ink-3);grid-row:span 2}
+.tl b{font-size:12.5px;font-weight:600}
+.tl .tx{font-size:12px;color:var(--ink-2)}
+.tl .k-checkpoint b{color:var(--me)}.tl .k-incident b{color:var(--bad)}
+@media (max-width:560px){.tl button{grid-template-columns:minmax(0,1fr)}.tl .tm{grid-row:auto}}
+.raw{font:500 12.5px var(--mono);color:var(--me);background:#02060c;border:1px solid var(--line);border-radius:4px;padding:8px 10px;display:inline-block;word-break:break-all}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition:none!important}
+  .planning i{border-right-color:var(--cy)}
+}
+
+/* polish: balanced headings, press feedback, touch-size targets */
+h1,h2,h3{text-wrap:balance}
+p{text-wrap:pretty}
+.btn,.chipb{transition:background-color .15s, border-color .15s, color .15s, transform .12s cubic-bezier(.2,0,0,1)}
+.btn:active,.chipb:active{transform:scale(.96)}
+@media (pointer:coarse){.btn,.btn.small,.chipb,.seg button,.tabs button{min-height:44px}}
+@media (pointer:coarse){.popm label{min-height:44px}}
+</style>
+
+<div id="loading" role="status"><div class="box"><b class="caps" style="color:var(--cy)">Starfare &middot; Dispatch operations</b>Loading the engine<div class="bar"><i></i></div></div></div>
+
+<header class="top wrap">
+  <div class="brand"><b>STARFARE</b><span>Dispatch operations</span></div>
+  <div class="ctr"><b>DISPATCH OPERATIONS</b><span>Live sky &middot; simulated fleet</span></div>
+  <div class="topr">
+    <div class="clock" title="One real second is one sky day"><span class="caps">Sky time &middot; simulated clock</span><b id="clk">&nbsp;</b><span class="s" id="clkS">&nbsp;</span></div>
+    <div class="stat"><i></i>Engine &middot; JPL DE421 positions</div>
+    <button class="btn primary small" type="button" id="connectBtn">Connect your agent</button>
+  </div>
+</header>
+
+<main class="ops wrap" id="ops">
+  <section class="panel c-fl" aria-labelledby="flH">
+    <div class="ph"><h2 id="flH">Flights in the air</h2><div class="tags"><span class="tag sim">Sample</span><span class="tag sim">Simulated</span></div></div>
+    <div class="tabs" role="tablist" aria-label="Flights or bookings">
+      <button type="button" role="tab" id="tabF" aria-selected="true" aria-controls="flList">Sample flights<span class="n" id="flN"></span></button>
+      <button type="button" role="tab" id="tabB" aria-selected="false" aria-controls="bkList">Open bookings<span class="n" id="bkN"></span></button>
+    </div>
+    <div class="scroll">
+      <ul class="cards" id="flList" role="tabpanel" aria-labelledby="tabF"></ul>
+      <div id="bkWrap" role="tabpanel" aria-labelledby="tabB" hidden>
+        <p class="note" style="margin:10px 13px 0">The desk right now, from the engine. Quick bookings are planned when the page opens; a long haul is planned when you pick it.</p>
+        <ul class="cards" id="bkList"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel c-map" aria-labelledby="mapH">
+    <div class="mtool">
+      <div class="ttl"><b id="mapH">Fleet map</b><span id="mapSub">True positions &middot; three.js</span></div>
+      <div class="seg" id="focus" role="group" aria-label="Focus the map">
+        <button type="button" data-f="sun" aria-pressed="true">Whole system</button><button type="button" data-f="inner" aria-pressed="false">Inner system</button><button type="button" data-f="earth" aria-pressed="false">Earth&ndash;Moon</button><button type="button" data-f="mars" aria-pressed="false">Mars</button><button type="button" data-f="jupiter" aria-pressed="false">Jupiter</button><button type="button" data-f="saturn" aria-pressed="false">Saturn</button>
+      </div>
+      <div class="pop"><button class="btn small" type="button" id="fBtn" aria-expanded="false" aria-controls="fMenu">Filters</button>
+        <div class="popm" id="fMenu" hidden><div class="caps">Show on the map</div>
+          <label><input type="checkbox" data-filt="fl" checked> Sample flights</label>
+          <label><input type="checkbox" data-filt="bk" checked> Open bookings</label>
+          <label><input type="checkbox" data-filt="pk" checked> Starseekers parked</label>
+        </div></div>
+      <div class="pop"><button class="btn small" type="button" id="lBtn" aria-expanded="false" aria-controls="lMenu">Layers</button>
+        <div class="popm" id="lMenu" hidden><div class="caps">Layers</div>
+          <label><input type="checkbox" data-lay="orb" checked> Orbits</label>
+          <label><input type="checkbox" data-lay="ring" checked> Rings &amp; grid</label>
+          <label><input type="checkbox" data-lay="lbl" checked> Labels</label>
+          <label><input type="checkbox" data-lay="moon" checked> Moon orbits</label>
+        </div></div>
+    </div>
+    <div class="mapwrap">
+      <div class="mapbox" id="mapbox">
+        <div class="gl-host" id="glhost"></div>
+        <div class="labels" id="labels"><div class="tbox" id="tbox"><i></i><i></i><i></i><i></i></div></div>
+        <div class="nogl-msg" id="nogl" hidden><p>This browser has no WebGL, so the 3D map is off. The flights, Starseekers, alerts and the feed below still run from the engine.</p></div>
+        <div class="hud tl"><div class="hudbox" id="hud"></div><button class="btn small" type="button" id="liveBtn" hidden>Back to live sky</button></div>
+      </div>
+      <div class="ov info" id="info" aria-live="polite"></div>
+      <div class="ov legend" id="legend">
+        <div class="caps">Legend</div>
+        <ul class="lg">
+          <li><span class="sw"></span>Flown or in flight</li>
+          <li><span class="sw d"></span>Planned leg</li>
+          <li><span class="sw a"></span>Open booking (engine plan)</li>
+          <li><span class="dm"></span>Stop</li>
+          <li><span class="sh" id="lgShip"></span>Starseeker on a flight</li>
+          <li><span class="dt"></span>Ready <span class="dt b" style="margin-left:6px"></span>Busy</li>
+        </ul>
+        <p class="lgn">Real bearings and dates; distances log-compressed; sizes exaggerated.</p>
+        <p class="lgn cred" id="artCred" hidden></p>
+      </div>
+      <div class="ov scale" id="scale">
+        <div class="caps">Distance scale</div>
+        <div id="sBar"></div>
+        <div class="caps" style="margin-top:6px">Map centre &middot; heliocentric ecliptic</div>
+        <div class="sct" id="cTxt">&nbsp;</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel c-sk" aria-labelledby="skH">
+    <div class="ph"><h2 id="skH">Starseekers</h2><div class="tags"><span class="tag fict">Fictional</span><span class="tag sim">Simulated</span></div></div>
+    <div class="scroll"><div class="sk" id="skList"></div></div>
+  </section>
+
+  <div class="bot">
+    <section class="panel" aria-labelledby="toolH">
+      <div class="ph"><h2 id="toolH">Your agent's tools</h2><div class="tags"><span class="tag ride">MCP</span></div></div>
+      <div class="pb">
+        <div class="tiles" id="tiles"></div>
+        <div class="ask" id="ask" hidden>
+          <div class="caps">Ask your agent</div>
+          <textarea id="askQ" rows="2" readonly aria-label="Prompt to give your agent"></textarea>
+          <div class="row"><button class="btn small" type="button" id="askCopy">Copy</button><button class="btn small primary" type="button" id="askConnect">Connect your agent</button><span class="note" id="askMsg" aria-live="polite"></span></div>
+        </div>
+        <p class="note" style="margin:10px 0 0">The site does not dispatch; your agent calls these through the Starfare connector. Works with Grok.</p>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="alH">
+      <div class="ph"><h2 id="alH">System alerts</h2><div class="tags"><span class="tag sim">Simulated</span></div></div>
+      <div class="pb">
+        <div class="alc"><span class="n" id="alN">&nbsp;</span><span class="note" id="alS">simulated hazards right now (flares, Mars dust, Titan haze, full pads)</span></div>
+        <ul class="al" id="alList"></ul>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="fdH">
+      <div class="ph"><h2 id="fdH">Dispatcher feed &middot; sample</h2><div class="tags"><span class="tag sim">Sample</span><span class="tag sim">Simulated</span></div></div>
+      <div class="pb">
+        <canvas class="wave" id="wave" aria-label="Event density in the feed over the last minute"></canvas>
+        <div class="note" style="margin-top:3px">Event density, last 60 s of real time</div>
+        <ul class="feed" id="feed" aria-live="off"></ul>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="rpH">
+      <div class="ph"><h2 id="rpH">Log &amp; reports</h2></div>
+      <div class="pb">
+        <button class="btn small" type="button" id="boardBtn" style="width:100%">Open the sample scoreboard</button>
+        <div class="caps" style="margin-top:12px">Receipts &middot; sample flights</div>
+        <ul class="rep" id="repList"></ul>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drH" hidden>
+  <header class="drh"><div><div class="caps">Flight receipt &middot; sample</div><b id="drH" tabindex="-1">&nbsp;</b></div><button class="btn small" type="button" id="drClose">Close</button></header>
+  <div class="drb" id="drBody"></div>
+</aside>
+
+<div class="modal" id="logM" role="dialog" aria-modal="true" aria-labelledby="logH" hidden>
+  <div class="sheet">
+    <header><div class="ttl"><div class="caps">Log &amp; reports</div><h2 id="logH" tabindex="-1">Sample scoreboard</h2></div><button class="btn small" type="button" id="logClose">Close</button></header>
+    <div class="bd">
+      <p class="note" style="margin-top:0">These runs were flown by a sample bot through the same game code the connector runs. They are not players. Real player runs appear here once agents connect (not built yet).</p>
+      <div class="tw"><table class="t" style="min-width:560px"><thead><tr><th>#</th><th class="r">Score</th><th>Flight</th><th>Starseeker</th><th class="r">Fare</th><th class="r">Energy, kWh</th><th></th></tr></thead><tbody id="boardRows"></tbody></table></div>
+      <div class="caps" style="margin-top:14px">You</div>
+      <p id="youRow" style="margin:4px 0 0;font-size:13px"></p>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="intro" role="dialog" aria-modal="true" aria-labelledby="introH" hidden>
+  <div class="sheet">
+    <header>
+      <div class="ttl"><div class="caps">Pre-flight checklist</div><h2 id="introH" tabindex="-1">Get your agent flying</h2></div>
+      <div class="prog" id="prog"><span class="pbar"><i></i></span><span class="tx">0 of 4 checks</span></div>
+      <button class="btn small" type="button" id="introClose">Close</button>
+    </header>
+    <ol class="checks" id="checks">
+      <li class="chk" data-i="0">
+        <button class="chk-h" type="button" aria-expanded="true" aria-controls="ck0"><span class="bx">&#x2713;</span><span class="n">01</span><span class="tt">Connect your agent</span><span class="st2">Open</span></button>
+        <div class="chk-b" id="ck0">
+          <p style="margin-top:0">Starfare works with Grok. Your agent is the dispatcher: it reads the desk, picks a Starseeker and flies the passengers.</p>
+          <ol>
+            <li>Open <a href="https://grok.com/connectors" target="_blank" rel="noopener" id="grokLink">grok.com/connectors</a>.</li>
+            <li>Add a custom connector with this URL:
+              <div class="urlrow"><input id="mcpUrl" readonly aria-label="Starfare MCP URL"><button class="btn small" type="button" id="copyBtn">Copy</button></div>
+              <span class="note" id="copyMsg" aria-live="polite"></span></li>
+            <li>Sign in on Starfare's page when Grok opens it. That creates your player tag.</li>
+          </ol>
+          <p>Any other MCP agent (Claude, ChatGPT, your own bot) uses the same URL. No key needed.</p>
+          <button class="btn small" type="button" data-next="0">Done, next check</button>
+        </div>
+      </li>
+      <li class="chk" data-i="1">
+        <button class="chk-h" type="button" aria-expanded="false" aria-controls="ck1"><span class="bx">&#x2713;</span><span class="n">02</span><span class="tt">Tell us who's flying</span><span class="st2">Open</span></button>
+        <div class="chk-b" id="ck1" hidden>
+          <p style="margin-top:0"><span class="tag sim">Self-reported, unverified</span> The scoreboard shows this next to your runs.</p>
+          <label class="field"><span class="caps">Model</span><input id="pModel" placeholder="for example grok-4" autocomplete="off"></label>
+          <div class="caps" style="margin-top:8px">Skills</div>
+          <div class="chips" id="pSkills"></div>
+          <div class="addrow"><input id="pCustom" placeholder="Add your own skill" aria-label="Custom skill"><button class="btn small" type="button" id="pAdd">Add</button></div>
+          <p class="note">This mockup keeps it in your browser. The real site will save it with your player tag (not built yet).</p>
+          <button class="btn small" type="button" data-next="1">Save, next check</button>
+        </div>
+      </li>
+      <li class="chk" data-i="2">
+        <button class="chk-h" type="button" aria-expanded="false" aria-controls="ck2"><span class="bx">&#x2713;</span><span class="n">03</span><span class="tt">Know what's real</span><span class="st2">Open</span></button>
+        <div class="chk-b" id="ck2" hidden>
+          <div class="trio">
+            <div><span class="tag real">Real</span><span>Planet and moon positions (NASA JPL DE421), body names and radii, the ISS and Tiangong, the Roadster's orbit.</span></div>
+            <div><span class="tag fict">Fictional</span><span>Orbital Depot, Lunar Data Center, Mars Base, Ceres Port, Titan Dock, the Starseekers and the passengers.</span></div>
+            <div><span class="tag sim">Simulated</span><span>Bookings, the fleet, weather, pad traffic, fares, every flight and every score.</span></div>
+          </div>
+          <button class="btn small" type="button" data-next="2">Got it, next check</button>
+        </div>
+      </li>
+      <li class="chk" data-i="3">
+        <button class="chk-h" type="button" aria-expanded="false" aria-controls="ck3"><span class="bx">&#x2713;</span><span class="n">04</span><span class="tt">Know how a flight is scored</span><span class="st2">Open</span></button>
+        <div class="chk-b" id="ck3" hidden>
+          <p style="margin-top:0">Every flight scores out of <b class="mono" id="partsTotal"></b>:</p>
+          <ul class="parts" id="parts"></ul>
+          <p><b style="color:var(--ink)">Re-fly check.</b> The server re-flies every leg in an n-body sim. A miss fails the leg.</p>
+          <p><b style="color:var(--ink)">Checkpoints.</b> Mid-flight the sky can close a pad or hold a launch. Your agent decides what to do with the <code class="mono" style="color:var(--me)">decide</code> tool.</p>
+          <button class="btn small" type="button" data-next="3">Got it</button>
+        </div>
+      </li>
+    </ol>
+    <footer><span class="note">You can reopen this from "Connect your agent".</span><button class="btn primary" type="button" id="toOps">Back to operations</button></footer>
+  </div>
+</div>
+
+<script src="sample-data.js"></script><script src="sky-core.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script>
+(function () {
+"use strict";
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var RM = window.matchMedia ? matchMedia("(prefers-reduced-motion: reduce)") : null, reduced = !!(RM && RM.matches);
+if (RM && RM.addEventListener) RM.addEventListener("change", function (e) { reduced = e.matches; });
+function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
+var TAU = Math.PI * 2, AU, PLACES = [];
+
+/* ---------- words and small formatters ---------- */
+function esc(s) { return SF.esc(s); }
+// Display words only. Data fields, tool names and paths keep car / ride / rider / hail.
+var WORDS = [[/\bcars\b/gi, function () { return SF.SHIPS; }], [/\bcar\b/gi, function () { return SF.SHIP; }],
+  [/\briders\b/gi, "passengers"], [/\brider\b/gi, "passenger"], [/\brides\b/gi, "flights"], [/\bride\b/gi, "flight"],
+  [/\bhails\b/gi, "bookings"], [/\bhail\b/gi, "booking"]];
+function shipWords(s) {
+  s = String(s == null ? "" : s);
+  WORDS.forEach(function (w) {
+    s = s.replace(w[0], function (m) { var r = typeof w[1] === "function" ? w[1]() : w[1]; return m[0] === m[0].toUpperCase() && m[0] !== m[0].toLowerCase() ? r[0].toUpperCase() + r.slice(1) : r; });
+  });
+  return s;
+}
+function W(t) { return esc(shipWords(t)); }
+var SEATS = "Seats: 4 (placeholder, not set yet)";
+function legKind(k) { return k === "ride" ? "passenger" : k; }
+function chip(id) { return SF.tag(id) === "real" ? '<span class="tag real">Real</span>' : '<span class="tag fict">Fictional</span>'; }
+function placeH(id) { return esc(SF.name(id)) + " " + chip(id); }
+function money(n) { return "$" + SF.fmt(n, 2); }
+function kwh(n) { return SF.fmt(n) + " kWh"; }
+function fmt(n, d) { return SF.fmt(n, d); }
+function iso(jd) { return SF.iso(jd); }
+function hailOf(id) { return SF.SITE.hails.filter(function (h) { return h.hail_id === id; })[0]; }
+function clamp(v, a, b) { return b < a ? a : v < a ? a : v > b ? b : v; }
+function sgn(n, d) { return (n < 0 ? "\u2212" : "+") + Math.abs(n).toFixed(d); }
+
+/* =========================================================
+   SAMPLE FLIGHTS: a replay clock that runs whether or not the map is drawn.
+   Each flight loops in LOOP seconds of real time (PLAY of them moving, then a hold on arrival). The sky time inside a
+   loop is warped: every depart, arrive and log event is a breakpoint, and each gap gets 0.6 + log2(1 + hours) of the
+   loop, so short holds are watchable and a five-year cruise doesn't take all of it.
+   ========================================================= */
+var LOOP = 52, PLAY = 48, T0 = Date.now(), FL = [];
+function warpBuild(rp) {
+  var j = [rp.start, rp.end];
+  rp.legs.forEach(function (L) { j.push(L.dep, L.arr); });
+  rp.events.forEach(function (e) { j.push(e.jd); });
+  j = j.filter(function (x) { return x >= rp.start && x <= rp.end; }).sort(function (a, b) { return a - b; });
+  var o = [j[0]];
+  for (var k = 1; k < j.length; k++) if (j[k] - o[o.length - 1] > 1e-5) o.push(j[k]);
+  var u = [0];
+  for (k = 1; k < o.length; k++) u.push(u[k - 1] + 0.6 + Math.log2(1 + (o[k] - o[k - 1]) * 24));
+  var T = u[u.length - 1] || 1;
+  return { j: o, u: u.map(function (x) { return x / T; }) };
+}
+function warpJd(w, u) {
+  if (u <= 0) return w.j[0];
+  for (var k = 1; k < w.u.length; k++) if (u <= w.u[k]) { var f = (u - w.u[k - 1]) / ((w.u[k] - w.u[k - 1]) || 1); return w.j[k - 1] + f * (w.j[k] - w.j[k - 1]); }
+  return w.j[w.j.length - 1];
+}
+function warpU(w, jd) {
+  if (jd <= w.j[0]) return 0;
+  for (var k = 1; k < w.j.length; k++) if (jd <= w.j[k]) { var f = (jd - w.j[k - 1]) / ((w.j[k] - w.j[k - 1]) || 1); return w.u[k - 1] + f * (w.u[k] - w.u[k - 1]); }
+  return 1;
+}
+function loopPhase(F, now) { var c = ((now - T0) / 1000 / LOOP + F.off) % 1; return c < 0 ? c + 1 : c; }
+function flightJd(F, now) { return warpJd(F.w, Math.min(1, loopPhase(F, now) * LOOP / PLAY)); }
+function seekFlight(F, jd) {
+  var c = warpU(F.w, jd) * PLAY / LOOP, base = ((Date.now() - T0) / 1000 / LOOP) % 1;
+  F.off = ((c - base) % 1 + 1) % 1; F.prev = null;
+}
+// Status chip from the replay and the run log's incidents (correction burns don't hold anything).
+var STI = { pick: "passenger", fly: "flying", hold: "launch_hold", closed: "pad_closed", arr: "pad" };
+// A status chip: the sprite icon replaces the dot when the art module is loaded.
+function setSt(el, k) { el.className = "st st-" + k + (window.SolArt ? " ico" : ""); el.innerHTML = ic(STI[k]) + esc(STL[k]); }
+var STL = { pick: "Pickup", fly: "In flight", hold: "Launch hold", closed: "Pad closed", arr: "Arrived" };
+function statusOf(F, jd) {
+  var rp = F.rp, s = rp.at(jd), inc = rp.record.score.incidents;
+  for (var k = 0; k < inc.length; k++) {
+    var x = inc[k]; if (x.kind === "correction_burn" || !x.hours) continue;
+    var a = SF.jdOf(x.at), b = a + x.hours / 24;
+    if (jd >= a && jd <= b) {
+      if (x.kind === "flare") return { k: "hold", s: s, why: x };
+      if (x.kind === "pad_busy") { var L = rp.legs.filter(function (l) { return l.kind === x.leg; })[0]; return { k: L && jd < L.dep ? "hold" : "closed", s: s, why: x }; }
+    }
+  }
+  if (s.phase === "arrived") return { k: "arr", s: s };
+  if (s.phase === "flight" && s.leg.kind !== "pickup") return { k: "fly", s: s };
+  return { k: "pick", s: s };
+}
+function progOf(F, jd) { var L0 = F.rp.legs[0], Ln = F.rp.legs[F.rp.legs.length - 1]; return clamp((jd - L0.dep) / ((Ln.arr - L0.dep) || 1), 0, 1); }
+function etaOf(F, jd) { var a = F.rp.legs[F.rp.legs.length - 1].arr; return jd >= a ? "arrived" : SF.dur(a - jd); }
+function arrOf(F) { return iso(F.rp.legs[F.rp.legs.length - 1].arr); }
+function whereOf(F) {
+  var s = F.st.s, L = s.leg;
+  if (s.phase === "flight") return "between " + esc(SF.name(L.from)) + " and " + esc(SF.name(L.to));
+  return "at " + esc(SF.name(s.phase === "arrived" ? L.to : L.from));
+}
+
+/* ---------- passenger list (the shared-flight shape; one booking per sample flight) ---------- */
+var SEAT_N = 4, PARTY_MAX = 3;
+function passengerList(i) {
+  var lg = SF.RIDES[i].record.log, fl = lg.flown || [], h = hailOf(lg.hail) || {};
+  var bk = { id: lg.hail, lead: (h.rider || "").split(",")[0], from: lg.from, to: lg.to, b: -1, a: -1 };
+  var stops = fl.length ? [{ at: fl[0].from, arrive: null, leave: fl[0].depart, board: [], alight: [] }] : [];
+  fl.forEach(function (f, k) { stops.push({ at: f.to, arrive: f.arrive, leave: fl[k + 1] ? fl[k + 1].depart : null, board: [], alight: [] }); });
+  stops.forEach(function (s, k) {
+    if (bk.b < 0 && s.at === bk.from) bk.b = k;
+    else if (bk.b >= 0 && bk.a < 0 && s.at === bk.to) bk.a = k;
+  });
+  if (bk.b >= 0) stops[bk.b].board.push(bk);
+  if (bk.a >= 0) stops[bk.a].alight.push(bk);
+  return { stops: stops, bookings: [bk], legs: fl };
+}
+function aboardAt(P, r) { return P.bookings.filter(function (b) { return b.b >= 0 && b.b <= r && (b.a < 0 || r < b.a); }); }
+function seatsHtml(on) {
+  var cls = [];
+  on.forEach(function () { cls.push("on"); for (var k = 1; k < PARTY_MAX; k++) cls.push("maybe"); });
+  var cells = "";
+  for (var k = 0; k < SEAT_N; k++) cells += '<span class="seat' + (cls[k] ? " " + cls[k] : "") + '"></span>';
+  var txt = on.length
+    ? "Seats in use <b>" + on.length + " lead passenger" + (on.length > 1 ? "s" : "") + "</b> + party not set yet / <b>4</b> (placeholder)"
+    : "Seats in use <b>0</b>, cabin empty / <b>4</b> (placeholder)";
+  return cells + '<span class="st3">' + txt + "</span>";
+}
+
+/* =========================================================
+   LIVE SKY: the fleet, the hazards and the desk, all from the engine at the sky clock
+   ========================================================= */
+var SAMPLE_CARS = {}, LIVE = [], LIVE_T = 0;
+function liveFleet(ms) {
+  var s = SF.sky(ms), by = {};
+  SF.desk(ms).forEach(function (h) {
+    try {
+      SF.R.fleetState(h.id, h.ready_jd, String(s.season)).forEach(function (c) {
+        var o = by[c.car] || (by[c.car] = { car: c.car, name: c.name, at: c.at, busy: null });
+        if (c.busy_until_jd && (!o.busy || c.busy_until_jd > o.busy)) o.busy = c.busy_until_jd;
+      });
+    } catch (e) { /* a booking the engine can't price leaves the fleet as it was */ }
+  });
+  return Object.keys(by).sort().map(function (k) { return by[k]; }).filter(function (c) { return !SAMPLE_CARS[c.car]; });
+}
+var PADS = ["iss", "lunar-data-center", "phobos", "mars-base", "io", "ganymede", "europa", "titan", "earth", "ceres-port", "orbital-depot", "ceres", "callisto", "titan-dock"];
+var HZ = {};
+function hz(season) { return HZ[season] || (HZ[season] = SF.R.hazards(String(season))); }
+function alertsNow(jd, season) {
+  var H = hz(season), out = [], f = H.flareAt(jd), hr = Math.floor(jd * 24);
+  if (f) out.push({ key: "flare", k: "flare", t: "Solar flare (simulated)", d: "No launches with a passenger aboard until " + iso(f.end) });
+  ["mars-base", "titan-dock"].forEach(function (p) {
+    var w = H.weatherAt(p, jd);
+    if (w) out.push({ key: "wx-" + p, k: "wx", p: p, t: (w.kind === "dust_storm" ? "Dust storm at " : "Haze at ") + SF.name(p) + " (simulated)", d: "Until " + iso(w.end) });
+  });
+  PADS.forEach(function (p) {
+    try { var b = H.berths(p), n = H.docked(p, hr); if (n >= b) out.push({ key: "pad-" + p, k: "pad", p: p, t: "Pad full at " + SF.name(p) + " (simulated)", d: n + " of " + b + " berths taken this sky hour" }); } catch (e) { /* not a pad */ }
+  });
+  return out;
+}
+// Open bookings: SF.plan is cached per ready time, which moves every real second, so each booking is planned once at a
+// fixed moment and labelled with that sky time. Replan plans it again now.
+var BK = {}, DESK = [];
+function bookingRide(P, hail) {
+  var legs = P.par.legs, first = -1, flown = [], arcs = {};
+  legs.forEach(function (L, k) { if (first < 0 && L.from === hail.from) first = k; });
+  legs.forEach(function (L, k) {
+    flown.push({ leg: first >= 0 && k >= first ? "ride" : "pickup", from: L.from, to: L.to, depart: iso(L.dep_jd), arrive: iso(L.arr_jd), kwh: L.kwh, gate: L.local ? "local" : "planned" });
+    arcs["a" + k] = { from: L.from, to: L.to, arc_au: L.arc, dep_jd: L.dep_jd, arr_jd: L.arr_jd };
+  });
+  return { record: { log: { flown: flown }, score: { incidents: [] } }, arcs: arcs };
+}
+function planBooking(id, ms) {
+  var B = BK[id] || (BK[id] = { id: id });
+  B.busy = false; B.ms = ms; B.rp = null; B.err = null;
+  try {
+    var P = SF.plan(id, ms); B.plan = P;
+    if (P.closed) { B.err = P.closed; }
+    else { B.rp = SF.replay(bookingRide(P, P.hail)); }
+  } catch (e) { B.err = "The engine could not plan this booking (" + (e && e.message) + ")."; }
+  B.samp = null; routesDirty = true;
+  pushFeed({ jd: SF.sky(ms).jd, who: "DESK", kind: "plan", txt: B.err ? "Could not plan " + (hailOf(id) || {}).title : "Engine planned " + (hailOf(id) || {}).title + (B.plan && B.plan.par ? ", par " + SF.SHIP + " " + parName(B.plan.par.car) : "") });
+  renderBookings(); if (SEL.t === "b" && SEL.id === id) renderInfo();
+}
+function parName(car) { var f = SF.SITE.fleet.filter(function (x) { return x.car === car; })[0]; return f ? f.name : String(car).toUpperCase(); }
+
+/* =========================================================
+   THE 3D MAP (three.js r128): tilted ecliptic, log-compressed radius, true bearings and dates
+   ========================================================= */
+var GL = null, scene, cam, GW = 1, GH = 1, MAPJD = 0, LIVEJD = 0, QUANT = true;
+function V(x, y, z) { return new THREE.Vector3(x || 0, y || 0, z || 0); }
+function initGL() {
+  function fail() { GL = null; $("#nogl").hidden = false; }
+  if (!window.THREE) return fail();
+  try {
+    var c = document.createElement("canvas");
+    var ok = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+    if (!ok) return fail();
+    var r = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance", logarithmicDepthBuffer: true });
+    r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    r.setClearColor(0x050a14, 1);
+    GL = { r: r, tex: {} };
+    if (window.SolArt) { SolArt.init(r); GL.post = SolArt.composer(r, { threshold: 0.9 }); } // bloom only on the ops map
+    $("#glhost").appendChild(r.domElement);
+    scene = new THREE.Scene();
+    cam = new THREE.PerspectiveCamera(45, 1, 0.005, 12000);
+  } catch (e) { return fail(); }
+}
+function onResize() {
+  if (!GL) return;
+  var host = $("#mapbox"), w = host.clientWidth || 1, h = host.clientHeight || 1;
+  GL.r.setSize(w, h); if (GL.post) GL.post.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix();
+  GW = w; GH = h; GUT = null;
+}
+/* ---------- textures and meshes ---------- */
+function prng(seed) { var s = seed >>> 0 || 1; return function () { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 100000) / 100000; }; }
+function hash(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h; }
+function glowTex(inner, outer) {
+  var k = inner + outer; if (GL.tex[k]) return GL.tex[k];
+  var c = document.createElement("canvas"); c.width = c.height = 128; var g = c.getContext("2d");
+  var gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, inner); gr.addColorStop(0.25, outer); gr.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  return (GL.tex[k] = new THREE.CanvasTexture(c));
+}
+function diamondTex() {
+  if (GL.tex.dia) return GL.tex.dia;
+  var c = document.createElement("canvas"); c.width = c.height = 64; var g = c.getContext("2d");
+  g.translate(32, 32); g.rotate(Math.PI / 4);
+  g.fillStyle = "rgba(255,207,122,.18)"; g.fillRect(-15, -15, 30, 30);
+  g.strokeStyle = "#ffcf7a"; g.lineWidth = 4; g.strokeRect(-15, -15, 30, 30);
+  return (GL.tex.dia = new THREE.CanvasTexture(c));
+}
+function planetTex(id) {
+  if (GL.tex["p" + id]) return GL.tex["p" + id];
+  var c = document.createElement("canvas"); c.width = 256; c.height = 128; var g = c.getContext("2d"), col = new THREE.Color(SF.color(id)), rnd = prng(hash(id));
+  function sh(k, a) { return "rgba(" + Math.round(Math.min(1, col.r * (1 + k)) * 255) + "," + Math.round(Math.min(1, col.g * (1 + k)) * 255) + "," + Math.round(Math.min(1, col.b * (1 + k)) * 255) + "," + (a == null ? 1 : a) + ")"; }
+  g.fillStyle = sh(0); g.fillRect(0, 0, 256, 128);
+  if (/^(jupiter|saturn|uranus|neptune)$/.test(id)) {
+    var amp = id === "jupiter" ? 0.32 : id === "saturn" ? 0.18 : 0.08;
+    for (var y = 0; y < 128;) { var hgt = 2 + Math.floor(rnd() * 7); g.fillStyle = sh((rnd() - 0.5) * amp * 2); g.fillRect(0, y, 256, hgt); y += hgt; }
+    if (id === "jupiter") { g.fillStyle = "rgba(200,110,80,.7)"; g.beginPath(); g.ellipse(170, 80, 16, 8, 0, 0, 7); g.fill(); }
+  } else if (id === "earth") {
+    g.fillStyle = "#1d4f9c"; g.fillRect(0, 0, 256, 128);
+    for (var i = 0; i < 26; i++) { g.fillStyle = rnd() < 0.5 ? "#4f7d4a" : "#7a8a55"; g.beginPath(); g.ellipse(rnd() * 256, 20 + rnd() * 88, 6 + rnd() * 26, 4 + rnd() * 14, rnd() * 3, 0, 7); g.fill(); }
+    for (i = 0; i < 40; i++) { g.fillStyle = "rgba(255,255,255," + (0.25 + rnd() * 0.4) + ")"; g.beginPath(); g.ellipse(rnd() * 256, rnd() * 128, 4 + rnd() * 22, 1 + rnd() * 4, 0, 0, 7); g.fill(); }
+    g.fillStyle = "rgba(255,255,255,.85)"; g.fillRect(0, 0, 256, 6); g.fillRect(0, 122, 256, 6);
+  } else {
+    for (i = 0; i < 180; i++) { g.fillStyle = sh((rnd() - 0.55) * 0.5, 0.45); g.beginPath(); g.arc(rnd() * 256, rnd() * 128, 1 + rnd() * 10, 0, 7); g.fill(); }
+  }
+  return (GL.tex["p" + id] = new THREE.CanvasTexture(c));
+}
+var GEO = {};
+function sphereGeo() { return GEO.s || (GEO.s = new THREE.SphereGeometry(1, 40, 20)); }
+function stars() {
+  if (window.SolArt) return SolArt.stars(3600);
+  var n = 2600, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), rnd = prng(7);
+  for (var i = 0; i < n; i++) {
+    var u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, s = Math.sqrt(1 - u * u), R = 3600;
+    pos[i * 3] = R * s * Math.cos(th); pos[i * 3 + 1] = R * u; pos[i * 3 + 2] = R * s * Math.sin(th);
+    var b = 0.35 + rnd() * 0.65, w = rnd(); col[i * 3] = b * (w > 0.85 ? 1 : 0.85); col[i * 3 + 1] = b * 0.9; col[i * 3 + 2] = b * (w < 0.2 ? 1 : 0.95);
+  }
+  var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  return new THREE.Points(g, new THREE.PointsMaterial({ size: 1.5, sizeAttenuation: false, vertexColors: true, depthWrite: false }));
+}
+function sunObj(r) {
+  if (window.SolArt) return SolArt.sun(r, 11);
+  var g = new THREE.Group();
+  g.add(new THREE.Mesh(sphereGeo(), new THREE.MeshBasicMaterial({ color: 0xffe2b0 })));
+  g.children[0].scale.setScalar(r);
+  var s1 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(255,236,200,1)", "rgba(255,170,80,.45)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  s1.scale.setScalar(r * 4.6); g.add(s1);
+  var s2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(255,190,110,.32)", "rgba(255,140,60,.07)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  s2.scale.setScalar(r * 11); g.add(s2);
+  return g;
+}
+function planetMesh(id) {
+  var a = window.SolArt && SolArt.planet(id); if (a) return a;
+  var m = new THREE.Mesh(sphereGeo(), new THREE.MeshLambertMaterial({ map: planetTex(id), emissive: new THREE.Color(SF.color(id)).multiplyScalar(0.06) }));
+  if (id === "saturn") {
+    var ring = new THREE.Mesh(new THREE.RingGeometry(1.35, 2.3, 64), new THREE.MeshBasicMaterial({ color: 0xd9c79a, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false }));
+    ring.rotation.x = -Math.PI / 2 + 0.47; m.add(ring);
+  }
+  m.rotation.z = 0.35;
+  return m;
+}
+function atmo(color, r) {
+  var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(0,0,0,0)", color), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  s.scale.setScalar(r * 2.9); return s;
+}
+var DASHED = [];
+function lineOf(pts, color, opacity, dashed) {
+  var g = new THREE.BufferGeometry().setFromPoints(pts);
+  var m = dashed ? new THREE.LineDashedMaterial({ color: color, transparent: true, opacity: opacity, dashSize: 0.35, gapSize: 0.3, depthWrite: false })
+    : new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: opacity, depthWrite: false });
+  var l = new THREE.Line(g, m); if (dashed) { l.computeLineDistances(); DASHED.push(m); }
+  return l;
+}
+function setLine(l, pts) {
+  l.geometry.dispose(); l.geometry = new THREE.BufferGeometry().setFromPoints(pts.length > 1 ? pts : [V(), V()]);
+  if (l.material.isLineDashedMaterial) l.computeLineDistances();
+  l.visible = pts.length > 1;
+}
+function glowPoints(n, color, size) {
+  var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  return new THREE.Points(g, new THREE.PointsMaterial({ size: size, sizeAttenuation: false, map: glowTex("rgba(255,255,255,1)", "rgba(142,197,255,.5)"), color: color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+}
+function setPts(obj, pts) {
+  var a = obj.geometry.attributes.position, n = Math.min(pts.length, a.count);
+  for (var i = 0; i < n; i++) a.setXYZ(i, pts[i].x, pts[i].y, pts[i].z);
+  a.needsUpdate = true; obj.geometry.setDrawRange(0, n); obj.geometry.computeBoundingSphere();
+}
+/* The Starseeker: lifting-body hull, window band, swept stub wings, a dorsal fin and one aft thruster. Nose along +z. */
+var SHIPMAT = null;
+function makeShip() {
+  if (!SHIPMAT) {
+    var pts = [], N = 22;
+    var rr = function (t) { return 0.15 * (t < 0.36 ? 0.6 + 0.4 * Math.sin(t / 0.36 * Math.PI / 2) : Math.pow(Math.cos((t - 0.36) / 0.64 * Math.PI / 2), 0.85)); };
+    pts.push(new THREE.Vector2(0.001, -0.5));
+    for (var i = 0; i <= N; i++) { var t = i / N; pts.push(new THREE.Vector2(Math.max(0.001, rr(t)), -0.5 + t)); }
+    var hull = new THREE.LatheGeometry(pts, 20); hull.rotateX(Math.PI / 2); hull.scale(1.25, 0.52, 1);
+    var fin = new THREE.Shape(); fin.moveTo(0, 0); fin.lineTo(0.2, 0); fin.lineTo(0.02, 0.13); fin.lineTo(-0.03, 0.13); fin.lineTo(0, 0);
+    var finG = new THREE.ExtrudeGeometry(fin, { depth: 0.012, bevelEnabled: false }); finG.translate(0, 0, -0.006); finG.rotateY(-Math.PI / 2);
+    var stripe = [];
+    for (i = 2; i <= 20; i++) { var tt = i / 22; stripe.push(V(rr(tt) * 1.25 * 1.01, -0.012, -0.5 + tt)); }
+    SHIPMAT = {
+      hull: hull, finG: finG, stripe: stripe,
+      wingG: new THREE.BoxGeometry(0.3, 0.012, 0.12),
+      hullM: new THREE.MeshStandardMaterial({ color: 0x3a4660, metalness: 0.5, roughness: 0.38, flatShading: true, emissive: 0x111a28 }),
+      wingM: new THREE.MeshStandardMaterial({ color: 0x222b3a, metalness: 0.5, roughness: 0.5, flatShading: true, emissive: 0x0a0f18 }),
+      winM: new THREE.MeshStandardMaterial({ color: 0x2a4266, emissive: 0x8ec5ff, emissiveIntensity: 0.7, metalness: 0.2, roughness: 0.15 }),
+      thrM: new THREE.MeshBasicMaterial({ color: 0xffcf7a }),
+      stripeM: new THREE.LineBasicMaterial({ color: 0x8ec5ff, transparent: true, opacity: 0.9 }),
+      glow: glowTex("rgba(255,230,180,1)", "rgba(255,182,92,.55)")
+    };
+  }
+  var S_ = SHIPMAT, g = new THREE.Group();
+  g.add(new THREE.Mesh(S_.hull, S_.hullM));
+  var band = new THREE.Mesh(sphereGeo(), S_.winM); band.scale.set(0.07, 0.034, 0.3); band.position.set(0, 0.052, 0.07); g.add(band);
+  [1, -1].forEach(function (s) {
+    var w = new THREE.Mesh(S_.wingG, S_.wingM); w.position.set(s * 0.22, -0.04, -0.1); w.rotation.y = s * 0.5; w.rotation.z = s * -0.08; g.add(w);
+    var st = new THREE.Line(new THREE.BufferGeometry().setFromPoints(S_.stripe.map(function (p) { return V(p.x * s, p.y, p.z); })), S_.stripeM); g.add(st);
+  });
+  var f = new THREE.Mesh(S_.finG, S_.wingM); f.position.set(0, 0.055, -0.42); g.add(f);
+  var tor = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.012, 8, 24), S_.thrM); tor.position.z = -0.5; g.add(tor);
+  var gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: S_.glow, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  gl.position.z = -0.58; gl.scale.setScalar(0.42); g.add(gl);
+  return g;
+}
+
+/* ---------- log-compressed radius: r_scene = 30 log10(1 + r / 0.25 AU); bearings and ecliptic latitude are true ---------- */
+var R0 = 0.25, KS = 30;
+function rs(r) { return KS * Math.log10(1 + r / R0); }
+function rsInv(x) { return R0 * (Math.pow(10, x / KS) - 1); }
+var SIZE = { sun: 3.2, mercury: 0.45, venus: 0.8, earth: 0.85, mars: 0.6, jupiter: 1.8, saturn: 1.5, uranus: 1.1, neptune: 1.1, ceres: 0.3, bennu: 0.1, roadster: 0.1, moon: 0.25, phobos: 0.12, io: 0.2, europa: 0.2, ganymede: 0.25, callisto: 0.22, enceladus: 0.12, titan: 0.25, triton: 0.18 };
+function dispR(id) { return SIZE[id] || 0.08; }
+function axes(v, s) { return V(v[0] * s, v[2] * s, -v[1] * s); }
+function S(p) { var r = Math.hypot(p[0], p[1], p[2]); return r ? axes(p, rs(r) / r) : V(); }
+function helioOf(v) { var L = v.length(); if (!L) return [0, 0, 0]; var k = rsInv(L) / L; return [v.x * k, -v.z * k, v.y * k]; }
+// Moons and stations sit around their planet on their own log scale (true direction, exaggerated distance).
+function localOff(rel, par) {
+  var au = Math.hypot(rel[0], rel[1], rel[2]); if (!au) return V();
+  var P = SF.place(par), R = (P && P.radius_km) || 1000, km = au * AU;
+  return axes(rel, dispR(par) * (1.3 + 0.9 * Math.log10(1 + km / R)) / au);
+}
+function d3(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+// Stations and moons that circle in under three days would spin many times a second at one sky day per second; on
+// the live map they step once per sky day (each real second) instead of blurring.
+var FAST = {};
+function qjd(jd) { var j0 = SF.SKY.jd0; return j0 + Math.floor(jd - j0); }
+var MEMO = {}, MEMON = 0;
+function marker(id, jd) {
+  var k = id + "|" + jd, m = MEMO[k]; if (m) return m;
+  if (++MEMON > 6000) { MEMO = {}; MEMON = 0; }
+  var P = SF.place(id), v;
+  if (id === "sun" || !P) v = V();
+  else if (P.parent === "sun") v = S(SF.pos(id, jd));
+  else { var j = QUANT && FAST[id] ? qjd(jd) : jd; v = marker(P.parent, jd).clone().add(localOff(d3(SF.pos(id, j), SF.pos(P.parent, j)), P.parent)); }
+  return (MEMO[k] = v);
+}
+// Where a replayed Starseeker is drawn. Hops inside one planet's system are drawn around that planet at jdNow.
+function shipC(rp, jd, jdNow) {
+  if (jdNow == null) jdNow = jd;
+  var s = rp.at(jd), L = s.leg;
+  if (s.phase !== "flight") return { v: marker(s.phase === "arrived" ? L.to : L.from, jdNow).clone(), s: s };
+  var f = s.f;
+  if (L.sys) {
+    var sys = L.sys, base = function (p) { return localOff(d3(p, SF.pos(sys, jd)), sys); }, an = marker(sys, jdNow);
+    var v = base(s.p);
+    var e0 = marker(L.from, jdNow).clone().sub(an).sub(base(SF.pos(L.from, jd)));
+    var e1 = marker(L.to, jdNow).clone().sub(an).sub(base(SF.pos(L.to, jd)));
+    return { v: v.add(e0.multiplyScalar(1 - f)).add(e1.multiplyScalar(f)).add(an), s: s };
+  }
+  var w = S(s.p), c0 = marker(L.from, L.dep).clone().sub(S(SF.pos(L.from, L.dep))), c1 = marker(L.to, L.arr).clone().sub(S(SF.pos(L.to, L.arr)));
+  return { v: w.add(c0.multiplyScalar(1 - f)).add(c1.multiplyScalar(f)), s: s };
+}
+function sampleRoute(rp, jdNow) {
+  var out = [];
+  rp.legs.forEach(function (L) {
+    var n = L.sys ? 40 : 72;
+    for (var k = 0; k <= n; k++) { var j = L.dep + (L.arr - L.dep) * k / n; out.push({ j: j, v: shipC(rp, j, jdNow).v }); }
+  });
+  return out;
+}
+
+/* ---------- labels, clamped to the map panel ---------- */
+var GUT = null;
+function gut() {
+  if (GUT) return GUT;
+  var d = document.createElement("div"), n = function (v) { return parseFloat(v) || 0; };
+  d.style.cssText = "position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)";
+  document.body.appendChild(d);
+  var cs = getComputedStyle(d);
+  GUT = { l: Math.max(16, n(cs.paddingLeft)), r: Math.max(16, n(cs.paddingRight)), t: 8, b: 8 };
+  d.remove(); return GUT;
+}
+function LabelSet(root) {
+  var items = [], pv = null;
+  return {
+    add: function (o) {
+      var el = document.createElement(o.click ? "button" : "div");
+      el.className = "lbl " + (o.cls || ""); el.innerHTML = o.html;
+      if (o.click) { el.type = "button"; el.addEventListener("click", o.click); }
+      root.appendChild(el); o.el = el; o.w = 0; o.on = false;
+      items.push(o); items.sort(function (a, b) { return b.pri - a.pri; }); return o;
+    },
+    update: function (cam, W, H) {
+      pv = pv || V(); var placed = [], g = gut();
+      for (var i = 0; i < items.length; i++) {
+        var o = items[i], p = o.hide && o.hide() ? null : o.pos(), show = false;
+        if (p) {
+          pv.copy(p).project(cam);
+          if (pv.z < 1 && pv.z > -1 && Math.abs(pv.x) < 1.05 && Math.abs(pv.y) < 1.05) {
+            if (!o.w) { o.w = o.el.offsetWidth || 60; o.h = o.el.offsetHeight || 16; }
+            var ok = true;
+            var x = clamp((pv.x + 1) / 2 * W + 4, g.l, W - g.r - o.w), y = clamp((1 - pv.y) / 2 * H - o.h / 2, g.t, H - g.b - o.h);
+            for (var j = 0; ok && j < placed.length; j++) { var r = placed[j]; if (x < r[2] && x + o.w > r[0] && y < r[3] && y + o.h > r[1]) ok = false; }
+            if (ok) { placed.push([x, y, x + o.w, y + o.h]); o.el.style.transform = "translate3d(" + x.toFixed(1) + "px," + y.toFixed(1) + "px,0)"; show = true; }
+          }
+        }
+        if (show !== o.on) { o.el.style.visibility = show ? "visible" : "hidden"; o.on = show; }
+      }
+    }
+  };
+}
+var TV = null;
+function tbox(el, p, minPx) {
+  if (!p) { el.style.visibility = "hidden"; return; }
+  TV = TV || V(); TV.copy(p).project(cam);
+  if (TV.z >= 1 || Math.abs(TV.x) > 1.05 || Math.abs(TV.y) > 1.05) { el.style.visibility = "hidden"; return; }
+  var s = minPx, x = (TV.x + 1) / 2 * GW, y = (1 - TV.y) / 2 * GH;
+  el.style.width = el.style.height = s + "px";
+  el.style.transform = "translate3d(" + (x - s / 2).toFixed(1) + "px," + (y - s / 2).toFixed(1) + "px,0)";
+  el.style.visibility = "visible";
+}
+function pxw(v) { return cam.position.distanceTo(v) * 2 * Math.tan(cam.fov * Math.PI / 360) / GH; }
+
+/* ---------- camera rig: slow auto-orbit, drag, wheel / pinch, fly-to ---------- */
+var RIG = { az: 0.7, el: 0.62, dist: 150, tgt: V(), touched: -1e9, fly: null, zoom: function (f) { RIG.fly = null; RIG.dist = clamp(RIG.dist * f, 1.2, 420); } };
+var FOCI = { sun: { id: "sun", d: 150, el: 0.62 }, inner: { id: "sun", d: 58, el: 0.78 }, earth: { id: "earth", d: 7 }, mars: { id: "mars", d: 6.5 }, jupiter: { id: "jupiter", d: 19 }, saturn: { id: "saturn", d: 16 } };
+var FOC = FOCI.sun, FOCKEY = "sun";
+function bindRig(host) {
+  var ptrs = {}, pinch = 0;
+  host.addEventListener("pointerdown", function (e) { ptrs[e.pointerId] = [e.clientX, e.clientY]; try { host.setPointerCapture(e.pointerId); } catch (x) { /* ok */ } RIG.touched = performance.now(); RIG.fly = null; });
+  host.addEventListener("pointermove", function (e) {
+    if (!ptrs[e.pointerId]) return;
+    var prev = ptrs[e.pointerId]; ptrs[e.pointerId] = [e.clientX, e.clientY];
+    var ids = Object.keys(ptrs);
+    if (ids.length === 2) {
+      var a = ptrs[ids[0]], b = ptrs[ids[1]], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      if (pinch) RIG.zoom(pinch / d); pinch = d;
+    } else {
+      RIG.az -= (e.clientX - prev[0]) * 0.006; RIG.el = clamp(RIG.el + (e.clientY - prev[1]) * 0.005, -1.35, 1.45);
+    }
+    RIG.touched = performance.now();
+  });
+  function up(e) { delete ptrs[e.pointerId]; pinch = 0; }
+  host.addEventListener("pointerup", up); host.addEventListener("pointercancel", up);
+  host.addEventListener("wheel", function (e) { e.preventDefault(); RIG.zoom(Math.exp(e.deltaY * 0.0012)); RIG.touched = performance.now(); }, { passive: false });
+}
+function flyTo(f, key) {
+  FOC = f; FOCKEY = key || null;
+  $$("#focus [data-f]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.f === key ? "true" : "false"); });
+  RIG.fly = { t0: performance.now(), p0: RIG.tgt.clone(), d0: RIG.dist, d1: f.d, el0: RIG.el, el1: f.el != null ? f.el : clamp(RIG.el, 0.35, 0.9) };
+  if (reduced) RIG.fly.t0 = -1e9;
+}
+function sysFocus(id) { var s = SF.system(id); return FOCI[s] ? s : null; }
+function focusTarget() {
+  if (FOLLOW && SEL.t === "f" && FL[SEL.i].sc) return FL[SEL.i].sc.v;
+  return marker(FOC.id, MAPJD);
+}
+
+/* ---------- scene objects ---------- */
+var BODIES = [], GRID, ORB, MOR = [], LBL, STOPS = {}, PARK_R, PARK_B, routesDirty = true, lastRoute = 0, lastFlown = 0, lastHud = 0;
+var ATMO = { earth: "rgba(120,180,255,.55)", venus: "rgba(255,220,160,.4)", mars: "rgba(255,140,90,.35)", jupiter: "rgba(255,210,170,.3)", saturn: "rgba(255,230,180,.28)", uranus: "rgba(150,230,240,.35)", neptune: "rgba(110,150,255,.38)", titan: "rgba(255,190,110,.45)" };
+var RINGS = [0.5, 1, 2, 5, 10, 20, 30];
+function buildScene(J0) {
+  scene.add(stars());
+  scene.add(new THREE.AmbientLight(0xffffff, 0.17));
+  scene.add(new THREE.PointLight(0xfff1dc, 1.45, 0));
+  var sun = sunObj(SIZE.sun); scene.add(sun);
+  if (window.SolArt) SolArt.setSun(V());
+  GRID = new THREE.Group();
+  RINGS.forEach(function (r) {
+    var pts = []; for (var k = 0; k <= 200; k++) { var a = k / 200 * TAU; pts.push(V(Math.cos(a) * rs(r), 0, Math.sin(a) * rs(r))); }
+    GRID.add(lineOf(pts, 0x5cc8ff, r === 1 ? 0.24 : 0.12));
+  });
+  for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; GRID.add(lineOf([V(Math.cos(a) * rs(0.12), 0, Math.sin(a) * rs(0.12)), V(Math.cos(a) * rs(34), 0, Math.sin(a) * rs(34))], 0x5cc8ff, 0.07)); }
+  scene.add(GRID);
+  ORB = new THREE.Group();
+  SF.PLANETS.concat(["ceres", "bennu", "roadster"]).forEach(function (id) {
+    try { var pts = SF.orbit(id, J0, 200).map(S); ORB.add(lineOf(pts, new THREE.Color(SF.color(id)), SF.PLANETS.indexOf(id) >= 0 ? 0.32 : 0.16)); } catch (e) { /* no orbit */ }
+  });
+  scene.add(ORB);
+  PLACES.forEach(function (p) {
+    if (p.kind === "moon") {
+      try {
+        var pts = SF.orbit(p.id, J0, 120).map(function (rel) { return localOff(rel, p.parent); });
+        if (pts.length > 1) { var g = new THREE.Group(); g.add(lineOf(pts, new THREE.Color(SF.color(p.id)), 0.3)); scene.add(g); MOR.push({ g: g, par: p.parent }); }
+      } catch (e) { /* no orbit */ }
+    }
+    var o, r, min;
+    if (p.kind === "planet" || p.kind === "moon" || p.id === "ceres") { o = planetMesh(p.id); r = dispR(p.id); min = p.kind === "moon" ? 1.6 : 2.6; }
+    else if (p.kind === "small") { o = new THREE.Mesh(sphereGeo(), new THREE.MeshBasicMaterial({ color: new THREE.Color(SF.color(p.id)) })); r = dispR(p.id); min = 1.6; }
+    else { o = new THREE.Mesh(GEO.oc || (GEO.oc = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: 0x5cc8ff, wireframe: true, transparent: true, opacity: 0.85 })); r = 0.06; min = 3.2; }
+    if (ATMO[p.id] && !(window.SolArt && SolArt.hasRim(p.id))) o.add(atmo(ATMO[p.id], 1));
+    scene.add(o);
+    BODIES.push({ id: p.id, kind: p.kind, obj: o, r: r, min: min });
+    if (p.kind === "station" || p.kind === "moon") {
+      var period = p.period_days;
+      if (!period) { try { var st = relRadius(p); period = st; } catch (e) { period = 1; } }
+      if (period < 3) FAST[p.id] = 1;
+    }
+  });
+  PARK_R = glowPoints(16, 0x5cc8ff, 13); PARK_B = glowPoints(16, 0x7f8a99, 11); scene.add(PARK_R); scene.add(PARK_B);
+  FL.forEach(function (F) {
+    F.full = lineOf([V(), V()], 0x5cc8ff, 0.45, true); F.flown = lineOf([V(), V()], 0x5cc8ff, 0.95, false);
+    F.ship = window.SolArt ? SolArt.ship({ callsign: F.call }) : makeShip(); F.halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(160,225,255,.9)", "rgba(92,200,255,.25)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+    scene.add(F.full); scene.add(F.flown); scene.add(F.halo); scene.add(F.ship);
+  });
+  labels();
+}
+// Orbital period (days) of a station from its state around its parent, by vis-viva.
+function relRadius(p) {
+  var a = SF.E.placeState(p.id, LIVEJD), b = SF.E.placeState(p.parent, LIVEJD), mu = SF.place(p.parent).mu;
+  var r = d3(a.r, b.r), v = d3(a.v, b.v), rm = Math.hypot(r[0], r[1], r[2]), v2 = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+  var sa = 1 / (2 / rm - v2 / mu); return sa > 0 ? TAU * Math.sqrt(sa * sa * sa / mu) / 86400 : 1;
+}
+function stopSprite(id) {
+  if (STOPS[id]) return STOPS[id];
+  var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: diamondTex(), depthWrite: false, transparent: true, depthTest: false }));
+  s.renderOrder = 5; scene.add(s); return (STOPS[id] = s);
+}
+function labels() {
+  LBL = LabelSet($("#labels"));
+  var noLbl = function () { return !LAY.lbl; };
+  LBL.add({ html: "Sun", cls: "k-planet", pri: 60, pos: function () { return V(); }, hide: noLbl });
+  RINGS.forEach(function (r) {
+    var a = -0.62, p = V(Math.cos(a) * rs(r), 0, Math.sin(a) * rs(r));
+    LBL.add({ html: (r < 1 ? r.toFixed(1) : String(r)) + " AU", cls: "k-ring", pri: 4, pos: function () { return p; }, hide: function () { return !LAY.ring; } });
+  });
+  PLACES.forEach(function (p) {
+    var pl = p.kind === "planet", sm = p.kind === "small";
+    LBL.add({ html: esc(SF.name(p.id)), cls: pl ? "k-planet" : "k-place", pri: pl ? 50 : sm ? 24 : p.kind === "moon" ? 18 : 14,
+      pos: function () { return marker(p.id, MAPJD); },
+      hide: function () { return !LAY.lbl || (!pl && !sm && RIG.dist > (p.kind === "moon" ? 40 : 22)); } });
+  });
+  FL.forEach(function (F, i) {
+    F.lbl = LBL.add({ html: esc(F.call), cls: "k-sample", pri: 90, click: function () { select({ t: "f", i: i }); },
+      pos: function () { return F.sc ? F.sc.v : null; }, hide: function () { return !FILT.fl || (FOLLOW && SEL.t === "f" && SEL.i !== i); } });
+  });
+  SF.SITE.fleet.forEach(function (c) {
+    if (SAMPLE_CARS[c.car]) return;
+    LBL.add({ html: esc(c.name), cls: "k-fleet", pri: 34,
+      pos: function () { var L = LIVE.filter(function (x) { return x.car === c.car; })[0]; return L ? marker(L.at, MAPJD) : null; },
+      hide: function () { return !FILT.pk || FOLLOW; } });
+  });
+  SF.SITE.hails.forEach(function (h) {
+    LBL.add({ html: esc(h.title), cls: "k-hail", pri: 40, click: function () { select({ t: "b", id: h.hail_id }); },
+      pos: function () { return marker(h.from.id, MAPJD); },
+      hide: function () { var B = BK[h.hail_id]; return !FILT.bk || FOLLOW || !B || !B.rp || !(SEL.t === "b" && SEL.id === h.hail_id); } });
+  });
+}
+function rebuildRoutes() {
+  routesDirty = false;
+  FL.forEach(function (F) {
+    F.samp = sampleRoute(F.rp, MAPJD);
+    setLine(F.full, F.samp.map(function (x) { return x.v; }));
+  });
+  Object.keys(BK).forEach(function (id) {
+    var B = BK[id]; if (!B.rp) { if (B.line) B.line.visible = false; return; }
+    if (!B.line) { B.line = lineOf([V(), V()], 0xffb65c, 0.5, true); scene.add(B.line); }
+    setLine(B.line, sampleRoute(B.rp, MAPJD).map(function (x) { return x.v; }));
+  });
+  var need = {};
+  var rp = SEL.t === "f" ? FL[SEL.i].rp : BK[SEL.id] && BK[SEL.id].rp;
+  if (rp && !(SEL.t === "b" && FOLLOW)) rp.legs.forEach(function (L) { need[L.from] = 1; need[L.to] = 1; });
+  Object.keys(STOPS).forEach(function (id) { STOPS[id].visible = !!need[id]; });
+  Object.keys(need).forEach(function (id) { stopSprite(id).visible = true; });
+}
+function updateFlown() {
+  FL.forEach(function (F) {
+    if (!F.samp || !F.sc) return;
+    var pts = [];
+    for (var k = 0; k < F.samp.length && F.samp[k].j <= F.jd; k++) pts.push(F.samp[k].v);
+    if (pts.length) pts.push(F.sc.v);
+    setLine(F.flown, pts);
+  });
+}
+
+/* ---------- the render loop: paused when the tab is hidden or the map is off screen ---------- */
+var raf = 0, last = 0, MAPVIS = true;
+function frame(t) {
+  raf = requestAnimationFrame(frame);
+  var dt = Math.min(0.1, Math.max(0, (t - last) / 1000)); last = t; MEMO = {}; MEMON = 0;
+  try { draw(dt, t); } catch (e) { if (!frame.err) { frame.err = 1; console.error(e); } }
+}
+function glStart() { if (GL && !raf && !document.hidden && MAPVIS) { last = performance.now(); raf = requestAnimationFrame(frame); } }
+function glStop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
+function draw(dt, t) {
+  var now = Date.now(), rep = FOLLOW && SEL.t === "f";
+  LIVEJD = SF.sky(now).jd;
+  FL.forEach(function (F) { F.jd = flightJd(F, now); });
+  QUANT = !rep;
+  MAPJD = rep ? FL[SEL.i].jd : LIVEJD;
+  FL.forEach(function (F) { F.sc = shipC(F.rp, F.jd, MAPJD); });
+  // camera
+  var want = focusTarget();
+  if (RIG.fly) {
+    var k = clamp((t - RIG.fly.t0) / 1200, 0, 1), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    RIG.tgt.copy(RIG.fly.p0).lerp(want, e);
+    RIG.dist = RIG.fly.d0 * Math.pow(RIG.fly.d1 / RIG.fly.d0, e);
+    RIG.el = RIG.fly.el0 + (RIG.fly.el1 - RIG.fly.el0) * e;
+    if (k >= 1) RIG.fly = null;
+  } else RIG.tgt.copy(want);
+  if (!reduced && t - RIG.touched > 4000) RIG.az += dt * 0.035;
+  var ce = Math.cos(RIG.el);
+  cam.position.set(RIG.tgt.x + RIG.dist * ce * Math.sin(RIG.az), RIG.tgt.y + RIG.dist * Math.sin(RIG.el), RIG.tgt.z + RIG.dist * ce * Math.cos(RIG.az));
+  cam.lookAt(RIG.tgt);
+  cam.updateMatrixWorld();
+  // bodies
+  for (var i = 0; i < BODIES.length; i++) {
+    var b = BODIES[i], v = marker(b.id, MAPJD);
+    b.obj.position.copy(v);
+    b.obj.visible = b.kind === "planet" || b.kind === "small" || RIG.dist < (b.kind === "moon" ? 70 : 40);
+    if (b.obj.visible) b.obj.scale.setScalar(Math.max(b.r, pxw(v) * b.min));
+  }
+  MOR.forEach(function (m) { m.g.position.copy(marker(m.par, MAPJD)); m.g.visible = LAY.moon && RIG.dist < 45; });
+  GRID.visible = LAY.ring; ORB.visible = LAY.orb;
+  // routes
+  if (routesDirty || t - lastRoute > (rep ? 250 : 1000)) { lastRoute = t; rebuildRoutes(); }
+  if (t - lastFlown > 100) { lastFlown = t; updateFlown(); }
+  var dash = RIG.dist * 0.012;
+  DASHED.forEach(function (m) { m.dashSize = dash; m.gapSize = dash * 0.8; });
+  FL.forEach(function (F, j) {
+    var on = FILT.fl && !(rep && SEL.i !== j), sel = SEL.t === "f" && SEL.i === j;
+    F.full.visible = on && F.full.visible !== false; F.flown.visible = on && F.flown.visible !== false;
+    F.full.material.opacity = sel ? 0.6 : 0.28; F.flown.material.opacity = sel ? 1 : 0.55;
+    F.ship.visible = F.halo.visible = on;
+    if (!on) return;
+    var v = F.sc.v, s = pxw(v);
+    F.ship.position.copy(v); F.ship.scale.setScalar(s * (sel ? 30 : 22));
+    if (F.sc.s.phase === "flight") {
+      var L = F.sc.s.leg, nx = shipC(F.rp, Math.min(L.arr, F.jd + Math.max(1e-5, (L.arr - L.dep) / 300)), MAPJD).v;
+      if (nx.distanceToSquared(v) > 1e-12) F.ship.lookAt(nx);
+    }
+    F.halo.position.copy(v); F.halo.scale.setScalar(s * (sel ? 34 : 24));
+    F.halo.material.color.setScalar(sel ? 1.5 : 0.75); // over the bloom threshold only when selected
+    if (F.ship.userData.update) F.ship.userData.update(t, F.sc.s.phase === "flight", reduced);
+    F.lbl.el.classList.toggle("on", sel);
+  });
+  Object.keys(BK).forEach(function (id) {
+    var B = BK[id]; if (!B.line) return;
+    B.line.visible = !!B.rp && FILT.bk && !FOLLOW;
+    B.line.material.opacity = SEL.t === "b" && SEL.id === id ? 0.95 : 0.32;
+  });
+  Object.keys(STOPS).forEach(function (id) {
+    var s = STOPS[id]; if (!s.visible) return;
+    var v = marker(id, MAPJD); s.position.copy(v); s.scale.setScalar(pxw(v) * 15);
+    s.material.color.setRGB(1.3, 1.25, 1.15); // the selected route's stops glow
+  });
+  // parked Starseekers
+  var pr = [], pb = [];
+  if (FILT.pk && !FOLLOW) LIVE.forEach(function (c) { (c.busy && c.busy > LIVEJD ? pb : pr).push(marker(c.at, MAPJD)); });
+  setPts(PARK_R, pr); setPts(PARK_B, pb);
+  LBL.update(cam, GW, GH);
+  var tb = $("#tbox");
+  if (SEL.t === "f" && FILT.fl) { var F0 = FL[SEL.i]; tb.className = "tbox " + (F0.st ? F0.st.k : ""); tbox(tb, F0.sc.v, 34); }
+  else tbox(tb, null);
+  if (t - lastHud > 250) { lastHud = t; mapHud(); }
+  if (GL.post) GL.post.render(scene, cam); else GL.r.render(scene, cam);
+}
+/* ---------- map HUD: map time, the scale bar and the map centre ---------- */
+var NICE = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20];
+function mapHud() {
+  var rep = FOLLOW && SEL.t === "f", F = rep ? FL[SEL.i] : null;
+  $("#hud").innerHTML = rep
+    ? '<span class="caps">Map time &middot; sample replay ' + esc(F.call) + '</span><br><b>' + iso(MAPJD) + "</b> UTC<br>Sample flights replay at their own season-13 dates. Live layers are hidden."
+    : '<span class="caps">Map time &middot; live sky</span><br><b>' + iso(MAPJD) + "</b> UTC &middot; season " + SF.sky().season + "<br>Sample flights replay at their own season-13 dates.";
+  $("#liveBtn").hidden = !rep;
+  var sysf = (FOC.id !== "sun" && !rep) || (rep && F.sc && F.sc.s.leg.sys && F.sc.s.phase === "flight") || (rep && F.sc && F.sc.s.phase !== "flight" && RIG.dist < 30);
+  if (sysf) $("#sBar").innerHTML = '<p class="note" style="margin:4px 0 0">Offsets around the planet are log-scaled; no single scale.</p>';
+  else {
+    var ppu = GH / (2 * RIG.dist * Math.tan(cam.fov * Math.PI / 360)), a = rsInv(RIG.tgt.length()), best = null;
+    NICE.forEach(function (n) { var x = (rs(a + n) - rs(a)) * ppu; if (x <= 190 && (!best || Math.abs(x - 110) < Math.abs(best.x - 110))) best = { n: n, x: x }; });
+    if (best && best.x > 8) {
+      var w = Math.round(best.x);
+      $("#sBar").innerHTML = '<div class="sbar" style="width:' + (w + 30) + 'px"><span class="ln" style="width:' + w + 'px"></span><span class="tk" style="left:0"></span><span class="tk" style="left:' + w + 'px"></span><span class="t2" style="left:0">0</span><span class="t2" style="left:' + w + 'px">' + best.n + ' AU</span></div><div class="note">' + (a < 0.01 ? "Outward from the Sun" : "Outward from " + fmt(a, a < 1 ? 2 : 1) + " AU, at the map centre") + ". Log-compressed, so it stretches inward.</div>";
+    } else $("#sBar").innerHTML = '<p class="note" style="margin:4px 0 0">Zoom in for a scale.</p>';
+  }
+  var c = helioOf(RIG.tgt);
+  $("#cTxt").innerHTML = "X <b>" + sgn(c[0], 3) + "</b> Y <b>" + sgn(c[1], 3) + "</b> Z <b>" + sgn(c[2], 3) + "</b> AU" + (FOC.id !== "sun" && !rep ? '<br><span class="dim">' + esc(SF.name(FOC.id)) + " at the centre</span>" : "");
+}
+
+/* =========================================================
+   SELECTION, CARDS, INFO CARD
+   ========================================================= */
+var SEL = { t: "f", i: 0 }, FOLLOW = false;
+var FILT = { fl: true, bk: true, pk: true }, LAY = { orb: true, ring: true, lbl: true, moon: true };
+function select(s) {
+  var same = s.t === SEL.t && (s.t === "f" ? s.i === SEL.i : s.id === SEL.id);
+  SEL = s;
+  if (s.t === "b") { FOLLOW = false; showTab("b"); var B = BK[s.id]; if (!B || (!B.rp && !B.err && !B.busy)) startPlan(s.id); }
+  else { showTab("f"); if (FOLLOW && !same) FOLLOW = true; }
+  routesDirty = true;
+  renderCardsSel(); renderBookings(); renderInfo();
+  if (GL && !same) {
+    var rp = s.t === "f" ? FL[s.i].rp : BK[s.id] && BK[s.id].rp, hail = s.t === "b" ? hailOf(s.id) : null;
+    var fid = s.t === "f" ? (rp.focus !== "sun" ? sysFocus(rp.focus) : null) : (sysFocus(hail.from.id) === sysFocus(hail.to.id) ? sysFocus(hail.from.id) : null);
+    if (FOLLOW && s.t === "f") flyTo({ id: "sun", d: rp.focus === "sun" ? 70 : 7 }, null);
+    else if (fid) flyTo(FOCI[fid], fid); else flyTo(FOCI.inner, "inner");
+  }
+}
+function setFollow(on) {
+  if (SEL.t !== "f") return;
+  FOLLOW = on; routesDirty = true;
+  var rp = FL[SEL.i].rp;
+  if (on) flyTo({ id: "sun", d: rp.focus === "sun" ? 70 : 7 }, null);
+  else { var fid = rp.focus !== "sun" ? sysFocus(rp.focus) : null; flyTo(fid ? FOCI[fid] : FOCI.inner, fid || "inner"); }
+  renderInfo();
+}
+function showTab(t) {
+  $("#tabF").setAttribute("aria-selected", t === "f" ? "true" : "false"); $("#tabB").setAttribute("aria-selected", t === "b" ? "true" : "false");
+  $("#flList").hidden = t !== "f"; $("#bkWrap").hidden = t !== "b";
+}
+function renderCards() {
+  $("#flN").textContent = FL.length;
+  $("#flList").innerHTML = FL.map(function (F, i) {
+    var lg = F.rp.record.log;
+    return '<li><button type="button" class="fc" data-f="' + i + '" aria-pressed="false">' +
+      '<div class="r1"><span class="cs">' + esc(F.call) + '</span><span class="dim" style="font-size:11px">' + esc(SF.SHIP) + '</span><span class="st" data-st></span></div>' +
+      '<div class="rt">' + placeH(lg.from) + ' <span class="ar">&rarr;</span> ' + placeH(lg.to) + "</div>" +
+      '<div class="lb">' + W(F.rp.label) + "</div>" +
+      '<div class="pbar"><i data-pb></i></div>' +
+      '<div class="r3"><span data-pc></span><span class="eta">ETA <b data-eta></b></span><span>Arr <b>' + esc(arrOf(F)) + "</b></span></div>" +
+      '<div class="tg"><span class="tag sim">Sample</span><span class="tag sim">Simulated</span></div></button></li>';
+  }).join("");
+  renderCardsSel(); updateCards();
+}
+function renderCardsSel() { $$("#flList .fc").forEach(function (b) { b.setAttribute("aria-pressed", SEL.t === "f" && +b.dataset.f === SEL.i ? "true" : "false"); }); }
+function updateCards() {
+  $$("#flList .fc").forEach(function (b) {
+    var F = FL[+b.dataset.f]; if (!F.st) return;
+    setSt($("[data-st]", b), F.st.k);
+    $("[data-pb]", b).style.width = (progOf(F, F.jd) * 100).toFixed(1) + "%";
+    $("[data-pc]", b).textContent = Math.round(progOf(F, F.jd) * 100) + "%";
+    $("[data-eta]", b).textContent = etaOf(F, F.jd);
+  });
+}
+function renderBookings() {
+  $("#bkN").textContent = DESK.length;
+  var html = DESK.map(function (d) {
+    var B = BK[d.id] || {}, P = B.plan, st;
+    if (B.busy) st = '<div class="planning" style="margin-top:6px"><i></i>Planning with the engine</div>';
+    else if (B.err) st = '<div class="pl">' + W(B.err) + "</div>";
+    else if (B.rp) st = '<div class="pl">Planned at sky time ' + iso(SF.sky(B.ms).jd) + " &middot; par <b>" + esc(parName(P.par.car)) + "</b></div>";
+    else st = '<div class="pl">' + (d.kind === "quick" ? "Not planned yet" : "Long haul: planned when you pick it (takes a moment)") + "</div>";
+    return '<li><button type="button" class="fc" data-b="' + esc(d.id) + '" aria-pressed="' + (SEL.t === "b" && SEL.id === d.id) + '">' +
+      '<div class="r1"><span style="font-weight:600;font-size:13.5px">' + esc(d.title) + '</span><span class="tag sim" style="margin-left:auto">' + ic("booking") + esc(d.kind) + "</span></div>" +
+      '<div class="rt">' + placeH(d.from) + ' <span class="ar">&rarr;</span> ' + placeH(d.to) + "</div>" +
+      '<div class="lb">' + W(d.rider) + "</div>" +
+      '<div class="rdy">' + (d.open ? "Ready " + iso(d.ready_jd) + " if taken now" : "Closed until the season resets") + "</div>" + st + "</button></li>";
+  }).join("");
+  if (html !== renderBookings.last) { renderBookings.last = html; $("#bkList").innerHTML = html; }
+}
+function startPlan(id) {
+  var B = BK[id] || (BK[id] = { id: id });
+  B.busy = true; renderBookings(); if (SEL.t === "b" && SEL.id === id) renderInfo();
+  setTimeout(function () { planBooking(id, Date.now()); }, 40);
+}
+function renderInfo() {
+  var el = $("#info");
+  if (SEL.t === "f") {
+    var F = FL[SEL.i], rec = F.rp.record, sc = rec.score, lg = rec.log;
+    el.innerHTML = '<div class="caps" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">Selected flight <span class="tag sim">Sample</span><span class="tag sim">Simulated</span></div>' +
+      '<div class="ihd"><div class="art">' + SF.SHIP_SVG + '</div><div><div class="nm">' + esc(F.call) + '</div><div class="dim" style="font-size:11px">' + esc(SF.SHIP) + ' <span class="tag fict">Fictional</span></div></div><span class="st" id="iSt"></span></div>' +
+      '<div class="irt">' + placeH(lg.from) + ' <span class="dim">&rarr;</span> ' + placeH(lg.to) + "</div>" +
+      '<div class="note" id="iW" style="margin-top:3px"></div><div class="ipb"><i id="iBar"></i></div>' +
+      '<dl class="kv"><dt>Progress</dt><dd id="iP"></dd><dt>ETA</dt><dd id="iEta"></dd><dt>Arrival</dt><dd>' + esc(arrOf(F)) + "</dd><dt>Energy used</dt><dd>" + kwh(sc.used_kwh) + "</dd><dt>Fare</dt><dd>" + money(sc.fare_usd) + "</dd><dt>Score</dt><dd>" + fmt(sc.total) + " / " + sc.out_of + "</dd></dl>" +
+      '<div class="irow"><button class="btn small primary" type="button" data-act="view">View flight</button><button class="btn small" type="button" data-act="follow" aria-pressed="' + FOLLOW + '">' + (FOLLOW ? "Following" : "Follow") + "</button></div>";
+    updateInfo();
+  } else {
+    var B = BK[SEL.id] || {}, h = hailOf(SEL.id), P = B.plan, body;
+    if (B.busy) body = '<div class="planning" style="margin-top:10px"><i></i>Planning with the engine</div>';
+    else if (B.err) body = '<p class="note">' + W(B.err) + "</p>";
+    else if (B.rp) {
+      body = '<dl class="kv"><dt>Planned at</dt><dd>' + iso(SF.sky(B.ms).jd) + "</dd><dt>Par " + esc(SF.SHIP) + "</dt><dd>" + esc(parName(P.par.car)) + "</dd><dt>Arrives</dt><dd>" + iso(P.par.arr_jd) + "</dd><dt>Arrive by</dt><dd>" + iso(P.arrive_by_jd) + "</dd><dt>Energy, par</dt><dd>" + kwh(P.par.kwh) + "</dd></dl>" +
+        '<div class="caps" style="margin-top:8px">Legs</div>' + P.par.legs.map(function (L, k) {
+          return '<div style="font-size:11.5px;margin-top:4px;border-top:1px solid var(--line);padding-top:4px">' + esc(SF.name(L.from)) + " &rarr; " + esc(SF.name(L.to)) + (L.local ? ' <span class="dim">local hop</span>' : "") + '<div class="mono dim" style="font-size:10.5px">' + iso(L.dep_jd) + " &rarr; " + iso(L.arr_jd) + " &middot; " + kwh(L.kwh) + " &middot; " + money(L.fare) + "</div></div>";
+        }).join("");
+    } else body = '<p class="note">Not planned yet.</p>';
+    el.innerHTML = '<div class="caps" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">Open booking <span class="tag sim">Simulated</span></div>' +
+      '<div style="font-weight:600;font-size:14px;margin-top:6px">' + esc(h.title) + "</div>" +
+      '<div class="irt">' + placeH(h.from.id) + ' <span class="dim">&rarr;</span> ' + placeH(h.to.id) + "</div>" +
+      '<div class="note" style="margin-top:4px">' + W(h.rider) + "</div>" + body +
+      '<div class="irow">' + (B.busy ? "" : '<button class="btn small" type="button" data-act="replan">' + (B.rp || B.err ? "Replan now" : "Plan now") + "</button>") + '<button class="btn small primary" type="button" data-act="take">Ask your agent to take it</button></div>';
+  }
+}
+function updateInfo() {
+  if (SEL.t !== "f" || !$("#iSt")) return;
+  var F = FL[SEL.i]; if (!F.st) return;
+  setSt($("#iSt"), F.st.k);
+  $("#iBar").style.width = (progOf(F, F.jd) * 100).toFixed(1) + "%";
+  $("#iP").textContent = Math.round(progOf(F, F.jd) * 100) + "%";
+  $("#iEta").textContent = etaOf(F, F.jd);
+  $("#iW").innerHTML = "Now " + whereOf(F);
+}
+
+/* ---------- Starseekers column ---------- */
+var TOPSVG = "";
+function renderSk() {
+  var now = LIVEJD || SF.sky().jd;
+  var ready = LIVE.filter(function (c) { return !(c.busy && c.busy > now); }), busy = LIVE.filter(function (c) { return c.busy && c.busy > now; });
+  function item(attr, name, lines, dot) { return '<li><button type="button" class="ski" ' + attr + '><span class="ic">' + TOPSVG + "</span><b>" + esc(name) + "</b>" + lines.map(function (l) { return '<span class="m">' + l + "</span>"; }).join("") + '<span class="dot ' + dot + '"></span></button></li>'; }
+  var html = '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px"><span class="tag sim">' + esc(SEATS) + "</span></div>" +
+    '<div class="skg"><div class="caps">' + ic("ready") + 'Ready <span class="mono">' + ready.length + "</span></div><ul>" + (ready.map(function (c) {
+      return item('data-park="' + esc(c.at) + '"', c.name, ["Parked at " + placeH(c.at), "Free now"], "ready");
+    }).join("") || '<li class="skn">None free right now.</li>') + "</ul></div>" +
+    '<div class="skg"><div class="caps">' + ic("flying") + 'On a flight &middot; sample replay <span class="mono">' + FL.length + "</span></div><ul>" + FL.map(function (F, i) {
+      return item('data-sf="' + i + '"', F.call, [(F.st ? esc(STL[F.st.k]) + ", " + whereOf(F) : ""), "Frees at " + esc(arrOf(F)) + ' <span class="tag sim">Sample</span>'], "fly");
+    }).join("") + "</ul></div>" +
+    '<div class="skg"><div class="caps">' + ic("busy") + 'Docked / busy &middot; simulated fleet competition <span class="mono">' + busy.length + "</span></div><ul>" + (busy.map(function (c) {
+      return item('data-park="' + esc(c.at) + '"', c.name, ["Docked at " + placeH(c.at), "Frees at " + iso(c.busy)], "busy");
+    }).join("") || '<li class="skn">None busy right now.</li>') + "</ul></div>" +
+    '<p class="skn">Ready and busy come from the engine\'s fleet for the open desk (simulated). The three sample ' + esc(SF.SHIPS) + " are shown on their sample flights instead.</p>";
+  if (html !== renderSk.last) { renderSk.last = html; $("#skList").innerHTML = html; }
+}
+
+/* ---------- alerts, feed and waveform ---------- */
+var ALERTS = [], ALKEYS = null;
+function renderAlerts() {
+  var s = SF.sky(), A = alertsNow(s.jd, s.season), keys = {};
+  A.forEach(function (a) { keys[a.key] = a; });
+  if (ALKEYS) {
+    A.forEach(function (a) { if (a.k !== "pad" && !ALKEYS[a.key]) pushFeed({ jd: s.jd, who: "SKY", kind: "alert", txt: a.t }); });
+    Object.keys(ALKEYS).forEach(function (k) { if (ALKEYS[k].k !== "pad" && !keys[k]) pushFeed({ jd: s.jd, who: "SKY", kind: "clear", txt: "Cleared: " + ALKEYS[k].t }); });
+  } else A.forEach(function (a) { pushFeed({ jd: s.jd, who: "SKY", kind: "alert", txt: "Now: " + a.t }); });
+  ALKEYS = keys; ALERTS = A;
+  var n = $("#alN"); n.textContent = A.length; n.className = "n" + (A.length ? "" : " zero");
+  var html = A.map(function (a) { return '<li class="k-' + a.k + '"><b>' + ic(a.k === "flare" ? "solar_flare" : a.k === "pad" ? "pad_closed" : /dust/i.test(a.t) ? "dust_storm" : "launch_hold") + esc(a.t) + "</b><span>" + esc(a.d) + "</span></li>"; }).join("") || '<li style="border-left-color:var(--ok)"><b>All clear</b><span>No simulated flare, storm or full pad at ' + iso(s.jd) + "</span></li>";
+  if (html !== renderAlerts.last) { renderAlerts.last = html; $("#alList").innerHTML = html; }
+}
+var BINS = [], BIN0 = 0;
+for (var bi = 0; bi < 60; bi++) BINS.push(0);
+function pushFeed(o) {
+  var ul = $("#feed"); if (!ul) return;
+  var li = document.createElement("li"); li.className = "k-" + o.kind;
+  li.innerHTML = '<span class="tm">' + iso(o.jd) + "</span><b>" + esc(o.who) + "</b>" + W(o.txt);
+  ul.insertBefore(li, ul.firstChild);
+  while (ul.children.length > 40) ul.removeChild(ul.lastChild);
+  BINS[59]++;
+}
+function feedTick() {
+  FL.forEach(function (F) {
+    var jd = F.jd;
+    if (F.prev == null) { F.prev = jd; return; }
+    if (jd < F.prev) { pushFeed({ jd: F.rp.start, who: F.call, kind: "depart", txt: "Sample replay starts again" }); F.prev = F.rp.start - 1e-9; }
+    F.rp.events.forEach(function (e) {
+      if (e.jd > F.prev && e.jd <= jd) pushFeed({ jd: e.jd, who: F.call, kind: e.kind, txt: e.title + ". " + e.text });
+    });
+    F.prev = jd;
+  });
+}
+function waveTick(now) {
+  var s = Math.floor(now / 1000);
+  if (!BIN0) BIN0 = s;
+  while (BIN0 < s) { BINS.shift(); BINS.push(0); BIN0++; }
+  var cv = $("#wave"), dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
+  if (!w) return;
+  if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  var g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  g.strokeStyle = "rgba(92,200,255,.18)"; g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke();
+  var bw = w / 60, ph = now / 300;
+  g.fillStyle = "rgba(92,200,255,.85)";
+  for (var i = 0; i < 60; i++) {
+    var d = Math.min(1, BINS[i] / 4), amp = (0.06 + d * 0.86) * (h / 2 - 2) * (d ? 1 : 0.6 + 0.4 * Math.sin(ph + i * 0.7));
+    g.globalAlpha = 0.35 + d * 0.65;
+    g.fillRect(i * bw + bw * 0.2, h / 2 - amp, bw * 0.6, amp * 2);
+  }
+  g.globalAlpha = 1;
+}
+
+/* ---------- tools ---------- */
+var TOOLS = [
+  ["take_hail", "Takes a booking off the desk. Returns a run id and the terms.", "Take the Phobos commute booking and show me the terms."],
+  ["plan_ride", "Plans the passenger leg with fare and arrival, re-flown in the n-body checker.", "Plan the ride leg for my booking and tell me the fare and arrival."],
+  ["check_pad", "Pad forecast (simulated): berths, bookings per hour, Mars dust and Titan haze odds. Free.", "Check the pad at Mars Base before we land."],
+  ["space_weather", "Flare forecast (simulated), odds per sky day. A storm holds any launch with a passenger aboard. Free.", "Check space weather before we launch with a passenger aboard."],
+  ["decide", "Answers the open checkpoint: wait or replan at a launch hold.", "If a checkpoint holds the launch, decide whether to wait or replan, and tell me why."],
+  ["get_my_rides", "Your past flights (simulated), newest first, with score and parts.", "Show my past flights with their scores."]
+];
+function renderTools() {
+  $("#tiles").innerHTML = TOOLS.map(function (t, i) { return '<button type="button" class="tile" data-t="' + i + '" aria-pressed="false"><code>' + esc(t[0]) + "</code><span>" + esc(t[1]) + "</span></button>"; }).join("");
+  $("#tiles").addEventListener("click", function (e) { var b = e.target.closest("[data-t]"); if (b) ask(TOOLS[+b.dataset.t][2], +b.dataset.t); });
+}
+function ask(q, i) {
+  $$("#tiles .tile").forEach(function (b) { b.setAttribute("aria-pressed", +b.dataset.t === i ? "true" : "false"); });
+  $("#ask").hidden = false; $("#askQ").value = q; $("#askMsg").textContent = "";
+}
+
+/* ---------- receipt drawer ---------- */
+function partOf(sc, k) { return sc.parts.filter(function (p) { return p.key === k; })[0]; }
+function partCell(p) {
+  if (!p) return '<span class="dim">not scored</span>';
+  var f = p.got / p.max, c = f >= 0.999 ? "pass" : f >= 0.5 ? "best" : "fail";
+  return '<span class="' + c + '" title="' + esc(shipWords(p.note)) + '">' + fmt(p.got, p.got % 1 ? 1 : 0) + " / " + p.max + "</span>";
+}
+function debrief(i) {
+  var F = FL[i], r = SF.RIDES[i], rec = r.record, sc = rec.score, lg = rec.log, h = hailOf(lg.hail) || {}, P = F.pl, rp = F.rp;
+  var parts = sc.parts.map(function (p) {
+    var f = p.got / p.max, col = f >= 0.999 ? "var(--ok)" : f >= 0.5 ? "var(--sun)" : "var(--bad)";
+    return '<div class="sp"><span class="lb">' + esc(p.label) + '</span><span class="bar"><i style="width:' + (f * 100).toFixed(1) + "%;background:" + col + '"></i></span><span class="v">' + fmt(p.got, p.got % 1 ? 1 : 0) + " / " + p.max + '</span><span class="nt">' + esc(shipWords(p.note)) + "</span></div>";
+  }).join("");
+  var legRows = r.legs.map(function (L, j) {
+    var f = lg.flown[j] || {}, rf = L.refly || {}, ok = rf.result === "PASS";
+    var rfTxt = ok ? '<span class="pass">PASS</span> \u00B7 miss ' + fmt(rf.final_miss_km, 1) + " km" : /local/.test(rf.result || "") ? '<span class="dim">Local hop, not re-flown</span>' : '<span class="fail">' + esc(rf.result || "") + "</span>";
+    return "<tr><td>" + esc(L.leg_id) + " \u00B7 " + esc(legKind(L.kind)) + '</td><td style="font-family:Inter">' + (f.from ? placeH(f.from) : esc(L.from)) + " \u2192 " + (f.to ? placeH(f.to) : esc(L.to)) + "</td><td>" + esc(L.depart) + "</td><td>" + esc(L.arrive) + '</td><td class="r">' + SF.dur(L.tof_days) + '</td><td class="r">' + fmt(L.battery_kwh) + '</td><td class="r">' + money(L.fare_usd) + "</td><td>" + rfTxt + "</td></tr>";
+  }).join("");
+  var flownRows = lg.flown.map(function (f) {
+    return "<tr><td>" + esc(legKind(f.leg)) + '</td><td style="font-family:Inter">' + placeH(f.from) + " \u2192 " + placeH(f.to) + "</td><td>" + esc(f.depart) + "</td><td>" + esc(f.arrive) + '</td><td class="r">' + fmt(f.kwh) + "</td><td>" + (f.gate === "PASS" ? '<span class="pass">PASS</span>' : f.gate === "local" ? '<span class="dim">Local hop</span>' : esc(f.gate)) + "</td></tr>";
+  }).join("");
+  var cps = (lg.checkpoints || []).map(function (cp) {
+    var rows = cp.options_hindsight.map(function (o) {
+      var chosen = o.option.indexOf(cp.decision.action) === 0, best = o.option === cp.best;
+      return "<tr><td" + (best ? ' class="best"' : "") + ">" + (best ? "\u2605 " : "") + esc(shipWords(o.option)) + "</td><td>" + (chosen ? '<span class="tag ride">Agent chose</span>' : "") + (best ? ' <span class="tag me">Best</span>' : "") + '</td><td class="r">' + fmt(o.used_kwh) + "</td><td>" + esc(o.arrive) + "</td></tr>";
+    }).join("");
+    return '<div class="cp"><div class="h"><span class="tag me">' + ic(cp.kind) + 'Checkpoint ' + cp.n + "</span><b>" + esc(cp.kind.replace("_", " ")) + " at " + esc(SF.name(cp.place)) + '</b><span class="mono dim">' + esc(cp.at) + " \u00B7 " + esc(legKind(cp.leg)) + " leg \u00B7 cause " + esc(cp.cause.replace("_", " ")) + "</span></div>" +
+      '<p style="margin:0 0 8px">The agent called <code class="mono" style="color:var(--me)">decide</code> and chose <b>' + esc(cp.decision.action) + '</b>. Best in hindsight: <b class="best">' + esc(cp.best) + "</b>.</p>" +
+      '<div class="tw"><table class="t"><thead><tr><th>Option (hindsight)</th><th></th><th class="r">Energy used, kWh</th><th>Arrival</th></tr></thead><tbody>' + rows + "</tbody></table></div></div>";
+  }).join("") || '<p class="dim" style="margin:0">No checkpoints on this flight.</p>';
+  var inc = sc.incidents.length ? '<div class="tw"><table class="t"><thead><tr><th>Incident</th><th>Leg</th><th>Place</th><th>At</th><th class="r">Hours</th><th class="r">kWh</th><th>Note</th></tr></thead><tbody>' + sc.incidents.map(function (x) {
+    return "<tr><td>" + evIcon({ kind: "incident", title: x.kind }) + " " + esc(x.kind.replace("_", " ")) + "</td><td>" + esc(legKind(x.leg)) + "</td><td>" + esc(SF.name(x.place)) + "</td><td>" + esc(x.at) + '</td><td class="r">' + fmt(x.hours, 1) + '</td><td class="r">' + fmt(x.kwh) + '</td><td class="wrapc">' + esc(shipWords(x.note)) + "</td></tr>";
+  }).join("") + "</tbody></table></div>" : '<p class="dim" style="margin:0">No incidents.</p>';
+  var paxRows = P.bookings.map(function (b) {
+    return '<tr><td class="mono">' + esc(b.id) + '</td><td style="font-family:Inter">' + esc(b.lead || "not in the data") + '</td><td class="dim">not set yet (1\u20133, placeholder)</td><td style="font-family:Inter">' + (b.b >= 0 ? placeH(P.stops[b.b].at) + ' <span class="dim">stop ' + b.b + "</span>" : '<span class="dim">not in the log</span>') + '</td><td style="font-family:Inter">' + (b.a >= 0 ? placeH(P.stops[b.a].at) + ' <span class="dim">stop ' + b.a + "</span>" : '<span class="dim">not in the log</span>') +
+      '</td><td class="r">' + partCell(partOf(sc, "pickup")) + '</td><td class="r">' + partCell(partOf(sc, "on_time")) + '</td><td class="r">' + partCell(partOf(sc, "promise")) + '</td><td class="r">' + partCell(partOf(sc, "fare")) + "</td></tr>";
+  }).join("");
+  var pe = partOf(sc, "energy"), pc = partOf(sc, "checker"), pn = partOf(sc, "economy");
+  var nPass = r.legs.filter(function (L) { return (L.refly || {}).result === "PASS"; }).length, nLocal = r.legs.filter(function (L) { return /local/.test((L.refly || {}).result || ""); }).length;
+  var mx = Math.max(sc.used_kwh, sc.par_kwh), over = sc.used_kwh - sc.par_kwh;
+  var onTime = SF.jdOf(sc.arrive) <= SF.jdOf(sc.arrive_by);
+  var stopsList = P.stops.map(function (s, k) {
+    var what = s.board.map(function (b) { return "booking " + esc(b.id) + " boards"; }).concat(s.alight.map(function (b) { return "booking " + esc(b.id) + " gets off"; })).join(", ") || (k === 0 ? "parked here, cabin empty" : "no one boards or gets off");
+    return '<li><span class="wp"><b>' + k + "</b></span><span>" + placeH(s.at) + " \u00B7 " + what + '</span><span class="m">' + esc(k === 0 ? "leaves " + s.leave : "arrives " + s.arrive) + "</span></li>";
+  }).join("");
+  var evs = rp.events.map(function (e, k) { return '<li><button type="button" class="k-' + e.kind + '" data-ev="' + k + '"><span class="tm">' + iso(e.jd) + "</span><b>" + evIcon(e) + W(e.title) + '</b><span class="tx">' + W(e.text) + "</span></button></li>"; }).join("");
+  return '<div class="sheet2">' +
+    '<div class="dh"><div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="caps">Flight receipt</span><span class="tag sim">Simulated</span><span class="tag sim">Sample</span></div>' +
+      "<h2>" + esc(SF.name(lg.from)) + " \u2192 " + esc(SF.name(lg.to)) + "</h2>" +
+      '<div class="who">' + W(h.rider || "") + " \u00B7 " + chip(lg.from) + " \u2192 " + chip(lg.to) + '</div><div class="who" style="margin-top:4px">Sample flight flown by a sample bot, not a player.</div>' +
+      '<div class="meta"><span>' + esc(SF.SHIP) + " <b>" + esc(sc.car) + "</b></span><span>Season <b>" + rec.season + "</b></span><span>Booking <b>" + esc(lg.hail) + "</b></span></div>" +
+      '<div class="note" style="margin-top:8px">' + esc(shipWords(rec.note)) + "</div></div>" +
+      '<div class="tot"><div><div class="caps">Total</div><span class="n">' + fmt(sc.total) + '</span><span class="d"> /' + sc.out_of + '</span></div><div class="art">' + SF.SHIP_SVG + "</div></div></div>" +
+    '<div class="sec"><h3>Passenger list <span class="tag sim">Simulated</span><span class="tag sim">Seats &middot; placeholder, not set yet</span></h3>' +
+      '<div class="seats">' + seatsHtml(aboardAt(P, Math.max(0, P.stops.length - 2))) + "</div>" +
+      '<p class="note" style="margin:0 0 8px">Each booking is scored on its own: fast pickup, on time, kept promise, honest fare. Hover a score for its note. Party size is a placeholder; bookings per flight: up to 3 (placeholder). This sample flight carries ' + P.bookings.length + " booking.</p>" +
+      '<div class="tw"><table class="t pt"><thead><tr><th>Booking</th><th>Lead passenger</th><th>Party</th><th>Boards at</th><th>Gets off at</th><th class="r">Fast pickup</th><th class="r">On time</th><th class="r">Kept promise</th><th class="r">Honest fare</th></tr></thead><tbody>' + paxRows + "</tbody></table></div>" +
+      '<div class="cmp" style="margin-top:12px">' +
+        '<div class="c"><div class="caps">Ship \u00B7 energy vs par</div><div class="mono" style="font-size:12px;margin:6px 0 2px">' + esc(pe ? pe.label : "Energy") + " " + partCell(pe) + '</div><div class="mono" style="font-size:12px">Used ' + kwh(sc.used_kwh) + '</div><div class="ebar"><i style="width:' + (sc.used_kwh / mx * 100).toFixed(1) + '%;background:var(--sun)"></i></div><div class="mono" style="font-size:12px">Par ' + kwh(sc.par_kwh) + '</div><div class="ebar"><i style="width:' + (sc.par_kwh / mx * 100).toFixed(1) + '%;background:var(--cy)"></i></div><div class="mono dim" style="font-size:11.5px">' + (sc.beat_par ? "beat par" : "over par by " + kwh(over)) + "</div></div>" +
+        '<div class="c"><div class="caps">Ship \u00B7 every leg checked</div><div class="mono" style="font-size:12px;margin:6px 0 2px">' + esc(pc ? pc.label : "Checker") + " " + partCell(pc) + '</div><dl class="kv"><dt>Re-fly PASS</dt><dd>' + nPass + " of " + r.legs.length + " legs</dd><dt>Local hops, not re-flown</dt><dd>" + nLocal + '</dd></dl><div class="note" style="margin-top:6px">' + esc(shipWords(pc ? pc.note : "")) + "</div></div>" +
+        '<div class="c"><div class="caps">Ship \u00B7 planning economy</div><div class="mono" style="font-size:12px;margin:6px 0 2px">' + esc(pn ? pn.label : "Economy") + " " + partCell(pn) + '</div><div class="note" style="margin-top:6px">' + esc(shipWords(pn ? pn.note : "")) + "</div></div>" +
+      "</div>" +
+      '<div class="caps" style="margin-top:14px">Stops</div><ol class="stops">' + stopsList + "</ol>" +
+    "</div>" +
+    '<div class="sec"><h3>Legs <span class="tag sim">As planned and checked</span></h3><div class="tw"><table class="t"><thead><tr><th>Leg</th><th>Route</th><th>Depart</th><th>Arrive</th><th class="r">Duration</th><th class="r">kWh</th><th class="r">Fare</th><th>Re-fly</th></tr></thead><tbody>' + legRows + "</tbody></table></div>" +
+      '<h3 style="margin-top:14px">As flown <span class="tag sim">After holds and checkpoints</span></h3><div class="tw"><table class="t"><thead><tr><th>Leg</th><th>Route</th><th>Depart</th><th>Arrive</th><th class="r">kWh</th><th>Gate</th></tr></thead><tbody>' + flownRows + "</tbody></table></div></div>" +
+    '<div class="sec"><h3>Checkpoints</h3>' + cps + "</div>" +
+    '<div class="sec"><h3>Incidents</h3>' + inc + "</div>" +
+    '<div class="sec"><h3>Score <span class="mono" style="color:var(--me);letter-spacing:0">' + fmt(sc.total) + " / " + sc.out_of + '</span></h3><div class="sparts">' + parts + "</div></div>" +
+    '<div class="sec"><h3>Promise vs actual</h3><div class="cmp">' +
+      '<div class="c"><div class="caps">Pickup</div><dl class="kv"><dt>Planned</dt><dd>' + esc(sc.planned_pickup) + "</dd><dt>Actual</dt><dd>" + esc(sc.pickup) + "</dd></dl></div>" +
+      '<div class="c"><div class="caps">Arrival</div><dl class="kv"><dt>Quoted</dt><dd>' + esc(sc.promised_arrival) + "</dd><dt>Actual</dt><dd>" + esc(sc.arrive) + "</dd><dt>Slip</dt><dd" + (sc.promise_slip_hours > 0 ? ' class="fail"' : "") + ">" + fmt(sc.promise_slip_hours, 1) + " h</dd><dt>Arrive by</dt><dd>" + esc(sc.arrive_by) + (onTime ? ' <span class="pass">met</span>' : ' <span class="fail">missed</span>') + "</dd></dl></div>" +
+      '<div class="c"><div class="caps">Fare</div><dl class="kv"><dt>Quoted</dt><dd>' + money(lg.quote.fare_usd) + "</dd><dt>Charged</dt><dd>" + money(sc.fare_usd) + "</dd></dl></div>" +
+    "</div></div>" +
+    '<div class="sec"><h3>Timeline <span class="tag sim">From the run log</span></h3><ol class="tl">' + evs + '</ol><p class="note" style="margin:8px 0 0">Pick an event to replay the map from there and follow the flight.</p></div>' +
+    '<div class="sec"><h3>Raw log</h3><span class="raw">/rides/' + esc(rec.run_id) + '.json</span><p class="note" style="margin:8px 0 0">The live site serves the full run log (starfare.ride/1) at this path. The mockup shows it as text.</p></div>' +
+  "</div>";
+}
+var DRAWER_I = -1, LAST_FOCUS = null;
+function openDrawer(i) {
+  DRAWER_I = i; LAST_FOCUS = document.activeElement;
+  $("#drH").textContent = FL[i].call + " \u00B7 " + SF.name(FL[i].rp.record.log.from) + " \u2192 " + SF.name(FL[i].rp.record.log.to);
+  $("#drBody").innerHTML = debrief(i);
+  $("#drawer").hidden = false; $("#scrim").hidden = false; $("#drawer").scrollTop = 0;
+  setTimeout(function () { $("#drH").focus(); }, 0);
+}
+function closeDrawer() { $("#drawer").hidden = true; $("#scrim").hidden = true; if (LAST_FOCUS && LAST_FOCUS.focus) LAST_FOCUS.focus(); }
+
+/* ---------- log & reports ---------- */
+function renderReports() {
+  $("#repList").innerHTML = FL.map(function (F, i) {
+    var sc = F.rp.record.score, lg = F.rp.record.log;
+    return '<li><button type="button" data-rc="' + i + '"><span class="sc">' + fmt(sc.total) + '</span><span class="t">' + esc(F.call) + " \u00B7 " + esc(SF.name(lg.from)) + " \u2192 " + esc(SF.name(lg.to)) + '</span><span class="d">' + W(F.rp.label) + " \u00B7 /" + sc.out_of + "</span></button></li>";
+  }).join("");
+}
+function openBoard() {
+  var rows = FL.map(function (F, i) { return { F: F, i: i }; }).sort(function (a, b) { return b.F.rp.record.score.total - a.F.rp.record.score.total; });
+  $("#boardRows").innerHTML = rows.map(function (o, k) {
+    var sc = o.F.rp.record.score, lg = o.F.rp.record.log;
+    return "<tr><td>" + (k + 1) + '</td><td class="r" style="color:var(--me)">' + fmt(sc.total) + " / " + sc.out_of + '</td><td style="font-family:Inter;white-space:normal">' + esc(SF.name(lg.from)) + " \u2192 " + esc(SF.name(lg.to)) + '<br><span class="tag sim">Sample bot run, not a player</span></td><td>' + esc(sc.car) + '</td><td class="r">' + money(sc.fare_usd) + '</td><td class="r">' + fmt(sc.used_kwh) + '</td><td><button class="btn small" type="button" data-rc="' + o.i + '">Open receipt</button></td></tr>';
+  }).join("");
+  var model = (PILOT.model || "").trim(), sk = PILOT.skills || [];
+  $("#youRow").innerHTML = model || sk.length
+    ? "Model <b>" + esc(model || "not given") + "</b> \u00B7 skills " + esc(sk.join(", ") || "none") + ' <span class="tag sim">Self-reported, unverified</span> <span class="dim">No runs yet. Your agent flies them through the connector.</span>'
+    : '<span class="dim">No player yet. Connect your agent and tell us who\'s flying (self-reported, unverified).</span>';
+  LAST_FOCUS = document.activeElement;
+  $("#logM").hidden = false; setTimeout(function () { $("#logH").focus(); }, 0);
+}
+function closeBoard() { $("#logM").hidden = true; if (LAST_FOCUS && LAST_FOCUS.focus) LAST_FOCUS.focus(); }
+
+/* ---------- intro (connect your agent) ---------- */
+var CK = store("sf-ops-checks") || [false, false, false, false];
+function renderChecks(open) {
+  $$("#checks .chk").forEach(function (li, i) {
+    li.classList.toggle("done", !!CK[i]);
+    $(".st2", li).textContent = CK[i] ? "Checked" : "Open";
+    if (open != null) { var b = $(".chk-b", li), on = i === open; b.hidden = !on; $(".chk-h", li).setAttribute("aria-expanded", on ? "true" : "false"); }
+  });
+  var n = CK.filter(Boolean).length;
+  $("#prog .tx").textContent = n + " of 4 checks"; $("#prog .pbar i").style.width = n * 25 + "%";
+  store("sf-ops-checks", CK);
+}
+function tick(i, next) { CK[i] = true; renderChecks(next); }
+var PILOT = store("sf-ops-pilot") || { model: "", skills: [] }, SKILLS = ["planning", "weather", "pricing"];
+if (!PILOT.skills) PILOT.skills = [];
+function renderSkills() {
+  var all = SKILLS.concat(PILOT.skills.filter(function (s) { return SKILLS.indexOf(s) < 0; }));
+  $("#pSkills").innerHTML = all.map(function (s) { return '<button type="button" class="chipb" data-s="' + esc(s) + '" aria-pressed="' + (PILOT.skills.indexOf(s) >= 0) + '">' + esc(s) + "</button>"; }).join("");
+}
+function copyText(txt, inp, msg, done) {
+  function fallback() { inp.focus(); inp.select(); msg.textContent = "Selected. Press Ctrl+C or Cmd+C to copy."; }
+  try { navigator.clipboard.writeText(txt).then(function () { msg.textContent = "Copied."; if (done) done(); }, fallback); } catch (e) { fallback(); }
+}
+function initIntro() {
+  $("#mcpUrl").value = SF.MCP_URL;
+  $("#partsTotal").textContent = SF.SCORE_PARTS.reduce(function (a, p) { return a + p[2]; }, 0);
+  var mx = Math.max.apply(null, SF.SCORE_PARTS.map(function (p) { return p[2]; }));
+  $("#parts").innerHTML = SF.SCORE_PARTS.map(function (p) { return "<li><span>" + esc(p[1]) + '</span><span class="bar"><i style="width:' + (p[2] / mx * 100) + '%"></i></span><span class="v">' + p[2] + "</span></li>"; }).join("");
+  $("#pModel").value = PILOT.model || "";
+  renderSkills(); renderChecks(0);
+  $("#copyBtn").addEventListener("click", function () { copyText(SF.MCP_URL, $("#mcpUrl"), $("#copyMsg"), function () { CK[0] = true; renderChecks(); }); });
+  $("#grokLink").addEventListener("click", function () { CK[0] = true; renderChecks(); });
+  $("#pSkills").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-s]"); if (!b) return;
+    var s = b.dataset.s, k = PILOT.skills.indexOf(s);
+    if (k >= 0) PILOT.skills.splice(k, 1); else PILOT.skills.push(s);
+    store("sf-ops-pilot", PILOT); renderSkills();
+  });
+  $("#pAdd").addEventListener("click", function () {
+    var v = $("#pCustom").value.trim().toLowerCase().slice(0, 24); if (!v) return;
+    if (PILOT.skills.indexOf(v) < 0) PILOT.skills.push(v);
+    $("#pCustom").value = ""; store("sf-ops-pilot", PILOT); renderSkills();
+  });
+  $("#pCustom").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("#pAdd").click(); } });
+  $("#pModel").addEventListener("input", function () { PILOT.model = this.value.slice(0, 60); store("sf-ops-pilot", PILOT); });
+  $$("[data-next]").forEach(function (b) { b.addEventListener("click", function () { var i = +b.dataset.next; if (i === 1) store("sf-ops-pilot", PILOT); tick(i, i < 3 ? i + 1 : -1); if (i === 3) $("#toOps").focus(); }); });
+  $$(".chk-h").forEach(function (b, i) { b.addEventListener("click", function () { var open = b.getAttribute("aria-expanded") === "true"; renderChecks(open ? -1 : i); }); });
+  $("#introClose").addEventListener("click", closeIntro);
+  $("#toOps").addEventListener("click", closeIntro);
+  $("#intro").addEventListener("click", function (e) { if (e.target === $("#intro")) closeIntro(); });
+}
+function openIntro() { LAST_FOCUS = document.activeElement; $("#intro").hidden = false; setTimeout(function () { $("#introH").focus(); }, 0); }
+function closeIntro() { $("#intro").hidden = true; if (LAST_FOCUS && LAST_FOCUS.focus) LAST_FOCUS.focus(); }
+
+/* ---------- ticks: cards and feed every 250 ms, the sky every second ---------- */
+var lastSlow = 0;
+function uiTick() {
+  var now = Date.now();
+  if (!raf) { LIVEJD = SF.sky(now).jd; }
+  FL.forEach(function (F) { F.jd = flightJd(F, now); F.st = statusOf(F, F.jd); });
+  feedTick(); updateCards(); updateInfo(); waveTick(now);
+  if (now - lastSlow >= 1000) { lastSlow = now; slowTick(now); }
+}
+function slowTick(now) {
+  var s = SF.sky(now);
+  $("#clk").textContent = iso(s.jd) + " UTC";
+  $("#clkS").textContent = "Season " + s.season + " \u00B7 day " + fmt(s.day) + " of " + fmt(SF.SKY.len_days);
+  DESK = SF.desk(now); renderBookings();
+  if (now - LIVE_T > 4000) { LIVE_T = now; LIVE = liveFleet(now); }
+  renderAlerts(); renderSk();
+}
+
+/* ---------- start ---------- */
+function start() {
+  AU = SF.AU; PLACES = SF.E.PLACES;
+  TOPSVG = SF.SHIP_TOP_SVG;
+  if (window.SolArt) { var ac = $("#artCred"); ac.textContent = SolArt.CREDIT + " Credits: assets/CREDITS.md"; ac.hidden = false; }
+  $("#lgShip").innerHTML = SF.SHIP_TOP_SVG;
+  LIVEJD = SF.sky().jd;
+  FL = SF.RIDES.map(function (r, i) {
+    var rp = SF.replay(r), F = { i: i, rp: rp, pl: passengerList(i), w: warpBuild(rp), off: i * 0.33, call: String(r.record.score.car).toUpperCase(), prev: null };
+    SAMPLE_CARS[String(r.record.score.car).toLowerCase()] = 1;
+    F.jd = flightJd(F, Date.now()); F.st = statusOf(F, F.jd);
+    return F;
+  });
+  // Seed the feed with each flight's last two events before where its replay starts.
+  FL.forEach(function (F) { F.rp.events.filter(function (e) { return e.jd <= F.jd; }).slice(-2).forEach(function (e) { pushFeed({ jd: e.jd, who: F.call, kind: e.kind, txt: e.title + ". " + e.text }); }); });
+  DESK = SF.desk();
+  renderCards(); renderBookings(); renderTools(); renderReports(); initIntro();
+  LIVE = liveFleet(Date.now()); LIVE_T = Date.now();
+  slowTick(Date.now()); renderInfo();
+  initGL();
+  if (GL) {
+    buildScene(LIVEJD);
+    bindRig($("#glhost"));
+    onResize();
+    if (window.ResizeObserver) new ResizeObserver(onResize).observe($("#mapbox")); else addEventListener("resize", onResize);
+    if (window.IntersectionObserver) new IntersectionObserver(function (en) { MAPVIS = en[0].isIntersecting; if (MAPVIS) glStart(); else glStop(); }).observe($("#mapbox"));
+    document.addEventListener("visibilitychange", function () { if (document.hidden) glStop(); else glStart(); });
+    flyTo(FOCI.sun, "sun"); RIG.fly = null; RIG.dist = FOCI.sun.d;
+    glStart();
+  }
+  // Quick bookings are planned while the page is idle, one at a time.
+  var q = DESK.filter(function (d) { return d.kind === "quick" && d.open; }).map(function (d) { return d.id; });
+  (function nextPlan() { var id = q.shift(); if (!id) return; setTimeout(function () { if (!BK[id] || (!BK[id].rp && !BK[id].busy)) planBooking(id, Date.now()); nextPlan(); }, 120); })();
+  setInterval(uiTick, 250);
+  // events
+  $("#tabF").addEventListener("click", function () { showTab("f"); });
+  $("#tabB").addEventListener("click", function () { showTab("b"); });
+  $("#flList").addEventListener("click", function (e) { var b = e.target.closest("[data-f]"); if (b) select({ t: "f", i: +b.dataset.f }); });
+  $("#bkList").addEventListener("click", function (e) { var b = e.target.closest("[data-b]"); if (b) select({ t: "b", id: b.dataset.b }); });
+  $("#focus").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-f]"); if (!b || !GL) return;
+    if (FOLLOW) { FOLLOW = false; routesDirty = true; renderInfo(); }
+    flyTo(FOCI[b.dataset.f], b.dataset.f);
+  });
+  $("#liveBtn").addEventListener("click", function () { setFollow(false); });
+  $("#info").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-act]"); if (!b) return;
+    var a = b.dataset.act;
+    if (a === "view") openDrawer(SEL.i);
+    else if (a === "follow") setFollow(!FOLLOW);
+    else if (a === "replan") startPlan(SEL.id);
+    else if (a === "take") { var h = hailOf(SEL.id); ask("Take the " + h.title + " booking and show me the terms.", 0); $("#ask").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" }); }
+  });
+  $("#skList").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-sf],[data-park]"); if (!b) return;
+    if (b.dataset.sf != null) return select({ t: "f", i: +b.dataset.sf });
+    if (!GL) return;
+    if (FOLLOW) { FOLLOW = false; routesDirty = true; renderInfo(); }
+    var id = b.dataset.park, P = SF.place(id), fk = sysFocus(id);
+    flyTo({ id: id, d: P && P.parent === "sun" ? (fk ? FOCI[fk].d : 8) : 4 }, null);
+  });
+  function pop(btn, menu) {
+    $(btn).addEventListener("click", function (e) { e.stopPropagation(); var open = $(menu).hidden; $$(".popm").forEach(function (m) { m.hidden = true; }); $$("#fBtn,#lBtn").forEach(function (x) { x.setAttribute("aria-expanded", "false"); }); $(menu).hidden = !open; $(btn).setAttribute("aria-expanded", open ? "true" : "false"); });
+    $(menu).addEventListener("click", function (e) { e.stopPropagation(); });
+  }
+  pop("#fBtn", "#fMenu"); pop("#lBtn", "#lMenu");
+  document.addEventListener("click", function () { $$(".popm").forEach(function (m) { m.hidden = true; }); $$("#fBtn,#lBtn").forEach(function (x) { x.setAttribute("aria-expanded", "false"); }); });
+  $$("[data-filt]").forEach(function (c) { c.addEventListener("change", function () { FILT[c.dataset.filt] = c.checked; routesDirty = true; }); });
+  $$("[data-lay]").forEach(function (c) { c.addEventListener("change", function () { LAY[c.dataset.lay] = c.checked; }); });
+  $("#connectBtn").addEventListener("click", openIntro);
+  $("#askConnect").addEventListener("click", openIntro);
+  $("#askCopy").addEventListener("click", function () { copyText($("#askQ").value, $("#askQ"), $("#askMsg")); });
+  $("#boardBtn").addEventListener("click", openBoard);
+  $("#logClose").addEventListener("click", closeBoard);
+  $("#logM").addEventListener("click", function (e) { if (e.target === $("#logM")) closeBoard(); var b = e.target.closest("[data-rc]"); if (b) { closeBoard(); openDrawer(+b.dataset.rc); } });
+  $("#repList").addEventListener("click", function (e) { var b = e.target.closest("[data-rc]"); if (b) openDrawer(+b.dataset.rc); });
+  $("#drClose").addEventListener("click", closeDrawer);
+  $("#scrim").addEventListener("click", closeDrawer);
+  $("#drBody").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-ev]"); if (!b) return;
+    var i = DRAWER_I, F = FL[i], ev = F.rp.events[+b.dataset.ev];
+    seekFlight(F, Math.min(F.rp.end, ev.jd + (F.rp.end - F.rp.start) * 0.0005));
+    closeDrawer();
+    if (!(SEL.t === "f" && SEL.i === i)) select({ t: "f", i: i });
+    setFollow(true);
+    $("#mapbox").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    if (!$("#intro").hidden) closeIntro();
+    else if (!$("#logM").hidden) closeBoard();
+    else if (!$("#drawer").hidden) closeDrawer();
+    else $$(".popm").forEach(function (m) { m.hidden = true; });
+  });
+  $("#loading").remove();
+}
+// Shared art (planet maps, the star catalog, bloom, the 3D Starseeker, icons) from assets/ when published or
+// ../assets/ in the repo. Always resolves: without it the page draws its own simpler art.
+function loadArt() {
+  // In the repo the page sits in design/mockups/; published, assets/ sits next to it.
+  var tries = /\/design\/mockups\//.test(location.pathname) ? ["../assets/sol-art.js"] : ["assets/sol-art.js", "../assets/sol-art.js"];
+  return new Promise(function (ok) {
+    (function next() {
+      if (!tries.length || !window.THREE) return ok();
+      var s = document.createElement("script"); s.src = tries.shift();
+      s.onload = function () { ok(); }; s.onerror = function () { s.remove(); next(); };
+      document.head.appendChild(s);
+    })();
+  });
+}
+function ic(n) { return window.SolArt ? SolArt.icon(n) : ""; }
+// The icon for a run-log event or incident: depart, arrive, a checkpoint or a weather/traffic hold.
+function evIcon(e) {
+  var t = String(e.title || "").toLowerCase();
+  return ic(e.kind === "depart" ? "flying" : e.kind === "arrive" ? (/aboard/.test(t) ? "passenger" : "pad") :
+    /dust/.test(t) ? "dust_storm" : /flare/.test(t) ? "solar_flare" : /pad.closed/.test(t) ? "pad_closed" : /hold|haze|berth|late/.test(t) ? "launch_hold" : "");
+}
+Promise.all([SF.loadEngine(), loadArt()]).then(start).catch(function (e) {
+  $("#loading .box").innerHTML = "The engine did not load (" + SF.esc(e && e.message) + "). Reload to try again.";
+});
+})();
+</script>

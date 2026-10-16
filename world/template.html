@@ -233,19 +233,19 @@ footer p{max-width:100ch}
 
 <section class="sec" id="hails" aria-labelledby="h-hails">
   <h2 id="h-hails">Ride hails</h2>
-  <p class="lead">Simulated riders are hailing a robotaxi. Take a hail, then pick a car from the simulated fleet and send it yourself, or let Claude dispatch. You'll watch the car fly to the rider and then take them where they're going. Pads get busy and storms happen, and you only get forecasts. Your score compares what actually happened with the best nearby car, and with the arrival you promised.</p>
+  <p class="lead">Simulated riders are hailing a robotaxi. Take a hail, then pick a Starseeker from the simulated fleet and send it yourself, or let Claude dispatch. You'll watch the ship fly to the rider and then take them where they're going. Pads get busy and storms happen, and you only get forecasts. Your score compares what actually happened with the best nearby car, and with the arrival you promised.</p>
   <div class="grid" id="h-grid"></div>
   <h2 id="h-fleet" style="font-size:24px;margin-top:20px">The fleet</h2>
-  <p class="small dim">Seven simulated Starfare cars, each parked at a station or a moon. Every hail starts with a car leaving where it's parked.</p>
+  <p class="small dim">Seven simulated Starseekers, each parked at a station or a moon. Every hail starts with a ship leaving where it's parked.</p>
   <div class="list" id="fleet"></div>
   <h2 id="h-board" style="font-size:24px;margin-top:20px">Scoreboard</h2>
-  <p class="small dim" id="board-note">Best score per hail for everyone who shares this page. Each entry says who dispatched the car: Claude, or the player alone.</p>
+  <p class="small dim" id="board-note">Best score per hail for everyone who shares this page. Each entry says who dispatched the ship: Claude, or the player alone.</p>
   <div class="board" id="board"></div>
 </section>
 
 <section class="sec" id="now" aria-labelledby="h-now">
   <h2 id="h-now">In the sky now</h2>
-  <p class="lead">Everyone who has this page open shares one sky. Their rides show up on the map as they book them. Simulated fleet cars fill the rest, and they're marked as simulated.</p>
+  <p class="lead">Everyone who has this page open shares one sky. Their rides show up on the map as they book them. Simulated fleet Starseekers fill the rest, and they're marked as simulated.</p>
   <div class="list" id="riders"></div>
 </section>
 
@@ -263,11 +263,11 @@ footer p{max-width:100ch}
     <div class="tile"><p class="t">The checker re-flies</p><p class="small dim">An n-body simulation (Sun, 8 planets and the Moon) re-flies the route. It passes only if the final miss is under 1 km and the correction is under 500 m/s.</p></div>
     <div class="tile"><p class="t">The gate strikes</p><p class="small dim">Any number in the dispatcher's reply that no tool printed gets struck out on screen. Only rides that pass the re-fly can be booked.</p></div>
   </div>
-  <p class="small faint" id="how-note">Sky time runs 86,400 times faster than real time, so one real second is one day. Each season covers 2026 to 2046 and then the sky resets. In ride hails, pad traffic, solar flares, Mars dust storms, Titan haze and busy fleet cars are all simulated and seeded per season, so everyone in a season flies through the same ones; they aren't real forecasts.</p>
+  <p class="small faint" id="how-note">Sky time runs 86,400 times faster than real time, so one real second is one day. Each season covers 2026 to 2046 and then the sky resets. In ride hails, pad traffic, solar flares, Mars dust storms, Titan haze and busy fleet ships are all simulated and seeded per season, so everyone in a season flies through the same ones; they aren't real forecasts.</p>
 </section>
 
 <footer>
-  <p>Starfare is a concept demo by Alvin Impang. It's a made-up robotaxi service with simulated riders and a simulated fleet, and it isn't affiliated with any real company. Burns, battery and fare come from stated, made-up car and thruster models. Landing, aerobraking, life support and orbital plane changes aren't priced.</p>
+  <p>Starfare is a concept demo by Alvin Impang. It's a made-up robotaxi service with simulated riders and a simulated fleet, and it isn't affiliated with any real company. Burns, battery and fare come from stated, made-up ship and thruster models. Landing, aerobraking, life support and orbital plane changes aren't priced.</p>
   <p>Planet positions: NASA JPL DE421. ISS and Tiangong orbits: JPL Horizons, 2026-10-16. The dispatcher runs on Claude through each visitor's own account, and it's built so a Grok dispatcher can replace it. <span id="eng-note"></span></p>
 </footer>
 
@@ -458,7 +458,7 @@ function planFor(to, objective, onStep){
 }
 function shape(b, id, to){ // what the dispatcher and the cards both see: tool output, nothing added
   var g = b.gate || {};
-  return { option_id: id, from: locName(ME.loc), to: PID[to].name, to_id: to, car: "Starfare fleet car (simulated)",
+  return { option_id: id, from: locName(ME.loc), to: PID[to].name, to_id: to, car: "Starfare fleet Starseeker (simulated)",
     depart: isoJD(b.dep_jd), arrive: isoJD(b.arr_jd), tof_days: +b.tof_days.toFixed(1),
     burn_depart_kms: +b.dv_dep_kms.toFixed(3), burn_arrive_kms: +b.dv_arr_kms.toFixed(3), burn_total_kms: +b.dv_total_kms.toFixed(3),
     battery_kwh: b.battery.energy_kwh, battery_packs: +(b.battery.energy_kwh / 200).toFixed(1), fare_usd: b.fare.total_usd,
@@ -514,29 +514,30 @@ var TOOLS = [
     } }
 ];
 function hailRules(){
-  return "You are the Starfare dispatcher in a concept robotaxi game: flying roadsters across the solar system. A simulated rider has hailed a ride, and you dispatch it for the player. Sky date: " + isoM(sky().jd) + ".\n" +
-    "Call get_hail first; its fleet says which cars are on other rides and when each is free (free_from). For each car worth trying, plan_pickup (car to rider), then plan_ride after that pickup (after_leg is the pickup's leg_id). " +
-    "Compare cars and objectives (energy = least battery, time = fastest). Cars parked near the rider or the destination are usually the ones worth trying.\n" +
+  return "You are the Starfare dispatcher in a concept robotaxi game: Starseeker ships across the solar system. A simulated rider has hailed a ride, and you dispatch it for the player. Sky date: " + isoM(sky().jd) + ".\n" +
+    "Call get_hail first; its fleet says which ships are on other rides and when each is free (free_from). For each ship worth trying, plan_pickup (ship to rider), then plan_ride after that pickup (after_leg is the pickup's leg_id). " +
+    "Compare ships and objectives (energy = least battery, time = fastest). Ships parked near the rider or the destination are usually the ones worth trying.\n" +
     "Hazards are simulated and seeded, and you only see forecasts, never what will happen. Before dispatching, check_pad the pickup around the pickup's arrive and the destination around the ride's arrive, and call space_weather from the ride's depart. " +
-    "Both are free and don't count as plans. A full pad means the car holds in orbit at " + RR.HOLD_KWH + " kWh an hour, and about " + Math.round(UNSCHED * 100) + "% of traffic is unscheduled and not in the forecast. " +
-    "A solar flare holds launches with a rider aboard (an empty car still flies); Mars dust storms and Titan haze close pads; a leg between planets that leaves late needs a correction burn. " +
+    "Both are free and don't count as plans. A full pad means the ship holds in orbit at " + RR.HOLD_KWH + " kWh an hour, and about " + Math.round(UNSCHED * 100) + "% of traffic is unscheduled and not in the forecast. " +
+    "A solar flare holds launches with a rider aboard (an empty ship still flies); Mars dust storms and Titan haze close pads; a leg between planets that leaves late needs a correction burn. " +
+    "A storm erupts at the Sun and its particles travel out at 1500 km/s, so it reaches Earth about a day later and Saturn about 11 days later, and fewer reach far out. You dispatch from HQ on Earth, which controls every station and Starseeker, so at a checkpoint the ship acts on your answer only when it arrives (light-time there and back). " +
     "If the forecast looks bad, you may replan with wait_days to dodge it, but waiting costs pickup or arrival points.\n" +
     "Then dispatch with the pickup leg, the ride leg, quoted_fare_usd copied exactly from the ride leg's fare_usd, and quoted_arrival: an arrival you can keep, YYYY-MM-DD HH:MM. Start from the ride leg's arrive; you may add a buffer for likely holds. " +
     "The promise score falls to 0 at 6 h after the promised time on quick hails and 1 day on long hauls, and arriving early costs a quarter as much.\n" +
     "Goal: pick the rider up fast, arrive by the arrive_by time, use the least energy as flown, keep the promise, and quote the fare honestly. Each plan counts: " + FREE_PLANS + " are free, then each costs a point.\n" +
     "Hard rules: every number you write must be copied from a tool result or the player's words, dates exactly as given. Never estimate a number. Never dispatch a leg whose refly.result is FAIL. Never say a hold or storm will or won't happen; forecasts are odds.\n" +
     "The sky clock runs 1 sky day per real second, so work promptly on long-haul hails. " +
-    "When a launch is held or a pad is closed for more than an hour, dispatch (or decide) returns status \"checkpoint\" with a situation: what happened, where the car is, the kWh used so far and the options. " +
-    "Answer it with decide: at a launch_hold, wait or replan; at a pad_closed, hold or divert to one of the alternates. The car starts on the map and the score locks when the ride arrives. " +
-    "After the ride arrives, tell the player in under 80 words which car you sent, why, what happened on the way (its incidents), and the score. If it returns problems, fix them and dispatch again.";
+    "When a launch is held or a pad is closed for more than an hour, dispatch (or decide) returns status \"checkpoint\" with a situation: what happened, where the ship is, the kWh used so far and the options. " +
+    "Answer it with decide: at a launch_hold, wait or replan; at a pad_closed, hold or divert to one of the alternates. The ship starts on the map and the score locks when the ride arrives. " +
+    "After the ride arrives, tell the player in under 80 words which ship you sent, why, what happened on the way (its incidents), and the score. If it returns problems, fix them and dispatch again.";
 }
 var RUN_ID = { type: "string", description: "run_id from get_hail (optional here: this page has one hail at a time)" };
 var HTOOLS = [
   { name: "get_hail", description: "The run's hail: rider, pickup place and time, destination, arrive_by, the fleet, plans used and the scoring rules.",
     inputSchema: { type: "object", properties: { run_id: RUN_ID } },
     execute: function(inp){ return Promise.resolve().then(function(){ runGuard(inp); var r = hailInfo(); TOOLOUT.push(r); return r; }); } },
-  { name: "plan_pickup", description: "Plan a car's flight from where it is parked to the rider, leaving when the rider is ready or the car is free, whichever is later (or wait_days after that), and re-fly it in the n-body checker. Returns the pickup leg with its leg_id.",
-    inputSchema: { type: "object", properties: { run_id: RUN_ID, car: { type: "string", description: "car id from the fleet, e.g. sf-01" }, objective: { type: "string", enum: ["energy", "time"] }, wait_days: { type: "number", minimum: 0, maximum: 400 } }, required: ["car"] },
+  { name: "plan_pickup", description: "Plan a ship's flight from where it is parked to the rider, leaving when the rider is ready or the ship is free, whichever is later (or wait_days after that), and re-fly it in the n-body checker. Returns the pickup leg with its leg_id.",
+    inputSchema: { type: "object", properties: { run_id: RUN_ID, car: { type: "string", description: "the ship's call sign from the fleet, e.g. sf-01" }, objective: { type: "string", enum: ["energy", "time"] }, wait_days: { type: "number", minimum: 0, maximum: 400 } }, required: ["car"] },
     execute: function(inp){ return Promise.resolve().then(function(){ runGuard(inp); return planPickup(inp); }).then(function(L){ var r = legOut(L); TOOLOUT.push(r); return r; }); } },
   { name: "plan_ride", description: "Plan the rider's ride from the pickup to the destination, leaving after the given pickup leg and boarding (or wait_days later), and re-fly it in the n-body checker. Returns the ride leg with its fare_usd and arrive time.",
     inputSchema: { type: "object", properties: { run_id: RUN_ID, after_leg: { type: "string", description: "leg_id of the pickup this ride follows" }, objective: { type: "string", enum: ["energy", "time"] }, wait_days: { type: "number", minimum: 0, maximum: 400 } }, required: ["after_leg"] },
@@ -545,11 +546,12 @@ var HTOOLS = [
     inputSchema: { type: "object", properties: { run_id: RUN_ID, place: { type: "string", description: "place id or name, e.g. the hail's pickup_at or destination id" },
       hours: { type: "number", minimum: 1, maximum: 72, description: "how many hours to show (default 24)" }, from: { type: "string", description: "first hour, YYYY-MM-DD HH:MM (default: rider_ready)" } }, required: ["place"] },
     execute: function(inp){ return Promise.resolve().then(function(){ runGuard(inp); var r = padOut(inp); TOOLOUT.push(r); return r; }); } },
-  { name: "space_weather", description: "Forecast of solar flare odds per sky day, plus Mars dust storm or Titan haze odds at this hail's pickup and destination where they have any. Simulated. Free: doesn't count as a plan.",
+  { name: "space_weather", description: "Forecast of solar flare odds per sky day at a place (storms travel out from the Sun at 1500 km/s, and fewer reach far places), plus Mars dust storm or Titan haze odds at this hail's pickup and destination where they have any. Simulated. Free: doesn't count as a plan.",
     inputSchema: { type: "object", properties: { run_id: RUN_ID, days: { type: "number", minimum: 1, maximum: 60, description: "how many days (default 10)" },
+      place: { type: "string", description: "place id or name for the flare odds (default: the open checkpoint's place, else the pickup)" },
       from: { type: "string", description: "first day, YYYY-MM-DD or YYYY-MM-DD HH:MM (default: rider_ready)" } } },
     execute: function(inp){ return Promise.resolve().then(function(){ runGuard(inp); var r = wxOut(inp); TOOLOUT.push(r); return r; }); } },
-  { name: "dispatch", description: "Dispatch the car: the pickup leg, the ride leg, the fare (copy the ride leg's fare_usd) and the arrival you promise the rider. Flies the dispatch through the season's hazards. If a hazard stops the ride, returns status \"checkpoint\" with the situation; answer it with decide. " +
+  { name: "dispatch", description: "Dispatch the ship: the pickup leg, the ride leg, the fare (copy the ride leg's fare_usd) and the arrival you promise the rider. Flies the dispatch through the season's hazards. If a hazard stops the ride, returns status \"checkpoint\" with the situation; answer it with decide. " +
       "Otherwise returns what happened and the locked score breakdown; the score goes on this page's scoreboard.",
     inputSchema: { type: "object", properties: { run_id: RUN_ID, pickup_leg: { type: "string" }, ride_leg: { type: "string" },
       quoted_fare_usd: { type: "number", description: "the fare you tell the rider, in US dollars" }, quoted_arrival: { type: "string", description: "the arrival time you promise the rider, YYYY-MM-DD HH:MM: the ride leg's arrive, plus any buffer you choose" } },
@@ -570,7 +572,7 @@ function addMsg(kind, html){ var d = document.createElement("div"); d.className 
 function ask(text, fresh){
   text = String(text || "").trim(); if (!text || BUSY) return;
   if (fresh) TURNS = []; // a suggestion is a new request, not a follow-up to stale answers
-  if (ME.ride){ addMsg("sys", hail() ? "Your car is on its way. Watch it on the map." : "You're already on a ride. Wait until you arrive."); return; }
+  if (ME.ride){ addMsg("sys", hail() ? "Your Starseeker is on its way. Watch it on the map." : "You're already on a ride. Wait until you arrive."); return; }
   addMsg("me", esc(text)); $("q").value = "";
   if (!CAP.sample){ offlineAsk(text); return; }
   TURNS.push({ role: "user", content: text }); if (TURNS.length > 8) TURNS = TURNS.slice(-8); if (TURNS[0].role !== "user") TURNS.shift();
@@ -655,7 +657,7 @@ function book(id){
 function renderRideBar(){
   if (!ME.ride || hail()){ showOpts(); return; }
   var R = ME.ride;
-  $("choose").innerHTML = '<h3>Your ride</h3><div class="glass ridebar"><div class="car" style="width:100%;height:96px">' + CAR + '</div><div class="row" style="display:flex;justify-content:space-between;gap:8px"><span class="tag sim">Fleet car · simulated</span><span class="tag ' + (R.gate === "PASS" ? "real" : "sim") + '">' + (R.gate === "PASS" ? "Re-fly pass" : "Local") + '</span></div>' +
+  $("choose").innerHTML = '<h3>Your ride</h3><div class="glass ridebar"><div class="car" style="width:100%;height:96px">' + CAR + '</div><div class="row" style="display:flex;justify-content:space-between;gap:8px"><span class="tag sim">Fleet Starseeker · simulated</span><span class="tag ' + (R.gate === "PASS" ? "real" : "sim") + '">' + (R.gate === "PASS" ? "Re-fly pass" : "Local") + '</span></div>' +
     '<p class="t" style="font-size:20px">' + esc(locName(R.from)) + " → " + esc(PID[R.to].name) + '</p><div class="prog"><i id="ride-prog"></i></div>' +
     '<p class="small dim num" id="ride-status"></p><p class="small dim num">Fare $' + fmt(R.fare, 2) + ' · burns ' + R.dv + ' km/s · ' + fmt(R.kwh) + ' kWh</p>' +
     '<button class="lnk" id="cancel" type="button">Cancel ride</button></div>';
@@ -728,12 +730,13 @@ function takeHail(id){
   }, function(e){ toast("Couldn't take that hail: " + e.message); }).then(function(){ HBUSY = false; });
 }
 function dropHail(why){ ME.hail = null; ME.trip = null; LEGS = {}; store(KEY, ME); renderHails(); showOpts(); if (why) toast(why); }
-function hailRulesText(){ return "Pick a car from the fleet; a car on another ride can't leave before its free_from. plan_pickup flies it from where it is parked to the rider (leaving at free_from, or wait_days later). " +
+function hailRulesText(){ return "Pick a Starseeker from the fleet; a ship on another ride can't leave before its free_from. plan_pickup flies it from where it is parked to the rider (leaving at free_from, or wait_days later). " +
   "plan_ride flies the rider from the pickup to the destination, after boarding. Then dispatch with the pickup leg, the ride leg, the ride leg's fare, and the arrival you promise the rider. " +
-  "Hazards are simulated and seeded per season, and you only see forecasts: check_pad shows booked berths per hour (about " + Math.round(UNSCHED * 100) + "% of traffic is unscheduled and not shown; with every berth taken the car holds in orbit at " + RR.HOLD_KWH + " kWh an hour), " +
-  "space_weather shows solar flare odds (a flare holds launches with a rider aboard) and Mars dust or Titan haze odds (they close the pad). A leg between planets that leaves late needs a correction burn. " +
+  "Hazards are simulated and seeded per season, and you only see forecasts: check_pad shows booked berths per hour (about " + Math.round(UNSCHED * 100) + "% of traffic is unscheduled and not shown; with every berth taken the ship holds in orbit at " + RR.HOLD_KWH + " kWh an hour), " +
+  "space_weather shows solar flare odds at a place (a flare holds launches with a rider aboard) and Mars dust or Titan haze odds (they close the pad). A leg between planets that leaves late needs a correction burn. " +
+  "A storm erupts at the Sun and its particles travel out at 1500 km/s, so it reaches Earth about a day later and Saturn about 11 days later, and fewer reach far out. You dispatch from HQ on Earth, which controls every station and Starseeker, so at a checkpoint the ship acts on your answer only when it reaches it (light-time there and back). " +
   "A hold or closed pad longer than an hour stops the ride at a checkpoint: wait or replan a held launch, hold or divert at a closed pad. Once it arrives, the result shows what each choice would have cost. " +
-  "Score out of 100, from what actually happens: fast pickup 20 (versus the quickest nearby car), arrived on time 20 (falls to 0 at half the trip's allowed time late), energy flown including holds and corrections versus par 20, " +
+  "Score out of 100, from what actually happens: fast pickup 20 (versus the quickest nearby ship), arrived on time 20 (falls to 0 at half the trip's allowed time late), energy flown including holds and corrections versus par 20, " +
   "kept the promise 15 (falls to 0 at 6 h after the promised arrival on quick hails, 1 day on long hauls; arriving early costs a quarter as much), every leg checked 10, honest fare 10 (within $1 of the ride leg's fare_usd), " +
   "planning economy 5 (" + FREE_PLANS + " plans free; forecasts are free). " +
   "The sky clock runs 1 sky day per real second: if a leg flies between planets and its departure passes before dispatch, the hail goes cold."; }
@@ -762,10 +765,11 @@ function padOut(inp){
 }
 function wxOut(inp){
   var H = hail(); if (!H) throw new Error("no hail is active. Take one on the page first.");
-  var h = RR.BY[H.id], from = jdOf(inp.from, H.t0), days = +inp.days || 10;
+  var h = RR.BY[H.id], from = jdOf(inp.from, H.t0), days = +inp.days || 10, cp = openCp(H), at = inp.place ? placeOf(inp.place) : cp ? cp.place : h.from, reach = RR.flareReach(at, from);
   return { simulated: true, days_from: isoM(Math.floor(from)), day_note: "each sky day runs 12:00 to 12:00 UTC",
-    flares: RR.flareForecast(from, days, H.seed).map(function(x){ return { day: isoM(x.day_jd), odds_pct: Math.round(x.flare_odds * 100) }; }),
-    flare_rule: "the chance a solar radiation storm starts that day; it holds launches with a rider aboard until it passes, and an empty car can still fly",
+    flare_place: { id: at, name: stopName(at) }, storm_travel_hours: rnd(reach.travel_days * 24, 1), storm_share: Math.round(reach.share * 1000) / 1000,
+    flares: RR.flareForecast(from, days, H.seed, at).map(function(x){ return { day: isoM(x.day_jd), odds_pct: Math.round(x.flare_odds * 100) }; }),
+    flare_rule: "the chance a solar radiation storm starts at flare_place that day; it holds launches with a rider aboard until it passes, and an empty ship can still fly. Each storm reaches there storm_travel_hours after it erupts at 1500 km/s, and storm_share is the share strong enough there (1/r^2)",
     local_weather: [h.from, h.to].map(function(p){ return RR.weatherForecast(p, from, days, H.seed); }).filter(function(w){ return w.kind; }).map(function(w){
       return { place: { id: w.place, name: stopName(w.place) }, kind: w.kind, odds_are: w.odds_are, days: w.days.map(function(x){ return { day: isoM(x.day_jd), odds_pct: Math.round(x.odds * 100) }; }) }; }) };
 }
@@ -798,7 +802,7 @@ function planPickup(inp){ // connector planPickup
   return Promise.resolve().then(function(){
     var H = openHail(), h = RR.BY[H.id], key = String(inp.car || "").toLowerCase().trim();
     var car = RR.CAR[key] || RR.FLEET.filter(function(c){ return c.name.toLowerCase() === key; })[0];
-    if (!car) throw new Error("unknown car " + inp.car + ". The fleet is in get_hail.");
+    if (!car) throw new Error("unknown ship " + inp.car + ". The fleet is in get_hail.");
     if (car.at === h.from) throw new Error(car.name + " is already at the pickup");
     // a car still on another (simulated) job can't leave before it's free
     return planHailLeg(H, "pickup", car.id, car.at, h.from, RR.pickupStart(H.id, car.id, H.t0, H.seed) + waitOf(inp), objOf(inp));
@@ -844,7 +848,7 @@ function nextHail(H, st){
   H.ride = st.ride;
   if (st.done) return landHail(H, st.done);
   store(KEY, ME); showOpts(); renderHails();
-  if (H.agent === "You") toast("The ride stopped at a checkpoint. Choose what the car does.");
+  if (H.agent === "You") toast("The ride stopped at a checkpoint. Choose what the ship does.");
   return { ok: true, status: "checkpoint", run_id: H.run_id, hail_id: H.id, situation: cpOut(H) };
 }
 function openCp(H){ return H && H.ride && !H.started ? H.ride.checkpoints[H.ride.checkpoints.length - 1] : null; }
@@ -852,13 +856,14 @@ function openCp(H){ return H && H.ride && !H.started ? H.ride.checkpoints[H.ride
 function cpOut(H){
   var cp = openCp(H); if (!cp) return null;
   var options = cp.options.map(function(o){ var c = {}; for (var k in o) c[k] = o[k];
-    if (o.action === "replan"){ c.depart_after_min = isoM(cp.sky_at); c.plans_used = H.calls; c.free_plans_left = Math.max(0, FREE_PLANS - H.calls); }
+    if (o.action === "replan"){ c.depart_after_min = isoM(cp.reply_jd); c.plans_used = H.calls; c.free_plans_left = Math.max(0, FREE_PLANS - H.calls); }
     if (o.action === "hold"){ c.held_hours = rnd(o.held_hours, 1); c.max_hold_hours_left = rnd(o.max_hold_hours_left, 1); }
     return c; });
-  return { checkpoint: cp.n, kind: cp.kind, why: cp.why, place: { id: cp.place, name: cp.place_name }, leg: cp.leg, sky_at: isoM(cp.sky_at), car: cp.car, rider_aboard: cp.rider_aboard,
+  return { checkpoint: cp.n, kind: cp.kind, why: cp.why, place: { id: cp.place, name: cp.place_name }, leg: cp.leg, sky_at: isoM(cp.sky_at),
+    signal_delay_minutes: cp.signal_delay_minutes, reply_arrives: isoM(cp.reply_jd), car: cp.car, rider_aboard: cp.rider_aboard,
     held_hours: rnd(cp.held_hours, 1), behind_plan_hours: rnd(cp.behind_plan_hours, 1), extra_kwh: cp.extra_kwh, used_kwh: cp.used_kwh, options: options, default: cp.default,
     checkpoints_left: RR.MAX_CHECKPOINTS - H.ride.checkpoints.length, simulated: true,
-    note: "The ride's clock is stopped here until you decide. You never see when a storm or haze ends, nor the unscheduled traffic." };
+    note: "The ride's clock is stopped here until you decide. You dispatch from HQ on Earth, which controls every station and Starseeker: your answer reaches the ship at reply_arrives, and it holds or waits until then. You never see when a storm or haze ends, nor the unscheduled traffic." };
 }
 // connector decide(): the same answers, checked the same way. A replan plans a fresh leg (it counts as a plan).
 function decideHail(inp){
@@ -872,10 +877,10 @@ function decideHail(inp){
   else if (a === "hold") d = inp.hours != null && inp.hours !== "" ? { action: "hold", hours: +inp.hours } : { action: "hold" };
   else if (a === "divert") d = { action: "divert", place: placeOf(inp.place), wait_hours: +inp.wait_hours || 0 };
   if (d) return Promise.resolve(stepHail(H, d));
-  var jd = inp.depart_after ? quoteJd(inp.depart_after) : cp.sky_at, obj = objOf(inp), S = H.ride.segs[H.ride.at.seg];
-  if (jd == null) throw new Error("depart_after must be a sky time as YYYY-MM-DD HH:MM, at or after " + isoM(cp.sky_at));
-  if (jd < cp.sky_at - 1 / 1440) throw new Error("a replan must depart at or after " + isoM(cp.sky_at));
-  return planHailLeg(H, S.role, S.role === "pickup" ? H.car : null, S.from, S.to, Math.max(jd, cp.sky_at), obj).then(function(L){
+  var jd = inp.depart_after ? quoteJd(inp.depart_after) : cp.reply_jd, obj = objOf(inp), S = H.ride.segs[H.ride.at.seg];
+  if (jd == null) throw new Error("depart_after must be a sky time as YYYY-MM-DD HH:MM, at or after " + isoM(cp.reply_jd));
+  if (jd < cp.reply_jd - 1 / 1440) throw new Error("a replan must depart at or after " + isoM(cp.reply_jd) + ", when your answer reaches the ship");
+  return planHailLeg(H, S.role, S.role === "pickup" ? H.car : null, S.from, S.to, Math.max(jd, cp.reply_jd), obj).then(function(L){
     if (L.gate === "FAIL") throw new Error(L.leg_id + " was rejected by the checker; checkpoint " + cp.n + " is still open (wait, or replan from another time)");
     return stepHail(H, { action: "replan", leg: { from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate } });
   });
@@ -901,7 +906,7 @@ function landHail(H, F){
   H.started = true; H.wait_days = sc.wait_days;
   H.times = { planned_pickup: p.arr_jd, pickup: sc.pickup_jd, planned_arrive: sc.planned_arrive_jd, arrive: sc.arrive_jd, promised: E.jdFromIso(qa.replace(" ", "T")) };
   H.score = { total: sc.total, out_of: 100, parts: sc.parts, car: RR.CAR[p.car].name, pickup: isoM(sc.pickup_jd), planned_pickup: isoM(p.arr_jd), arrive: isoM(sc.arrive_jd), planned_arrive: isoM(sc.planned_arrive_jd),
-    promised_arrival: qa, arrive_by: isoM(H.arrive_by_jd), fare_usd: sc.fare_usd, used_kwh: sc.used_kwh, extra_kwh: sc.extra_kwh, par_kwh: H.par_kwh, par_car: RR.CAR[H.par_car].name, beat_par: sc.beat_par,
+    promised_arrival: qa, arrive_by: isoM(H.arrive_by_jd), rider_dose_msv: sc.rider_dose_msv, fare_usd: sc.fare_usd, used_kwh: sc.used_kwh, extra_kwh: sc.extra_kwh, par_kwh: H.par_kwh, par_car: RR.CAR[H.par_car].name, beat_par: sc.beat_par,
     incidents: sc.incidents.map(function(x){ return { kind: x.kind, leg: x.leg, where: stopName(x.where), at: isoM(x.at_jd), hours: rnd(x.hours, 1), kwh: x.kwh, note: x.note }; }),
     checkpoints: cpLog(H.ride) };
   startHailRide(H);
@@ -948,12 +953,12 @@ function manualDecide(ds){
   var H = hail(), cp = openCp(H), inp = { checkpoint: cp.n, action: ds.cp, hours: ds.hours, place: ds.place };
   if (ds.cp !== "replan"){ try { decideHail(inp); } catch (e) { toast(e.message); } return; }
   var el = addMsg("bot", '<div class="who">Starfare planner</div><div class="body dim">Replanning from checkpoint ' + cp.n + '…</div><div class="steps"></div>'); BUSY = { el: el, steps: [] }; showOpts();
-  Promise.resolve().then(function(){ return decideHail(inp); }).then(function(){ el.querySelector(".body").textContent = "Replanned from " + isoM(cp.sky_at) + "."; },
+  Promise.resolve().then(function(){ return decideHail(inp); }).then(function(){ el.querySelector(".body").textContent = "Replanned from " + isoM(cp.reply_jd) + "."; },
     function(e){ el.querySelector(".body").textContent = "Couldn't replan: " + e.message + "."; }).then(function(){ BUSY = null; showOpts(); });
 }
 function claudeDispatch(){
   var H = hail(); if (!H || BUSY || H.started) return; var h = RR.BY[H.id];
-  ask("Dispatch the " + h.title + " hail for " + riderName(h) + ". Try the cars worth trying, send the one that serves them best, quote honestly, and tell me what you chose.");
+  ask("Dispatch the " + h.title + " hail for " + riderName(h) + ". Try the ships worth trying, send the one that serves them best, quote honestly, and tell me what you chose.");
 }
 function scoreDoc(){ return CAP.db && CAP.uid ? CAP.db.doc("scores/" + CAP.uid) : null; }
 function saveScore(H){
@@ -1002,13 +1007,13 @@ function fcHTML(H, pickupJd, arriveJd, departJd, planned, readyLabel){
     return '<span style="background:rgba(255,182,92,' + (0.07 + o * 0.5).toFixed(2) + ')">' + Math.round(o * 100) + "%<em>" + isoM(x.day_jd).slice(5, 10) + "</em></span>"; }).join("") + "</div>"; }
   var wx = [[h.from, pickupJd], [h.to, arriveJd]].map(function(a){ return RR.weatherForecast(a[0], a[1], 7, H.seed); }).filter(function(w){ return w.kind; });
   return '<div class="fc"><div class="fc-h"><span class="caps faint" style="font-size:10.5px">Forecast · simulated</span><span class="faint">' + (planned ? "for this plan" : "before you plan") + "</span></div>" +
-    pad(h.from, pickupJd, "Pickup", planned ? "car due" : readyLabel || "rider ready") + pad(h.to, arriveJd, "Destination", planned ? "car due" : "par arrival") +
-    '<div class="fc-h"><span><b>Solar flares</b><span class="faint"> · from the ride\'s departure</span></span><span class="faint">odds one starts each day</span></div>' + days(RR.flareForecast(departJd, 7, H.seed), "flare_odds") +
+    pad(h.from, pickupJd, "Pickup", planned ? "ship due" : readyLabel || "rider ready") + pad(h.to, arriveJd, "Destination", planned ? "ship due" : "par arrival") +
+    '<div class="fc-h"><span><b>Solar flares · ' + esc(stopName(h.from)) + '</b><span class="faint"> · from the ride\'s departure</span></span><span class="faint">odds one reaches it each day</span></div>' + days(RR.flareForecast(departJd, 7, H.seed, h.from), "flare_odds") +
     wx.map(function(w){ return '<div class="fc-h"><span><b>' + (w.kind === "dust_storm" ? "Dust storms" : "Titan haze") + " · " + esc(stopName(w.place)) + '</b></span><span class="faint">' + esc(w.odds_are) + "</span></div>" + days(w.days, "odds"); }).join("") +
-    '<p class="small faint">Red hours are full, blue have berths booked, the outlined hour is when the car is due. Booked berths only: about ' + Math.round(UNSCHED * 100) + "% of traffic is unscheduled and isn't shown. " +
-    "A full pad means holding in orbit at " + fmt(RR.HOLD_KWH) + " kWh an hour; a flare holds launches with a rider aboard.</p></div>";
+    '<p class="small faint">Red hours are full, blue have berths booked, the outlined hour is when the ship is due. Booked berths only: about ' + Math.round(UNSCHED * 100) + "% of traffic is unscheduled and isn't shown. " +
+    "A full pad means holding in orbit at " + fmt(RR.HOLD_KWH) + " kWh an hour; a flare holds launches with a rider aboard. Flares erupt at the Sun and travel out at 1500 km/s, so fewer reach far pads, and later.</p></div>";
 }
-var KIND = { pad_busy: "Pad busy", flare: "Solar flare", dust_storm: "Dust storm", titan_haze: "Titan haze", correction_burn: "Correction burn", replanned: "Replanned", divert: "Diverted", checkpoint_cap: "Checkpoint limit" };
+var KIND = { pad_busy: "Pad busy", flare: "Solar flare", dust_storm: "Dust storm", titan_haze: "Titan haze", correction_burn: "Correction burn", replanned: "Replanned", divert: "Diverted", divert_overtaken: "Divert overtaken", awaiting_answer: "Awaiting answer", checkpoint_cap: "Checkpoint limit" };
 function hailHTML(){
   var H = hail(); if (!H) return ""; var h = RR.BY[H.id], s = sky(), q = h.kind === "quick", done = H.done || [];
   function when(jd){ return q ? "+" + dur(jd - H.t0) : isoM(jd); }
@@ -1028,7 +1033,7 @@ function hailHTML(){
       '<span class="k caps faint" style="font-size:10.5px">What happened · simulated</span>' +
       (inc.length ? '<ul class="inc">' + inc.map(function(x){ return '<li class="num"><b>' + esc(KIND[x.kind] || x.kind) + "</b> · " + esc(x.where) + " · " + (x.leg === "ride" ? "ride" : "pickup") +
           (x.hours ? " · " + fmt(x.hours, 1) + " h" : "") + (x.kwh ? " · +" + kwhs(x.kwh) : "") + '<span class="w">' + esc(x.note) + ".</span></li>"; }).join("") + "</ul>"
-        : '<p class="small ok">Nothing got in the way: the car flew as planned.</p>') +
+        : '<p class="small ok">Nothing got in the way: the ship flew as planned.</p>') +
       (sc.extra_kwh ? '<p class="small num">Extra energy: <b>' + kwhs(sc.extra_kwh) + "</b> from holds and correction burns, " + kwhs(sc.used_kwh) + " flown in all.</p>" : "") +
       (sc.checkpoints && sc.checkpoints.length ? '<span class="k caps faint" style="font-size:10.5px">Checkpoints · in hindsight · simulated</span><ul class="inc">' + sc.checkpoints.map(function(c){
           return '<li class="num"><b>' + c.n + " · " + esc(c.kind === "launch_hold" ? "Launch held" : "Pad closed") + "</b> · " + esc(c.place) + " · chose " + esc(c.chose || "?") +
@@ -1038,9 +1043,9 @@ function hailHTML(){
         '<span class="stop' + (done.indexOf(h.to) >= 0 ? " done" : "") + '">' + (done.indexOf(h.to) >= 0 ? "Dropped off · " : "Drop off · ") + esc(stopName(h.to)) + '</span></div>' +
       '<p class="small dim num" id="h-next">' + esc(hailNext()) + '</p>' + res +
       '<div class="score"><span class="k caps faint" style="font-size:10.5px">Score · ' + esc(sc.car) + ' · dispatched by ' + esc(H.agent || "You") + '</span><span class="big num">' + sc.total + '<span class="dim" style="font-size:16px"> / 100</span></span>' +
-      (sc.beat_par ? '<span class="small ok">Beat par: less energy than the best nearby car, as flown.</span>' : "") +
+      (sc.beat_par ? '<span class="small ok">Beat par: less energy than the best nearby ship, as flown.</span>' : "") +
       sc.parts.map(function(p){ return '<div class="srow num"><span>' + esc(p.label) + '</span><span>' + p.got + " / " + p.max + '</span><span class="bar"><i style="width:' + (p.got / p.max * 100).toFixed(0) + '%"></i></span><span class="w">' + esc(p.note) + "</span></div>"; }).join("") +
-      '</div><p class="small faint num">Quoted ' + (H.quote && isFinite(+H.quote.fare_usd) ? money(+H.quote.fare_usd) : "no fare") + ", promised arrival " + esc((H.quote && H.quote.arrival) || "?") + ". Par: " + esc(sc.par_car) + ", " + kwhs(sc.par_kwh) + ".</p>" +
+      '</div><p class="small faint num">Quoted ' + (H.quote && isFinite(+H.quote.fare_usd) ? money(+H.quote.fare_usd) : "no fare") + ", promised arrival " + esc((H.quote && H.quote.arrival) || "?") + ". Par: " + esc(sc.par_car) + ", " + kwhs(sc.par_kwh) + "." + (sc.rider_dose_msv != null ? " Rider's cosmic-ray dose aboard: at most " + fmt(sc.rider_dose_msv, 2) + " mSv (deep-space cruise rate, simulated)." : "") + "</p>" +
       (H.finished ? '<div class="mrow"><button class="btn ghost" type="button" id="h-done">Close hail</button></div>' : "") + "</div>";
   }
   var cp = openCp(H);
@@ -1049,22 +1054,23 @@ function hailHTML(){
     var o = {}; cp.options.forEach(function(x){ o[x.action] = x; });
     var btns = cp.kind === "launch_hold"
       ? '<button class="btn" type="button" data-cp="wait">Wait it out (default)</button>' +
-        '<button class="btn ghost" type="button" data-cp="replan"' + (BUSY ? " disabled" : "") + '>Replan from ' + esc(isoM(cp.sky_at)) + '</button>'
+        '<button class="btn ghost" type="button" data-cp="replan"' + (BUSY ? " disabled" : "") + '>Replan from ' + esc(isoM(cp.reply_jd)) + '</button>'
       : '<button class="btn" type="button" data-cp="hold">Hold until it opens (default)</button>' +
         (o.hold.max_hold_hours_left >= 2 ? '<button class="btn ghost" type="button" data-cp="hold" data-hours="2">Hold 2 h, then ask again</button>' : "") +
         (o.divert ? o.divert.alternates.map(function(a){ return '<button class="btn ghost" type="button" data-cp="divert" data-place="' + esc(a.place) + '">Divert to ' + esc(a.name) +
           ' · ' + kwhs(a.hop_kwh) + ' · ' + fmt(a.hop_hours, 1) + ' h</button>'; }).join("") : "");
     var facts = cp.kind === "launch_hold"
-      ? "Leaving now would need a correction burn of " + kwhs(o.wait.correction_kwh_if_it_left_now) + "; it grows " + o.wait.correction_pct_per_hour_late + "% of the leg an hour, to at most " + o.wait.correction_cap_pct + "%. A replan counts as a plan."
+      ? "Leaving when your answer reaches the ship would need a correction burn of " + kwhs(o.wait.correction_kwh_if_it_left_on_reply) + "; it grows " + o.wait.correction_pct_per_hour_late + "% of the leg an hour, to at most " + o.wait.correction_cap_pct + "%. A replan counts as a plan."
       : "Holding costs " + fmt(o.hold.kwh_per_hour) + " kWh an hour; held " + fmt(rnd(cp.held_hours, 1), 1) + " h so far, at most " + fmt(rnd(o.hold.max_hold_hours_left, 1), 1) + " h more." +
         (o.divert ? " A divert hops to another pad and back; the kWh shown is one hop." : " No other pad is near enough to divert to.");
     return head + '<div class="cp"><span class="k caps faint" style="font-size:10.5px">Checkpoint ' + cp.n + ' · simulated</span>' +
       '<p class="t">' + esc(cp.kind === "launch_hold" ? "Launch held" : "Pad closed") + ' · ' + esc(cp.place_name) + '</p>' +
-      '<p class="small">' + esc(cp.why.charAt(0).toUpperCase() + cp.why.slice(1)) + '. The car is ' + esc(cp.car) + (cp.rider_aboard ? " with " + esc(riderName(h)) + " aboard" : "") + '.</p>' +
+      '<p class="small">' + esc(cp.why.charAt(0).toUpperCase() + cp.why.slice(1)) + '. The ship is ' + esc(cp.car) + (cp.rider_aboard ? " with " + esc(riderName(h)) + " aboard" : "") + '.</p>' +
       '<div class="mmeta num small"><div><span class="k">Sky time</span><span>' + isoM(cp.sky_at) + '</span></div><div><span class="k">Behind plan</span><span>' + fmt(rnd(cp.behind_plan_hours, 1), 1) + ' h</span></div>' +
+      '<div><span class="k">Answer reaches ship</span><span>' + isoM(cp.reply_jd) + '</span></div><div><span class="k">Signal from Earth</span><span>' + fmt(cp.signal_delay_minutes, 1) + ' min each way</span></div>' +
       '<div><span class="k">Used so far</span><span>' + kwhs(cp.used_kwh) + '</span></div><div><span class="k">Extra so far</span><span>' + kwhs(cp.extra_kwh) + '</span></div></div>' +
       '<p class="small dim num">' + esc(facts) + '</p><div class="mrow cpb">' + btns + '</div>' +
-      '<p class="small faint">The ride\'s clock is stopped until you choose. You never see when a storm or haze ends, or the unscheduled traffic. The score locks when the car arrives.</p></div></div>';
+      '<p class="small faint">The ride\'s clock is stopped until you choose. You never see when a storm or haze ends, or the unscheduled traffic. The score locks when the ship arrives.</p></div></div>';
   }
   if (H.plan){
     var P = H.plan.legs[0], R = H.plan.legs[1], used = P.kwh + R.kwh, late = R.arr_jd > H.arrive_by_jd, ff = firstFar(H.plan.legs), bad = H.plan.legs.some(function(L){ return L.gate === "FAIL"; });
@@ -1077,22 +1083,22 @@ function hailHTML(){
       '<div class="qrow"><input id="h-quote" class="num' + (quoteJd(qv) == null ? " bad" : "") + '" value="' + esc(qv) + '" placeholder="YYYY-MM-DD HH:MM" maxlength="16" autocomplete="off" spellcheck="false" aria-describedby="h-qhelp">' +
         bufs.map(function(b){ return '<button type="button" class="stop" data-qbuf="' + b[0] + '">' + b[1] + "</button>"; }).join("") + '<button type="button" class="stop" data-qbuf="0">Planned</button></div>' +
       '<p class="small faint num" id="h-qhelp">Planned arrival ' + isoM(R.arr_jd) + ". Holds can make it later, so a buffer can help: the promise score falls to 0 at " + (q ? "6 h" : "1 day") + " late, and arriving early costs a quarter as much.</p>" +
-      (H.plan.stale ? '<p class="small bad">This plan has expired: the car had to leave by ' + isoM(ff.dep_jd) + '. Try again and Starfare will plan a later departure.</p>' : "") +
-      '<div class="mrow"><button class="btn" type="button" id="h-dispatch"' + (H.plan.stale || bad ? " disabled" : "") + '>Dispatch →</button><button class="btn ghost" type="button" id="h-replan">Try another car</button></div>' +
-      (ff ? '<p class="small faint num" id="h-cold">' + (H.plan.stale ? "" : "The car must leave in " + dur(Math.max(0, ff.dep_jd - s.jd)) + " (sky time), or the hail goes cold.") + '</p>'
-        : '<p class="small faint">Local hops cost the same whenever they leave, so the car sets off as soon as you dispatch.</p>') +
+      (H.plan.stale ? '<p class="small bad">This plan has expired: the ship had to leave by ' + isoM(ff.dep_jd) + '. Try again and Starfare will plan a later departure.</p>' : "") +
+      '<div class="mrow"><button class="btn" type="button" id="h-dispatch"' + (H.plan.stale || bad ? " disabled" : "") + '>Dispatch →</button><button class="btn ghost" type="button" id="h-replan">Try another ship</button></div>' +
+      (ff ? '<p class="small faint num" id="h-cold">' + (H.plan.stale ? "" : "The ship must leave in " + dur(Math.max(0, ff.dep_jd - s.jd)) + " (sky time), or the hail goes cold.") + '</p>'
+        : '<p class="small faint">Local hops cost the same whenever they leave, so the ship sets off as soon as you dispatch.</p>') +
       '<p class="small faint num">Plans used: ' + H.calls + " of " + FREE_PLANS + ' free.</p></div>';
   }
   var near = nearIds(H.id), busy = busyMap(H), st = RR.pickupStart(H.id, H.car, H.t0, H.seed);
   function chips(list){ return list.map(function(c){ var here = c.at === h.from;
     return '<button type="button" class="stop' + (H.car === c.id ? " on" : "") + '" data-car="' + c.id + '"' + (here ? " disabled" : "") + '>' + esc(c.name) + " · " + esc(stopName(c.at)) +
       (busy[c.id] ? '<span class="busy">on another ride until ' + isoM(busy[c.id]) + "</span>" : "") + "</button>"; }).join(""); }
-  return head + '<p class="small dim">Pick a car and how it should fly, or let Claude dispatch. The fleet is simulated, and some cars are still finishing other rides.</p>' +
-    '<span class="k caps faint" style="font-size:10.5px">Nearby cars</span><div class="stops">' + chips(RR.FLEET.filter(function(c){ return near.indexOf(c.id) >= 0; })) + '</div>' +
+  return head + '<p class="small dim">Pick a Starseeker and how it should fly, or let Claude dispatch. The fleet is simulated, and some ships are still finishing other rides.</p>' +
+    '<span class="k caps faint" style="font-size:10.5px">Nearby ships</span><div class="stops">' + chips(RR.FLEET.filter(function(c){ return near.indexOf(c.id) >= 0; })) + '</div>' +
     '<span class="k caps faint" style="font-size:10.5px">Farther away</span><div class="stops">' + chips(RR.FLEET.filter(function(c){ return near.indexOf(c.id) < 0; })) + '</div>' +
     (busy[H.car] ? '<p class="small num" style="color:var(--sun)">' + esc(RR.CAR[H.car].name) + " is on another ride until " + isoM(busy[H.car]) + ", so its pickup can't leave before then.</p>" : "") +
     '<div class="stops" role="group" aria-label="How to fly"><button type="button" class="stop' + (H.obj !== "time" ? " on" : "") + '" data-hobj="energy">Least energy</button><button type="button" class="stop' + (H.obj === "time" ? " on" : "") + '" data-hobj="time">Fastest</button></div>' +
-    fcHTML(H, Math.max(H.t0, st), H.par_arr_jd || H.arrive_by_jd, Math.max(H.t0, st) + RR.DWELL, false, st > H.t0 ? "car free" : "rider ready") +
+    fcHTML(H, Math.max(H.t0, st), H.par_arr_jd || H.arrive_by_jd, Math.max(H.t0, st) + RR.DWELL, false, st > H.t0 ? "ship free" : "rider ready") +
     '<div class="mrow">' + (CAP.sample ? '<button class="btn" type="button" id="h-claude">Let Claude dispatch</button>' : "") + '<button class="btn' + (CAP.sample ? " ghost" : "") + '" type="button" id="h-manual"' + (BUSY ? " disabled" : "") + '>Plan ' + esc(RR.CAR[H.car].name) + '</button></div>' +
     '<p class="small faint num">Plans used: ' + H.calls + " of " + FREE_PLANS + ' free. Forecasts are free.</p></div>';
 }
@@ -1100,7 +1106,7 @@ function tickHail(){
   var H = hail(); if (!H) return;
   if (!H.started && H.plan && !H.plan.stale){ var ff = firstFar(H.plan.legs), el = $("h-cold");
     if (ff && sky().jd > ff.dep_jd){ H.plan.stale = true; store(KEY, ME); showOpts(); }
-    else if (ff && el) el.textContent = "The car must leave in " + dur(Math.max(0, ff.dep_jd - sky().jd)) + " (sky time), or the hail goes cold."; }
+    else if (ff && el) el.textContent = "The ship must leave in " + dur(Math.max(0, ff.dep_jd - sky().jd)) + " (sky time), or the hail goes cold."; }
   var nx = $("h-next"); if (nx && H.started) nx.textContent = hailNext();
 }
 
@@ -1257,7 +1263,7 @@ document.addEventListener("click", function(e){
   var qb = e.target.closest("[data-qbuf]"); if (qb && hail() && hail().plan && !hail().started){ var HP = hail().plan, R1 = HP.legs[1], n = +qb.dataset.qbuf, base = quoteJd(HP.quote);
     HP.quote = isoM(n ? (base == null ? R1.arr_jd : base) + n / 24 : R1.arr_jd); store(KEY, ME); showOpts(); return; }
   if (e.target.id === "h-replan" && hail()){ hail().plan = null; store(KEY, ME); showOpts(); return; }
-  if (e.target.id === "h-drop"){ if (ME.ride && !confirm("Abandon the hail? The car stops where it is.")) return; if (ME.ride && sky().jd > ME.ride.dep){ ME.loc = { kind: "ship", jd: sky().jd, r: myPos(sky().jd), v: [0, 0, 0] }; } ME.ride = null; clearMyRide(); dropHail("Hail abandoned."); renderYou(); presence(); return; }
+  if (e.target.id === "h-drop"){ if (ME.ride && !confirm("Abandon the hail? The ship stops where it is.")) return; if (ME.ride && sky().jd > ME.ride.dep){ ME.loc = { kind: "ship", jd: sky().jd, r: myPos(sky().jd), v: [0, 0, 0] }; } ME.ride = null; clearMyRide(); dropHail("Hail abandoned."); renderYou(); presence(); return; }
   if (e.target.id === "h-done"){ dropHail(); renderYou(); return; }
   var q = e.target.closest("[data-q]"); if (q){ ask(q.dataset.q, true); return; }
   var o = e.target.closest("[data-obj]"); if (o){ direct($("dest").value, o.dataset.obj); return; }

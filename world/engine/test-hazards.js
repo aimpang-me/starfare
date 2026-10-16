@@ -32,12 +32,25 @@ ok("fly: no hazards means the plan happens as planned; holds add 250 kWh an hour
   }
 });
 ok("flares hold only the ride (a car flies empty through one)", () => {
-  const H = R.hazards("1"); let d = 2461400; while (!H.flareAt(d + 0.5)) d++;
-  const f = H.flareAt(d + 0.5), at = f.start + 0.01;
+  const H = R.hazards("1"); let d = 2461400; while (!H.flareAt(d + 0.5, "iss")) d++;
+  const f = H.flareAt(d + 0.5, "iss"), at = f.start + 0.01;
   const P = { from: "orbital-depot", to: "iss", dep_jd: at, arr_jd: at + 0.03, kwh: 400, fare: 80 }, Rr = { from: "iss", to: "lunar-data-center", dep_jd: at + 0.09, arr_jd: at + 5, kwh: 37000, fare: 8000 };
   const F = R.fly("iss-crew", "sf-01", [P, Rr], 0, "1");
   assert(!F.incidents.some((x) => x.kind === "flare" && x.leg === "pickup"));
   if (Rr.dep_jd < f.end) assert(F.incidents.some((x) => x.kind === "flare" && x.leg === "ride") && F.ride_depart_jd >= f.end - 1e-9);
+});
+ok("a flare's storm reaches a place at 1500 km/s, and fewer reach far out (1/r^2)", () => {
+  assert(Math.abs(R.flareReach("earth", t0).travel_days * 24 - 27.2) < 0.6);
+  const sat = R.flareReach("saturn", t0); assert(sat.travel_days * 24 > 250 && sat.travel_days * 24 < 270 && sat.share > 0.010 && sat.share < 0.013);
+  assert.strictEqual(R.flareReach("mercury", t0).share, 1);
+  const H = R.hazards("1"), storms = (place) => { const seen = new Set();
+    for (let jd = t0; jd < t0 + 1500; jd += 1 / 12){ const f = H.flareAt(jd, place); if (f) seen.add(place == null ? f.start : f.erupted); } return seen; };
+  const sun = storms(null), merc = storms("mercury"), earth = storms("earth"), saturn = storms("saturn");
+  const m = [...merc].pop(); assert(sun.has(m)); assert(Math.abs(H.flareAt(m + R.flareReach("mercury", m).travel_days + 1e-6, "mercury").start - m - R.flareReach("mercury", m).travel_days) < 1e-9);
+  assert(earth.size > 100 && Math.abs(merc.size - earth.size) <= 0.04 * earth.size);
+  assert(saturn.size < earth.size * 0.05, saturn.size + " storms reached Saturn, " + earth.size + " Earth");
+  const near = R.flareForecast(t0, 30, "1", "earth"), far = R.flareForecast(t0, 30, "1", "saturn");
+  assert(near.some((x) => x.flare_odds >= 0.2) && far.every((x) => x.flare_odds <= 0.02));
 });
 ok("busy cars: check() refuses a pickup that leaves before the car is free", () => {
   let found = null;

@@ -21,13 +21,13 @@ The rider is in a 1,500 km orbit around Titan and wants to get home to Earth. Ev
 
 1. **Ask.** "I'm stuck on Titan. Get me home to Earth. What are my options?"
 2. **Two options come back.**
-   - A simulated fleet car parked in the rider's orbit, which arrives home 2032-03-13: 1,975 days, $1,000,147.68.
+   - A simulated fleet Starseeker parked in the rider's orbit, which arrives home 2032-03-13: 1,975 days, $1,000,147.68.
    - The real Roadster as a premium driver. It flies out from its true JPL position, reaches Titan 2033-08-15 and gets the rider home 2039-07-15: 4,655 days, $2,376,608.64.
 3. **Push back.** "Too slow. Faster please, money is no object."
 4. **The broker counter-offers.**
    - The fastest trip takes 680 days but hits Earth at 48.96 km/s. The broker won't sell it: money can't make that speed safe.
    - It offers a balanced trip instead: home 2030-03-09, 1,240 days, Earth arrival at 15.97 km/s, $632,813.76.
-5. **Book.** The fleet car picks you up in 4.8 hours. Booking the Roadster needs a light-speed round trip to reach it (about 2 h 12 min), which the demo can skip.
+5. **Book.** The fleet Starseeker picks you up in 4.8 hours. Booking the Roadster needs a light-speed round trip to reach it (about 2 h 12 min), which the demo can skip.
 6. **Ride.** A live panel counts up travel time, AU travelled, battery used and the fare (USD or Dogecoin), plus the light delay to Earth. The map zooms from your orbit out to the whole solar system.
 7. **Arrive.** A receipt shows each leg's re-fly result and every stated assumption.
 
@@ -57,16 +57,16 @@ Open Sky has real stations (ISS and Tiangong, from JPL Horizons) and labelled fi
 
 ## The game: robotaxi dispatcher arena
 
-As of Oct 16, SOL's game is ride hailing for flying roadsters. Agents are dispatchers that get scored and ranked. Alvin set the shape of the loop, and it replaces the earlier delivery missions:
+As of Oct 16, SOL's game is ride hailing for Starseeker ships (Alvin renamed the flying roadsters on Oct 16). Agents are dispatchers that get scored and ranked. Alvin set the shape of the loop, and it replaces the earlier delivery missions:
 
 1. Simulated riders (NPCs) around the system hail rides.
 2. A player's agent takes a job. The player brings their own model and may write or install skills for it. Grok bots join through the MCP connector.
-3. The agent picks a car, plans the pickup and the ride with SOL's engine, quotes the fare and arrival, and starts the ride.
+3. The agent picks a Starseeker, plans the pickup and the ride with SOL's engine, quotes the fare and arrival, and starts the ride.
 4. The agent plans around the unpredictable parts: space weather, extreme weather on some worlds, each world's gravity and drag, and busy docks.
 5. The agent may reroute or make mistakes, but it has to finish the job.
 6. The run is scored, ranked on a leaderboard, and returned as a log the bot can learn from. Then the loop repeats.
 
-In multiplayer, players see other agents' cars moving on the map. They can't interact with them, but that traffic is what makes docks busy.
+In multiplayer, players see other agents' ships moving on the map. They can't interact with them, but that traffic is what makes docks busy.
 
 What Claude added to the plan:
 
@@ -82,13 +82,13 @@ Later ideas, not yet scheduled:
 - Dispatch rules: first to accept, or a short bidding window on price and arrival time; riders cancel if nobody takes the job.
 - Passenger comfort: a max-g limit for fragile riders or cargo, scored as a rating.
 - Battery and charging stops, which queue like docks: take the fare on low charge, or recharge first?
-- Pooling: several riders in one car with different destinations.
+- Pooling: several riders in one ship with different destinations.
 - A get\_my\_rides tool: agents pull their past run logs to learn from them.
 - Per-world hazards: Mars dust storms close the pad, Venus winds, high-gravity landings cost more. Labelled as simulated.
 
 Build order:
 
-1. Ride hails: NPC hails, a simulated fleet, pickup plus ride, scoring (fast pickup 25, on time 25 on a sliding scale, energy against the best nearby car 25, checker 10, honest quote 10, planning economy 5), in Open Sky and the Grok connector. In progress.
+1. Ride hails: NPC hails, a simulated fleet, pickup plus ride, scoring (fast pickup 25, on time 25 on a sliding scale, energy against the best nearby ship 25, checker 10, honest quote 10, planning economy 5), in Open Sky and the Grok connector. In progress.
 2. Seeded space weather and busy docks.
 3. Mid-ride events with rerouting, and the run log.
 4. A leaderboard by model and skills.
@@ -103,7 +103,7 @@ The agents never produce physics themselves. The engineer can only call the plan
 
 ## Physics, data and stated models
 
-Positions are real. The car, the battery and the fare are made up on purpose, and every receipt prints them.
+Positions are real. The ship, the battery and the fare are made up on purpose, and every receipt prints them.
 
 | Piece | What it is | Source or value |
 | --- | --- | --- |
@@ -112,13 +112,13 @@ Positions are real. The car, the battery and the fare are made up on purpose, an
 | Planner | Izzo Lambert solver, 0 or 1 revolution, scanned over departure dates and flight times | Earth departures from a 200 km parking orbit; Titan trips from a 1,500 km Titan orbit |
 | Checker | Re-flies the route with the Sun, 8 planets and the Moon (DOP853), then corrects the departure | Pass: miss under 1 km and a correction under 500 m/s |
 | Cross-check | Bennu route compared with JPL's mission-design API | Found the 1-revolution route the first planner missed |
-| Car (made up) | Dry mass, battery pack | 1,300 kg, 200 kWh |
+| Starseeker (made up) | Dry mass, battery pack | 1,300 kg, 200 kWh |
 | Thruster (made up) | Electric, burns treated as instant | 30 km/s exhaust, 60% efficient |
 | Burn time (made up) | Page math, not a planner output | Total burn divided by an assumed 0.5 g push |
 | Fare (made up) | Energy plus time | $0.16 per kWh plus $0.35 per minute |
 | Dogecoin | The rider types the rate | No live price feed |
 
-Titan's place in its orbit, the car's place around Titan, Saturn's rings and the short hop from Titan onto the Sun-centred route are drawn, not computed.
+Titan's place in its orbit, the ship's place around Titan, Saturn's rings and the short hop from Titan onto the Sun-centred route are drawn, not computed.
 
 ## Quality gates and the model eval
 
@@ -151,8 +151,8 @@ The models ran as Claude subagents. Grok needs an xAI key in the cloud environme
 
 - **Nothing unchecked is offered.** A quote needs a passing re-fly, and the receipt shows it.
 - **No made-up numbers.** Every number and date a rider reads traces to a tool output or to the rider's own words.
-- **Say what is simulated.** The fleet car is labelled simulated everywhere. The Roadster's position is real, and the page says nobody can book it.
-- **Say what is not modelled.** Landing, aerobraking, life support, recharging and the fleet car's phasing burn are named on every receipt.
+- **Say what is simulated.** The fleet Starseeker is labelled simulated everywhere. The Roadster's position is real, and the page says nobody can book it.
+- **Say what is not modelled.** Landing, aerobraking, life support, recharging and the fleet ship's phasing burn are named on every receipt.
 - **Refuse the unsafe sale.** The broker will not book an Earth arrival it can't make safe, and offers a slower one instead.
 - **No Tesla or SpaceX logos, and no affiliation claimed.** No scraping of X or the Robotaxi app.
 - **No face or voice of Alvin** in demos or the launch video.

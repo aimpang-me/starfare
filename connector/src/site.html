@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Starfare</title>
-<meta name="description" content="Starfare is a robotaxi game for flying cars across the solar system, and a benchmark for AI agents. Planet positions are real; riders, the fleet and hazards are simulated. Works with Grok.">
+<meta name="description" content="Starfare is a robotaxi game for Starseeker ships across the solar system, and a benchmark for AI agents. Planet positions are real; riders, the fleet and hazards are simulated. Works with Grok.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -132,15 +132,15 @@ footer p{max-width:100ch}
   </div>
   <section class="ov hero glass" aria-labelledby="h-hero">
     <span class="tag sim" style="align-self:flex-start">Game · agent benchmark</span>
-    <h1 id="h-hero">A robotaxi game for flying cars across the solar system.</h1>
-    <p class="dim">Simulated riders hail rides between real places, from the ISS to Titan. Your AI agent is the dispatcher. It picks a car, plans the pickup and the ride with the game's orbital planner, promises a fare and an arrival time, and flies through simulated hazards. Every arrived ride is scored, so the game is also a benchmark for agents.</p>
+    <h1 id="h-hero">A robotaxi game for Starseeker ships across the solar system.</h1>
+    <p class="dim">Simulated riders hail rides between real places, from the ISS to Titan. Your AI agent is the dispatcher. It picks a Starseeker, plans the pickup and the ride with the game's orbital planner, promises a fare and an arrival time, and flies through simulated hazards. Every arrived ride is scored, so the game is also a benchmark for agents.</p>
     <div class="cta"><a class="btn" href="#play">Play with Grok</a><a class="btn ghost" href="#scores">Scoreboard</a></div>
-    <p class="small faint">The map is live and read-only. Planet positions are real, from NASA JPL's DE421 ephemeris. Riders, cars and hazards are simulated. Tap anything on the map. Pinch or Ctrl+scroll to zoom.</p>
+    <p class="small faint">The map is live and read-only. Planet positions are real, from NASA JPL's DE421 ephemeris. Riders, ships and hazards are simulated. Tap anything on the map. Pinch or Ctrl+scroll to zoom.</p>
   </section>
   <div class="ov legend glass" aria-hidden="true">
     <span><i class="sw" style="background:#6fa8ff"></i>Planets and moons: real positions</span>
     <span><i class="sw dash"></i><i class="sw" style="background:var(--me);margin-left:-6px"></i>Open hail, pickup to destination (simulated rider)</span>
-    <span><i class="sw sq" style="background:var(--sim)"></i>Fleet car, parked (simulated)</span>
+    <span><i class="sw sq" style="background:var(--sim)"></i>Fleet Starseeker, parked (simulated)</span>
   </div>
 </div>
 
@@ -150,7 +150,7 @@ footer p{max-width:100ch}
   <div class="grid" id="hail-grid"></div>
   <h3 class="k" style="margin:12px 0 0">The fleet (simulated)</h3>
   <div class="list" id="fleet-list"></div>
-  <p class="small faint">In a run, some cars are already busy on other simulated jobs. The dispatcher sees when each car is free and picks one.</p>
+  <p class="small faint">In a run, some ships are already busy on other simulated jobs. The dispatcher sees when each ship is free and picks one.</p>
 </section>
 
 <section class="sec" id="scores" aria-labelledby="h-scores">
@@ -189,7 +189,7 @@ footer p{max-width:100ch}
 </main>
 
 <footer>
-  <p>Starfare is a concept demo by Alvin Impang, an SDET and AI-quality engineer. It's a made-up robotaxi service with simulated riders, a simulated fleet and simulated hazards, and it isn't affiliated with any real company. Burns, battery and fare come from stated, made-up car and thruster models.</p>
+  <p>Starfare is a concept demo by Alvin Impang, an SDET and AI-quality engineer. It's a made-up robotaxi service with simulated riders, a simulated fleet and simulated hazards, and it isn't affiliated with any real company. Burns, battery and fare come from stated, made-up ship and thruster models.</p>
   <p>Planet positions: NASA JPL DE421. ISS and Tiangong orbits: JPL Horizons. Sky time runs fast: one real second is one sky day, and the sky resets at the end of each season. Grok connects through the Model Context Protocol. <span id="eng-note"></span></p>
 </footer>
 
@@ -251,7 +251,7 @@ fetch("/board.json", { cache: "no-store" }).then(function(r){ if (!r.ok) throw n
   .catch(function(){ $("board-list").innerHTML = '<p class="li small dim" style="grid-template-columns:1fr">The scoreboard didn\'t load. Try <a href="/board">/board</a>.</p>'; });
 
 /* ---------- benchmark parts, from the engine ---------- */
-var WHAT = { pickup: "How soon a car reached the rider, against the best any nearby car could do.", on_time: "Whether the rider arrived by the hail's deadline.",
+var WHAT = { pickup: "How soon a ship reached the rider, against the best any nearby ship could do.", on_time: "Whether the rider arrived by the hail's deadline.",
   energy: "Energy flown against par, the game's own hindsight plan.", promise: "Whether the rider arrived when the agent said they would.",
   checker: "Legs that passed the n-body re-fly. Short local hops count as passed.", fare: "Whether the quoted fare matches the ride's fare.", economy: "How few planning calls it took." };
 if (PARTS){
@@ -267,6 +267,18 @@ var PL = E.PLACES.map(function(p){ var q = Object.assign({}, p, LOOK[p.id] || {}
 var PID = {}; PL.forEach(function(p){ PID[p.id] = p; });
 var PLANETS = PL.filter(function(p){ return p.kind === "planet"; }).map(function(p){ return p.id; });
 function pos(id, jd){ return E.placeState(id, jd).r; }
+function add(a, b){ return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
+function cross(a, b){ return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+// A station or moon that circles its parent in a few sky hours goes round several times a real second at one sky day a second,
+// and drawn where it really is it strobes and spins. The map pins it to one point of its orbit and draws the orbit instead.
+var FAST = {};
+PL.forEach(function(P){ if (!P.parent) return; var jd = sky().jd, dt = 1 / 60;
+  var a = E.sub(pos(P.id, jd), pos(P.parent, jd)), b = E.sub(pos(P.id, jd + dt), pos(P.parent, jd + dt)), n = cross(a, b), nn = Math.hypot.apply(null, n);
+  if (Math.atan2(nn, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]) > 0.2) FAST[P.id] = { u: a, w: cross(n, a).map(function(x){ return x / nn; }) }; });
+function at(id, jd){ var f = FAST[id]; return f ? add(at(PID[id].parent, jd), f.u) : pos(id, jd); } // where the map draws a place
+function ring(id, jd){ var f = FAST[id], c = at(PID[id].parent, jd), pts = [];
+  for (var i = 0; i <= 48; i++){ var t = i / 48 * 2 * Math.PI; pts.push(add(c, add(f.u.map(function(x){ return x * Math.cos(t); }), f.w.map(function(x){ return x * Math.sin(t); })))); }
+  return pts; }
 
 var cv = $("sky"), ctx = cv.getContext("2d"), W = 0, H = 0, DPR = 1;
 function resize(){ var r = cv.getBoundingClientRect(); DPR = Math.min(2, window.devicePixelRatio || 1); W = r.width; H = r.height; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); }
@@ -298,8 +310,8 @@ function flushLabels(){
   LBL = [];
 }
 function dispR(P){ var b = clamp(W / 120, 5, 12); return P.id === "jupiter" || P.id === "saturn" ? b * 1.7 : P.big ? b * 1.3 : b; } // not to scale, like a poster
-function hidden(P, st, jd){ // a moon or station drawn on top of its parent at this zoom
-  if (!P.parent) return false; var px = Math.hypot.apply(null, E.sub(st.r, pos(P.parent, jd))) * V.s;
+function hidden(P, r, jd){ // a moon or station drawn on top of its parent at this zoom
+  if (!P.parent) return false; var px = Math.hypot.apply(null, E.sub(r, at(P.parent, jd))) * V.s;
   return px < (PID[P.parent] && PID[P.parent].kind === "planet" ? dispR(PID[P.parent]) : 0) + 9;
 }
 var PICK = [];
@@ -318,7 +330,7 @@ function draw(){
   // open hails: a straight line from pickup to destination (not the route), and a ring at the waiting rider
   var pulse = REDUCED ? 0.3 : (Date.now() % 1800) / 1800;
   SITE.hails.forEach(function(h){
-    var a = proj(pos(h.from.id, jd)), b = proj(pos(h.to.id, jd)), ax = sx(a[0]), ay = sy(a[1]), bx = sx(b[0]), by = sy(b[1]);
+    var a = proj(at(h.from.id, jd)), b = proj(at(h.to.id, jd)), ax = sx(a[0]), ay = sy(a[1]), bx = sx(b[0]), by = sy(b[1]);
     ctx.setLineDash([4, 5]); ctx.strokeStyle = "rgba(156,195,255,.6)"; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); ctx.setLineDash([]);
     ctx.strokeStyle = "rgba(255,207,122," + (0.8 - pulse * 0.7) + ")"; ctx.beginPath(); ctx.arc(ax, ay, 5 + pulse * 12, 0, 7); ctx.stroke();
     ctx.fillStyle = "#ffcf7a"; ctx.beginPath(); ctx.arc(ax, ay, 3, 0, 7); ctx.fill();
@@ -326,9 +338,10 @@ function draw(){
   });
   PL.forEach(function(P){
     if (P.kind === "station" && V.s * 1e6 < 20) return;
-    var st = E.placeState(P.id, jd), q = proj(st.r), x = sx(q[0]), y = sy(q[1]);
-    if (x < -60 || x > W + 60 || y < -60 || y > H + 60 || hidden(P, st, jd)) return;
-    var r = Math.max(P.kind === "planet" ? Math.max(2.5, Math.min(dispR(P), 0.3 * Math.hypot(st.r[0], st.r[1]) * V.s)) : P.kind === "station" ? 2.2 : 3, (P.radius_km || 0) * V.s);
+    var loc = at(P.id, jd), q = proj(loc), x = sx(q[0]), y = sy(q[1]);
+    if (x < -60 || x > W + 60 || y < -60 || y > H + 60 || hidden(P, loc, jd)) return;
+    if (FAST[P.id]){ ctx.strokeStyle = "rgba(255,255,255,.13)"; line(ring(P.id, jd), true); }
+    var r = Math.max(P.kind === "planet" ? Math.max(2.5, Math.min(dispR(P), 0.3 * Math.hypot(loc[0], loc[1]) * V.s)) : P.kind === "station" ? 2.2 : 3, (P.kind === "station" ? 0 : P.radius_km || 0) * V.s); // a station's radius_km is its parent's
     if (P.kind === "station"){ ctx.fillStyle = P.real ? "#86d9a8" : "#ffb65c"; ctx.fillRect(x - 2.5, y - 2.5, 5, 5); }
     else { if (P.id === "saturn" && r > 3){ ctx.strokeStyle = "rgba(227,207,154,.7)"; ctx.lineWidth = Math.max(1, r * .18); ctx.beginPath(); ctx.ellipse(x, y, r * 2.2, r * 2.2 * Math.max(.18, Math.cos(TILT * Z.tilt)), -.35, 0, 7); ctx.stroke(); ctx.lineWidth = 1; }
       ball(x, y, r, P.color || "#9aa3ad", P.kind === "planet" ? "rgba(255,255,255,.06)" : null); }
@@ -338,9 +351,9 @@ function draw(){
   // the fleet, parked at its stations (simulated)
   var seen = {};
   SITE.fleet.forEach(function(c){
-    var P = PID[c.parked_at.id]; if (!P) return; var st = E.placeState(P.id, jd);
-    if (P.kind === "station" && V.s * 1e6 < 20 || hidden(P, st, jd) && Z.cur < 7) { st = E.placeState(system(P.id), jd); }
-    var q = proj(st.r), k = Math.round(sx(q[0]) / 6) + ":" + Math.round(sy(q[1]) / 6), i = seen[k] = (seen[k] || 0) + 1;
+    var P = PID[c.parked_at.id]; if (!P) return; var r = at(P.id, jd);
+    if (P.kind === "station" && V.s * 1e6 < 20 || hidden(P, r, jd) && Z.cur < 7) r = at(system(P.id), jd);
+    var q = proj(r), k = Math.round(sx(q[0]) / 6) + ":" + Math.round(sy(q[1]) / 6), i = seen[k] = (seen[k] || 0) + 1;
     var x = sx(q[0]) + 6 + 7 * i, y = sy(q[1]) - 8; if (x < -20 || x > W + 20 || y < -20 || y > H + 20) return;
     ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI / 4); ctx.fillStyle = "#7f8a99"; ctx.strokeStyle = "#06080c"; ctx.fillRect(-3, -3, 6, 6); ctx.strokeRect(-3, -3, 6, 6); ctx.restore();
     PICK.push([x, y, 10, "car", c]);
@@ -357,7 +370,7 @@ function system(id){ var p = PID[id]; while (p && p.parent) p = PID[p.parent]; r
 function hailZoom(){ var jd = sky().jd, far = 0; SITE.hails.forEach(function(h){ far = Math.max(far, Math.hypot.apply(null, pos(h.from.id, jd)), Math.hypot.apply(null, pos(h.to.id, jd))); });
   return clamp(Math.log10(far * (W < 600 ? 2.5 : 2.3)), 8.6, 10.2); }
 function setZ(mode){ Z.mode = mode;
-  Z.cT = mode === "earth" ? 1 : 0; if (mode === "earth") Z.focus = "earth";
+  if (mode !== "free") Z.cT = mode === "earth" ? 1 : 0; if (mode === "earth") Z.focus = "earth";
   Z.target = mode === "hails" ? hailZoom() : mode === "inner" ? 8.75 : mode === "all" ? 10.12 : mode === "earth" ? 5.6 : Z.target;
   document.querySelectorAll(".zoombar .chip").forEach(function(c){ if (c.dataset.z !== "tilt") c.setAttribute("aria-pressed", String(c.dataset.z === mode)); }); }
 document.querySelector(".zoombar").addEventListener("click", function(e){ var c = e.target.closest(".chip"); if (!c) return;
@@ -375,7 +388,7 @@ cv.addEventListener("click", function(e){
   var it = best.it, html;
   if (best.kind === "place") html = '<span class="tag ' + (it.real ? "real" : "fict") + '" style="align-self:flex-start">' + (it.real ? "Real" : "Fictional") + "</span><b>" + esc(it.name) + '</b><span class="small dim">' + esc(it.sub || "") + "</span>";
   else if (best.kind === "hail") html = '<span class="tag sim" style="align-self:flex-start">Simulated rider</span><b>' + esc(it.title) + '</b><span class="small dim">' + esc(it.from.name) + " → " + esc(it.to.name) + '</span><span class="small">' + esc(it.blurb) + "</span>";
-  else html = '<span class="tag sim" style="align-self:flex-start">Simulated car</span><b>' + esc(it.name) + '</b><span class="small dim">Parked at ' + esc(it.parked_at.name) + "</span>";
+  else html = '<span class="tag sim" style="align-self:flex-start">Simulated Starseeker</span><b>' + esc(it.name) + '</b><span class="small dim">Parked at ' + esc(it.parked_at.name) + "</span>";
   popup = document.createElement("div"); popup.className = "pick glass";
   popup.style.left = clamp(best.x + 14, 8, W - 290) + "px"; popup.style.top = clamp(best.y - 20, 8, H - 150) + "px";
   popup.innerHTML = html; cv.parentNode.appendChild(popup);

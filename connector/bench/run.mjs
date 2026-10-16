@@ -15,11 +15,10 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import META from "../src/engine/meta.json" with { type: "json" };
 import { SCORE_VERSION, rideRecord } from "../src/game.js";
+import { RESULTS_FORMAT } from "../src/stats.js";
 import { seedFor, tasksOf } from "../src/suite.js";
 import { BenchBackend, flags, loadEngine, openTask, readSuite } from "./backend.mjs";
 import { naive, random, rngOf } from "./agents.mjs";
-
-export const RESULTS_FORMAT = "starfare.results/1";
 const SERVE = fileURLToPath(new URL("./serve.mjs", import.meta.url));
 const BUILTIN = { naive: (call, E) => naive(call, E), random: (call, E, at) => random(call, E, rngOf(at.task.id + "|" + at.repeat)) };
 

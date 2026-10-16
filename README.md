@@ -1,6 +1,6 @@
 # Starfare
 
-A concept robotaxi game: flying cars across the solar system. Simulated riders hail rides; a dispatcher (you, Claude, or your own Grok bot over MCP) picks a car, plans the pickup and the ride on real planet positions (NASA JPL DE421), quotes a fare and an arrival time, and is scored on what actually happens through simulated, seeded hazards (busy pads, solar radiation storms, Mars dust, Titan haze, busy cars).
+A concept robotaxi game: Starseeker ships across the solar system. Simulated riders hail rides; a dispatcher (you, Claude, or your own Grok bot over MCP) picks a Starseeker, plans the pickup and the ride on real planet positions (NASA JPL DE421), quotes a fare and an arrival time, and is scored on what actually happens through simulated, seeded hazards (busy pads, solar radiation storms, Mars dust, Titan haze, busy cars).
 
 Not affiliated with any real company. Riders, fleet, weather and traffic are simulated.
 

@@ -3,7 +3,7 @@
 Context for a new Claude Code session picking up Starfare. `CLAUDE.md` has the layout, tests and rules; this file has the why, the decisions and what's next.
 
 ## What Starfare is
-A robotaxi game for flying cars across the solar system, built as Alvin's portfolio piece (AI quality / agent evaluation angle). It doubles as an **agent benchmark**: anyone's agent can play by connecting over MCP.
+A robotaxi game for Starseeker ships across the solar system, built as Alvin's portfolio piece (AI quality / agent evaluation angle). It doubles as an **agent benchmark**: anyone's agent can play by connecting over MCP.
 
 Alvin's game loop, in his words (2026-10-16):
 - Robotaxi ride hails. Simulated riders (NPCs) in different places request rides.
@@ -14,7 +14,7 @@ Alvin's game loop, in his words (2026-10-16):
 - Multiplayer: other agents are visible driving around; not interactive, but they make docks busy.
 
 ## Where things stand
-- **Engine** (`world/engine/sol-rides.js`): 5 hails (iss-crew, phobos-commute, jovian-hop quick; titan-home, ceres-shift long haul), 7 simulated cars SF-01..SF-07, par = best nearby car flown through the hazards with hindsight.
+- **Engine** (`world/engine/sol-rides.js`): 5 hails (iss-crew, phobos-commute, jovian-hop quick; titan-home, ceres-shift long haul), 7 simulated Starseekers SF-01..SF-07, par = best nearby ship flown through the hazards with hindsight.
 - **Hazard layer** (all simulated, seeded per season so everyone gets the same weather): pads with limited berths and NPC traffic (25% unscheduled, hidden from forecasts; holding in orbit costs 250 kWh/h), radiation storms that hold launches with a rider aboard, Mars dust storms and Titan haze closing pads, correction burns for late interplanetary departures, fleet cars busy on other jobs. `fly()` decides what happened; bots only see forecasts.
 - **Score /100**: fast pickup 20, on time 20, energy vs par 20, kept the promise 15 (quoted arrival vs actual; 0 at 6 h late on quick hails, 1 day on long; early costs a quarter as much), every leg checked 10, honest fare 10, planning economy 5.
 - **Grok connector** (`connector/`): live at https://starfare.aimpang.workers.dev/mcp (board at /board), OAuth on. Tools: list_hails, take_hail, get_hail, plan_pickup, plan_ride, check_pad, space_weather, dispatch (returns what happened, incidents and a run log).
@@ -34,7 +34,7 @@ Alvin's game loop, in his words (2026-10-16):
 Everything still waiting on Alvin, with options and a recommendation: `docs/OPEN-QUESTIONS.md`. Ask him, one at a time.
 
 ## Decisions already made (don't relitigate)
-- It's ride hailing for flying cars, not deliveries (the older delivery game `sol-missions.js` is legacy).
+- It's ride hailing for Starseeker ships, not deliveries (the older delivery game `sol-missions.js` is legacy).
 - Bring-your-own-agent is Grok-first: players add the connector in their own Grok at grok.com/connectors. No xAI key on our side, ever.
 - The Claude dispatcher in the page runs through the viewer's own Claude account (the page can't reach the network).
 - Honest labels on everything simulated; the number gate strikes any number a dispatcher writes that no tool produced.
@@ -44,7 +44,7 @@ Everything still waiting on Alvin, with options and a recommendation: `docs/OPEN
 1. Done and deployed: mid-ride events and rerouting (checkpoints `launch_hold` and `pad_closed`, answered with the ninth tool `decide`; par answers each checkpoint with hindsight), on the connector and the Open Sky page. Tests: `connector/TEST.md`.
 2. Done and deployed: run log history (`get_my_rides`) and downloadable JSON ride logs.
 3. Leaderboard labelled by model plus skills; daily seed so runs are comparable.
-4. Show other agents' cars on the map and make their dockings fill real pads (multiplayer busy docks).
+4. Show other agents' ships on the map and make their dockings fill real pads (multiplayer busy docks).
 5. Later: dispatch bidding, comfort (max g), battery and charging stops, pooling.
 
 ## Housekeeping

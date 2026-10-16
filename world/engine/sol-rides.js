@@ -27,11 +27,11 @@ var HAILS = [
   { id: "phobos-commute", title: "Phobos commute", rider: "Ravi, a survey pilot", party: 1, from: "phobos", to: "mars-base", kind: "quick",
     blurb: "Ravi is done surveying Phobos and wants a lift down to Mars Base." },
   { id: "jovian-hop", title: "Jovian hop", rider: "Mei, a volcanologist", party: 1, from: "io", to: "ganymede", kind: "quick",
-    blurb: "Mei is leaving Io for a conference on Ganymede. Two cars work Jupiter's moons.", rush: { at: "ganymede", x: 3, after: 2 } },
+    blurb: "Mei is leaving Io for a conference on Ganymede. Two Starseekers work Jupiter's moons.", rush: { at: "ganymede", x: 3, after: 2 } },
   { id: "titan-home", title: "Stranded at Titan", rider: "Sam, a stranded tourist", party: 1, from: "titan", to: "earth", kind: "long",
     blurb: "Sam's tour left without them. It's a long way home from Titan to Earth." },
   { id: "ceres-shift", title: "Belt shift change", rider: "Ana, a miner", party: 1, from: "ceres-port", to: "mars-base", kind: "long", rush: { at: "ceres-port", x: 3 },
-    blurb: "Ana's shift on Ceres is over and she's heading to Mars Base. One car is parked at Ceres, one at Mars." }
+    blurb: "Ana's shift on Ceres is over and she's heading to Mars Base. One Starseeker is parked at Ceres, one at Mars." }
 ];
 var BY = {}; HAILS.forEach(function(h){ BY[h.id] = h; });
 
@@ -78,6 +78,23 @@ var TRAFFIC = { iss: 0.25, "orbital-depot": 0.25, "lunar-data-center": 0.25, "ma
 var TRAFFIC_KIND = { station: 0.15, moon: 0.2, planet: 0.3, small: 0.05 };
 var UNSCHEDULED = 0.25; // share of NPC dockings that never appear in the pad forecast
 var LOCAL = { mars: "dust", "mars-base": "dust", titan: "haze", "titan-dock": "haze" };
+// Real constants (docs/SOLAR-VARIABLES.md, from the Solar System Environment Variables workbook).
+var C_KMS = 299792.458;    // speed of light, exact (SI)
+var AU_KM = 149597870.7;   // astronomical unit (IAU 2012)
+var CME_KMS = 1500;        // a fast CME, held at constant speed (real CMEs slow down on the way out)
+var CRUISE_MSV_DAY = 1.84; // dose inside a spacecraft in deep space (Curiosity RAD, cruise to Mars; Zeitlin et al. 2013)
+// Dispatch HQ is on Earth and controls every station and Starseeker (a simulated assumption): every answer to a checkpoint
+// crosses the real light time.
+var DIST = new Map();
+function helioAt(place, jd){ var R = E.EPHEM_RANGE; return E.placeState(place, Math.min(R[1], Math.max(R[0], jd))).r; }
+function sunKm(place, day){ var key = place + "|" + day;
+  if (!DIST.has(key)){ if (DIST.size > 20000) DIST.clear(); var r = helioAt(place, day); DIST.set(key, Math.hypot(r[0], r[1], r[2])); }
+  return DIST.get(key); }
+function lightDays(place, jd){ var a = helioAt(place, jd), b = helioAt("earth", jd); return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) / C_KMS / 86400; }
+// How a flare's storm reaches a place: the fast CME's travel time from the Sun, and the share of storms still strong
+// enough to ground launches there (intensity falls as 1/r^2, so every storm counts inside 1 AU).
+function flareReach(place, jd){ var r = sunKm(place, Math.floor(jd));
+  return { sun_au: r / AU_KM, travel_days: r / CME_KMS / 86400, share: Math.min(1, Math.pow(AU_KM / r, 2)) }; }
 function fmix(h){ h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; return h >>> 0; }
 // Bench seeds look like "k1:<32 hex chars>": a 128-bit key, and every draw is SipHash-2-4(key, label) in full, so no
 // 32-bit state can be recovered from forecasts. Any other seed keeps the FNV-1a draw, so live seasons never change.
@@ -133,9 +150,15 @@ function hazards(seed){
   var u = K ? function(key){ var r = sip24(K, key); return (r[0] * 2097152 + (r[1] >>> 11)) / 9007199254740992; }
     : function(key){ var s = seed + "|" + key, h = 2166136261; for (var i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return fmix(h) / 4294967296; };
   // Solar flares (radiation storms): odds per sky day come from a 27-day spell (one solar rotation); a storm lasts 4-48 h, mostly short.
+  // flareOn is the eruption at the Sun. Its storm reaches a place flareReach().travel_days later, if strong enough there.
   function flareOdds(day){ var a = u("spell|" + Math.floor(day / 27)); return a < 0.55 ? 0.05 : 0.25 + (a - 0.55) / 0.45 * 0.35; }
   function flareOn(day){ if (u("flare|" + day) >= flareOdds(day)) return null; var st = day + u("flare-at|" + day); return { start: st, end: st + (4 + 44 * Math.pow(u("flare-h|" + day), 2)) * HOUR }; }
-  function flareAt(jd){ var d = Math.floor(jd); for (var k = 0; k < 3; k++){ var f = flareOn(d - k); if (f && jd >= f.start && jd < f.end) return f; } return null; }
+  function flareThere(place, day){ var f = flareOn(day); if (!f) return null; var x = flareReach(place, day);
+    if (u("flare-s|" + day) >= x.share) return null; return { start: f.start + x.travel_days, end: f.end + x.travel_days, erupted: f.start }; }
+  function flareAt(jd, place){ var d = Math.floor(jd), k, f, n;
+    if (place == null){ for (k = 0; k < 3; k++){ f = flareOn(d - k); if (f && jd >= f.start && jd < f.end) return f; } return null; }
+    for (k = 0, n = Math.ceil(flareReach(place, jd).travel_days) + 3; k < n; k++){ f = flareThere(place, d - k); if (f && jd >= f.start && jd < f.end) return f; }
+    return null; }
   // Local weather. Mars dust storms: odds per 10-day block, a storm lasts 1-4 days. Titan haze: odds per day, 3-9 h.
   function wxOdds(place, jd){ var w = LOCAL[place]; if (!w) return 0;
     return w === "dust" ? 0.1 + 0.5 * u("dust-odds|" + Math.floor(jd / 10)) : 0.15 + 0.3 * u("haze-odds|" + Math.floor(jd)); }
@@ -184,7 +207,7 @@ function rushes(ride){ return ride.hails.map(function(id){ return rushOf(BY[id],
    { action: "wait" } | { action: "replan", leg } | { action: "hold", hours? } | { action: "divert", place, wait_hours? }.
    The caller plans a replan leg, so the engine never re-flies anything here. */
 var MAX_CHECKPOINTS = 8, ORACLE_DEPTH = 3;
-var CAUSE = { dust_storm: "a dust storm closed the pad", titan_haze: "Titan haze closed the pad", solar_flare: "a solar flare grounded launches with a rider aboard", car_late: "the car reached the pad after the planned departure", pad_full: "every berth was taken" };
+var CAUSE = { dust_storm: "a dust storm closed the pad", titan_haze: "Titan haze closed the pad", solar_flare: "a solar flare grounded launches with a rider aboard", car_late: "the ship reached the pad after the planned departure", pad_full: "every berth was taken" };
 var EVENTS = {
   // An interplanetary leg can't leave on time. Local legs just wait, as they always have.
   launch_hold: { options: ["wait", "replan"], dflt: { action: "wait" }, apply: applyLaunch },
@@ -240,7 +263,7 @@ function ask(ride, kind, cause, place, T){
   if (ride.checkpoints.length < MAX_CHECKPOINTS) return checkpoint(ride, kind, cause, place, T);
   var S = ride.segs[ride.at.seg];
   if (!ride.capped) ride.incidents.push({ kind: "checkpoint_cap", leg: S.role, where: place, at_jd: T, hours: 0, kwh: 0,
-    note: "This ride reached " + MAX_CHECKPOINTS + " checkpoints, so from here the car followed the defaults: wait for a launch, hold for a pad" });
+    note: "This ride reached " + MAX_CHECKPOINTS + " checkpoints, so from here the ship followed the defaults: wait for a launch, hold for a pad" });
   ride.capped = true;
   return null;
 }
@@ -248,7 +271,7 @@ function departPhase(ride){
   var H = hazards(ride.seed), at = ride.at, S = ride.segs[at.seg], jd = at.jd;
   if (S.kind === "divert"){ S.flew = { dep_jd: jd }; return toOrbit(ride, S.arr_jd + (jd - S.dep_jd)); } // leaves from orbit at once
   if (between(S) && asking(ride) && !ride.capped && !at.waived){
-    var w = H.weatherAt(S.from, jd), f = S.role === "ride" ? H.flareAt(jd) : null;
+    var w = H.weatherAt(S.from, jd), f = S.role === "ride" ? H.flareAt(jd, S.from) : null;
     if (w || f || jd - S.dep_jd > 1e-6){
       var cp = ask(ride, "launch_hold", w ? w.kind : f ? "solar_flare" : "car_late", S.from, jd);
       if (cp) return cp;
@@ -256,12 +279,12 @@ function departPhase(ride){
   }
   // Hold on the ground (no extra energy) until the pad's weather opens and, with a rider aboard, until any flare ends.
   for (var i = 0; i < 400; i++){
-    var w2 = H.weatherAt(S.from, jd), f2 = S.role === "ride" ? H.flareAt(jd) : null;
+    var w2 = H.weatherAt(S.from, jd), f2 = S.role === "ride" ? H.flareAt(jd, S.from) : null;
     if (!w2 && !f2) break;
     var until = Math.max(w2 ? w2.end : 0, f2 ? f2.end : 0);
     ride.incidents.push({ kind: w2 ? w2.kind : "flare", leg: S.role, where: S.from, at_jd: jd, hours: (until - jd) * 24,
       kwh: 0, note: w2 ? (w2.kind === "dust_storm" ? "Dust storm closed the pad; the car waited on the ground" : "Haze closed the pad; the car waited on the ground")
-        : "Solar flare: no launches with a rider aboard until it passed" });
+        : "Solar storm at " + nameOf(S.from) + ": no launches with a rider aboard until it passed" });
     jd = until; }
   // Delays to a leg between planets mean a correction burn: 2% of the leg's energy per hour late, up to 30%.
   var shift = jd - S.dep_jd;
@@ -298,6 +321,7 @@ function arrivePhase(ride){
     hd.why = hd.why || (w ? w.kind : "pad_busy");
     var next = w ? Math.max(jd + HOUR, Math.min(w.end, jd + MAX_HOLD_H * HOUR)) : (Math.floor(jd * 24) + 1) / 24, capped = (next - hd.start) * 24 >= MAX_HOLD_H;
     if (capped) next = hd.start + MAX_HOLD_H * HOUR;
+    if (hd.act && next > hd.act.at - 1e-9){ bookHold(ride, S, hd.act.at); divert(ride, hd.act); return null; }
     if (hd.stop != null && next > hd.stop + 1e-9 && asking(ride) && !ride.capped){
       var cause = closedAt(ride, place, hd.stop);
       if (!cause) hd.stop = next; // open at the ask time but the car is mid-step: ask at its next look if still closed
@@ -308,6 +332,8 @@ function arrivePhase(ride){
   }
   var land = hd.jd;
   bookHold(ride, S, land);
+  if (hd.act) ride.incidents.push({ kind: "divert_overtaken", leg: S.role, where: place, at_jd: land, hours: 0, kwh: 0,
+    note: "The pad opened before the dispatcher's divert to " + hd.act.name + " reached the ship, so it landed at " + nameOf(place) });
   S.flew.land_jd = land;
   // At its stop (not a divert's alternate): everyone named there boards or alights now.
   var stop = S.to === S.target ? ride.stops[S.stop] : null, boarding = !!(stop && stop.board && stop.board.length);
@@ -342,32 +368,36 @@ function alternates(ride, place, target, T){
 }
 function checkpoint(ride, kind, cause, place, T){
   var S = ride.segs[ride.at.seg], ref = ride.legs[S.stop - 1], launch = kind === "launch_hold";
-  var held = launch ? 0 : (T - ride.at.hold.start) * 24, options;
+  var held = launch ? 0 : (T - ride.at.hold.start) * 24, options, oneWay = lightDays(place, T), reply = T + 2 * oneWay;
   if (launch){
-    var late = Math.max(0, T - S.dep_jd);
+    var late = Math.max(0, reply - S.dep_jd);
     options = [
-      { action: "wait", leg_kwh: S.kwh, correction_pct_per_hour_late: 2, correction_cap_pct: 30, correction_kwh_if_it_left_now: Math.round(S.kwh * Math.min(0.3, 0.02 * late * 24)),
+      { action: "wait", leg_kwh: S.kwh, correction_pct_per_hour_late: 2, correction_cap_pct: 30, correction_kwh_if_it_left_on_reply: Math.round(S.kwh * Math.min(0.3, 0.02 * late * 24)),
         note: "Wait until the launch is clear, then fly this leg late; the correction burn grows with every hour late" },
-      { action: "replan", note: "Plan a fresh leg from " + nameOf(S.from) + " to " + nameOf(S.to) + " departing at or after " + iso(T) + "; it counts as a plan" }];
+      { action: "replan", note: "Plan a fresh leg from " + nameOf(S.from) + " to " + nameOf(S.to) + " departing at or after " + iso(reply) + " (when the answer reaches the ship); it counts as a plan" }];
   } else {
     options = [{ action: "hold", kwh_per_hour: HOLD_KWH, held_hours: held, max_hold_hours_left: Math.max(0, MAX_HOLD_H - held),
-      note: "Hold in orbit until the pad opens (or for the hours you give, then ask again)" }];
-    var alts = alternates(ride, place, S.target, T);
+      note: "Hold in orbit until the pad opens (or for the hours you give after the answer reaches the ship, then ask again)" }];
+    var alts = alternates(ride, place, S.target, reply);
     if (alts.length) options.push({ action: "divert", alternates: alts,
-      note: "Hop to another pad, land, wait on the ground for free for wait_hours, then hop back" + (S.kind !== "divert" && between(S) ? "; priced as a local hop from " + nameOf(place) + "'s orbit" : "") });
+      note: "When the answer reaches the ship, hop to another pad, land, wait on the ground for free for wait_hours, then hop back" + (S.kind !== "divert" && between(S) ? "; priced as a local hop from " + nameOf(place) + "'s orbit" : "") });
   }
   return { n: ride.checkpoints.length + 1, kind: kind, cause: cause, why: CAUSE[cause], place: place, place_name: nameOf(place), leg: S.role, sky_at: T,
+    signal_delay_minutes: Math.round(oneWay * 14400) / 10, reply_jd: reply,
     held_hours: held, car: (launch ? "on the pad at " : "holding in orbit at ") + nameOf(place), rider_aboard: S.role === "ride",
     extra_kwh: ride.extra_kwh, used_kwh: usedSoFar(ride), behind_plan_hours: (T - (launch ? ref.dep_jd : ref.arr_jd)) * 24,
     options: options, default: EVENTS[kind].dflt, decision: null };
 }
 function applyLaunch(ride, cp, d){
-  if (d.action === "wait"){ ride.at.waived = true; return { action: "wait" }; }
+  if (d.action === "wait"){ ride.at.waived = true;
+    if (cp.reply_jd > ride.at.jd + 1e-9) ride.incidents.push({ kind: "awaiting_answer", leg: ride.segs[ride.at.seg].role, where: cp.place, at_jd: ride.at.jd, hours: (cp.reply_jd - ride.at.jd) * 24, kwh: 0,
+      note: "The Starseeker waited on the pad for the dispatcher's answer from Earth (" + cp.signal_delay_minutes + " min each way)" });
+    ride.at.jd = Math.max(ride.at.jd, cp.reply_jd); return { action: "wait" }; }
   var S = ride.segs[ride.at.seg], L = d.leg;
   if (!L || L.from !== S.from || L.to !== S.to) throw new Error("a replan must go from " + nameOf(S.from) + " to " + nameOf(S.to));
-  if (!(L.dep_jd >= cp.sky_at - 1e-9) || !(L.arr_jd > L.dep_jd) || !isFinite(L.kwh)) throw new Error("a replan must depart at or after " + iso(cp.sky_at));
+  if (!(L.dep_jd >= cp.reply_jd - 1e-9) || !(L.arr_jd > L.dep_jd) || !isFinite(L.kwh)) throw new Error("a replan must depart at or after " + iso(cp.reply_jd) + ", when the answer reaches the ship");
   if (L.dep_jd > cp.sky_at + 1e-9) ride.incidents.push({ kind: "replanned", leg: S.role, where: S.from, at_jd: cp.sky_at, hours: (L.dep_jd - cp.sky_at) * 24, kwh: 0,
-    note: "Because " + CAUSE[cp.cause] + ", the car waited on the ground and left on a new plan" });
+    note: "Because " + CAUSE[cp.cause] + ", the ship waited on the ground and left on a new plan" });
   var leg = { from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate || null };
   ride.segs[ride.at.seg] = seg(S.role, "replan", leg, S.target, S.stop);
   ride.at = { seg: ride.at.seg, phase: "depart", jd: leg.dep_jd };
@@ -379,27 +409,33 @@ function applyPad(ride, cp, d){
     if (d.hours == null){ hd.stop = null; return { action: "hold" }; }
     var hrs = +d.hours;
     if (!(hrs > 0 && hrs <= MAX_HOLD_H)) throw new Error("hold hours must be more than 0 and at most " + MAX_HOLD_H);
-    hd.stop = cp.sky_at + hrs * HOUR; return { action: "hold", hours: hrs };
+    hd.stop = cp.reply_jd + hrs * HOUR; return { action: "hold", hours: hrs };
   }
   var div = cp.options.filter(function(o){ return o.action === "divert"; })[0], alt = div && div.alternates.filter(function(a){ return a.place === d.place; })[0];
   if (!alt) throw new Error("divert to one of: " + (div ? div.alternates.map(function(a){ return a.place; }).join(", ") : "nowhere (no local alternates)"));
   var wait = d.wait_hours == null ? 0 : +d.wait_hours;
   if (!(wait >= 0 && wait <= MAX_HOLD_H)) throw new Error("wait_hours must be 0 to " + MAX_HOLD_H);
-  var S = ride.segs[ride.at.seg], T = cp.sky_at, b = planned(S.to, alt.place, T, "energy", ride.end_jd);
+  hd.stop = null;
+  hd.act = { place: alt.place, name: alt.name, wait: wait, at: cp.reply_jd, cause: cp.cause };
+  return { action: "divert", place: alt.place, wait_hours: wait };
+}
+// The ship carries out a divert once the answer reaches it (arrivePhase calls this at act.at).
+function divert(ride, act){
+  var S = ride.segs[ride.at.seg], T = act.at, b = planned(S.to, act.place, T, "energy", ride.end_jd);
   S.flew.left_jd = T;
-  var hop = seg(S.role, "divert", { from: S.to, to: alt.place, dep_jd: b.dep_jd, arr_jd: b.arr_jd, kwh: b.battery.energy_kwh, gate: "local" }, S.target, S.stop);
-  var back = { role: S.role, kind: "return", from: alt.place, to: S.target, dep_jd: null, arr_jd: null, kwh: 0, gate: "local", target: S.target, stop: S.stop, wait_hours: wait };
+  var hop = seg(S.role, "divert", { from: S.to, to: act.place, dep_jd: b.dep_jd, arr_jd: b.arr_jd, kwh: b.battery.energy_kwh, gate: "local" }, S.target, S.stop);
+  var back = { role: S.role, kind: "return", from: act.place, to: S.target, dep_jd: null, arr_jd: null, kwh: 0, gate: "local", target: S.target, stop: S.stop, wait_hours: act.wait };
   var nx = ride.at.seg + 1, N = ride.segs[nx];
   ride.segs.splice(nx, N && N.kind === "return" && N.from === S.to ? 1 : 0, hop, back);
   ride.incidents.push({ kind: "divert", leg: S.role, where: S.to, at_jd: T, hours: 0, kwh: 0,
-    note: "Because " + CAUSE[cp.cause] + ", the car diverted to " + alt.name + " (" + k(hop.kwh) + " kWh hop), to wait " + (Math.round(wait * 10) / 10) + " h on the ground and hop back" });
+    note: "Because " + CAUSE[act.cause] + ", the ship diverted to " + act.name + " (" + k(hop.kwh) + " kWh hop), to wait " + (Math.round(act.wait * 10) / 10) + " h on the ground and hop back" });
   ride.at = { seg: nx, phase: "depart", jd: T };
-  return { action: "divert", place: alt.place, wait_hours: wait };
 }
 function outcome(ride){
   var r = ride.legs[ride.legs.length - 1], flown = ride.segs.filter(function(s){ return s.flew; });
   return { pickup_jd: ride.pickup_jd, ride_depart_jd: ride.ride_depart_jd, arrive_jd: ride.arrive_jd, planned_kwh: ride.legs.reduce(function(a, l){ return a + l.kwh; }, 0),
     extra_kwh: ride.extra_kwh, used_kwh: usedSoFar(ride), incidents: ride.incidents, delay_hours: (ride.arrive_jd - r.arr_jd) * 24,
+    rider_dose_msv: dose(ride.pickup_jd, ride.arrive_jd),
     divert_kwh: flown.reduce(function(a, s){ return a + (s.kind === "divert" || s.kind === "return" ? s.kwh : 0); }, 0),
     segments: flown.map(function(s){ return { role: s.role, kind: s.kind, from: s.from, to: s.to, dep_jd: s.flew.dep_jd, arr_jd: s.flew.land_jd != null ? s.flew.land_jd : s.flew.left_jd, kwh: s.kwh, gate: s.gate }; }),
     checkpoints: ride.checkpoints, bookings: bookingsOf(ride) };
@@ -407,23 +443,26 @@ function outcome(ride){
 function bookingsOf(ride){ var out = {};
   ride.hails.forEach(function(id){ out[id] = { pickup_jd: ride.pickups[id] == null ? null : ride.pickups[id], arrive_jd: ride.arrivals[id] == null ? null : ride.arrivals[id] }; });
   return out; }
+// Cosmic-ray dose for the rider's time aboard, at the deep-space cruise rate: a ceiling, since stations inside a
+// magnetosphere get less. Solar storms and shielding are not modelled.
+function dose(boarded, arrived){ return boarded == null || arrived == null ? null : Math.round(CRUISE_MSV_DAY * (arrived - boarded) * 100) / 100; }
 // What actually happens when a dispatch flies with nobody to ask: every checkpoint takes its default.
-// A one-booking flight keeps these eight keys (fixtures/fly-baseline.json pins them); a shared one adds bookings.
+// A one-booking flight keeps these nine keys (fixtures/fly-baseline.json pins them); a shared one adds bookings.
 function fly(id, car, legs, t0, seed){
   var o = start(id, car, legs, t0, seed, { ask_after_hours: null }).done;
   var F = { pickup_jd: o.pickup_jd, ride_depart_jd: o.ride_depart_jd, arrive_jd: o.arrive_jd, planned_kwh: o.planned_kwh, extra_kwh: o.extra_kwh, used_kwh: o.used_kwh, incidents: o.incidents,
-    delay_hours: o.delay_hours };
+    delay_hours: o.delay_hours, rider_dose_msv: o.rider_dose_msv };
   if (Object.keys(o.bookings).length > 1) F.bookings = o.bookings;
   return F;
 }
-// With hindsight: what each choice at a checkpoint could be. A replan leaves when the hold really ends;
-// a divert waits at the alternate so it lands back as the closed pad reopens (at once if the pad was only full).
+// With hindsight: what each choice at a checkpoint could be. A replan leaves when the hold really ends (not before the
+// answer reaches the ship); a divert waits at the alternate so it lands back as the closed pad reopens (at once if only full).
 function hindsight(ride, cp){
   var H = hazards(ride.seed), S = ride.segs[ride.at.seg], out = [];
   if (cp.kind === "launch_hold"){
     out.push({ action: "wait" });
-    var jd = cp.sky_at;
-    for (var i = 0; i < 400; i++){ var w = H.weatherAt(S.from, jd), f = S.role === "ride" ? H.flareAt(jd) : null; if (!w && !f) break; jd = Math.max(w ? w.end : 0, f ? f.end : 0); }
+    var jd = cp.reply_jd;
+    for (var i = 0; i < 400; i++){ var w = H.weatherAt(S.from, jd), f = S.role === "ride" ? H.flareAt(jd, S.from) : null; if (!w && !f) break; jd = Math.max(w ? w.end : 0, f ? f.end : 0); }
     try { var b = planned(S.from, S.to, jd, "energy", ride.end_jd); out.push({ action: "replan", depart_after: jd, leg: slim(b, S.from, S.to) }); } catch (e) {}
     return out;
   }
@@ -432,7 +471,7 @@ function hindsight(ride, cp){
   for (var j = 0; j < 50; j++){ var x = H.weatherAt(cp.place, open); if (!x) break; open = x.end; }
   var div = cp.options.filter(function(o){ return o.action === "divert"; })[0];
   (div ? div.alternates : []).forEach(function(a){
-    out.push({ action: "divert", place: a.place, wait_hours: Math.max(0, Math.round(((open - cp.sky_at) * 24 - 2 * a.hop_hours) * 100) / 100) }); });
+    out.push({ action: "divert", place: a.place, wait_hours: Math.max(0, Math.round(((open - cp.reply_jd) * 24 - 2 * a.hop_hours) * 100) / 100) }); });
   return out;
 }
 function label(d){
@@ -476,9 +515,15 @@ function padForecast(place, fromJd, hours, id, t0, seed){
   hours = Math.max(1, Math.min(72, Math.round(hours || 24)));
   for (var n = n0; n < n0 + hours; n++) out.push({ hour_jd: n / 24, booked: H.docked(place, n, rush, true) });
   return { place: place, berths: H.berths(place), hours: out, unscheduled_share: UNSCHEDULED, local_weather: LOCAL[place] || null }; }
-function flareForecast(fromJd, days, seed){ var H = hazards(seed), d0 = Math.floor(fromJd), out = [];
+// With a place: the chance a storm that reaches it starts there that sky day (eruptions travel_days earlier, times the
+// share strong enough there). Without one: the chance an eruption starts at the Sun.
+function flareForecast(fromJd, days, seed, place){ var H = hazards(seed), d0 = Math.floor(fromJd), out = [];
   days = Math.max(1, Math.min(60, Math.round(days || 10)));
-  for (var d = d0; d < d0 + days; d++) out.push({ day_jd: d, flare_odds: Math.round(H.flareOdds(d) * 100) / 100 }); return out; }
+  for (var d = d0; d < d0 + days; d++){ var o = H.flareOdds(d);
+    if (place != null){ var x = flareReach(place, d), t = d - x.travel_days, e = Math.floor(t), fr = t - e;
+      o = 1 - (1 - H.flareOdds(e) * (1 - fr) * x.share) * (1 - H.flareOdds(e + 1) * fr * x.share); }
+    out.push({ day_jd: d, flare_odds: Math.round(o * 100) / 100 }); }
+  return out; }
 function weatherForecast(place, fromJd, days, seed){ var H = hazards(seed), w = LOCAL[place], out = [];
   if (!w) return { place: place, kind: null, days: [] }; days = Math.max(1, Math.min(60, Math.round(days || 10)));
   for (var d = Math.floor(fromJd); d < Math.floor(fromJd) + days; d++) out.push({ day_jd: d, odds: Math.round(H.wxOdds(place, d) * 100) / 100 });
@@ -531,7 +576,7 @@ function par(id, t0, endJd, seed){
       if (!wait || G.pickup_jd < wait.arr_jd) wait = { car: c.id, arr_jd: G.pickup_jd };
     } catch (e) {}
   });
-  if (!best) throw new Error("no car can serve " + h.title);
+  if (!best) throw new Error("no ship can serve " + h.title);
   return { car: best.car, kwh: best.kwh, planned_kwh: best.planned_kwh, arr_jd: best.arr_jd, planned_arr_jd: best.planned_arr_jd, legs: best.legs, wait_hours: best.wait_h || [0, 0],
     choices: best.path, best_wait_days: wait ? Math.max(1e-6, wait.arr_jd - t0) : 1e-6, best_wait_car: wait ? wait.car : best.car };
 }
@@ -616,7 +661,7 @@ function termsSet(ids, t0, endJd, seed){
 // Returns a list of problems (empty = flyable). A one-booking plan gets the wording riders have always seen.
 function check(id, car, legs, t0, seed){
   var c = CAR[car], errs = [];
-  if (!c) return ["unknown car " + car];
+  if (!c) return ["unknown ship " + car];
   if (Array.isArray(legs) && legs.length !== 2) return ["a dispatch is two legs: the pickup, then the ride"];
   if (!legs || (!Array.isArray(legs) && !(Array.isArray(legs.stops) && Array.isArray(legs.legs)))) return ["a dispatch is two legs [pickup, ride] or a plan { stops, legs }"];
   var plan = planOf(id, car, legs), S = plan.stops, L = plan.legs, M = manifest(plan), one = M.hails.length === 1 && L.length === 2;
@@ -702,7 +747,7 @@ function score(id, legs, ctx){
   var total = parts.reduce(function(a, p){ return a + p.got; }, 0), lead = bookings[id];
   function round(p){ p.got = Math.round(p.got * 10) / 10; return p; }
   var out = { total: Math.round(total), parts: parts.map(round), used_kwh: used, extra_kwh: F.extra_kwh || 0, wait_days: lead.wait_days, late_days: lead.late_days,
-    pickup_jd: lead.pickup_jd, arrive_jd: lead.arrive_jd, planned_arrive_jd: lead.planned_arrive_jd, fare_usd: lead.fare_usd, beat_par: used < ctx.par_kwh * 0.995, incidents: F.incidents || [] };
+    pickup_jd: lead.pickup_jd, arrive_jd: lead.arrive_jd, planned_arrive_jd: lead.planned_arrive_jd, rider_dose_msv: dose(lead.pickup_jd, lead.arrive_jd), fare_usd: lead.fare_usd, beat_par: used < ctx.par_kwh * 0.995, incidents: F.incidents || [] };
   if (!one){ out.bookings = {}; M.hails.forEach(function(b){ var r = bookings[b]; r.parts = r.parts.map(round); out.bookings[b] = r; }); }
   return out;
 }
@@ -710,6 +755,7 @@ return { DWELL: DWELL, WINDOW: WINDOW, LEAD: LEAD, FLEET: FLEET, CAR: CAR, HAILS
   planLeg: planLeg, par: par, terms: terms, check: check, score: score, planOf: planOf, manifest: manifest, iso: iso,
   MAX_BOOKINGS: MAX_BOOKINGS, stopOrders: stopOrders, parSet: parSet, termsSet: termsSet,
   HOLD_KWH: HOLD_KWH, BERTHS: BERTHS, hazards: hazards, siphash24: siphash24, fly: fly, pickupStart: pickupStart, fleetState: fleetState,
-  padForecast: padForecast, flareForecast: flareForecast, weatherForecast: weatherForecast,
+  padForecast: padForecast, flareForecast: flareForecast, flareReach: flareReach, lightDays: lightDays, weatherForecast: weatherForecast,
+  C_KMS: C_KMS, AU_KM: AU_KM, CME_KMS: CME_KMS, CRUISE_MSV_DAY: CRUISE_MSV_DAY,
   start: start, step: step, regret: regret, oracle: oracle, hindsight: hindsight, ORACLE_DEPTH: ORACLE_DEPTH, EVENTS: EVENTS, MAX_CHECKPOINTS: MAX_CHECKPOINTS };
 })(SOLE);

@@ -267,15 +267,15 @@ function householder(x0, T0, ll, M, tol, maxiter) {
 function findXY(ll, T, M, maxiter, lowpath, tol) {
   if (!(Math.abs(ll) < 1)) throw new Error("degenerate geometry |lambda| = 1");
   if (!(T > 0)) throw new Error("non-positive time of flight");
-  let Mmax = Math.floor(T / Math.PI);
+  let Mmax = Math.floor(T / Math.PI), Tmin = null;
   const T00 = Math.acos(ll) + ll * Math.sqrt(1 - ll * ll);
   if (T < T00 + Mmax * Math.PI && Mmax > 0) {
-    const Tmin = computeTmin(ll, Mmax, maxiter, tol)[1];
-    if (T < Tmin) Mmax -= 1;
+    Tmin = computeTmin(ll, Mmax, maxiter, tol)[1];
+    if (T < Tmin) { Mmax -= 1; Tmin = null; }
   }
   if (M > Mmax) throw new Error(`No feasible solution for M=${M} (M_max=${Mmax})`);
   const [x, iters] = householder(initialGuess(T, ll, M, lowpath), T, ll, M, tol, maxiter);
-  return [x, computeY(x, ll), iters];
+  return [x, computeY(x, ll), iters, M > 0 && M === Mmax && Tmin != null ? T / Tmin - 1 : null];
 }
 // lambert(r1, r2, tof [s], mu, revs = 0, lowpath = true) -> {v1, v2, angle_deg, iterations}; throws like the
 // Python on infeasible/degenerate cases (lambertSafe returns null instead).
@@ -294,7 +294,7 @@ export function lambert(r1, r2, tof, mu = MU_SUN, revs = 0, lowpath = true, prog
   else { it1 = cross(ih, ir1); it2 = cross(ih, ir2); }
   if (!prograde) { ll = -ll; it1 = scl(it1, -1); it2 = scl(it2, -1); }
   const T = Math.sqrt(2 * mu / s ** 3) * tof;
-  const [x, y, iters] = findXY(ll, T, revs, maxiter, lowpath, tol);
+  const [x, y, iters, fold] = findXY(ll, T, revs, maxiter, lowpath, tol);
   const gamma = Math.sqrt(mu * s / 2), rho = (r1n - r2n) / cn, sigma = Math.sqrt(Math.max(0, 1 - rho * rho));
   const Vr1 = gamma * ((ll * y - x) - rho * (ll * y + x)) / r1n;
   const Vr2 = -gamma * ((ll * y - x) + rho * (ll * y + x)) / r2n;
@@ -304,7 +304,7 @@ export function lambert(r1, r2, tof, mu = MU_SUN, revs = 0, lowpath = true, prog
   const n = unit(cross(r1, v1));
   let ang = Math.atan2(dot(cross(ir1, ir2), n), dot(ir1, ir2)) * 180 / Math.PI;
   ang = ((ang % 360) + 360) % 360;
-  return { v1, v2, angle_deg: ang, iterations: iters, x, y };
+  return { v1, v2, angle_deg: ang, iterations: iters, x, y, fold };
 }
 export function lambertSafe(r1, r2, tof, mu, revs, lowpath) {
   try { return lambert(r1, r2, tof, mu, revs, lowpath); } catch (e) { return null; }
@@ -337,14 +337,14 @@ const POLE = { mercury: [281.01, 61.42], venus: [272.76, 67.16], earth: [0, 90],
   moon: [266.86, 65.64], ceres: [291.42, 66.76], titan: [39.48, 83.43] };
 export const PLACES = [
   // planets: helio from DE421; mu = ephem.py GM (system); burn from a circular parking orbit
-  { id: "mercury", name: "Mercury", kind: "planet", parent: "sun", real: true, mu: GM[1], radius_km: 2439.4, park_alt_km: 200 },
-  { id: "venus", name: "Venus", kind: "planet", parent: "sun", real: true, mu: GM[2], radius_km: 6051.8, park_alt_km: 250 },
+  { id: "mercury", name: "Mercury", kind: "planet", parent: "sun", real: true, mu: GM[1], radius_km: 2440.5, park_alt_km: 200 },
+  { id: "venus", name: "Venus", kind: "planet", parent: "sun", real: true, mu: GM[2], radius_km: 6051.8, park_alt_km: 250, atmosphere: true },
   { id: "earth", name: "Earth", kind: "planet", parent: "sun", real: true, mu: GM[399], radius_km: 6378.137, park_alt_km: 200, atmosphere: true },
   { id: "mars", name: "Mars", kind: "planet", parent: "sun", real: true, mu: GM[4], radius_km: 3396.19, park_alt_km: 200, atmosphere: true },
-  { id: "jupiter", name: "Jupiter", kind: "planet", parent: "sun", real: true, mu: GM[5], radius_km: 71492, park_alt_km: 5000 },
-  { id: "saturn", name: "Saturn", kind: "planet", parent: "sun", real: true, mu: GM[6], radius_km: 60268, park_alt_km: 5000 },
-  { id: "uranus", name: "Uranus", kind: "planet", parent: "sun", real: true, mu: GM[7], radius_km: 25559, park_alt_km: 5000 },
-  { id: "neptune", name: "Neptune", kind: "planet", parent: "sun", real: true, mu: GM[8], radius_km: 24764, park_alt_km: 5000 },
+  { id: "jupiter", name: "Jupiter", kind: "planet", parent: "sun", real: true, mu: GM[5], radius_km: 71492, park_alt_km: 5000, atmosphere: true },
+  { id: "saturn", name: "Saturn", kind: "planet", parent: "sun", real: true, mu: GM[6], radius_km: 60268, park_alt_km: 5000, atmosphere: true },
+  { id: "uranus", name: "Uranus", kind: "planet", parent: "sun", real: true, mu: GM[7], radius_km: 25559, park_alt_km: 5000, atmosphere: true },
+  { id: "neptune", name: "Neptune", kind: "planet", parent: "sun", real: true, mu: GM[8], radius_km: 24764, park_alt_km: 5000, atmosphere: true },
   // moons
   { id: "moon", name: "Moon", kind: "moon", parent: "earth", real: true, mu: GM[301], radius_km: 1737.4, park_alt_km: 100, orbit_km: 384400, period_days: 27.321661 },
   { id: "phobos", name: "Phobos", kind: "moon", parent: "mars", real: true, mu: 7.087e-4, radius_km: 11.1, park_alt_km: 10, orbit_km: 9376, period_days: 0.31891 },
@@ -487,7 +487,7 @@ export const titanBurn = (vinf) => wellBurn(endpointModel({ place: "titan" }).ch
 // ------------------------------------------------------------------ models.py (stated, made-up-on-purpose)
 export const MODELS = { CAR_DRY_KG: 1300.0, PACK_KWH: 200.0, EXHAUST_KMS: 30.0, THRUSTER_EFF: 0.60,
   USD_PER_KWH: 0.16, USD_PER_MIN: 0.35 };
-export const ASSUMPTIONS = ["car 1300 kg dry with a 200 kWh pack",
+export const ASSUMPTIONS = ["ship 1300 kg dry with a 200 kWh pack",
   "electric thruster: 30 km/s exhaust, 60% efficient, burns treated as instant",
   "fare = $0.16/kWh energy + $0.35/min time fee", "landing, aerobraking and life support are not priced"];
 function pyRound(x, nd = 0) {  // Python round(): half to even, on the decimal repr like CPython's
@@ -528,6 +528,9 @@ export function isoFromJd(jd, withTime = false) {
 
 // ------------------------------------------------------------------ planner
 const BRANCHES = [[0, true], [1, true], [1, false]];
+// A multi-rev leg within 2% of the Lambert minimum time sits on the fold, where the n-body
+// re-fly's Newton step diverges (velocity goes as 1/sqrt(T - Tmin)); probes failed up to 1.25%.
+const FOLD_MARGIN = 0.02;
 const hohmannDays = (a1, a2, mu = MU_SUN) => Math.PI * Math.sqrt(((a1 + a2) / 2) ** 3 / mu) / DAY;
 
 // anchor state for the planner (small bodies: Kepler, as quote.py/trip.py; ships: Kepler)
@@ -590,7 +593,7 @@ function localTransfer(o, d, mo, md, opt) {
 function legEval(ctx, d0, tof, M, low) {
   const sa = ctx.depState(d0), sb = ctx.arrState(d0 + tof);
   const L = lambertSafe(sa.r, sb.r, tof * DAY, MU_SUN, M, low);
-  if (!L) return null;
+  if (!L || (L.fold != null && L.fold < FOLD_MARGIN)) return null;
   if (ctx.skip180 && Math.abs(L.angle_deg - 180) < 1) return null;
   const vd = norm(sub(L.v1, sa.v)), va = norm(sub(L.v2, sb.v));
   if (vd * vd > ctx.maxC3) return null;

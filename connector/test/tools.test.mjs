@@ -88,7 +88,7 @@ test("a call that fails still spends the budget; the refusal spends none and cha
   const s = session(bench(2));
   const { run_id } = data(await s.call("take_hail", { hail_id: "iss-crew" }));
   assert.deepEqual(await s.call("plan_pickup", { run_id, car: "sf-99" }),
-    { content: [{ type: "text", text: "unknown car sf-99. The fleet is in get_hail." }], isError: true });
+    { content: [{ type: "text", text: "unknown ship sf-99. The fleet is in get_hail." }], isError: true });
   assert.equal(data(await s.call("get_hail", { run_id })).plans_used, 0);
   const spent = s.backend.runs.get(run_id);
   assert.equal(spent.tool_calls, 2);
