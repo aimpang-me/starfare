@@ -1,0 +1,312 @@
+<meta charset="utf-8">
+<title>Starfare Map Markings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#050a14; --glass:rgba(12,22,40,.72); --line:rgba(120,180,255,.14); --line-2:rgba(120,190,255,.28);
+  --ink:#e8f0fa; --ink-2:#9fb0c6; --ink-3:#66788f; --cy:#5cc8ff; --ride:#8ec5ff; --sun:#ffb65c; --me:#ffcf7a; --sim:#7f8a99;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:radial-gradient(1200px 700px at 50% -10%, #0c1a33 0%, var(--bg) 60%) fixed, var(--bg);color:var(--ink);font:14px/1.5 Inter, system-ui, sans-serif;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:28px 56px;display:grid;gap:18px}
+header{display:grid;gap:10px}
+header .k{font:600 10.5px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--cy)}
+header h1{margin:0;font:700 26px/1.15 Inter, sans-serif;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:0;max-width:72ch;color:var(--ink-2);text-wrap:pretty}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button{display:inline-flex;align-items:center;gap:9px;min-height:36px;padding:7px 13px;border:1px solid var(--line-2);border-radius:4px;background:rgba(92,200,255,.04);color:var(--ink-2);font:600 11.5px/1 Inter, sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:color .15s cubic-bezier(.2,0,0,1), border-color .15s cubic-bezier(.2,0,0,1), background-color .15s cubic-bezier(.2,0,0,1), transform .1s cubic-bezier(.2,0,0,1)}
+.tabs button b{font:600 10px/1 var(--mono);color:var(--ink-3)}
+.tabs button:hover{color:var(--ink)}
+.tabs button:active{transform:scale(.96)}
+.tabs button[aria-selected="true"]{color:var(--cy);border-color:var(--cy);background:rgba(92,200,255,.14)}
+.tabs button[aria-selected="true"] b{color:var(--cy)}
+.tabs button:focus-visible{outline:2px solid var(--me);outline-offset:2px}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
+.map{position:relative;min-width:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:radial-gradient(520px 300px at 50% 52%, rgba(255,182,92,.07), transparent 70%), #040912}
+.map svg{display:block;width:100%;height:auto}
+.note{position:absolute;left:10px;top:10px;display:flex;gap:6px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;padding:3px 8px;border:1px solid var(--line-2);border-radius:999px;font:600 9.5px/1 Inter, sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--sim);background:rgba(5,10,20,.7)}
+aside{min-width:0;display:grid;gap:12px;padding:14px;border:1px solid var(--line);border-radius:8px;background:var(--glass)}
+aside h2{margin:0;font:700 17px/1.2 Inter, sans-serif;text-wrap:balance}
+aside .sum{margin:0;color:var(--ink-2);font-size:13.5px;text-wrap:pretty}
+aside ul{margin:0;padding:0;list-style:none;display:grid;gap:9px}
+aside li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:start;font-size:13px;color:var(--ink-2)}
+aside li b{display:block;color:var(--ink);font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+aside li svg{width:44px;height:22px;margin-top:2px}
+aside .fit{margin:0;padding-top:10px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3);text-wrap:pretty}
+aside .fit b{color:var(--ink-2)}
+@media (max-width:900px){ .stage{grid-template-columns:minmax(0,1fr)} }
+@media (prefers-reduced-motion:reduce){ .tabs button{transition:none} .pulse{animation:none!important} }
+@keyframes pulse{0%{r:3;opacity:.9}100%{r:13;opacity:0}}
+.pulse{animation:pulse 2.4s cubic-bezier(.2,0,0,1) infinite}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="k">Starfare · design study · map markings</div>
+    <h1>Three ways to mark the fleet map</h1>
+    <p>The same scene drawn in three grammars: orbits, distance rings, planet labels, flight lines (flown and still to fly), the selected flight, and an open booking. Fonts stay as they are today so only the markings change. Planet positions here are placed by hand to show every case; the real map takes them from JPL DE421.</p>
+  </header>
+  <div class="tabs" role="tablist" aria-label="Variants">
+    <button role="tab" id="t-instrument" aria-controls="stage" aria-selected="true" data-v="instrument"><b>01</b>Instrument</button>
+    <button role="tab" id="t-chart" aria-controls="stage" aria-selected="false" data-v="chart"><b>02</b>Star Chart</button>
+    <button role="tab" id="t-glow" aria-controls="stage" aria-selected="false" data-v="glow"><b>03</b>Quiet Glow</button>
+  </div>
+  <div class="stage" id="stage" role="tabpanel">
+    <div class="map"><div class="note"><span class="tag">Illustrative positions</span><span class="tag">Simulated fleet</span></div><div id="svg"></div></div>
+    <aside id="aside"></aside>
+  </div>
+</div>
+
+<script>
+(function () {
+  var W = 900, H = 540, CX = 450, CY = 270, K = 0.5, D2R = Math.PI / 180;
+  function R(au) { return 20 + 64 * Math.log2(1 + 1.6 * au); }
+  function P(r, deg) { return [CX + r * Math.cos(deg * D2R), CY + r * Math.sin(deg * D2R) * K]; }
+  function f1(n) { return n.toFixed(1); }
+  var PL = [
+    { id: "Mercury", au: 0.39, deg: 160, c: "#a7a7a7", s: 2.6 },
+    { id: "Venus", au: 0.72, deg: 318, c: "#e8cda2", s: 3.4 },
+    { id: "Earth", au: 1, deg: 30, c: "#4f8fe0", s: 3.6 },
+    { id: "Mars", au: 1.52, deg: 82, c: "#c1440e", s: 3.1 },
+    { id: "Ceres", au: 2.77, deg: 150, c: "#a89f91", s: 2.2 },
+    { id: "Jupiter", au: 5.2, deg: 196, c: "#d8ca9d", s: 6.5 },
+    { id: "Saturn", au: 9.54, deg: 222, c: "#e3d29c", s: 5.6 },
+    { id: "Uranus", au: 19.2, deg: 330, c: "#9fe3e8", s: 4.4 },
+    { id: "Neptune", au: 30.1, deg: 34, c: "#5b7ce0", s: 4.4 }
+  ];
+  var BY = {}; PL.forEach(function (p) { p.r = R(p.au); p.xy = P(p.r, p.deg); BY[p.id] = p; });
+  var RINGS = [0.5, 1, 2, 5, 10, 20, 30];
+  // Flights spiral prograde from origin to destination; f is the share already flown.
+  var FL = [
+    { cs: "SF-03", from: "Earth", to: "Mars", f: 0.46, sel: true },
+    { cs: "SF-07", from: "Jupiter", to: "Earth", f: 0.35 },
+    { cs: "SF-04", from: "Mars", to: "Ceres", f: 0.7 }
+  ];
+  var BK = { cs: "Open booking", from: "Venus", to: "Earth" };
+  function route(a, b, n) {
+    var A = BY[a], B = BY[b], d1 = B.deg; while (d1 <= A.deg) d1 += 360;
+    var pts = []; for (var k = 0; k <= n; k++) { var t = k / n; pts.push(P(A.r + (B.r - A.r) * t, A.deg + (d1 - A.deg) * t)); }
+    return pts;
+  }
+  function path(pts) { return "M" + pts.map(function (p) { return f1(p[0]) + " " + f1(p[1]); }).join("L"); }
+  function split(pts, f) { var i = Math.max(1, Math.round((pts.length - 1) * f)); return [pts.slice(0, i + 1), pts.slice(i)]; }
+  function heading(pts, i) { var a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)]; return Math.atan2(b[1] - a[1], b[0] - a[0]) / D2R; }
+  // Points every `step` px along a polyline, with the heading there.
+  function along(pts, step, from) {
+    var out = [], acc = -(from || step / 2);
+    for (var i = 1; i < pts.length; i++) {
+      var a = pts[i - 1], b = pts[i], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy), t = 0;
+      while (acc + L - t * L >= step) { var need = step - acc; t += need / L; acc = 0; out.push({ x: a[0] + dx * t, y: a[1] + dy * t, a: Math.atan2(dy, dx) / D2R }); }
+      acc += L * (1 - t);
+    }
+    return out;
+  }
+  function orbit(r, n) { var pts = []; for (var k = 0; k <= (n || 160); k++) pts.push(P(r, k / (n || 160) * 360)); return pts; }
+  function arc(r, d0, d1, n) { var pts = []; for (var k = 0; k <= n; k++) pts.push(P(r, d0 + (d1 - d0) * k / n)); return pts; }
+  function arcLen(r, deg, gap, len) {
+    var d = deg, prev = P(r, d), run = 0, pts = [];
+    while (Math.hypot(prev[0] - P(r, deg)[0], prev[1] - P(r, deg)[1]) < gap) { d += 0.5; prev = P(r, d); }
+    pts.push(prev);
+    while (run < len) { d += 0.5; var q = P(r, d); run += Math.hypot(q[0] - prev[0], q[1] - prev[1]); pts.push(q); prev = q; }
+    return pts;
+  }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+  var T_CAPS = 'font-family="Inter, sans-serif" font-weight="600" letter-spacing="1.3" ';
+  var T_MONO = 'font-family="JetBrains Mono, monospace" font-weight="500" ';
+
+  function sunAt(glowOnly) {
+    return '<circle cx="' + CX + '" cy="' + CY + '" r="26" fill="url(#sunglow)"/>' + (glowOnly ? "" : '<circle cx="' + CX + '" cy="' + CY + '" r="9" fill="#ffc46e"/>');
+  }
+  function defs() {
+    return '<defs><radialGradient id="sunglow"><stop offset="0" stop-color="#ffb65c" stop-opacity=".55"/><stop offset="1" stop-color="#ffb65c" stop-opacity="0"/></radialGradient>' +
+      '<filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter></defs>';
+  }
+
+  /* ---------- 01 Instrument: a precise HUD. Leaders, chevrons, a bearing scale. ---------- */
+  function instrument() {
+    var s = defs();
+    // bearing scale around the edge
+    var rb = R(36);
+    s += '<path d="' + path(orbit(rb)) + '" fill="none" stroke="rgba(92,200,255,.08)"/>';
+    for (var d = 0; d < 360; d += 10) {
+      var a = P(rb, d), b = P(rb + (d % 90 ? 5 : 11), d);
+      s += '<line x1="' + f1(a[0]) + '" y1="' + f1(a[1]) + '" x2="' + f1(b[0]) + '" y2="' + f1(b[1]) + '" stroke="rgba(92,200,255,' + (d % 90 ? .16 : .38) + ')"/>';
+      if (!(d % 90)) { var t = P(rb + 24, d); s += '<text x="' + f1(t[0]) + '" y="' + f1(t[1] + 3) + '" text-anchor="middle" ' + T_MONO + 'font-size="9" fill="rgba(92,200,255,.55)">' + d + '°</text>'; }
+    }
+    // distance rings, label knocked out of the ring at one bearing
+    RINGS.forEach(function (au) {
+      var r = R(au), lp = P(r, 255), txt = (au < 1 ? au.toFixed(1) : au) + " AU", w = txt.length * 5.6 + 8;
+      s += '<path d="' + path(orbit(r)) + '" fill="none" stroke="rgba(92,200,255,' + (au === 1 ? .2 : .1) + ')"/>';
+      s += '<rect x="' + f1(lp[0] - w / 2) + '" y="' + f1(lp[1] - 6) + '" width="' + f1(w) + '" height="12" fill="#040912"/>';
+      s += '<text x="' + f1(lp[0]) + '" y="' + f1(lp[1] + 3) + '" text-anchor="middle" ' + T_MONO + 'font-size="9" fill="rgba(92,200,255,.6)">' + txt + '</text>';
+    });
+    // orbits
+    PL.forEach(function (p) { s += '<path d="' + path(orbit(p.r)) + '" fill="none" stroke="' + p.c + '" stroke-opacity=".26"/>'; });
+    // booking
+    var bk = route(BK.from, BK.to, 60);
+    s += '<path d="' + path(bk) + '" fill="none" stroke="#ffb65c" stroke-opacity=".75" stroke-width="1.2" stroke-dasharray="1 4" stroke-linecap="round"/>';
+    // flights
+    FL.forEach(function (F) {
+      var pts = route(F.from, F.to, 90), sp = split(pts, F.f), here = sp[0][sp[0].length - 1], hd = heading(pts, sp[0].length - 1), op = F.sel ? 1 : .6;
+      s += '<path d="' + path(sp[0]) + '" fill="none" stroke="#8ec5ff" stroke-opacity="' + op + '" stroke-width="' + (F.sel ? 1.8 : 1.3) + '"/>';
+      s += '<path d="' + path(sp[1]) + '" fill="none" stroke="#8ec5ff" stroke-opacity="' + (F.sel ? .45 : .22) + '" stroke-dasharray="3 4"/>';
+      along(sp[1], 30, 22).forEach(function (c) { s += '<path d="M-3 -3.2L1.4 0L-3 3.2" transform="translate(' + f1(c.x) + ' ' + f1(c.y) + ') rotate(' + f1(c.a) + ')" fill="none" stroke="#8ec5ff" stroke-opacity="' + (F.sel ? .8 : .4) + '" stroke-width="1.2"/>'; });
+      s += '<path d="M6 0L-4 -4L-2 0L-4 4Z" transform="translate(' + f1(here[0]) + ' ' + f1(here[1]) + ') rotate(' + f1(hd) + ')" fill="' + (F.sel ? "#5cc8ff" : "#cfe6ff") + '"/>';
+      var lx = here[0] + 12, ly = here[1] - 16, w = F.cs.length * 6.6 + 12;
+      s += '<path d="M' + f1(here[0] + 4) + ' ' + f1(here[1] - 4) + 'L' + f1(lx) + ' ' + f1(ly + 9) + '" stroke="rgba(92,200,255,.5)"/>';
+      s += '<rect x="' + f1(lx) + '" y="' + f1(ly) + '" width="' + f1(w) + '" height="17" rx="3" fill="rgba(5,10,20,.8)" stroke="' + (F.sel ? "#5cc8ff" : "rgba(92,200,255,.35)") + '"/>';
+      s += '<text x="' + f1(lx + 6) + '" y="' + f1(ly + 12) + '" ' + T_MONO + 'font-size="10.5" fill="' + (F.sel ? "#5cc8ff" : "#cfe6ff") + '">' + F.cs + '</text>';
+    });
+    s += sunAt();
+    // planets with a two-segment leader and the name off to the side
+    PL.concat([{ id: "Sun", xy: [CX, CY], s: 9, c: "#ffc46e" }]).forEach(function (p) {
+      var x = p.xy[0], y = p.xy[1], g = p.s + 3, side = p.id === "Sun" || p.id === "Mercury" || p.id === "Jupiter" || p.id === "Saturn" ? -1 : 1;
+      if (p.id !== "Sun") s += '<circle cx="' + f1(x) + '" cy="' + f1(y) + '" r="' + p.s + '" fill="' + p.c + '"/>';
+      var x1 = x + side * g * .7, y1 = y - g * .7, x2 = x1 + side * 9, y2 = y1 - 9, x3 = x2 + side * 10;
+      s += '<path d="M' + f1(x1) + ' ' + f1(y1) + 'L' + f1(x2) + ' ' + f1(y2) + 'L' + f1(x3) + ' ' + f1(y2) + '" fill="none" stroke="#d8e2ee" stroke-opacity=".35"/>';
+      s += '<text x="' + f1(x3 + side * 4) + '" y="' + f1(y2 + 3.5) + '" text-anchor="' + (side > 0 ? "start" : "end") + '" ' + T_CAPS + 'font-size="10.5" fill="#d8e2ee" fill-opacity=".62">' + p.id.toUpperCase() + '</text>';
+    });
+    return s;
+  }
+
+  /* ---------- 02 Star Chart: cartographic. Dashed orbits, names along the orbit, a scale ruler, day ticks. ---------- */
+  function chart() {
+    var s = defs();
+    RINGS.forEach(function (au) { s += '<path d="' + path(orbit(R(au))) + '" fill="none" stroke="rgba(92,200,255,.07)"/>'; });
+    // one scale ruler from the Sun with a tick and label per ring
+    var rd = 285, end = P(R(32), rd);
+    s += '<line x1="' + CX + '" y1="' + CY + '" x2="' + f1(end[0]) + '" y2="' + f1(end[1]) + '" stroke="rgba(92,200,255,.35)"/>';
+    RINGS.forEach(function (au) {
+      var p = P(R(au), rd), nx = Math.cos((rd + 90) * D2R), ny = Math.sin((rd + 90) * D2R);
+      s += '<line x1="' + f1(p[0] - nx * 4) + '" y1="' + f1(p[1] - ny * 4) + '" x2="' + f1(p[0] + nx * 4) + '" y2="' + f1(p[1] + ny * 4) + '" stroke="rgba(92,200,255,.6)"/>';
+      s += '<text x="' + f1(p[0] - 8) + '" y="' + f1(p[1] + 3) + '" text-anchor="end" ' + T_MONO + 'font-size="9" fill="rgba(92,200,255,.65)">' + (au < 1 ? au.toFixed(1) : au) + '</text>';
+    });
+    var e2 = P(R(32), rd); s += '<text x="' + f1(e2[0] - 8) + '" y="' + f1(e2[1] + 3) + '" text-anchor="end" ' + T_MONO + 'font-size="9" fill="rgba(92,200,255,.65)">AU</text>';
+    // dashed orbits, names set along the orbit just ahead of the planet
+    PL.forEach(function (p, i) {
+      s += '<path d="' + path(orbit(p.r)) + '" fill="none" stroke="' + p.c + '" stroke-opacity=".3" stroke-dasharray="2 5" stroke-linecap="round"/>';
+      var a = arcLen(p.r + 7, p.deg, p.s + 8, p.id.length * 9 + 12), rev = a[a.length - 1][0] < a[0][0];
+      if (rev) a.reverse();
+      s += '<path id="o' + i + '" d="' + path(a) + '" fill="none"/>';
+      s += '<text ' + T_CAPS + 'font-size="9.5" letter-spacing="2.2" fill="#d8e2ee" fill-opacity=".58" dy="' + (rev ? 10 : -3) + '"><textPath href="#o' + i + '" startOffset="' + (rev ? "100%" : "0%") + '" text-anchor="' + (rev ? "end" : "start") + '">' + p.id.toUpperCase() + '</textPath></text>';
+    });
+    // booking: thin amber with hollow diamonds at the ends
+    var bk = route(BK.from, BK.to, 60);
+    s += '<path d="' + path(bk) + '" fill="none" stroke="#ffb65c" stroke-opacity=".6" stroke-dasharray="6 4"/>';
+    [bk[0], bk[bk.length - 1]].forEach(function (q) { s += '<rect x="-3.5" y="-3.5" width="7" height="7" transform="translate(' + f1(q[0]) + ' ' + f1(q[1]) + ') rotate(45)" fill="#040912" stroke="#ffb65c"/>'; });
+    // flights: a solid track with cross ticks at even spacing, an open origin, a target ring
+    FL.forEach(function (F, i) {
+      var pts = route(F.from, F.to, 90), sp = split(pts, F.f), here = sp[0][sp[0].length - 1], hd = heading(pts, sp[0].length - 1), a0 = pts[0], a1 = pts[pts.length - 1];
+      s += '<path d="' + path(sp[0]) + '" fill="none" stroke="#8ec5ff" stroke-opacity="' + (F.sel ? .95 : .55) + '" stroke-width="' + (F.sel ? 2 : 1.3) + '"/>';
+      s += '<path d="' + path(sp[1]) + '" fill="none" stroke="#8ec5ff" stroke-opacity="' + (F.sel ? .4 : .2) + '"/>';
+      along(pts, 16, 16).forEach(function (c) {
+        var nx = Math.cos((c.a + 90) * D2R) * 3, ny = Math.sin((c.a + 90) * D2R) * 3;
+        s += '<line x1="' + f1(c.x - nx) + '" y1="' + f1(c.y - ny) + '" x2="' + f1(c.x + nx) + '" y2="' + f1(c.y + ny) + '" stroke="#8ec5ff" stroke-opacity="' + (F.sel ? .55 : .25) + '"/>';
+      });
+      s += '<circle cx="' + f1(a0[0]) + '" cy="' + f1(a0[1]) + '" r="3" fill="#040912" stroke="#8ec5ff" stroke-opacity=".8"/>';
+      s += '<circle cx="' + f1(a1[0]) + '" cy="' + f1(a1[1]) + '" r="' + (BY[F.to].s + 5) + '" fill="none" stroke="#8ec5ff" stroke-opacity="' + (F.sel ? .7 : .3) + '" stroke-dasharray="2 2"/>';
+      var hx = Math.cos(hd * D2R) * 9, hy = Math.sin(hd * D2R) * 9;
+      s += '<line x1="' + f1(here[0]) + '" y1="' + f1(here[1]) + '" x2="' + f1(here[0] + hx) + '" y2="' + f1(here[1] + hy) + '" stroke="#5cc8ff" stroke-width="1.6"/>';
+      s += '<circle cx="' + f1(here[0]) + '" cy="' + f1(here[1]) + '" r="' + (F.sel ? 4 : 3) + '" fill="' + (F.sel ? "#5cc8ff" : "#cfe6ff") + '" stroke="#040912" stroke-width="1.5"/>';
+      var up = hd > 90 || hd < -90 ? hd + 180 : hd, lx = here[0] + Math.cos((hd - 90) * D2R) * 10, ly = here[1] + Math.sin((hd - 90) * D2R) * 10;
+      s += '<text transform="translate(' + f1(lx) + ' ' + f1(ly) + ') rotate(' + f1(up) + ')" text-anchor="middle" ' + T_MONO + 'font-size="10" fill="' + (F.sel ? "#5cc8ff" : "#cfe6ff") + '" fill-opacity="' + (F.sel ? 1 : .75) + '">' + F.cs + ' · ' + F.from + ' → ' + F.to + '</text>';
+    });
+    s += sunAt();
+    PL.forEach(function (p) { s += '<circle cx="' + f1(p.xy[0]) + '" cy="' + f1(p.xy[1]) + '" r="' + p.s + '" fill="' + p.c + '"/>'; });
+    return s;
+  }
+
+  /* ---------- 03 Quiet Glow: cinematic. Faint orbits, motion trails, names under the body. ---------- */
+  function trail(pts, color, w, peak) {
+    var s = "", n = pts.length - 1;
+    for (var k = 1; k <= n; k++) s += '<line x1="' + f1(pts[k - 1][0]) + '" y1="' + f1(pts[k - 1][1]) + '" x2="' + f1(pts[k][0]) + '" y2="' + f1(pts[k][1]) + '" stroke="' + color + '" stroke-opacity="' + (peak * Math.pow(k / n, 1.6)).toFixed(3) + '" stroke-width="' + w + '" stroke-linecap="round"/>';
+    return s;
+  }
+  function glow() {
+    var s = defs();
+    PL.forEach(function (p) { s += '<path d="' + path(orbit(p.r)) + '" fill="none" stroke="' + p.c + '" stroke-opacity=".07"/>'; });
+    s += '<path d="' + path(orbit(R(1))) + '" fill="none" stroke="rgba(92,200,255,.12)" stroke-dasharray="1 5"/>';
+    var la = P(R(1), 248); s += '<text x="' + f1(la[0]) + '" y="' + f1(la[1] - 5) + '" text-anchor="middle" ' + T_MONO + 'font-size="9" fill="rgba(92,200,255,.45)">1 AU</text>';
+    // each body drags a short arc of its own orbit behind it
+    PL.forEach(function (p) { s += trail(arc(p.r, p.deg - Math.min(70, 3200 / p.r), p.deg, 24), p.c, 1.6, .7); });
+    // booking: a pulse at the pickup and a faint arc
+    var bk = route(BK.from, BK.to, 60), b0 = bk[0];
+    s += '<path d="' + path(bk) + '" fill="none" stroke="#ffb65c" stroke-opacity=".28" stroke-dasharray="1 6" stroke-linecap="round"/>';
+    s += '<circle class="pulse" cx="' + f1(b0[0]) + '" cy="' + f1(b0[1]) + '" r="3" fill="none" stroke="#ffb65c"/>';
+    // flights: a fading trail behind the ship; only the selected one shows what is left to fly
+    FL.forEach(function (F) {
+      var pts = route(F.from, F.to, 120), sp = split(pts, F.f), here = sp[0][sp[0].length - 1];
+      s += '<g filter="url(#blur)" opacity=".8">' + trail(sp[0], "#5cc8ff", F.sel ? 4 : 3, F.sel ? .9 : .5) + '</g>';
+      s += trail(sp[0], F.sel ? "#cfe6ff" : "#8ec5ff", 1.2, F.sel ? 1 : .7);
+      if (F.sel) s += '<path d="' + path(sp[1]) + '" fill="none" stroke="#8ec5ff" stroke-opacity=".3" stroke-dasharray="1 5" stroke-linecap="round"/>';
+      s += '<circle cx="' + f1(here[0]) + '" cy="' + f1(here[1]) + '" r="' + (F.sel ? 7 : 5) + '" fill="#5cc8ff" opacity=".35" filter="url(#blur)"/>';
+      s += '<circle cx="' + f1(here[0]) + '" cy="' + f1(here[1]) + '" r="' + (F.sel ? 2.6 : 2) + '" fill="#eaf6ff"/>';
+      s += '<text x="' + f1(here[0] + 9) + '" y="' + f1(here[1] + 3.5) + '" ' + T_MONO + 'font-size="10" fill="' + (F.sel ? "#5cc8ff" : "#cfe6ff") + '" fill-opacity="' + (F.sel ? 1 : .6) + '">' + F.cs + '</text>';
+    });
+    s += sunAt();
+    PL.concat([{ id: "Sun", xy: [CX, CY], s: 9, c: "#ffc46e" }]).forEach(function (p) {
+      if (p.id !== "Sun") s += '<circle cx="' + f1(p.xy[0]) + '" cy="' + f1(p.xy[1]) + '" r="' + p.s + '" fill="' + p.c + '"/>';
+      s += '<text x="' + f1(p.xy[0]) + '" y="' + f1(p.xy[1] + p.s + 13) + '" text-anchor="middle" ' + T_CAPS + 'font-size="9" letter-spacing="2" fill="#d8e2ee" fill-opacity=".45">' + p.id.toUpperCase() + '</text>';
+    });
+    return s;
+  }
+
+  function sw(inner) { return '<svg viewBox="0 0 44 22" aria-hidden="true">' + inner + '</svg>'; }
+  var V = {
+    instrument: { name: "Instrument", draw: instrument,
+      sum: "A precise heads-up display. Every mark has a leader or a scale, and nothing touches what it names.",
+      rules: [
+        [sw('<circle cx="8" cy="15" r="3" fill="#d8ca9d"/><path d="M11 12L17 6H25" fill="none" stroke="#d8e2ee" stroke-opacity=".5"/>'), "Planet labels", "On a short bent leader, set off to the side at 62% opacity."],
+        [sw('<path d="M2 11H42" stroke="rgba(92,200,255,.25)"/><rect x="12" y="5" width="20" height="12" fill="#0a1222"/><text x="22" y="14" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#5cc8ff">2 AU</text>'), "Distance rings", "Labelled at one bearing, with the label cut into the ring."],
+        [sw('<path d="M2 11H18" stroke="#8ec5ff" stroke-width="1.8"/><path d="M18 11H42" stroke="#8ec5ff" stroke-opacity=".4" stroke-dasharray="3 4"/><path d="M27 8L31 11L27 14M36 8L40 11L36 14" fill="none" stroke="#8ec5ff"/>'), "Flight lines", "Flown is solid, still to fly is dashed, and chevrons show the direction."],
+        [sw('<path d="M24 11L14 7L16 11L14 15Z" fill="#5cc8ff"/><rect x="27" y="4" width="15" height="13" rx="2" fill="none" stroke="#5cc8ff"/>'), "Starseekers", "An arrowhead on the heading and a boxed callsign on a leader."],
+        [sw('<path d="M2 18Q22 2 42 18" fill="none" stroke="rgba(92,200,255,.3)"/><path d="M22 4V9M8 12L11 14M36 12L33 14" stroke="#5cc8ff" stroke-opacity=".6"/>'), "Bearing scale", "Ticks every 10° around the edge, which helps when the camera turns."]
+      ],
+      fit: "<b>Fits:</b> the ops console (mockups E and F) and the dispatcher's view. It is the busiest of the three, so labels need the collision pass F already has." },
+    chart: { name: "Star Chart", draw: chart,
+      sum: "A printed navigation chart. Names follow the orbits, one ruler carries the distance scale, and flights carry their own timing ticks.",
+      rules: [
+        [sw('<path d="M2 16Q22 4 42 16" fill="none" stroke="#d8ca9d" stroke-opacity=".5" stroke-dasharray="2 4"/><text x="22" y="9" text-anchor="middle" font-family="Inter" font-size="6" letter-spacing="1" fill="#d8e2ee">JUPITER</text>'), "Planet labels", "Set along the planet's own dashed orbit, just ahead of the body, so they never cover it."],
+        [sw('<path d="M4 4L40 18" stroke="rgba(92,200,255,.5)"/><path d="M13 5L11 10M27 11L25 16" stroke="#5cc8ff"/>'), "Distance rings", "One ruler from the Sun, with a tick where each ring crosses it. The rings themselves are almost invisible."],
+        [sw('<path d="M2 11H42" stroke="#8ec5ff"/><path d="M8 8V14M16 8V14M24 8V14M32 8V14" stroke="#8ec5ff" stroke-opacity=".6"/>'), "Flight lines", "Cross ticks at even spacing, like a chart's time marks. The callsign and route run along the line."],
+        [sw('<circle cx="8" cy="11" r="3" fill="#0a1222" stroke="#8ec5ff"/><circle cx="34" cy="11" r="7" fill="none" stroke="#8ec5ff" stroke-dasharray="2 2"/>'), "Ends", "An open circle at the origin and a dotted target ring at the destination."],
+        [sw('<path d="M8 11H36" stroke="#ffb65c" stroke-dasharray="6 4"/><rect x="5" y="8" width="6" height="6" transform="rotate(45 8 11)" fill="#0a1222" stroke="#ffb65c"/>'), "Open booking", "A dashed amber line with hollow diamonds at the pickup and drop-off."]
+      ],
+      fit: "<b>Fits:</b> the public website and the Open Sky page, where people read the map more than they operate it. It works best seen from above, so it suits a flatter camera." },
+    glow: { name: "Quiet Glow", draw: glow,
+      sum: "Cinematic and calm. Orbits almost disappear, every body leaves a short motion trail, and only the selected flight shows its whole route.",
+      rules: [
+        [sw('<circle cx="22" cy="8" r="3.5" fill="#4f8fe0"/><text x="22" y="20" text-anchor="middle" font-family="Inter" font-size="6" letter-spacing="1" fill="#d8e2ee" fill-opacity=".6">EARTH</text>'), "Planet labels", "Centred under the body at 45% opacity, with no leader."],
+        [sw('<path d="M2 16Q14 12 30 10" fill="none" stroke="#4f8fe0" stroke-opacity=".25" stroke-width="1.6"/><circle cx="32" cy="10" r="3.5" fill="#4f8fe0"/>'), "Orbits", "Drawn at 7%. Each body drags a fading arc of its own orbit, so you can see which way it moves."],
+        [sw('<path d="M2 14Q16 12 30 9" fill="none" stroke="#5cc8ff" stroke-opacity=".7" stroke-width="2"/><circle cx="31" cy="9" r="2.5" fill="#eaf6ff"/><path d="M33 8.5Q38 7 42 6" fill="none" stroke="#8ec5ff" stroke-opacity=".4" stroke-dasharray="1 3"/>'), "Flight lines", "A glowing trail that fades out behind the ship. Only the selected flight shows the rest of its route, dotted."],
+        [sw('<circle cx="22" cy="11" r="3" fill="none" stroke="#ffb65c"/><circle cx="22" cy="11" r="8" fill="none" stroke="#ffb65c" stroke-opacity=".3"/>'), "Open booking", "A slow pulse at the pickup and a faint dotted arc to the drop-off."],
+        [sw('<path d="M2 11H42" stroke="rgba(92,200,255,.25)" stroke-dasharray="1 4"/><text x="22" y="8" text-anchor="middle" font-family="JetBrains Mono" font-size="6" fill="#5cc8ff" fill-opacity=".6">1 AU</text>'), "Distance rings", "Only 1 AU stays as a reference. The legend's scale card carries the rest."]
+      ],
+      fit: "<b>Fits:</b> the hero and the rider-facing pages (D), and the background map behind the scoreboard. It is the least busy, but it gives less to read at a glance." }
+  };
+  var svgEl = document.getElementById("svg"), aside = document.getElementById("aside"), tabs = [].slice.call(document.querySelectorAll(".tabs button"));
+  function show(id) {
+    var v = V[id] || V.instrument; id = V[id] ? id : "instrument";
+    svgEl.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(v.name) + ' map markings on an illustrative solar system">' + v.draw() + '</svg>';
+    aside.innerHTML = '<h2>' + esc(v.name) + '</h2><p class="sum">' + v.sum + '</p><ul>' + v.rules.map(function (r) { return '<li>' + r[0] + '<div><b>' + r[1] + '</b>' + r[2] + '</div></li>'; }).join("") + '</ul><p class="fit">' + v.fit + '</p>';
+    tabs.forEach(function (b) { var on = b.dataset.v === id; b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1; });
+    document.getElementById("stage").setAttribute("aria-labelledby", "t-" + id);
+  }
+  tabs.forEach(function (b, i) {
+    b.addEventListener("click", function () { show(b.dataset.v); try { history.replaceState(null, "", "#" + b.dataset.v); } catch (e) {} });
+    b.addEventListener("keydown", function (e) {
+      var d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0; if (!d) return;
+      var n = tabs[(i + d + tabs.length) % tabs.length]; n.focus(); n.click();
+    });
+  });
+  show((location.hash || "").slice(1));
+  window.addEventListener("hashchange", function () { show((location.hash || "").slice(1)); });
+})();
+</script>
