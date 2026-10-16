@@ -455,6 +455,8 @@ const atCheckpoint = (E, run) => ({ ok: true, status: "checkpoint", run_id: run.
 const arrived = (run) => Object.assign(project(run, "arrived", { ok: true, run_id: run.run_id, hail_id: run.id, planned_by: "Grok bot (connector)", ...(run.player_id ? { player_id: run.player_id } : {}) }), run.score);
 
 const FREE_PLANS = 6; // R.score's planning economy: 6 plans free, then a point each
+/** What a ride scores beyond the engine (whose sha256 is in meta.json): bump it when land() changes what it hands R.score. */
+export const SCORE_VERSION = 1;
 /** The open checkpoint as a bot sees it: what stopped the car, where it stands, and what each answer costs so far. */
 function situation(E, run) {
   const R = E.R, ride = run.ride, cp = openCheckpoint(run);
@@ -574,20 +576,23 @@ const RUN_TOOLS = {
   dispatch: (E, run, inp, ctx) => dispatch(E, run, inp, ctx.nowMs),
   decide: (E, run, inp, ctx) => decide(E, run, inp, ctx.legFn),
 };
+/** Counts one call on a bench run (budget set), or refuses it once the budget is used; a season run counts none.
+ *  applyTool counts the run-scoped tools; a bench host counts list_hails, take_hail and get_my_rides with it too. */
+export function spend(run) {
+  if (run.budget == null) return;
+  if (run.tool_calls >= run.budget) fail("this task has used its budget of " + run.budget + " tool calls; no more calls are answered");
+  run.tool_calls++;
+}
 /** One tool call: { run, result }. The run passed in is never changed. run is the run after the call, or null when the call
  *  left it as it was, so a caller saves exactly when it is not null (a failed plan still counts, a cold hail is abandoned).
- *  result is the tool's answer, or { error } for a game error. ctx: { nowMs, legFn? }.
- *  A bench run (budget set) counts every call in tool_calls and refuses calls once the budget is used; a season run counts none. */
+ *  result is the tool's answer, or { error } for a game error. ctx: { nowMs, legFn? }. */
 export async function applyTool(E, run, tool, input, ctx) {
   const apply = own(RUN_TOOLS, tool);
   if (!apply) throw new Error("not a run tool: " + tool);
   const next = structuredClone(run);
   let result;
   try {
-    if (next.budget != null) {
-      if (next.tool_calls >= next.budget) fail("this task has used its budget of " + next.budget + " tool calls; no more calls are answered");
-      next.tool_calls++;
-    }
+    spend(next);
     result = await apply(E, next, input, ctx);
   } catch (e) {
     if (!(e instanceof GameError)) throw e;
