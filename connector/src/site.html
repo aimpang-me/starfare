@@ -267,6 +267,18 @@ var PL = E.PLACES.map(function(p){ var q = Object.assign({}, p, LOOK[p.id] || {}
 var PID = {}; PL.forEach(function(p){ PID[p.id] = p; });
 var PLANETS = PL.filter(function(p){ return p.kind === "planet"; }).map(function(p){ return p.id; });
 function pos(id, jd){ return E.placeState(id, jd).r; }
+function add(a, b){ return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
+function cross(a, b){ return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+// A station or moon that circles its parent in a few sky hours goes round several times a real second at one sky day a second,
+// and drawn where it really is it strobes and spins. The map pins it to one point of its orbit and draws the orbit instead.
+var FAST = {};
+PL.forEach(function(P){ if (!P.parent) return; var jd = sky().jd, dt = 1 / 60;
+  var a = E.sub(pos(P.id, jd), pos(P.parent, jd)), b = E.sub(pos(P.id, jd + dt), pos(P.parent, jd + dt)), n = cross(a, b), nn = Math.hypot.apply(null, n);
+  if (Math.atan2(nn, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]) > 0.2) FAST[P.id] = { u: a, w: cross(n, a).map(function(x){ return x / nn; }) }; });
+function at(id, jd){ var f = FAST[id]; return f ? add(at(PID[id].parent, jd), f.u) : pos(id, jd); } // where the map draws a place
+function ring(id, jd){ var f = FAST[id], c = at(PID[id].parent, jd), pts = [];
+  for (var i = 0; i <= 48; i++){ var t = i / 48 * 2 * Math.PI; pts.push(add(c, add(f.u.map(function(x){ return x * Math.cos(t); }), f.w.map(function(x){ return x * Math.sin(t); })))); }
+  return pts; }
 
 var cv = $("sky"), ctx = cv.getContext("2d"), W = 0, H = 0, DPR = 1;
 function resize(){ var r = cv.getBoundingClientRect(); DPR = Math.min(2, window.devicePixelRatio || 1); W = r.width; H = r.height; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); }
@@ -298,8 +310,8 @@ function flushLabels(){
   LBL = [];
 }
 function dispR(P){ var b = clamp(W / 120, 5, 12); return P.id === "jupiter" || P.id === "saturn" ? b * 1.7 : P.big ? b * 1.3 : b; } // not to scale, like a poster
-function hidden(P, st, jd){ // a moon or station drawn on top of its parent at this zoom
-  if (!P.parent) return false; var px = Math.hypot.apply(null, E.sub(st.r, pos(P.parent, jd))) * V.s;
+function hidden(P, r, jd){ // a moon or station drawn on top of its parent at this zoom
+  if (!P.parent) return false; var px = Math.hypot.apply(null, E.sub(r, at(P.parent, jd))) * V.s;
   return px < (PID[P.parent] && PID[P.parent].kind === "planet" ? dispR(PID[P.parent]) : 0) + 9;
 }
 var PICK = [];
@@ -318,7 +330,7 @@ function draw(){
   // open hails: a straight line from pickup to destination (not the route), and a ring at the waiting rider
   var pulse = REDUCED ? 0.3 : (Date.now() % 1800) / 1800;
   SITE.hails.forEach(function(h){
-    var a = proj(pos(h.from.id, jd)), b = proj(pos(h.to.id, jd)), ax = sx(a[0]), ay = sy(a[1]), bx = sx(b[0]), by = sy(b[1]);
+    var a = proj(at(h.from.id, jd)), b = proj(at(h.to.id, jd)), ax = sx(a[0]), ay = sy(a[1]), bx = sx(b[0]), by = sy(b[1]);
     ctx.setLineDash([4, 5]); ctx.strokeStyle = "rgba(156,195,255,.6)"; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); ctx.setLineDash([]);
     ctx.strokeStyle = "rgba(255,207,122," + (0.8 - pulse * 0.7) + ")"; ctx.beginPath(); ctx.arc(ax, ay, 5 + pulse * 12, 0, 7); ctx.stroke();
     ctx.fillStyle = "#ffcf7a"; ctx.beginPath(); ctx.arc(ax, ay, 3, 0, 7); ctx.fill();
@@ -326,9 +338,10 @@ function draw(){
   });
   PL.forEach(function(P){
     if (P.kind === "station" && V.s * 1e6 < 20) return;
-    var st = E.placeState(P.id, jd), q = proj(st.r), x = sx(q[0]), y = sy(q[1]);
-    if (x < -60 || x > W + 60 || y < -60 || y > H + 60 || hidden(P, st, jd)) return;
-    var r = Math.max(P.kind === "planet" ? Math.max(2.5, Math.min(dispR(P), 0.3 * Math.hypot(st.r[0], st.r[1]) * V.s)) : P.kind === "station" ? 2.2 : 3, (P.radius_km || 0) * V.s);
+    var loc = at(P.id, jd), q = proj(loc), x = sx(q[0]), y = sy(q[1]);
+    if (x < -60 || x > W + 60 || y < -60 || y > H + 60 || hidden(P, loc, jd)) return;
+    if (FAST[P.id]){ ctx.strokeStyle = "rgba(255,255,255,.13)"; line(ring(P.id, jd), true); }
+    var r = Math.max(P.kind === "planet" ? Math.max(2.5, Math.min(dispR(P), 0.3 * Math.hypot(loc[0], loc[1]) * V.s)) : P.kind === "station" ? 2.2 : 3, (P.kind === "station" ? 0 : P.radius_km || 0) * V.s); // a station's radius_km is its parent's
     if (P.kind === "station"){ ctx.fillStyle = P.real ? "#86d9a8" : "#ffb65c"; ctx.fillRect(x - 2.5, y - 2.5, 5, 5); }
     else { if (P.id === "saturn" && r > 3){ ctx.strokeStyle = "rgba(227,207,154,.7)"; ctx.lineWidth = Math.max(1, r * .18); ctx.beginPath(); ctx.ellipse(x, y, r * 2.2, r * 2.2 * Math.max(.18, Math.cos(TILT * Z.tilt)), -.35, 0, 7); ctx.stroke(); ctx.lineWidth = 1; }
       ball(x, y, r, P.color || "#9aa3ad", P.kind === "planet" ? "rgba(255,255,255,.06)" : null); }
@@ -338,9 +351,9 @@ function draw(){
   // the fleet, parked at its stations (simulated)
   var seen = {};
   SITE.fleet.forEach(function(c){
-    var P = PID[c.parked_at.id]; if (!P) return; var st = E.placeState(P.id, jd);
-    if (P.kind === "station" && V.s * 1e6 < 20 || hidden(P, st, jd) && Z.cur < 7) { st = E.placeState(system(P.id), jd); }
-    var q = proj(st.r), k = Math.round(sx(q[0]) / 6) + ":" + Math.round(sy(q[1]) / 6), i = seen[k] = (seen[k] || 0) + 1;
+    var P = PID[c.parked_at.id]; if (!P) return; var r = at(P.id, jd);
+    if (P.kind === "station" && V.s * 1e6 < 20 || hidden(P, r, jd) && Z.cur < 7) r = at(system(P.id), jd);
+    var q = proj(r), k = Math.round(sx(q[0]) / 6) + ":" + Math.round(sy(q[1]) / 6), i = seen[k] = (seen[k] || 0) + 1;
     var x = sx(q[0]) + 6 + 7 * i, y = sy(q[1]) - 8; if (x < -20 || x > W + 20 || y < -20 || y > H + 20) return;
     ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI / 4); ctx.fillStyle = "#7f8a99"; ctx.strokeStyle = "#06080c"; ctx.fillRect(-3, -3, 6, 6); ctx.strokeRect(-3, -3, 6, 6); ctx.restore();
     PICK.push([x, y, 10, "car", c]);
@@ -357,7 +370,7 @@ function system(id){ var p = PID[id]; while (p && p.parent) p = PID[p.parent]; r
 function hailZoom(){ var jd = sky().jd, far = 0; SITE.hails.forEach(function(h){ far = Math.max(far, Math.hypot.apply(null, pos(h.from.id, jd)), Math.hypot.apply(null, pos(h.to.id, jd))); });
   return clamp(Math.log10(far * (W < 600 ? 2.5 : 2.3)), 8.6, 10.2); }
 function setZ(mode){ Z.mode = mode;
-  Z.cT = mode === "earth" ? 1 : 0; if (mode === "earth") Z.focus = "earth";
+  if (mode !== "free") Z.cT = mode === "earth" ? 1 : 0; if (mode === "earth") Z.focus = "earth";
   Z.target = mode === "hails" ? hailZoom() : mode === "inner" ? 8.75 : mode === "all" ? 10.12 : mode === "earth" ? 5.6 : Z.target;
   document.querySelectorAll(".zoombar .chip").forEach(function(c){ if (c.dataset.z !== "tilt") c.setAttribute("aria-pressed", String(c.dataset.z === mode)); }); }
 document.querySelector(".zoombar").addEventListener("click", function(e){ var c = e.target.closest(".chip"); if (!c) return;
