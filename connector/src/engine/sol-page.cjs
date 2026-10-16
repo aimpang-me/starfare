@@ -1132,7 +1132,7 @@ function score(id, legs, ctx){
 return { DWELL: DWELL, WINDOW: WINDOW, MISSIONS: MISSIONS, BY: BY, planLeg: planLeg, par: par, terms: terms, check: check, score: score };
 })(SOLE);
 
-// SOL ride hails: simulated riders (NPCs) hail a robotaxi; the dispatcher picks a car from the simulated fleet,
+// Starfare ride hails: simulated riders (NPCs) hail a robotaxi; the dispatcher picks a car from the simulated fleet,
 // plans the pickup and the ride, quotes the fare and arrival, and is scored. Appended to the engine bundle by
 // world/bundle.py as `SOLE.R`, so the page, its worker and the Grok connector all score the same way.
 // Pure functions of the engine; no DOM, no storage.
@@ -1143,13 +1143,13 @@ var WINDOW = 120;        // a leg may depart up to this many days after it is al
 var LEAD = 150;          // long-haul hails are booked this many sky days ahead (quick hails: 1 day)
 // The simulated robotaxi fleet: flying roadsters parked at stations and moons. Same in every season.
 var FLEET = [
-  { id: "sol-01", name: "SOL-01", at: "orbital-depot" },
-  { id: "sol-02", name: "SOL-02", at: "lunar-data-center" },
-  { id: "sol-03", name: "SOL-03", at: "mars-base" },
-  { id: "sol-04", name: "SOL-04", at: "ceres" },
-  { id: "sol-05", name: "SOL-05", at: "europa" },
-  { id: "sol-06", name: "SOL-06", at: "callisto" },
-  { id: "sol-07", name: "SOL-07", at: "titan-dock" }
+  { id: "sf-01", name: "SF-01", at: "orbital-depot" },
+  { id: "sf-02", name: "SF-02", at: "lunar-data-center" },
+  { id: "sf-03", name: "SF-03", at: "mars-base" },
+  { id: "sf-04", name: "SF-04", at: "ceres" },
+  { id: "sf-05", name: "SF-05", at: "europa" },
+  { id: "sf-06", name: "SF-06", at: "callisto" },
+  { id: "sf-07", name: "SF-07", at: "titan-dock" }
 ];
 var CAR = {}; FLEET.forEach(function(c){ CAR[c.id] = c; });
 // Simulated riders. Names are made up; every number comes from the engine.

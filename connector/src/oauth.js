@@ -1,10 +1,10 @@
-// Optional OAuth sign-in (SOL_OAUTH = "on"). Same setup as Wingbot's web/src/oauth/: @cloudflare/workers-oauth-provider
+// Optional OAuth sign-in (STARFARE_OAUTH = "on"). Same setup as Wingbot's web/src/oauth/: @cloudflare/workers-oauth-provider
 // with dynamic client registration, PKCE and a consent page. Starfare has no accounts and no private data, so the consent
 // page is one click: Allow mints an anonymous player identity (a fresh random id per grant). Nothing else changes:
 // tools, run_id rules and scoring are the same as with OAuth off; runs and the board just carry the player tag.
 //
 // Storage: the provider keeps clients, grants and tokens in env.OAUTH_KV. If a KV namespace is bound as OAUTH_KV
-// (Wingbot's way) it is used. If not, SolAuth below stands in: a SQLite Durable Object with the small part of the KV
+// (Wingbot's way) it is used. If not, StarfareAuth below stands in: a SQLite Durable Object with the small part of the KV
 // API the provider calls, so turning OAuth on needs no namespace to create, only the var.
 import { DurableObject } from "cloudflare:workers";
 import { AuthorizationError, CimdFetchError, OAuthProvider } from "@cloudflare/workers-oauth-provider";
@@ -14,13 +14,13 @@ export const SCOPES = ["play"];
 export const PLAYER_ID = /^p_[0-9a-f]{16}$/;
 const PROTECTED_RESOURCE_ROOT = "/.well-known/oauth-protected-resource";
 
-export const oauthOn = (env) => env.SOL_OAUTH === "on";
+export const oauthOn = (env) => env.STARFARE_OAUTH === "on";
 const newPlayerId = () => "p_" + [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, "0")).join("");
 
 // ---- KV stand-in -----------------------------------------------------------------------------------------------
 
 /** One instance ("auth"). Rows expire like KV entries: expired rows are invisible and are swept on writes. */
-export class SolAuth extends DurableObject {
+export class StarfareAuth extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
     this.sql = ctx.storage.sql;
@@ -50,7 +50,7 @@ export class SolAuth extends DurableObject {
   }
 }
 
-/** The KV methods the provider uses (get text/json, put with expirationTtl/expiration/metadata, delete, list), over SolAuth. */
+/** The KV methods the provider uses (get text/json, put with expirationTtl/expiration/metadata, delete, list), over StarfareAuth. */
 function doKv(ns) {
   const stub = ns.get(ns.idFromName("auth")); // per request: a stub is an I/O object and cannot cross requests
   return {
@@ -71,7 +71,7 @@ function doKv(ns) {
 
 /** env with OAUTH_KV filled in, built fresh for each request. The provider reads env.OAUTH_KV, so the stand-in has to live on env. */
 function withKv(env) {
-  return env.OAUTH_KV ? env : Object.assign(Object.create(env), { OAUTH_KV: doKv(env.SOL_AUTH) });
+  return env.OAUTH_KV ? env : Object.assign(Object.create(env), { OAUTH_KV: doKv(env.STARFARE_AUTH) });
 }
 
 // ---- consent page ----------------------------------------------------------------------------------------------

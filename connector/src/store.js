@@ -1,7 +1,7 @@
 // Durable Objects that hold the connector's state.
-//   SolRun: one per run_id. Holds the run and does the planning, so one run's tool calls are serialized
+//   StarfareRun: one per run_id. Holds the run and does the planning, so one run's tool calls are serialized
 //           and different players plan in parallel.
-//   SolHub: one global instance. Plan+re-fly cache, hail-terms cache (keyed by hail, t0, season end and hazard seed),
+//   StarfareHub: one global instance. Plan+re-fly cache, hail-terms cache (keyed by hail, t0, season end and hazard seed),
 //           best score per hail, per-IP rate limit.
 //           (The best table's key column is still called mission_id; it holds the hail id.)
 // Every RPC method returns plain data; game errors come back as { error } instead of throwing across RPC.
@@ -10,12 +10,12 @@ import { engine } from "./engine.js";
 import { GameError, checkPad, computeLeg, dispatch, hailInfo, legKey, legPub, newRun, planPickup, planRideLeg, spaceWeather } from "./game.js";
 
 export const RUN_ID = /^run_[0-9a-f]{20}$/;
-export const hub = (env) => env.SOL_HUB.get(env.SOL_HUB.idFromName("hub"));
-export const runStub = (env, runId) => env.SOL_RUN.get(env.SOL_RUN.idFromName(runId));
+export const hub = (env) => env.STARFARE_HUB.get(env.STARFARE_HUB.idFromName("hub"));
+export const runStub = (env, runId) => env.STARFARE_RUN.get(env.STARFARE_RUN.idFromName(runId));
 
 const CACHE_MAX = 5000;
 
-export class SolRun extends DurableObject {
+export class StarfareRun extends DurableObject {
   async #run() { return (await this.ctx.storage.get("run")) ?? null; }
   async #save(run) { await this.ctx.storage.put("run", run); }
   async #guard(fn) {
@@ -36,7 +36,7 @@ export class SolRun extends DurableObject {
         return slim;
       };
       const run = await newRun(E, hailId, Date.now(), runId, termsFn);
-      if (playerId) run.player_id = playerId; // SOL_OAUTH on only; a label, the run_id rules do not change
+      if (playerId) run.player_id = playerId; // STARFARE_OAUTH on only; a label, the run_id rules do not change
       await this.#save(run);
       return hailInfo(E, run, Date.now());
     });
@@ -111,7 +111,7 @@ export class SolRun extends DurableObject {
   }
 }
 
-export class SolHub extends DurableObject {
+export class StarfareHub extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
     this.sql = ctx.storage.sql;

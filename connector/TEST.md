@@ -4,8 +4,8 @@
 
 - Build: `engine copied: 493178 bytes, sha256 e8634d4297c3f306…`.
 - `node --test test/game.test.mjs`: **17 of 17** (was 10). New: the season seed, fleet `busy_until`, the score from `R.fly` part by part on 18 dispatches, a clean 100 when nothing is in the way, the promise (late, kept, early, wrong), the busy-car rule in `plan_pickup` and `dispatch`, `check_pad` never showing unscheduled traffic, `space_weather` showing odds only, forecast input validation and the run log, determinism per season seed.
-- `node test/e2e.mjs`: **30 of 30** (off 19 of 19, on 11 of 11), three full runs. `wrangler.jsonc` now ships `SOL_OAUTH` `"on"`, so the off phase starts `wrangler dev` with `--var SOL_OAUTH:off`. New off checks: the fleet's `busy_until`, a busy car's pickup, and the two forecast tools (equal to the engine's forecasts for the run's seed, booked berths only, bad input refused, free, listed in the dispatch log). Every scored run is compared with `R.fly` + `R.score` in Node on the same legs and seed, including the incidents.
-- Dry run: `Total Upload: 4035.86 KiB / gzip: 974.47 KiB`, `env.SOL_OAUTH ("on")`.
+- `node test/e2e.mjs`: **30 of 30** (off 19 of 19, on 11 of 11), three full runs. `wrangler.jsonc` now ships `STARFARE_OAUTH` `"on"`, so the off phase starts `wrangler dev` with `--var STARFARE_OAUTH:off`. New off checks: the fleet's `busy_until`, a busy car's pickup, and the two forecast tools (equal to the engine's forecasts for the run's seed, booked berths only, bad input refused, free, listed in the dispatch log). Every scored run is compared with `R.fly` + `R.score` in Node on the same legs and seed, including the incidents.
+- Dry run: `Total Upload: 4035.86 KiB / gzip: 974.47 KiB`, `env.STARFARE_OAUTH ("on")`.
 - CPU (`node test/bench.mjs`, with the season seed): quick `take_hail` 5 to 35 ms, long haul 0.9 to 1.3 s, interplanetary legs 0.3 to 0.5 s, about the same as before.
 - Example (off mode, season 8): iss-crew with the par car SF-01, rider ready 2031-07-18 00:00. The ISS pad was full (an unscheduled ship during the crew-change rush), so the car held in orbit 11.2 h (2,805 kWh). The dispatch quoted the ride leg's arrival, so it arrived 11.2 h after the promise: 82 (pickup 20, on time 20, energy 17.3, promise 0, checker 10, fare 10, economy 5); Node 82. SF-02 from the Lunar Data Center: 53. ceres-shift with SF-04: no incidents, 100. A busy car: SF-04 on iss-crew was busy until 2031-07-19 18:35, and its pickup left at 18:35 with the note. `check_pad` at the Lunar Data Center over 72 h hid 35 ship-hours of unscheduled traffic that `booked` never showed.
 
@@ -94,14 +94,14 @@ node test/e2e.mjs --mode=on                    # or: npm run e2e:on
 
 `test/e2e.mjs` was rewritten for the ride-hail tools; the harness is the same as before. It starts `wrangler dev` on a free port with a throwaway `--persist-to` directory and drives it with the MCP SDK client. Every scored run is cross-checked against the engine run directly in Node: same `rider_ready` time, same car, the same two legs through `computeLeg`, then `SOLE.R.terms` and `SOLE.R.score`, compared part by part.
 
-**Off** (`--var SOL_OAUTH:off`; `wrangler.jsonc` now ships `"on"`). Streamable HTTP (and once SSE) with no auth. A second `wrangler dev` with `--var RATE_PER_MIN:5` checks the rate limit.
+**Off** (`--var STARFARE_OAUTH:off`; `wrangler.jsonc` now ships `"on"`). Streamable HTTP (and once SSE) with no auth. A second `wrangler dev` with `--var RATE_PER_MIN:5` checks the rate limit.
 
-**On** (`--var SOL_OAUTH:on`, `RATE_PER_MIN` raised to 1000 so the test is not throttled). The SDK's own OAuth client (`OAuthClientProvider` plus `StreamableHTTPClientTransport`'s `authProvider`) connects with no token and does what grok.com did with Wingbot: it gets the 401, follows `resource_metadata` to both metadata documents, registers itself at `/register`, and builds the `/authorize` URL with PKCE S256 and `resource`. The test then opens that URL like a browser, checks the page has Allow and Deny and no code or password field, presses Allow, and hands the code back to the SDK (`finishAuth`), which exchanges it at `/token`. The reconnected client lists the tools and plays a scored hail. A hand-rolled client covers Deny and a wrong PKCE verifier, and a third `wrangler dev` with `RATE_PER_MIN:5` checks the limit over the OAuth endpoints.
+**On** (`--var STARFARE_OAUTH:on`, `RATE_PER_MIN` raised to 1000 so the test is not throttled). The SDK's own OAuth client (`OAuthClientProvider` plus `StreamableHTTPClientTransport`'s `authProvider`) connects with no token and does what grok.com did with Wingbot: it gets the 401, follows `resource_metadata` to both metadata documents, registers itself at `/register`, and builds the `/authorize` URL with PKCE S256 and `resource`. The test then opens that URL like a browser, checks the page has Allow and Deny and no code or password field, presses Allow, and hands the code back to the SDK (`finishAuth`), which exchanges it at `/token`. The reconnected client lists the tools and plays a scored hail. A hand-rolled client covers Deny and a wrong PKCE verifier, and a third `wrangler dev` with `RATE_PER_MIN:5` checks the limit over the OAuth endpoints.
 
 Run of `npm test` (build, the Node tests, then `node test/e2e.mjs` in both modes), checks:
 
 ```
-== SOL_OAUTH=off ==
+== STARFARE_OAUTH=off ==
 wrangler dev up at http://127.0.0.1:41967
 PASS  tools/list is exactly the eight ride-hail tools
 PASS  list_hails returns the engine's hails (SOLE.R.HAILS) and the fleet
@@ -122,7 +122,7 @@ PASS  SSE transport also works (list_hails, take_hail, get_hail)
 PASS  GET /board and /board.json: best per hail with hail titles, labelled planned by Grok bot
 PASS  off: no OAuth: /mcp needs no token, OAuth endpoints are 404, runs carry no player_id
 PASS  per-IP rate limit answers 429 past RATE_PER_MIN
-== SOL_OAUTH=on ==
+== STARFARE_OAUTH=on ==
 wrangler dev up at http://127.0.0.1:45741
 PASS  on: /, /board and /board.json stay public; /mcp without a token is 401
 PASS  on: the 401 points at protected-resource metadata; authorization-server metadata has DCR, PKCE S256, scope play
@@ -239,12 +239,12 @@ node node_modules/wrangler/bin/wrangler.js deploy --dry-run --outdir /tmp/sol-co
 ```
 Total Upload: 4010.27 KiB / gzip: 966.63 KiB
 Binding                         Resource
-env.MCP_OBJECT (SolMcp)         Durable Object
-env.SOL_RUN (SolRun)            Durable Object
-env.SOL_HUB (SolHub)            Durable Object
-env.SOL_AUTH (SolAuth)          Durable Object
+env.MCP_OBJECT (StarfareMcp)         Durable Object
+env.STARFARE_RUN (StarfareRun)            Durable Object
+env.STARFARE_HUB (StarfareHub)            Durable Object
+env.STARFARE_AUTH (StarfareAuth)          Durable Object
 env.RATE_PER_MIN ("120")        Environment Variable
-env.SOL_OAUTH ("off")           Environment Variable
+env.STARFARE_OAUTH ("off")           Environment Variable
 --dry-run: exiting now.
 ```
 
@@ -271,7 +271,7 @@ data: {"result":{"protocolVersion":"2025-03-26","capabilities":{"tools":{"listCh
 
 (Headers and the instructions text are trimmed here.) An unauthenticated `initialize` gets 200, so a client has no reason to start OAuth.
 
-The same with OAuth on (`wrangler dev --var SOL_OAUTH:on`), the requests from DEPLOY.md "Turning OAuth on", step 3, were run against the mission version and are covered for this version by the on-mode e2e checks above (401 with `resource_metadata`, both metadata documents):
+The same with OAuth on (`wrangler dev --var STARFARE_OAUTH:on`), the requests from DEPLOY.md "Turning OAuth on", step 3, were run against the mission version and are covered for this version by the on-mode e2e checks above (401 with `resource_metadata`, both metadata documents):
 
 ```sh
 curl -si -X POST $URL/mcp | head -5
@@ -281,4 +281,4 @@ curl -s $URL/.well-known/oauth-authorization-server | head -c 400
 
 ## Not tested
 
-A Cloudflare deployment, the workers.dev hostname, real CPU limits on Cloudflare (all CPU numbers are Node or local-workerd timings), grok.com's connector form, Grok as an MCP client (with OAuth off or on), the `SolAuth` OAuth storage on Cloudflare rather than local workerd, how per-IP limits behave when every request comes from xAI's servers, and the in-page ride dispatcher (`sol/world/template.html` still has the mission dispatcher, so connector and page scores could not be compared on the page itself; the connector is compared with `SOLE.R` in Node).
+A Cloudflare deployment, the workers.dev hostname, real CPU limits on Cloudflare (all CPU numbers are Node or local-workerd timings), grok.com's connector form, Grok as an MCP client (with OAuth off or on), the `StarfareAuth` OAuth storage on Cloudflare rather than local workerd, how per-IP limits behave when every request comes from xAI's servers, and the in-page ride dispatcher (`sol/world/template.html` still has the mission dispatcher, so connector and page scores could not be compared on the page itself; the connector is compared with `SOLE.R` in Node).

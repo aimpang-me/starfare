@@ -26,8 +26,8 @@ Score out of 100, computed by `SOLE.R.score` unchanged from what actually happen
 
 | Path | What |
 |---|---|
-| `/mcp` | MCP server, Streamable HTTP and the older SSE transport on the same path (`McpAgent`, `transport: "auto"`, same pattern as Wingbot's `web/`). No auth by default (`SOL_OAUTH` `off`). Rate limited per IP. |
-| `/.well-known/oauth-*`, `/register`, `/authorize`, `/token` | Only with `SOL_OAUTH` `on`: OAuth for `/mcp`, see "Turning OAuth on" below. With `off` they answer 404. |
+| `/mcp` | MCP server, Streamable HTTP and the older SSE transport on the same path (`McpAgent`, `transport: "auto"`, same pattern as Wingbot's `web/`). No auth by default (`STARFARE_OAUTH` `off`). Rate limited per IP. |
+| `/.well-known/oauth-*`, `/register`, `/authorize`, `/token` | Only with `STARFARE_OAUTH` `on`: OAuth for `/mcp`, see "Turning OAuth on" below. With `off` they answer 404. |
 | `/board` | Scoreboard page: best connector score per hail, with the hail titles, labelled "planned by Grok bot". `/board.json` is the same data. |
 | `/` | One line of plain text saying where the connector and the board are. |
 
@@ -46,9 +46,9 @@ Tools:
 
 **No auth (the default).** The Starfare tools expose no private data: hails, plans and scores are game data. A run is addressed by an unguessable `run_id` (`run_` plus 20 random hex characters), so nobody can dispatch somebody else's run without being given its id. Leg ids are only looked up inside their own run.
 
-Why no OAuth by default: what is known now is that grok.com **does** accept a custom connector that uses OAuth (the Wingbot connector worked: Grok ran dynamic client registration, PKCE and the consent page, then called a tool). Whether it accepts one with **no** auth is still unknown. xAI's page (docs.x.ai/grok/connectors) says only "complete any required authentication", and third-party guides show optional OAuth fields, which suggests a URL-only connector is allowed. A server that answers an unauthenticated `initialize` with 200 never asks a well-behaved client to start OAuth. If grok.com refuses the no-auth server, that is the first thing step 5 will show, and the fix is one var: `SOL_OAUTH` `on` (section "Turning OAuth on"), which is built and tested locally.
+Why no OAuth by default: what is known now is that grok.com **does** accept a custom connector that uses OAuth (the Wingbot connector worked: Grok ran dynamic client registration, PKCE and the consent page, then called a tool). Whether it accepts one with **no** auth is still unknown. xAI's page (docs.x.ai/grok/connectors) says only "complete any required authentication", and third-party guides show optional OAuth fields, which suggests a URL-only connector is allowed. A server that answers an unauthenticated `initialize` with 200 never asks a well-behaved client to start OAuth. If grok.com refuses the no-auth server, that is the first thing step 5 will show, and the fix is one var: `STARFARE_OAUTH` `on` (section "Turning OAuth on"), which is built and tested locally.
 
-**Rate limit:** each IP gets `RATE_PER_MIN` requests a minute on `/mcp` (default 120; fixed one-minute window; counted in the `SolHub` Durable Object's memory, so a restart resets it). When Grok calls the connector, the requests come from xAI's servers, not from the player. All Grok players may then share a few IPs and one budget. Watch `wrangler tail` for 429s after launch and raise `RATE_PER_MIN` if needed. A run also stops accepting plans after 40 `plan_pickup` and `plan_ride` calls, which bounds the CPU one run can spend.
+**Rate limit:** each IP gets `RATE_PER_MIN` requests a minute on `/mcp` (default 120; fixed one-minute window; counted in the `StarfareHub` Durable Object's memory, so a restart resets it). When Grok calls the connector, the requests come from xAI's servers, not from the player. All Grok players may then share a few IPs and one budget. Watch `wrangler tail` for 429s after launch and raise `RATE_PER_MIN` if needed. A run also stops accepting plans after 40 `plan_pickup` and `plan_ride` calls, which bounds the CPU one run can spend.
 
 **"Planned by Grok bot" is a label, not a check.** Any MCP client can call `/mcp`. The board says so.
 
@@ -68,7 +68,7 @@ Through `wrangler dev` (local workerd, so wall time including the MCP and Durabl
 
 The free plan allows 10 ms of CPU per request. Long-haul `take_hail` is 100 to 200 times over that, an interplanetary leg 40 to 70 times, and even a quick `take_hail` can go over it. The paid plan's default is 30 s per request, which is plenty. The free plan would at best play quick hails with nearby cars some of the time, so I did not try to make it fit. Durable Objects on the free plan need SQLite storage; this Worker uses SQLite-backed classes only, so the bindings work on either plan.
 
-Caching: every leg (plan plus re-fly) is cached in `SolHub` keyed by `from|to|depart-after|objective|season-end`, and hail terms are cached by `hail|t0|season-end` (5,000 rows each, oldest dropped first). Be honest with yourself about the hit rate: the sky clock moves one sky day per real second, so `t0` changes every second and two players rarely ask for the same leg. The cache mainly helps a bot that re-plans the same leg, and players who take the same hail in the same second.
+Caching: every leg (plan plus re-fly) is cached in `StarfareHub` keyed by `from|to|depart-after|objective|season-end`, and hail terms are cached by `hail|t0|season-end` (5,000 rows each, oldest dropped first). Be honest with yourself about the hit rate: the sky clock moves one sky day per real second, so `t0` changes every second and two players rarely ask for the same leg. The cache mainly helps a bot that re-plans the same leg, and players who take the same hail in the same second.
 
 ## Local development [verified]
 
@@ -90,7 +90,7 @@ Re-run `npm run build` whenever `sol/world/engine/sol-page.js` (rebuilt by `sol/
 | Name | Kind | Meaning |
 |---|---|---|
 | `RATE_PER_MIN` | var | Requests a minute per IP on `/mcp` (and, with OAuth on, on the OAuth endpoints too). Default `120`. |
-| `SOL_OAUTH` | var | `off` (default): no auth. `on`: OAuth with a one-click consent page. Only `on` exactly turns it on. |
+| `STARFARE_OAUTH` | var | `off` (default): no auth. `on`: OAuth with a one-click consent page. Only `on` exactly turns it on. |
 
 No secrets.
 
@@ -116,7 +116,7 @@ npm run build
 node node_modules/wrangler/bin/wrangler.js deploy
 ```
 
-No databases or KV namespaces to create: all state is in Durable Objects (`SolMcp` per MCP session, `SolRun` per run, one `SolHub`, and one `SolAuth` that only OAuth mode uses), created by the `v1` and `v2` migrations on first deploy. The first deploy may ask you to register a workers.dev subdomain. It prints the URL, for example `https://sol-connector.alvin.workers.dev`. Call it `$URL` below. `npm run dry-run` bundles cleanly [verified]: 4,036 KiB, 974 KiB gzipped, under the free plan's 3 MB gzipped limit and the paid plan's 10 MB.
+No databases or KV namespaces to create: all state is in Durable Objects (`StarfareMcp` per MCP session, `StarfareRun` per run, one `StarfareHub`, and one `StarfareAuth` that only OAuth mode uses), created by the `v1` and `v2` migrations on first deploy. The first deploy may ask you to register a workers.dev subdomain. It prints the URL, for example `https://sol-connector.alvin.workers.dev`. Call it `$URL` below. `npm run dry-run` bundles cleanly [verified]: 4,036 KiB, 974 KiB gzipped, under the free plan's 3 MB gzipped limit and the paid plan's 10 MB.
 
 ### 3. Check the deployment from your terminal
 
@@ -166,20 +166,20 @@ If it fails, the useful facts are where it stopped (URL rejected, an OAuth promp
 
 **When:** only if step 5 fails because of auth: Grok rejects the URL, says the server needs authentication, or shows an empty tool list for the no-auth connector. If Grok lists the eight tools with OAuth off, leave it off.
 
-**What changes with `SOL_OAUTH` `on`.** It is the same setup as Wingbot's `web/` (`@cloudflare/workers-oauth-provider` 1.2.3, Wingbot's version), so Grok sees the same flow it already completed with Wingbot:
+**What changes with `STARFARE_OAUTH` `on`.** It is the same setup as Wingbot's `web/` (`@cloudflare/workers-oauth-provider` 1.2.3, Wingbot's version), so Grok sees the same flow it already completed with Wingbot:
 
 - `/mcp` without a token answers 401 with `WWW-Authenticate: Bearer realm="OAuth", resource_metadata=".../.well-known/oauth-protected-resource/mcp"`. Grok follows that to the metadata, registers itself at `/register`, opens `/authorize` with PKCE, and exchanges the code at `/token`.
 - The consent page ("Allow Grok to play Starfare?") has one Allow button and a Deny button. There is no owner code or login, because Starfare has no accounts and nothing private. Allow creates a new anonymous player id (`p_` plus 16 random hex characters) for that grant. Every grant gets a new one.
 - Tools, `run_id` rules and scoring do not change. A run taken with OAuth on also carries the grant's `player_id` (in `take_hail`, `get_hail` and `dispatch` results), and the board row says "planned by Grok bot · player 1a2b3c" (the first six hex characters). Any session that has a `run_id` can still play that run, as with OAuth off.
 - `/`, `/board` and `/board.json` stay public. The per-IP rate limit covers `/mcp` and the OAuth endpoints.
-- Clients, grants and tokens are stored in the `SolAuth` Durable Object, so no KV namespace is needed. If you would rather do it Wingbot's way, create a KV namespace, bind it as `OAUTH_KV` in `wrangler.jsonc`, and the Worker uses it instead (tested locally with the local KV on the mission version, see TEST.md). Lifetimes are the provider's defaults: access tokens 1 hour, refresh tokens 30 days (after that Grok asks for one more click on Allow), registered clients 90 days.
+- Clients, grants and tokens are stored in the `StarfareAuth` Durable Object, so no KV namespace is needed. If you would rather do it Wingbot's way, create a KV namespace, bind it as `OAUTH_KV` in `wrangler.jsonc`, and the Worker uses it instead (tested locally with the local KV on the mission version, see TEST.md). Lifetimes are the provider's defaults: access tokens 1 hour, refresh tokens 30 days (after that Grok asks for one more click on Allow), registered clients 90 days.
 
 What it does not protect: anyone can click Allow, so anyone can get a player id. It is a label, not an account, exactly like "planned by Grok bot". The rate limit bounds how fast grants can be made.
 
 **Steps.** Run them from `sol/connector`. Alvin already has wrangler logged in to his Cloudflare account on his desktop from the Wingbot deploy, so step 1 above should not be needed there: run `node node_modules/wrangler/bin/wrangler.js whoami` to confirm it shows that account, and run `login` only if it does not [not verified].
 
-1. In `wrangler.jsonc`, change `"SOL_OAUTH": "off"` to `"SOL_OAUTH": "on"` [verified locally: the e2e test runs `wrangler dev` with `--var SOL_OAUTH:on`, which overrides the same var].
-2. Deploy: `npm run build`, then `node node_modules/wrangler/bin/wrangler.js deploy` [not verified]. The first deploy that includes this version adds the `SolAuth` class (migration `v2`). There are no secrets to set.
+1. In `wrangler.jsonc`, change `"STARFARE_OAUTH": "off"` to `"STARFARE_OAUTH": "on"` [verified locally: the e2e test runs `wrangler dev` with `--var STARFARE_OAUTH:on`, which overrides the same var].
+2. Deploy: `npm run build`, then `node node_modules/wrangler/bin/wrangler.js deploy` [not verified]. The first deploy that includes this version adds the `StarfareAuth` class (migration `v2`). There are no secrets to set.
 3. Check from your terminal [verified against `wrangler dev`; not verified against workers.dev]:
 
    ```sh
@@ -191,7 +191,7 @@ What it does not protect: anyone can click Allow, so anyone can get a player id.
 4. In Grok, remove the old Starfare connector if it is there, then add it again with the same URL, `$URL/mcp`, and leave the client id fields empty (Grok registers itself, as it did with Wingbot) [not verified]. Grok opens the Starfare consent page; press Allow. Then play as in step 5 above. On `/board` the run shows a player tag.
 5. Watch `node node_modules/wrangler/bin/wrangler.js tail sol-connector` while connecting. You should see `POST /mcp 401`, the two `/.well-known` requests, `POST /register`, `GET /authorize`, `POST /authorize`, `POST /token`, then `POST /mcp` with 200s [verified against `wrangler dev` with the MCP SDK client; not verified with Grok].
 
-**Turning it off again:** set `"SOL_OAUTH": "off"` and deploy [verified locally that `off` serves `/mcp` with no auth and answers 404 on every OAuth path]. Grok then no longer needs its token; whether it reconnects without one, or needs the connector added again, is [not verified].
+**Turning it off again:** set `"STARFARE_OAUTH": "off"` and deploy [verified locally that `off` serves `/mcp` with no auth and answers 404 on every OAuth path]. Grok then no longer needs its token; whether it reconnects without one, or needs the connector added again, is [not verified].
 
 ## Scoring over MCP
 
@@ -201,4 +201,4 @@ The in-page dispatcher in `sol/world/template.html` still plays the old delivery
 
 ## What was verified locally, and how
 
-All against `wrangler dev` with real workerd and the MCP SDK v1 client, no mocks, plus plain-Node tests (exact commands and output in TEST.md). `node test/e2e.mjs` runs both modes: OAuth off (19 checks: the eight ride tools, hails and fleet, iss-crew with the par car matching `SOLE.R.fly` + `SOLE.R.score` in Node including the incidents, a farther car scoring lower, a wrong quote losing the fare and promise points, the fleet's `busy_until`, a busy car's pickup, `check_pad` and `space_weather` (the engine's forecasts, booked berths and odds only, free, in the log), bad leg ids refused, bad run and hail ids, the long-haul ceres-shift end to end, the cache, one run per session, SSE, the board, no OAuth paths, the rate limit) and OAuth on (11 checks: the SDK's own OAuth client doing discovery, registration, PKCE, one-click Allow and token exchange, then a scored hail with a player id; Deny; a wrong PKCE verifier; refresh; SSE; the rate limit). Not covered anywhere: a Cloudflare deployment, the workers.dev hostname, real CPU limits on Cloudflare (the numbers above are Node timings), grok.com, the `SolAuth` storage on Cloudflare (only local workerd), and any MCP client other than the SDK.
+All against `wrangler dev` with real workerd and the MCP SDK v1 client, no mocks, plus plain-Node tests (exact commands and output in TEST.md). `node test/e2e.mjs` runs both modes: OAuth off (19 checks: the eight ride tools, hails and fleet, iss-crew with the par car matching `SOLE.R.fly` + `SOLE.R.score` in Node including the incidents, a farther car scoring lower, a wrong quote losing the fare and promise points, the fleet's `busy_until`, a busy car's pickup, `check_pad` and `space_weather` (the engine's forecasts, booked berths and odds only, free, in the log), bad leg ids refused, bad run and hail ids, the long-haul ceres-shift end to end, the cache, one run per session, SSE, the board, no OAuth paths, the rate limit) and OAuth on (11 checks: the SDK's own OAuth client doing discovery, registration, PKCE, one-click Allow and token exchange, then a scored hail with a player id; Deny; a wrong PKCE verifier; refresh; SSE; the rate limit). Not covered anywhere: a Cloudflare deployment, the workers.dev hostname, real CPU limits on Cloudflare (the numbers above are Node timings), grok.com, the `StarfareAuth` storage on Cloudflare (only local workerd), and any MCP client other than the SDK.

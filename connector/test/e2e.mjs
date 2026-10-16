@@ -2,8 +2,8 @@
 // drives it with the MCP SDK v1 client, like a Grok bot would. Scores are cross-checked against the engine run directly
 // in Node on the same legs: SOLE.R.fly through the season's simulated hazards (seed = the season number the run reports),
 // then SOLE.R.score with ctx.flown. Two modes, both run by default:
-//   off: --var SOL_OAUTH:off, no auth (wrangler.jsonc ships with "on").
-//   on:  SOL_OAUTH=on. The SDK's own OAuth client does what grok.com did with Wingbot: follow the 401 to the
+//   off: --var STARFARE_OAUTH:off, no auth (wrangler.jsonc ships with "on").
+//   on:  STARFARE_OAUTH=on. The SDK's own OAuth client does what grok.com did with Wingbot: follow the 401 to the
 //        metadata, register itself (DCR), authorize with PKCE, press Allow on the consent page, exchange the
 //        code, then play a hail with the access token.
 // Run: node build.mjs && node test/e2e.mjs [--mode=off|on|both]
@@ -54,7 +54,7 @@ async function startWorker(vars = {}) {
     if (Date.now() > deadline) throw new Error(`wrangler dev not ready:\n${log.join("").slice(-2000)}`);
     try { await fetch(`${base}/`); break; } catch { await sleep(250); }
   }
-  return { base, log, stop: async () => { try { process.kill(-child.pid, "SIGKILL"); } catch {} running.delete(child); rmSync(persist, { recursive: true, force: true }); await sleep(300); } };
+  return { base, log, stop: async () => { try { process.kill(-child.pid, "SIGKILL"); } catch { try { child.kill("SIGKILL"); } catch {} } running.delete(child); await sleep(300); try { rmSync(persist, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch {} } };
 }
 
 async function connect(base, kind = "streamable-http", opts) {
@@ -132,9 +132,9 @@ function assertMatchesNode(play, planCalls, quote = "exact") {
 const partsStr = (score) => score.parts.map((p) => `${p.key} ${p.got}/${p.max}`);
 
 async function phaseOff() {
-  console.log("\n== SOL_OAUTH=off (default) ==");
+  console.log("\n== STARFARE_OAUTH=off (default) ==");
   const report = {};
-  const w = await startWorker({ SOL_OAUTH: "off" }); // wrangler.jsonc ships "on" (the live setting)
+  const w = await startWorker({ STARFARE_OAUTH: "off" }); // wrangler.jsonc ships "on" (the live setting)
   console.log(`wrangler dev up at ${w.base}`);
   const client = await connect(w.base);
 
@@ -384,7 +384,7 @@ async function phaseOff() {
   await w.stop();
 
   await check("per-IP rate limit answers 429 past RATE_PER_MIN", async () => {
-    const w2 = await startWorker({ SOL_OAUTH: "off", RATE_PER_MIN: "5" });
+    const w2 = await startWorker({ STARFARE_OAUTH: "off", RATE_PER_MIN: "5" });
     try {
       const statuses = [];
       for (let i = 0; i < 7; i++) {
@@ -403,7 +403,7 @@ async function phaseOff() {
   for (const t of timings) console.log(t.ms === undefined ? t.tool : `${t.tool.padEnd(12)} ${String(t.what).padEnd(15)} ${t.ms} ms`);
 }
 
-// ---- SOL_OAUTH=on ------------------------------------------------------------------------------------------------
+// ---- STARFARE_OAUTH=on ------------------------------------------------------------------------------------------------
 
 const REDIRECT_URI = "http://127.0.0.1:9/callback";
 const noFollow = { redirect: "manual" };
@@ -472,9 +472,9 @@ async function sdkSignIn(base, name) {
 }
 
 async function phaseOn() {
-  console.log("\n== SOL_OAUTH=on ==");
+  console.log("\n== STARFARE_OAUTH=on ==");
   const report = {};
-  const w = await startWorker({ SOL_OAUTH: "on", RATE_PER_MIN: "1000" });
+  const w = await startWorker({ STARFARE_OAUTH: "on", RATE_PER_MIN: "1000" });
   const { base } = w;
   console.log(`wrangler dev up at ${base}`);
   let asMeta, a, b;
@@ -583,7 +583,7 @@ async function phaseOn() {
   } finally { await w.stop(); }
 
   await check("on: the per-IP rate limit covers /mcp and the OAuth endpoints", async () => {
-    const w2 = await startWorker({ SOL_OAUTH: "on", RATE_PER_MIN: "5" });
+    const w2 = await startWorker({ STARFARE_OAUTH: "on", RATE_PER_MIN: "5" });
     try {
       const statuses = [];
       for (const path of ["/mcp", "/.well-known/oauth-authorization-server", "/register", "/mcp", "/token", "/authorize", "/mcp"]) {

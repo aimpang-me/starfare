@@ -8,4 +8,4 @@ Not affiliated with any real company. Riders, fleet, weather and traffic are sim
 - `connector/`: the Grok MCP connector, a Cloudflare Worker named `starfare`. See `connector/DEPLOY.md` and `connector/TEST.md`.
 - `code/`, `day1`-`day6/`, `audit/`, `receipts/`: the original planner (Python), the n-body re-fly checker, evals and their results.
 
-Internal names (`SOLE`, `sol-*.js`, `SOL_OAUTH`, `SolRun`) are from the project's working title, SOL.
+Internal names (`SOLE`, `sol-*.js`, `STARFARE_OAUTH`, `StarfareRun`) are from the project's working title, SOL.

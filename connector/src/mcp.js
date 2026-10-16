@@ -1,7 +1,7 @@
 // The MCP server a player's Grok bot calls: the Starfare robotaxi dispatcher. Same game as the in-page dispatcher
 // (get_hail, plan_pickup, plan_ride, dispatch) plus list_hails and take_hail, and two free forecast tools for the
 // simulated hazards (check_pad, space_weather). Tools only forward to the run's
-// Durable Object; this class holds nothing but the session's current run_id (and, with SOL_OAUTH on, the
+// Durable Object; this class holds nothing but the session's current run_id (and, with STARFARE_OAUTH on, the
 // grant's player id in this.props).
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -31,7 +31,7 @@ const json = (v) => ({ content: [{ type: "text", text: JSON.stringify(v) }] });
 const err = (msg) => ({ content: [{ type: "text", text: msg }], isError: true });
 const out = (r) => (r && r.error ? err(r.error) : json(r));
 
-export class SolMcp extends McpAgent {
+export class StarfareMcp extends McpAgent {
   server = new McpServer({ name: "sol", version: "0.1.0" }, { instructions: INSTRUCTIONS });
   initialState = { run_id: null };
 
@@ -48,7 +48,7 @@ export class SolMcp extends McpAgent {
     }, async ({ hail_id }) => {
       const prev = this.state && this.state.run_id;
       const id = "run_" + [...crypto.getRandomValues(new Uint8Array(10))].map((b) => b.toString(16).padStart(2, "0")).join("");
-      // With SOL_OAUTH on, the grant's anonymous player id rides along on the run (and to the board). Off: null.
+      // With STARFARE_OAUTH on, the grant's anonymous player id rides along on the run (and to the board). Off: null.
       const player = this.props && typeof this.props.player_id === "string" ? this.props.player_id : null;
       const r = await runStub(this.env, id).create(id, hail_id, player);
       if (r.error) return err(r.error);
@@ -115,4 +115,4 @@ export class SolMcp extends McpAgent {
   }
 }
 
-export const mcpHandler = SolMcp.serve("/mcp", { transport: "auto" });
+export const mcpHandler = StarfareMcp.serve("/mcp", { transport: "auto" });

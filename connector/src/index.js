@@ -1,6 +1,6 @@
 // sol-connector Worker: the "bring your own Grok bot" robotaxi-dispatcher MCP server for Starfare. By default no auth (the tools expose no
 // private data); each run is addressed by an unguessable run_id, and /mcp is rate limited per IP.
-// SOL_OAUTH = "on" puts /mcp behind OAuth (src/oauth.js): one-click consent, an anonymous player id per grant.
+// STARFARE_OAUTH = "on" puts /mcp behind OAuth (src/oauth.js): one-click consent, an anonymous player id per grant.
 import { boardHtml } from "./board.js";
 import { engine } from "./engine.js";
 import { listHails } from "./game.js";
@@ -8,9 +8,9 @@ import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
 import { hub } from "./store.js";
 
-export { SolMcp } from "./mcp.js";
-export { SolAuth } from "./oauth.js";
-export { SolHub, SolRun } from "./store.js";
+export { StarfareMcp } from "./mcp.js";
+export { StarfareAuth } from "./oauth.js";
+export { StarfareHub, StarfareRun } from "./store.js";
 
 const isMcpPath = (p) => p === "/mcp" || p.startsWith("/mcp/");
 const isPublicPage = (p) => p === "/" || p === "/board" || p === "/board.json";
