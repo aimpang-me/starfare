@@ -79,10 +79,11 @@ function takeAt(E, hailId, jd) {
   if (!h) fail("unknown hail_id " + hailId + ". Call list_hails for the ids.");
   return Math.floor(jd + (h.kind === "quick" ? 1 : R.LEAD)) + 0.5;
 }
+const SEASON_TOO_SHORT = "The season ends too soon for a new hail. Wait for the reset.";
 /** Page takeHail(): t0 and the hazard seed (the season number) from the sky clock. */
 export function seasonInstance(E, hailId, nowMs) {
   const s = sky(nowMs), t0 = takeAt(E, hailId, s.jd);
-  if (t0 + 30 > SEASON_END) fail("The season ends too soon for a new hail. Wait for the reset.");
+  if (t0 + 30 > SEASON_END) fail(SEASON_TOO_SHORT);
   return { hail_id: hailId, t0, end_jd: SEASON_END, seed: String(s.season), clock: { kind: "wall" }, tag: null, budget: null };
 }
 /** A bench task: sky time frozen at clockJd, where a live take would have read it, so t0 is after the clock.
@@ -91,17 +92,21 @@ export function suiteInstance(E, task, { seed, clockJd, tag, budget }) {
   const hails = task.hails || [task.hail_id];
   return { hail_id: hails[0], ...(hails.length > 1 ? { hails } : {}), t0: takeAt(E, hails[0], clockJd), end_jd: SEASON_END, seed: String(seed), clock: { kind: "frozen", jd: clockJd }, tag, budget };
 }
+/** R.par throws "no ship can serve" when no flight leaving after t0 lands before end_jd: the season is too short. */
+async function seasonTerms(get) {
+  try { return await get(); } catch (e) { throw /^no ship can serve /.test(e.message) ? new GameError(SEASON_TOO_SHORT) : e; }
+}
 /** A new run in planning for an instance. termsFn lets the caller cache R.terms; its cache key must include the seed.
  *  A shared flight (inst.hails) takes R.termsSet: the lead's terms, par from the best pooled flight, and every booking's own terms. */
 export async function openRun(E, inst, runId, nowMs, termsFn) {
   const R = E.R, { hail_id: hailId, t0, end_jd, seed } = inst;
   let terms, set = null;
   if (inst.hails) {
-    set = R.termsSet(inst.hails, t0, end_jd, seed);
+    set = await seasonTerms(() => R.termsSet(inst.hails, t0, end_jd, seed));
     const P = set.par.pooled, B = set.bookings[hailId];
     terms = { arrive_by_jd: B.arrive_by_jd, par_kwh: P ? P.kwh : set.par.kwh, par_car: P ? P.car : set.par.split.bookings[hailId].car, best_wait_days: B.best_wait_days };
   } else {
-    const T = await (termsFn ? termsFn(hailId, t0, end_jd, seed) : R.terms(hailId, t0, end_jd, seed));
+    const T = await seasonTerms(() => termsFn ? termsFn(hailId, t0, end_jd, seed) : R.terms(hailId, t0, end_jd, seed));
     terms = { arrive_by_jd: T.arrive_by_jd, par_kwh: T.par.kwh, par_car: T.par.car, best_wait_days: T.par.best_wait_days };
   }
   return {
