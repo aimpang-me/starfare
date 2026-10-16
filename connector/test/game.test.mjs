@@ -225,7 +225,7 @@ test("space_weather shows flare odds only, never the actual storms", async () =>
   const pair = f.find((a) => stormy(a.day_jd) && f.some((b) => !stormy(b.day_jd) && b.flare_odds === a.flare_odds));
   assert.ok(pair, "no stormy and calm day with the same odds in 60 days");
   assert.equal(spaceWeather(E, run, {}, NOW).days.length, 10);
-  assert.match(out.note, /rider aboard/); assert.match(out.note, /empty car/);
+  assert.match(out.note, /rider aboard/); assert.match(out.note, /empty ship/);
 });
 
 test("forecast tools validate input, are free (not plans) and are noted in the dispatch log", async () => {
@@ -277,7 +277,7 @@ test("long haul: the hail goes cold if the first interplanetary departure passes
 
 test("wrong legs are refused; validation failures are not counted; the plan cap holds", async () => {
   const run = await seasonRun(E, "iss-crew", NOW, "run_v");
-  await assert.rejects(planPickup(E, run, { car: "nope" }), /unknown car/);
+  await assert.rejects(planPickup(E, run, { car: "nope" }), /unknown ship/);
   await assert.rejects(planRideLeg(E, run, { after_leg: "leg9" }), /unknown leg_id/);
   assert.equal(run.calls, 0);
   const p = (await planPickup(E, run, { car: "sf-01" })).leg;
@@ -509,7 +509,7 @@ test("shared flight: plan_leg chains one car's legs; the one-booking tools and s
     ["leg", "sf-04", "Ceres", "Ceres Port", "2027-10-22 00:00", "2027-10-22 02:21"],
     ["leg", "sf-04", "Ceres Port", "Mars Base", "2028-02-19 03:33", "2030-07-23 06:50"],
     ["leg", "sf-04", "Phobos", "Mars Base", "2030-07-23 10:16", "2030-07-23 12:30"]]);
-  assert.equal((await s.call("plan_leg", { after_leg: l1.leg_id, car: "sf-01", to: "mars-base" })).error, "leg1 flies SF-04; a flight is one car");
+  assert.equal((await s.call("plan_leg", { after_leg: l1.leg_id, car: "sf-01", to: "mars-base" })).error, "leg1 flies SF-04; a flight is one ship");
   assert.equal((await s.call("plan_leg", { after_leg: l1.leg_id, to: "ceres-port" })).error, "this leg would start and end at Ceres Port");
   const one = await openRun(E, suiteInstance(E, { hail_id: "iss-crew" }, { seed: "2", clockJd: 2461550.0, tag: "t", budget: null }), "run_00000000000000000002", 0);
   assert.equal((await applyTool(E, one, "plan_leg", { car: "sf-01", to: "iss" }, { nowMs: 0 })).result.error, "this flight has one booking; plan it with plan_pickup and plan_ride");

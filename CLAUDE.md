@@ -1,6 +1,6 @@
 # Starfare: notes for Claude
 
-Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi game for flying cars across the solar system. Riders, the fleet, weather and traffic are simulated; planet positions are real (NASA JPL DE421).
+Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi game for Starseeker ships across the solar system. Riders, the fleet, weather and traffic are simulated; planet positions are real (NASA JPL DE421).
 
 Read first: `docs/HANDOFF.md` (state, decisions, next steps), `docs/OPEN-QUESTIONS.md`, `docs/WEBSITES.md`, `docs/DESIGN.md`, `docs/HISTORY.md`, `docs/SPEC.md`.
 

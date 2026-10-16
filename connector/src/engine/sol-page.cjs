@@ -493,7 +493,7 @@ const titanBurn = (vinf) => wellBurn(endpointModel({ place: "titan" }).chain, vi
 // ------------------------------------------------------------------ models.py (stated, made-up-on-purpose)
 const MODELS = { CAR_DRY_KG: 1300.0, PACK_KWH: 200.0, EXHAUST_KMS: 30.0, THRUSTER_EFF: 0.60,
   USD_PER_KWH: 0.16, USD_PER_MIN: 0.35 };
-const ASSUMPTIONS = ["car 1300 kg dry with a 200 kWh pack",
+const ASSUMPTIONS = ["ship 1300 kg dry with a 200 kWh pack",
   "electric thruster: 30 km/s exhaust, 60% efficient, burns treated as instant",
   "fare = $0.16/kWh energy + $0.35/min time fee", "landing, aerobraking and life support are not priced"];
 function pyRound(x, nd = 0) {  // Python round(): half to even, on the decimal repr like CPython's
@@ -1161,11 +1161,11 @@ var HAILS = [
   { id: "phobos-commute", title: "Phobos commute", rider: "Ravi, a survey pilot", party: 1, from: "phobos", to: "mars-base", kind: "quick",
     blurb: "Ravi is done surveying Phobos and wants a lift down to Mars Base." },
   { id: "jovian-hop", title: "Jovian hop", rider: "Mei, a volcanologist", party: 1, from: "io", to: "ganymede", kind: "quick",
-    blurb: "Mei is leaving Io for a conference on Ganymede. Two cars work Jupiter's moons.", rush: { at: "ganymede", x: 3, after: 2 } },
+    blurb: "Mei is leaving Io for a conference on Ganymede. Two Starseekers work Jupiter's moons.", rush: { at: "ganymede", x: 3, after: 2 } },
   { id: "titan-home", title: "Stranded at Titan", rider: "Sam, a stranded tourist", party: 1, from: "titan", to: "earth", kind: "long",
     blurb: "Sam's tour left without them. It's a long way home from Titan to Earth." },
   { id: "ceres-shift", title: "Belt shift change", rider: "Ana, a miner", party: 1, from: "ceres-port", to: "mars-base", kind: "long", rush: { at: "ceres-port", x: 3 },
-    blurb: "Ana's shift on Ceres is over and she's heading to Mars Base. One car is parked at Ceres, one at Mars." }
+    blurb: "Ana's shift on Ceres is over and she's heading to Mars Base. One Starseeker is parked at Ceres, one at Mars." }
 ];
 var BY = {}; HAILS.forEach(function(h){ BY[h.id] = h; });
 
@@ -1318,7 +1318,7 @@ function rushes(ride){ return ride.hails.map(function(id){ return rushOf(BY[id],
    { action: "wait" } | { action: "replan", leg } | { action: "hold", hours? } | { action: "divert", place, wait_hours? }.
    The caller plans a replan leg, so the engine never re-flies anything here. */
 var MAX_CHECKPOINTS = 8, ORACLE_DEPTH = 3;
-var CAUSE = { dust_storm: "a dust storm closed the pad", titan_haze: "Titan haze closed the pad", solar_flare: "a solar flare grounded launches with a rider aboard", car_late: "the car reached the pad after the planned departure", pad_full: "every berth was taken" };
+var CAUSE = { dust_storm: "a dust storm closed the pad", titan_haze: "Titan haze closed the pad", solar_flare: "a solar flare grounded launches with a rider aboard", car_late: "the ship reached the pad after the planned departure", pad_full: "every berth was taken" };
 var EVENTS = {
   // An interplanetary leg can't leave on time. Local legs just wait, as they always have.
   launch_hold: { options: ["wait", "replan"], dflt: { action: "wait" }, apply: applyLaunch },
@@ -1374,7 +1374,7 @@ function ask(ride, kind, cause, place, T){
   if (ride.checkpoints.length < MAX_CHECKPOINTS) return checkpoint(ride, kind, cause, place, T);
   var S = ride.segs[ride.at.seg];
   if (!ride.capped) ride.incidents.push({ kind: "checkpoint_cap", leg: S.role, where: place, at_jd: T, hours: 0, kwh: 0,
-    note: "This ride reached " + MAX_CHECKPOINTS + " checkpoints, so from here the car followed the defaults: wait for a launch, hold for a pad" });
+    note: "This ride reached " + MAX_CHECKPOINTS + " checkpoints, so from here the ship followed the defaults: wait for a launch, hold for a pad" });
   ride.capped = true;
   return null;
 }
@@ -1501,7 +1501,7 @@ function applyLaunch(ride, cp, d){
   if (!L || L.from !== S.from || L.to !== S.to) throw new Error("a replan must go from " + nameOf(S.from) + " to " + nameOf(S.to));
   if (!(L.dep_jd >= cp.sky_at - 1e-9) || !(L.arr_jd > L.dep_jd) || !isFinite(L.kwh)) throw new Error("a replan must depart at or after " + iso(cp.sky_at));
   if (L.dep_jd > cp.sky_at + 1e-9) ride.incidents.push({ kind: "replanned", leg: S.role, where: S.from, at_jd: cp.sky_at, hours: (L.dep_jd - cp.sky_at) * 24, kwh: 0,
-    note: "Because " + CAUSE[cp.cause] + ", the car waited on the ground and left on a new plan" });
+    note: "Because " + CAUSE[cp.cause] + ", the ship waited on the ground and left on a new plan" });
   var leg = { from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate || null };
   ride.segs[ride.at.seg] = seg(S.role, "replan", leg, S.target, S.stop);
   ride.at = { seg: ride.at.seg, phase: "depart", jd: leg.dep_jd };
@@ -1526,7 +1526,7 @@ function applyPad(ride, cp, d){
   var nx = ride.at.seg + 1, N = ride.segs[nx];
   ride.segs.splice(nx, N && N.kind === "return" && N.from === S.to ? 1 : 0, hop, back);
   ride.incidents.push({ kind: "divert", leg: S.role, where: S.to, at_jd: T, hours: 0, kwh: 0,
-    note: "Because " + CAUSE[cp.cause] + ", the car diverted to " + alt.name + " (" + k(hop.kwh) + " kWh hop), to wait " + (Math.round(wait * 10) / 10) + " h on the ground and hop back" });
+    note: "Because " + CAUSE[cp.cause] + ", the ship diverted to " + alt.name + " (" + k(hop.kwh) + " kWh hop), to wait " + (Math.round(wait * 10) / 10) + " h on the ground and hop back" });
   ride.at = { seg: nx, phase: "depart", jd: T };
   return { action: "divert", place: alt.place, wait_hours: wait };
 }
@@ -1665,7 +1665,7 @@ function par(id, t0, endJd, seed){
       if (!wait || G.pickup_jd < wait.arr_jd) wait = { car: c.id, arr_jd: G.pickup_jd };
     } catch (e) {}
   });
-  if (!best) throw new Error("no car can serve " + h.title);
+  if (!best) throw new Error("no ship can serve " + h.title);
   return { car: best.car, kwh: best.kwh, planned_kwh: best.planned_kwh, arr_jd: best.arr_jd, planned_arr_jd: best.planned_arr_jd, legs: best.legs, wait_hours: best.wait_h || [0, 0],
     choices: best.path, best_wait_days: wait ? Math.max(1e-6, wait.arr_jd - t0) : 1e-6, best_wait_car: wait ? wait.car : best.car };
 }
@@ -1750,7 +1750,7 @@ function termsSet(ids, t0, endJd, seed){
 // Returns a list of problems (empty = flyable). A one-booking plan gets the wording riders have always seen.
 function check(id, car, legs, t0, seed){
   var c = CAR[car], errs = [];
-  if (!c) return ["unknown car " + car];
+  if (!c) return ["unknown ship " + car];
   if (Array.isArray(legs) && legs.length !== 2) return ["a dispatch is two legs: the pickup, then the ride"];
   if (!legs || (!Array.isArray(legs) && !(Array.isArray(legs.stops) && Array.isArray(legs.legs)))) return ["a dispatch is two legs [pickup, ride] or a plan { stops, legs }"];
   var plan = planOf(id, car, legs), S = plan.stops, L = plan.legs, M = manifest(plan), one = M.hails.length === 1 && L.length === 2;

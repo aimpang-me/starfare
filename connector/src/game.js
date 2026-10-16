@@ -181,28 +181,28 @@ function passengers(E, run) {
     ...(n ? { planned_arrive: isoJD(legs[n - 1].arr_jd) } : {}) }));
 }
 const sharedRules = (run) =>
-  " This is a shared flight (simulated) with " + run.hails.length + " bookings, listed in bookings: one car carries them all, and passengers aboard can't exceed its seats. " +
-  "Plan it with plan_leg, not plan_pickup and plan_ride: the first leg names a car and flies from where it is parked; each later leg names after_leg and flies on from where that one lands, " +
+  " This is a shared flight (simulated) with " + run.hails.length + " bookings, listed in bookings: one Starseeker carries them all, and passengers aboard can't exceed its seats. " +
+  "Plan it with plan_leg, not plan_pickup and plan_ride: the first leg names a ship (its car field) and flies from where it is parked; each later leg names after_leg and flies on from where that one lands, " +
   "after boarding if a booking boards there. A leg's to is a booking's pickup or destination. Then dispatch with legs (the legs in order), stops (one per leg: the bookings that board and alight where it lands) " +
   "and quotes (a fare_usd and an arrival for each booking). A booking's fare is the sum of the fares of the legs it rides. Fast pickup, on time, kept promise and honest fare are scored per booking " +
-  "and averaged by party size; energy is against par, the best nearby car carrying every booking.";
+  "and averaged by party size; energy is against par, the best nearby ship carrying every booking.";
 const rules = (E) =>
-  "Pick a car from the fleet. A car with a busy_until time is finishing another (simulated) job and can't leave before then; \"free\" cars can leave when the rider is ready. " +
-  "plan_pickup flies the car from where it is parked to the rider, leaving when the rider is ready or the car is free, whichever is later (or wait_days after that). " +
+  "Pick a Starseeker from the fleet (the car field takes its call sign). A ship with a busy_until time is finishing another (simulated) job and can't leave before then; \"free\" ships can leave when the rider is ready. " +
+  "plan_pickup flies the ship from where it is parked to the rider, leaving when the rider is ready or the ship is free, whichever is later (or wait_days after that). " +
   "plan_ride flies the rider from the pickup to the destination, after boarding (or wait_days later). Then dispatch with the pickup leg, the ride leg, the fare you quote and the arrival you promise the rider. " +
   "Hazards (all simulated, the same for every player this season): you only see forecasts, and the dispatch result tells you what actually happened. " +
   "Pads have a few berths and other ships use them. check_pad shows the berths and how many are booked each hour, but about a quarter of the traffic is unscheduled and never shows in the forecast. " +
-  "If every berth is taken when the car arrives, it holds in orbit until one frees up, and holding costs 250 kWh an hour. " +
-  "Solar radiation storms (space_weather gives the odds per day) hold any launch with a rider aboard until the storm passes; an empty car on its pickup can fly through. " +
-  "Mars dust storms (Mars, Mars Base) and Titan haze (Titan, Titan Dock) close those pads: the car waits on the ground, or holds in orbit if it is arriving. check_pad gives their odds. " +
+  "If every berth is taken when the ship arrives, it holds in orbit until one frees up, and holding costs 250 kWh an hour. " +
+  "Solar radiation storms (space_weather gives the odds per day) hold any launch with a rider aboard until the storm passes; an empty ship on its pickup can fly through. " +
+  "Mars dust storms (Mars, Mars Base) and Titan haze (Titan, Titan Dock) close those pads: the ship waits on the ground, or holds in orbit if it is arriving. check_pad gives their odds. " +
   "A leg between planets that leaves late needs a correction burn (2% of its energy per hour late, up to 30%). " +
-  "Score out of 100, from what actually happened: fast pickup 20 (versus the quickest nearby car), arrived on time 20 (falls to 0 at half the trip's allowed time late), " +
-  "energy 20 (kWh actually flown, including holds and correction burns, versus par: the best nearby car flown through the same hazards), " +
+  "Score out of 100, from what actually happened: fast pickup 20 (versus the quickest nearby ship), arrived on time 20 (falls to 0 at half the trip's allowed time late), " +
+  "energy 20 (kWh actually flown, including holds and correction burns, versus par: the best nearby ship flown through the same hazards), " +
   "kept the promise 15 (the arrival you quote is a promise: full marks for arriving when promised, 0 at 6 hours late on a quick hail or 1 day late on a long haul, arriving early costs a quarter as much), " +
   "every leg checked 10, honest fare 10 (within $1 of the ride leg's fare_usd), planning economy 5 (6 plans free, then a point each; check_pad and space_weather are free). " +
   "The sky clock runs 1 sky day per real second: if a leg flies between planets and its departure passes before dispatch, the hail goes cold. " +
-  "In flight (simulated), the car stops at checkpoints and asks you: a launch between planets that can't leave on time (wait for it to clear, or replan a fresh leg, which counts as a plan), " +
-  "and a pad still closed or full after the car has held ask_after_hours in orbit (hold, or divert to a nearby pad, wait on the ground and hop back). " +
+  "In flight (simulated), the ship stops at checkpoints and asks you: a launch between planets that can't leave on time (wait for it to clear, or replan a fresh leg, which counts as a plan), " +
+  "and a pad still closed or full after the ship has held ask_after_hours in orbit (hold, or divert to a nearby pad, wait on the ground and hop back). " +
   "dispatch then returns status checkpoint and a situation; answer it with decide, which returns the next situation or the score. The ride's clock waits for your answer, so nothing goes cold in flight. " +
   "You never see when a storm or haze ends, nor the unscheduled traffic; check_pad and space_weather forecast from the checkpoint's time. A ride asks at most " + E.R.MAX_CHECKPOINTS + " times, then takes the defaults. " +
   "dispatch with ask_after_hours \"never\" flies every checkpoint on its default (wait, hold) without asking.";
@@ -212,7 +212,7 @@ export function legPub(E, L) {
   return {
     leg_id: L.leg_id, kind: L.role, ...(L.car ? { car: L.car } : {}), from: placeName(L.from), to: placeName(L.to), depart: isoJD(L.dep_jd), arrive: isoJD(L.arr_jd),
     tof_days: +L.tof_days.toFixed(2), burn_total_kms: L.dv, battery_kwh: L.kwh, fare_usd: L.fare, refly: L.refly,
-    ...(L.busy_until_jd ? { car_busy_until: isoJD(L.busy_until_jd), note: "The car was busy on another job until " + isoJD(L.busy_until_jd) + ", so this pickup leaves no earlier than then." } : {}),
+    ...(L.busy_until_jd ? { car_busy_until: isoJD(L.busy_until_jd), note: "The ship was busy on another job until " + isoJD(L.busy_until_jd) + ", so this pickup leaves no earlier than then." } : {}),
   };
 }
 
@@ -236,7 +236,7 @@ const ABANDONED = "this run was abandoned when a newer hail was taken";
 function guardRun(run) {
   const phase = phaseOf(run);
   if (phase === "abandoned") fail(ABANDONED);
-  if (phase === "in_flight") fail("this hail has already been dispatched and the car is at a checkpoint; answer it with decide");
+  if (phase === "in_flight") fail("this hail has already been dispatched and the ship is at a checkpoint; answer it with decide");
   if (phase === "arrived") fail("this hail has already been dispatched");
 }
 async function addLeg(run, role, car, from, to, t, obj, legFn, extra) {
@@ -280,7 +280,7 @@ export async function planRideLeg(E, run, inp, legFn) {
 
 function carOf(E, q) {
   const R = E.R, key = String(q || "").toLowerCase().trim();
-  return own(R.CAR, key) || R.FLEET.filter((c) => c.name.toLowerCase() === key)[0] || fail("unknown car " + q + ". The fleet is in get_hail.");
+  return own(R.CAR, key) || R.FLEET.filter((c) => c.name.toLowerCase() === key)[0] || fail("unknown ship " + q + ". The fleet is in get_hail.");
 }
 const useLegs = (run) => "this flight has " + run.hails.length + " bookings; plan it with plan_leg";
 
@@ -297,7 +297,7 @@ export async function planHop(E, run, inp, legFn) {
   if (inp.after_leg != null && inp.after_leg !== "") {
     const prev = own(run.legs, inp.after_leg);
     if (!prev || prev.role !== "leg") fail("unknown leg_id " + inp.after_leg + ": pass the plan_leg leg this one follows");
-    if (inp.car && carOf(E, inp.car).id !== prev.car) fail(inp.after_leg + " flies " + R.CAR[prev.car].name + "; a flight is one car");
+    if (inp.car && carOf(E, inp.car).id !== prev.car) fail(inp.after_leg + " flies " + R.CAR[prev.car].name + "; a flight is one ship");
     car = prev.car; from = prev.to;
     t = prev.arr_jd + (run.hails.some((id) => R.BY[id].from === from) ? R.DWELL : 0) + wait;
     extra = { after: prev.leg_id };
@@ -348,7 +348,7 @@ export function checkPad(E, run, inp, nowMs) {
     hours: f.hours.map((x) => ({ hour: isoJD(x.hour_jd), booked: x.booked, free: Math.max(0, f.berths - x.booked) })),
     local_weather: wx ? { kind: wx.kind, odds_are: wx.odds_are, days: wx.days.map((d) => Object.assign(dayPub(d.day_jd), { odds: d.odds })) } : null,
     note: "Forecast only (simulated). booked counts scheduled ships; about " + Math.round(f.unscheduled_share * 100) + "% of traffic is unscheduled and is not shown, so a pad can be full when the forecast says a berth is free. " +
-      "A car that arrives to a full pad holds in orbit at " + R.HOLD_KWH + " kWh an hour." +
+      "A ship that arrives to a full pad holds in orbit at " + R.HOLD_KWH + " kWh an hour." +
       (wx ? " " + (wx.kind === "dust_storm" ? "Mars dust storms" : "Titan haze") + " can close this pad; odds are the " + wx.odds_are + "." : " No local weather closes this pad."),
   };
 }
@@ -362,7 +362,7 @@ export function spaceWeather(E, run, inp, nowMs) {
     run_id: run.run_id, from: isoJD(from),
     days: f.map((d) => Object.assign(dayPub(d.day_jd), { flare_odds: d.flare_odds })),
     note: "Forecast only (simulated). flare_odds is the chance a solar radiation storm starts in that sky day (noon to noon UTC). A storm lasts 4 to 48 hours, mostly short, and odds run in spells of about 27 days. " +
-      "While a storm is on, no car launches with a rider aboard: the ride waits on the ground until it passes, and a ride between planets that leaves late needs a correction burn. An empty car on its pickup can fly through.",
+      "While a storm is on, no ship launches with a rider aboard: the ride waits on the ground until it passes, and a ride between planets that leaves late needs a correction burn. An empty ship on its pickup can fly through.",
   };
 }
 
@@ -421,7 +421,7 @@ function stopsPlan(E, run, inp) {
   if (inp.stops.length !== inp.legs.length) probs.push("stops has " + inp.stops.length + " entries; it needs one for each of the " + inp.legs.length + " legs");
   if (probs.length) return { problems: probs };
   const car = legs[0].car;
-  if (legs.some((L) => L.car !== car)) return { problems: ["every leg must fly the same car"] };
+  if (legs.some((L) => L.car !== car)) return { problems: ["every leg must fly the same ship"] };
   const listOf = (v) => (v == null ? [] : (Array.isArray(v) ? v : [v]).map(String));
   const stops = [{ at: R.CAR[car].at }, ...inp.stops.map((s, i) => ({ at: legs[i].to, board: listOf(s && s.board), alight: listOf(s && s.alight) }))];
   const on = new Set(stops.flatMap((s) => [...(s.board || []), ...(s.alight || [])])), quotes = {}, q = inp.quotes || {};

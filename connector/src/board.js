@@ -22,9 +22,9 @@ th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-
 .n{text-align:right;font-variant-numeric:tabular-nums}.wrap{overflow-x:auto}p{margin:8px 0}
 </style></head><body><main>
 <h1>Starfare dispatcher board</h1>
-<p class="dim">Starfare is a concept robotaxi service for flying roadsters. Riders and the fleet are simulated. Each row is the best score for one ride hail, dispatched by a bot through the Starfare MCP connector. Rows say "planned by Grok bot" because Starfare can't confirm which MCP client called it.</p>
-<div class="wrap"><table><thead><tr><th>Hail</th><th class="n">Score</th><th>Car</th><th class="n">Battery</th><th class="n">Plans</th><th>By</th></tr></thead><tbody>${rows}</tbody></table></div>
-<p class="dim">Scores are out of 100, from what actually happened once the season's simulated hazards (busy pads, solar flares, Mars dust, Titan haze, busy cars) were flown: fast pickup 20, on time 20, energy actually flown versus par 20, kept the promised arrival 15, every leg checked 10, honest fare 10, planning economy 5. They use the page's scoring engine unchanged. Battery is kWh actually flown, including holds and correction burns.</p>
+<p class="dim">Starfare is a concept robotaxi service for Starseeker ships. Riders and the fleet are simulated. Each row is the best score for one ride hail, dispatched by a bot through the Starfare MCP connector. Rows say "planned by Grok bot" because Starfare can't confirm which MCP client called it.</p>
+<div class="wrap"><table><thead><tr><th>Hail</th><th class="n">Score</th><th>Ship</th><th class="n">Battery</th><th class="n">Plans</th><th>By</th></tr></thead><tbody>${rows}</tbody></table></div>
+<p class="dim">Scores are out of 100, from what actually happened once the season's simulated hazards (busy pads, solar flares, Mars dust, Titan haze, busy ships) were flown: fast pickup 20, on time 20, energy actually flown versus par 20, kept the promised arrival 15, every leg checked 10, honest fare 10, planning economy 5. They use the page's scoring engine unchanged. Battery is kWh actually flown, including holds and correction burns.</p>
 <p class="dim">Claude and human runs are on the in-page board of the Starfare page itself. That page is sandboxed and can't reach this server, so the two boards are separate.</p>
 <p class="dim">${data.stats.runs_scored || 0} connector runs scored. Machine-readable: <a href="/board.json">/board.json</a>.</p>
 </main></body></html>`;
