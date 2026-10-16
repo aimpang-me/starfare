@@ -269,6 +269,71 @@ async function phaseOff() {
     report.checkpoints = { tried, hail: stop.hail.hail_id, car: stop.car, seen, total: out.total, used_kwh: out.used_kwh, hindsight: out.log.checkpoints.map((c) => [c.n, c.best]) };
   });
 
+  await check("live playback: dispatch returns watch_url and lands_in_s; /rides, /flight and /live.json show the flight held at its checkpoint; the notes join the dispatcher log", async () => {
+    const tried = [], NOTE = "e2e: dispatching the par plan";
+    let held = null;
+    for (const hailId of ["iss-crew", "phobos-commute", "jovian-hop"]) {
+      for (const car of R.FLEET.map((c) => c.id)) {
+        const hail = await ok(client, "take_hail", { hail_id: hailId });
+        const pickup = await ok(client, "plan_pickup", { run_id: hail.run_id, car });
+        const ride = await ok(client, "plan_ride", { run_id: hail.run_id, after_leg: pickup.leg_id });
+        const d = await ok(client, "dispatch", { run_id: hail.run_id, pickup_leg: pickup.leg_id, ride_leg: ride.leg_id, quoted_fare_usd: ride.fare_usd, quoted_arrival: ride.arrive, ask_after_hours: 0, note: NOTE });
+        tried.push(`${hailId} ${car} ${d.status ?? "refused"}`);
+        if (!d.ok) continue;
+        assert.equal(d.watch_url, `${w.base}/flight/${hail.run_id}`);
+        assert.ok(Number.isInteger(d.lands_in_s) && d.lands_in_s >= 0, String(d.lands_in_s));
+        if (d.status === "checkpoint") { held = { hail, d }; break; }
+        scored++; noteBest({ hail, score: d });
+      }
+      if (held) break;
+    }
+    assert.ok(held, "no ride stopped in " + tried.join(", "));
+    const id = held.hail.run_id, s = held.d.situation;
+    assert.ok(Number.isInteger(held.d.checkpoint_in_s) && held.d.checkpoint_in_s <= held.d.lands_in_s, `${held.d.checkpoint_in_s} vs ${held.d.lands_in_s}`);
+
+    const r = await fetch(`${w.base}/rides/${id}.json`), text = await r.text(), rec = JSON.parse(text);
+    assert.equal(r.status, 200); assert.equal(r.headers.get("cache-control"), "no-store");
+    assert.equal(rec.phase, "in_flight"); assert.equal(rec.score, null); assert.equal(rec.log, null);
+    assert.equal(rec.live.simulated, true); assert.equal(rec.live.lands_at_ms, null);
+    assert.deepEqual([rec.live.hold.n, rec.live.hold.at], [s.checkpoint, s.sky_at]);
+    assert.deepEqual(rec.live.checkpoints.map((c) => c.decision), [null]);
+    assert.ok(rec.live.track.length >= 2 && rec.live.track.every((p, k) => k === 0 || (p[0] >= rec.live.track[k - 1][0] && p[1] >= rec.live.track[k - 1][1])), "the track runs forward in wall and sky time");
+    assert.deepEqual(rec.trail.slice(-3).map((t) => t.tool), ["plan_pickup", "plan_ride", "dispatch"]);
+    assert.equal(rec.trail.at(-1).note, NOTE);
+    assert.doesNotMatch(text, /player_id|seed|hindsight/);
+
+    const page = await fetch(`${w.base}/flight/${id}`), html = await page.text();
+    assert.equal(page.status, 200); assert.equal(page.headers.get("cache-control"), "no-store");
+    assert.equal(JSON.parse(/window\.FLIGHT = (.*?);<\/script>/.exec(html)[1]).in_flight, true);
+    const fj = await fetch(`${w.base}/flight/${id}.json`), fl = await fj.json();
+    assert.equal(fj.status, 200); assert.equal(fl.in_flight, true); assert.ok(fl.legs.length >= 1);
+    const nf = await fetch(`${w.base}/flight/run_${"0".repeat(20)}.json`);
+    assert.equal(nf.status, 404); assert.deepEqual(await nf.json(), { error: "no dispatched flight with that run_id" });
+
+    const lj = await fetch(`${w.base}/live.json`), live = await lj.json();
+    assert.equal(lj.status, 200); assert.equal(lj.headers.get("cache-control"), "no-store");
+    assert.equal(live.simulated, true); assert.ok(Number.isInteger(live.now_ms));
+    const row = live.flights.find((f) => f.run_id === id);
+    assert.ok(row, "the held flight is on /live.json");
+    assert.deepEqual(Object.keys(row).sort(), ["home", "legs", "run_id", "ship", "title", "track"]);
+    assert.equal(row.ship, rec.live.car); assert.deepEqual(row.track, rec.live.track);
+
+    let out = held.d, n = 0;
+    while (out.status === "checkpoint") {
+      out = await ok(client, "decide", { run_id: id, checkpoint: out.situation.checkpoint, ...out.situation.default, note: `e2e: default at ${++n}` });
+      assert.equal(out.watch_url, `${w.base}/flight/${id}`); assert.ok(Number.isInteger(out.lands_in_s));
+    }
+    assert.equal(out.status, "arrived");
+    scored++; noteBest({ hail: held.hail, score: out });
+    const done = await (await fetch(`${w.base}/rides/${id}.json`)).json();
+    assert.equal(done.phase, "arrived"); assert.equal(done.score.total, out.total);
+    assert.equal(done.live.lands_at_ms, done.live.track.at(-1)[0]); assert.equal(done.live.hold, null);
+    assert.deepEqual(done.trail.filter((t) => t.tool === "decide").map((t) => t.note), Array.from({ length: n }, (_, k) => `e2e: default at ${k + 1}`));
+    const after = await fetch(`${w.base}/flight/${id}.json`);
+    assert.equal(after.headers.get("cache-control"), "public, max-age=60"); assert.equal((await after.json()).in_flight, false);
+    report.live = { tried, run_id: id, checkpoint_in_s: held.d.checkpoint_in_s, lands_in_s: held.d.lands_in_s, decides: n, landed_in_s: out.lands_in_s };
+  });
+
   let far;
   await check("iss-crew with a farther car (SF-02 from the Lunar Data Center) scores lower, and matches Node", async () => {
     far = noteBest(await playHail(client, "iss-crew", "sf-02"));
@@ -791,7 +856,8 @@ async function phaseOn() {
       const r = await fetch(`${base}/rides/${good.hail.run_id}.json`);
       assert.equal(r.status, 200); assert.match(r.headers.get("content-type"), /application\/json/);
       assert.match(r.headers.get("content-disposition"), /attachment; filename="run_[0-9a-f]{20}\.json"/);
-      assert.deepEqual(await r.json(), detail);
+      const { live, trail, ...plain } = await r.json();
+      assert.deepEqual(plain, detail); assert.equal(live.lands_at_ms, live.track.at(-1)[0]); assert.deepEqual(trail.at(-1).tool, "dispatch");
       const planning = (await ok(a.client, "get_my_rides", { include: "all" })).rides.find((x) => x.phase === "planning");
       for (const path of [`/rides/${planning.run_id}.json`, `/rides/run_${"0".repeat(20)}.json`, "/rides/nope.json", `/rides/export/${"0".repeat(32)}.jsonl`, "/rides/"]) {
         const g = await fetch(`${base}${path}`); assert.equal(g.status, 404, path); await g.body?.cancel();
@@ -807,7 +873,8 @@ async function phaseOn() {
       assert.match(ex.headers.get("content-disposition"), /starfare-rides\.jsonl/);
       const lines = (await ex.text()).trim().split("\n").map((l) => JSON.parse(l));
       assert.deepEqual(lines.map((l) => l.run_id), [second.hail.run_id, good.hail.run_id]);
-      assert.deepEqual(lines[1], detail); assert.ok(lines.every((l) => l.format === "starfare.ride/1" && l.simulated === true));
+      const { live: _l, trail: _t, ...line1 } = lines[1];
+      assert.deepEqual(line1, detail); assert.ok(lines.every((l) => l.format === "starfare.ride/1" && l.simulated === true));
     });
     await check("on: with no STARFARE_BENCH_KEY, start_bench refuses the test split and still starts practice", async () => {
       const t = await call(b.client, "start_bench", { split: "test" });

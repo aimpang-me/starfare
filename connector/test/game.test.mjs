@@ -604,9 +604,9 @@ test("live: the public record of a flight in the air has the legs flown so far, 
   assert.deepEqual([rec.live.now_ms, rec.live.lands_at_ms, rec.live.track, rec.live.car, rec.live.from, rec.live.to, rec.live.planned],
     [NOW + 5000, null, TRACK_TO_HOLD, "SF-01", "iss", "lunar-data-center", []]);
   assert.deepEqual(rec.live.hold, { n: 1, kind: "pad_closed", cause: "pad_full", place: "lunar-data-center", place_name: "Lunar Data Center", at: "2030-02-03 02:46" });
-  assert.deepEqual(rec.live.flown.map((L) => [L.leg, L.from, L.to, L.depart, L.orbit, L.arrive]), [
-    ["pickup", "orbital-depot", "iss", "2030-01-29 00:00", "2030-01-29 00:47", "2030-01-29 01:00"],
-    ["ride", "iss", "lunar-data-center", "2030-01-29 02:12", "2030-02-03 01:46", "2030-02-03 02:46"]]);
+  assert.deepEqual(rec.live.flown.map((L) => [L.leg, L.from, L.to, L.depart, L.orbit, L.arrive, !!L.open]), [
+    ["pickup", "orbital-depot", "iss", "2030-01-29 00:00", "2030-01-29 00:47", "2030-01-29 01:00", false],
+    ["ride", "iss", "lunar-data-center", "2030-01-29 02:12", "2030-02-03 01:46", "2030-02-03 02:46", true]]);
   assert.deepEqual(rec.live.checkpoints.map((c) => [c.n, c.kind, c.at, c.decision]), [[1, "pad_closed", "2030-02-03 02:46", null]]);
   assert.deepEqual(rec.trail.map((e) => e.tool), ["check_pad", "plan_pickup", "plan_ride", "dispatch"]);
   assert.deepEqual(liveRow(E, run), { run_id: "run_" + "1".repeat(20), land_ms: null, v: { run_id: "run_" + "1".repeat(20), title: "ISS crew change", ship: "SF-01", home: "orbital-depot",

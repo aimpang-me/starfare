@@ -731,8 +731,8 @@ export function liveRecord(E, run, nowMs) {
   if (run.tag != null || !run.live || !run.ride) return rec;
   const ride = run.ride, cp = openCheckpoint(run), { placeName } = names(E), iso = (jd) => (jd == null ? null : isoJD(jd)), tr = run.live.track;
   const flown = ride.segs.filter((S) => S.flew).map((S) => {
-    const f = S.flew, end = f.land_jd ?? f.left_jd ?? (cp ? cp.sky_at : null);
-    return { kind: S.kind, leg: S.role, from: S.from, to: S.to, depart: iso(f.dep_jd), orbit: iso(f.orbit_jd), arrive: iso(end), kwh: S.kwh, gate: S.gate };
+    const f = S.flew, done = f.land_jd ?? f.left_jd, end = done ?? (cp ? cp.sky_at : null);
+    return { kind: S.kind, leg: S.role, from: S.from, to: S.to, depart: iso(f.dep_jd), orbit: iso(f.orbit_jd), arrive: iso(end), kwh: S.kwh, gate: S.gate, ...(done == null ? { open: true } : {}) };
   });
   const planned = ride.segs.filter((S) => !S.flew).map((S) => ({ kind: S.kind, leg: S.role, from: S.from, to: S.to, depart: isoJD(S.dep_jd), arrive: isoJD(S.arr_jd), kwh: S.kwh, gate: S.gate }));
   const h = E.R.BY[run.id];
