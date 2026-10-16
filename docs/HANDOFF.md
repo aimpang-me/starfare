@@ -52,4 +52,4 @@ Everything still waiting on Alvin, with options and a recommendation: `docs/OPEN
 - This repo is public as of 2026-10-16; Alvin may make it private.
 - Windows: `.gitattributes` keeps LF so the engine copy stays byte-identical. `connector/test/e2e.mjs` stop() has a Windows fallback (if `process.kill(-pid)` throws, `child.kill('SIGKILL')`; `rmSync` in a try with `maxRetries: 5`), or cleanup fails with EBUSY. Committed in eb3caae.
 - The Open Sky pill fix is already in (pills lock while Claude answers, each pill starts fresh, the gate trusts the page's sky date).
-- e2e tests fail in the last minute of a sky season (7000 sky days, about 1.9 h real time); rerun.
+- Take_hail refuses long hauls for about the last 7 real minutes of a 7000-sky-day season (about 1.9 h real time), so e2e can fail then; rerun.

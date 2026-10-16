@@ -12,9 +12,9 @@ Read first: `docs/HANDOFF.md` (state, decisions, next steps), `docs/OPEN-QUESTIO
 - `code/`, `day1`-`day6/`, `audit/`, `receipts/`: the original Python planner, checker, evals.
 
 ## Tests
-- Engine hazards: `node world/engine/test-hazards.js` (7 checks).
+- Engine hazards: `node world/engine/test-hazards.js` (8 checks).
 - Engine checkpoints: `node world/engine/test-reroute.js` (8 checks, about a minute; one replays 100 fixture hails). `node world/engine/find-reroute-cases.js` finds the dust-storm rides it pins.
-- Connector: `cd connector && npm ci && node build.mjs && node --test test/game.test.mjs` (27) and `node test/e2e.mjs` (37, runs wrangler dev; fails in the last minute of a 7000-sky-day season, about 1.9 h real time, so rerun).
+- Connector: `cd connector && npm ci && node build.mjs && node --test test/*.test.mjs` (69) and `node test/e2e.mjs` (41, runs wrangler dev; take_hail refuses long hauls for about the last 7 real minutes of a 7000-sky-day season (about 1.9 h real time), so e2e can fail then; rerun).
 
 ## Rules from Alvin
 - Never deploy, delete a Worker, or change Cloudflare without Alvin's go in this session.
@@ -24,9 +24,10 @@ Read first: `docs/HANDOFF.md` (state, decisions, next steps), `docs/OPEN-QUESTIO
 - Keep secrets out of the repo; use environment variables or Wrangler secrets.
 
 ## Open items (2026-10-16)
-- Done: merged with the live connector (DO classes StarfareMcp/Run/Hub/Auth, STARFARE_OAUTH); MCP server named "starfare"; live Worker version ba5fae0f (main 4362dc3; the StarfareBench DO came in migration v3 with 460862e8). Suite v1 still names engine cc4d09d2 while the bundle is ad94cc69, so bench sessions refuse to start until the re-cut suite lands and is redeployed. Don't rename the DO classes again without a wrangler migration.
+- Done: merged with the live connector (DO classes StarfareMcp/Run/Hub/Auth, STARFARE_OAUTH); MCP server named "starfare"; live Worker version ba5fae0f (main 4362dc3; the StarfareBench DO came in migration v3 with 460862e8). Engine bundle c5fdd816 (small bodies planned on the n-body table); suite v1 re-cut for it on main (dev 18, test 18). Live bench sessions refuse to start until main is deployed. Don't rename the DO classes again without a wrangler migration.
 - See docs/HANDOFF.md (vision, decisions, build order), docs/WEBSITES.md (every page, link, build, publish) and docs/DESIGN.md (look, tokens, mockups) and docs/OPEN-QUESTIONS.md (decisions waiting on Alvin; ask him and record answers).
 - Old Worker `sol-connector` still running; delete only when Alvin says.
 - Done and deployed: mid-ride checkpoints (launch_hold, pad_closed) with the `decide` tool, on the connector and the Open Sky page; get_my_rides with ride history and run logs.
 - Done and deployed: the public website at https://starfare.aimpang.workers.dev/ (`connector/src/site.html`, Dark SOL).
+- On main, not deployed: the website rebuilt from mockup D (Sky desk) with live flights from `/live.json`; the flight page plays runs in real time.
 - Later ideas: leaderboard by model + skills, daily seed, dispatch bidding, comfort max-g, charging stops, pooling.
