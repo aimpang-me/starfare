@@ -1103,20 +1103,20 @@ function buildScene(J0) {
   GRID = new THREE.Group();
   RINGS.forEach(function (r) {
     var pts = []; for (var k = 0; k <= 200; k++) { var a = k / 200 * TAU; pts.push(V(Math.cos(a) * rs(r), 0, Math.sin(a) * rs(r))); }
-    GRID.add(lineOf(pts, 0x5cc8ff, r === 1 ? 0.24 : 0.12));
+    GRID.add(lineOf(pts, 0x5cc8ff, r === 1 ? 0.22 : 0.11));
   });
-  for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; GRID.add(lineOf([V(Math.cos(a) * rs(0.12), 0, Math.sin(a) * rs(0.12)), V(Math.cos(a) * rs(34), 0, Math.sin(a) * rs(34))], 0x5cc8ff, 0.07)); }
+  for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; GRID.add(lineOf([V(Math.cos(a) * rs(0.12), 0, Math.sin(a) * rs(0.12)), V(Math.cos(a) * rs(34), 0, Math.sin(a) * rs(34))], 0x5cc8ff, 0.063)); }
   scene.add(GRID);
   ORB = new THREE.Group();
   SF.PLANETS.concat(["ceres", "bennu", "roadster"]).forEach(function (id) {
-    try { var pts = SF.orbit(id, J0, 200).map(S); ORB.add(lineOf(pts, new THREE.Color(SF.color(id)), SF.PLANETS.indexOf(id) >= 0 ? 0.32 : 0.16)); } catch (e) { /* no orbit */ }
+    try { var pts = SF.orbit(id, J0, 200).map(S); ORB.add(lineOf(pts, new THREE.Color(SF.color(id)), SF.PLANETS.indexOf(id) >= 0 ? 0.29 : 0.145)); } catch (e) { /* no orbit */ }
   });
   scene.add(ORB);
   PLACES.forEach(function (p) {
     if (p.kind === "moon") {
       try {
         var pts = SF.orbit(p.id, J0, 120).map(function (rel) { return localOff(rel, p.parent); });
-        if (pts.length > 1) { var g = new THREE.Group(); g.add(lineOf(pts, new THREE.Color(SF.color(p.id)), 0.3)); scene.add(g); MOR.push({ g: g, par: p.parent }); }
+        if (pts.length > 1) { var g = new THREE.Group(); g.add(lineOf(pts, new THREE.Color(SF.color(p.id)), 0.27)); scene.add(g); MOR.push({ g: g, par: p.parent }); }
       } catch (e) { /* no orbit */ }
     }
     var o, r, min;
