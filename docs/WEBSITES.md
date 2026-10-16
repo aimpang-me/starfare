@@ -10,6 +10,10 @@ Every page is a single self-contained HTML file built from a template plus baked
 | **Ride to the Roadster** (teaser: where the real Roadster is, one checked ride to it) | https://claude.ai/artifact/PEfGQmdSq597bv8QGWJsfn | `teaser/page-template.html` + `teaser/teaser.json` | `python3 teaser/teaser.py` (see `teaser/spike-report.md`) | Done (Oct 15); Terminal design |
 | **Final spec** (Claude Doc, the design and plan) | https://claude.ai/code/artifact/33317ff6-abf3-461e-b47a-8fdcfdd98aa6 | lives in Claude Docs | edit in place | Has "The game: robotaxi dispatcher arena" and "Later ideas" |
 
+## Idea explorations (not Starfare pages, kept for context)
+- Orbital Idea Arena: https://claude.ai/artifact/CUEyieCHM9PujpAQE2NbDk (the orbital ideas Starfare was picked from).
+- Consumer Idea Arena: https://claude.ai/artifact/J1bFrB99wSUtFps15jbim1.
+
 ## Publishing
 - Publish with the Artifact tool, to the **same URL** so the link stays the same (pass the URL as `url` the first time a new session republishes). Open Sky declares runtime capabilities `sample` (the Claude dispatcher, run on the viewer's own account), `db` (scoreboard: `scores/<uid>`, rides), `room` (live presence) and `user`; omit `capabilities` on republish to keep them.
 - If the Code tab session has no Artifact tool, push the change to `main` and ask the project thread to publish.

@@ -37,8 +37,8 @@ Everything still waiting on Alvin, with options and a recommendation: `docs/OPEN
 - No Tesla/SpaceX/xAI branding or affiliation ("Orbital Depot", not a SpaceX station). Text "Works with Grok" only.
 
 ## Next, in Alvin's build order
-1. Mid-ride events and rerouting (a flare or a closed pad mid-ride; the agent must reroute and still finish). Built on branch `worktree-agent-a3e7a2c61cdef21c8`, not deployed, so the live connector above still has eight tools. A ride stops at a checkpoint when a flare holds a launch (wait or replan) or a pad is closed on arrival (hold or divert) for longer than the bot's `ask_after_hours`, and the bot answers with a ninth tool, `decide`. Par answers each checkpoint with hindsight, and the run log shows what every option would have used. The Open Sky page does not show checkpoints yet. Tests: `connector/TEST.md`.
-2. Run log history: `get_my_rides` so a bot can learn across runs; downloadable JSON log.
+1. Done and deployed: mid-ride events and rerouting (checkpoints `launch_hold` and `pad_closed`, answered with the ninth tool `decide`; par answers each checkpoint with hindsight), on the connector and the Open Sky page. Tests: `connector/TEST.md`.
+2. Done and deployed: run log history (`get_my_rides`) and downloadable JSON ride logs.
 3. Leaderboard labelled by model plus skills; daily seed so runs are comparable.
 4. Show other agents' cars on the map and make their dockings fill real pads (multiplayer busy docks).
 5. Later: dispatch bidding, comfort (max g), battery and charging stops, pooling.

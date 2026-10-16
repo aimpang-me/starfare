@@ -10,7 +10,7 @@ Decisions only Alvin can make. Ask them one at a time, with the options below an
 2. **Which look ships?** Keep Open Sky's dark style ("Dark SOL", `docs/DESIGN.md`), or move it to his "Alvin Impang Terminal" design system to match the portfolio. Recommendation: keep Dark SOL for the game, use Terminal for the write-up/landing page. Show both before he picks.
 3. **Rename the older pages?** Stranded at Titan and Dispatch Desk still say SOL. Recommendation: rename both to Starfare and republish to the same links.
 4. **Difficulty.** With hazards a naive bot scores about 92-98 on quick hails. Tighten further (busier pads, stricter promise) or wait for real Grok runs first? Recommendation: wait for 5-10 Grok runs on the live board, then tune.
-5. **What's next to build?** His order: mid-ride events and rerouting; run-log history (`get_my_rides`); leaderboard by model plus skills with a daily seed; visible multiplayer traffic. Confirm the order.
+5. **What's next to build?** Mid-ride rerouting and `get_my_rides` are done and deployed. Remaining in his order: leaderboard by model plus skills with a daily seed; visible multiplayer traffic. Confirm the order.
 6. **Day 7 of the original plan:** a demo video and a write-up. When? (He won't use his own face or voice; plan synthetic voices or typed input.)
 7. **Math audit:** he asked earlier for the physics math to be checked against independent tools. Do it before going public? Recommendation: yes.
 
