@@ -122,6 +122,9 @@ h1,h2,h3{margin:0;font-weight:600}
 .fc .pl b{color:var(--me);font-weight:500}
 .st{display:inline-flex;align-items:center;gap:5px;font:700 10px/1 Inter;letter-spacing:.12em;text-transform:uppercase;padding:4px 7px;border-radius:3px;border:1px solid;white-space:nowrap}
 .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ico::before{display:none}
+.al li .si{margin-right:5px}.tl b .si{margin-right:5px}.skg .caps .si{margin-right:4px}
+.lgn.cred{margin-top:4px;font-size:9.5px;opacity:.8}
 .st-pick{color:var(--ride);border-color:rgba(142,197,255,.45);background:rgba(142,197,255,.08)}
 .st-fly{color:var(--cy);border-color:rgba(92,200,255,.5);background:rgba(92,200,255,.1)}
 .st-hold{color:var(--sun);border-color:rgba(255,182,92,.5);background:rgba(255,182,92,.1)}
@@ -456,6 +459,7 @@ table.t td.wrapc{white-space:normal;min-width:220px;font-family:Inter;font-size:
           <li><span class="dt"></span>Ready <span class="dt b" style="margin-left:6px"></span>Busy</li>
         </ul>
         <p class="lgn">Real bearings and dates; distances log-compressed; sizes exaggerated.</p>
+        <p class="lgn cred" id="artCred" hidden></p>
       </div>
       <div class="ov scale" id="scale">
         <div class="caps">Distance scale</div>
@@ -589,7 +593,7 @@ table.t td.wrapc{white-space:normal;min-width:220px;font-family:Inter;font-size:
   </div>
 </div>
 
-<script src="sample-data.js"></script><script src="sky-core.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="sample-data.js"></script><script src="sky-core.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script>
 (function () {
 "use strict";
@@ -662,6 +666,9 @@ function seekFlight(F, jd) {
   F.off = ((c - base) % 1 + 1) % 1; F.prev = null;
 }
 // Status chip from the replay and the run log's incidents (correction burns don't hold anything).
+var STI = { pick: "passenger", fly: "flying", hold: "launch_hold", closed: "pad_closed", arr: "pad" };
+// A status chip: the sprite icon replaces the dot when the art module is loaded.
+function setSt(el, k) { el.className = "st st-" + k + (window.SolArt ? " ico" : ""); el.innerHTML = ic(STI[k]) + esc(STL[k]); }
 var STL = { pick: "Pickup", fly: "In flight", hold: "Launch hold", closed: "Pad closed", arr: "Arrived" };
 function statusOf(F, jd) {
   var rp = F.rp, s = rp.at(jd), inc = rp.record.score.incidents;
@@ -786,6 +793,7 @@ function initGL() {
     r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     r.setClearColor(0x050a14, 1);
     GL = { r: r, tex: {} };
+    if (window.SolArt) { SolArt.init(r); GL.post = SolArt.composer(r, { threshold: 0.9 }); } // bloom only on the ops map
     $("#glhost").appendChild(r.domElement);
     scene = new THREE.Scene();
     cam = new THREE.PerspectiveCamera(45, 1, 0.005, 12000);
@@ -794,7 +802,7 @@ function initGL() {
 function onResize() {
   if (!GL) return;
   var host = $("#mapbox"), w = host.clientWidth || 1, h = host.clientHeight || 1;
-  GL.r.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix();
+  GL.r.setSize(w, h); if (GL.post) GL.post.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix();
   GW = w; GH = h; GUT = null;
 }
 /* ---------- textures and meshes ---------- */
@@ -837,6 +845,7 @@ function planetTex(id) {
 var GEO = {};
 function sphereGeo() { return GEO.s || (GEO.s = new THREE.SphereGeometry(1, 40, 20)); }
 function stars() {
+  if (window.SolArt) return SolArt.stars(3600);
   var n = 2600, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), rnd = prng(7);
   for (var i = 0; i < n; i++) {
     var u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, s = Math.sqrt(1 - u * u), R = 3600;
@@ -847,6 +856,7 @@ function stars() {
   return new THREE.Points(g, new THREE.PointsMaterial({ size: 1.5, sizeAttenuation: false, vertexColors: true, depthWrite: false }));
 }
 function sunObj(r) {
+  if (window.SolArt) return SolArt.sun(r, 11);
   var g = new THREE.Group();
   g.add(new THREE.Mesh(sphereGeo(), new THREE.MeshBasicMaterial({ color: 0xffe2b0 })));
   g.children[0].scale.setScalar(r);
@@ -857,6 +867,7 @@ function sunObj(r) {
   return g;
 }
 function planetMesh(id) {
+  var a = window.SolArt && SolArt.planet(id); if (a) return a;
   var m = new THREE.Mesh(sphereGeo(), new THREE.MeshLambertMaterial({ map: planetTex(id), emissive: new THREE.Color(SF.color(id)).multiplyScalar(0.06) }));
   if (id === "saturn") {
     var ring = new THREE.Mesh(new THREE.RingGeometry(1.35, 2.3, 64), new THREE.MeshBasicMaterial({ color: 0xd9c79a, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false }));
@@ -1080,6 +1091,7 @@ function buildScene(J0) {
   scene.add(new THREE.AmbientLight(0xffffff, 0.17));
   scene.add(new THREE.PointLight(0xfff1dc, 1.45, 0));
   var sun = sunObj(SIZE.sun); scene.add(sun);
+  if (window.SolArt) SolArt.setSun(V());
   GRID = new THREE.Group();
   RINGS.forEach(function (r) {
     var pts = []; for (var k = 0; k <= 200; k++) { var a = k / 200 * TAU; pts.push(V(Math.cos(a) * rs(r), 0, Math.sin(a) * rs(r))); }
@@ -1103,7 +1115,7 @@ function buildScene(J0) {
     if (p.kind === "planet" || p.kind === "moon" || p.id === "ceres") { o = planetMesh(p.id); r = dispR(p.id); min = p.kind === "moon" ? 1.6 : 2.6; }
     else if (p.kind === "small") { o = new THREE.Mesh(sphereGeo(), new THREE.MeshBasicMaterial({ color: new THREE.Color(SF.color(p.id)) })); r = dispR(p.id); min = 1.6; }
     else { o = new THREE.Mesh(GEO.oc || (GEO.oc = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: 0x5cc8ff, wireframe: true, transparent: true, opacity: 0.85 })); r = 0.06; min = 3.2; }
-    if (ATMO[p.id]) o.add(atmo(ATMO[p.id], 1));
+    if (ATMO[p.id] && !(window.SolArt && SolArt.hasRim(p.id))) o.add(atmo(ATMO[p.id], 1));
     scene.add(o);
     BODIES.push({ id: p.id, kind: p.kind, obj: o, r: r, min: min });
     if (p.kind === "station" || p.kind === "moon") {
@@ -1115,7 +1127,7 @@ function buildScene(J0) {
   PARK_R = glowPoints(16, 0x5cc8ff, 13); PARK_B = glowPoints(16, 0x7f8a99, 11); scene.add(PARK_R); scene.add(PARK_B);
   FL.forEach(function (F) {
     F.full = lineOf([V(), V()], 0x5cc8ff, 0.45, true); F.flown = lineOf([V(), V()], 0x5cc8ff, 0.95, false);
-    F.ship = makeShip(); F.halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(160,225,255,.9)", "rgba(92,200,255,.25)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+    F.ship = window.SolArt ? SolArt.ship({ callsign: F.call }) : makeShip(); F.halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(160,225,255,.9)", "rgba(92,200,255,.25)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
     scene.add(F.full); scene.add(F.flown); scene.add(F.halo); scene.add(F.ship);
   });
   labels();
@@ -1245,6 +1257,8 @@ function draw(dt, t) {
       if (nx.distanceToSquared(v) > 1e-12) F.ship.lookAt(nx);
     }
     F.halo.position.copy(v); F.halo.scale.setScalar(s * (sel ? 34 : 24));
+    F.halo.material.color.setScalar(sel ? 1.5 : 0.75); // over the bloom threshold only when selected
+    if (F.ship.userData.update) F.ship.userData.update(t, F.sc.s.phase === "flight", reduced);
     F.lbl.el.classList.toggle("on", sel);
   });
   Object.keys(BK).forEach(function (id) {
@@ -1255,6 +1269,7 @@ function draw(dt, t) {
   Object.keys(STOPS).forEach(function (id) {
     var s = STOPS[id]; if (!s.visible) return;
     var v = marker(id, MAPJD); s.position.copy(v); s.scale.setScalar(pxw(v) * 15);
+    s.material.color.setRGB(1.3, 1.25, 1.15); // the selected route's stops glow
   });
   // parked Starseekers
   var pr = [], pb = [];
@@ -1265,7 +1280,7 @@ function draw(dt, t) {
   if (SEL.t === "f" && FILT.fl) { var F0 = FL[SEL.i]; tb.className = "tbox " + (F0.st ? F0.st.k : ""); tbox(tb, F0.sc.v, 34); }
   else tbox(tb, null);
   if (t - lastHud > 250) { lastHud = t; mapHud(); }
-  GL.r.render(scene, cam);
+  if (GL.post) GL.post.render(scene, cam); else GL.r.render(scene, cam);
 }
 /* ---------- map HUD: map time, the scale bar and the map centre ---------- */
 var NICE = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20];
@@ -1338,7 +1353,7 @@ function renderCardsSel() { $$("#flList .fc").forEach(function (b) { b.setAttrib
 function updateCards() {
   $$("#flList .fc").forEach(function (b) {
     var F = FL[+b.dataset.f]; if (!F.st) return;
-    var st = $("[data-st]", b); st.className = "st st-" + F.st.k; st.textContent = STL[F.st.k];
+    setSt($("[data-st]", b), F.st.k);
     $("[data-pb]", b).style.width = (progOf(F, F.jd) * 100).toFixed(1) + "%";
     $("[data-pc]", b).textContent = Math.round(progOf(F, F.jd) * 100) + "%";
     $("[data-eta]", b).textContent = etaOf(F, F.jd);
@@ -1353,7 +1368,7 @@ function renderBookings() {
     else if (B.rp) st = '<div class="pl">Planned at sky time ' + iso(SF.sky(B.ms).jd) + " &middot; par <b>" + esc(parName(P.par.car)) + "</b></div>";
     else st = '<div class="pl">' + (d.kind === "quick" ? "Not planned yet" : "Long haul: planned when you pick it (takes a moment)") + "</div>";
     return '<li><button type="button" class="fc" data-b="' + esc(d.id) + '" aria-pressed="' + (SEL.t === "b" && SEL.id === d.id) + '">' +
-      '<div class="r1"><span style="font-weight:600;font-size:13.5px">' + esc(d.title) + '</span><span class="tag sim" style="margin-left:auto">' + esc(d.kind) + "</span></div>" +
+      '<div class="r1"><span style="font-weight:600;font-size:13.5px">' + esc(d.title) + '</span><span class="tag sim" style="margin-left:auto">' + ic("booking") + esc(d.kind) + "</span></div>" +
       '<div class="rt">' + placeH(d.from) + ' <span class="ar">&rarr;</span> ' + placeH(d.to) + "</div>" +
       '<div class="lb">' + W(d.rider) + "</div>" +
       '<div class="rdy">' + (d.open ? "Ready " + iso(d.ready_jd) + " if taken now" : "Closed until the season resets") + "</div>" + st + "</button></li>";
@@ -1396,7 +1411,7 @@ function renderInfo() {
 function updateInfo() {
   if (SEL.t !== "f" || !$("#iSt")) return;
   var F = FL[SEL.i]; if (!F.st) return;
-  var st = $("#iSt"); st.className = "st st-" + F.st.k; st.textContent = STL[F.st.k];
+  setSt($("#iSt"), F.st.k);
   $("#iBar").style.width = (progOf(F, F.jd) * 100).toFixed(1) + "%";
   $("#iP").textContent = Math.round(progOf(F, F.jd) * 100) + "%";
   $("#iEta").textContent = etaOf(F, F.jd);
@@ -1410,13 +1425,13 @@ function renderSk() {
   var ready = LIVE.filter(function (c) { return !(c.busy && c.busy > now); }), busy = LIVE.filter(function (c) { return c.busy && c.busy > now; });
   function item(attr, name, lines, dot) { return '<li><button type="button" class="ski" ' + attr + '><span class="ic">' + TOPSVG + "</span><b>" + esc(name) + "</b>" + lines.map(function (l) { return '<span class="m">' + l + "</span>"; }).join("") + '<span class="dot ' + dot + '"></span></button></li>'; }
   var html = '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px"><span class="tag sim">' + esc(SEATS) + "</span></div>" +
-    '<div class="skg"><div class="caps">Ready <span class="mono">' + ready.length + "</span></div><ul>" + (ready.map(function (c) {
+    '<div class="skg"><div class="caps">' + ic("ready") + 'Ready <span class="mono">' + ready.length + "</span></div><ul>" + (ready.map(function (c) {
       return item('data-park="' + esc(c.at) + '"', c.name, ["Parked at " + placeH(c.at), "Free now"], "ready");
     }).join("") || '<li class="skn">None free right now.</li>') + "</ul></div>" +
-    '<div class="skg"><div class="caps">On a flight &middot; sample replay <span class="mono">' + FL.length + "</span></div><ul>" + FL.map(function (F, i) {
+    '<div class="skg"><div class="caps">' + ic("flying") + 'On a flight &middot; sample replay <span class="mono">' + FL.length + "</span></div><ul>" + FL.map(function (F, i) {
       return item('data-sf="' + i + '"', F.call, [(F.st ? esc(STL[F.st.k]) + ", " + whereOf(F) : ""), "Frees at " + esc(arrOf(F)) + ' <span class="tag sim">Sample</span>'], "fly");
     }).join("") + "</ul></div>" +
-    '<div class="skg"><div class="caps">Docked / busy &middot; simulated fleet competition <span class="mono">' + busy.length + "</span></div><ul>" + (busy.map(function (c) {
+    '<div class="skg"><div class="caps">' + ic("busy") + 'Docked / busy &middot; simulated fleet competition <span class="mono">' + busy.length + "</span></div><ul>" + (busy.map(function (c) {
       return item('data-park="' + esc(c.at) + '"', c.name, ["Docked at " + placeH(c.at), "Frees at " + iso(c.busy)], "busy");
     }).join("") || '<li class="skn">None busy right now.</li>') + "</ul></div>" +
     '<p class="skn">Ready and busy come from the engine\'s fleet for the open desk (simulated). The three sample ' + esc(SF.SHIPS) + " are shown on their sample flights instead.</p>";
@@ -1434,7 +1449,7 @@ function renderAlerts() {
   } else A.forEach(function (a) { pushFeed({ jd: s.jd, who: "SKY", kind: "alert", txt: "Now: " + a.t }); });
   ALKEYS = keys; ALERTS = A;
   var n = $("#alN"); n.textContent = A.length; n.className = "n" + (A.length ? "" : " zero");
-  var html = A.map(function (a) { return '<li class="k-' + a.k + '"><b>' + esc(a.t) + "</b><span>" + esc(a.d) + "</span></li>"; }).join("") || '<li style="border-left-color:var(--ok)"><b>All clear</b><span>No simulated flare, storm or full pad at ' + iso(s.jd) + "</span></li>";
+  var html = A.map(function (a) { return '<li class="k-' + a.k + '"><b>' + ic(a.k === "flare" ? "solar_flare" : a.k === "pad" ? "pad_closed" : /dust/i.test(a.t) ? "dust_storm" : "launch_hold") + esc(a.t) + "</b><span>" + esc(a.d) + "</span></li>"; }).join("") || '<li style="border-left-color:var(--ok)"><b>All clear</b><span>No simulated flare, storm or full pad at ' + iso(s.jd) + "</span></li>";
   if (html !== renderAlerts.last) { renderAlerts.last = html; $("#alList").innerHTML = html; }
 }
 var BINS = [], BIN0 = 0;
@@ -1521,12 +1536,12 @@ function debrief(i) {
       var chosen = o.option.indexOf(cp.decision.action) === 0, best = o.option === cp.best;
       return "<tr><td" + (best ? ' class="best"' : "") + ">" + (best ? "\u2605 " : "") + esc(shipWords(o.option)) + "</td><td>" + (chosen ? '<span class="tag ride">Agent chose</span>' : "") + (best ? ' <span class="tag me">Best</span>' : "") + '</td><td class="r">' + fmt(o.used_kwh) + "</td><td>" + esc(o.arrive) + "</td></tr>";
     }).join("");
-    return '<div class="cp"><div class="h"><span class="tag me">Checkpoint ' + cp.n + "</span><b>" + esc(cp.kind.replace("_", " ")) + " at " + esc(SF.name(cp.place)) + '</b><span class="mono dim">' + esc(cp.at) + " \u00B7 " + esc(legKind(cp.leg)) + " leg \u00B7 cause " + esc(cp.cause.replace("_", " ")) + "</span></div>" +
+    return '<div class="cp"><div class="h"><span class="tag me">' + ic(cp.kind) + 'Checkpoint ' + cp.n + "</span><b>" + esc(cp.kind.replace("_", " ")) + " at " + esc(SF.name(cp.place)) + '</b><span class="mono dim">' + esc(cp.at) + " \u00B7 " + esc(legKind(cp.leg)) + " leg \u00B7 cause " + esc(cp.cause.replace("_", " ")) + "</span></div>" +
       '<p style="margin:0 0 8px">The agent called <code class="mono" style="color:var(--me)">decide</code> and chose <b>' + esc(cp.decision.action) + '</b>. Best in hindsight: <b class="best">' + esc(cp.best) + "</b>.</p>" +
       '<div class="tw"><table class="t"><thead><tr><th>Option (hindsight)</th><th></th><th class="r">Energy used, kWh</th><th>Arrival</th></tr></thead><tbody>' + rows + "</tbody></table></div></div>";
   }).join("") || '<p class="dim" style="margin:0">No checkpoints on this flight.</p>';
   var inc = sc.incidents.length ? '<div class="tw"><table class="t"><thead><tr><th>Incident</th><th>Leg</th><th>Place</th><th>At</th><th class="r">Hours</th><th class="r">kWh</th><th>Note</th></tr></thead><tbody>' + sc.incidents.map(function (x) {
-    return "<tr><td>" + esc(x.kind.replace("_", " ")) + "</td><td>" + esc(legKind(x.leg)) + "</td><td>" + esc(SF.name(x.place)) + "</td><td>" + esc(x.at) + '</td><td class="r">' + fmt(x.hours, 1) + '</td><td class="r">' + fmt(x.kwh) + '</td><td class="wrapc">' + esc(shipWords(x.note)) + "</td></tr>";
+    return "<tr><td>" + evIcon({ kind: "incident", title: x.kind }) + " " + esc(x.kind.replace("_", " ")) + "</td><td>" + esc(legKind(x.leg)) + "</td><td>" + esc(SF.name(x.place)) + "</td><td>" + esc(x.at) + '</td><td class="r">' + fmt(x.hours, 1) + '</td><td class="r">' + fmt(x.kwh) + '</td><td class="wrapc">' + esc(shipWords(x.note)) + "</td></tr>";
   }).join("") + "</tbody></table></div>" : '<p class="dim" style="margin:0">No incidents.</p>';
   var paxRows = P.bookings.map(function (b) {
     return '<tr><td class="mono">' + esc(b.id) + '</td><td style="font-family:Inter">' + esc(b.lead || "not in the data") + '</td><td class="dim">not set yet (1\u20133, placeholder)</td><td style="font-family:Inter">' + (b.b >= 0 ? placeH(P.stops[b.b].at) + ' <span class="dim">stop ' + b.b + "</span>" : '<span class="dim">not in the log</span>') + '</td><td style="font-family:Inter">' + (b.a >= 0 ? placeH(P.stops[b.a].at) + ' <span class="dim">stop ' + b.a + "</span>" : '<span class="dim">not in the log</span>') +
@@ -1540,7 +1555,7 @@ function debrief(i) {
     var what = s.board.map(function (b) { return "booking " + esc(b.id) + " boards"; }).concat(s.alight.map(function (b) { return "booking " + esc(b.id) + " gets off"; })).join(", ") || (k === 0 ? "parked here, cabin empty" : "no one boards or gets off");
     return '<li><span class="wp"><b>' + k + "</b></span><span>" + placeH(s.at) + " \u00B7 " + what + '</span><span class="m">' + esc(k === 0 ? "leaves " + s.leave : "arrives " + s.arrive) + "</span></li>";
   }).join("");
-  var evs = rp.events.map(function (e, k) { return '<li><button type="button" class="k-' + e.kind + '" data-ev="' + k + '"><span class="tm">' + iso(e.jd) + "</span><b>" + W(e.title) + '</b><span class="tx">' + W(e.text) + "</span></button></li>"; }).join("");
+  var evs = rp.events.map(function (e, k) { return '<li><button type="button" class="k-' + e.kind + '" data-ev="' + k + '"><span class="tm">' + iso(e.jd) + "</span><b>" + evIcon(e) + W(e.title) + '</b><span class="tx">' + W(e.text) + "</span></button></li>"; }).join("");
   return '<div class="sheet2">' +
     '<div class="dh"><div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="caps">Flight receipt</span><span class="tag sim">Simulated</span><span class="tag sim">Sample</span></div>' +
       "<h2>" + esc(SF.name(lg.from)) + " \u2192 " + esc(SF.name(lg.to)) + "</h2>" +
@@ -1681,6 +1696,7 @@ function slowTick(now) {
 function start() {
   AU = SF.AU; PLACES = SF.E.PLACES;
   TOPSVG = SF.SHIP_TOP_SVG;
+  if (window.SolArt) { var ac = $("#artCred"); ac.textContent = SolArt.CREDIT + " Credits: assets/CREDITS.md"; ac.hidden = false; }
   $("#lgShip").innerHTML = SF.SHIP_TOP_SVG;
   LIVEJD = SF.sky().jd;
   FL = SF.RIDES.map(function (r, i) {
@@ -1772,7 +1788,28 @@ function start() {
   });
   $("#loading").remove();
 }
-SF.loadEngine().then(start).catch(function (e) {
+// Shared art (planet maps, the star catalog, bloom, the 3D Starseeker, icons) from assets/ when published or
+// ../assets/ in the repo. Always resolves: without it the page draws its own simpler art.
+function loadArt() {
+  // In the repo the page sits in design/mockups/; published, assets/ sits next to it.
+  var tries = /\/design\/mockups\//.test(location.pathname) ? ["../assets/sol-art.js"] : ["assets/sol-art.js", "../assets/sol-art.js"];
+  return new Promise(function (ok) {
+    (function next() {
+      if (!tries.length || !window.THREE) return ok();
+      var s = document.createElement("script"); s.src = tries.shift();
+      s.onload = function () { ok(); }; s.onerror = function () { s.remove(); next(); };
+      document.head.appendChild(s);
+    })();
+  });
+}
+function ic(n) { return window.SolArt ? SolArt.icon(n) : ""; }
+// The icon for a run-log event or incident: depart, arrive, a checkpoint or a weather/traffic hold.
+function evIcon(e) {
+  var t = String(e.title || "").toLowerCase();
+  return ic(e.kind === "depart" ? "flying" : e.kind === "arrive" ? (/aboard/.test(t) ? "passenger" : "pad") :
+    /dust/.test(t) ? "dust_storm" : /flare/.test(t) ? "solar_flare" : /pad.closed/.test(t) ? "pad_closed" : /hold|haze|berth|late/.test(t) ? "launch_hold" : "");
+}
+Promise.all([SF.loadEngine(), loadArt()]).then(start).catch(function (e) {
   $("#loading .box").innerHTML = "The engine did not load (" + SF.esc(e && e.message) + "). Reload to try again.";
 });
 })();

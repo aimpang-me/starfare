@@ -274,6 +274,10 @@ button.lbl:hover{color:var(--ink)}
 .co .k .mono{letter-spacing:0;font-weight:500}
 .co b{display:block;font-weight:600;font-size:13px;margin:2px 0}
 .co p{margin:0;font-size:12px;color:var(--ink-2)}
+.co .k .si{margin-right:5px;color:var(--ride)}.co.checkpoint .k .si{color:var(--me)}.co.incident .k .si{color:var(--bad)}
+.tl b .si{margin-right:5px}.pst .bd .si,.pst .al .si{margin-right:3px}
+.r-note .cred{display:block;margin-top:2px;font-size:10px;opacity:.8}.r-note .cred-s{display:none}
+@media (max-width:560px){.r-note .cred-l{display:none}.r-note .cred-s{display:block}}
 @keyframes co{from{transform:translateX(-12px);opacity:0}to{transform:none;opacity:1}}
 .r-note{position:absolute;z-index:2;left:12px;bottom:calc(clamp(60px,10vh,84px) + 10px);font-size:11.5px;color:var(--ink-3);pointer-events:none;text-shadow:0 1px 4px #000;max-width:calc(100% - 24px)}
 @media (max-width:520px){
@@ -284,7 +288,7 @@ button.lbl:hover{color:var(--ink)}
   .tcode{font-size:11px;min-width:0}
   .r-tele{font-size:9.5px}.r-tele .big{font-size:12px}
   .callouts{top:auto;bottom:150px}
-  .r-note{bottom:112px}
+  .r-note{bottom:136px}
 }
 
 /* passenger list (shared-flight shape: stops with who boards and who gets off) */
@@ -537,7 +541,7 @@ table.t td.wrapc{white-space:normal;min-width:220px;font-family:Inter;font-size:
   </div>
 </div>
 
-<script src="sample-data.js"></script><script src="sky-core.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="sample-data.js"></script><script src="sky-core.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script>
 (function () {
 "use strict";
@@ -835,7 +839,7 @@ function renderDesk(force) {
   if (!force && key === HOME.deskKey) return; HOME.deskKey = key;
   $("#hails").innerHTML = d.map(function (h) {
     return '<li><button type="button" class="hail" data-h="' + esc(h.id) + '" aria-pressed="' + (HOME.hail === h.id) + '">' +
-      '<span class="t">' + esc(h.title) + '</span><span class="tag ' + (h.kind === "quick" ? "ride" : "me") + '">' + esc(h.kind) + "</span>" +
+      '<span class="t">' + esc(h.title) + '</span><span class="tag ' + (h.kind === "quick" ? "ride" : "me") + '">' + ic("booking") + esc(h.kind) + "</span>" +
       '<span class="rt">' + placeH(h.from) + ' <span class="ar">\u2192</span> ' + placeH(h.to) + "</span>" +
       '<span class="rdy">Ready ' + SF.iso(h.ready_jd) + (h.open ? "" : " \u00B7 closed this season") + "</span>" +
       '<span class="mani"><span class="mh"><span class="caps">Manifest</span><span class="dim mono">Party size: not in the data yet</span></span><span class="rd" style="display:block;margin-top:2px">' + esc(h.rider) + "</span></span></button></li>";
@@ -1103,6 +1107,7 @@ function initGL() {
     r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     r.setClearColor(0x06080c, 1);
     GL = { r: r, tex: {} };
+    if (window.SolArt) { SolArt.init(r); GL.post = SolArt.composer(r, { vignette: true, grain: true, threshold: 0.9 }); }
   } catch (e) { return fail(); }
 }
 function attachCanvas(host) {
@@ -1113,7 +1118,7 @@ function onResize() {
   if (!GL) return;
   var host = GL.r.domElement.parentNode; if (!host || !host.clientWidth) return;
   var w = host.clientWidth || 1, h = host.clientHeight || 1;
-  GL.r.setSize(w, h);
+  GL.r.setSize(w, h); if (GL.post) GL.post.setSize(w, h);
   if (RS && RS.cam) { RS.cam.aspect = w / h; RS.cam.updateProjectionMatrix(); }
   GL.W = w; GL.H = h; GUT = null;
 }
@@ -1150,6 +1155,7 @@ function planetTex(id) {
 var GEO = {};
 function sphereGeo() { return GEO.s || (GEO.s = new THREE.SphereGeometry(1, 40, 20)); }
 function stars() {
+  if (window.SolArt) return SolArt.stars(3600);
   var n = 2600, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), rnd = prng(7);
   for (var i = 0; i < n; i++) {
     var u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, s = Math.sqrt(1 - u * u), R = 3600;
@@ -1160,6 +1166,7 @@ function stars() {
   return new THREE.Points(g, new THREE.PointsMaterial({ size: 1.5, sizeAttenuation: false, vertexColors: true, depthWrite: false }));
 }
 function sunObj(r) {
+  if (window.SolArt) return SolArt.sun(r, 22);
   var g = new THREE.Group();
   g.add(new THREE.Mesh(sphereGeo(), new THREE.MeshBasicMaterial({ color: 0xffe2b0 })));
   g.children[0].scale.setScalar(r);
@@ -1170,6 +1177,7 @@ function sunObj(r) {
   return g;
 }
 function planetMesh(id) {
+  var a = window.SolArt && SolArt.planet(id); if (a) return a;
   var m = new THREE.Mesh(sphereGeo(), new THREE.MeshLambertMaterial({ map: planetTex(id), emissive: new THREE.Color(SF.color(id)).multiplyScalar(0.05) }));
   if (id === "saturn") {
     var rg = new THREE.RingGeometry(1.35, 2.3, 64);
@@ -1202,7 +1210,8 @@ function setPts(obj, pts) {
 /* The Starseeker: lifting-body hull (lathe teardrop, widest behind the middle), blue window band, swept stub wings,
    a dorsal fin and one round aft thruster. Nose along +z, length 1. Built from primitives; original design. */
 var SHIPMAT = null;
-function makeShip() {
+function makeShip(callsign) {
+  if (window.SolArt) return SolArt.ship({ callsign: callsign });
   if (!SHIPMAT) {
     var pts = [], N = 22;
     function rr(t) { return 0.15 * (t < 0.36 ? 0.6 + 0.4 * Math.sin(t / 0.36 * Math.PI / 2) : Math.pow(Math.cos((t - 0.36) / 0.64 * Math.PI / 2), 0.85)); }
@@ -1437,8 +1446,8 @@ function renderPlist() {
   var P = RS.pl, n = P.stops.length - 1;
   $("#plStops").innerHTML = P.stops.map(function (s, k) {
     var ev = [];
-    s.board.forEach(function (b) { ev.push('<li><span class="bd">Boards</span>booking <b class="mono">' + esc(b.id) + "</b> \u00B7 lead " + esc(b.lead || "not in the data") + " \u00B7 party not set yet (1\u20133, placeholder)</li>"); });
-    s.alight.forEach(function (b) { ev.push('<li><span class="al">Gets off</span>booking <b class="mono">' + esc(b.id) + "</b></li>"); });
+    s.board.forEach(function (b) { ev.push('<li><span class="bd">' + ic("passenger") + 'Boards</span>booking <b class="mono">' + esc(b.id) + "</b> \u00B7 lead " + esc(b.lead || "not in the data") + " \u00B7 party not set yet (1\u20133, placeholder)</li>"); });
+    s.alight.forEach(function (b) { ev.push('<li><span class="al">' + ic("pad") + 'Gets off</span>booking <b class="mono">' + esc(b.id) + "</b></li>"); });
     if (!ev.length) ev.push('<li class="dim">' + (k === 0 ? "Parked here, cabin empty" : "No one boards or gets off") + "</li>");
     var tm = k === 0 ? "leaves " + s.leave : "arrives " + s.arrive + (s.leave ? " \u00B7 leaves " + s.leave : " \u00B7 end of flight");
     var out = '<li class="pst" data-k="' + k + '"><span class="wp">' + k + '</span><div class="nm">' + placeH(s.at) + '</div><div class="m">Stop ' + k + (k === 0 ? ", parked" : "") + " \u00B7 " + esc(tm) + "</div><ul>" + ev.join("") + "</ul></li>";
@@ -1495,6 +1504,7 @@ function loadRide(i) {
   $("#rtitle").textContent = shipWords(h.title || rec.hail_id) + " \u00B7 " + SF.name(rec.log.from) + " \u2192 " + SF.name(rec.log.to);
   $("#rnote").textContent = local ? "Centred on " + SF.name(rp.focus) + ", distances in km. Not to scale: the " + SF.SHIP + " and small moons are enlarged. The flight is simulated."
     : "Not to scale: distances compressed, sizes exaggerated. Planet positions are real; the flight is simulated.";
+  if (window.SolArt) $("#rnote").insertAdjacentHTML("beforeend", '<span class="cred cred-l">' + esc(SolArt.CREDIT) + ' Credits: assets/CREDITS.md</span><span class="cred cred-s">Maps: NASA, JPL, USGS; Solar System Scope (CC BY 4.0). assets/CREDITS.md</span>');
   $("#sticks").innerHTML = rp.events.map(function (e) { return '<span class="tick ' + e.kind + '" style="left:' + ((e.jd - rp.start) / span * 100).toFixed(2) + '%" title="' + W(e.title) + '"></span>'; }).join("");
   $("#callouts").innerHTML = ""; RS.ckey = null;
   playIcon();
@@ -1520,7 +1530,7 @@ function buildRideScene() {
     var dl = new THREE.DirectionalLight(0xfff1dc, 1.5); sc.add(dl); sc.add(dl.target); RS.dl = dl;
     var sun = sunObj(30); sc.add(sun); RS.sun = sun;
     var P = SF.place(focus), R = P.radius_km / 1000, pm = planetMesh(focus); pm.scale.setScalar(R); sc.add(pm);
-    pm.add(atmo(focus === "earth" ? "rgba(120,170,255,.35)" : "rgba(230,140,100,.22)", 1));
+    if (!(window.SolArt && SolArt.hasRim(focus))) pm.add(atmo(focus === "earth" ? "rgba(120,170,255,.35)" : "rgba(230,140,100,.22)", 1));
     RS.bodies.push({ id: focus, m: pm, r: R });
     labels.add({ html: esc(SF.name(focus)), cls: "k-planet", pri: 50, pos: function () { return V(); } });
     SF.E.PLACES.forEach(function (Q) {
@@ -1535,6 +1545,7 @@ function buildRideScene() {
     });
   } else {
     sc.add(new THREE.AmbientLight(0x3a4252, 0.6)); sc.add(new THREE.PointLight(0xfff1dc, 1.7, 0)); sc.add(sunObj(SIZE.sun));
+    if (window.SolArt) SolArt.setSun(V());
     var used = {}; rp.legs.forEach(function (L) { used[L.from] = used[L.to] = 1; });
     SF.E.PLACES.forEach(function (Q) {
       var id = Q.id, m, minPx = 2;
@@ -1559,7 +1570,7 @@ function buildRideScene() {
   });
   RS.path = lineOf(pts, 0x9cc3ff, 0.22); RS.done = lineOf(pts, 0x9cc3ff, 1); RS.done.geometry.setDrawRange(0, 0); RS.ts = ts;
   sc.add(RS.path); sc.add(RS.done);
-  RS.ship = makeShip(); sc.add(RS.ship);
+  RS.ship = makeShip(rp.record.score.car); sc.add(RS.ship);
   RS.shipScale = local ? 0.14 : 0.55;
   RS.ship.scale.setScalar(RS.shipScale);
   onResize();
@@ -1602,7 +1613,7 @@ function rideFrame(dt, t) {
     var key = vis.map(function (e) { return e.jd + e.kind; }).join();
     if (key !== RS.ckey) {
       RS.ckey = key;
-      $("#callouts").innerHTML = vis.map(function (e) { return '<div class="co ' + e.kind + '"><div class="k">' + esc(e.kind) + ' \u00B7 <span class="mono">' + iso(e.jd) + "</span></div><b>" + W(e.title) + "</b><p>" + W(e.text) + "</p></div>"; }).join("");
+      $("#callouts").innerHTML = vis.map(function (e) { return '<div class="co ' + e.kind + '"><div class="k">' + evIcon(e) + esc(e.kind) + ' \u00B7 <span class="mono">' + iso(e.jd) + "</span></div><b>" + W(e.title) + "</b><p>" + W(e.text) + "</p></div>"; }).join("");
       RS.alert = vis.some(function (e) { return e.kind === "checkpoint" || e.kind === "incident"; });
     }
     if (t - (RS.pillT || -1e9) > 1000) { RS.pillT = t; var s = SF.sky(); $("#pillClock").textContent = iso(s.jd) + " UTC"; $("#pillSeason").textContent = "S" + s.season; }
@@ -1623,6 +1634,7 @@ function rideFrame(dt, t) {
   if (RS.local) {
     var sd = axes(d3([0, 0, 0], SF.pos(rp.focus, jd)), 1); sd.normalize();
     RS.dl.position.copy(sd.clone().multiplyScalar(100)); RS.sun.position.copy(sd.clone().multiplyScalar(3000));
+    if (window.SolArt) SolArt.setSun(RS.sun.position);
   }
   var q = shipPos(Math.min(rp.end, jd + span / 900)), d = q.clone().sub(p);
   // Near a planet a parked Starseeker rides its station's orbit, often several laps per second of replay. The camera
@@ -1630,8 +1642,11 @@ function rideFrame(dt, t) {
   var snap = reduced || jump || (RS.local && !fl);
   if (d.lengthSq() > 1e-12 && (fl || RS.local)) RS.fwd.lerp(d.normalize(), snap ? 1 : 1 - Math.exp(-dt * 6)).normalize();
   RS.ship.position.copy(p); RS.ship.lookAt(p.clone().add(RS.fwd));
-  RS.ship.userData.glow.material.opacity = fl ? 1 : 0.2;
-  RS.ship.userData.glow.scale.setScalar(fl ? 0.42 + (reduced ? 0 : 0.06 * Math.sin(t / 45)) : 0.25);
+  if (RS.ship.userData.update) RS.ship.userData.update(t, fl, reduced);
+  else {
+    RS.ship.userData.glow.material.opacity = fl ? 1 : 0.2;
+    RS.ship.userData.glow.scale.setScalar(fl ? 0.42 + (reduced ? 0 : 0.06 * Math.sin(t / 45)) : 0.25);
+  }
   var nd = 0; while (nd < RS.ts.length && RS.ts[nd] <= jd) nd++;
   RS.done.geometry.setDrawRange(0, nd);
   // Camera: chase (behind and above) or overhead. In the heliocentric scene a parked or waiting Starseeker circles
@@ -1664,7 +1679,9 @@ function rideFrame(dt, t) {
   var tb = $("#rtbox"); tb.classList.toggle("alert", !!RS.alert);
   tbox(tb, cam, GW, GH, p, RS.shipScale * 0.6, 44);
   if (t - (RS.tt || 0) > 150) { RS.tt = t; $("#rti").innerHTML = "<b>" + esc(SF.SHIP) + " " + esc(rp.record.score.car) + "</b>" + esc(st.phase) + " \u00B7 " + (fl ? Math.round(st.f * 100) + "% of leg" : esc(SF.name(st.phase === "arrived" ? L.to : L.from))); }
-  GL.r.render(RS.sc, cam);
+  // Bloom always; the vignette and film grain only on the chase cam, not the overhead view.
+  if (GL.post) { if (GL.post.post) GL.post.post.enabled = !RS.over; GL.post.tick(t, reduced); GL.post.render(RS.sc, cam); }
+  else GL.r.render(RS.sc, cam);
 }
 
 /* ---------- receipt ---------- */
@@ -1703,12 +1720,12 @@ function debrief(i) {
       var chosen = o.option.indexOf(cp.decision.action) === 0, best = o.option === cp.best;
       return "<tr><td" + (best ? ' class="best"' : "") + ">" + (best ? "\u2605 " : "") + esc(shipWords(o.option)) + "</td><td>" + (chosen ? '<span class="tag ride">Agent chose</span>' : "") + (best ? ' <span class="tag me">Best</span>' : "") + '</td><td class="r">' + fmt(o.used_kwh) + "</td><td>" + esc(o.arrive) + "</td></tr>";
     }).join("");
-    return '<div class="cp"><div class="h"><span class="tag me">Checkpoint ' + cp.n + "</span><b>" + esc(cp.kind.replace("_", " ")) + " at " + esc(SF.name(cp.place)) + '</b><span class="mono dim">' + esc(cp.at) + " \u00B7 " + esc(legKind(cp.leg)) + " leg \u00B7 cause " + esc(cp.cause.replace("_", " ")) + "</span></div>" +
+    return '<div class="cp"><div class="h"><span class="tag me">' + ic(cp.kind) + 'Checkpoint ' + cp.n + "</span><b>" + esc(cp.kind.replace("_", " ")) + " at " + esc(SF.name(cp.place)) + '</b><span class="mono dim">' + esc(cp.at) + " \u00B7 " + esc(legKind(cp.leg)) + " leg \u00B7 cause " + esc(cp.cause.replace("_", " ")) + "</span></div>" +
       '<p style="margin:0 0 8px">The agent called <code class="mono" style="color:var(--me)">decide</code> and chose <b>' + esc(cp.decision.action) + "</b>. Best in hindsight: <b class=\"best\">" + esc(cp.best) + "</b>.</p>" +
       '<div class="tw"><table class="t"><thead><tr><th>Option (hindsight)</th><th></th><th class="r">Energy used, kWh</th><th>Arrival</th></tr></thead><tbody>' + rows + "</tbody></table></div></div>";
   }).join("") || '<p class="dim" style="margin:0">No checkpoints on this flight.</p>';
   var inc = sc.incidents.length ? '<div class="tw"><table class="t"><thead><tr><th>Incident</th><th>Leg</th><th>Place</th><th>At</th><th class="r">Hours</th><th class="r">kWh</th><th>Note</th></tr></thead><tbody>' + sc.incidents.map(function (x) {
-    return "<tr><td>" + esc(x.kind.replace("_", " ")) + "</td><td>" + esc(legKind(x.leg)) + "</td><td>" + esc(SF.name(x.place)) + "</td><td>" + esc(x.at) + '</td><td class="r">' + fmt(x.hours, 1) + '</td><td class="r">' + fmt(x.kwh) + '</td><td class="wrapc">' + esc(shipWords(x.note)) + "</td></tr>";
+    return "<tr><td>" + evIcon({ kind: "incident", title: x.kind }) + " " + esc(x.kind.replace("_", " ")) + "</td><td>" + esc(legKind(x.leg)) + "</td><td>" + esc(SF.name(x.place)) + "</td><td>" + esc(x.at) + '</td><td class="r">' + fmt(x.hours, 1) + '</td><td class="r">' + fmt(x.kwh) + '</td><td class="wrapc">' + esc(shipWords(x.note)) + "</td></tr>";
   }).join("") + "</tbody></table></div>" : '<p class="dim" style="margin:0">No incidents.</p>';
   // Passenger list per booking (the booking half of the score) and the ship block (the flight half).
   var paxRows = P.bookings.map(function (b) {
@@ -1723,7 +1740,7 @@ function debrief(i) {
     var what = s.board.map(function (b) { return "booking " + esc(b.id) + " boards"; }).concat(s.alight.map(function (b) { return "booking " + esc(b.id) + " gets off"; })).join(", ") || (k === 0 ? "parked here, cabin empty" : "no one boards or gets off");
     return '<li><span class="wp">' + k + "</span><span>" + placeH(s.at) + " \u00B7 " + what + '</span><span class="m">' + esc(k === 0 ? "leaves " + s.leave : "arrives " + s.arrive) + "</span></li>";
   }).join("");
-  var evs = RS.rp.events.map(function (e, k) { return '<li><button type="button" class="k-' + e.kind + '" data-ev="' + k + '"><span class="tm">' + iso(e.jd) + "</span><b>" + W(e.title) + '</b><span class="tx">' + W(e.text) + "</span></button></li>"; }).join("");
+  var evs = RS.rp.events.map(function (e, k) { return '<li><button type="button" class="k-' + e.kind + '" data-ev="' + k + '"><span class="tm">' + iso(e.jd) + "</span><b>" + evIcon(e) + W(e.title) + '</b><span class="tx">' + W(e.text) + "</span></button></li>"; }).join("");
   return '<div class="sheet2">' +
     '<div class="dh"><div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="caps">Flight receipt</span><span class="tag sim">Simulated</span><span class="tag sim">Sample</span></div>' +
       "<h2>" + esc(SF.name(lg.from)) + " \u2192 " + esc(SF.name(lg.to)) + "</h2>" +
@@ -1831,6 +1848,27 @@ function route() {
 }
 
 /* ---------- start ---------- */
+// Shared art (planet maps, the star catalog, bloom, the 3D Starseeker, icons) from assets/ when published or
+// ../assets/ in the repo. Always resolves: without it the page draws its own simpler art.
+function loadArt() {
+  // In the repo the page sits in design/mockups/; published, assets/ sits next to it.
+  var tries = /\/design\/mockups\//.test(location.pathname) ? ["../assets/sol-art.js"] : ["assets/sol-art.js", "../assets/sol-art.js"];
+  return new Promise(function (ok) {
+    (function next() {
+      if (!tries.length || !window.THREE) return ok();
+      var s = document.createElement("script"); s.src = tries.shift();
+      s.onload = function () { ok(); }; s.onerror = function () { s.remove(); next(); };
+      document.head.appendChild(s);
+    })();
+  });
+}
+function ic(n) { return window.SolArt ? SolArt.icon(n) : ""; }
+// The icon for a run-log event or incident: depart, arrive, a checkpoint or a weather/traffic hold.
+function evIcon(e) {
+  var t = String(e.title || "").toLowerCase();
+  return ic(e.kind === "depart" ? "flying" : e.kind === "arrive" ? (/aboard/.test(t) ? "passenger" : "pad") :
+    /dust/.test(t) ? "dust_storm" : /flare/.test(t) ? "solar_flare" : /pad.closed/.test(t) ? "pad_closed" : /hold|haze|berth|late/.test(t) ? "launch_hold" : "");
+}
 function start() {
   AU = SF.AU; PLACES = SF.E.PLACES;
   SHIP_IMG = new Image();
@@ -1864,7 +1902,7 @@ function start() {
   route();
   $("#loading").remove();
 }
-SF.loadEngine().then(start).catch(function (e) {
+Promise.all([SF.loadEngine(), loadArt()]).then(start).catch(function (e) {
   $("#loading .box").innerHTML = "The engine did not load (" + SF.esc(e && e.message) + "). Reload to try again.";
 });
 })();
