@@ -117,7 +117,7 @@ npm run build
 node node_modules/wrangler/bin/wrangler.js deploy
 ```
 
-No databases or KV namespaces to create: all state is in Durable Objects (`StarfareMcp` per MCP session, `StarfareRun` per run, one `StarfareHub`, and one `StarfareAuth` that only OAuth mode uses), created by the `v1` and `v2` migrations on first deploy. The first deploy may ask you to register a workers.dev subdomain. It prints the URL, for example `https://starfare.alvin.workers.dev`. Call it `$URL` below. `npm run dry-run` bundles cleanly [verified]: 4,036 KiB, 974 KiB gzipped, under the free plan's 3 MB gzipped limit and the paid plan's 10 MB.
+No databases or KV namespaces to create: all state is in Durable Objects (`StarfareMcp` per MCP session, `StarfareRun` per run, one `StarfareHub`, and one `StarfareAuth` that only OAuth mode uses), created by the `v1` and `v2` migrations on first deploy. The first deploy may ask you to register a workers.dev subdomain. It prints the URL, for example `https://starfare.aimpang.workers.dev`. Call it `$URL` below. `npm run dry-run` bundles cleanly [verified]: 4,036 KiB, 974 KiB gzipped, under the free plan's 3 MB gzipped limit and the paid plan's 10 MB.
 
 ### 3. Check the deployment from your terminal
 
