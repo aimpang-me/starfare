@@ -140,7 +140,7 @@ const mcpApi = {
     if (typeof player_id !== "string" || !PLAYER_ID.test(player_id)) {
       return new Response("Grant is malformed; connect again.", { status: 401, headers: { "www-authenticate": 'Bearer error="invalid_token"' } });
     }
-    ctx.props = { player_id };
+    ctx.props = { player_id, origin: new URL(req.url).origin };
     return mcpHandler.fetch(req, env, ctx);
   },
 };

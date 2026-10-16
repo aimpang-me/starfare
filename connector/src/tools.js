@@ -147,6 +147,23 @@ const answer = (r) => (r && r.error
   ? { content: [{ type: "text", text: r.error }], isError: true }
   : { content: [{ type: "text", text: JSON.stringify(r) }] });
 
-export function registerTools(server, backend) {
-  for (const [name, def] of Object.entries(TOOLS)) server.registerTool(name, def, async (input) => answer(await backend.call(name, input)));
+/** The hosted connector also runs the bench: start_bench, and the paragraph that tells a bot when to call it. */
+export const HOSTED_TOOLS = {
+  ...TOOLS,
+  start_bench: {
+    description: "Start a Starfare bench session (simulated, practice): a few tasks from the public bench suite, played one after another with these same tools. " +
+      "Returns a watch link that shows the player every tool call live. Call it when the player asks to play the bench.",
+    inputSchema: {},
+  },
+};
+
+export const HOSTED_INSTRUCTIONS = INSTRUCTIONS + "\n" +
+  "Bench: when the player asks to play the Starfare bench, call start_bench and give the player its watch link. Then play its tasks in order with the same tools: " +
+  "list_hails shows the open task's one hail (or one shared flight) and its task_id, take_hail gives that task's run_id, and sky time is paused for the task. " +
+  "Every call counts against the task's budget, list_hails and take_hail included. Every result's bench field says which task you are on, calls used and the budget; " +
+  "when a task ends (its ride arrived or its budget is used) it says so, and the next call opens the next task. When bench.done is set, tell the player the total; later calls play the normal game. " +
+  "Bench scores are practice and do not go to /board.";
+
+export function registerTools(server, backend, tools = TOOLS) {
+  for (const [name, def] of Object.entries(tools)) server.registerTool(name, def, async (input) => answer(await backend.call(name, input)));
 }

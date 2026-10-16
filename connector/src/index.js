@@ -1,6 +1,8 @@
 // starfare Worker: the "bring your own Grok bot" robotaxi-dispatcher MCP server for Starfare. By default no auth (the tools expose no
 // private data); each run is addressed by an unguessable run_id, and /mcp is rate limited per IP.
 // STARFARE_OAUTH = "on" puts /mcp behind OAuth (src/oauth.js): one-click consent, an anonymous player id per grant.
+import { BENCH_ID, benchStub } from "./bench.js";
+import benchHtml from "./bench.html";
 import { boardHtml } from "./board.js";
 import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
@@ -12,6 +14,7 @@ import siteHtml from "./site.html";
 import { hub, runStub } from "./store.js";
 import { RUN_ID } from "./tools.js";
 
+export { StarfareBench } from "./bench.js";
 export { StarfareMcp } from "./mcp.js";
 export { StarfareAuth } from "./oauth.js";
 export { StarfareHub, StarfareRun } from "./store.js";
@@ -19,7 +22,8 @@ export { StarfareHub, StarfareRun } from "./store.js";
 const isMcpPath = (p) => p === "/mcp" || p.startsWith("/mcp/");
 // The landing page runs the engine in the browser. ?v= changes with every engine build, so that URL can be cached for good.
 const ENGINE_PATH = "/engine.js", ENGINE_V = META.sha256.slice(0, 16);
-const isPublicPage = (p) => p === "/" || p === ENGINE_PATH || p === "/board" || p === "/board.json" || p.startsWith("/rides/");
+const isBenchPath = (p) => p === "/bench" || p.startsWith("/bench/");
+const isPublicPage = (p) => p === "/" || p === ENGINE_PATH || p === "/board" || p === "/board.json" || p.startsWith("/rides/") || isBenchPath(p);
 const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
 
 function tooMany(limit) {
@@ -49,6 +53,29 @@ async function rides(req, path, env) {
   return new Response("Not found", { status: 404 });
 }
 
+/** The bench watch pages. /bench: how to start one from Grok. /bench/<bench_id>: one session's tasks and tool calls, live
+ *  (simulated, practice); the page polls /bench/<bench_id>.json?after=<seq> and POSTs /bench/<bench_id>/end to end the open task.
+ *  The bench_id is the capability, as the run_id is for /rides. */
+const BENCH_PATH = new RegExp("^/bench/(" + BENCH_ID.source.slice(1, -1) + ")(\\.json|/end)?$");
+async function bench(req, url, env) {
+  const page = (id) => new Response(benchHtml.replaceAll("__ORIGIN__", url.origin).replace("__BENCH__", JSON.stringify(id)),
+    { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
+  const m = BENCH_PATH.exec(url.pathname), method = m && m[2] === "/end" ? "POST" : "GET";
+  if (url.pathname !== "/bench" && !m) return new Response("Not found", { status: 404 });
+  if (req.method !== method) return new Response("Method not allowed", { status: 405, headers: { allow: method } });
+  if (!m) return page(null);
+  if (!m[2]) return page(m[1]);
+  const limit = Number(env.RATE_PER_MIN) || 120;
+  if (!(await hub(env).hit("bench:" + (req.headers.get("cf-connecting-ip") || "unknown"), limit)).ok) return new Response("Too many requests. Try again in a minute.", { status: 429, headers: { "retry-after": "60" } });
+  const stub = benchStub(env, m[1]);
+  if (m[2] === "/end") {
+    const r = await stub.end();
+    return Response.json(r, { status: r.error ? 409 : 200 });
+  }
+  const v = await stub.view(Math.max(0, Number(url.searchParams.get("after")) || 0));
+  return v ? Response.json(v, { headers: { "cache-control": "no-store" } }) : new Response("Not found: no bench session with that id", { status: 404 });
+}
+
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
@@ -64,8 +91,10 @@ export default {
       const ip = req.headers.get("cf-connecting-ip") || "unknown";
       const r = await hub(env).hit(ip, limit);
       if (!r.ok) return tooMany(limit);
+      ctx.props = { origin: url.origin };
       return mcpHandler.fetch(req, env, ctx);
     }
+    if (isBenchPath(url.pathname)) return bench(req, url, env);
     if (req.method !== "GET") return new Response("Method not allowed", { status: 405 });
     if (url.pathname === "/board" || url.pathname === "/board.json") {
       const raw = await hub(env).board(), hails = listHails(await engine());

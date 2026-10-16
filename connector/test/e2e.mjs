@@ -28,7 +28,7 @@ const MODE = (process.argv.find((a) => a.startsWith("--mode=")) || "--mode=both"
 if (!["off", "on", "both"].includes(MODE)) throw new Error("--mode must be off, on or both");
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
-const TOOLS = ["check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_leg", "plan_pickup", "plan_ride", "space_weather", "take_hail"];
+const TOOLS = ["check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_leg", "plan_pickup", "plan_ride", "space_weather", "start_bench", "take_hail"];
 
 const results = [];
 async function check(name, fn) {
@@ -156,7 +156,7 @@ async function phaseOff() {
     assert.match(js.headers.get("cache-control"), /immutable/);
     assert.ok((await js.text()).includes("module.exports = SOLE"));
   });
-  await check("tools/list is exactly the eleven ride-hail tools", async () => {
+  await check("tools/list is exactly the eleven ride-hail tools and start_bench", async () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     assert.deepEqual(names, TOOLS);
   });
@@ -441,6 +441,46 @@ async function phaseOff() {
     const h = await call(client, "get_my_rides", {});
     assert.equal(h.isError, true); assert.match(h.value, /sign-in \(OAuth\)/);
   });
+  await check("start_bench: a watch link whose page and .json show each call; End on the page closes tasks; after the last, the session plays the normal game", async () => {
+    const bot = await connect(w.base);
+    try {
+      const start = await ok(bot, "start_bench");
+      assert.match(start.bench_id, /^b_[0-9a-f]{20}$/);
+      assert.deepEqual([start.watch, start.simulated, start.practice, start.tasks, start.budget], [`${w.base}/bench/${start.bench_id}`, true, true, 5, 60]);
+      const page = await fetch(start.watch);
+      assert.equal(page.status, 200);
+      const html = await page.text();
+      assert.ok(html.includes(`const BENCH = "${start.bench_id}";`));
+      assert.doesNotMatch(html, /__(BENCH|ORIGIN)__/);
+      assert.ok((await (await fetch(`${w.base}/bench`)).text()).includes(`${w.base}/mcp`));
+
+      const list = await ok(bot, "list_hails");
+      assert.deepEqual(list.hails.map((h) => h.shared_flight ?? [h.hail_id]), [list.task_id.split("/")[0].split("+")]);
+      assert.deepEqual([list.bench.task, list.bench.calls_used, list.bench.budget], ["1 of 5", 1, 60]);
+      const v = await (await fetch(`${start.watch}.json`)).json();
+      assert.deepEqual(v.trace.map((r) => [r.seq, r.task, r.tool]), [[1, null, "start_bench"], [2, 0, "list_hails"]]);
+      assert.deepEqual(v.trace[1].result.hails, list.hails);
+      assert.deepEqual([v.current.task, v.current.calls_used, v.tasks.map((t) => t.status)], [1, 1, ["current", "waiting", "waiting", "waiting", "waiting"]]);
+      assert.deepEqual((await (await fetch(`${start.watch}.json?after=2`)).json()).trace, []);
+
+      let end;
+      for (let k = 0; k < 5; k++) end = await (await fetch(`${start.watch}/end`, { method: "POST" })).json();
+      assert.equal(end.done, true);
+      const again = await fetch(`${start.watch}/end`, { method: "POST" });
+      assert.equal(again.status, 409); await again.body?.cancel();
+      const over = await call(bot, "list_hails");
+      assert.deepEqual([over.isError, over.value], [true, "This bench session is over. start_bench starts a new one."]);
+      assert.deepEqual((await ok(bot, "list_hails")).hails.map((h) => h.hail_id), R.HAILS.map((h) => h.id));
+
+      const done = await (await fetch(`${start.watch}.json`)).json();
+      assert.deepEqual([done.done, done.current, done.tasks.map((t) => t.result.ended)], [true, null, Array(5).fill("ended on the watch page")]);
+      assert.deepEqual(done.trace.map((r) => r.tool).slice(2), [...Array(5).fill("end task (watch page)"), "list_hails"]);
+      for (const [path, method, status] of [[`/bench/b_${"0".repeat(20)}.json`, "GET", 404], [`/bench/${start.bench_id}.json`, "POST", 405], [`/bench/${start.bench_id}/end`, "GET", 405], ["/bench/nope", "GET", 404]]) {
+        const r = await fetch(`${w.base}${path}`, { method });
+        assert.equal(r.status, status, `${method} ${path}`); await r.body?.cancel();
+      }
+    } finally { await bot.close(); }
+  });
   await client.close();
   await w.stop();
 
@@ -563,7 +603,7 @@ async function phaseOn() {
       assert.deepEqual(asMeta.scopes_supported, ["play"]);
       report.www_authenticate = challenge; report.protected_resource = meta;
     });
-    await check("on: SDK OAuth flow: 401, discovery, dynamic registration, PKCE S256, one-click Allow, token, then tools/list is the eleven ride-hail tools", async () => {
+    await check("on: SDK OAuth flow: 401, discovery, dynamic registration, PKCE S256, one-click Allow, token, then tools/list is the eleven ride-hail tools and start_bench", async () => {
       a = await sdkSignIn(base, "sol e2e player A");
       const q = a.auth.authUrl.searchParams;
       assert.equal(q.get("code_challenge_method"), "S256"); assert.ok(q.get("code_challenge"));

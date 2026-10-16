@@ -14,6 +14,7 @@ import { SUITE_FORMAT, loadSuite, seedFor } from "../src/suite.js";
 import { BenchBackend, loadEngine, openTask } from "../bench/backend.mjs";
 import { naive, random, reference, rngOf } from "../bench/agents.mjs";
 import { runSuite } from "../bench/run.mjs";
+import { benchCall, benchView, endTask, newSession } from "../src/bench-host.js";
 
 const E = loadEngine();
 const SOLO = { id: "iss-crew/fixture", hail_id: "iss-crew", clock_jd: 2461550.0 };
@@ -86,6 +87,42 @@ test("run.mjs runs naive over a split and writes one row and one ride record per
   assert.deepEqual(res.rows.map((r) => [r.task_id, r.repeat, r.score.phase, r.meta.over_budget]), [["iss-crew/fixture", 0, "arrived", false], ["iss-crew/fixture", 1, "arrived", false]]);
   assert.equal(res.rows[0].score.total, res.rows[1].score.total);
   assert.deepEqual(records.map((r) => [r.task_id, r.phase, "seed" in r]), [["iss-crew/fixture", "arrived", false], ["iss-crew/fixture", "arrived", false]]);
+});
+
+test("hosted session: tasks in order, each closed on arrival or from the watch page, then the session refuses calls", async () => {
+  const tasks = [SOLO, { ...SOLO, id: "iss-crew/fixture-2" }, { ...SOLO, id: "iss-crew/fixture-3" }];
+  const suite = { ...SUITE, splits: { dev: tasks } };
+  let s = { ...newSession(suite, "b_test", null, 0), tasks };
+  const results = [];
+  const call = async (tool, input) => {
+    const r = await benchCall(E, suite, s, tool, input, 0);
+    s = r.session;
+    results.push(r.result);
+    return r.result;
+  };
+  await naive(call, E);
+  const last = results.at(-1);
+  assert.equal(last.status, "arrived");
+  assert.deepEqual(last.bench, { task: "1 of 3", task_id: "iss-crew/fixture", calls_used: 7, budget: 60, ended: { why: "arrived", phase: "arrived", total: 93 },
+    next: "Task 2 of 3 is next. Call list_hails to open it; it has its own run_id." });
+
+  let e = endTask(E, s);
+  s = e.session;
+  assert.deepEqual(e.result, { task_id: "iss-crew/fixture-2", phase: "not started", total: 0 });
+  assert.equal((await call("list_hails", {})).bench.notice, "Task 2 was ended on the watch page; this call is on task 3 of 3, with its own run_id from take_hail.");
+  assert.equal(benchView(s).current.calls_used, 1);
+
+  e = endTask(E, s);
+  s = e.session;
+  assert.deepEqual(e.result, { task_id: "iss-crew/fixture-3", phase: "planning", total: 0, done: true, bench_total: 93 });
+  assert.deepEqual(await call("list_hails", {}), { error: "This bench session is over. start_bench starts a new one.", bench: { done: true } });
+  const v = benchView(s);
+  assert.deepEqual([v.done, v.current, v.total, v.out_of], [true, null, 93, 300]);
+  assert.deepEqual(v.tasks.map((t) => [t.task_id, t.status, t.result.phase, t.result.ended]), [
+    ["iss-crew/fixture", "done", "arrived", "arrived"],
+    ["iss-crew/fixture-2", "done", "not started", "ended on the watch page"],
+    ["iss-crew/fixture-3", "done", "planning", "ended on the watch page"],
+  ]);
 });
 
 test("serve.mjs over MCP stdio: an agent plays a dev task to arrival", async () => {
