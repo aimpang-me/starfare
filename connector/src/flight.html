@@ -331,7 +331,7 @@ var SF = (function () {
   function jdOf(s) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/.exec(s || ""); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 864e5 + 2440587.5 : null; }
   function fmt(n, d) { return Number(n).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
-  function dur(days) { var h = days * 24; return h < 48 ? fmt(h, h < 10 ? 1 : 0) + " h" : days < 400 ? fmt(days, 1) + " days" : fmt(days / 365.25, 1) + " years"; }
+  function dur(days) { var h = days * 24; return h < 1 ? fmt(h * 60, h < 1 / 6 ? 1 : 0) + " min" : h < 48 ? fmt(h, h < 10 ? 1 : 0) + " h" : days < 400 ? fmt(days, 1) + " days" : fmt(days / 365.25, 1) + " years"; }
 
   // Places. "system" is the planet (or the Sun's child) a place orbits; tag is what the page's chip says.
   function place(id) { return PID[id]; }
@@ -354,7 +354,7 @@ var SF = (function () {
   // live: the record's live block while the flight is still in the air. Its legs are the ones flown so far, each with the
   // time it reached orbit at its destination (orb); the last one is open while a checkpoint holds it.
   function replay(ride, live) {
-    var log = ride.record.log, hold = live && live.hold ? jdOf(live.hold.at) : null;
+    var log = ride.record.log, hold = live && live.hold ? live.track[live.track.length - 1][1] : null;
     var legs = (live ? live.flown : log.flown).map(function (f) {
       var dep = jdOf(f.depart), arr = jdOf(f.arrive);
       return { kind: f.leg, from: f.from, to: f.to, dep: dep, orb: jdOf(f.orbit) || arr, arr: arr, open: !!f.open, kwh: f.kwh, gate: f.gate, arc: arcFor(ride, f, dep),
@@ -472,6 +472,8 @@ function fmt(n, d) { return SF.fmt(n, d); }
 function iso(jd) { return SF.iso(jd); }
 function dist(km) { return km >= 0.05 * AU ? fmt(km / AU, 2) + " AU" : km >= 1e6 ? fmt(km / 1e6, 2) + " million km" : fmt(km) + " km"; }
 function W(t) { return esc(shipWords(t)); }
+// A note is the bot's quote, shown as written.
+function evText(e) { return e.kind === "note" ? esc(e.text) : W(e.text); }
 
 function initGL() {
   function fail() { GL = null; $("#rnogl").hidden = false; }
@@ -878,18 +880,17 @@ function trackJd(tr, ms) {
 function liveJd() { return trackJd(RIDE.live.track, wallNow()); }
 function liveRate() { var w = wallNow(), tr = RIDE.live.track; return trackJd(tr, w + 500) - trackJd(tr, w - 500); }
 function setFollow(on) { RS.follow = on; if (on) RS.playing = true; $("#golive").setAttribute("aria-pressed", String(on)); playIcon(); }
-// The wall ms at which the track first reaches the checkpoint's sky time.
-function holdMs(lv, hj) { for (var k = 0; k < lv.track.length; k++) if (lv.track[k][1] >= hj - 1e-9) return lv.track[k][0]; return null; }
+// The server's track ends where the flight lands or holds, so its last point's wall ms is when that happens.
 function liveStatus(lj) {
-  var lv = RIDE.live, w = wallNow(), hd = lv.hold, tx, hm;
+  var lv = RIDE.live, w = wallNow(), hd = lv.hold, tx, hm = lv.track[lv.track.length - 1][0];
   if (lv.lands_at_ms != null) tx = "Lands in about <b>" + Math.max(0, Math.ceil((lv.lands_at_ms - w) / 1000)) + " s</b> (simulated playback).";
-  else if (hd && (hm = holdMs(lv, RS.rp.hold)) != null && w < hm) tx = "Reaches checkpoint " + hd.n + " in about <b>" + Math.ceil((hm - w) / 1000) + " s</b>, then waits for the Grok bot's decision.";
+  else if (hd && w < hm) tx = "Reaches checkpoint " + hd.n + " in about <b>" + Math.ceil((hm - w) / 1000) + " s</b>, then waits for the Grok bot's decision.";
   else if (hd) tx = "<b>Waiting for the Grok bot's decision at checkpoint " + hd.n + "</b> (" + esc(hd.kind.replace("_", " ")) + " at " + esc(hd.place_name) + ").";
   else tx = "In the air (simulated playback).";
   var el = $("#lvst");
   if (el && tx !== RS.lvst) { RS.lvst = tx; el.innerHTML = tx; }
-  // The timeline below shows the events the playback has reached.
-  var n = RS.rp.events.filter(function (e) { return e.jd <= lj; }).length;
+  // The timeline below shows the events the playback has reached. Event times are whole minutes, so allow one.
+  var n = RS.rp.events.filter(function (e) { return e.jd <= lj + 1 / 1440; }).length;
   if (n !== RS.lvn && $("#lvtl")) { RS.lvn = n; $("#lvtl").innerHTML = eventsHtml(n) || '<li class="dim">Nothing yet: the flight has not left.</li>'; bindEvents(); }
 }
 // keep: a rebuild of the same flight (the bot answered a checkpoint, or it landed), so the view and the play state carry over.
@@ -1035,15 +1036,15 @@ function rideFrame(dt, t) {
     $("#rtele").innerHTML = '<div class="hudbox"><div class="caps">Sky time \u00B7 UTC \u00B7 simulated</div><div class="big">' + iso(jd) + "</div>" + rateTx + "<br>" +
       esc(SF.SHIP) + " <b>" + esc(rp.car) + "</b><br>Leg <b>" + (st.i + 1) + "/" + (rp.legs.length + rp.plan.length) + "</b> \u00B7 " + esc(on.length || fl && L.kind !== "pickup" ? "passenger" : legKind(L.kind)) + " \u00B7 <b>" + esc(st.phase) + "</b><br>" +
       esc(SF.name(L.from)) + " \u2192 " + esc(SF.name(L.to)) + "<br>To " + esc(SF.name(L.to)) + " <b>" + where + "</b><br>" +
-      (on.length ? "Aboard <b>" + esc(RS.pax) + "</b> \u00B7 party not set yet" : "Cabin empty \u00B7 picking up <b>" + esc(RS.pax) + "</b>") + "<br>Seats <b>4</b> (placeholder)</div>";
-    var win = er * 6, vis = rp.events.filter(function (e) { return e.jd <= jd && jd - e.jd <= Math.max(win, span * 0.02); }).slice(held ? -2 : -3);
+      (on.length ? "Aboard <b>" + esc(RS.pax) + "</b> \u00B7 party not set yet" : "Cabin empty \u00B7 " + (L.kind === "pickup" || L.idle ? "picking up" : "dropped off") + " <b>" + esc(RS.pax) + "</b>") + "<br>Seats <b>4</b> (placeholder)</div>";
+    var win = er * 6, vis = rp.events.filter(function (e) { return e.jd <= jd + 1 / 1440 && jd - e.jd <= Math.max(win, span * 0.02); }).slice(held ? -2 : -3);
     var key = (held ? "H" : "") + vis.map(function (e) { return e.jd + e.kind; }).join();
     if (key !== RS.ckey) {
       RS.ckey = key;
       var hd = RIDE.live && RIDE.live.hold;
       $("#callouts").innerHTML = (held ? '<div class="co hold"><div class="k">Checkpoint ' + hd.n + ' \u00B7 <span class="mono">' + esc(hd.at) + '</span> \u00B7 simulated</div><b>Waiting for the Grok bot\'s decision at checkpoint ' + hd.n + "</b><p>" +
         W(hd.kind.replace("_", " ") + " at " + hd.place_name + ", cause " + hd.cause.replace("_", " ")) + ". The playback holds here until the bot calls decide.</p></div>" : "") +
-        vis.map(function (e) { return '<div class="co ' + e.kind + '"><div class="k">' + esc(e.kind) + ' \u00B7 <span class="mono">' + iso(e.jd) + "</span></div><b>" + W(e.title) + "</b><p>" + W(e.text) + "</p></div>"; }).join("");
+        vis.map(function (e) { return '<div class="co ' + e.kind + '"><div class="k">' + esc(e.kind) + ' \u00B7 <span class="mono">' + iso(e.jd) + "</span></div><b>" + W(e.title) + "</b><p>" + evText(e) + "</p></div>"; }).join("");
       RS.alert = held || vis.some(function (e) { return e.kind === "checkpoint" || e.kind === "incident"; });
     }
     if (RS.live) liveStatus(lj);
@@ -1134,7 +1135,7 @@ function bindEvents() {
   });
 }
 function eventsHtml(n) {
-  return RS.rp.events.slice(0, n).map(function (e, k) { return '<li><button type="button" class="k-' + e.kind + '" data-ev="' + k + '"><span class="tm">' + iso(e.jd) + "</span><b>" + W(e.title) + '</b><span class="tx">' + W(e.text) + "</span></button></li>"; }).join("");
+  return RS.rp.events.slice(0, n).map(function (e, k) { return '<li><button type="button" class="k-' + e.kind + '" data-ev="' + k + '"><span class="tm">' + iso(e.jd) + "</span><b>" + W(e.title) + '</b><span class="tx">' + evText(e) +"</span></button></li>"; }).join("");
 }
 // While the flight is in the air there is no score yet: the sheet says what the playback waits on and lists what it has shown.
 function liveSheet() {

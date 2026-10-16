@@ -745,12 +745,14 @@ async function phaseOn() {
       const s = assertMatchesNode(good, 2);
       report.play = { run_id: good.hail.run_id, player_id: good.hail.player_id, car: good.score.car, total: good.score.total, node_total: s.total };
     });
-    await check("on: a second grant is a different anonymous player; run_id rules unchanged (any session can address a run by its id, unknown ids rejected)", async () => {
+    await check("on: a second grant is a different anonymous player; a signed-in player's run answers only them, since its run_id is public on the watch page", async () => {
       b = await sdkSignIn(base, "sol e2e player B");
       const m = await ok(b.client, "take_hail", { hail_id: "jovian-hop" });
       assert.match(m.player_id, /^p_[0-9a-f]{16}$/); assert.notEqual(m.player_id, good.hail.player_id);
-      const seen = await ok(b.client, "get_hail", { run_id: good.hail.run_id });
+      const seen = await ok(a.client, "get_hail", { run_id: good.hail.run_id });
       assert.equal(seen.run_id, good.hail.run_id); assert.equal(seen.player_id, good.hail.player_id);
+      const other = await call(b.client, "get_hail", { run_id: good.hail.run_id });
+      assert.equal(other.isError, true); assert.equal(other.value, "unknown run_id. Call take_hail to get one.");
       const u = await call(b.client, "get_hail", { run_id: "run_" + "0".repeat(20) });
       assert.equal(u.isError, true); assert.match(u.value, /unknown run_id/);
       report.second_player = m.player_id;
