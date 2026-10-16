@@ -125,7 +125,7 @@ PASS  bad leg ids are refused (plan_ride after_leg, dispatch) and refusals are n
 PASS  unknown or malformed run_id is rejected; unknown hail_id is refused
 PASS  ceres-shift (long haul): take_hail, plan_pickup (par car), plan_ride re-flown PASS, dispatch, matches Node
 PASS  re-fly cache: the same pickup parameters are served from the cache
-PASS  one run per session: a new take_hail abandons the open run
+PASS  one run per session: a new take_hail abandons the open run and says so in previous_run
 PASS  SSE transport also works (list_hails, take_hail, get_hail)
 PASS  GET /board and /board.json: best per hail with hail titles, labelled planned by Grok bot
 PASS  off: no OAuth: /mcp needs no token, OAuth endpoints are 404, runs carry no player_id
@@ -232,7 +232,7 @@ What the checks cover, in the order the brief asked:
 - Bad leg ids are refused: `plan_ride` after an unknown leg or after a ride leg; `dispatch` with a forged leg, swapped legs, leg ids from another run, or a ride that leaves before the pickup it is dispatched with has arrived. None of these refusals counts as a plan.
 - An unknown or malformed `run_id` and an unknown `hail_id` are refused.
 - A long-haul hail (ceres-shift) plays end to end: rider ready about 150 sky days after `take_hail`, the interplanetary ride re-flown in the n-body checker (PASS), score equal to Node's.
-- One run per session: a new `take_hail` abandons the open run (`plan_pickup` and `dispatch` on it say "abandoned").
+- One run per session: a new `take_hail` abandons the open run (`previous_run` says so; `plan_pickup` and `dispatch` on it say "abandoned"). A ride stopped at a checkpoint is flown on the defaults instead; `game.test.mjs` checks that.
 - After `dispatch` the run is locked: a second `dispatch` returns the same score with `already_dispatched`, `plan_pickup` is refused.
 - SSE works, with OAuth off and with an access token. `/board` and `/board.json` show the best run per hail with the hail titles, labelled "planned by Grok bot". The plan+re-fly cache serves a repeated leg. With the limit set to 5, the sixth and seventh requests in a minute from one IP get 429, with OAuth off and on.
 - OAuth on: see the paragraph above. The run's `player_id` appears in `take_hail`, `get_hail`, `dispatch` and `/board`; a second grant gets a different id; a refreshed token keeps the id; a run can still be addressed by its `run_id` from another session.

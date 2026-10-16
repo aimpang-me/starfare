@@ -7,7 +7,7 @@
 // Every RPC method returns plain data; game errors come back as { error } instead of throwing across RPC.
 import { DurableObject } from "cloudflare:workers";
 import { engine } from "./engine.js";
-import { GameError, abandonRun, checkPad, computeLeg, decide, dispatch, hailInfo, legKey, legPub, newRun, phaseOf, planPickup, planRideLeg, spaceWeather } from "./game.js";
+import { GameError, checkPad, computeLeg, decide, dispatch, hailInfo, leaveRun, legKey, legPub, newRun, phaseOf, planPickup, planRideLeg, spaceWeather } from "./game.js";
 
 export const RUN_ID = /^run_[0-9a-f]{20}$/;
 export const hub = (env) => env.STARFARE_HUB.get(env.STARFARE_HUB.idFromName("hub"));
@@ -128,11 +128,15 @@ export class StarfareRun extends DurableObject {
     });
   }
 
-  /** One bot holds one run at a time: taking a new hail in the same MCP session abandons the open one if it is still planning. */
-  async abandon() {
+  /** One bot holds one run at a time. Taking a new hail in the same MCP session abandons the open run if it is still planning,
+   *  or flies it on the defaults to arrive if it is at a checkpoint, scored and on the board. */
+  async leave() {
     const run = await this.#run();
-    if (run && abandonRun(run)) await this.#save(run);
-    return { ok: true };
+    const r = run ? leaveRun(await engine(), run) : null;
+    if (!r) return null;
+    await this.#save(run);
+    if (r.status === "arrived") await this.#record(run, r);
+    return { run_id: r.run_id, status: r.status, ...(r.status === "arrived" ? { total: r.total, note: r.note } : {}) };
   }
 }
 

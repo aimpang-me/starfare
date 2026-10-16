@@ -88,11 +88,22 @@ export async function newRun(E, hailId, nowMs, runId, termsFn) {
 // Runs stored before phases existed carry started and abandoned booleans instead.
 export const phaseOf = (run) => run.phase || (run.started ? "arrived" : run.abandoned ? "abandoned" : "planning");
 function setPhase(run, phase) { run.phase = phase; delete run.started; delete run.abandoned; }
-/** Taking a newer hail abandons a run that is still planning. Returns whether it changed. */
-export function abandonRun(run) {
-  if (phaseOf(run) !== "planning") return false;
-  setPhase(run, "abandoned");
-  return true;
+/** Taking a newer hail leaves the old run. A run still planning is abandoned. A ride at a checkpoint flies on with the default
+ *  answer at every checkpoint left, so the rider still arrives and the run is scored. Returns null when the run was already over. */
+export function leaveRun(E, run) {
+  const phase = phaseOf(run);
+  if (phase === "planning") { setPhase(run, "abandoned"); return { ok: true, status: "abandoned", run_id: run.run_id }; }
+  if (phase !== "in_flight") return null;
+  const from = run.ride.pending;
+  run.decisions = run.decisions || [];
+  while (phaseOf(run) === "in_flight") {
+    const cp = openCheckpoint(run), d = decisionOf(E, cp, cp.default);
+    run.decisions[cp.n - 1] = d;
+    next(E, run, E.R.step(run.ride, d));
+  }
+  run.score.left_at_checkpoint = from;
+  run.score.note = "A newer hail was taken at checkpoint " + from + ", so the rest of this ride flew on the default answers.";
+  return arrived(run);
 }
 
 export function hailInfo(E, run, nowMs) {

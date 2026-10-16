@@ -378,9 +378,10 @@ async function phaseOff() {
     const tA = Date.now(); await ok(client, "plan_pickup", { run_id: h.run_id, car: "sf-01" });
     report.cache = { first_cached: a.cached, second_cached: b.cached, first_ms: timings.at(-3).ms, cached_call_ms: Date.now() - tA };
   });
-  await check("one run per session: a new take_hail abandons the open run", async () => {
+  await check("one run per session: a new take_hail abandons the open run and says so in previous_run", async () => {
     const h1 = await ok(client, "take_hail", { hail_id: "jovian-hop" });
-    await ok(client, "take_hail", { hail_id: "phobos-commute" });
+    const h2 = await ok(client, "take_hail", { hail_id: "phobos-commute" });
+    assert.deepEqual(h2.previous_run, { run_id: h1.run_id, status: "abandoned" });
     const p = await call(client, "plan_pickup", { run_id: h1.run_id, car: "sf-05" });
     assert.equal(p.isError, true); assert.match(p.value, /abandoned/);
     const d = await call(client, "dispatch", { run_id: h1.run_id, pickup_leg: "leg1", ride_leg: "leg2", quoted_fare_usd: 0, quoted_arrival: "" });
