@@ -21,8 +21,8 @@ Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi gam
 - Keep secrets out of the repo; use environment variables or Wrangler secrets.
 
 ## Open items (2026-10-16)
-- Done: merged with the live connector (DO classes StarfareMcp/Run/Hub/Auth, STARFARE_OAUTH); MCP server named "starfare"; live Worker version 37989da3. Don't rename the DO classes again without a wrangler migration.
+- Done: merged with the live connector (DO classes StarfareMcp/Run/Hub/Auth, STARFARE_OAUTH); MCP server named "starfare"; live Worker version 31d63a4c (main c9b50df). Don't rename the DO classes again without a wrangler migration.
 - See docs/HANDOFF.md for the game's vision, decisions and build order.
 - Old Worker `sol-connector` still running; delete only when Alvin says.
-- Mid-ride checkpoints (launch_hold, pad_closed) and the `decide` tool are built on branch `worktree-agent-a3e7a2c61cdef21c8`, not deployed. The Open Sky page does not show checkpoints yet.
-- Later ideas: get_my_rides / run-log history, leaderboard by model + skills, daily seed, dispatch bidding, comfort max-g, charging stops, pooling.
+- Done and deployed: mid-ride checkpoints (launch_hold, pad_closed) with the `decide` tool, on the connector and the Open Sky page; get_my_rides with ride history and run logs.
+- Later ideas: leaderboard by model + skills, daily seed, dispatch bidding, comfort max-g, charging stops, pooling.
