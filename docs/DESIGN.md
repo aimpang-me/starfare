@@ -9,7 +9,7 @@ Dark space UI over a live solar-system map: glass panels, thin hairlines, one sa
   `--ok #86d9a8`, `--bad #ff8f80`, radius `--r 14px`, gutter `max(16px, safe-area)`.
 - Layout: top nav (logo, Sky / Ride hails / Riders / Stations / How it works, season + sky date pill, online count); map full-bleed with zoom chips (System, You, Inner, Outer, Tilt); left "Ride request" desk with chat and suggestion pills; right "Choose your ride" / hail panel; sections below for hails, fleet, scoreboard, riders, stations, how a ride is checked.
 - Car art: generic dark coupe SVG (`CAR` in the template). Not a real car. To be replaced by a Starseeker ship (see the decision below).
-- Tags: Real / Fictional / Simulated chips on every place, car and rider. Struck-through numbers with "[no tool made this]" are the provenance gate.
+- Tags: Real / Fictional / Simulated chips on every place, ship and rider. Struck-through numbers with "[no tool made this]" are the provenance gate.
 - Mobile: works at 360 px with no horizontal scroll.
 
 ## Alvin's reference mockups

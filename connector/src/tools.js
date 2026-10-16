@@ -6,18 +6,18 @@ import { z } from "zod";
 export const RUN_ID = /^run_[0-9a-f]{20}$/;
 
 export const INSTRUCTIONS =
-  "Starfare is a concept robotaxi service for flying roadsters across the solar system. You are the dispatcher. Simulated riders hail a ride; you pick a car from the simulated fleet, " +
+  "Starfare is a concept robotaxi service for Starseeker ships across the solar system. You are the dispatcher. Simulated riders hail a ride; you pick a Starseeker from the simulated fleet, " +
   "plan the pickup and the ride with Starfare's engine (every leg between planets is re-flown in an n-body checker), quote the rider a fare and arrival, and dispatch.\n" +
   "Before planning, call get_my_rides: your past rides (simulated), what you lost points on, and at each checkpoint what the best choice would have used in hindsight.\n" +
-  "Call list_hails, then take_hail to get a run_id and the fleet. Some cars are busy on another job until their busy_until time; their pickup can't leave earlier. " +
-  "For each car worth trying, plan_pickup (car to rider), then plan_ride after that pickup. Compare cars, objectives (energy = least battery, time = fastest) and wait_days, " +
+  "Call list_hails, then take_hail to get a run_id and the fleet. Some ships are busy on another job until their busy_until time; their pickup can't leave earlier. " +
+  "For each ship worth trying, plan_pickup (ship to rider), then plan_ride after that pickup. Compare ships, objectives (energy = least battery, time = fastest) and wait_days, " +
   "then dispatch with the pickup leg, the ride leg, the fare copied from the ride leg, and the arrival you promise the rider.\n" +
   "Hazards (simulated, seeded per season, the same for every player): pads have few berths and other traffic, solar flares hold any launch with a rider aboard, " +
   "Mars dust storms and Titan haze close those pads, a leg between planets that leaves late needs a correction burn, and holding in orbit for a berth costs 250 kWh an hour. " +
   "You only get forecasts: check_pad (booked berths per hour and local weather odds; unscheduled traffic, about a quarter, is never shown) and space_weather (flare odds per day). " +
   "Both are free and do not count as plans.\n" +
-  "Once dispatched, the car flies the season's hazards. When a flare grounds a launch or a pad is closed when the car arrives, the ride stops at a checkpoint and the result is status \"checkpoint\" " +
-  "with a situation: what happened, where the car is, the kWh used so far and the options. Answer with decide: at a launch hold, wait or replan the leg from a later time (a replan counts as a plan); " +
+  "Once dispatched, the ship flies the season's hazards. When a flare grounds a launch or a pad is closed when the ship arrives, the ride stops at a checkpoint and the result is status \"checkpoint\" " +
+  "with a situation: what happened, where the ship is, the kWh used so far and the options. Answer with decide: at a launch hold, wait or replan the leg from a later time (a replan counts as a plan); " +
   "at a closed pad, hold in orbit or divert to a nearby pad. Small holds are decided for you: dispatch's ask_after_hours (default 1, or \"never\") sets how long before the ride asks. " +
   "The ride's sky clock is stopped at a checkpoint, and get_hail shows the open one. When the ride arrives the result says what actually happened (incidents, extra kWh, actual arrival), " +
   "what each choice at each checkpoint would have cost in hindsight, and a log you can learn from.\n" +
@@ -34,7 +34,7 @@ const from = skyTime.describe("sky time YYYY-MM-DD HH:MM to start from (default:
 /** Every tool, in the order tools/list shows them. */
 export const TOOLS = {
   list_hails: {
-    description: "Riders waiting for a Starfare robotaxi (simulated riders): hail id, pickup place, destination, quick or long haul. Also the fleet of cars. Take one with take_hail.",
+    description: "Riders waiting for a Starfare robotaxi (simulated riders): hail id, pickup place, destination, quick or long haul. Also the fleet of Starseekers. Take one with take_hail.",
     inputSchema: {},
   },
   take_hail: {
@@ -42,14 +42,14 @@ export const TOOLS = {
     inputSchema: { hail_id: z.string().describe("hail id from list_hails, e.g. iss-crew") },
   },
   get_hail: {
-    description: "The run's hail: rider, pickup place and time, destination, arrive_by, the fleet (each car free or busy_until a time), plans used, the hazards and the scoring rules.",
+    description: "The run's hail: rider, pickup place and time, destination, arrive_by, the fleet (each ship free or busy_until a time), plans used, the hazards and the scoring rules.",
     inputSchema: { run_id: runId },
   },
   plan_pickup: {
-    description: "Plan a car's flight from where it is parked to the rider, leaving when the rider is ready or the car is free, whichever is later (or wait_days after that), and re-fly it in the n-body checker. Returns the pickup leg with its leg_id; a note says if the car was busy.",
+    description: "Plan a ship's flight from where it is parked to the rider, leaving when the rider is ready or the ship is free, whichever is later (or wait_days after that), and re-fly it in the n-body checker. Returns the pickup leg with its leg_id; a note says if the ship was busy.",
     inputSchema: {
       run_id: runId,
-      car: z.string().describe("car id from the fleet, e.g. sf-01"),
+      car: z.string().describe("the ship's call sign from the fleet, e.g. sf-01"),
       objective: z.enum(["energy", "time"]).optional(),
       wait_days: z.number().min(0).max(400).optional(),
     },
@@ -65,10 +65,10 @@ export const TOOLS = {
   },
   plan_leg: {
     description: "Shared flights only (get_hail lists several bookings): plan one leg of the flight to a booking's pickup place or destination, and re-fly it in the n-body checker. " +
-      "The first leg names a car and flies from where it is parked; each later leg names after_leg and flies on from where that leg lands, after boarding if anyone boards there (or wait_days later). Returns the leg with its leg_id, fare_usd and arrive time.",
+      "The first leg names a ship (its car field) and flies from where it is parked; each later leg names after_leg and flies on from where that leg lands, after boarding if anyone boards there (or wait_days later). Returns the leg with its leg_id, fare_usd and arrive time.",
     inputSchema: {
       run_id: runId,
-      car: z.string().optional().describe("first leg: car id from the fleet, e.g. sf-01"),
+      car: z.string().optional().describe("first leg: the ship's call sign from the fleet, e.g. sf-01"),
       after_leg: z.string().optional().describe("later legs: leg_id of the leg this one follows"),
       to: z.string().min(1).max(64).describe("place id or name: one of the bookings' pickup places or destinations"),
       objective: z.enum(["energy", "time"]).optional(),
@@ -93,7 +93,7 @@ export const TOOLS = {
     },
   },
   dispatch: {
-    description: "Dispatch the car: the pickup leg, the ride leg, the fare you quote (copy the ride leg's fare_usd) and the arrival you promise the rider. The season's hazards are then flown. " +
+    description: "Dispatch the ship: the pickup leg, the ride leg, the fare you quote (copy the ride leg's fare_usd) and the arrival you promise the rider. The season's hazards are then flown. " +
       "If a hazard stops the ride, the result is status \"checkpoint\" with the situation; answer it with decide. Otherwise the ride arrives and the result says what actually happened " +
       "(actual pickup and arrival, delay, extra kWh, incidents), the locked score and a run log. Arrived scores go on the /board page. " +
       "A shared flight sends legs, stops (who boards and alights where each leg lands) and quotes per booking instead of the pickup and ride legs and the one quote.",

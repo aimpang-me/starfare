@@ -334,7 +334,7 @@ async function phaseOff() {
     const proto = await call(client, "plan_ride", { run_id: h.run_id, after_leg: "constructor" });
     assert.equal(proto.isError, true); assert.match(proto.value, /unknown leg_id constructor/);
     const c = await call(client, "plan_pickup", { run_id: h.run_id, car: "sol-99" });
-    assert.equal(c.isError, true); assert.match(c.value, /unknown car sol-99/);
+    assert.equal(c.isError, true); assert.match(c.value, /unknown ship sol-99/);
     const p = await ok(client, "plan_pickup", { run_id: h.run_id, car: "sf-01" });
     assert.equal(p.plans_used, 1);
     const r = await ok(client, "plan_ride", { run_id: h.run_id, after_leg: p.leg_id });

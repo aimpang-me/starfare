@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Starfare</title>
-<meta name="description" content="Starfare is a robotaxi game for flying cars across the solar system, and a benchmark for AI agents. Planet positions are real; riders, the fleet and hazards are simulated. Works with Grok.">
+<meta name="description" content="Starfare is a robotaxi game for Starseeker ships across the solar system, and a benchmark for AI agents. Planet positions are real; riders, the fleet and hazards are simulated. Works with Grok.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -132,15 +132,15 @@ footer p{max-width:100ch}
   </div>
   <section class="ov hero glass" aria-labelledby="h-hero">
     <span class="tag sim" style="align-self:flex-start">Game · agent benchmark</span>
-    <h1 id="h-hero">A robotaxi game for flying cars across the solar system.</h1>
-    <p class="dim">Simulated riders hail rides between real places, from the ISS to Titan. Your AI agent is the dispatcher. It picks a car, plans the pickup and the ride with the game's orbital planner, promises a fare and an arrival time, and flies through simulated hazards. Every arrived ride is scored, so the game is also a benchmark for agents.</p>
+    <h1 id="h-hero">A robotaxi game for Starseeker ships across the solar system.</h1>
+    <p class="dim">Simulated riders hail rides between real places, from the ISS to Titan. Your AI agent is the dispatcher. It picks a Starseeker, plans the pickup and the ride with the game's orbital planner, promises a fare and an arrival time, and flies through simulated hazards. Every arrived ride is scored, so the game is also a benchmark for agents.</p>
     <div class="cta"><a class="btn" href="#play">Play with Grok</a><a class="btn ghost" href="#scores">Scoreboard</a></div>
-    <p class="small faint">The map is live and read-only. Planet positions are real, from NASA JPL's DE421 ephemeris. Riders, cars and hazards are simulated. Tap anything on the map. Pinch or Ctrl+scroll to zoom.</p>
+    <p class="small faint">The map is live and read-only. Planet positions are real, from NASA JPL's DE421 ephemeris. Riders, ships and hazards are simulated. Tap anything on the map. Pinch or Ctrl+scroll to zoom.</p>
   </section>
   <div class="ov legend glass" aria-hidden="true">
     <span><i class="sw" style="background:#6fa8ff"></i>Planets and moons: real positions</span>
     <span><i class="sw dash"></i><i class="sw" style="background:var(--me);margin-left:-6px"></i>Open hail, pickup to destination (simulated rider)</span>
-    <span><i class="sw sq" style="background:var(--sim)"></i>Fleet car, parked (simulated)</span>
+    <span><i class="sw sq" style="background:var(--sim)"></i>Fleet Starseeker, parked (simulated)</span>
   </div>
 </div>
 
@@ -150,7 +150,7 @@ footer p{max-width:100ch}
   <div class="grid" id="hail-grid"></div>
   <h3 class="k" style="margin:12px 0 0">The fleet (simulated)</h3>
   <div class="list" id="fleet-list"></div>
-  <p class="small faint">In a run, some cars are already busy on other simulated jobs. The dispatcher sees when each car is free and picks one.</p>
+  <p class="small faint">In a run, some ships are already busy on other simulated jobs. The dispatcher sees when each ship is free and picks one.</p>
 </section>
 
 <section class="sec" id="scores" aria-labelledby="h-scores">
@@ -189,7 +189,7 @@ footer p{max-width:100ch}
 </main>
 
 <footer>
-  <p>Starfare is a concept demo by Alvin Impang, an SDET and AI-quality engineer. It's a made-up robotaxi service with simulated riders, a simulated fleet and simulated hazards, and it isn't affiliated with any real company. Burns, battery and fare come from stated, made-up car and thruster models.</p>
+  <p>Starfare is a concept demo by Alvin Impang, an SDET and AI-quality engineer. It's a made-up robotaxi service with simulated riders, a simulated fleet and simulated hazards, and it isn't affiliated with any real company. Burns, battery and fare come from stated, made-up ship and thruster models.</p>
   <p>Planet positions: NASA JPL DE421. ISS and Tiangong orbits: JPL Horizons. Sky time runs fast: one real second is one sky day, and the sky resets at the end of each season. Grok connects through the Model Context Protocol. <span id="eng-note"></span></p>
 </footer>
 
@@ -251,7 +251,7 @@ fetch("/board.json", { cache: "no-store" }).then(function(r){ if (!r.ok) throw n
   .catch(function(){ $("board-list").innerHTML = '<p class="li small dim" style="grid-template-columns:1fr">The scoreboard didn\'t load. Try <a href="/board">/board</a>.</p>'; });
 
 /* ---------- benchmark parts, from the engine ---------- */
-var WHAT = { pickup: "How soon a car reached the rider, against the best any nearby car could do.", on_time: "Whether the rider arrived by the hail's deadline.",
+var WHAT = { pickup: "How soon a ship reached the rider, against the best any nearby ship could do.", on_time: "Whether the rider arrived by the hail's deadline.",
   energy: "Energy flown against par, the game's own hindsight plan.", promise: "Whether the rider arrived when the agent said they would.",
   checker: "Legs that passed the n-body re-fly. Short local hops count as passed.", fare: "Whether the quoted fare matches the ride's fare.", economy: "How few planning calls it took." };
 if (PARTS){
@@ -375,7 +375,7 @@ cv.addEventListener("click", function(e){
   var it = best.it, html;
   if (best.kind === "place") html = '<span class="tag ' + (it.real ? "real" : "fict") + '" style="align-self:flex-start">' + (it.real ? "Real" : "Fictional") + "</span><b>" + esc(it.name) + '</b><span class="small dim">' + esc(it.sub || "") + "</span>";
   else if (best.kind === "hail") html = '<span class="tag sim" style="align-self:flex-start">Simulated rider</span><b>' + esc(it.title) + '</b><span class="small dim">' + esc(it.from.name) + " → " + esc(it.to.name) + '</span><span class="small">' + esc(it.blurb) + "</span>";
-  else html = '<span class="tag sim" style="align-self:flex-start">Simulated car</span><b>' + esc(it.name) + '</b><span class="small dim">Parked at ' + esc(it.parked_at.name) + "</span>";
+  else html = '<span class="tag sim" style="align-self:flex-start">Simulated Starseeker</span><b>' + esc(it.name) + '</b><span class="small dim">Parked at ' + esc(it.parked_at.name) + "</span>";
   popup = document.createElement("div"); popup.className = "pick glass";
   popup.style.left = clamp(best.x + 14, 8, W - 290) + "px"; popup.style.top = clamp(best.y - 20, 8, H - 150) + "px";
   popup.innerHTML = html; cv.parentNode.appendChild(popup);

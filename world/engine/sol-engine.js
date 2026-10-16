@@ -487,7 +487,7 @@ export const titanBurn = (vinf) => wellBurn(endpointModel({ place: "titan" }).ch
 // ------------------------------------------------------------------ models.py (stated, made-up-on-purpose)
 export const MODELS = { CAR_DRY_KG: 1300.0, PACK_KWH: 200.0, EXHAUST_KMS: 30.0, THRUSTER_EFF: 0.60,
   USD_PER_KWH: 0.16, USD_PER_MIN: 0.35 };
-export const ASSUMPTIONS = ["car 1300 kg dry with a 200 kWh pack",
+export const ASSUMPTIONS = ["ship 1300 kg dry with a 200 kWh pack",
   "electric thruster: 30 km/s exhaust, 60% efficient, burns treated as instant",
   "fare = $0.16/kWh energy + $0.35/min time fee", "landing, aerobraking and life support are not priced"];
 function pyRound(x, nd = 0) {  // Python round(): half to even, on the decimal repr like CPython's
