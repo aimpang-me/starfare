@@ -1,7 +1,7 @@
 {
   "format": "starfare.suite/1",
   "id": "v1",
-  "engine_sha256": "ad94cc691b07d519d7747a53d73af868a5184bd87a4c88a35adb67d57e82717f",
+  "engine_sha256": "c5fdd816d464827c7879256f69dd084e66c5928522b4e5ee642b9564cdd69732",
   "score_version": 1,
   "budget": 60,
   "world": "per_task",
@@ -65,15 +65,6 @@
         "stratum": "quick/hazard"
       },
       {
-        "id": "ceres-shift+iss-crew/4237",
-        "hails": [
-          "ceres-shift",
-          "iss-crew"
-        ],
-        "clock_jd": 2465566.5,
-        "stratum": "long/hazard"
-      },
-      {
         "id": "phobos-commute+jovian-hop/5865",
         "hails": [
           "phobos-commute",
@@ -108,6 +99,15 @@
         ],
         "clock_jd": 2465945.5,
         "stratum": "quick/hazard"
+      },
+      {
+        "id": "titan-home+jovian-hop/2880",
+        "hails": [
+          "titan-home",
+          "jovian-hop"
+        ],
+        "clock_jd": 2464209.5,
+        "stratum": "long/hazard"
       },
       {
         "id": "ceres-shift/2358",
