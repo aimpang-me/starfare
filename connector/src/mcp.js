@@ -19,7 +19,7 @@ const INSTRUCTIONS =
   "then dispatch with the pickup leg, the ride leg, the fare copied from the ride leg, and the arrival you promise the rider.\n" +
   "Hazards (simulated, seeded per season, the same for every player): pads have few berths and other traffic, solar flares hold any launch with a rider aboard, " +
   "Mars dust storms and Titan haze close those pads, a leg between planets that leaves late needs a correction burn, and holding in orbit for a berth costs 250 kWh an hour. " +
-  "You only get forecasts: check_pad (booked berths per hour and local weather odds; unscheduled traffic, about a quarter, is never shown) and space_weather (flare odds per day). " +
+  "You only get forecasts: check_pad (booked berths per hour and local weather odds; unscheduled traffic, about a quarter, is never shown) and space_weather (flare odds per day at a place; storms reach far places later and less often). " +
   "Both are free and do not count as plans.\n" +
   "Once dispatched, the car flies the season's hazards. When a flare grounds a launch or a pad is closed when the car arrives, the ride stops at a checkpoint and the result is status \"checkpoint\" " +
   "with a situation: what happened, where the car is, the kWh used so far and the options. Answer with decide: at a launch hold, wait or replan the leg from a later time (a replan counts as a plan); " +
@@ -102,9 +102,10 @@ export class StarfareMcp extends McpAgent {
     }, async ({ run_id, ...inp }) => out(await runStub(this.env, run_id).forecast("pad", inp)));
 
     s.registerTool("space_weather", {
-      description: "Solar radiation storm (flare) forecast (simulated): the odds a storm starts, per sky day. A storm holds any launch with a rider aboard until it passes. Free; does not count as a plan.",
+      description: "Solar radiation storm (flare) forecast (simulated): the odds a storm starts at a place, per sky day. Storms travel out from the Sun at 1500 km/s and fewer reach far places. A storm holds any launch with a rider aboard until it passes. Free; does not count as a plan.",
       inputSchema: {
         run_id: runId,
+        place: z.string().min(1).max(64).optional().describe("place id or name (default: the open checkpoint's place, else the pickup)"),
         days: z.number().int().min(1).max(60).optional().describe("days to show, 1-60 (default 10)"),
         from,
       },

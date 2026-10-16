@@ -14,6 +14,13 @@ Decisions only Alvin can make. Ask them one at a time, with the options below an
 9. **Clean-up (can't be undone; only on his explicit go):** delete the old `sol-connector` Worker, the duplicate repo `aimpang/starfare`, and `Documents\starfare-mine`. Recommendation: after Grok works on the new `starfare` connector.
 10. **Old scores:** the old `sol-connector` board holds pre-hazard 100s; the new board started empty. Leave them, or show them as an "old rules" table?
 
+## Solar variables (docs/SOLAR-VARIABLES.md)
+11. **Where does the dispatcher sit?** Earth now (simulated): every checkpoint answer crosses the real light time (minutes at Mars, over two hours round trip at Saturn). Or a dispatcher per region, which cuts the delay to seconds there. Recommendation: keep Earth; the delay is the point.
+12. **Rider dose limits.** At the deep-space cruise rate (1.84 mSv/day) Ceres and Titan rides give 1 to 3.5 Sv, against NASA-STD-3001's 600 mSv career limit. Score it, cap it, or only show it? Recommendation: only show it until there is shielding or faster cars.
+13. **Flare frequency.** Keep the simulated 27-day spells, or fit them to a real solar cycle?
+14. **CME direction.** Every storm now reaches every place, thinned by 1/r². Real CMEs are cones aimed one way. Add direction?
+15. **Mars Base** is an orbit station that has Mars dust weather. Keep it that way?
+
 ## Answered
 - Name: Starfare (2026-10-16).
 - Repo home: aimpang-me/starfare, worked on in the desktop Code tab on his PC (2026-10-16).

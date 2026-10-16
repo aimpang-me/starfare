@@ -305,10 +305,11 @@ async function phaseOff() {
     assert.equal(mars.local_weather.kind, "dust_storm");
     assert.deepEqual(mars.local_weather.days.map((d) => d.odds), R.weatherForecast("mars-base", t0, mars.local_weather.days.length, seed).days.map((d) => d.odds));
     const sw = await ok(client, "space_weather", { run_id: h.run_id, days: 30 });
-    assert.deepEqual(sw.days.map((d) => [d.from, d.flare_odds]), R.flareForecast(t0, 30, seed).map((d) => [isoJD(d.day_jd), d.flare_odds]));
+    assert.equal(sw.place.id, R.BY[h.hail_id].from);
+    assert.deepEqual(sw.days.map((d) => [d.from, d.flare_odds]), R.flareForecast(t0, 30, seed, sw.place.id).map((d) => [isoJD(d.day_jd), d.flare_odds]));
     for (const d of sw.days) assert.deepEqual(Object.keys(d).sort(), ["flare_odds", "from", "to"]);
     assert.equal((await ok(client, "space_weather", { run_id: h.run_id })).days.length, 10);
-    for (const [tool, args, re] of [["check_pad", { place: "nowhere" }, /unknown place nowhere/], ["check_pad", { place: "constructor" }, /unknown place/], ["check_pad", { place: "iss", from: "2030-02-30 00:00" }, /from must be/]]) {
+    for (const [tool, args, re] of [["check_pad", { place: "nowhere" }, /unknown place nowhere/], ["check_pad", { place: "constructor" }, /unknown place/], ["check_pad", { place: "iss", from: "2030-02-30 00:00" }, /from must be/], ["space_weather", { place: "nowhere" }, /unknown place nowhere/]]) {
       const r = await call(client, tool, { run_id: h.run_id, ...args });
       assert.equal(r.isError, true, JSON.stringify(r.value)); assert.match(String(r.value), re);
     }
