@@ -139,6 +139,23 @@ async function phaseOff() {
   console.log(`wrangler dev up at ${w.base}`);
   const client = await connect(w.base);
 
+  await check("GET / is the landing page: the connector URL, the hails and fleet as data, and a cacheable engine script", async () => {
+    const r = await fetch(`${w.base}/`);
+    assert.equal(r.status, 200);
+    assert.match(r.headers.get("content-type"), /^text\/html/);
+    const html = await r.text();
+    for (const s of ["Starfare", "Works with Grok", `${w.base}/mcp`, "grok.com/connectors", "/board.json", "/rides/&lt;run_id&gt;.json"]) assert.ok(html.includes(s), s);
+    assert.doesNotMatch(html, /__(SITE|ORIGIN|ENGINE_URL)__/);
+    const site = JSON.parse(/window\.SITE = (.*);<\/script>/.exec(html)[1]);
+    assert.deepEqual(site.hails.map((h) => h.hail_id), R.HAILS.map((h) => h.id));
+    assert.deepEqual(site.fleet.map((c) => [c.car, c.parked_at.id]), R.FLEET.map((c) => [c.id, c.at]));
+    const src = /<script src="(\/engine\.js\?v=[0-9a-f]{16})"/.exec(html)[1];
+    const js = await fetch(`${w.base}${src}`);
+    assert.equal(js.status, 200);
+    assert.match(js.headers.get("content-type"), /^text\/javascript/);
+    assert.match(js.headers.get("cache-control"), /immutable/);
+    assert.ok((await js.text()).includes("module.exports = SOLE"));
+  });
   await check("tools/list is exactly the ten ride-hail tools", async () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     assert.deepEqual(names, TOOLS);
@@ -523,8 +540,8 @@ async function phaseOn() {
   console.log(`wrangler dev up at ${base}`);
   let asMeta, a, b;
   try {
-    await check("on: /, /board and /board.json stay public; /mcp without a token is 401", async () => {
-      for (const path of ["/", "/board", "/board.json"]) { const r = await fetch(`${base}${path}`); assert.equal(r.status, 200, path); await r.body?.cancel(); }
+    await check("on: /, /engine.js, /board and /board.json stay public; /mcp without a token is 401", async () => {
+      for (const path of ["/", "/engine.js", "/board", "/board.json"]) { const r = await fetch(`${base}${path}`); assert.equal(r.status, 200, path); await r.body?.cancel(); }
       await assert.rejects(connect(base), (e) => { assert.equal(e.code, 401, e.message); return true; });
       await assert.rejects(connect(base, "sse"), (e) => { assert.equal(e.code, 401, e.message); return true; });
       await assert.rejects(connect(base, "streamable-http", { requestInit: { headers: { Authorization: "Bearer not-a-token" } } }), (e) => { assert.equal(e.code, 401, e.message); return true; });

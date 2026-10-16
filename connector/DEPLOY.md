@@ -29,7 +29,8 @@ Score out of 100, computed by `SOLE.R.score` unchanged from what actually happen
 | `/mcp` | MCP server, Streamable HTTP and the older SSE transport on the same path (`McpAgent`, `transport: "auto"`, same pattern as Wingbot's `web/`). No auth by default (`STARFARE_OAUTH` `off`). Rate limited per IP. |
 | `/.well-known/oauth-*`, `/register`, `/authorize`, `/token` | Only with `STARFARE_OAUTH` `on`: OAuth for `/mcp`, see "Turning OAuth on" below. With `off` they answer 404. |
 | `/board` | Scoreboard page: best connector score per hail, with the hail titles, labelled "planned by Grok bot". `/board.json` is the same data. |
-| `/` | One line of plain text saying where the connector and the board are. |
+| `/` | Public landing page (`src/site.html`): what Starfare is, a live read-only sky map that runs the engine in the browser (real planet positions, the current hails, the simulated fleet), the scoreboard from `/board.json`, and how to add `/mcp` at grok.com/connectors. Public even with `STARFARE_OAUTH` `on`. |
+| `/engine.js` | The engine bundle for the landing page, the same bytes as `src/engine/sol-page.cjs` (`node build.mjs` writes a gitignored copy, `src/engine/sol-page.txt`). Cached for a year at `?v=<first 16 hex of the engine sha256>`, which is the URL the page uses. |
 
 Tools:
 
@@ -132,7 +133,7 @@ curl -si -X POST $URL/mcp \
 curl -s $URL/board | head -20
 ```
 
-Expected: the first prints the one-line pointer; the second returns `200` with an `event: message` body naming `serverInfo.name` `sol` and carrying the dispatcher instructions ("Starfare is a concept robotaxi service for flying roadsters ..."); the third is the board's HTML ("Starfare dispatcher board", one row per hail).
+Expected: the first prints the landing page's HTML (`<title>Starfare</title>`, the `/mcp` URL under "Works with Grok"); open `$URL/` in a browser to see the sky map move; the second returns `200` with an `event: message` body naming `serverInfo.name` `sol` and carrying the dispatcher instructions ("Starfare is a concept robotaxi service for flying roadsters ..."); the third is the board's HTML ("Starfare dispatcher board", one row per hail).
 
 ### 4. Play one run from your terminal (optional) [verified locally]
 

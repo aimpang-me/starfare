@@ -5,13 +5,13 @@ Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi gam
 ## Layout
 - `world/engine/`: the engine. `sol-engine.js` (planner, n-body re-fly checker), `sol-rides.js` (ride hails, hazards, scoring), `sol-missions.js` (older delivery game). `python3 world/bundle.py` bundles them into `engine/sol-page.js`.
 - `world/template.html` -> `python3 world/build.py` -> `world/open-sky.html` (the Open Sky page, published as a claude.ai artifact).
-- `connector/`: the Grok MCP connector, a Cloudflare Worker named `starfare`. `node build.mjs` copies the engine bundle into `src/engine/`. Docs: `DEPLOY.md`, `TEST.md`.
+- `connector/`: the Grok MCP connector, a Cloudflare Worker named `starfare`. `node build.mjs` copies the engine bundle into `src/engine/`. `GET /` is the public website (`src/site.html`): a live read-only sky map running the engine in the browser (served at `/engine.js`), the scoreboard and how to connect Grok. Docs: `DEPLOY.md`, `TEST.md`.
 - `code/`, `day1`-`day6/`, `audit/`, `receipts/`: the original Python planner, checker, evals.
 
 ## Tests
 - Engine hazards: `node world/engine/test-hazards.js` (7 checks).
 - Engine checkpoints: `node world/engine/test-reroute.js` (8 checks, about a minute; one replays 100 fixture hails). `node world/engine/find-reroute-cases.js` finds the dust-storm rides it pins.
-- Connector: `cd connector && npm ci && node build.mjs && node --test test/game.test.mjs` (27) and `node test/e2e.mjs` (36, runs wrangler dev; fails in the last minute of a 7000-sky-day season, about 1.9 h real time, so rerun).
+- Connector: `cd connector && npm ci && node build.mjs && node --test test/game.test.mjs` (27) and `node test/e2e.mjs` (37, runs wrangler dev; fails in the last minute of a 7000-sky-day season, about 1.9 h real time, so rerun).
 
 ## Rules from Alvin
 - Never deploy, delete a Worker, or change Cloudflare without Alvin's go in this session.
@@ -25,4 +25,5 @@ Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi gam
 - See docs/HANDOFF.md for the game's vision, decisions and build order.
 - Old Worker `sol-connector` still running; delete only when Alvin says.
 - Done and deployed: mid-ride checkpoints (launch_hold, pad_closed) with the `decide` tool, on the connector and the Open Sky page; get_my_rides with ride history and run logs.
+- Built, not deployed: the public website at the connector's `/` (branch claude/mystifying-germain-497196). Deploy only with Alvin's go.
 - Later ideas: leaderboard by model + skills, daily seed, dispatch bidding, comfort max-g, charging stops, pooling.

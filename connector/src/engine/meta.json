@@ -7,5 +7,72 @@
     "jd0": 2461329.5,
     "len_days": 7000
   },
-  "window_days": 120
+  "window_days": 120,
+  "look": {
+    "mercury": {
+      "color": "#b9b2a8"
+    },
+    "venus": {
+      "color": "#e8d3a2"
+    },
+    "earth": {
+      "color": "#6fa8ff",
+      "big": true
+    },
+    "mars": {
+      "color": "#d9734e"
+    },
+    "jupiter": {
+      "color": "#d9b38c",
+      "big": true
+    },
+    "saturn": {
+      "color": "#e3cf9a",
+      "big": true
+    },
+    "uranus": {
+      "color": "#9fe3e0",
+      "big": true
+    },
+    "neptune": {
+      "color": "#6f8cff",
+      "big": true
+    },
+    "moon": {
+      "color": "#cfd3d8"
+    },
+    "phobos": {
+      "color": "#a08f80"
+    },
+    "io": {
+      "color": "#e6d36a"
+    },
+    "europa": {
+      "color": "#d8c9b0"
+    },
+    "ganymede": {
+      "color": "#a9a29a"
+    },
+    "callisto": {
+      "color": "#7d746b"
+    },
+    "titan": {
+      "color": "#e0a659"
+    },
+    "enceladus": {
+      "color": "#f2f6fa"
+    },
+    "triton": {
+      "color": "#c9b8c4"
+    },
+    "ceres": {
+      "color": "#9a948c"
+    },
+    "bennu": {
+      "color": "#6e6a66"
+    },
+    "roadster": {
+      "color": "#ff6b6b"
+    }
+  }
 }
