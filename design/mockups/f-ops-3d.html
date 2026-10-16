@@ -159,8 +159,8 @@ h1,h2,h3{margin:0;font-weight:600}
 .lbl::before{content:"";position:absolute;left:0;top:50%;width:6px;height:1px;background:currentColor;opacity:.6}
 button.lbl{pointer-events:auto;cursor:pointer}
 button.lbl:hover{color:var(--ink)}
-.lbl.k-planet{color:#d8e2ee;font-size:11px}
-.lbl.k-place{color:var(--ink-3);font-size:9.5px}
+.lbl.k-planet{color:#d8e2ee;font-size:11px;opacity:.62}
+.lbl.k-place{color:var(--ink-3);font-size:9.5px;opacity:.8}
 .lbl.k-ring{color:rgba(92,200,255,.55);font:500 9.5px var(--mono);letter-spacing:.02em;text-transform:none;padding-left:4px}
 .lbl.k-ring::before{display:none}
 .lbl.k-fleet{color:var(--cy);font-size:9.5px}
@@ -1033,7 +1033,7 @@ function LabelSet(root) {
           if (pv.z < 1 && pv.z > -1 && Math.abs(pv.x) < 1.05 && Math.abs(pv.y) < 1.05) {
             if (!o.w) { o.w = o.el.offsetWidth || 60; o.h = o.el.offsetHeight || 16; }
             var ok = true;
-            var x = clamp((pv.x + 1) / 2 * W + 4, g.l, W - g.r - o.w), y = clamp((1 - pv.y) / 2 * H - o.h / 2, g.t, H - g.b - o.h);
+            var x = clamp((pv.x + 1) / 2 * W + (o.gap || 4), g.l, W - g.r - o.w), y = clamp((1 - pv.y) / 2 * H - o.h / 2, g.t, H - g.b - o.h);
             for (var j = 0; ok && j < placed.length; j++) { var r = placed[j]; if (x < r[2] && x + o.w > r[0] && y < r[3] && y + o.h > r[1]) ok = false; }
             if (ok) { placed.push([x, y, x + o.w, y + o.h]); o.el.style.transform = "translate3d(" + x.toFixed(1) + "px," + y.toFixed(1) + "px,0)"; show = true; }
           }
@@ -1154,14 +1154,14 @@ function stopSprite(id) {
 function labels() {
   LBL = LabelSet($("#labels"));
   var noLbl = function () { return !LAY.lbl; };
-  LBL.add({ html: "Sun", cls: "k-planet", pri: 60, pos: function () { return V(); }, hide: noLbl });
+  LBL.add({ html: "Sun", cls: "k-planet", pri: 60, gap: 22, pos: function () { return V(); }, hide: noLbl });
   RINGS.forEach(function (r) {
     var a = -0.62, p = V(Math.cos(a) * rs(r), 0, Math.sin(a) * rs(r));
     LBL.add({ html: (r < 1 ? r.toFixed(1) : String(r)) + " AU", cls: "k-ring", pri: 4, pos: function () { return p; }, hide: function () { return !LAY.ring; } });
   });
   PLACES.forEach(function (p) {
     var pl = p.kind === "planet", sm = p.kind === "small";
-    LBL.add({ html: esc(SF.name(p.id)), cls: pl ? "k-planet" : "k-place", pri: pl ? 50 : sm ? 24 : p.kind === "moon" ? 18 : 14,
+    LBL.add({ html: esc(SF.name(p.id)), cls: pl ? "k-planet" : "k-place", gap: pl ? 12 : 8, pri: pl ? 50 : sm ? 24 : p.kind === "moon" ? 18 : 14,
       pos: function () { return marker(p.id, MAPJD); },
       hide: function () { return !LAY.lbl || (!pl && !sm && RIG.dist > (p.kind === "moon" ? 40 : 22)); } });
   });
