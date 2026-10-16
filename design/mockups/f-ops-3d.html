@@ -263,7 +263,17 @@ button.lbl:hover{color:var(--ink)}
 .al li.k-flare{border-left-color:var(--bad)}
 .al li b{display:block;font-weight:600;font-size:12.5px}
 .al li span{font:500 10.5px var(--mono);color:var(--ink-3)}
-.wave{display:block;width:100%;height:46px;margin-top:2px;border:1px solid var(--line);border-radius:3px;background:rgba(3,8,16,.6)}
+.wv{border:1px solid var(--line);border-radius:4px;background:linear-gradient(180deg,rgba(92,200,255,.04),rgba(3,8,16,.5));padding:7px 9px 6px}
+.wvh{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.wvn{font:500 10.5px var(--mono);color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.wvn b{font:600 15px/1 var(--cond);letter-spacing:.04em;color:var(--ink);margin-right:3px}
+.wave{display:block;width:100%;height:44px;margin-top:5px}
+.wvx{position:relative;height:11px;margin-top:3px;font:500 9.5px/11px var(--mono);color:var(--ink-3);font-variant-numeric:tabular-nums}
+.wvx span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+.wvx span:first-child{transform:none}.wvx span:last-child{transform:translateX(-100%)}
+.wvk{display:flex;flex-wrap:wrap;gap:3px 10px;margin-top:6px;padding-top:5px;border-top:1px solid var(--line);font-size:10px;color:var(--ink-2)}
+.wvk span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.wvk i{width:7px;height:7px;border-radius:1.5px;background:currentColor}
 .feed{list-style:none;margin:8px 0 0;padding:0;height:170px;overflow:auto;font:500 11px/1.45 var(--mono);color:var(--ink-2)}
 .feed li{padding:3px 0;border-bottom:1px solid rgba(120,180,255,.06);animation:fin .35s ease-out}
 .feed .tm{color:var(--ink-3);margin-right:6px}
@@ -507,8 +517,12 @@ p{text-wrap:pretty}
     <section class="panel" aria-labelledby="fdH">
       <div class="ph"><h2 id="fdH">Dispatcher feed &middot; sample</h2><div class="tags"><span class="tag sim">Sample</span><span class="tag sim">Simulated</span></div></div>
       <div class="pb">
-        <canvas class="wave" id="wave" aria-label="Event density in the feed over the last minute"></canvas>
-        <div class="note" style="margin-top:3px">Event density, last 60 s of real time</div>
+        <div class="wv">
+          <div class="wvh"><span class="caps">Feed activity</span><span class="wvn" id="waveN"><b>0</b>events / min</span></div>
+          <canvas class="wave" id="wave" role="img" aria-label="Feed events per second over the last minute of real time, stacked by kind"></canvas>
+          <div class="wvx" aria-hidden="true"><span style="left:0">&minus;60 s</span><span style="left:25%">&minus;45</span><span style="left:50%">&minus;30</span><span style="left:75%">&minus;15</span><span style="left:100%">now</span></div>
+          <div class="wvk"><span style="color:var(--cy)"><i></i>Ride</span><span style="color:var(--me)"><i></i>Checkpoint</span><span style="color:var(--sun)"><i></i>Hazard</span><span style="color:var(--ok)"><i></i>Cleared</span></div>
+        </div>
         <ul class="feed" id="feed" aria-live="off"></ul>
       </div>
     </section>
@@ -1461,15 +1475,18 @@ function renderAlerts() {
   var html = A.map(function (a) { return '<li class="k-' + a.k + '"><b>' + ic(a.k === "flare" ? "solar_flare" : a.k === "pad" ? "pad_closed" : /dust/i.test(a.t) ? "dust_storm" : "launch_hold") + esc(a.t) + "</b><span>" + esc(a.d) + "</span></li>"; }).join("") || '<li style="border-left-color:var(--ok)"><b>All clear</b><span>No simulated flare, storm or full pad at ' + iso(s.jd) + "</span></li>";
   if (html !== renderAlerts.last) { renderAlerts.last = html; $("#alList").innerHTML = html; }
 }
-var BINS = [], BIN0 = 0;
-for (var bi = 0; bi < 60; bi++) BINS.push(0);
+/* One bin per real second, split by the feed's own colour groups: ride, checkpoint, hazard, cleared. */
+var BINS = [], BIN0 = 0, WLAST = 0, WCOL = null;
+function wbin() { return [0, 0, 0, 0]; }
+for (var bi = 0; bi < 60; bi++) BINS.push(wbin());
+function wgroup(kind) { return kind === "checkpoint" ? 1 : kind === "incident" || kind === "alert" ? 2 : kind === "clear" ? 3 : 0; }
 function pushFeed(o) {
   var ul = $("#feed"); if (!ul) return;
   var li = document.createElement("li"); li.className = "k-" + o.kind;
   li.innerHTML = '<span class="tm">' + iso(o.jd) + "</span><b>" + esc(o.who) + "</b>" + W(o.txt);
   ul.insertBefore(li, ul.firstChild);
   while (ul.children.length > 40) ul.removeChild(ul.lastChild);
-  BINS[59]++;
+  WLAST = Date.now(); waveRoll(WLAST); BINS[59][wgroup(o.kind)]++;
 }
 function feedTick() {
   FL.forEach(function (F) {
@@ -1482,23 +1499,50 @@ function feedTick() {
     F.prev = jd;
   });
 }
-function waveTick(now) {
-  var s = Math.floor(now / 1000);
-  if (!BIN0) BIN0 = s;
-  while (BIN0 < s) { BINS.shift(); BINS.push(0); BIN0++; }
+function waveRoll(now) {
+  var sec = Math.floor(now / 1000);
+  if (!BIN0) BIN0 = sec;
+  if (sec - BIN0 > 60) BIN0 = sec - 60;
+  while (BIN0 < sec) { BINS.shift(); BINS.push(wbin()); BIN0++; }
+}
+function waveTick() {
+  var now = Date.now(); waveRoll(now);
   var cv = $("#wave"), dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
-  if (!w) return;
-  if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
-  var g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-  g.strokeStyle = "rgba(92,200,255,.18)"; g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke();
-  var bw = w / 60, ph = now / 300;
-  g.fillStyle = "rgba(92,200,255,.85)";
-  for (var i = 0; i < 60; i++) {
-    var d = Math.min(1, BINS[i] / 4), amp = (0.06 + d * 0.86) * (h / 2 - 2) * (d ? 1 : 0.6 + 0.4 * Math.sin(ph + i * 0.7));
-    g.globalAlpha = 0.35 + d * 0.65;
-    g.fillRect(i * bw + bw * 0.2, h / 2 - amp, bw * 0.6, amp * 2);
+  if (w) {
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    if (!WCOL) { var cs = getComputedStyle(document.documentElement); WCOL = ["--cy", "--me", "--sun", "--ok"].map(function (v) { return cs.getPropertyValue(v).trim(); }); }
+    var g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    var tot = BINS.map(function (b) { return b[0] + b[1] + b[2] + b[3]; }), n = tot.reduce(function (a, b) { return a + b; }, 0);
+    var top = Math.max(4, Math.max.apply(null, tot)), base = h - 1.5, unit = (h - 4) / top, bw = w / 60;
+    // Quarter grid and a solid baseline, so the strip reads as a scale even when it is quiet.
+    g.fillStyle = "rgba(120,180,255,.07)";
+    for (var q = 1; q < 4; q++) g.fillRect(Math.round(w * q / 4), 0, 1, h);
+    g.fillRect(0, Math.round(h / 2), w, 1);
+    g.fillStyle = "rgba(120,180,255,.22)"; g.fillRect(0, Math.round(base), w, 1);
+    // Bars glide left with real time instead of stepping once a second.
+    var frac = (now % 1000) / 1000, gap = Math.max(1, bw * 0.28);
+    g.save(); g.beginPath(); g.rect(0, 0, w, h); g.clip();
+    for (var i = 0; i < 60; i++) {
+      var x = w - (60 - i - 1 + frac) * bw - bw, y = base;
+      if (!tot[i]) { g.fillStyle = "rgba(120,180,255,.16)"; g.fillRect(x + bw / 2 - 0.5, base - 2, 1, 2); continue; }
+      for (var k = 0; k < 4; k++) {
+        var c = BINS[i][k]; if (!c) continue;
+        var hh = Math.max(2, c * unit - 1);
+        g.globalAlpha = i === 59 ? 1 : 0.55 + 0.4 * (i / 59);
+        g.fillStyle = WCOL[k]; g.fillRect(x + gap / 2, y - hh, bw - gap, hh);
+        y -= hh + 1;
+      }
+    }
+    g.globalAlpha = 1;
+    // A fresh event glows at the "now" edge for half a second.
+    var fresh = Math.max(0, 1 - (now - WLAST) / 600);
+    g.fillStyle = "rgba(92,200,255," + (0.35 + 0.5 * fresh).toFixed(3) + ")"; g.fillRect(w - 1, 0, 1, h);
+    if (fresh) { g.shadowColor = WCOL[0]; g.shadowBlur = 8 * fresh; g.fillStyle = WCOL[0]; g.beginPath(); g.arc(w - 1.5, 3, 2, 0, 7); g.fill(); g.shadowBlur = 0; }
+    g.restore();
+    var lbl = "<b>" + n + "</b>event" + (n === 1 ? "" : "s") + " / min";
+    if (lbl !== waveTick.last) { waveTick.last = lbl; $("#waveN").innerHTML = lbl; }
   }
-  g.globalAlpha = 1;
+  requestAnimationFrame(waveTick);
 }
 
 /* ---------- tools ---------- */
@@ -1689,7 +1733,7 @@ function uiTick() {
   var now = Date.now();
   if (!raf) { LIVEJD = SF.sky(now).jd; }
   FL.forEach(function (F) { F.jd = flightJd(F, now); F.st = statusOf(F, F.jd); });
-  feedTick(); updateCards(); updateInfo(); waveTick(now);
+  feedTick(); updateCards(); updateInfo();
   if (now - lastSlow >= 1000) { lastSlow = now; slowTick(now); }
 }
 function slowTick(now) {
@@ -1735,6 +1779,7 @@ function start() {
   var q = DESK.filter(function (d) { return d.kind === "quick" && d.open; }).map(function (d) { return d.id; });
   (function nextPlan() { var id = q.shift(); if (!id) return; setTimeout(function () { if (!BK[id] || (!BK[id].rp && !BK[id].busy)) planBooking(id, Date.now()); nextPlan(); }, 120); })();
   setInterval(uiTick, 250);
+  requestAnimationFrame(waveTick);
   // events
   $("#tabF").addEventListener("click", function () { showTab("f"); });
   $("#tabB").addEventListener("click", function () { showTab("b"); });
