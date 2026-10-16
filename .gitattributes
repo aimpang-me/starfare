@@ -1,0 +1,5 @@
+# Keep LF everywhere: the connector checks the engine bundle copy byte for byte.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.zip binary
