@@ -1187,10 +1187,59 @@ var TRAFFIC_KIND = { station: 0.15, moon: 0.2, planet: 0.3, small: 0.05 };
 var UNSCHEDULED = 0.25; // share of NPC dockings that never appear in the pad forecast
 var LOCAL = { mars: "dust", "mars-base": "dust", titan: "haze", "titan-dock": "haze" };
 function fmix(h){ h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; return h >>> 0; }
+// Bench seeds look like "k1:<32 hex chars>": a 128-bit key, and every draw is SipHash-2-4(key, label) in full, so no
+// 32-bit state can be recovered from forecasts. Any other seed keeps the FNV-1a draw, so live seasons never change.
+var K1 = /^k1:([0-9a-fA-F]{32})$/;
+function keyOf(seed){ var m = K1.exec(seed); if (!m) return null;
+  var b = [], w = []; for (var i = 0; i < 16; i++) b.push(parseInt(m[1].substr(2 * i, 2), 16));
+  for (var j = 0; j < 16; j += 4) w.push((b[j] | b[j + 1] << 8 | b[j + 2] << 16 | b[j + 3] << 24) >>> 0);
+  return w; } // [k0 low, k0 high, k1 low, k1 high], little-endian as the SipHash reference reads the key
+// SipHash-2-4 of a string's UTF-8 bytes under key K, as [high, low] 32-bit words of the 64-bit output.
+function sip24(K, s){
+  for (var q = 0; q < s.length; q++) if (s.charCodeAt(q) > 127){ s = unescape(encodeURIComponent(s)); break; }
+  var n = s.length, t,
+    v0l = K[0] ^ 0x70736575, v0h = K[1] ^ 0x736f6d65, v1l = K[2] ^ 0x6e646f6d, v1h = K[3] ^ 0x646f7261,
+    v2l = K[0] ^ 0x6e657261, v2h = K[1] ^ 0x6c796765, v3l = K[2] ^ 0x79746573, v3h = K[3] ^ 0x74656462;
+  function round(){
+    t = (v0l >>> 0) + (v1l >>> 0); v0h = (v0h + v1h + (t >= 4294967296 ? 1 : 0)) | 0; v0l = t | 0;
+    t = (v1h << 13) | (v1l >>> 19); v1l = (v1l << 13) | (v1h >>> 19); v1h = t;
+    v1l ^= v0l; v1h ^= v0h;
+    t = v0l; v0l = v0h; v0h = t;
+    t = (v2l >>> 0) + (v3l >>> 0); v2h = (v2h + v3h + (t >= 4294967296 ? 1 : 0)) | 0; v2l = t | 0;
+    t = (v3h << 16) | (v3l >>> 16); v3l = (v3l << 16) | (v3h >>> 16); v3h = t;
+    v3l ^= v2l; v3h ^= v2h;
+    t = (v0l >>> 0) + (v3l >>> 0); v0h = (v0h + v3h + (t >= 4294967296 ? 1 : 0)) | 0; v0l = t | 0;
+    t = (v3h << 21) | (v3l >>> 11); v3l = (v3l << 21) | (v3h >>> 11); v3h = t;
+    v3l ^= v0l; v3h ^= v0h;
+    t = (v2l >>> 0) + (v1l >>> 0); v2h = (v2h + v1h + (t >= 4294967296 ? 1 : 0)) | 0; v2l = t | 0;
+    t = (v1h << 17) | (v1l >>> 15); v1l = (v1l << 17) | (v1h >>> 15); v1h = t;
+    v1l ^= v2l; v1h ^= v2h;
+    t = v2l; v2l = v2h; v2h = t;
+  }
+  var ml, mh, i = 0;
+  for (; i + 8 <= n; i += 8){
+    ml = s.charCodeAt(i) | s.charCodeAt(i + 1) << 8 | s.charCodeAt(i + 2) << 16 | s.charCodeAt(i + 3) << 24;
+    mh = s.charCodeAt(i + 4) | s.charCodeAt(i + 5) << 8 | s.charCodeAt(i + 6) << 16 | s.charCodeAt(i + 7) << 24;
+    v3l ^= ml; v3h ^= mh; round(); round(); v0l ^= ml; v0h ^= mh;
+  }
+  ml = 0; mh = (n & 0xff) << 24;
+  for (var j = 0; i + j < n; j++){ var c = s.charCodeAt(i + j); if (j < 4) ml |= c << (8 * j); else mh |= c << (8 * (j - 4)); }
+  v3l ^= ml; v3h ^= mh; round(); round(); v0l ^= ml; v0h ^= mh;
+  v2l ^= 0xff; round(); round(); round(); round();
+  return [(v0h ^ v1h ^ v2h ^ v3h) >>> 0, (v0l ^ v1l ^ v2l ^ v3l) >>> 0];
+}
+// The reference's view of it: key and output as hex strings of their bytes in order (the output little-endian).
+function siphash24(keyHex, msg){ var K = keyOf("k1:" + keyHex); if (!K) throw new Error("the key is 32 hex chars");
+  var r = sip24(K, msg), out = "";
+  [r[1], r[0]].forEach(function(w){ for (var i = 0; i < 4; i++) out += ("0" + ((w >>> (8 * i)) & 0xff).toString(16)).slice(-2); });
+  return out; }
 function hazards(seed){
   seed = String(seed == null ? "1" : seed);
   if (HZ[seed]) return HZ[seed];
-  function u(key){ var s = seed + "|" + key, h = 2166136261; for (var i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return fmix(h) / 4294967296; }
+  var K = keyOf(seed);
+  // Each draw is a number in [0, 1) from the seed and a label; the top 53 bits of SipHash, or the mixed FNV-1a state.
+  var u = K ? function(key){ var r = sip24(K, key); return (r[0] * 2097152 + (r[1] >>> 11)) / 9007199254740992; }
+    : function(key){ var s = seed + "|" + key, h = 2166136261; for (var i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return fmix(h) / 4294967296; };
   // Solar flares (radiation storms): odds per sky day come from a 27-day spell (one solar rotation); a storm lasts 4-48 h, mostly short.
   function flareOdds(day){ var a = u("spell|" + Math.floor(day / 27)); return a < 0.55 ? 0.05 : 0.25 + (a - 0.55) / 0.45 * 0.35; }
   function flareOn(day){ if (u("flare|" + day) >= flareOdds(day)) return null; var st = day + u("flare-at|" + day); return { start: st, end: st + (4 + 44 * Math.pow(u("flare-h|" + day), 2)) * HOUR }; }
@@ -1475,14 +1524,14 @@ function finish(st){ while (!st.done){ st.ride.auto = true; st = step(st.ride, n
 // no checkpoints at all; keeps the least energy, then the earliest arrival.
 function oracle(id, car, legs, t0, seed, endJd){
   var best = null;
-  function keep(o, path){ if (better(o, best)) best = { used_kwh: o.used_kwh, planned_kwh: o.planned_kwh, arrive_jd: o.arrive_jd, path: path }; }
-  keep(start(id, car, legs, t0, seed, { ask_after_hours: null, end_jd: endJd }).done, []);
-  (function explore(st, depth, path){
-    if (st.done) return keep(st.done, path);
-    if (depth >= ORACLE_DEPTH) return keep(finish(st), path);
+  function keep(o, path, decisions){ if (better(o, best)) best = { used_kwh: o.used_kwh, planned_kwh: o.planned_kwh, arrive_jd: o.arrive_jd, path: path, decisions: decisions, outcome: o }; }
+  keep(start(id, car, legs, t0, seed, { ask_after_hours: null, end_jd: endJd }).done, [], []);
+  (function explore(st, depth, path, decisions){
+    if (st.done) return keep(st.done, path, decisions);
+    if (depth >= ORACLE_DEPTH) return keep(finish(st), path, decisions);
     hindsight(st.ride, st.checkpoint).forEach(function(d){
-      try { explore(step(st.ride, d), depth + 1, path.concat([label(d)])); } catch (e) {} });
-  })(start(id, car, legs, t0, seed, { ask_after_hours: 0, end_jd: endJd }), 0, []);
+      try { explore(step(st.ride, d), depth + 1, path.concat([label(d)]), decisions.concat([d])); } catch (e) {} });
+  })(start(id, car, legs, t0, seed, { ask_after_hours: 0, end_jd: endJd }), 0, [], []);
   return best;
 }
 // For a finished (or stopped) ride: at each decided checkpoint, what every hindsight choice would have led to
@@ -1610,9 +1659,9 @@ function score(id, legs, ctx){
 }
 return { DWELL: DWELL, WINDOW: WINDOW, LEAD: LEAD, FLEET: FLEET, CAR: CAR, HAILS: HAILS, BY: BY, system: system, nearCars: nearCars,
   planLeg: planLeg, par: par, terms: terms, check: check, score: score, iso: iso,
-  HOLD_KWH: HOLD_KWH, BERTHS: BERTHS, hazards: hazards, fly: fly, pickupStart: pickupStart, fleetState: fleetState,
+  HOLD_KWH: HOLD_KWH, BERTHS: BERTHS, hazards: hazards, siphash24: siphash24, fly: fly, pickupStart: pickupStart, fleetState: fleetState,
   padForecast: padForecast, flareForecast: flareForecast, weatherForecast: weatherForecast,
-  start: start, step: step, regret: regret, EVENTS: EVENTS, MAX_CHECKPOINTS: MAX_CHECKPOINTS };
+  start: start, step: step, regret: regret, oracle: oracle, hindsight: hindsight, ORACLE_DEPTH: ORACLE_DEPTH, EVENTS: EVENTS, MAX_CHECKPOINTS: MAX_CHECKPOINTS };
 })(SOLE);
 
 if (typeof module !== 'undefined') module.exports = SOLE;
