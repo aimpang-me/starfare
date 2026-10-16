@@ -63,6 +63,18 @@ export const TOOLS = {
       wait_days: z.number().min(0).max(400).optional(),
     },
   },
+  plan_leg: {
+    description: "Shared flights only (get_hail lists several bookings): plan one leg of the flight to a booking's pickup place or destination, and re-fly it in the n-body checker. " +
+      "The first leg names a car and flies from where it is parked; each later leg names after_leg and flies on from where that leg lands, after boarding if anyone boards there (or wait_days later). Returns the leg with its leg_id, fare_usd and arrive time.",
+    inputSchema: {
+      run_id: runId,
+      car: z.string().optional().describe("first leg: car id from the fleet, e.g. sf-01"),
+      after_leg: z.string().optional().describe("later legs: leg_id of the leg this one follows"),
+      to: z.string().min(1).max(64).describe("place id or name: one of the bookings' pickup places or destinations"),
+      objective: z.enum(["energy", "time"]).optional(),
+      wait_days: z.number().min(0).max(400).optional(),
+    },
+  },
   check_pad: {
     description: "Forecast for a pad (simulated): its berths, how many are booked each hour, and local weather odds (Mars dust, Titan haze) if any. Scheduled traffic only: about a quarter of ships are unscheduled and never show here. Free; does not count as a plan.",
     inputSchema: {
@@ -83,13 +95,19 @@ export const TOOLS = {
   dispatch: {
     description: "Dispatch the car: the pickup leg, the ride leg, the fare you quote (copy the ride leg's fare_usd) and the arrival you promise the rider. The season's hazards are then flown. " +
       "If a hazard stops the ride, the result is status \"checkpoint\" with the situation; answer it with decide. Otherwise the ride arrives and the result says what actually happened " +
-      "(actual pickup and arrival, delay, extra kWh, incidents), the locked score and a run log. Arrived scores go on the /board page.",
+      "(actual pickup and arrival, delay, extra kWh, incidents), the locked score and a run log. Arrived scores go on the /board page. " +
+      "A shared flight sends legs, stops (who boards and alights where each leg lands) and quotes per booking instead of the pickup and ride legs and the one quote.",
     inputSchema: {
       run_id: runId,
-      pickup_leg: z.string(),
-      ride_leg: z.string(),
-      quoted_fare_usd: z.number().describe("the fare you tell the rider, in US dollars"),
-      quoted_arrival: z.string().describe("the arrival time you promise the rider, YYYY-MM-DD HH:MM"),
+      pickup_leg: z.string().optional(),
+      ride_leg: z.string().optional(),
+      quoted_fare_usd: z.number().optional().describe("the fare you tell the rider, in US dollars"),
+      quoted_arrival: z.string().optional().describe("the arrival time you promise the rider, YYYY-MM-DD HH:MM"),
+      legs: z.array(z.string()).optional().describe("shared flight: the plan_leg leg_ids in flying order"),
+      stops: z.array(z.object({ board: z.array(z.string()).optional(), alight: z.array(z.string()).optional() })).optional()
+        .describe("shared flight: one entry per leg, the hail ids that board and alight where that leg lands"),
+      quotes: z.record(z.object({ fare_usd: z.number(), arrival: z.string() })).optional()
+        .describe("shared flight: per hail id, the fare you quote (the sum of fare_usd over the legs it rides) and the arrival you promise"),
       ask_after_hours: z.union([z.number().min(0).max(24), z.literal("never")]).optional()
         .describe("stop at a checkpoint once a hold or pad wait passes this many hours (0-24, default 1); \"never\" flies the default answers without stopping"),
     },

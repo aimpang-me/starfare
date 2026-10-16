@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { SKY, SEASON_END, MAX_PLANS_PER_RUN, sky, isoJD, jdOfIso, openRun, seasonInstance, hailInfo, legPub, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, seedOf, phaseOf, leaveRun, computeLeg, GameError,
+import { SKY, SEASON_END, MAX_PLANS_PER_RUN, sky, isoJD, jdOfIso, openRun, seasonInstance, suiteInstance, applyTool, hailInfo, legPub, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, seedOf, phaseOf, leaveRun, computeLeg, GameError,
   RIDE_FORMAT, rideSummary, rideRecord, rideStats, rideCursor, rideCursorOf } from "../src/game.js";
 
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
@@ -470,4 +470,78 @@ test("ride history cursor: base64url of created_ms and run_id, round trips, and 
   assert.deepEqual(rideCursorOf(c), row);
   for (const bad of ["", "nope", "%%%", rideCursor({ created_ms: 1, run_id: "constructor" }), btoa("12:run_short")])
     assert.throws(() => rideCursorOf(bad), (e) => e instanceof GameError && /cursor/.test(e.message), bad);
+});
+
+// A shared flight: ceres-shift (lead, Ceres Port to Mars Base) and phobos-commute (Phobos to Mars Base), at a frozen clock.
+const SHARED = ["ceres-shift", "phobos-commute"];
+async function sharedRun() {
+  const inst = suiteInstance(E, { hails: SHARED }, { seed: "2", clockJd: 2461550.0, tag: "t", budget: null });
+  let run = await openRun(E, inst, "run_00000000000000000001", 0);
+  const call = async (tool, input) => { const o = await applyTool(E, run, tool, input, { nowMs: 0 }); if (o.run) run = o.run; return o.result; };
+  return { call, get run() { return run; } };
+}
+async function sharedLegs(call) {
+  const l1 = await call("plan_leg", { car: "sf-04", to: "ceres-port" });
+  const l2 = await call("plan_leg", { after_leg: l1.leg_id, to: "Mars Base" });
+  const l3 = await call("plan_leg", { after_leg: l2.leg_id, to: "phobos" });
+  const l4 = await call("plan_leg", { after_leg: l3.leg_id, to: "mars-base" });
+  return [l1, l2, l3, l4];
+}
+
+test("shared flight: the run carries every booking, par from the pooled flight, and get_hail lists the bookings and seats", async () => {
+  const s = await sharedRun(), run = s.run;
+  assert.deepEqual([run.id, run.hails, run.t0, run.par_kwh, run.par_car], ["ceres-shift", SHARED, 2461700.5, 99781, "sf-04"]);
+  const info = await s.call("get_hail", {});
+  assert.deepEqual(info.bookings.map((b) => [b.hail_id, b.party, b.pickup_at.id, b.destination.id, b.rider_ready, b.arrive_by]), [
+    ["ceres-shift", 1, "ceres-port", "mars-base", "2027-10-22 00:00", "2031-12-09 00:00"],
+    ["phobos-commute", 1, "phobos", "mars-base", "2027-10-22 00:00", "2027-10-25 00:00"]]);
+  assert.ok(info.fleet.every((c) => c.seats === 4));
+  assert.equal(info.passengers, undefined);
+  assert.match(info.rules, /shared flight \(simulated\) with 2 bookings/);
+});
+
+test("shared flight: plan_leg chains one car's legs; the one-booking tools and stray legs are refused", async () => {
+  const s = await sharedRun();
+  assert.equal((await s.call("plan_pickup", { car: "sf-04" })).error, "this flight has 2 bookings; plan it with plan_leg");
+  assert.match((await s.call("plan_leg", { car: "sf-04", to: "titan" })).error, /^to must be a booking's pickup or destination: Ceres Port, Mars Base, Phobos$/);
+  const [l1, l2, , l4] = await sharedLegs(s.call);
+  assert.deepEqual([l1, l2, l4].map((l) => [l.kind, l.car, l.from, l.to, l.depart, l.arrive]), [
+    ["leg", "sf-04", "Ceres", "Ceres Port", "2027-10-22 00:00", "2027-10-22 02:21"],
+    ["leg", "sf-04", "Ceres Port", "Mars Base", "2028-02-19 03:33", "2030-07-23 06:50"],
+    ["leg", "sf-04", "Phobos", "Mars Base", "2030-07-23 10:16", "2030-07-23 12:30"]]);
+  assert.equal((await s.call("plan_leg", { after_leg: l1.leg_id, car: "sf-01", to: "mars-base" })).error, "leg1 flies SF-04; a flight is one car");
+  assert.equal((await s.call("plan_leg", { after_leg: l1.leg_id, to: "ceres-port" })).error, "this leg would start and end at Ceres Port");
+  const one = await openRun(E, suiteInstance(E, { hail_id: "iss-crew" }, { seed: "2", clockJd: 2461550.0, tag: "t", budget: null }), "run_00000000000000000002", 0);
+  assert.equal((await applyTool(E, one, "plan_leg", { car: "sf-01", to: "iss" }, { nowMs: 0 })).result.error, "this flight has one booking; plan it with plan_pickup and plan_ride");
+});
+
+test("shared flight: dispatch with legs, stops and quotes scores each booking and lists the passengers stop by stop", async () => {
+  const s = await sharedRun(), legs = await sharedLegs(s.call), [, l2, , l4] = legs;
+  const out = await s.call("dispatch", {
+    legs: legs.map((l) => l.leg_id), ask_after_hours: "never",
+    stops: [{ board: ["ceres-shift"] }, { alight: ["ceres-shift"] }, { board: ["phobos-commute"] }, { alight: ["phobos-commute"] }],
+    quotes: { "ceres-shift": { fare_usd: l2.fare_usd, arrival: l2.arrive }, "phobos-commute": { fare_usd: l4.fare_usd, arrival: l4.arrive } },
+  });
+  assert.deepEqual([out.status, out.total, out.car, out.used_kwh, out.par_kwh, out.planned_pickup, out.promised_arrival], ["arrived", 75, "SF-04", 99781, 99781, "2027-10-22 02:21", "2030-07-23 06:50"]);
+  assert.deepEqual(out.bookings.map((b) => [b.hail_id, b.pickup, b.arrive, b.promise_slip_hours, b.fare_usd, b.parts.map((x) => x.got)]), [
+    ["ceres-shift", "2027-10-22 02:21", "2030-07-23 06:50", 0, 518971.32, [20, 20, 15, 10]],
+    ["phobos-commute", "2030-07-23 09:04", "2030-07-23 16:27", 4, 1811.11, [0, 0, 5.1, 10]]]);
+  assert.deepEqual(out.passengers.map((p) => [p.place.id, p.board, p.alight, p.aboard, p.seats]), [
+    ["ceres", [], [], 0, 4], ["ceres-port", ["ceres-shift"], [], 1, 4], ["mars-base", [], ["ceres-shift"], 0, 4],
+    ["phobos", ["phobos-commute"], [], 1, 4], ["mars-base", [], ["phobos-commute"], 0, 4]]);
+  assert.deepEqual([out.log.hails, out.log.dispatched, Object.keys(out.log.bookings)], [SHARED, ["leg1", "leg2", "leg3", "leg4"], SHARED]);
+  assert.deepEqual(out.log.bookings["phobos-commute"].parts, { pickup: 0, on_time: 0, promise: 5.1, fare: 10 });
+  assert.deepEqual((await s.call("get_hail", {})).passengers.map((p) => p.aboard), [0, 1, 0, 1, 0]);
+});
+
+test("shared flight: dispatch refuses the two-leg form, a booking left off the plan, a missing quote and a stranger", async () => {
+  const s = await sharedRun(), ids = (await sharedLegs(s.call)).map((l) => l.leg_id);
+  const q = { "ceres-shift": { fare_usd: 1, arrival: "2030-07-23 06:50" }, "phobos-commute": { fare_usd: 1, arrival: "2030-07-23 12:30" } };
+  const probs = async (inp) => (await s.call("dispatch", inp)).problems;
+  assert.match((await probs({ pickup_leg: ids[0], ride_leg: ids[1], quoted_fare_usd: 1, quoted_arrival: "2030-07-23 06:50" }))[0], /^this flight has 2 bookings: dispatch with legs/);
+  assert.deepEqual(await probs({ legs: ids, stops: [{}, {}, {}], quotes: q }), ["stops has 3 entries; it needs one for each of the 4 legs"]);
+  assert.deepEqual(await probs({ legs: ids, stops: [{ board: ["ceres-shift"] }, { alight: ["ceres-shift"] }, {}, {}], quotes: q }), ["phobos-commute is not on the plan: every booking boards and alights"]);
+  assert.deepEqual(await probs({ legs: ids, stops: [{ board: ["ceres-shift"] }, { alight: ["ceres-shift"] }, { board: ["phobos-commute"] }, { alight: ["phobos-commute", "iss-crew"] }], quotes: { "ceres-shift": q["ceres-shift"] } }),
+    ["iss-crew is not a booking on this flight; its bookings are ceres-shift, phobos-commute", "quotes needs a fare_usd and an arrival for phobos-commute"]);
+  assert.equal(phaseOf(s.run), "planning");
 });

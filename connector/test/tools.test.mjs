@@ -52,11 +52,11 @@ function session(instanceOf) {
 }
 const data = (r) => { assert.equal(r.isError, undefined, r.content[0].text); return JSON.parse(r.content[0].text); };
 
-test("registerTools registers the ten tools in order and answers each through backend.call", async () => {
+test("registerTools registers the eleven tools in order and answers each through backend.call", async () => {
   const server = fakeServer(), seen = [];
   registerTools(server, { call: async (tool, input) => { seen.push([tool, input]); return tool === "get_hail" ? { error: "no such run" } : { ok: 1 }; } });
   assert.deepEqual([...server.tools.keys()],
-    ["list_hails", "take_hail", "get_hail", "plan_pickup", "plan_ride", "check_pad", "space_weather", "dispatch", "decide", "get_my_rides"]);
+    ["list_hails", "take_hail", "get_hail", "plan_pickup", "plan_ride", "plan_leg", "check_pad", "space_weather", "dispatch", "decide", "get_my_rides"]);
   assert.deepEqual(Object.keys(server.tools.get("plan_pickup").def.inputSchema), ["run_id", "car", "objective", "wait_days"]);
 
   const id = "run_" + "0".repeat(20);

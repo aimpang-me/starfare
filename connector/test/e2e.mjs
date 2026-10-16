@@ -28,7 +28,7 @@ const MODE = (process.argv.find((a) => a.startsWith("--mode=")) || "--mode=both"
 if (!["off", "on", "both"].includes(MODE)) throw new Error("--mode must be off, on or both");
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
-const TOOLS = ["check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_pickup", "plan_ride", "space_weather", "take_hail"];
+const TOOLS = ["check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_leg", "plan_pickup", "plan_ride", "space_weather", "take_hail"];
 
 const results = [];
 async function check(name, fn) {
@@ -156,7 +156,7 @@ async function phaseOff() {
     assert.match(js.headers.get("cache-control"), /immutable/);
     assert.ok((await js.text()).includes("module.exports = SOLE"));
   });
-  await check("tools/list is exactly the ten ride-hail tools", async () => {
+  await check("tools/list is exactly the eleven ride-hail tools", async () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     assert.deepEqual(names, TOOLS);
   });
@@ -563,7 +563,7 @@ async function phaseOn() {
       assert.deepEqual(asMeta.scopes_supported, ["play"]);
       report.www_authenticate = challenge; report.protected_resource = meta;
     });
-    await check("on: SDK OAuth flow: 401, discovery, dynamic registration, PKCE S256, one-click Allow, token, then tools/list is the ten ride-hail tools", async () => {
+    await check("on: SDK OAuth flow: 401, discovery, dynamic registration, PKCE S256, one-click Allow, token, then tools/list is the eleven ride-hail tools", async () => {
       a = await sdkSignIn(base, "sol e2e player A");
       const q = a.auth.authUrl.searchParams;
       assert.equal(q.get("code_challenge_method"), "S256"); assert.ok(q.get("code_challenge"));

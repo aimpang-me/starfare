@@ -85,18 +85,29 @@ export function seasonInstance(E, hailId, nowMs) {
   if (t0 + 30 > SEASON_END) fail("The season ends too soon for a new hail. Wait for the reset.");
   return { hail_id: hailId, t0, end_jd: SEASON_END, seed: String(s.season), clock: { kind: "wall" }, tag: null, budget: null };
 }
-/** A bench task: sky time frozen at clockJd, where a live take would have read it, so t0 is after the clock. */
+/** A bench task: sky time frozen at clockJd, where a live take would have read it, so t0 is after the clock.
+ *  task is { hail_id } or a shared flight { hails: [ids] }, whose first booking is the lead: it sets t0 and is the run's hail. */
 export function suiteInstance(E, task, { seed, clockJd, tag, budget }) {
-  return { hail_id: task.hail_id, t0: takeAt(E, task.hail_id, clockJd), end_jd: SEASON_END, seed: String(seed), clock: { kind: "frozen", jd: clockJd }, tag, budget };
+  const hails = task.hails || [task.hail_id];
+  return { hail_id: hails[0], ...(hails.length > 1 ? { hails } : {}), t0: takeAt(E, hails[0], clockJd), end_jd: SEASON_END, seed: String(seed), clock: { kind: "frozen", jd: clockJd }, tag, budget };
 }
-/** A new run in planning for an instance. termsFn lets the caller cache R.terms; its cache key must include the seed. */
+/** A new run in planning for an instance. termsFn lets the caller cache R.terms; its cache key must include the seed.
+ *  A shared flight (inst.hails) takes R.termsSet: the lead's terms, par from the best pooled flight, and every booking's own terms. */
 export async function openRun(E, inst, runId, nowMs, termsFn) {
   const R = E.R, { hail_id: hailId, t0, end_jd, seed } = inst;
-  const T = await (termsFn ? termsFn(hailId, t0, end_jd, seed) : R.terms(hailId, t0, end_jd, seed));
+  let terms, set = null;
+  if (inst.hails) {
+    set = R.termsSet(inst.hails, t0, end_jd, seed);
+    const P = set.par.pooled, B = set.bookings[hailId];
+    terms = { arrive_by_jd: B.arrive_by_jd, par_kwh: P ? P.kwh : set.par.kwh, par_car: P ? P.car : set.par.split.bookings[hailId].car, best_wait_days: B.best_wait_days };
+  } else {
+    const T = await (termsFn ? termsFn(hailId, t0, end_jd, seed) : R.terms(hailId, t0, end_jd, seed));
+    terms = { arrive_by_jd: T.arrive_by_jd, par_kwh: T.par.kwh, par_car: T.par.car, best_wait_days: T.par.best_wait_days };
+  }
   return {
-    run_id: runId, id: hailId, title: R.BY[hailId].title, t0, seed, arrive_by_jd: T.arrive_by_jd, par_kwh: T.par.kwh, par_car: T.par.car,
-    best_wait_days: T.par.best_wait_days, calls: 0, lseq: 0, legs: {}, forecasts: [], phase: "planning", score: null, created_ms: nowMs,
+    run_id: runId, id: hailId, title: R.BY[hailId].title, t0, seed, ...terms, calls: 0, lseq: 0, legs: {}, forecasts: [], phase: "planning", score: null, created_ms: nowMs,
     end_jd, clock: inst.clock, tag: inst.tag, budget: inst.budget, ...(inst.budget == null ? {} : { tool_calls: 0 }),
+    ...(set ? { hails: inst.hails, bookings: set.bookings } : {}),
   };
 }
 /** Sky time for a run: the only reader of the clock. Runs stored before clocks existed read the wall. */
@@ -106,11 +117,11 @@ export const worldOf = (run) => (run.tag == null ? { season: +seedOf(run) } : { 
 
 // The fields each view may print. Anything else on a run, its seed above all, never reaches a tool result.
 const VIEWS = Object.fromEntries(Object.entries({
-  hail: "run_id hail_id title rider note pickup_at destination rider_ready arrive_by boarding_hours season task_id fleet sky_now plans_used phase dispatched situation player_id rules",
+  hail: "run_id hail_id title rider note pickup_at destination rider_ready arrive_by boarding_hours bookings season task_id fleet sky_now plans_used phase dispatched passengers situation player_id rules",
   arrived: "ok run_id hail_id planned_by player_id",
-  score: "status total out_of parts car pickup arrive planned_pickup planned_arrive promised_arrival arrive_by delay_hours promise_slip_hours fare_usd planned_kwh extra_kwh divert_kwh used_kwh par_kwh par_car beat_par checkpoints incidents season task_id",
-  log: "hail kind season task_id from to rider_ready arrive_by car par_car par_kwh fleet planned dispatched quote forecasts checkpoints flown happened incidents parts total",
-  summary: "run_id hail_id title kind season task_id phase taken_at rider_ready arrive_by plans_used reason open_checkpoint car par_car total out_of parts used_kwh par_kwh beat_par promised_arrival arrive promise_slip_hours delay_hours incidents checkpoints",
+  score: "status total out_of parts car pickup arrive planned_pickup planned_arrive promised_arrival arrive_by delay_hours promise_slip_hours fare_usd planned_kwh extra_kwh divert_kwh used_kwh par_kwh par_car beat_par checkpoints incidents bookings passengers season task_id",
+  log: "hail kind season task_id from to rider_ready arrive_by car par_car par_kwh fleet planned dispatched quote hails stops quotes forecasts checkpoints flown happened bookings incidents parts total",
+  summary: "run_id hail_id hails title kind season task_id phase taken_at rider_ready arrive_by plans_used reason open_checkpoint car par_car total out_of parts used_kwh par_kwh beat_par promised_arrival arrive promise_slip_hours delay_hours incidents checkpoints",
   record: "format simulated note run_id player_tag hail_id season task_id phase taken_at reason open_checkpoint score log",
 }).map(([k, v]) => [k, new Set(v.split(" "))]));
 // A season run's own fields; a bench run never prints them (its season would be its seed, and no Grok bot planned it).
@@ -149,11 +160,32 @@ export function hailInfo(E, run, nowMs) {
     run_id: run.run_id, hail_id: run.id, title: h.title, rider: h.rider + " (simulated)", note: h.blurb,
     pickup_at: { id: h.from, name: placeName(h.from) }, destination: { id: h.to, name: placeName(h.to) },
     rider_ready: isoJD(run.t0), arrive_by: isoJD(run.arrive_by_jd), boarding_hours: +(R.DWELL * 24).toFixed(2), ...worldOf(run),
-    fleet: runFleet(E, run), sky_now: isoJD(skyNow(run, nowMs)), plans_used: run.calls, phase, dispatched: phase === "in_flight" || phase === "arrived",
+    ...(run.hails ? { bookings: run.hails.map((id) => bookingPub(E, run, id)) } : {}),
+    fleet: run.hails ? runFleet(E, run).map((c) => Object.assign(c, { seats: R.CAR[c.car].seats })) : runFleet(E, run),
+    sky_now: isoJD(skyNow(run, nowMs)), plans_used: run.calls, phase, dispatched: phase === "in_flight" || phase === "arrived",
+    ...(run.plan ? { passengers: passengers(E, run) } : {}),
     ...(phase === "in_flight" ? { situation: situation(E, run) } : {}), ...(run.player_id ? { player_id: run.player_id } : {}),
-    rules: rules(E),
+    rules: rules(E) + (run.hails ? sharedRules(run) : ""),
   });
 }
+function bookingPub(E, run, id) {
+  const h = E.R.BY[id], B = run.bookings[id], { placeName } = names(E);
+  return { hail_id: id, title: h.title, rider: h.rider + " (simulated)", party: h.party, pickup_at: { id: h.from, name: placeName(h.from) },
+    destination: { id: h.to, name: placeName(h.to) }, rider_ready: isoJD(B.t0), arrive_by: isoJD(B.arrive_by_jd) };
+}
+/** The dispatched plan stop by stop: who boards and alights there, passengers aboard as the car leaves, and the seats. */
+function passengers(E, run) {
+  const R = E.R, { placeName } = names(E), legs = run.route.map((id) => run.legs[id]), stops = run.plan.stops;
+  const M = R.manifest({ stops, legs }), seats = R.CAR[run.car].seats;
+  return stops.map((s, n) => ({ stop: n, place: { id: s.at, name: placeName(s.at) }, board: s.board || [], alight: s.alight || [], aboard: M.party[n], seats,
+    ...(n ? { planned_arrive: isoJD(legs[n - 1].arr_jd) } : {}) }));
+}
+const sharedRules = (run) =>
+  " This is a shared flight (simulated) with " + run.hails.length + " bookings, listed in bookings: one car carries them all, and passengers aboard can't exceed its seats. " +
+  "Plan it with plan_leg, not plan_pickup and plan_ride: the first leg names a car and flies from where it is parked; each later leg names after_leg and flies on from where that one lands, " +
+  "after boarding if a booking boards there. A leg's to is a booking's pickup or destination. Then dispatch with legs (the legs in order), stops (one per leg: the bookings that board and alight where it lands) " +
+  "and quotes (a fare_usd and an arrival for each booking). A booking's fare is the sum of the fares of the legs it rides. Fast pickup, on time, kept promise and honest fare are scored per booking " +
+  "and averaged by party size; energy is against par, the best nearby car carrying every booking.";
 const rules = (E) =>
   "Pick a car from the fleet. A car with a busy_until time is finishing another (simulated) job and can't leave before then; \"free\" cars can leave when the rider is ready. " +
   "plan_pickup flies the car from where it is parked to the rider, leaving when the rider is ready or the car is free, whichever is later (or wait_days after that). " +
@@ -226,9 +258,8 @@ const waitOf = (inp) => Math.max(0, Math.min(400, +inp.wait_days || 0));
 export async function planPickup(E, run, inp, legFn) {
   const R = E.R, h = R.BY[run.id];
   guardRun(run);
-  const key = String(inp.car || "").toLowerCase().trim();
-  const car = own(R.CAR, key) || R.FLEET.filter((c) => c.name.toLowerCase() === key)[0];
-  if (!car) fail("unknown car " + inp.car + ". The fleet is in get_hail.");
+  if (run.hails) fail(useLegs(run));
+  const car = carOf(E, inp.car);
   if (car.at === h.from) fail(car.name + " is already at the pickup");
   const obj = inp.objective === "time" ? "time" : "energy", wait = waitOf(inp), start = R.pickupStart(run.id, car.id, run.t0, seedOf(run));
   return addLeg(run, "pickup", car.id, car.at, h.from, start + wait, obj, legFn || defaultLegFn(E),
@@ -239,11 +270,44 @@ export async function planPickup(E, run, inp, legFn) {
 export async function planRideLeg(E, run, inp, legFn) {
   const R = E.R, h = R.BY[run.id];
   guardRun(run);
+  if (run.hails) fail(useLegs(run));
   const prev = own(run.legs, inp.after_leg);
   if (!prev) fail("unknown leg_id " + inp.after_leg + ": pass the pickup leg this ride follows");
   if (prev.role !== "pickup") fail(inp.after_leg + " is a ride leg; pass the pickup leg");
   const obj = inp.objective === "time" ? "time" : "energy", wait = waitOf(inp);
   return addLeg(run, "ride", null, h.from, h.to, prev.arr_jd + R.DWELL + wait, obj, legFn || defaultLegFn(E), { objective: obj, wait_days: wait, after: prev.leg_id });
+}
+
+function carOf(E, q) {
+  const R = E.R, key = String(q || "").toLowerCase().trim();
+  return own(R.CAR, key) || R.FLEET.filter((c) => c.name.toLowerCase() === key)[0] || fail("unknown car " + q + ". The fleet is in get_hail.");
+}
+const useLegs = (run) => "this flight has " + run.hails.length + " bookings; plan it with plan_leg";
+
+/** plan_leg, for a shared flight: one leg of the car's route. The first leaves where the car is parked once the lead
+ *  booking is ready and the car is free; each later one leaves where after_leg lands, after boarding if a booking boards there. */
+export async function planHop(E, run, inp, legFn) {
+  const R = E.R, { placeOf, placeName } = names(E);
+  guardRun(run);
+  if (!run.hails) fail("this flight has one booking; plan it with plan_pickup and plan_ride");
+  const ends = [...new Set(run.hails.flatMap((id) => [R.BY[id].from, R.BY[id].to]))], to = placeOf(inp.to);
+  if (!to || !ends.includes(to.id)) fail("to must be a booking's pickup or destination: " + ends.map(placeName).join(", "));
+  const obj = inp.objective === "time" ? "time" : "energy", wait = waitOf(inp);
+  let car, from, t, extra;
+  if (inp.after_leg != null && inp.after_leg !== "") {
+    const prev = own(run.legs, inp.after_leg);
+    if (!prev || prev.role !== "leg") fail("unknown leg_id " + inp.after_leg + ": pass the plan_leg leg this one follows");
+    if (inp.car && carOf(E, inp.car).id !== prev.car) fail(inp.after_leg + " flies " + R.CAR[prev.car].name + "; a flight is one car");
+    car = prev.car; from = prev.to;
+    t = prev.arr_jd + (run.hails.some((id) => R.BY[id].from === from) ? R.DWELL : 0) + wait;
+    extra = { after: prev.leg_id };
+  } else {
+    const c = carOf(E, inp.car), start = R.pickupStart(run.id, c.id, run.t0, seedOf(run));
+    car = c.id; from = c.at; t = start + wait;
+    extra = start > run.t0 ? { busy_until_jd: start } : {};
+  }
+  if (from === to.id) fail("this leg would start and end at " + to.name);
+  return addLeg(run, "leg", car, from, to.id, t, obj, legFn || defaultLegFn(E), { objective: obj, wait_days: wait, ...extra });
 }
 
 // ---- forecasts: read-only, free (not plans). They only ever show what the engine forecasts (booked berths, odds). ----
@@ -316,6 +380,24 @@ export function dispatch(E, run, inp, nowMs) {
   if (phase === "arrived") return Object.assign({ already_dispatched: true }, run.score);
   if (phase === "in_flight") return Object.assign(atCheckpoint(E, run), { already_dispatched: true });
   const after = askAfter(inp.ask_after_hours);
+  const got = run.hails ? stopsPlan(E, run, inp) : twoLegs(E, run, inp);
+  if (got.problems) return { ok: false, problems: got.problems };
+  const legs = got.legs, firstFar = legs.filter((L) => L.gate !== "local")[0], now = skyNow(run, nowMs);
+  if (firstFar && now > firstFar.dep_jd) {
+    setPhase(run, "abandoned");
+    run.abandoned_reason = "cold";
+    fail("The hail went cold: " + firstFar.leg_id + " was due to depart " + isoJD(firstFar.dep_jd) + " and sky time is now " + isoJD(now) + ". Take the hail again.");
+  }
+  run.route = legs.map((L) => L.leg_id);
+  run.car = legs[0].car;
+  if (got.stops) { run.plan = { stops: got.stops }; run.quotes = got.quotes; }
+  run.quote = got.quotes ? got.quotes[run.id] : { fare_usd: inp.quoted_fare_usd, arrival: inp.quoted_arrival };
+  run.decisions = [];
+  const slim = legs.map(slimLeg);
+  return next(E, run, R.start(run.id, run.car, got.stops ? { stops: got.stops, legs: slim } : slim, run.t0, seedOf(run), { ask_after_hours: after, end_jd: SEASON_END }));
+}
+/** A one-booking dispatch: { legs: [pickup, ride] } or { problems }. */
+function twoLegs(E, run, inp) {
   const p = own(run.legs, inp.pickup_leg), r = own(run.legs, inp.ride_leg);
   const probs = [];
   if (!p) probs.push("unknown pickup_leg " + inp.pickup_leg);
@@ -323,21 +405,37 @@ export function dispatch(E, run, inp, nowMs) {
   if (!probs.length) {
     if (p.role !== "pickup") probs.push(inp.pickup_leg + " is not a pickup leg");
     if (r.role !== "ride") probs.push(inp.ride_leg + " is not a ride leg");
-    if (!probs.length) R.check(run.id, p.car, [p, r], run.t0, seedOf(run)).forEach((x) => probs.push(x));
+    if (!probs.length) E.R.check(run.id, p.car, [p, r], run.t0, seedOf(run)).forEach((x) => probs.push(x));
     [p, r].forEach((L) => { if (L.gate === "FAIL") probs.push(L.leg_id + " was rejected by the checker"); });
   }
-  if (probs.length) return { ok: false, problems: probs };
-  const firstFar = [p, r].filter((L) => L.gate !== "local")[0], now = skyNow(run, nowMs);
-  if (firstFar && now > firstFar.dep_jd) {
-    setPhase(run, "abandoned");
-    run.abandoned_reason = "cold";
-    fail("The hail went cold: " + firstFar.leg_id + " was due to depart " + isoJD(firstFar.dep_jd) + " and sky time is now " + isoJD(now) + ". Take the hail again.");
-  }
-  run.route = [p.leg_id, r.leg_id];
-  run.car = p.car;
-  run.quote = { fare_usd: inp.quoted_fare_usd, arrival: inp.quoted_arrival };
-  run.decisions = [];
-  return next(E, run, R.start(run.id, p.car, [p, r].map(slimLeg), run.t0, seedOf(run), { ask_after_hours: after, end_jd: SEASON_END }));
+  return probs.length ? { problems: probs } : { legs: [p, r] };
+}
+/** A shared flight's dispatch: the plan_leg legs in order, a stop where each lands (who boards, who alights) and a quote per
+ *  booking. Stop 0 is where the car is parked. Returns { legs, stops, quotes } or { problems }. */
+function stopsPlan(E, run, inp) {
+  const R = E.R, ids = run.hails;
+  if (!Array.isArray(inp.legs) || !inp.legs.length || !Array.isArray(inp.stops))
+    return { problems: ["this flight has " + ids.length + " bookings: dispatch with legs (the plan_leg legs in order), stops (one per leg: { board, alight }, the bookings that board and alight where it lands) and quotes ({ hail_id: { fare_usd, arrival } } for every booking)"] };
+  const probs = [], legs = inp.legs.map((id) => own(run.legs, id));
+  inp.legs.forEach((id, i) => { if (!legs[i]) probs.push("unknown leg " + id); else if (legs[i].role !== "leg") probs.push(id + " is not a plan_leg leg"); });
+  if (inp.stops.length !== inp.legs.length) probs.push("stops has " + inp.stops.length + " entries; it needs one for each of the " + inp.legs.length + " legs");
+  if (probs.length) return { problems: probs };
+  const car = legs[0].car;
+  if (legs.some((L) => L.car !== car)) return { problems: ["every leg must fly the same car"] };
+  const listOf = (v) => (v == null ? [] : (Array.isArray(v) ? v : [v]).map(String));
+  const stops = [{ at: R.CAR[car].at }, ...inp.stops.map((s, i) => ({ at: legs[i].to, board: listOf(s && s.board), alight: listOf(s && s.alight) }))];
+  const on = new Set(stops.flatMap((s) => [...(s.board || []), ...(s.alight || [])])), quotes = {}, q = inp.quotes || {};
+  on.forEach((id) => { if (!ids.includes(id)) probs.push(id + " is not a booking on this flight; its bookings are " + ids.join(", ")); });
+  ids.forEach((id) => {
+    if (!on.has(id)) probs.push(id + " is not on the plan: every booking boards and alights");
+    const x = own(q, id);
+    if (!x || x.fare_usd == null || x.arrival == null) probs.push("quotes needs a fare_usd and an arrival for " + id);
+    else quotes[id] = { fare_usd: x.fare_usd, arrival: x.arrival };
+  });
+  if (probs.length) return { problems: probs };
+  R.check(run.id, car, { stops, legs }, run.t0, seedOf(run)).forEach((x) => probs.push(x));
+  legs.forEach((L) => { if (L.gate === "FAIL") probs.push(L.leg_id + " was rejected by the checker"); });
+  return probs.length ? { problems: probs } : { legs, stops, quotes };
 }
 
 const slimLeg = (L) => ({ from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate });
@@ -378,27 +476,39 @@ function situation(E, run) {
   };
 }
 
+// The promised arrival, read the way R.score reads it (date, then a space or T, then HH:MM), or null.
+function promisedJd(E, s) {
+  const m = /^\s*(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec(String(s || "")), j = m ? E.jdFromIso(m[1] + "T" + m[2]) : null;
+  return j != null && isFinite(j) ? j : null;
+}
 function land(E, run, F) {
-  const R = E.R, p = run.legs[run.route[0]], r = run.legs[run.route[1]], quote = run.quote;
-  const sc = R.score(run.id, [p, r], { t0: run.t0, arrive_by_jd: run.arrive_by_jd, par_kwh: run.par_kwh, best_wait_days: run.best_wait_days, plan_calls: run.calls,
-    kind: R.BY[run.id].kind, quote, flown: F });
-  // The promised arrival, read the way R.score reads it (date, then a space or T, then HH:MM).
-  const qm = /^\s*(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec(String(quote.arrival || "")), qj0 = qm ? E.jdFromIso(qm[1] + "T" + qm[2]) : null;
-  const qj = qj0 != null && isFinite(qj0) ? qj0 : null;
+  const R = E.R, legs = run.route.map((id) => run.legs[id]), quote = run.quote;
+  const plan = run.plan ? { stops: run.plan.stops, legs } : legs, M = R.manifest(R.planOf(run.id, run.car, plan));
+  const sc = R.score(run.id, plan, { t0: run.t0, arrive_by_jd: run.arrive_by_jd, par_kwh: run.par_kwh, best_wait_days: run.best_wait_days, plan_calls: run.calls,
+    kind: R.BY[run.id].kind, quote, flown: F,
+    ...(run.plan ? { bookings: Object.fromEntries(run.hails.map((id) => [id, { ...run.bookings[id], quote: run.quotes[id] }])) } : {}) });
+  const qj = promisedJd(E, quote.arrival);
   const incidents = incidentsPub(E, sc.incidents);
   setPhase(run, "arrived");
   run.pickup_jd = sc.pickup_jd; // actual, for the board's pickup wait
   run.score = project(run, "score", {
-    status: "arrived", total: sc.total, out_of: 100, parts: sc.parts, car: R.CAR[p.car].name,
-    pickup: isoJD(sc.pickup_jd), arrive: isoJD(sc.arrive_jd), planned_pickup: isoJD(p.arr_jd), planned_arrive: isoJD(sc.planned_arrive_jd),
+    status: "arrived", total: sc.total, out_of: 100, parts: sc.parts, car: R.CAR[run.car].name,
+    pickup: isoJD(sc.pickup_jd), arrive: isoJD(sc.arrive_jd), planned_pickup: isoJD(legs[M.stop[run.id].board[0] - 1].arr_jd), planned_arrive: isoJD(sc.planned_arrive_jd),
     promised_arrival: qj == null ? null : isoJD(qj), arrive_by: isoJD(run.arrive_by_jd),
     delay_hours: r1(F.delay_hours), promise_slip_hours: qj == null ? null : r1((sc.arrive_jd - qj) * 24),
     fare_usd: sc.fare_usd, planned_kwh: F.planned_kwh, extra_kwh: sc.extra_kwh, divert_kwh: F.divert_kwh, used_kwh: sc.used_kwh,
     par_kwh: run.par_kwh, par_car: R.CAR[run.par_car].name, beat_par: sc.beat_par, checkpoints: F.checkpoints.length,
-    incidents, ...worldOf(run),
+    incidents, ...(run.plan ? { bookings: run.hails.map((id) => bookingScore(E, run, id, sc.bookings[id])), passengers: passengers(E, run) } : {}), ...worldOf(run),
   });
-  run.score.log = runLog(E, run, p, r, quote, incidents, sc, F);
+  run.score.log = runLog(E, run, quote, incidents, sc, F);
   return arrived(run);
+}
+/** One booking's side of a shared flight's score: its times, its promise, its fare and its passenger parts. */
+function bookingScore(E, run, id, b) {
+  const qj = promisedJd(E, run.quotes[id].arrival);
+  return { hail_id: id, title: E.R.BY[id].title, party: b.party, pickup: isoJD(b.pickup_jd), arrive: isoJD(b.arrive_jd), planned_arrive: isoJD(b.planned_arrive_jd),
+    arrive_by: isoJD(run.bookings[id].arrive_by_jd), promised_arrival: qj == null ? null : isoJD(qj), promise_slip_hours: qj == null ? null : r1((b.arrive_jd - qj) * 24),
+    fare_usd: b.fare_usd, parts: b.parts };
 }
 
 const ACTIONS = "action must be wait, replan, hold or divert";
@@ -458,6 +568,7 @@ const RUN_TOOLS = {
   get_hail: (E, run, inp, ctx) => hailInfo(E, run, ctx.nowMs),
   plan_pickup: async (E, run, inp, ctx) => planned(E, run, await planPickup(E, run, inp, ctx.legFn)),
   plan_ride: async (E, run, inp, ctx) => planned(E, run, await planRideLeg(E, run, inp, ctx.legFn)),
+  plan_leg: async (E, run, inp, ctx) => planned(E, run, await planHop(E, run, inp, ctx.legFn)),
   check_pad: (E, run, inp, ctx) => checkPad(E, run, inp, ctx.nowMs),
   space_weather: (E, run, inp, ctx) => spaceWeather(E, run, inp, ctx.nowMs),
   dispatch: (E, run, inp, ctx) => dispatch(E, run, inp, ctx.nowMs),
@@ -486,19 +597,22 @@ export async function applyTool(E, run, tool, input, ctx) {
 }
 
 /** The run log a bot can learn from: what it was asked, what it planned and checked, what happened, how it scored. */
-function runLog(E, run, p, r, quote, incidents, sc, F) {
+function runLog(E, run, quote, incidents, sc, F) {
   const R = E.R, h = R.BY[run.id];
   return project(run, "log", {
     hail: run.id, kind: kindOf(h), ...worldOf(run), from: h.from, to: h.to, rider_ready: isoJD(run.t0), arrive_by: isoJD(run.arrive_by_jd),
-    car: p.car, par_car: run.par_car, par_kwh: run.par_kwh,
+    car: run.car, par_car: run.par_car, par_kwh: run.par_kwh,
     fleet: R.fleetState(run.id, run.t0, seedOf(run)).filter((c) => c.busy_until_jd).map((c) => ({ car: c.car, busy_until: isoJD(c.busy_until_jd) })),
     planned: Object.values(run.legs).map((L) => ({ leg: L.leg_id, kind: L.role, ...(L.car ? { car: L.car } : {}), ...(L.after ? { after: L.after } : {}), ...(L.replan_of ? { replan_of: L.replan_of } : {}),
       objective: L.objective, wait_days: L.wait_days, depart: isoJD(L.dep_jd), arrive: isoJD(L.arr_jd), kwh: L.kwh, gate: L.gate })),
-    dispatched: [p.leg_id, r.leg_id], quote: { fare_usd: quote.fare_usd, arrival: quote.arrival },
+    dispatched: run.route.slice(), quote: { fare_usd: quote.fare_usd, arrival: quote.arrival },
+    ...(run.plan ? { hails: run.hails, stops: run.plan.stops, quotes: run.quotes } : {}),
     forecasts: run.forecasts || [],
     ...(F.checkpoints.length ? { checkpoints: checkpointLog(E, run) } : {}),
     flown: F.segments.map((s) => ({ kind: s.kind, leg: s.role, from: s.from, to: s.to, depart: isoJD(s.dep_jd), arrive: isoJD(s.arr_jd), kwh: s.kwh, gate: s.gate })),
     happened: { pickup: isoJD(sc.pickup_jd), arrive: isoJD(sc.arrive_jd), extra_kwh: sc.extra_kwh, divert_kwh: F.divert_kwh, used_kwh: sc.used_kwh },
+    ...(run.plan ? { bookings: Object.fromEntries(run.hails.map((id) => { const b = sc.bookings[id];
+      return [id, { pickup: isoJD(b.pickup_jd), arrive: isoJD(b.arrive_jd), parts: Object.fromEntries(b.parts.map((x) => [x.key, x.got])) }]; })) } : {}),
     incidents: incidents.map((x) => ({ kind: x.kind, leg: x.leg, place: x.place, at: x.at, hours: x.hours, kwh: x.kwh })),
     parts: Object.fromEntries(sc.parts.map((x) => [x.key, x.got])), total: sc.total,
   });
@@ -523,7 +637,7 @@ const takenAt = (run) => new Date(run.created_ms || 0).toISOString();
 /** One row of a player's history: the ride's terms, and once it arrived, its score, incidents and each checkpoint's hindsight best. */
 export function rideSummary(E, run) {
   const phase = phaseOf(run), h = own(E.R.BY, run.id);
-  const base = { run_id: run.run_id, hail_id: run.id, title: run.title, kind: h ? kindOf(h) : null, ...worldOf(run), phase, taken_at: takenAt(run),
+  const base = { run_id: run.run_id, hail_id: run.id, ...(run.hails ? { hails: run.hails } : {}), title: run.title, kind: h ? kindOf(h) : null, ...worldOf(run), phase, taken_at: takenAt(run),
     rider_ready: isoJD(run.t0), arrive_by: isoJD(run.arrive_by_jd), plans_used: run.calls };
   if (phase === "abandoned") return project(run, "summary", Object.assign(base, { reason: run.abandoned_reason || null }));
   if (phase === "in_flight") return project(run, "summary", Object.assign(base, { open_checkpoint: run.ride.pending }));
