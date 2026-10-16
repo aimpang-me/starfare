@@ -221,7 +221,7 @@ export function legPub(E, L) {
 /** Key for the plan+re-fly cache: everything planLeg and refly depend on. */
 export const legKey = (from, to, t, obj, endJd) => [from, to, t.toFixed(6), obj, endJd.toFixed(6)].join("|");
 
-/** planLeg + refly, reduced to what a leg keeps (page planLegFor, minus the drawing arc). */
+/** planLeg + refly, reduced to what a leg keeps (page planLegFor). arc_au is the drawn path, kept for the /flight replay. */
 export function computeLeg(E, from, to, t, obj, endJd) {
   const b = E.R.planLeg(from, to, t, obj, endJd);
   const g = E.refly(b);
@@ -231,6 +231,7 @@ export function computeLeg(E, from, to, t, obj, endJd) {
     gate: loc ? "local" : g && g.pass ? "PASS" : "FAIL",
     refly: loc ? { result: "not re-flown: local transfer" } : g && g.error ? { result: "FAIL", note: g.error }
       : { final_miss_km: +(+g.final_miss_km).toFixed(3), retarget_ms: +(+g.retarget_ms).toFixed(1), result: g.pass ? "PASS" : "FAIL" },
+    arc_au: (b.arc_au || []).map((p) => p.map((x) => +x.toFixed(6))),
   };
 }
 
