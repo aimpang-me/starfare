@@ -55,9 +55,10 @@ async function rides(req, path, env) {
 }
 
 /** The bench watch pages. /bench: how to start one from Grok. /bench/<bench_id>: one session's tasks and tool calls, live
- *  (simulated, practice); the page polls /bench/<bench_id>.json?after=<seq> and POSTs /bench/<bench_id>/end to end the open task.
+ *  (simulated); the page polls /bench/<bench_id>.json?after=<seq> and POSTs /bench/<bench_id>/end to end the open task.
+ *  /bench/<bench_id>/trace.json: the finished session's calls, to replay with bench/verify.mjs.
  *  The bench_id is the capability, as the run_id is for /rides. */
-const BENCH_PATH = new RegExp("^/bench/(" + BENCH_ID.source.slice(1, -1) + ")(\\.json|/end)?$");
+const BENCH_PATH = new RegExp("^/bench/(" + BENCH_ID.source.slice(1, -1) + ")(\\.json|/end|/trace\\.json)?$");
 async function bench(req, url, env) {
   const page = (id) => new Response(benchHtml.replaceAll("__ORIGIN__", url.origin).replace("__BENCH__", JSON.stringify(id)),
     { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
@@ -72,6 +73,11 @@ async function bench(req, url, env) {
   if (m[2] === "/end") {
     const r = await stub.end();
     return Response.json(r, { status: r.error ? 409 : 200 });
+  }
+  if (m[2] === "/trace.json") {
+    const t = await stub.trace();
+    if (!t) return new Response("Not found: no bench session with that id", { status: 404 });
+    return Response.json(t, t.error ? { status: 409 } : { headers: { "content-disposition": 'attachment; filename="starfare-' + m[1] + '-trace.json"' } });
   }
   const v = await stub.view(Math.max(0, Number(url.searchParams.get("after")) || 0));
   return v ? Response.json(v, { headers: { "cache-control": "no-store" } }) : new Response("Not found: no bench session with that id", { status: 404 });

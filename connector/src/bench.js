@@ -1,7 +1,7 @@
 // StarfareBench: one per hosted bench session (bench_id). Holds the session (bench-host.js) and a trace of every tool call,
 // which the watch page at /bench/<bench_id> polls. Calls run one at a time, so the page's End button never lands mid-call.
 import { DurableObject } from "cloudflare:workers";
-import { benchCall, benchView, endTask, newSession } from "./bench-host.js";
+import { END_TOOL, benchCall, benchView, endTask, newSession, replayTrace, traceOf } from "./bench-host.js";
 import { engine } from "./engine.js";
 import { loadSuite } from "./suite.js";
 import V1 from "./suites/v1.json" with { type: "json" };
@@ -59,6 +59,7 @@ export class StarfareBench extends DurableObject {
       const r = await benchCall(await engine(), suiteOf(), s, tool, input, Date.now(), this.env.STARFARE_BENCH_KEY);
       await this.ctx.storage.put("session", r.session);
       this.#log(r.task, tool, input, r.result);
+      if (r.session.done) this.#verifyLater();
       return r.result;
     });
   }
@@ -69,16 +70,46 @@ export class StarfareBench extends DurableObject {
       if (!s) return { error: "unknown bench session" };
       const r = endTask(await engine(), s);
       await this.ctx.storage.put("session", r.session);
-      if (r.task != null) this.#log(r.task, "end task (watch page)", {}, r.result);
+      if (r.task != null) this.#log(r.task, END_TOOL, {}, r.result);
+      if (r.session.done) this.#verifyLater();
       return r.result;
     });
+  }
+
+  #calls() {
+    return this.ctx.storage.sql.exec("SELECT seq, at, task, tool, input FROM trace WHERE tool != 'start_bench' ORDER BY seq").toArray().map((r) => ({ ...r, input: JSON.parse(r.input) }));
+  }
+
+  #verifying = null;
+
+  /** Once a session is done, its stored trace is replayed through the same reducer and the session keeps verified: true or
+   *  false. Queued after the call that finished it, so the bot's answer does not wait; a view retries it after an eviction. */
+  #verifyLater() {
+    this.#verifying ??= this.#serial(async () => {
+      const s = await this.#session();
+      if (!s || !s.done || s.verified != null) return;
+      let verified = false;
+      try { verified = (await replayTrace(await engine(), suiteOf(), traceOf(suiteOf(), s, this.#calls()), this.env.STARFARE_BENCH_KEY)).verified; }
+      catch (e) { console.error("bench verify", s.bench_id, e); }
+      await this.ctx.storage.put("session", { ...s, verified });
+    }).finally(() => { this.#verifying = null; });
+    if (this.ctx.waitUntil) this.ctx.waitUntil(this.#verifying);
   }
 
   /** The page's view: the session and up to 50 trace rows after seq. null for an unknown bench_id. */
   async view(after) {
     const s = await this.#session();
     if (!s) return null;
+    if (s.done && s.verified == null) this.#verifyLater();
     const rows = this.ctx.storage.sql.exec("SELECT seq, at, task, tool, input, result FROM trace WHERE seq > ? ORDER BY seq LIMIT ?", after, TRACE_PAGE).toArray();
     return { ...benchView(s), trace: rows.map((r) => ({ ...r, input: JSON.parse(r.input), result: JSON.parse(r.result) })) };
+  }
+
+  /** The finished session as a replayable file (bench/verify.mjs). Withheld while it plays, so a test session stays sealed. */
+  async trace() {
+    const s = await this.#session();
+    if (!s) return null;
+    if (!s.done) return { error: "The trace is published once every task in this session is played." };
+    return traceOf(suiteOf(), s, this.#calls());
   }
 }

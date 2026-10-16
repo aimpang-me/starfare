@@ -15,7 +15,7 @@ import { SUITE_FORMAT, loadSuite, seedFor } from "../src/suite.js";
 import { BenchBackend, loadEngine, openTask } from "../bench/backend.mjs";
 import { naive, random, reference, rngOf } from "../bench/agents.mjs";
 import { runSuite } from "../bench/run.mjs";
-import { SEALED_NOTE, benchCall, benchView, endTask, newRunId, newSession } from "../src/bench-host.js";
+import { END_TOOL, SEALED_NOTE, TRACE_FORMAT, benchCall, benchView, endTask, newRunId, newSession, replayTrace, traceOf } from "../src/bench-host.js";
 import { publicTask } from "../bench/make-suite.mjs";
 
 const E = loadEngine();
@@ -180,6 +180,55 @@ test("a test session seals every score until its last task closes; practice show
   assert.deepEqual(e.result, { task_id: "iss-crew/held-2", phase: "not started", total: 0, done: true, bench_total: hidden });
   const done = benchView(s);
   assert.deepEqual([done.sealed, done.total, done.tasks.map((t) => t.result.total)], [false, hidden, [hidden, 0]]);
+});
+
+/** Plays a session as the StarfareBench DO does, keeping its trace rows: naive on task 1, then the End button for the rest. */
+async function played(suite, split, key) {
+  let s = { ...newSession(suite, "b_r", "someone", 0, { split, key }), tasks: suite.splits[split] };
+  const calls = [], row = (task, tool, input) => calls.push({ seq: calls.length + 2, at: 0, task, tool, input: JSON.parse(JSON.stringify(input ?? {})) });
+  await naive(async (tool, input) => { const r = await benchCall(E, suite, s, tool, input, 0, key); s = r.session; row(r.task, tool, input); return r.result; }, E);
+  while (!s.done) { const r = endTask(E, s); s = r.session; row(r.task, END_TOOL, {}); }
+  await benchCall(E, suite, s, "list_hails", {}, 0, key).then((r) => row(r.task, "list_hails", {}));
+  return traceOf(suite, s, calls);
+}
+
+test("a finished session's trace replays to the same results byte for byte; a tampered trace does not", async () => {
+  const suite = { ...SUITE, splits: { dev: [SOLO, SHARED] } }, trace = JSON.parse(JSON.stringify(await played(suite, "dev")));
+  assert.deepEqual([trace.format, trace.simulated, trace.start.player, trace.calls.at(-1).tool, trace.results.map((r) => [r.total, r.ended])],
+    [TRACE_FORMAT, true, undefined, "list_hails", [[93, "arrived"], [0, "ended on the watch page"]]]);
+  assert.deepEqual(await replayTrace(E, suite, trace), { verified: true, suite_tasks: true, tasks: [
+    { task_id: SOLO.id, stored: 93, replayed: 93, same: true }, { task_id: SHARED.id, stored: 0, replayed: 0, same: true }] });
+
+  const fare = structuredClone(trace), d = fare.calls.find((c) => c.tool === "dispatch");
+  d.input.quoted_fare_usd = Math.round(d.input.quoted_fare_usd * 3);
+  assert.deepEqual((await replayTrace(E, suite, fare)).tasks[0].same, false);
+  assert.equal((await replayTrace(E, suite, fare)).verified, false);
+  const score = structuredClone(trace);
+  score.results[0].total = 100;
+  assert.deepEqual(await replayTrace(E, suite, score), { verified: false, suite_tasks: true, tasks: [
+    { task_id: SOLO.id, stored: 100, replayed: 93, same: false }, { task_id: SHARED.id, stored: 0, replayed: 0, same: true }] });
+  const own = structuredClone(trace);
+  own.start.tasks[0] = { ...SOLO, clock_jd: SOLO.clock_jd + 1 };
+  assert.deepEqual((await replayTrace(E, suite, own)).suite_tasks, false);
+});
+
+test("bench/verify.mjs replays a downloaded test-split trace with the key, and exits 1 on a tampered one", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "starfare-verify-")), suiteFile = join(dir, "suite.json"), good = join(dir, "good.json"), bad = join(dir, "bad.json");
+  try {
+    const trace = await played(TEST_SUITE, "test", KEY);
+    writeFileSync(suiteFile, JSON.stringify(TEST_SUITE));
+    writeFileSync(good, JSON.stringify(trace));
+    writeFileSync(bad, JSON.stringify({ ...trace, calls: trace.calls.filter((c) => c.tool !== "dispatch") }));
+    const cli = (file, key) => spawnSync(process.execPath, [fileURLToPath(new URL("../bench/verify.mjs", import.meta.url)), file, "--suite", suiteFile], { encoding: "utf8", env: { ...process.env, STARFARE_BENCH_KEY: key } });
+    const ok = cli(good, KEY);
+    assert.equal(ok.status, 0, ok.stderr);
+    assert.match(ok.stdout, new RegExp("same      iss-crew/held: stored " + trace.results[0].total + ", replayed " + trace.results[0].total + "\\nverified: the calls reproduce every stored result"));
+    const tampered = cli(bad, KEY);
+    assert.equal(tampered.status, 1);
+    assert.match(tampered.stdout, /DIFFERENT iss-crew\/held: stored \d+, replayed null\nNOT verified/);
+    assert.match(cli(good, "").stderr, /the test split needs STARFARE_BENCH_KEY in the environment/);
+    assert.equal(cli(good, "another-key").status, 1);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test("make-suite's test cut writes only id, hail or hails and sky day to the suite, and its scores only outside the repo", () => {

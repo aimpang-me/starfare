@@ -147,6 +147,8 @@ export async function benchCall(E, suite, session, tool, input, nowMs, key) {
   return { session: s, task: k, result: out };
 }
 
+export const END_TOOL = "end task (watch page)";
+
 /** The player ended the open task from the watch page. */
 export function endTask(E, session) {
   const s = structuredClone(session);
@@ -164,6 +166,31 @@ export function benchView(s) {
     bench_id: s.bench_id, simulated: true, practice: practice(s), sealed: shut, suite: s.suite, split: s.split, budget: s.budget, started_ms: s.started_ms, done: s.done,
     tasks: s.tasks.map((t, k) => ({ task_id: t.id, hails: t.hails || [t.hail_id], status: k < s.i ? "done" : k === s.i && !s.done ? "current" : "waiting", ...(s.results[k] && !shut ? { result: s.results[k] } : {}) })),
     current: s.done ? null : { task: s.i + 1, task_id: s.tasks[s.i].id, title: s.run ? s.run.title : null, phase: s.run ? phaseOf(s.run) : "not opened", calls_used: s.run ? s.run.tool_calls : 0 },
-    total: shut ? null : totalOf(s), out_of: 100 * s.tasks.length,
+    total: shut ? null : totalOf(s), out_of: 100 * s.tasks.length, verified: s.verified ?? null,
   };
+}
+
+export const TRACE_FORMAT = "starfare.bench-trace/1";
+
+/** A finished session as a file anyone can replay: how it started (tasks and run_ids, not the player), every call in order
+ *  ({ seq, at, task, tool, input }, the End button as END_TOOL), and the results it stored. */
+export function traceOf(suite, s, calls) {
+  const { bench_id, split, budget, tasks, run_ids, started_ms } = s;
+  return {
+    format: TRACE_FORMAT, simulated: true, bench_id, suite: suite.id, engine_sha256: suite.engine_sha256, score_version: suite.score_version, split,
+    start: { bench_id, suite: s.suite, split, budget, tasks, run_ids, started_ms }, results: s.results, total: totalOf(s), out_of: 100 * s.tasks.length,
+    verified: s.verified ?? null, calls,
+  };
+}
+
+/** Plays a trace's calls again through benchCall and endTask, the reducer that played them, and compares every task's stored
+ *  result with the replayed one, byte for byte as JSON. The tasks and budget must be the suite's own, or a trace could bring its
+ *  own easy tasks. A test split's trace needs the key its worlds came from. */
+export async function replayTrace(E, suite, trace, key) {
+  const split = (suite.splits && suite.splits[trace.start.split]) || [], own = new Set(split.map((t) => JSON.stringify(t)));
+  const suite_tasks = trace.start.budget === suite.budget && trace.start.tasks.every((t) => own.has(JSON.stringify(t)));
+  let s = { ...trace.start, player: null, i: 0, run: null, results: [], notice: null, done: false };
+  for (const c of trace.calls) s = (c.tool === END_TOOL ? endTask(E, s) : await benchCall(E, suite, s, c.tool, c.input, 0, key)).session;
+  const tasks = trace.results.map((r, k) => ({ task_id: r.task_id, stored: r.total, replayed: s.results[k] ? s.results[k].total : null, same: JSON.stringify(r) === JSON.stringify(s.results[k]) }));
+  return { verified: suite_tasks && s.done && s.results.length === trace.results.length && tasks.every((t) => t.same), suite_tasks, tasks };
 }
