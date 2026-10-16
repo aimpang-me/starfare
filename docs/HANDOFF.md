@@ -19,12 +19,16 @@ Alvin's game loop, in his words (2026-10-16):
 - **Score /100**: fast pickup 20, on time 20, energy vs par 20, kept the promise 15 (quoted arrival vs actual; 0 at 6 h late on quick hails, 1 day on long; early costs a quarter as much), every leg checked 10, honest fare 10, planning economy 5.
 - **Grok connector** (`connector/`): live at https://starfare.aimpang.workers.dev/mcp (board at /board), OAuth on. Tools: list_hails, take_hail, get_hail, plan_pickup, plan_ride, check_pad, space_weather, dispatch (returns what happened, incidents and a run log).
 - **Open Sky page** (`world/template.html` -> `open-sky.html`): the shared sky with free rides, a Claude dispatcher (through the viewer's own Claude account), the hail game with forecasts, a promise box and an incident list. Published as a private claude.ai artifact: https://claude.ai/artifact/PDmHnbcrxCiMTAerA8JR2z (republish to the same URL; it declares sample, db, room, user capabilities; keep them).
-- **Spec**: "SOL Final Spec" Claude Doc https://claude.ai/code/artifact/33317ff6-abf3-461e-b47a-8fdcfdd98aa6 (section "The game: robotaxi dispatcher arena", and "Later ideas").
+- **Spec**: "SOL Final Spec" Claude Doc https://claude.ai/code/artifact/33317ff6-abf3-461e-b47a-8fdcfdd98aa6 (section "The game: robotaxi dispatcher arena", and "Later ideas"). A copy is in `docs/SPEC.md`.
 - Before the hazards, Grok scored 100 every time; a naive bot now averages about 92-98 on quick hails.
 
 ## Web pages and design
 - All pages, their links, sources and how to build and publish them: `docs/WEBSITES.md` (Open Sky, Stranded at Titan, Dispatch Desk, the Roadster teaser in `teaser/`, the spec).
 - The visual design, tokens, Alvin's mockups and his Terminal design system: `docs/DESIGN.md`.
+
+## History and spec
+- How the project got here (idea arena, the one-week build, the audit, the pivot to ride hails, the rename): `docs/HISTORY.md`. The original week plan: `docs/history/sol-plan.md`.
+- The full spec as of Oct 16: `docs/SPEC.md`.
 
 ## Open questions
 Everything still waiting on Alvin, with options and a recommendation: `docs/OPEN-QUESTIONS.md`. Ask him, one at a time.

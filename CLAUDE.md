@@ -2,6 +2,8 @@
 
 Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi game for flying cars across the solar system. Riders, the fleet, weather and traffic are simulated; planet positions are real (NASA JPL DE421).
 
+Read first: `docs/HANDOFF.md` (state, decisions, next steps), `docs/OPEN-QUESTIONS.md`, `docs/WEBSITES.md`, `docs/DESIGN.md`, `docs/HISTORY.md`, `docs/SPEC.md`.
+
 ## Layout
 - `world/engine/`: the engine. `sol-engine.js` (planner, n-body re-fly checker), `sol-rides.js` (ride hails, hazards, scoring), `sol-missions.js` (older delivery game). `python3 world/bundle.py` bundles them into `engine/sol-page.js`.
 - `world/template.html` -> `python3 world/build.py` -> `world/open-sky.html` (the Open Sky page, published as a claude.ai artifact).
