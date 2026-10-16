@@ -119,7 +119,7 @@ export const worldOf = (run) => (run.tag == null ? { season: +seedOf(run) } : { 
 const VIEWS = Object.fromEntries(Object.entries({
   hail: "run_id hail_id title rider note pickup_at destination rider_ready arrive_by boarding_hours bookings season task_id fleet sky_now plans_used phase dispatched passengers situation player_id rules",
   arrived: "ok run_id hail_id planned_by player_id",
-  score: "status total out_of parts car pickup arrive planned_pickup planned_arrive promised_arrival arrive_by delay_hours promise_slip_hours fare_usd planned_kwh extra_kwh divert_kwh used_kwh par_kwh par_car beat_par checkpoints incidents bookings passengers season task_id",
+  score: "status total out_of parts car pickup arrive planned_pickup planned_arrive promised_arrival arrive_by delay_hours promise_slip_hours fare_usd planned_kwh extra_kwh divert_kwh used_kwh par_kwh par_car beat_par checkpoints rider_dose_msv incidents bookings passengers season task_id",
   log: "hail kind season task_id from to rider_ready arrive_by car par_car par_kwh fleet planned dispatched quote hails stops quotes forecasts checkpoints flown happened bookings incidents parts total",
   summary: "run_id hail_id hails title kind season task_id phase taken_at rider_ready arrive_by plans_used reason open_checkpoint car par_car total out_of parts used_kwh par_kwh beat_par promised_arrival arrive promise_slip_hours delay_hours incidents checkpoints",
   record: "format simulated note run_id player_tag hail_id season task_id phase taken_at reason open_checkpoint score log",
@@ -193,7 +193,9 @@ const rules = (E) =>
   "Hazards (all simulated, the same for every player this season): you only see forecasts, and the dispatch result tells you what actually happened. " +
   "Pads have a few berths and other ships use them. check_pad shows the berths and how many are booked each hour, but about a quarter of the traffic is unscheduled and never shows in the forecast. " +
   "If every berth is taken when the ship arrives, it holds in orbit until one frees up, and holding costs 250 kWh an hour. " +
-  "Solar radiation storms (space_weather gives the odds per day) hold any launch with a rider aboard until the storm passes; an empty ship on its pickup can fly through. " +
+  "Solar radiation storms (space_weather gives the odds per day at a place) hold any launch with a rider aboard until the storm passes; an empty ship on its pickup can fly through. " +
+  "A storm's particles leave the Sun at 1500 km/s (a fast CME), so a storm reaches Earth about a day after it erupts and Saturn about 11 days after, and fewer reach far out (1/r^2). " +
+  "You dispatch from HQ on Earth, which controls every station and Starseeker: at a checkpoint the ship acts on your answer only when it arrives, after the light-time there and back (minutes at Mars, over two hours at Saturn). " +
   "Mars dust storms (Mars, Mars Base) and Titan haze (Titan, Titan Dock) close those pads: the ship waits on the ground, or holds in orbit if it is arriving. check_pad gives their odds. " +
   "A leg between planets that leaves late needs a correction burn (2% of its energy per hour late, up to 30%). " +
   "Score out of 100, from what actually happened: fast pickup 20 (versus the quickest nearby ship), arrived on time 20 (falls to 0 at half the trip's allowed time late), " +
@@ -353,15 +355,20 @@ export function checkPad(E, run, inp, nowMs) {
   };
 }
 
-/** space_weather: odds of a solar radiation storm (flare) per sky day. */
+/** space_weather: odds per sky day that a solar radiation storm (flare) starts at a place (default: the open checkpoint's place, else the pickup). */
 export function spaceWeather(E, run, inp, nowMs) {
-  const R = E.R, days = intIn(inp.days, 1, 60, 10, "days"), from = forecastFrom(run, inp);
-  const f = R.flareForecast(from, days, seedOf(run));
-  logForecast(run, { tool: "space_weather", from: isoJD(from), days, max_odds: Math.max(...f.map((d) => d.flare_odds)), sky_now: isoJD(skyNow(run, nowMs)) });
+  const R = E.R, { placeOf } = names(E), days = intIn(inp.days, 1, 60, 10, "days"), from = forecastFrom(run, inp);
+  const cp = openCheckpoint(run), p = placeOf(inp.place == null || inp.place === "" ? (cp ? cp.place : R.BY[run.id].from) : inp.place);
+  if (!p) fail("unknown place " + inp.place + ". Use a place id or name, e.g. " + R.BY[run.id].from + " or " + names(E).placeName(R.BY[run.id].to) + ".");
+  const f = R.flareForecast(from, days, seedOf(run), p.id), reach = R.flareReach(p.id, from);
+  logForecast(run, { tool: "space_weather", place: p.id, from: isoJD(from), days, max_odds: Math.max(...f.map((d) => d.flare_odds)), sky_now: isoJD(skyNow(run, nowMs)) });
   return {
-    run_id: run.run_id, from: isoJD(from),
+    run_id: run.run_id, place: { id: p.id, name: p.name }, from: isoJD(from),
+    storm_travel_hours: r1(reach.travel_days * 24), storm_share: Math.round(reach.share * 1000) / 1000,
     days: f.map((d) => Object.assign(dayPub(d.day_jd), { flare_odds: d.flare_odds })),
-    note: "Forecast only (simulated). flare_odds is the chance a solar radiation storm starts in that sky day (noon to noon UTC). A storm lasts 4 to 48 hours, mostly short, and odds run in spells of about 27 days. " +
+    note: "Forecast only (simulated). flare_odds is the chance a solar radiation storm starts at " + p.name + " in that sky day (noon to noon UTC). " +
+      "Storms erupt at the Sun, last 4 to 48 hours (mostly short) and run in spells of about 27 days (the Sun's rotation); each reaches " + p.name + " storm_travel_hours later at 1500 km/s, " +
+      "and storm_share is the share strong enough there (1/r^2 from the Sun, 1 inside Earth's orbit). " +
       "While a storm is on, no ship launches with a rider aboard: the ride waits on the ground until it passes, and a ride between planets that leaves late needs a correction burn. An empty ship on its pickup can fly through.",
   };
 }
@@ -461,18 +468,19 @@ export const SCORE_VERSION = 1;
 function situation(E, run) {
   const R = E.R, ride = run.ride, cp = openCheckpoint(run);
   const options = cp.options.map((o) =>
-    o.action === "replan" ? Object.assign({}, o, { depart_after_min: isoJD(cp.sky_at), plans_used: run.calls, plans_left: Math.max(0, MAX_PLANS_PER_RUN - run.calls), free_plans_left: Math.max(0, FREE_PLANS - run.calls) })
+    o.action === "replan" ? Object.assign({}, o, { depart_after_min: isoJD(cp.reply_jd), plans_used: run.calls, plans_left: Math.max(0, MAX_PLANS_PER_RUN - run.calls), free_plans_left: Math.max(0, FREE_PLANS - run.calls) })
       : o.action === "hold" ? Object.assign({}, o, { held_hours: r1(o.held_hours), max_hold_hours_left: r1(o.max_hold_hours_left) }) : o);
   const how = cp.kind === "launch_hold"
-    ? "decide with checkpoint " + cp.n + " and action \"wait\", or action \"replan\" with depart_after (at or after " + isoJD(cp.sky_at) + ", the default) and objective energy or time."
+    ? "decide with checkpoint " + cp.n + " and action \"wait\", or action \"replan\" with depart_after (at or after " + isoJD(cp.reply_jd) + ", when your answer reaches the ship; the default) and objective energy or time."
     : "decide with checkpoint " + cp.n + " and action \"hold\" (with hours to ask again after that many hours, or none to hold until the pad opens), " +
       "or action \"divert\" with place (one of the alternates) and wait_hours on the ground there (default 0).";
   return {
     checkpoint: cp.n, kind: cp.kind, cause: cp.cause, why: cp.why, place: { id: cp.place, name: cp.place_name }, leg: cp.leg, sky_at: isoJD(cp.sky_at),
-    car: cp.car, rider_aboard: cp.rider_aboard, held_hours: r1(cp.held_hours), behind_plan_hours: r1(cp.behind_plan_hours), extra_kwh: cp.extra_kwh, used_kwh: cp.used_kwh,
+    signal_delay_minutes: cp.signal_delay_minutes, reply_arrives: isoJD(cp.reply_jd), car: cp.car, rider_aboard: cp.rider_aboard, held_hours: r1(cp.held_hours), behind_plan_hours: r1(cp.behind_plan_hours), extra_kwh: cp.extra_kwh, used_kwh: cp.used_kwh,
     options, default: cp.default, checkpoints_left: R.MAX_CHECKPOINTS - ride.checkpoints.length, ask_after_hours: ride.ask_after_hours,
     incidents: incidentsPub(E, ride.incidents),
     hidden: "You never see when a storm or haze ends, nor the unscheduled traffic. check_pad and space_weather forecast from this checkpoint's sky time.",
+    signal: "You dispatch from HQ on Earth, which controls every station and Starseeker. This checkpoint's news took signal_delay_minutes to reach you, and your answer takes as long back: the ship acts on it at reply_arrives, and holds or waits on the default until then.",
     note: "Simulated. The ride's clock is stopped here until you decide.",
     how_to_answer: how,
   };
@@ -500,7 +508,7 @@ function land(E, run, F) {
     delay_hours: r1(F.delay_hours), promise_slip_hours: qj == null ? null : r1((sc.arrive_jd - qj) * 24),
     fare_usd: sc.fare_usd, planned_kwh: F.planned_kwh, extra_kwh: sc.extra_kwh, divert_kwh: F.divert_kwh, used_kwh: sc.used_kwh,
     par_kwh: run.par_kwh, par_car: R.CAR[run.par_car].name, beat_par: sc.beat_par, checkpoints: F.checkpoints.length,
-    incidents, ...(run.plan ? { bookings: run.hails.map((id) => bookingScore(E, run, id, sc.bookings[id])), passengers: passengers(E, run) } : {}), ...worldOf(run),
+    rider_dose_msv: sc.rider_dose_msv, incidents, ...(run.plan ? { bookings: run.hails.map((id) => bookingScore(E, run, id, sc.bookings[id])), passengers: passengers(E, run) } : {}), ...worldOf(run),
   });
   run.score.log = runLog(E, run, quote, incidents, sc, F);
   return arrived(run);
@@ -523,7 +531,7 @@ function decisionOf(E, cp, inp) {
     const p = names(E).placeOf(inp.place);
     return { action: "divert", place: p ? p.id : String(inp.place == null ? "" : inp.place), wait_hours: given(inp.wait_hours) ? +inp.wait_hours : 0 };
   }
-  if (a === "replan") return { action: "replan", depart_after: given(inp.depart_after) ? String(inp.depart_after).trim() : isoJD(cp.sky_at), objective: inp.objective === "time" ? "time" : "energy" };
+  if (a === "replan") return { action: "replan", depart_after: given(inp.depart_after) ? String(inp.depart_after).trim() : isoJD(cp.reply_jd), objective: inp.objective === "time" ? "time" : "energy" };
   fail(ACTIONS);
 }
 
@@ -546,12 +554,12 @@ export async function decide(E, run, inp, legFn) {
   let decision = input;
   if (input.action === "replan") {
     if (run.calls >= MAX_PLANS_PER_RUN) fail("this run has used its " + MAX_PLANS_PER_RUN + " plans; answer with wait instead");
-    const jd = jdOfIso(input.depart_after), latest = Math.min(cp.sky_at + 400, SEASON_END);
-    if (jd == null) fail("depart_after must be a sky time as YYYY-MM-DD HH:MM, at or after " + isoJD(cp.sky_at));
-    if (jd < cp.sky_at - 1 / 1440) fail("a replan must depart at or after " + isoJD(cp.sky_at));
+    const jd = jdOfIso(input.depart_after), latest = Math.min(cp.reply_jd + 400, SEASON_END);
+    if (jd == null) fail("depart_after must be a sky time as YYYY-MM-DD HH:MM, at or after " + isoJD(cp.reply_jd));
+    if (jd < cp.reply_jd - 1 / 1440) fail("a replan must depart at or after " + isoJD(cp.reply_jd) + ", when your answer reaches the ship");
     if (jd > latest) fail("depart_after must be by " + isoJD(latest));
     const S = ride.segs[ride.at.seg];
-    const { leg: L } = await addLeg(run, S.role, S.role === "pickup" ? run.car : null, S.from, S.to, Math.max(jd, cp.sky_at), input.objective, legFn || defaultLegFn(E),
+    const { leg: L } = await addLeg(run, S.role, S.role === "pickup" ? run.car : null, S.from, S.to, Math.max(jd, cp.reply_jd), input.objective, legFn || defaultLegFn(E),
       { objective: input.objective, wait_days: 0, replan_of: n });
     if (L.gate === "FAIL") fail(L.leg_id + " was rejected by the checker; checkpoint " + n + " is still open (wait, or replan from another time)");
     decision = { action: "replan", leg: slimLeg(L) };

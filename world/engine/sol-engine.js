@@ -337,14 +337,14 @@ const POLE = { mercury: [281.01, 61.42], venus: [272.76, 67.16], earth: [0, 90],
   moon: [266.86, 65.64], ceres: [291.42, 66.76], titan: [39.48, 83.43] };
 export const PLACES = [
   // planets: helio from DE421; mu = ephem.py GM (system); burn from a circular parking orbit
-  { id: "mercury", name: "Mercury", kind: "planet", parent: "sun", real: true, mu: GM[1], radius_km: 2439.4, park_alt_km: 200 },
-  { id: "venus", name: "Venus", kind: "planet", parent: "sun", real: true, mu: GM[2], radius_km: 6051.8, park_alt_km: 250 },
+  { id: "mercury", name: "Mercury", kind: "planet", parent: "sun", real: true, mu: GM[1], radius_km: 2440.5, park_alt_km: 200 },
+  { id: "venus", name: "Venus", kind: "planet", parent: "sun", real: true, mu: GM[2], radius_km: 6051.8, park_alt_km: 250, atmosphere: true },
   { id: "earth", name: "Earth", kind: "planet", parent: "sun", real: true, mu: GM[399], radius_km: 6378.137, park_alt_km: 200, atmosphere: true },
   { id: "mars", name: "Mars", kind: "planet", parent: "sun", real: true, mu: GM[4], radius_km: 3396.19, park_alt_km: 200, atmosphere: true },
-  { id: "jupiter", name: "Jupiter", kind: "planet", parent: "sun", real: true, mu: GM[5], radius_km: 71492, park_alt_km: 5000 },
-  { id: "saturn", name: "Saturn", kind: "planet", parent: "sun", real: true, mu: GM[6], radius_km: 60268, park_alt_km: 5000 },
-  { id: "uranus", name: "Uranus", kind: "planet", parent: "sun", real: true, mu: GM[7], radius_km: 25559, park_alt_km: 5000 },
-  { id: "neptune", name: "Neptune", kind: "planet", parent: "sun", real: true, mu: GM[8], radius_km: 24764, park_alt_km: 5000 },
+  { id: "jupiter", name: "Jupiter", kind: "planet", parent: "sun", real: true, mu: GM[5], radius_km: 71492, park_alt_km: 5000, atmosphere: true },
+  { id: "saturn", name: "Saturn", kind: "planet", parent: "sun", real: true, mu: GM[6], radius_km: 60268, park_alt_km: 5000, atmosphere: true },
+  { id: "uranus", name: "Uranus", kind: "planet", parent: "sun", real: true, mu: GM[7], radius_km: 25559, park_alt_km: 5000, atmosphere: true },
+  { id: "neptune", name: "Neptune", kind: "planet", parent: "sun", real: true, mu: GM[8], radius_km: 24764, park_alt_km: 5000, atmosphere: true },
   // moons
   { id: "moon", name: "Moon", kind: "moon", parent: "earth", real: true, mu: GM[301], radius_km: 1737.4, park_alt_km: 100, orbit_km: 384400, period_days: 27.321661 },
   { id: "phobos", name: "Phobos", kind: "moon", parent: "mars", real: true, mu: 7.087e-4, radius_km: 11.1, park_alt_km: 10, orbit_km: 9376, period_days: 0.31891 },

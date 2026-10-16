@@ -72,7 +72,7 @@ test("naive, random and the reference on one hail", async () => {
 
 test("naive, random and the reference on a shared flight of two bookings", async () => {
   const n = await play(SHARED, (call) => naive(call, E));
-  assert.deepEqual([n.score.phase, n.score.total, n.run.calls], ["arrived", 56, 12]);
+  assert.deepEqual([n.score.phase, n.score.total, n.run.calls], ["arrived", 59, 12]);
   const r = await play(SHARED, (call) => random(call, E, rngOf(SHARED.id + "|0")));
   assert.equal(r.score.phase, "arrived");
   const ref = reference(E, await openTask(E, SUITE, SHARED, "2"));
