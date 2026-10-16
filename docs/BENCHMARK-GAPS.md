@@ -506,6 +506,12 @@ Each step uses the one before it. **[inferred]**
    - Put `STARFARE_BENCH_KEY` in a Wrangler secret.
    - This needs a deploy and a Cloudflare change, so it needs Alvin's go.
    - **The test split's task list is public.** It sits in the suite file as `splits.test`, each task only an id, its hail or hails and its sky day, because what a test task hides is its world (the hazards drawn from the keyed seed), every task shows its hail and sky day in `list_hails` the moment it opens anyway, and a public list lets anyone check which tasks a test session was played on. The stratum and anchor flags stay out of it, since each says how naive fared in a hidden world; those and every score go only to the selection file, which `make-suite.mjs --test-selection` refuses to write inside the repo.
+   - **Status (2026-10-16, built and tested locally, not deployed).** Sessions start with `start_bench` over the connector's own `/mcp` and live in the `StarfareBench` DO, rather than at `/bench/sessions`. The rest of this step is built.
+     - Test-split worlds come only from `STARFARE_BENCH_KEY`. A server without the key refuses `start_bench` with split test, and practice (split dev) still works.
+     - Test-split outcomes are sealed until the session is done. A task that arrives answers `status: "flown"` with the next task, and no tool result, watch page or `.json` shows a score, parts, incidents or hindsight before then. Practice shows everything as before.
+     - When the last task closes, the DO replays the stored calls through the same reducer and keeps `verified: true` or `false` on the session. The watch page shows it. `/bench/<bench_id>/trace.json` serves the calls once the session is done, and `node bench/verify.mjs <trace.json>` replays that file in Node and exits 1 on any difference. A test-split trace needs the key. A rotated key makes old test traces fail.
+     - Bench sessions never write to the public board. `StarfareBench` imports nothing from `store.js`, and the e2e checks that `/board.json` is byte-identical before and after a bench ride arrives.
+     - Still to do: `wrangler secret put STARFARE_BENCH_KEY` and cutting the test split (both in `connector/DEPLOY.md`), then a deploy. Each needs Alvin's go.
 7. **Later:**
    - more hail templates with a held-out template split (gap 10);
    - a scored provenance column (gap 9);

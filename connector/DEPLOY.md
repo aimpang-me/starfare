@@ -195,6 +195,21 @@ What it does not protect: anyone can click Allow, so anyone can get a player id.
 
 **Turning it off again:** set `"STARFARE_OAUTH": "off"` and deploy [verified locally that `off` serves `/mcp` with no auth and answers 404 on every OAuth path]. Grok then no longer needs its token; whether it reconnects without one, or needs the connector added again, is [not verified].
 
+## The bench's held-out test split (needs Alvin's go)
+
+`start_bench` with split `dev` (practice) works with no setup. Split `test` draws each task's world (its weather and traffic, simulated) from `STARFARE_BENCH_KEY`, so the Worker refuses it until that secret is set. The key never goes in the repo, a tool result or a trace. Run these from `sol/connector`; none was run for this change.
+
+1. Make a key and keep it somewhere safe outside the repo (a password manager). Every test-split world and every replay of a test-split trace depends on it. A new key makes a new set of worlds, so traces played under the old key no longer verify.
+2. Cut the test split with the key in the environment. The task list (id, hail or hails, sky day) goes into the suite file, and the scores go only to the selection file, which must sit outside the repo:
+
+   ```sh
+   STARFARE_BENCH_KEY=... node bench/make-suite.mjs --test-into src/suites/v1.json --test-selection ~/starfare-private/v1.test.selection.json
+   ```
+
+   Commit the changed `src/suites/v1.json`, rebuild (`npm run build`) and run the tests.
+3. Give the Worker the same key: `node node_modules/wrangler/bin/wrangler.js secret put STARFARE_BENCH_KEY`, and paste it at the prompt [not verified]. Then deploy: `npm run build`, then `node node_modules/wrangler/bin/wrangler.js deploy` [not verified].
+4. Check a finished session. Its watch page says whether the replay verified. To replay one yourself, download `$URL/bench/<bench_id>/trace.json` (served once every task is played) and run `node bench/verify.mjs <trace.json>` [verified locally against `wrangler dev`]. A test-split trace needs `STARFARE_BENCH_KEY` in the environment. The script exits 1 when the stored calls do not reproduce every stored result.
+
 ## Scoring over MCP
 
 `dispatch` first runs `SOLE.R.check` on the car and its two legs with the run's `t0` and season seed (the pickup must leave where the car is parked, no earlier than the car is free, and end at the rider; the ride must go from the rider to the destination and leave after boarding), and refuses legs the n-body checker failed. Then it applies the cold-hail rule (above), flies the legs with `SOLE.R.fly` (the run's seed), and calls `SOLE.R.score` unchanged with the run's own inputs: `t0`, `arrive_by_jd`, par kWh and the best possible pickup wait from `SOLE.R.terms` (same seed; the terms cache key includes it), the number of plans, the quote, and `flown`. Nothing is rescaled: every part of the score is checked over MCP, including the honest quote, so the connector's total is exactly the engine's. The e2e test checks it part by part against the engine run directly in Node.
