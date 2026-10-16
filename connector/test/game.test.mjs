@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { SKY, SEASON_END, MAX_PLANS_PER_RUN, sky, isoJD, jdOfIso, openRun, seasonInstance, suiteInstance, applyTool, hailInfo, legPub, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, seedOf, phaseOf, leaveRun, computeLeg, GameError,
-  RIDE_FORMAT, rideSummary, rideRecord, rideStats, rideCursor, rideCursorOf } from "../src/game.js";
+  RIDE_FORMAT, rideSummary, rideRecord, rideStats, rideCursor, rideCursorOf, liveRecord, liveRow } from "../src/game.js";
 
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
@@ -550,4 +550,83 @@ test("shared flight: dispatch refuses the two-leg form, a booking left off the p
   assert.deepEqual(await probs({ legs: ids, stops: [{ board: ["ceres-shift"] }, { alight: ["ceres-shift"] }, { board: ["phobos-commute"] }, { alight: ["phobos-commute", "iss-crew"] }], quotes: { "ceres-shift": q["ceres-shift"] } }),
     ["iss-crew is not a booking on this flight; its bookings are ceres-shift, phobos-commute", "quotes needs a fare_usd and an arrival for phobos-commute"]);
   assert.equal(phaseOf(s.run), "planning");
+});
+
+// Live playback: the bench's iss-crew seed (stops at a pad_closed checkpoint) as a season run (tag null) and as a bench task.
+const LIVE_SEED = "k1:7f3c9a2e5b10d84f00";
+async function liveFlight(tag) {
+  const inst = suiteInstance(E, { hail_id: "iss-crew" }, { seed: LIVE_SEED, clockJd: 2462529.5, tag, budget: tag == null ? null : 60 });
+  let run = await openRun(E, inst, "run_" + "1".repeat(20), NOW);
+  const call = async (tool, input, ms = NOW) => { const o = await applyTool(E, run, tool, input, { nowMs: ms }); if (o.run) run = o.run; return o.result; };
+  await call("check_pad", { place: "iss" });
+  const p = await call("plan_pickup", { car: run.par_car }), r = await call("plan_ride", { after_leg: p.leg_id });
+  const d = await call("dispatch", { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare_usd, quoted_arrival: r.arrive, note: "  Par ship, least battery; ISS pad looked open.  " }, NOW + 1000);
+  return { d, call, run: () => run };
+}
+const TRACK_TO_HOLD = [[NOW + 1000, 2462530.5], [NOW + 36556, 2462530.532566714], [NOW + 45444, 2462530.5416666665], [NOW + 54333, 2462530.5916666663],
+  [NOW + 89889, 2462535.573823781], [NOW + 98778, 2462535.6154904477]];
+
+test("live: a season dispatch flies on the wall clock to its checkpoint and says when; decide extends the track from the answer", async () => {
+  const f = await liveFlight(null);
+  assert.deepEqual([f.d.status, f.d.checkpoint_in_s, f.d.lands_in_s], ["checkpoint", 98, 107]);
+  assert.deepEqual(f.run().live, { ms_per_unit: 35555.555555555555, track: TRACK_TO_HOLD });
+  const dd = await f.call("decide", { checkpoint: 1, action: "hold", note: "Holding beats a divert: the berth opens soon." }, NOW + 200000);
+  assert.deepEqual([dd.status, dd.lands_in_s, "checkpoint_in_s" in dd, typeof dd.total], ["arrived", 9, false, "number"]);
+  assert.deepEqual(f.run().live.track, [...TRACK_TO_HOLD, [NOW + 200000, 2462535.6154904477], [NOW + 208889, 2462535.625]]);
+});
+
+test("live: the dispatcher log keeps each season call with its summary and the bot's trimmed note", async () => {
+  const f = await liveFlight(null);
+  await f.call("decide", { checkpoint: 2, action: "hold" }, NOW + 2000);
+  await f.call("decide", { checkpoint: 1, action: "hold", note: "Holding beats a divert: the berth opens soon." }, NOW + 3000);
+  const t = f.run().trail;
+  assert.deepEqual(t.map((e) => e.tool), ["check_pad", "plan_pickup", "plan_ride", "dispatch", "decide", "decide"]);
+  assert.deepEqual(t[0], { at_ms: NOW, sky: "2030-01-28 00:00", tool: "check_pad", place: "ISS", berths: 2, max_booked: 3 });
+  assert.deepEqual(t[3], { at_ms: NOW + 1000, sky: "2030-01-28 00:00", tool: "dispatch", route: ["leg1", "leg2"], car: "SF-01", fare_usd: 8523.49, arrival: "2030-02-03 01:33",
+    status: "checkpoint", note: "Par ship, least battery; ISS pad looked open." });
+  assert.equal(typeof t[4].error, "string");
+  assert.deepEqual(t[5], { at_ms: NOW + 3000, sky: "2030-01-28 00:00", tool: "decide", checkpoint: 1, kind: "pad_closed", checkpoint_at: "2030-02-03 02:46",
+    decision: { action: "hold" }, status: "arrived", note: "Holding beats a divert: the berth opens soon." });
+});
+
+test("live: the dispatcher log keeps the newest 80 calls", async () => {
+  const f = await liveFlight(null);
+  for (let i = 0; i < 85; i++) await f.call("space_weather", { place: "iss", days: 1 }, NOW + 10000 + i);
+  const t = f.run().trail;
+  assert.deepEqual([t.length, t[0].at_ms, t[79].at_ms, t[79].tool], [80, NOW + 10005, NOW + 10084, "space_weather"]);
+});
+
+test("live: the public record of a flight in the air has the legs flown so far, the hold and the log, and no player or seed", async () => {
+  const f = await liveFlight(null), run = f.run();
+  run.player_id = "p_0123456789abcdef";
+  const rec = liveRecord(E, run, NOW + 5000), json = JSON.stringify(rec);
+  assert.deepEqual([rec.phase, rec.score, rec.log, rec.open_checkpoint, json.includes("p_0123456789abcdef"), json.includes(LIVE_SEED)], ["in_flight", null, null, 1, false, false]);
+  assert.deepEqual([rec.live.now_ms, rec.live.lands_at_ms, rec.live.track, rec.live.car, rec.live.from, rec.live.to, rec.live.planned],
+    [NOW + 5000, null, TRACK_TO_HOLD, "SF-01", "iss", "lunar-data-center", []]);
+  assert.deepEqual(rec.live.hold, { n: 1, kind: "pad_closed", cause: "pad_full", place: "lunar-data-center", place_name: "Lunar Data Center", at: "2030-02-03 02:46" });
+  assert.deepEqual(rec.live.flown.map((L) => [L.leg, L.from, L.to, L.depart, L.orbit, L.arrive]), [
+    ["pickup", "orbital-depot", "iss", "2030-01-29 00:00", "2030-01-29 00:47", "2030-01-29 01:00"],
+    ["ride", "iss", "lunar-data-center", "2030-01-29 02:12", "2030-02-03 01:46", "2030-02-03 02:46"]]);
+  assert.deepEqual(rec.live.checkpoints.map((c) => [c.n, c.kind, c.at, c.decision]), [[1, "pad_closed", "2030-02-03 02:46", null]]);
+  assert.deepEqual(rec.trail.map((e) => e.tool), ["check_pad", "plan_pickup", "plan_ride", "dispatch"]);
+  assert.deepEqual(liveRow(E, run), { run_id: "run_" + "1".repeat(20), land_ms: null, v: { run_id: "run_" + "1".repeat(20), title: "ISS crew change", ship: "SF-01", home: "orbital-depot",
+    legs: [{ from: "orbital-depot", to: "iss", dep_jd: 2462530.5, arr_jd: 2462530.532566714 }, { from: "iss", to: "lunar-data-center", dep_jd: 2462530.5916666663, arr_jd: 2462535.573823781 }],
+    track: TRACK_TO_HOLD } });
+  await f.call("decide", { checkpoint: 1, action: "hold" }, NOW + 200000);
+  const landed = liveRecord(E, f.run(), NOW + 300000);
+  assert.deepEqual([landed.phase, landed.live.lands_at_ms, landed.live.hold, landed.score.total === f.run().score.total, landed.log.flown.length], ["arrived", NOW + 208889, null, true, 2]);
+});
+
+test("live: a bench task stays instant, with the same results less the playback fields, and keeps no track or log", async () => {
+  const s = await liveFlight(null), b = await liveFlight("iss-crew/pad-closed-01");
+  const { checkpoint_in_s, lands_in_s, playback, ...rest } = s.d;
+  assert.deepEqual([checkpoint_in_s, lands_in_s, typeof playback], [98, 107, "string"]);
+  assert.deepEqual(b.d, rest);
+  const sd = await s.call("decide", { checkpoint: 1, action: "hold" }, NOW + 200000), bd = await b.call("decide", { checkpoint: 1, action: "hold" }, NOW + 200000);
+  const { lands_in_s: l2, playback: p2, ...rest2 } = sd;
+  assert.deepEqual([l2, bd.lands_in_s, bd.playback], [9, undefined, undefined]);
+  // A season run and a bench task differ only in their world label and board credit.
+  const game = (o) => JSON.parse(JSON.stringify(o, (k, v) => (k === "season" || k === "task_id" || k === "planned_by" ? undefined : v)));
+  assert.deepEqual(game(bd), game(rest2));
+  assert.deepEqual(["live" in b.run(), "trail" in b.run(), liveRecord(E, b.run(), NOW).live], [false, false, undefined]);
 });

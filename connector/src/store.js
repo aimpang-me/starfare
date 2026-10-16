@@ -10,8 +10,8 @@ import { DurableObject } from "cloudflare:workers";
 import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
 import {
-  GameError, applyTool, computeLeg, hailInfo, leaveRun, legKey, legPub, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord, rideStats, rideSummary,
-  seasonInstance,
+  GameError, applyTool, computeLeg, flyLive, hailInfo, leaveRun, legKey, legPub, liveRecord, liveRow, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord,
+  rideStats, rideSummary, seasonInstance,
 } from "./game.js";
 
 export const hub = (env) => env.STARFARE_HUB.get(env.STARFARE_HUB.idFromName("hub"));
@@ -24,6 +24,8 @@ const EXPORT_MAX = 500; // newest arrived rides in one export file (each is one 
 const EXPORT_MS = 24 * 3600 * 1000;
 /** Where a ride stands for its history row: its phase and the checkpoints answered. Plans and forecasts leave it where it was. */
 const rideMark = (run) => phaseOf(run) + "/" + (run.decisions ? run.decisions.length : 0);
+const LIVE_HELD_MS = 6 * 3600 * 1000; // a flight held at a checkpoint leaves the home map after this long without an answer
+const LIVE_AFTER_MS = 60 * 1000; // a landed flight stays on the home map this long after it lands
 
 export class StarfareRun extends DurableObject {
   async #run() { return (await this.ctx.storage.get("run")) ?? null; }
@@ -51,6 +53,7 @@ export class StarfareRun extends DurableObject {
     await this.#save(run);
     if (phaseOf(before) !== "arrived" && phaseOf(run) === "arrived") await this.#record(run);
     if (rideMark(before) !== rideMark(run)) await this.#index(E, run);
+    if (run.live && JSON.stringify(before.live) !== JSON.stringify(run.live)) await hub(this.env).livePut(liveRow(E, run));
   }
   /** A signed-in player's history row: written when the ride is taken and whenever its rideMark moves. */
   async #index(E, run) {
@@ -84,9 +87,10 @@ export class StarfareRun extends DurableObject {
   }
 
   /** Every run-scoped tool call (get_hail, plan_pickup, plan_ride, check_pad, space_weather, dispatch, decide). */
-  async act(tool, input) {
+  async act(tool, input, playerId = null) {
     const before = await this.#run();
-    if (!before) return { error: "unknown run_id. Call take_hail to get one." };
+    // A signed-in player's run answers only them: its run_id is public on the watch page and the home map.
+    if (!before || (before.player_id && before.player_id !== playerId)) return { error: "unknown run_id. Call take_hail to get one." };
     const E = await engine();
     const { run, result } = await applyTool(E, before, tool, input, { nowMs: Date.now(), legFn: this.#legFn(E) });
     if (run) await this.#commit(E, before, run);
@@ -100,6 +104,7 @@ export class StarfareRun extends DurableObject {
     if (!before) return null;
     const E = await engine(), run = structuredClone(before), r = leaveRun(E, run);
     if (!r) return null;
+    if (run.live && phaseOf(run) === "arrived") flyLive(run, Date.now());
     await this.#commit(E, before, run);
     return { run_id: r.run_id, status: r.status, ...(r.status === "arrived" ? { total: r.total, note: r.note } : {}) };
   }
@@ -110,17 +115,19 @@ export class StarfareRun extends DurableObject {
     if (!run || !playerId || run.player_id !== playerId) return { error: "not one of your rides. get_my_rides lists yours." };
     return rideRecord(await engine(), run);
   }
-  /** The record of an arrived ride, or null: the public /rides/<run_id>.json download (the run_id is the capability). */
+  /** The public /rides/<run_id>.json record (the run_id is the capability), or null: an arrived ride, or a season flight
+   *  still in the air with its live track and dispatcher log. */
   async record() {
     const run = await this.#run();
-    return run && phaseOf(run) === "arrived" ? rideRecord(await engine(), run) : null;
+    return run && (phaseOf(run) === "arrived" || (phaseOf(run) === "in_flight" && run.live)) ? liveRecord(await engine(), run, Date.now()) : null;
   }
-  /** What the /flight/<run_id> replay draws beside the record: the flown legs and their stored arcs, or null if not arrived. */
+  /** What the /flight/<run_id> page draws beside the record: the planned legs and their stored arcs, or null when record() is. */
   async flight() {
     const run = await this.#run();
-    if (!run || phaseOf(run) !== "arrived") return null;
+    if (!run || !(phaseOf(run) === "arrived" || (phaseOf(run) === "in_flight" && run.live))) return null;
     const E = await engine(), flown = Object.values(run.legs).filter((L) => run.route.includes(L.leg_id) || L.replan_of);
     return {
+      in_flight: phaseOf(run) === "in_flight",
       legs: flown.map((L) => legPub(E, L)),
       arcs: Object.fromEntries(flown.filter((L) => L.arc_au).map((L) => [L.leg_id, { from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, arc_au: L.arc_au }])),
     };
@@ -138,6 +145,7 @@ export class StarfareHub extends DurableObject {
     this.sql.exec("CREATE TABLE IF NOT EXISTS rides (run_id TEXT PRIMARY KEY, player_id TEXT NOT NULL, created_ms INTEGER NOT NULL, hail_id TEXT NOT NULL, phase TEXT NOT NULL, reason TEXT, summary TEXT)");
     this.sql.exec("CREATE INDEX IF NOT EXISTS rides_by_player ON rides (player_id, created_ms DESC, run_id DESC)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS exports (token TEXT PRIMARY KEY, player_id TEXT NOT NULL, expires_ms INTEGER NOT NULL)");
+    this.sql.exec("CREATE TABLE IF NOT EXISTS live (run_id TEXT PRIMARY KEY, v TEXT NOT NULL, land_ms INTEGER, updated_ms INTEGER NOT NULL)");
     this.hits = new Map(); // ip -> {win, n}; in memory on purpose: losing it on eviction only resets a minute's count
   }
   #get(table, k) { const row = this.sql.exec(`SELECT v FROM ${table} WHERE k = ?`, k).toArray()[0]; return row ? JSON.parse(row.v) : null; }
@@ -216,6 +224,17 @@ export class StarfareHub extends DurableObject {
     if (!row || row.expires_ms < Date.now()) return null;
     return this.sql.exec("SELECT run_id FROM rides WHERE player_id = ? AND phase = 'arrived' ORDER BY created_ms DESC, run_id DESC LIMIT ?", row.player_id, EXPORT_MAX)
       .toArray().map((x) => x.run_id);
+  }
+
+  /** A season flight's home-map row, written each time its playback track grows. */
+  livePut(e) {
+    this.sql.exec("INSERT OR REPLACE INTO live (run_id, v, land_ms, updated_ms) VALUES (?, ?, ?, ?)", e.run_id, JSON.stringify(e.v), e.land_ms, Date.now());
+  }
+  /** The flights on the home map now: still flying their playback, or held at a checkpoint for under LIVE_HELD_MS. */
+  live() {
+    const now = Date.now();
+    this.sql.exec("DELETE FROM live WHERE land_ms < ? OR (land_ms IS NULL AND updated_ms < ?)", now - LIVE_AFTER_MS, now - LIVE_HELD_MS);
+    return { now_ms: now, flights: this.sql.exec("SELECT v FROM live ORDER BY updated_ms DESC LIMIT 50").toArray().map((x) => JSON.parse(x.v)) };
   }
 
   board() {

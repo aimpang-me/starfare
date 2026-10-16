@@ -111,3 +111,14 @@ test("a season run has no budget: it never counts calls, and a read leaves nothi
   assert.deepEqual([planned.result.plans_used, planned.run.calls, run.calls], [1, 1, 0]);
   assert.equal(JSON.stringify(run), snapshot);
 });
+
+test("dispatch and decide take an optional note of up to 300 characters, passed to the backend as given", async () => {
+  const server = fakeServer(), seen = [];
+  registerTools(server, { call: async (tool, input) => { seen.push([tool, input]); return { ok: 1 }; } });
+  assert.deepEqual(Object.keys(server.tools.get("decide").def.inputSchema), ["run_id", "checkpoint", "action", "hours", "place", "wait_hours", "depart_after", "objective", "note"]);
+  assert.equal(Object.keys(server.tools.get("dispatch").def.inputSchema).at(-1), "note");
+  const id = "run_" + "0".repeat(20);
+  await server.call("decide", { run_id: id, checkpoint: 1, action: "hold", note: "x".repeat(300) });
+  assert.deepEqual(seen, [["decide", { run_id: id, checkpoint: 1, action: "hold", note: "x".repeat(300) }]]);
+  assert.throws(() => server.call("dispatch", { run_id: id, note: "x".repeat(301) }), /<=300 characters/);
+});

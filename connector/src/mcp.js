@@ -66,12 +66,13 @@ export class StarfareMcp extends McpAgent {
     return r;
   }
 
-  #call(tool, input) {
+  async #call(tool, input) {
     const bench = this.state && this.state.bench_id;
     if (bench && tool !== "start_bench") return this.#bench(bench, tool, input);
     if (Object.hasOwn(SESSION_TOOLS, tool)) return SESSION_TOOLS[tool](this, input);
-    const { run_id, ...inp } = input;
-    return runStub(this.env, run_id).act(tool, inp);
+    const { run_id, ...inp } = input, r = await runStub(this.env, run_id).act(tool, inp, playerOf(this));
+    // A season flight now flying (dispatch or decide): the page where everyone watches it live.
+    return r.lands_in_s != null ? { watch_url: ((this.props && this.props.origin) || "") + "/flight/" + run_id, ...r } : r;
   }
 
   async init() {
