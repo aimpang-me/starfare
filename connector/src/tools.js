@@ -21,6 +21,10 @@ export const INSTRUCTIONS =
   "at a closed pad, hold in orbit or divert to a nearby pad. Small holds are decided for you: dispatch's ask_after_hours (default 1, or \"never\") sets how long before the ride asks. " +
   "The ride's sky clock is stopped at a checkpoint, and get_hail shows the open one. When the ride arrives the result says what actually happened (incidents, extra kWh, actual arrival), " +
   "what each choice at each checkpoint would have cost in hindsight, and a log you can learn from.\n" +
+  "Watching live (the live game, not bench tasks): dispatch and decide also return watch_url, a page where the player watches the Starseeker fly the ride in 3D with your dispatcher log, " +
+  "and lands_in_s, the real seconds until it lands there (a playback of simulated sky time; checkpoint_in_s when a checkpoint comes first). Right after dispatching, give the player the watch_url, " +
+  "say the Starseeker is flying now, and say it lands in about lands_in_s seconds; after a decide, say when it lands again. The score in the result is final; the page shows it at landing. " +
+  "Add a note to dispatch and decide: one or two sentences on why, which the page shows as your own words.\n" +
   "Goal: pick the rider up fast, arrive by arrive_by, use the least battery actually flown, and keep your promise. The quoted arrival is a promise scored against the actual arrival: " +
   "late costs the most (0 at 6 hours late on a quick hail, 1 day on a long haul), early costs a quarter as much. Each plan counts: 6 are free, then each costs a point.\n" +
   "Hard rules: every number you write must be copied from a tool result or the player's words, dates exactly as given. Never estimate a number. Never dispatch a leg whose refly.result is FAIL. " +
@@ -29,6 +33,7 @@ export const INSTRUCTIONS =
 
 const runId = z.string().regex(RUN_ID).describe("run_id from take_hail");
 const skyTime = z.string().regex(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+const note = z.string().max(300).optional().describe("one or two sentences on why, shown to the player on the flight page as the Grok bot's own words");
 const from = skyTime.describe("sky time YYYY-MM-DD HH:MM to start from (default: when the rider is ready, or the open checkpoint's time in flight)").optional();
 
 /** Every tool, in the order tools/list shows them. */
@@ -97,7 +102,8 @@ export const TOOLS = {
     description: "Dispatch the ship: the pickup leg, the ride leg, the fare you quote (copy the ride leg's fare_usd) and the arrival you promise the rider. The season's hazards are then flown. " +
       "If a hazard stops the ride, the result is status \"checkpoint\" with the situation; answer it with decide. Otherwise the ride arrives and the result says what actually happened " +
       "(actual pickup and arrival, delay, extra kWh, incidents), the locked score and a run log. Arrived scores go on the /board page. " +
-      "A shared flight sends legs, stops (who boards and alights where each leg lands) and quotes per booking instead of the pickup and ride legs and the one quote.",
+      "A shared flight sends legs, stops (who boards and alights where each leg lands) and quotes per booking instead of the pickup and ride legs and the one quote. " +
+      "In the live game the result also has watch_url (the page where the player watches the Starseeker fly now) and lands_in_s (real seconds until it lands there): give the player the link right away.",
     inputSchema: {
       run_id: runId,
       pickup_leg: z.string().optional(),
@@ -111,12 +117,14 @@ export const TOOLS = {
         .describe("shared flight: per hail id, the fare you quote (the sum of fare_usd over the legs it rides) and the arrival you promise"),
       ask_after_hours: z.union([z.number().min(0).max(24), z.literal("never")]).optional()
         .describe("stop at a checkpoint once a hold or pad wait passes this many hours (0-24, default 1); \"never\" flies the default answers without stopping"),
+      note,
     },
   },
   decide: {
     description: "Answer the open checkpoint of a dispatched ride. At a launch_hold (a flare grounds the launch): action wait, or replan with depart_after and objective (re-planned and re-flown " +
       "in the n-body checker; counts as a plan). At a pad_closed (no berth, dust or haze): action hold, with hours to ask again after that long or none to hold until it opens, or divert " +
-      "with place (one of the situation's alternates) and wait_hours on the ground there. Returns the next checkpoint or the arrived result. Sending the same answer again returns where the ride stands.",
+      "with place (one of the situation's alternates) and wait_hours on the ground there. Returns the next checkpoint or the arrived result. Sending the same answer again returns where the ride stands. " +
+      "In the live game the result has watch_url and lands_in_s again: the Starseeker flies on from the checkpoint on the watch page.",
     inputSchema: {
       run_id: runId,
       checkpoint: z.number().int().min(1).describe("the situation's checkpoint number"),
@@ -126,6 +134,7 @@ export const TOOLS = {
       wait_hours: z.number().min(0).optional().describe("divert: hours on the ground at the alternate before flying back (default 0)"),
       depart_after: skyTime.optional().describe("replan: leave no earlier than this sky time YYYY-MM-DD HH:MM (default: the checkpoint's time)"),
       objective: z.enum(["energy", "time"]).optional().describe("replan: least battery or fastest (default energy)"),
+      note,
     },
   },
   get_my_rides: {

@@ -6,6 +6,7 @@
 // ever sees forecasts (check_pad, space_weather), and R.fly decides what happened when it dispatches.
 // No Workers APIs here, so it runs the same in a Durable Object and in plain Node.
 import META from "./engine/meta.json" with { type: "json" };
+import { extendTrack, msPerUnit, pieces, startTrack, unitsLeft } from "./live.js";
 
 export const SKY = META.sky; // {t0_ms, jd0, len_days} from sol/world/build.py WORLD.sky
 export const SEASON_END = SKY.jd0 + SKY.len_days - 1;
@@ -612,7 +613,50 @@ export async function applyTool(E, run, tool, input, ctx) {
     if (!(e instanceof GameError)) throw e;
     result = { error: e.message };
   }
+  if (run.tag == null && tool !== "get_hail" && (phaseOf(run) === "planning" || phaseOf(run) === "in_flight")) {
+    if ((tool === "dispatch" || tool === "decide") && !result.error && !result.already_dispatched && !result.already_decided
+      && (result.status === "checkpoint" || result.status === "arrived")) Object.assign(result, flyLive(next, ctx.nowMs));
+    logTrail(E, next, tool, input, result, ctx.nowMs);
+  }
   return { run: JSON.stringify(next) === JSON.stringify(run) ? null : next, result };
+}
+
+// ---- a season flight, live: its playback track (live.js) and the dispatcher log of the bot's calls, both public on /flight. ----
+/** Puts the ride flown so far on the run's playback track, and says when the player sees it land: { lands_in_s, ... }. */
+export function flyLive(run, nowMs) {
+  const ride = run.ride, landed = phaseOf(run) === "arrived", end = landed ? ride.arrive_jd : openCheckpoint(run).sky_at;
+  if (!run.live) { const mpu = msPerUnit(run.route.map((id) => run.legs[id])); run.live = { ms_per_unit: mpu, track: startTrack(ride, end, mpu, nowMs) }; }
+  else run.live.track = extendTrack(run.live.track, pieces(ride, end), run.live.ms_per_unit, nowMs);
+  const tr = run.live.track, reach = Math.max(0, Math.round((tr[tr.length - 1][0] - nowMs) / 1000));
+  if (landed) return { lands_in_s: reach, playback: "Simulated playback: the Starseeker is flying this ride now on the watch page and lands there in lands_in_s seconds. The score in this result is final." };
+  return { checkpoint_in_s: reach, lands_in_s: reach + Math.round((unitsLeft(ride) * run.live.ms_per_unit) / 1000),
+    playback: "Simulated playback: the Starseeker is flying now on the watch page. It reaches this checkpoint there in checkpoint_in_s seconds and holds until you decide. Answered by then, it lands in about lands_in_s seconds if the rest flies as planned." };
+}
+const TRAIL_MAX = 80;
+/** One dispatcher-log entry per run-tool call on a season run: when, the tool, what it asked and got, and the bot's note. */
+function logTrail(E, run, tool, inp, result, nowMs) {
+  const e = { at_ms: nowMs, sky: isoJD(skyNow(run, nowMs)), tool, ...(result.error ? { error: String(result.error).slice(0, 160) } : trailOf(E, run, tool, inp, result)) };
+  const note = (tool === "dispatch" || tool === "decide") && typeof inp.note === "string" ? inp.note.trim().slice(0, 300) : "";
+  if (note) e.note = note;
+  run.trail = [...(run.trail || []), e].slice(-TRAIL_MAX);
+}
+const maxOf = (xs) => (xs.length ? Math.max(...xs) : null);
+function trailOf(E, run, tool, inp, r) {
+  if (tool === "check_pad") {
+    const w = r.local_weather;
+    return { place: r.place.name, berths: r.berths, max_booked: maxOf(r.hours.map((h) => h.booked)), ...(w ? { weather: w.kind, max_odds: maxOf(w.days.map((d) => d.odds)) } : {}) };
+  }
+  if (tool === "space_weather") return { place: r.place.name, max_flare_odds: maxOf(r.days.map((d) => d.flare_odds)) };
+  if (tool === "dispatch") {
+    if (r.problems) return { problems: r.problems.slice(0, 3).map((p) => String(p).slice(0, 120)) };
+    return { route: run.route.slice(), car: E.R.CAR[run.car].name, fare_usd: run.quote.fare_usd, arrival: run.quote.arrival, status: r.status };
+  }
+  if (tool === "decide") {
+    const d = run.decisions[inp.checkpoint - 1], cp = run.ride.checkpoints[inp.checkpoint - 1];
+    return { checkpoint: cp.n, kind: cp.kind, checkpoint_at: isoJD(cp.sky_at), decision: d, status: r.status };
+  }
+  const L = run.legs[r.leg_id];
+  return { leg_id: r.leg_id, kind: r.kind, from: r.from, to: r.to, depart: r.depart, arrive: r.arrive, kwh: r.battery_kwh, fare_usd: r.fare_usd, gate: L.gate };
 }
 
 /** The run log a bot can learn from: what it was asked, what it planned and checked, what happened, how it scored. */
@@ -684,6 +728,41 @@ export function rideRecord(E, run) {
     ...(phase === "abandoned" ? { reason: run.abandoned_reason || null } : {}), ...(phase === "in_flight" ? { open_checkpoint: run.ride.pending } : {}),
     score, log,
   });
+}
+/** The public record of a season flight with live playback, arrived or still flying: rideRecord plus live (the track and the
+ *  ride flown so far, no hindsight) and trail (the dispatcher log). A bench run, or one never dispatched, is rideRecord alone. */
+export function liveRecord(E, run, nowMs) {
+  const rec = rideRecord(E, run);
+  if (run.tag != null || !run.live || !run.ride) return rec;
+  const ride = run.ride, cp = openCheckpoint(run), { placeName } = names(E), iso = (jd) => (jd == null ? null : isoJD(jd)), tr = run.live.track;
+  const flown = ride.segs.filter((S) => S.flew).map((S) => {
+    const f = S.flew, done = f.land_jd ?? f.left_jd, end = done ?? (cp ? cp.sky_at : null);
+    return { kind: S.kind, leg: S.role, from: S.from, to: S.to, depart: iso(f.dep_jd), orbit: iso(f.orbit_jd), arrive: iso(end), kwh: S.kwh, gate: S.gate, ...(done == null ? { open: true } : {}) };
+  });
+  const planned = ride.segs.filter((S) => !S.flew).map((S) => ({ kind: S.kind, leg: S.role, from: S.from, to: S.to, depart: isoJD(S.dep_jd), arrive: isoJD(S.arr_jd), kwh: S.kwh, gate: S.gate }));
+  const h = E.R.BY[run.id];
+  return {
+    ...rec,
+    live: {
+      simulated: true, now_ms: nowMs, track: tr, lands_at_ms: phaseOf(run) === "arrived" ? tr[tr.length - 1][0] : null,
+      hold: cp ? { n: cp.n, kind: cp.kind, cause: cp.cause, place: cp.place, place_name: cp.place_name, at: isoJD(cp.sky_at) } : null,
+      car: E.R.CAR[run.car].name, title: run.title, from: h.from, to: h.to, flown, planned,
+      checkpoints: ride.checkpoints.map((c, i) => ({ n: c.n, kind: c.kind, cause: c.cause, leg: c.leg, place: c.place, place_name: placeName(c.place), at: isoJD(c.sky_at),
+        decision: (run.decisions || [])[i] || null })),
+      incidents: incidentsPub(E, ride.incidents),
+    },
+    trail: run.trail || [],
+  };
+}
+/** The home map's row for a season flight in playback: what it flew so far and its track; land_ms once it has landed. */
+export function liveRow(E, run) {
+  const tr = run.live.track, ride = run.ride;
+  return {
+    run_id: run.run_id, land_ms: phaseOf(run) === "arrived" ? tr[tr.length - 1][0] : null,
+    v: { run_id: run.run_id, title: run.title, ship: E.R.CAR[run.car].name, home: ride.segs[0].from,
+      legs: ride.segs.filter((S) => S.flew).map((S) => ({ from: S.from, to: S.to, dep_jd: S.flew.dep_jd, arr_jd: S.flew.orbit_jd ?? S.flew.land_jd ?? S.flew.left_jd ?? null })),
+      track: tr },
+  };
 }
 const mean1 = (xs) => Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10;
 /** Per-hail sums and means over arrived summaries (newest first): rides, best, last and mean total, the mean of each part,

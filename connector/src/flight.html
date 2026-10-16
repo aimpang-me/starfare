@@ -106,7 +106,8 @@ button.lbl:hover{color:var(--ink)}
 .scrub .knob{position:absolute;top:7px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--me);box-shadow:0 0 10px rgba(255,207,122,.55);pointer-events:none}
 .scrub input:focus-visible ~ .knob{outline:2px solid var(--ink);outline-offset:2px}
 .scrub .tick{position:absolute;top:8px;width:2px;height:12px;margin-left:-1px;background:var(--ride);opacity:.85;pointer-events:none}
-.scrub .tick.checkpoint{background:var(--me)}.scrub .tick.incident{background:var(--bad)}
+.scrub .tick.checkpoint{background:var(--me)}.scrub .tick.incident{background:var(--bad)}.scrub .tick.note{background:var(--ok)}
+.scrub .ahead{position:absolute;top:13px;right:0;height:2px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.35) 0 4px,transparent 4px 8px);pointer-events:none}
 .ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .ctl select{background:#030407;border:1px solid var(--line-2);border-radius:8px;padding:5px 6px;font:500 12px var(--mono)}
 .tcode{font:500 12.5px var(--mono);color:var(--ink);min-width:118px}
@@ -117,7 +118,15 @@ button.lbl:hover{color:var(--ink)}
 .r-tele b{color:var(--ink);font-weight:500}
 .callouts{position:absolute;z-index:2;left:12px;top:calc(clamp(52px,9vh,76px) + 12px);width:min(340px,calc(100% - 24px));display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .co{padding:8px 11px 9px;border:1px solid var(--line-2);border-left:3px solid var(--ride);background:rgba(6,8,12,.82);border-radius:8px;animation:co .3s ease-out;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.co.checkpoint{border-left-color:var(--me)}.co.incident{border-left-color:var(--bad)}
+.co.checkpoint{border-left-color:var(--me)}.co.incident{border-left-color:var(--bad)}.co.note{border-left-color:var(--ok)}
+.co.note p{color:var(--ink);font-style:italic}
+.hold{padding:10px 12px;border:1px solid rgba(255,207,122,.6);border-left:3px solid var(--me);background:rgba(20,14,4,.88);border-radius:8px;animation:hp 2s ease-in-out infinite}
+.hold b{display:block;font-size:13.5px;color:var(--me);margin:2px 0}
+.hold p{margin:0;font-size:12px;color:var(--ink-2)}
+@keyframes hp{50%{border-color:rgba(255,207,122,.2)}}
+.tag.live{color:var(--ok);border-color:rgba(134,217,168,.5);background:rgba(134,217,168,.1)}
+.tag.live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok);animation:lv 1.4s ease-in-out infinite}
+@keyframes lv{50%{opacity:.25}}
 .co .k{font:600 9.5px Inter, sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
 .co .k .mono{letter-spacing:0;font-weight:500}
 .co b{display:block;font-weight:600;font-size:13px;margin:2px 0}
@@ -166,7 +175,18 @@ button.lbl:hover{color:var(--ink)}
 .tl .tm{font:500 11px var(--mono);color:var(--ink-3);grid-row:span 2}
 .tl b{font-size:12.5px;font-weight:600}
 .tl .tx{font-size:12px;color:var(--ink-2)}
-.tl .k-checkpoint b{color:var(--me)}.tl .k-incident b{color:var(--bad)}
+.tl .k-checkpoint b{color:var(--me)}.tl .k-incident b{color:var(--bad)}.tl .k-note b{color:var(--ok)}
+/* dispatcher log: the Grok bot's tool calls on this run, newest last */
+.dlog{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.dlog li{display:grid;grid-template-columns:150px minmax(0,1fr);gap:2px 12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.18)}
+.dlog .tm{font:500 11px/1.5 var(--mono);color:var(--ink-3);grid-row:span 3}
+.dlog .tm b{display:block;color:var(--ink-2);font-weight:500}
+.dlog code{font:600 12px var(--mono);color:var(--me)}
+.dlog .sm{font-size:12.5px;color:var(--ink-2)}
+.dlog .er{font-size:12.5px;color:var(--bad)}
+.dlog q{display:block;font-size:13px;font-style:italic;color:var(--ink);border-left:2px solid var(--ok);padding-left:8px;margin-top:2px;quotes:"\201C" "\201D"}
+@media (max-width:560px){.dlog li{grid-template-columns:minmax(0,1fr)}.dlog .tm{grid-row:auto}}
+.lv-st{font:500 13px var(--mono);color:var(--ink)}
 @media (max-width:560px){.tl button{grid-template-columns:minmax(0,1fr)}.tl .tm{grid-row:auto}}
 
 /* debrief */
@@ -250,19 +270,20 @@ footer p{margin:0;max-width:100ch}
       <div class="nogl-msg" id="rnogl" hidden><p><b>The 3D replay needs WebGL, which is off in this browser.</b><br>The timeline, callouts, passenger list and the receipt below still work.</p></div>
       <div class="lbar t">
         <a class="btn small back" href="/" aria-label="Back to the sky"><span class="l">&#x2190; Back to the sky</span><span class="s">&#x2190; Sky</span></a>
-        <div class="ttl"><div class="caps">Flight replay <span class="tag sim" id="rwho">Connector run</span><span class="tag sim">Simulated</span></div><b id="rtitle"></b></div>
+        <div class="ttl"><div class="caps"><span id="rmode">Flight replay</span> <span class="tag live" id="rlive" hidden>Live</span><span class="tag sim" id="rwho">Connector run</span><span class="tag sim">Simulated</span></div><b id="rtitle"></b></div>
       </div>
       <div class="r-tele" id="rtele"></div>
       <div class="callouts" id="callouts" aria-live="polite"></div>
       <div class="r-note" id="rnote"></div>
       <div class="lbar b">
         <button class="playb" id="play" type="button" aria-label="Play"><svg viewBox="0 0 16 16" id="playicon" aria-hidden="true"><path d="M4 2l10 6-10 6z"/></svg></button>
-        <div class="scrub" id="scrub"><div class="trk"></div><div class="fill" id="sfill"></div><div id="sticks"></div><input type="range" min="0" max="1000" step="1" value="0" id="srange" aria-label="Replay position"><div class="knob" id="sknob"></div></div>
+        <div class="scrub" id="scrub"><div class="trk"></div><div class="fill" id="sfill"></div><div class="ahead" id="sahead" hidden></div><div id="sticks"></div><input type="range" min="0" max="1000" step="1" value="0" id="srange" aria-label="Replay position"><div class="knob" id="sknob"></div></div>
         <div class="ctl">
           <span class="tcode" id="tcode"></span>
           <label class="caps" for="speed">Speed</label>
           <select id="speed"><option value="0.5">0.5&#xD7;</option><option value="1" selected>1&#xD7;</option><option value="2">2&#xD7;</option><option value="4">4&#xD7;</option></select>
           <div class="seg" role="group" aria-label="Camera"><button type="button" id="cammode" aria-pressed="false">Overhead</button></div>
+          <div class="seg" id="liveseg" hidden><button type="button" id="golive" aria-pressed="true" title="Follow the flight as it flies now">Live</button></div>
         </div>
       </div>
     </div>
@@ -278,6 +299,11 @@ footer p{margin:0;max-width:100ch}
     </aside>
   </div>
   <section class="debrief wrap" id="debrief" aria-label="Flight receipt"></section>
+  <section class="debrief wrap" id="dlogsec" aria-labelledby="dlH" hidden><div class="sheet2"><div class="sec">
+    <h3 id="dlH">Dispatcher log <span class="tag me">Written by the Grok bot</span><span class="tag sim">Simulated</span></h3>
+    <p class="note" style="margin:0 0 10px">Every tool call the Grok bot made on this flight, oldest first, with the notes it chose to leave. The numbers are what the tools returned. Times are sky time (UTC) and wall time.</p>
+    <ol class="dlog" id="dlog"></ol>
+  </div></div></section>
 </main>
 
 <footer>
@@ -305,7 +331,7 @@ var SF = (function () {
   function jdOf(s) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/.exec(s || ""); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 864e5 + 2440587.5 : null; }
   function fmt(n, d) { return Number(n).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
-  function dur(days) { var h = days * 24; return h < 48 ? fmt(h, h < 10 ? 1 : 0) + " h" : days < 400 ? fmt(days, 1) + " days" : fmt(days / 365.25, 1) + " years"; }
+  function dur(days) { var h = days * 24; return h < 1 ? fmt(h * 60, h < 1 / 6 ? 1 : 0) + " min" : h < 48 ? fmt(h, h < 10 ? 1 : 0) + " h" : days < 400 ? fmt(days, 1) + " days" : fmt(days / 365.25, 1) + " years"; }
 
   // Places. "system" is the planet (or the Sun's child) a place orbits; tag is what the page's chip says.
   function place(id) { return PID[id]; }
@@ -325,28 +351,41 @@ var SF = (function () {
     if (best) return best;
     try { var b = R.planLeg(f.from, f.to, dep, "energy", SEASON_END); return { dep_jd: b.dep_jd, arr_jd: b.arr_jd, arc_au: b.arc_au || [] }; } catch (e) { return null; }
   }
-  function replay(ride) {
-    var log = ride.record.log;
-    var legs = log.flown.map(function (f) {
-      var dep = jdOf(f.depart);
-      return { kind: f.leg, from: f.from, to: f.to, dep: dep, arr: jdOf(f.arrive), kwh: f.kwh, gate: f.gate, arc: arcFor(ride, f, dep),
+  // live: the record's live block while the flight is still in the air. Its legs are the ones flown so far, each with the
+  // time it reached orbit at its destination (orb); the last one is open while a checkpoint holds it.
+  function replay(ride, live) {
+    var log = ride.record.log, hold = live && live.hold ? live.track[live.track.length - 1][1] : null;
+    var legs = (live ? live.flown : log.flown).map(function (f) {
+      var dep = jdOf(f.depart), arr = jdOf(f.arrive);
+      return { kind: f.leg, from: f.from, to: f.to, dep: dep, orb: jdOf(f.orbit) || arr, arr: arr, open: !!f.open, kwh: f.kwh, gate: f.gate, arc: arcFor(ride, f, dep),
         sys: system(f.from) === system(f.to) ? system(f.from) : null };
     });
-    var start = legs[0].dep - 0.25 * (legs[legs.length - 1].arr - legs[0].dep) / Math.max(1, legs.length), end = legs[legs.length - 1].arr;
+    // A launch hold before the first leg: the Starseeker waits where it is parked until the bot answers.
+    if (!legs.length) {
+      var home = live.planned.length ? live.planned[0].from : live.from, j0 = hold != null ? hold : live.track[0][1];
+      legs.push({ kind: "pickup", from: home, to: home, dep: j0, orb: j0, arr: j0, idle: true, arc: null, sys: null });
+    }
+    var lastArr = legs[legs.length - 1].arr, plan = live ? live.planned.map(function (p) { return { kind: p.leg, from: p.from, to: p.to, dep: jdOf(p.depart), arr: jdOf(p.arrive) }; }) : [];
+    var end = Math.max(lastArr, hold || 0, plan.length ? plan[plan.length - 1].arr : 0);
+    var start = legs[0].dep - 0.25 * (lastArr - legs[0].dep) / Math.max(1, legs.length);
     start = Math.min(start, legs[0].dep - 1 / 24);
     function ends(L) { // the arc's start and end offsets from the real places at the flown departure and arrival
       if (L.err) return L.err;
       var A = L.arc.arc_au, a0 = A[0], a1 = A[A.length - 1];
-      if (L.sys) { var d0 = sub(pos(L.sys, L.dep), pos(L.sys, L.arc.dep_jd)), d1 = sub(pos(L.sys, L.arr), pos(L.sys, L.arc.arr_jd)); a0 = add(a0, d0); a1 = add(a1, d1); }
-      return (L.err = [sub(pos(L.from, L.dep), a0), sub(pos(L.to, L.arr), a1)]);
+      if (L.sys) { var d0 = sub(pos(L.sys, L.dep), pos(L.sys, L.arc.dep_jd)), d1 = sub(pos(L.sys, L.orb), pos(L.sys, L.arc.arr_jd)); a0 = add(a0, d0); a1 = add(a1, d1); }
+      return (L.err = [sub(pos(L.from, L.dep), a0), sub(pos(L.to, L.orb), a1)]);
     }
+    // Phases: parked, flight, orbit (at the destination, before landing), dwell (between legs), holding (a checkpoint
+    // waits on the bot), arrived. f >= 1 means the Starseeker is at the leg's destination.
     function at(jd) {
       for (var i = 0; i < legs.length; i++) {
         var L = legs[i];
+        if (L.idle) return { p: pos(L.from, jd), leg: L, i: i, f: 0, phase: "holding" };
         if (jd < L.dep) return { p: pos(L.from, jd), leg: L, i: i, f: 0, phase: i ? "dwell" : "parked" };
-        if (jd <= L.arr) {
-          var f = (jd - L.dep) / Math.max(1e-9, L.arr - L.dep);
-          if (!L.arc || !L.arc.arc_au || !L.arc.arc_au.length) { var a0 = pos(L.from, L.dep), a1 = pos(L.to, L.arr); return { p: lerp(a0, a1, f), leg: L, i: i, f: f, phase: "flight" }; }
+        if (jd <= L.arr && jd > L.orb) return { p: pos(L.to, jd), leg: L, i: i, f: 1, phase: L.open ? "holding" : "orbit" };
+        if (jd <= L.orb) {
+          var f = (jd - L.dep) / Math.max(1e-9, L.orb - L.dep);
+          if (!L.arc || !L.arc.arc_au || !L.arc.arc_au.length) { var a0 = pos(L.from, L.dep), a1 = pos(L.to, L.orb); return { p: lerp(a0, a1, f), leg: L, i: i, f: f, phase: "flight" }; }
           var A = L.arc.arc_au, k = f * (A.length - 1), j = Math.min(A.length - 2, Math.floor(k)), p = lerp(A[j], A[j + 1], k - j);
           if (L.sys) { var tp = L.arc.dep_jd + f * (L.arc.arr_jd - L.arc.dep_jd), s0 = pos(L.sys, tp), s1 = pos(L.sys, jd); p = [p[0] - s0[0] + s1[0], p[1] - s0[1] + s1[1], p[2] - s0[2] + s1[2]]; }
           // Blend out the end errors so the car leaves exactly from, and lands exactly on, the place at the flown times.
@@ -356,23 +395,39 @@ var SF = (function () {
         }
       }
       var last = legs[legs.length - 1];
-      return { p: pos(last.to, jd), leg: last, i: legs.length - 1, f: 1, phase: "arrived" };
+      return { p: pos(last.to, jd), leg: last, i: legs.length - 1, f: 1, phase: hold != null ? "holding" : "arrived" };
     }
     var ev = [];
     legs.forEach(function (L) {
+      if (L.idle) return;
       ev.push({ jd: L.dep, kind: "depart", title: (L.kind === "pickup" ? "Pickup leg departs " : "Ride departs ") + name(L.from), text: name(L.from) + " to " + name(L.to) });
-      ev.push({ jd: L.arr, kind: "arrive", title: (L.kind === "pickup" ? "Rider aboard at " : "Arrived at ") + name(L.to), text: L.gate === "PASS" ? "Re-fly check: PASS" : "Local hop (not re-flown)" });
+      if (!L.open) ev.push({ jd: L.arr, kind: "arrive", title: (L.kind === "pickup" ? "Rider aboard at " : "Arrived at ") + name(L.to), text: L.gate === "PASS" ? "Re-fly check: PASS" : "Local hop (not re-flown)" });
     });
-    (log.checkpoints || []).forEach(function (c) {
+    (live ? live.checkpoints : log.checkpoints || []).forEach(function (c) {
+      var d = c.decision;
       ev.push({ jd: jdOf(c.at), kind: "checkpoint", title: "Checkpoint " + c.n + ": " + c.kind.replace("_", " ") + " at " + name(c.place),
-        text: "Cause: " + c.cause.replace("_", " ") + ". Agent chose: " + c.decision.action + ". Best in hindsight: " + c.best + ".", cp: c });
+        text: "Cause: " + c.cause.replace("_", " ") + ". " + (live ? (d ? "The Grok bot chose: " + decText(d) + "." : "Waiting for the Grok bot's decision.") : "Agent chose: " + d.action + ". Best in hindsight: " + c.best + "."), cp: c });
     });
-    ride.record.score.incidents.forEach(function (x) {
+    (live ? live.incidents : ride.record.score.incidents).forEach(function (x) {
       ev.push({ jd: jdOf(x.at), kind: "incident", title: x.kind.replace("_", " ") + " at " + name(x.place), text: x.note + (x.hours ? " (" + fmt(x.hours, 1) + " h" : "") + (x.kwh ? (x.hours ? ", " : " (") + fmt(x.kwh) + " kWh)" : x.hours ? ")" : "") });
+    });
+    // The bot's own words: the dispatch note at the first departure, each decide note at its checkpoint.
+    (ride.trail || []).forEach(function (t) {
+      if (!t.note || t.error) return;
+      var j = t.tool === "decide" ? jdOf(t.checkpoint_at) : t.tool === "dispatch" && !legs[0].idle ? legs[0].dep : null;
+      if (j != null) ev.push({ jd: j, kind: "note", title: "The Grok bot's note on " + t.tool, text: "“" + t.note + "”" });
     });
     ev.sort(function (a, b) { return a.jd - b.jd; });
     var focus = legs.every(function (L) { return L.sys; }) && legs.every(function (L) { return L.sys === legs[0].sys; }) ? legs[0].sys : "sun";
-    return { legs: legs, start: start, end: end, at: at, events: ev, focus: focus, record: ride.record, pub: ride.legs };
+    return { legs: legs, plan: plan, hold: hold, start: start, end: end, at: at, events: ev, focus: focus, record: ride.record, pub: ride.legs,
+      car: live ? live.car : ride.record.score.car };
+  }
+  // A decide answer in words, from the stored decision.
+  function decText(d) {
+    if (d.action === "hold") return d.hours != null ? "hold, ask again in " + fmt(d.hours, 1) + " h" : "hold until the pad opens";
+    if (d.action === "divert") return "divert to " + name(d.place) + (d.wait_hours ? ", " + fmt(d.wait_hours, 1) + " h on the ground" : "");
+    if (d.action === "replan") return "replan, leaving after " + d.depart_after + " (" + d.objective + ")";
+    return d.action;
   }
   function sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
   function add(a, b) { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
@@ -380,7 +435,7 @@ var SF = (function () {
 
   return {
     AU: AU, SITE: SITE, init: init, sky: sky, iso: iso, jdOf: jdOf, fmt: fmt, esc: esc, dur: dur,
-    place: place, system: system, name: name, tag: tag, color: color, pos: pos, replay: replay,
+    place: place, system: system, name: name, tag: tag, color: color, pos: pos, replay: replay, decText: decText,
     get E() { return E; }, get R() { return R; },
     // The Starseeker: an original short-hop passenger ship. Not modelled on any real or game vehicle. Nose to the right.
     SHIP_SVG: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" aria-hidden="true"><defs><linearGradient id="ssh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a6578"/><stop offset=".5" stop-color="#1c2230"/><stop offset="1" stop-color="#07090d"/></linearGradient><linearGradient id="ssg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffb65c" stop-opacity="0"/><stop offset="1" stop-color="#ffcf7a"/></linearGradient><linearGradient id="ssw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0b0f16"/><stop offset="1" stop-color="#2a4266"/></linearGradient></defs><ellipse cx="8" cy="47" rx="14" ry="4" fill="url(#ssg)"/><path d="M70 54 L44 70 L100 61 Z" fill="#141a24" stroke="rgba(255,255,255,.18)"/><path d="M32 33 L22 13 L50 27 Z" fill="#1c2230" stroke="rgba(255,255,255,.2)"/><path d="M18 40 C30 30 52 24 84 23 C120 22 160 30 190 45 C170 52 140 57 100 58 L40 58 C28 57 20 50 18 40 Z" fill="url(#ssh)" stroke="rgba(255,255,255,.28)"/><path d="M72 31 C102 27 140 29 168 39 C140 36 104 35 76 37 Z" fill="url(#ssw)"/><g fill="#9cc3ff" opacity=".75"><rect x="86" y="31.5" width="7" height="2.4" rx="1"/><rect x="98" y="31" width="7" height="2.4" rx="1"/><rect x="110" y="31" width="7" height="2.4" rx="1"/><rect x="122" y="31.5" width="7" height="2.4" rx="1"/><rect x="134" y="32.5" width="7" height="2.4" rx="1"/></g><path d="M40 50 C90 53 140 51 182 45" fill="none" stroke="#9cc3ff" stroke-width="1.2" opacity=".7"/><ellipse cx="24" cy="47" rx="9" ry="6.5" fill="#10141c" stroke="rgba(255,255,255,.25)"/><ellipse cx="17" cy="47" rx="2.6" ry="4.6" fill="#ffcf7a"/></svg>',
@@ -417,6 +472,8 @@ function fmt(n, d) { return SF.fmt(n, d); }
 function iso(jd) { return SF.iso(jd); }
 function dist(km) { return km >= 0.05 * AU ? fmt(km / AU, 2) + " AU" : km >= 1e6 ? fmt(km / 1e6, 2) + " million km" : fmt(km) + " km"; }
 function W(t) { return esc(shipWords(t)); }
+// A note is the bot's quote, shown as written.
+function evText(e) { return e.kind === "note" ? esc(e.text) : W(e.text); }
 
 function initGL() {
   function fail() { GL = null; $("#rnogl").hidden = false; }
@@ -591,7 +648,7 @@ function marker(id, jd) {
 function shipC(rp, jd, jdNow) {
   if (jdNow == null) jdNow = jd;
   var s = rp.at(jd), L = s.leg;
-  if (s.phase !== "flight") return { v: marker(s.phase === "arrived" ? L.to : L.from, jdNow).clone(), s: s };
+  if (s.phase !== "flight") return { v: marker(s.f >= 1 ? L.to : L.from, jdNow).clone(), s: s };
   var f = s.f;
   if (L.sys) {
     var sys = L.sys, base = function (p) { return localOff(d3(p, SF.pos(sys, jd)), sys); }, an = marker(sys, jdNow);
@@ -601,7 +658,7 @@ function shipC(rp, jd, jdNow) {
     return { v: v.add(e0.multiplyScalar(1 - f)).add(e1.multiplyScalar(f)).add(an), s: s };
   }
   // Moon and station offsets are exaggerated in the scene; take them at departure and arrival, so a moon's orbit doesn't wobble the path.
-  var w = S(s.p), c0 = marker(L.from, L.dep).clone().sub(S(SF.pos(L.from, L.dep))), c1 = marker(L.to, L.arr).clone().sub(S(SF.pos(L.to, L.arr)));
+  var w = S(s.p), c0 = marker(L.from, L.dep).clone().sub(S(SF.pos(L.from, L.dep))), c1 = marker(L.to, L.orb).clone().sub(S(SF.pos(L.to, L.orb)));
   return { v: w.add(c0.multiplyScalar(1 - f)).add(c1.multiplyScalar(f)), s: s };
 }
 // Osculating orbit ring from a state vector (km, km/s): points relative to the attractor, in km.
@@ -726,10 +783,10 @@ function glStop() { if (glRaf) cancelAnimationFrame(glRaf); glRaf = 0; }
    booking for now. Seats, party size and bookings per flight are placeholders, not in the data. */
 var SEAT_N = 4, PARTY_MAX = 3;
 function passengerList(i) {
-  var lg = RIDE.record.log, fl = lg.flown || [], h = hailOf(lg.hail) || {};
+  var lg = RIDE.lg, fl = lg.flown || [], h = hailOf(lg.hail) || {};
   var bk = { id: lg.hail, lead: (h.rider || "").split(",")[0], from: lg.from, to: lg.to, b: -1, a: -1 };
   var stops = fl.length ? [{ at: fl[0].from, arrive: null, leave: fl[0].depart, board: [], alight: [] }] : [];
-  fl.forEach(function (f, k) { stops.push({ at: f.to, arrive: f.arrive, leave: fl[k + 1] ? fl[k + 1].depart : null, board: [], alight: [] }); });
+  fl.forEach(function (f, k) { stops.push({ at: f.to, arrive: f.open ? null : f.arrive, leave: fl[k + 1] ? fl[k + 1].depart : null, board: [], alight: [] }); });
   stops.forEach(function (s, k) {
     if (bk.b < 0 && s.at === bk.from) bk.b = k;
     else if (bk.b >= 0 && bk.a < 0 && s.at === bk.to) bk.a = k;
@@ -757,7 +814,7 @@ function renderPlist() {
     s.board.forEach(function (b) { ev.push('<li><span class="bd">Boards</span>booking <b class="mono">' + esc(b.id) + "</b> \u00B7 lead " + esc(b.lead || "not in the data") + " \u00B7 party not set yet (1\u20133, placeholder)</li>"); });
     s.alight.forEach(function (b) { ev.push('<li><span class="al">Gets off</span>booking <b class="mono">' + esc(b.id) + "</b></li>"); });
     if (!ev.length) ev.push('<li class="dim">' + (k === 0 ? "Parked here, cabin empty" : "No one boards or gets off") + "</li>");
-    var tm = k === 0 ? "leaves " + s.leave : "arrives " + s.arrive + (s.leave ? " \u00B7 leaves " + s.leave : " \u00B7 end of flight");
+    var tm = k === 0 ? "leaves " + s.leave : !s.arrive ? "not landed yet" : "arrives " + s.arrive + (s.leave ? " \u00B7 leaves " + s.leave : RS.live ? "" : " \u00B7 end of flight");
     var out = '<li class="pst" data-k="' + k + '"><span class="wp">' + k + '</span><div class="nm">' + placeH(s.at) + '</div><div class="m">Stop ' + k + (k === 0 ? ", parked" : "") + " \u00B7 " + esc(tm) + "</div><ul>" + ev.join("") + "</ul></li>";
     if (k < n) {
       var on = aboardAt(P, k), f = P.legs[k];
@@ -768,9 +825,12 @@ function renderPlist() {
   $("#plKv").innerHTML = "<dt>Bookings on this flight</dt><dd>" + P.bookings.length + " (run log)</dd><dt>Bookings per flight</dt><dd>up to 3 (placeholder)</dd><dt>Seats on the " + esc(SF.SHIP) + "</dt><dd>4 (placeholder)</dd><dt>Party per booking</dt><dd>1\u20133 (placeholder)</dd>";
   RS.plKey = null;
 }
+// The stop the Starseeker is at (or the leg it flies, after stop r) for a replay state.
+function stopOf(st, n) { return st.phase === "arrived" ? n : st.phase === "parked" || st.leg.idle ? 0 : st.f >= 1 && st.phase !== "orbit" && !st.leg.open ? st.i + 1 : st.i; }
+function flying(st) { return st.phase === "flight" || st.phase === "orbit" || st.leg.open && st.f >= 1; }
 function plistTick(st) {
-  var P = RS.pl, n = P.stops.length - 1, fl = st.phase === "flight";
-  var r = st.phase === "arrived" ? n : st.phase === "parked" ? 0 : st.i;
+  var P = RS.pl, n = P.stops.length - 1, fl = flying(st);
+  var r = stopOf(st, n);
   var key = r + st.phase;
   if (key === RS.plKey) return;
   RS.plKey = key;
@@ -785,8 +845,20 @@ function plistTick(st) {
 
 /* ---------- replay ---------- */
 function bindRide() {
-  $("#play").addEventListener("click", function () { if (!RS) return; if (RS.cur >= RS.rp.end) RS.cur = RS.rp.start; RS.playing = !RS.playing; playIcon(); });
-  $("#srange").addEventListener("input", function () { if (!RS) return; RS.cur = RS.rp.start + (RS.rp.end - RS.rp.start) * (+this.value / 1000); RS.scrubbed = true; });
+  $("#play").addEventListener("click", function () {
+    if (!RS) return;
+    if (RS.live && RS.follow) { RS.playing = false; setFollow(false); return; }
+    if (!RS.live && RS.cur >= RS.rp.end) RS.cur = RS.rp.start;
+    RS.playing = !RS.playing; playIcon();
+  });
+  $("#golive").addEventListener("click", function () { if (!RS || !RS.live) return; if (RS.follow) RS.playing = false; setFollow(!RS.follow); });
+  // A live flight scrubs back freely but not past now: the part ahead hasn't flown yet.
+  $("#srange").addEventListener("input", function () {
+    if (!RS) return;
+    var j = RS.rp.start + (RS.rp.end - RS.rp.start) * (+this.value / 1000);
+    if (RS.live) { var lj = liveJd(); setFollow(j >= lj); j = Math.min(j, lj); }
+    RS.cur = j; RS.scrubbed = true;
+  });
   $("#speed").addEventListener("change", function () { if (RS) RS.speed = +this.value; });
   $("#cammode").addEventListener("click", function () { if (!RS) return; RS.over = !RS.over; this.setAttribute("aria-pressed", String(RS.over)); });
   bindRig($("#rhost"), { set az(v) { if (RS) RS.yaw = v; }, get az() { return RS ? RS.yaw : 0; }, set el(v) { if (RS) RS.pitch = v; }, get el() { return RS ? RS.pitch : 0; }, zoom: function (k) { if (RS) RS.zf = Math.max(0.25, Math.min(8, RS.zf * k)); } });
@@ -795,29 +867,64 @@ function playIcon() {
   $("#playicon").innerHTML = RS && RS.playing ? '<path d="M3 2h4v12H3zM9 2h4v12H9z"/>' : '<path d="M4 2l10 6-10 6z"/>';
   $("#play").setAttribute("aria-label", RS && RS.playing ? "Pause" : "Play");
 }
-function loadRide(i) {
-  if (RS && RS.i === i) return;
-  var ride = RIDE, rp = SF.replay(ride), rec = rp.record, h = hailOf(rec.hail_id) || {};
+/* ---------- live playback ----------
+   A season flight in the air plays on the server's track: [wall ms, sky jd] points, the same for every viewer. CLOCK is
+   the server clock minus this one, from the last poll. After the last point the sky time stays put (a checkpoint hold). */
+var CLOCK = 0;
+function wallNow() { return Date.now() + CLOCK; }
+function trackJd(tr, ms) {
+  if (ms <= tr[0][0]) return tr[0][1];
+  for (var k = 1; k < tr.length; k++) if (ms <= tr[k][0]) { var a = tr[k - 1], b = tr[k]; return a[1] + (b[1] - a[1]) * (ms - a[0]) / Math.max(1, b[0] - a[0]); }
+  return tr[tr.length - 1][1];
+}
+function liveJd() { return trackJd(RIDE.live.track, wallNow()); }
+function liveRate() { var w = wallNow(), tr = RIDE.live.track; return trackJd(tr, w + 500) - trackJd(tr, w - 500); }
+function setFollow(on) { RS.follow = on; if (on) RS.playing = true; $("#golive").setAttribute("aria-pressed", String(on)); playIcon(); }
+// The server's track ends where the flight lands or holds, so its last point's wall ms is when that happens.
+function liveStatus(lj) {
+  var lv = RIDE.live, w = wallNow(), hd = lv.hold, tx, hm = lv.track[lv.track.length - 1][0];
+  if (lv.lands_at_ms != null) tx = "Lands in about <b>" + Math.max(0, Math.ceil((lv.lands_at_ms - w) / 1000)) + " s</b> (simulated playback).";
+  else if (hd && w < hm) tx = "Reaches checkpoint " + hd.n + " in about <b>" + Math.ceil((hm - w) / 1000) + " s</b>, then waits for the Grok bot's decision.";
+  else if (hd) tx = "<b>Waiting for the Grok bot's decision at checkpoint " + hd.n + "</b> (" + esc(hd.kind.replace("_", " ")) + " at " + esc(hd.place_name) + ").";
+  else tx = "In the air (simulated playback).";
+  var el = $("#lvst");
+  if (el && tx !== RS.lvst) { RS.lvst = tx; el.innerHTML = tx; }
+  // The timeline below shows the events the playback has reached. Event times are whole minutes, so allow one.
+  var n = RS.rp.events.filter(function (e) { return e.jd <= lj + 1 / 1440; }).length;
+  if (n !== RS.lvn && $("#lvtl")) { RS.lvn = n; $("#lvtl").innerHTML = eventsHtml(n) || '<li class="dim">Nothing yet: the flight has not left.</li>'; bindEvents(); }
+}
+// keep: a rebuild of the same flight (the bot answered a checkpoint, or it landed), so the view and the play state carry over.
+function loadRide(keep) {
+  var old = RS, live = RIDE.live, rp = SF.replay(RIDE, live), rec = rp.record, h = hailOf(rec.hail_id) || {};
   var span = rp.end - rp.start, local = rp.focus !== "sun";
   // Local scenes open further out and higher, so the planet frames the shot instead of filling it.
-  RS = { pax: (h.rider || "").split(",")[0] || "passenger", i: i, rp: rp, cur: rp.start, playing: !reduced, speed: +$("#speed").value, rate: span / 28, over: false,
-    yaw: 0, pitch: local ? 0.55 : 0.3, zf: rp.focus === "earth" ? 2.6 : local ? 1.6 : 1, fwd: window.THREE ? V(0, 0, 1) : null, camp: null, local: local };
-  RS.pl = passengerList(i);
-  $("#cammode").setAttribute("aria-pressed", "false");
+  RS = { pax: (h.rider || "").split(",")[0] || "passenger", rp: rp, cur: rp.start, playing: !reduced || !!live, speed: +$("#speed").value, rate: span / 28, over: false,
+    yaw: 0, pitch: local ? 0.55 : 0.3, zf: rp.focus === "earth" ? 2.6 : local ? 1.6 : 1, fwd: window.THREE ? V(0, 0, 1) : null, camp: null, local: local, live: !!live, follow: !!live };
+  if (keep && old && old.local === local) {
+    ["cur", "playing", "follow", "over", "yaw", "pitch", "zf", "fwd", "camp", "look", "up"].forEach(function (k) { RS[k] = old[k]; });
+    RS.cur = Math.max(rp.start, Math.min(rp.end, RS.cur)); RS.follow = RS.follow && RS.live;
+  }
+  if (RS.live && RS.follow) RS.cur = Math.max(rp.start, liveJd());
+  RS.pl = passengerList();
+  $("#cammode").setAttribute("aria-pressed", String(RS.over));
+  $("#golive").setAttribute("aria-pressed", String(RS.follow));
+  $("#rmode").textContent = live ? "Live flight" : "Flight replay";
+  $("#rlive").hidden = $("#liveseg").hidden = $("#sahead").hidden = !live;
   $("#rwho").textContent = rec.player_tag ? "Player run" : "Connector run";
   $("#rwho").className = "tag " + (rec.player_tag ? "me" : "sim");
-  $("#rtitle").textContent = shipWords(h.title || rec.hail_id) + " \u00B7 " + SF.name(rec.log.from) + " \u2192 " + SF.name(rec.log.to);
+  $("#rtitle").textContent = shipWords(h.title || rec.hail_id) + " \u00B7 " + SF.name(RIDE.lg.from) + " \u2192 " + SF.name(RIDE.lg.to);
   $("#rnote").textContent = local ? "Centred on " + SF.name(rp.focus) + ", distances in km. Not to scale: the " + SF.SHIP + " and small moons are enlarged. The flight is simulated."
-    : "Not to scale: distances compressed, sizes exaggerated. Planet positions are real; the flight is simulated.";
+    : "Not to scale: distances compressed, sizes exaggerated. Planet positions are real; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet." : "");
   $("#sticks").innerHTML = rp.events.map(function (e) { return '<span class="tick ' + e.kind + '" style="left:' + ((e.jd - rp.start) / span * 100).toFixed(2) + '%" title="' + W(e.title) + '"></span>'; }).join("");
-  $("#callouts").innerHTML = ""; RS.ckey = null;
+  $("#callouts").innerHTML = ""; RS.ckey = null; RS.lvst = null;
   playIcon();
   renderPlist();
-  renderDebrief(i);
+  renderDebrief();
+  renderDlog();
   if (GL) {
     buildRideScene();
-    var L0 = rp.legs[0], d0 = shipPos(L0.arr).sub(shipPos(L0.dep)); // face along the first leg from the start
-    if (d0.lengthSq() > 1e-12) RS.fwd.copy(d0.normalize());
+    var L0 = rp.legs[0], d0 = shipPos(L0.orb).sub(shipPos(L0.dep)); // face along the first leg from the start
+    if (!(keep && old) && d0.lengthSq() > 1e-12) RS.fwd.copy(d0.normalize());
   }
 }
 function placeK(id, jd) { var b = SF.pos(RS.rp.focus, jd); return axes(d3(SF.pos(id, jd), b), AU / 1000); }
@@ -849,7 +956,7 @@ function buildRideScene() {
     });
   } else {
     sc.add(new THREE.AmbientLight(0x3a4252, 0.6)); sc.add(new THREE.PointLight(0xfff1dc, 1.7, 0)); sc.add(sunObj(SIZE.sun));
-    var used = {}; rp.legs.forEach(function (L) { used[L.from] = used[L.to] = 1; });
+    var used = {}; rp.legs.concat(rp.plan).forEach(function (L) { used[L.from] = used[L.to] = 1; });
     SF.E.PLACES.forEach(function (Q) {
       var id = Q.id, m, minPx = 2;
       if (Q.kind === "planet" || id === "ceres") {
@@ -866,13 +973,21 @@ function buildRideScene() {
   }
   // The flown path, dim in full and bright up to now. Only the flights are drawn: a parked Starseeker rides its moon
   // or station around the planet, and months of that sampled coarsely would scribble zigzags over the scene.
-  var pts = [], ts = [], fly = rp.legs.reduce(function (a, L) { return a + (L.arr - L.dep); }, 0) || 1;
+  var pts = [], ts = [], fly = rp.legs.reduce(function (a, L) { return a + (L.orb - L.dep); }, 0) || 1;
   rp.legs.forEach(function (L) {
-    var n = Math.max(8, Math.round(600 * (L.arr - L.dep) / fly));
-    for (var k = 0; k <= n; k++) { var j = L.dep + (L.arr - L.dep) * k / n; ts.push(j); pts.push(shipPos(j)); }
+    if (L.idle) return;
+    var n = Math.max(8, Math.round(600 * (L.orb - L.dep) / fly));
+    for (var k = 0; k <= n; k++) { var j = L.dep + (L.orb - L.dep) * k / n; ts.push(j); pts.push(shipPos(j)); }
   });
+  if (!pts.length) { ts.push(rp.start); pts.push(shipPos(rp.start)); }
   RS.path = lineOf(pts, 0x9cc3ff, 0.22); RS.done = lineOf(pts, 0x9cc3ff, 1); RS.done.geometry.setDrawRange(0, 0); RS.ts = ts;
   sc.add(RS.path); sc.add(RS.done);
+  // Legs still to fly in a live flight: dashed, straight between the places at the planned times. They can change at a checkpoint.
+  rp.plan.forEach(function (Q) {
+    var a = local ? placeK(Q.from, Q.dep) : marker(Q.from, Q.dep), b = local ? placeK(Q.to, Q.arr) : marker(Q.to, Q.arr), seg = [];
+    for (var k = 0; k <= 24; k++) seg.push(a.clone().lerp(b, k / 24));
+    sc.add(lineOf(seg, 0xffcf7a, 0.5, true));
+  });
   RS.ship = makeShip(); sc.add(RS.ship);
   RS.shipScale = local ? 0.14 : 0.55;
   RS.ship.scale.setScalar(RS.shipScale);
@@ -887,6 +1002,7 @@ function shipPos(jd) {
 // days, so those stretches play slower: each takes at least about 8 s at 1x.
 function effRate() {
   var rp = RS.rp, base = RS.rate * RS.speed;
+  if (RS.live && RS.follow) return liveRate();
   if (RS.local) return base;
   var st = rp.at(RS.cur), w;
   if (st.phase === "parked") w = rp.legs[0].dep - rp.start;
@@ -896,29 +1012,42 @@ function effRate() {
 }
 function rideFrame(dt, t) {
   if (!RS) return;
-  var rp = RS.rp, span = rp.end - rp.start, er = effRate();
-  if (RS.playing) { RS.cur += dt * er; if (RS.cur >= rp.end) { RS.cur = rp.end; RS.playing = false; playIcon(); } }
+  var rp = RS.rp, span = rp.end - rp.start, er = effRate(), lj = RS.live ? Math.max(rp.start, liveJd()) : null;
+  if (RS.live && RS.follow) RS.cur = lj;
+  else if (RS.playing) {
+    RS.cur += dt * er;
+    if (RS.live && RS.cur >= lj) { RS.cur = lj; setFollow(true); }
+    else if (RS.cur >= rp.end) { RS.cur = rp.end; RS.playing = false; playIcon(); }
+  }
   var jd = RS.cur, f = (jd - rp.start) / span, st = rp.at(jd), L = st.leg, jump = !!RS.scrubbed; // a scrub jumps the camera, no swoop
-  var fl = st.phase === "flight";
+  var fl = st.phase === "flight", held = RS.live && RIDE.live.hold && jd >= rp.hold - 1e-6;
   if (t - rHudT > 90 || RS.scrubbed) {
     rHudT = t; RS.scrubbed = false;
+    if (RS.live && RIDE.live.lands_at_ms != null && wallNow() >= RIDE.live.lands_at_ms) land();
     if (document.activeElement !== $("#srange")) $("#srange").value = String(Math.round(f * 1000));
     $("#sfill").style.width = (f * 100).toFixed(2) + "%"; $("#sknob").style.left = (f * 100).toFixed(2) + "%";
+    if (RS.live) $("#sahead").style.left = ((lj - rp.start) / span * 100).toFixed(2) + "%";
     $("#tcode").textContent = iso(jd);
     plistTick(st);
-    var P = RS.pl, r = st.phase === "arrived" ? P.stops.length - 1 : st.phase === "parked" ? 0 : st.i, on = aboardAt(P, r);
+    var P = RS.pl, on = aboardAt(P, stopOf(st, P.stops.length - 1));
     var dkm = Math.hypot.apply(null, d3(SF.pos(L.to, jd), st.p)) * AU;
-    $("#rtele").innerHTML = '<div class="hudbox"><div class="caps">Sky time \u00B7 UTC \u00B7 simulated</div><div class="big">' + iso(jd) + "</div>1 s = <b>" + SF.dur(er) + "</b>" + (er < RS.rate * RS.speed - 1e-9 ? " (slowed while waiting)" : "") + "<br>" +
-      esc(SF.SHIP) + " <b>" + esc(rp.record.score.car) + "</b><br>Leg <b>" + (st.i + 1) + "/" + rp.legs.length + "</b> \u00B7 " + esc(on.length || fl && L.kind !== "pickup" ? "passenger" : legKind(L.kind)) + " \u00B7 <b>" + esc(st.phase) + "</b><br>" +
-      esc(SF.name(L.from)) + " \u2192 " + esc(SF.name(L.to)) + "<br>To " + esc(SF.name(L.to)) + " <b>" + (st.phase === "arrived" ? "arrived" : dist(dkm)) + "</b><br>" +
-      (on.length ? "Aboard <b>" + esc(RS.pax) + "</b> \u00B7 party not set yet" : "Cabin empty \u00B7 picking up <b>" + esc(RS.pax) + "</b>") + "<br>Seats <b>4</b> (placeholder)</div>";
-    var win = er * 6, vis = rp.events.filter(function (e) { return e.jd <= jd && jd - e.jd <= Math.max(win, span * 0.02); }).slice(-3);
-    var key = vis.map(function (e) { return e.jd + e.kind; }).join();
+    var where = L.idle ? "parked" : st.phase === "arrived" ? "arrived" : st.f >= 1 ? "in orbit" : dist(dkm);
+    var rateTx = er > 0 ? "1 s = <b>" + SF.dur(er) + "</b>" + (RS.live && RS.follow ? " (live)" : er < RS.rate * RS.speed - 1e-9 ? " (slowed while waiting)" : "") : "<b>Held</b> until the Grok bot decides";
+    $("#rtele").innerHTML = '<div class="hudbox"><div class="caps">Sky time \u00B7 UTC \u00B7 simulated</div><div class="big">' + iso(jd) + "</div>" + rateTx + "<br>" +
+      esc(SF.SHIP) + " <b>" + esc(rp.car) + "</b><br>Leg <b>" + (st.i + 1) + "/" + (rp.legs.length + rp.plan.length) + "</b> \u00B7 " + esc(on.length || fl && L.kind !== "pickup" ? "passenger" : legKind(L.kind)) + " \u00B7 <b>" + esc(st.phase) + "</b><br>" +
+      esc(SF.name(L.from)) + " \u2192 " + esc(SF.name(L.to)) + "<br>To " + esc(SF.name(L.to)) + " <b>" + where + "</b><br>" +
+      (on.length ? "Aboard <b>" + esc(RS.pax) + "</b> \u00B7 party not set yet" : "Cabin empty \u00B7 " + (L.kind === "pickup" || L.idle ? "picking up" : "dropped off") + " <b>" + esc(RS.pax) + "</b>") + "<br>Seats <b>4</b> (placeholder)</div>";
+    var win = er * 6, vis = rp.events.filter(function (e) { return e.jd <= jd + 1 / 1440 && jd - e.jd <= Math.max(win, span * 0.02); }).slice(held ? -2 : -3);
+    var key = (held ? "H" : "") + vis.map(function (e) { return e.jd + e.kind; }).join();
     if (key !== RS.ckey) {
       RS.ckey = key;
-      $("#callouts").innerHTML = vis.map(function (e) { return '<div class="co ' + e.kind + '"><div class="k">' + esc(e.kind) + ' \u00B7 <span class="mono">' + iso(e.jd) + "</span></div><b>" + W(e.title) + "</b><p>" + W(e.text) + "</p></div>"; }).join("");
-      RS.alert = vis.some(function (e) { return e.kind === "checkpoint" || e.kind === "incident"; });
+      var hd = RIDE.live && RIDE.live.hold;
+      $("#callouts").innerHTML = (held ? '<div class="co hold"><div class="k">Checkpoint ' + hd.n + ' \u00B7 <span class="mono">' + esc(hd.at) + '</span> \u00B7 simulated</div><b>Waiting for the Grok bot\'s decision at checkpoint ' + hd.n + "</b><p>" +
+        W(hd.kind.replace("_", " ") + " at " + hd.place_name + ", cause " + hd.cause.replace("_", " ")) + ". The playback holds here until the bot calls decide.</p></div>" : "") +
+        vis.map(function (e) { return '<div class="co ' + e.kind + '"><div class="k">' + esc(e.kind) + ' \u00B7 <span class="mono">' + iso(e.jd) + "</span></div><b>" + W(e.title) + "</b><p>" + evText(e) + "</p></div>"; }).join("");
+      RS.alert = held || vis.some(function (e) { return e.kind === "checkpoint" || e.kind === "incident"; });
     }
+    if (RS.live) liveStatus(lj);
     if (t - (RS.pillT || -1e9) > 1000) { RS.pillT = t; var s = SF.sky(); $("#skydate").textContent = "Season " + s.season + " \u00B7 " + iso(s.jd).slice(0, 10); }
   }
   if (!GL || !RS.sc) return;
@@ -951,7 +1080,7 @@ function rideFrame(dt, t) {
   // Camera: chase (behind and above) or overhead. In the heliocentric scene a parked or waiting Starseeker circles
   // its moon fast, so the camera holds on that planet's system instead of chasing the ship around it.
   var D = (RS.local ? 0.75 : 3.2) * RS.zf, want, look, hold = null;
-  if (!RS.local && !RS.over && !fl) { var pl = st.phase === "arrived" ? L.to : L.from, sys = SF.system(pl); if (sys && sys !== pl && sys !== "sun") hold = sys; }
+  if (!RS.local && !RS.over && !fl) { var pl = st.f >= 1 ? L.to : L.from, sys = SF.system(pl); if (sys && sys !== pl && sys !== "sun") hold = sys; }
   if (hold) {
     var c = marker(hold, jd), R = Math.max(c.distanceTo(p) * 3.5, D * 1.2), cp = Math.cos(RS.pitch);
     want = c.clone().add(V(Math.sin(RS.yaw) * cp, Math.sin(RS.pitch) + 0.1, Math.cos(RS.yaw) * cp).multiplyScalar(R)); look = c.clone();
@@ -977,7 +1106,7 @@ function rideFrame(dt, t) {
   RS.labels.update(cam, GW, GH);
   var tb = $("#rtbox"); tb.classList.toggle("alert", !!RS.alert);
   tbox(tb, cam, GW, GH, p, RS.shipScale * 0.6, 44);
-  if (t - (RS.tt || 0) > 150) { RS.tt = t; $("#rti").innerHTML = "<b>" + esc(SF.SHIP) + " " + esc(rp.record.score.car) + "</b>" + esc(st.phase) + " \u00B7 " + (fl ? Math.round(st.f * 100) + "% of leg" : esc(SF.name(st.phase === "arrived" ? L.to : L.from))); }
+  if (t - (RS.tt || 0) > 150) { RS.tt = t; $("#rti").innerHTML = "<b>" + esc(SF.SHIP) + " " + esc(rp.car) + "</b>" + esc(st.phase) + " \u00B7 " + (fl ? Math.round(st.f * 100) + "% of leg" : esc(SF.name(st.f >= 1 ? L.to : L.from))); }
   GL.r.render(RS.sc, cam);
 }
 
@@ -988,17 +1117,59 @@ function partCell(p) {
   var f = p.got / p.max, c = f >= 0.999 ? "pass" : f >= 0.5 ? "best" : "fail";
   return '<span class="' + c + '" title="' + esc(shipWords(p.note)) + '">' + fmt(p.got, p.got % 1 ? 1 : 0) + " / " + p.max + "</span>";
 }
-function renderDebrief(i) {
-  $("#debrief").innerHTML = debrief(i);
+function renderDebrief() {
+  $("#debrief").innerHTML = RIDE.live ? liveSheet() : debrief();
+  RS.lvn = -1;
+  bindEvents();
+}
+function bindEvents() {
   $$("#debrief [data-ev]").forEach(function (b) {
+    if (b.dataset.bound) return;
+    b.dataset.bound = "1";
     b.addEventListener("click", function () {
-      var e = RS.rp.events[+b.dataset.ev];
-      RS.cur = Math.min(RS.rp.end, e.jd + (RS.rp.end - RS.rp.start) * 0.001); RS.playing = false; RS.scrubbed = true; playIcon();
+      var e = RS.rp.events[+b.dataset.ev], j = Math.min(RS.rp.end, e.jd + (RS.rp.end - RS.rp.start) * 0.001);
+      if (RS.live) { setFollow(false); j = Math.min(j, liveJd()); }
+      RS.cur = j; RS.playing = false; RS.scrubbed = true; playIcon();
       window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
     });
   });
 }
-function debrief(i) {
+function eventsHtml(n) {
+  return RS.rp.events.slice(0, n).map(function (e, k) { return '<li><button type="button" class="k-' + e.kind + '" data-ev="' + k + '"><span class="tm">' + iso(e.jd) + "</span><b>" + W(e.title) + '</b><span class="tx">' + evText(e) +"</span></button></li>"; }).join("");
+}
+// While the flight is in the air there is no score yet: the sheet says what the playback waits on and lists what it has shown.
+function liveSheet() {
+  var rec = RIDE.record, lv = RIDE.live, h = hailOf(rec.hail_id) || {};
+  return '<div class="sheet2">' +
+    '<div class="dh"><div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="caps">Flight receipt</span><span class="tag sim">Simulated</span><span class="tag live">Live</span>' + (rec.player_tag ? '<span class="tag me">Player run</span>' : '<span class="tag sim">Connector run</span>') + "</div>" +
+      "<h2>" + esc(SF.name(lv.from)) + " → " + esc(SF.name(lv.to)) + "</h2>" +
+      '<div class="who">' + esc(h.rider || "") + " · " + chip(lv.from) + " → " + chip(lv.to) + "</div>" +
+      '<div class="meta"><span>' + SF.SHIP + " <b>" + esc(lv.car) + "</b></span><span>Season <b>" + esc(rec.season) + "</b></span><span>Run <b>" + esc(rec.run_id) + "</b></span><span>Booking <b>" + esc(rec.hail_id) + "</b></span></div>" +
+      '<div class="note" style="margin-top:8px">The receipt and score appear when the ' + SF.SHIP + " lands. " + esc(shipWords(rec.note)) + "</div>" +
+      '<div class="lv-st" id="lvst"></div></div>' +
+      '<div class="tot"><div class="art">' + SF.SHIP_SVG + "</div></div></div>" +
+    '<div class="sec"><h3>Timeline so far <span class="tag sim">From the run log</span></h3><ol class="tl" id="lvtl"></ol><p class="note" style="margin:8px 0 0">Pick an event to jump the playback back there; Live follows the flight again.</p></div>' +
+    '<div class="sec"><h3>Raw log</h3><a class="raw" href="/rides/' + esc(rec.run_id) + '.json">/rides/' + esc(rec.run_id) + '.json</a><p class="note" style="margin:8px 0 0">The run so far (' + esc(rec.format) + "), as JSON.</p></div>" +
+  "</div>";
+}
+// The dispatcher log: each tool call the Grok bot made on this run, in its order, with its own note. Numbers are the tool results'.
+function dlogText(t) {
+  if (t.tool === "check_pad") return "Pad at <b>" + esc(t.place) + "</b>: " + esc(t.berths) + " berths, up to " + esc(t.max_booked) + " booked an hour" + (t.weather ? "; " + esc(t.weather) + ", odds up to " + esc(t.max_odds) : "") + ".";
+  if (t.tool === "space_weather") return "Space weather at <b>" + esc(t.place) + "</b>: flare odds up to " + esc(t.max_flare_odds) + ".";
+  if (t.tool === "dispatch") return t.problems ? "Dispatch refused: " + esc(t.problems.join("; ")) : "Dispatched <b>" + esc(t.car) + "</b> on " + t.route.map(function (r) { return "<code>" + esc(r) + "</code>"; }).join(" + ") + " · fare " + money(t.fare_usd) + " · arrival quoted " + esc(t.arrival) + " · " + esc(t.status) + ".";
+  if (t.tool === "decide") return "Checkpoint " + esc(t.checkpoint) + " (" + esc(String(t.kind).replace("_", " ")) + ", " + esc(t.checkpoint_at) + "): chose <b>" + esc(SF.decText(t.decision)) + "</b> · " + esc(t.status) + ".";
+  if (t.leg_id) return "Leg <code>" + esc(t.leg_id) + "</code> " + esc(legKind(t.kind)) + ", " + esc(SF.name(t.from)) + " → " + esc(SF.name(t.to)) + ", departs " + esc(t.depart) + ", arrives " + esc(t.arrive) + " · " + kwh(t.kwh) + " · " + money(t.fare_usd) + " · re-fly " + esc(t.gate) + ".";
+  return "";
+}
+function renderDlog() {
+  var tr = RIDE.trail || [];
+  $("#dlogsec").hidden = !tr.length;
+  $("#dlog").innerHTML = tr.map(function (t) {
+    return '<li><div class="tm">' + esc(t.sky) + ' UTC<br><span class="sm">' + esc(new Date(t.at_ms).toLocaleTimeString()) + " your time</span></div><div><code>" + esc(t.tool) + "</code> " +
+      (t.error ? '<span class="er">' + esc(t.error) + "</span>" : dlogText(t)) + (t.note ? "<q>" + esc(t.note) + "</q>" : "") + "</div></li>";
+  }).join("");
+}
+function debrief() {
   var r = RIDE, rec = r.record, sc = rec.score, lg = rec.log, h = hailOf(lg.hail) || {}, P = RS.pl;
   var parts = sc.parts.map(function (p) {
     var f = p.got / p.max, col = f >= 0.999 ? "var(--ok)" : f >= 0.5 ? "var(--sun)" : "var(--bad)";
@@ -1037,7 +1208,7 @@ function debrief(i) {
     var what = s.board.map(function (b) { return "booking " + esc(b.id) + " boards"; }).concat(s.alight.map(function (b) { return "booking " + esc(b.id) + " gets off"; })).join(", ") || (k === 0 ? "parked here, cabin empty" : "no one boards or gets off");
     return '<li><span class="wp">' + k + "</span><span>" + placeH(s.at) + " \u00B7 " + what + '</span><span class="m">' + esc(k === 0 ? "leaves " + s.leave : "arrives " + s.arrive) + "</span></li>";
   }).join("");
-  var evs = RS.rp.events.map(function (e, k) { return '<li><button type="button" class="k-' + e.kind + '" data-ev="' + k + '"><span class="tm">' + iso(e.jd) + "</span><b>" + W(e.title) + '</b><span class="tx">' + W(e.text) + "</span></button></li>"; }).join("");
+  var evs = eventsHtml(RS.rp.events.length);
   return '<div class="sheet2">' +
     '<div class="dh"><div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="caps">Flight receipt</span><span class="tag sim">Simulated</span>' + (rec.player_tag ? '<span class="tag me">Player run</span>' : '<span class="tag sim">Connector run</span>') + '</div>' +
       "<h2>" + esc(SF.name(lg.from)) + " \u2192 " + esc(SF.name(lg.to)) + "</h2>" +
@@ -1085,22 +1256,66 @@ function start() {
   initGL(); bindRide();
   if (window.ResizeObserver) new ResizeObserver(onResize).observe($("#rstage")); else addEventListener("resize", onResize);
   document.addEventListener("visibilitychange", function () { if (document.hidden) glStop(); else glStart(); });
-  loadRide(0);
+  loadRide(false);
   if (GL) attachCanvas($("#rhost"));
   glStart();
   $("#loading").remove();
+  if (RIDE.live) POLL = setInterval(poll, 4000);
+}
+function getJson(path) { return fetch(path, { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }); }
+// The page's ride: the record, the drawn arcs and checked legs, the dispatcher log, and live while the playback has not landed.
+function rideOf(rec, fl) {
+  var lv = rec.live, live = lv && (lv.lands_at_ms == null || wallNow() < lv.lands_at_ms) ? lv : null;
+  return { record: rec, arcs: fl.arcs, legs: fl.legs, trail: rec.trail || [], live: live,
+    lg: live ? { hail: rec.hail_id, from: live.from, to: live.to, flown: live.flown } : rec.log };
+}
+function sig(rec) {
+  var lv = rec.live || {}, tr = lv.track || [], last = tr[tr.length - 1] || [];
+  return [tr.length, last[0], last[1], (lv.flown || []).length, (lv.planned || []).length, lv.hold ? lv.hold.n : 0, lv.lands_at_ms,
+    (lv.checkpoints || []).filter(function (c) { return c.decision; }).length, (rec.trail || []).length].join();
+}
+// Poll while in the air. A new track point, leg, decision or log entry rebuilds the scene in place; landing swaps in the receipt.
+var POLL = 0, LANDING = false;
+function poll() {
+  if (!RIDE.live || LANDING || document.hidden) return;
+  getJson("/rides/" + encodeURIComponent(RUN) + ".json").then(function (rec) {
+    if (!RIDE.live || LANDING || !rec.live) return;
+    CLOCK = rec.live.now_ms - Date.now();
+    var s = sig(rec), old = RIDE.live;
+    if (s === RIDE.sig) return;
+    var again = rec.live.flown.length !== old.flown.length || rec.live.planned.length !== old.planned.length;
+    return (again ? getJson("/flight/" + encodeURIComponent(RUN) + ".json") : Promise.resolve(FL)).then(function (fl) {
+      var nr = rideOf(rec, fl);
+      if (!nr.live) return land();
+      FL = fl; RIDE = nr; RIDE.sig = s;
+      loadRide(true);
+    });
+  }).catch(function (e) { console.warn("poll", e); });
+}
+// At landing the page becomes the normal replay: the full record with its score, parked at the end. A failed fetch retries in 5 s.
+function land() {
+  if (LANDING) return;
+  LANDING = true; clearInterval(POLL);
+  Promise.all([getJson("/rides/" + encodeURIComponent(RUN) + ".json"), getJson("/flight/" + encodeURIComponent(RUN) + ".json")]).then(function (v) {
+    var rec = v[0];
+    if (!rec.score || !rec.log) throw new Error("no score yet");
+    FL = v[1]; RIDE = rideOf(rec, FL); RIDE.live = null; RIDE.lg = rec.log;
+    loadRide(true);
+    RS.cur = RS.rp.end; RS.playing = false; RS.scrubbed = true; playIcon();
+  }).catch(function (e) { console.warn("land", e); setTimeout(function () { LANDING = false; }, 5000); });
 }
 var raw = '<a href="/rides/' + esc(RUN) + '.json">/rides/' + esc(RUN) + ".json</a>";
 if (!window.SOLE) failMsg("The engine did not load, so the replay can't run. Reload to try again. The run log is at " + raw + ".");
 else {
   SF.init(window.SOLE);
-  fetch("/rides/" + encodeURIComponent(RUN) + ".json").then(function (r) {
-    if (r.status === 404) throw { shown: "No arrived flight with this run id yet. Flights appear here once they have arrived. <a href=\"/\">Back to the sky</a>" };
+  fetch("/rides/" + encodeURIComponent(RUN) + ".json", { cache: "no-store" }).then(function (r) {
+    if (r.status === 404) throw { shown: "No flight with this run id yet. A flight appears here once it is dispatched. <a href=\"/\">Back to the sky</a>" };
     if (!r.ok) throw new Error("HTTP " + r.status);
     return r.json();
   }).then(function (rec) {
-    if (!rec.log || !rec.log.flown || !rec.log.flown.length) throw { shown: "This run log has no flown legs to replay. It is at " + raw + "." };
-    RIDE = { record: rec, arcs: FL.arcs, legs: FL.legs };
+    if (rec.live) CLOCK = rec.live.now_ms - Date.now();
+    RIDE = rideOf(rec, FL); RIDE.sig = sig(rec);
+    if (!RIDE.live && (!rec.log || !rec.log.flown || !rec.log.flown.length)) throw { shown: "This run has no flown legs to replay yet. It is at " + raw + "." };
     return loadThree();
   }).then(start).catch(function (e) {
     if (e && e.shown) return failMsg(e.shown);
