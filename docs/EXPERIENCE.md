@@ -122,6 +122,19 @@ All three use the same data (real engine positions at sky time, `sample-data.js`
 - **Debrief:** each booking gets a row (pickup, on time, kept promise, fare), next to the ship's parts (energy vs par, every leg checked, planning economy).
 - **Placeholders:** seats per Starseeker, party size and bookings per flight are chipped "Simulated · placeholder, not set yet" until Alvin sets them: 4 seats, parties of 1 to 3, up to 3 bookings.
 
+**Ops console studies (Alvin's reference, `design/refs/ops-console-reference.webp`).** Two mockups take the reference's command-console layout and keep every part truthful:
+- **Layout:**
+  - Left: flights in the air, as labelled samples, since `/live.json` isn't built.
+  - Centre: the map.
+  - Right: the Starseeker fleet from the engine.
+- **Quick actions:** "Your agent's tools" (real MCP tool names with an "ask your agent" prompt), because the site never dispatches.
+- **Other panels:** system alerts from the engine's simulated hazards, and a sample dispatcher feed.
+- **Dropped from the reference:** stardate, crew and supply bars, and invented places.
+
+The two mockups:
+- **E. Ops, schematic** (`design/mockups/e-ops-schematic.html`, https://claude.ai/artifact/YLWmuFAQFRtLgzt7ZKhjKd): a 2D network map. Bearings come from real positions; distances are not to scale.
+- **F. Ops, 3D** (`design/mockups/f-ops-3d.html`, https://claude.ai/artifact/HrsA3dazbDh3eL12sHG8rQ): a three.js solar system at real positions with log-compressed distances.
+
 Each artifact is published with `engine.js` (a copy of `world/engine/sol-page.js`), `sample-data.js` and `sky-core.js` next to it.
 
 Run locally: open the HTML files from `design/mockups/` (they load the engine from `../../world/engine/sol-page.js` when `engine.js` is not next to them). Rebuild the sample flights with `node design/mockups/make-data.mjs` after `node connector/build.mjs`.

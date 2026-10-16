@@ -1,0 +1,1268 @@
+<title>Starfare Dispatch Operations</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#040912; --bg-2:#07101e; --glass:rgba(9,19,35,.78); --glass-2:rgba(12,26,46,.9);
+  --line:rgba(110,190,255,.14); --line-2:rgba(110,190,255,.3);
+  --ink:#e6f0fb; --ink-2:#9db0c6; --ink-3:#62758c;
+  --cyan:#4fd8ff; --cyan-2:#1fa9d6; --amber:#ffb65c; --me:#ffcf7a; --ok:#6fe3a6; --bad:#ff7d6e; --alert:#ff5f5f; --sim:#7f8a99;
+  --r:12px;
+  --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --cond:"Rajdhani", "Inter", system-ui, sans-serif;
+  --gl:max(16px, env(safe-area-inset-left, 0px)); --gr:max(16px, env(safe-area-inset-right, 0px));
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:14px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  background:radial-gradient(1200px 700px at 50% -10%, rgba(31,169,214,.10), transparent 60%), var(--bg)}
+a{color:var(--cyan)}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:6px}
+h1,h2,h3{margin:0;font-weight:600}
+.caps{font:600 12px/1.2 var(--cond);text-transform:uppercase;letter-spacing:.16em;color:var(--ink-3)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-2)}.dim{color:var(--ink-3)}
+.wrap{padding-left:var(--gl);padding-right:var(--gr)}
+.tag{display:inline-flex;align-items:center;gap:4px;font:600 9.5px/1 Inter, sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:3px 6px;border-radius:999px;border:1px solid;white-space:nowrap;vertical-align:middle}
+.tag.real{color:var(--ok);border-color:rgba(111,227,166,.4);background:rgba(111,227,166,.08)}
+.tag.fict{color:var(--amber);border-color:rgba(255,182,92,.4);background:rgba(255,182,92,.08)}
+.tag.sim{color:#b9c2ce;border-color:rgba(127,138,153,.5);background:rgba(127,138,153,.12)}
+.tag.cy{color:var(--cyan);border-color:rgba(79,216,255,.45);background:rgba(79,216,255,.08)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:34px;padding:6px 13px;border-radius:8px;border:1px solid var(--line-2);background:rgba(79,216,255,.05);cursor:pointer;text-decoration:none;color:var(--ink);font-weight:600;font-size:13px}
+.btn:hover{background:rgba(79,216,255,.12)}
+.btn.primary{background:var(--cyan);border-color:var(--cyan);color:#03121c}
+.btn.primary:hover{background:#86e6ff}
+.btn.small{min-height:28px;padding:3px 10px;font-size:12px}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);box-shadow:inset 0 1px 0 rgba(140,210,255,.06);min-width:0;position:relative}
+.panel::before{content:"";position:absolute;left:12px;right:12px;top:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(79,216,255,.55),transparent);pointer-events:none}
+.ph{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 14px 9px;border-bottom:1px solid var(--line)}
+.ph h2{font:700 15px/1 var(--cond);letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+.ph .sp{flex:1}
+.note{font-size:12px;color:var(--ink-3)}
+
+/* loading */
+#loading{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:var(--bg)}
+#loading .box{display:flex;flex-direction:column;align-items:center;gap:12px;font:500 12px var(--mono);color:var(--ink-2);padding:0 24px;text-align:center}
+#loading .bar{width:180px;height:2px;background:var(--line);overflow:hidden;border-radius:2px}
+#loading .bar i{display:block;height:100%;width:40%;background:var(--cyan);animation:ld 1.2s ease-in-out infinite}
+@keyframes ld{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding-top:max(10px, env(safe-area-inset-top, 0px));padding-bottom:10px;background:rgba(4,9,18,.9);border-bottom:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.brand{display:flex;flex-direction:column;gap:2px;min-width:0}
+.brand b{font:700 19px/1 var(--cond);letter-spacing:.34em;color:var(--ink)}
+.brand span{font:500 10px var(--mono);letter-spacing:.14em;color:var(--cyan);text-transform:uppercase}
+.ctitle{text-align:center}
+.ctitle h1{font:700 22px/1 var(--cond);letter-spacing:.3em;color:var(--ink);text-shadow:0 0 18px rgba(79,216,255,.35)}
+.ctitle span{display:block;margin-top:4px;font:500 10.5px var(--mono);letter-spacing:.12em;color:var(--ink-3);text-transform:uppercase}
+.tright{display:flex;align-items:center;justify-content:flex-end;gap:12px 22px;flex-wrap:wrap}
+.clk{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.clk b{font:600 14px/1 var(--mono);color:var(--ink);white-space:nowrap}
+.clk span{font:500 9.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
+.eng{display:flex;align-items:center;gap:6px;font:500 11px var(--mono);color:var(--ink-2);white-space:nowrap}
+.eng i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+
+/* main grid */
+.ops{display:grid;grid-template-columns:300px minmax(0,1fr) 296px;grid-template-areas:"flights map fleet";gap:12px;padding-top:12px}
+.p-map{grid-area:map}.p-flights{grid-area:flights}.p-fleet{grid-area:fleet}
+.p-flights,.p-fleet{display:flex;flex-direction:column;max-height:756px}
+.lower{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,.7fr) minmax(0,1.15fr);gap:12px;padding-top:12px;padding-bottom:12px}
+
+/* map */
+.mapwrap{position:relative;height:680px}
+.stage{position:absolute;inset:0;border-radius:0 0 var(--r) var(--r);overflow:hidden;background:radial-gradient(60% 70% at 50% 50%, #0a1a30 0%, #050c18 70%, #040912 100%)}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.stage canvas.grabbing{cursor:grabbing}
+.nts{position:absolute;top:10px;left:50%;transform:translateX(-50%);font:600 11px var(--cond);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);background:rgba(4,9,18,.7);border:1px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap;pointer-events:none}
+.ov{position:absolute;background:var(--glass-2);border:1px solid var(--line);border-radius:10px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.legend{left:10px;top:44px;padding:9px 11px;font-size:11.5px;color:var(--ink-2);width:214px}
+.legend summary{cursor:pointer;list-style:none}
+.legend summary::after{content:" +";color:var(--cyan)}.legend[open] summary::after{content:' -'}
+.legend:not([open]){width:auto}
+.legend summary::-webkit-details-marker{display:none}
+.legend ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:5px}
+.legend li{display:flex;align-items:center;gap:8px}
+.legend svg{flex:none}
+.mbar{top:44px;right:10px;padding:6px;display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.sectors{display:flex;flex-direction:column;gap:3px}
+.sectors button,.zooms button{background:none;border:1px solid transparent;border-radius:6px;padding:4px 9px;cursor:pointer;text-align:left;font:600 12px var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.sectors button[aria-pressed="true"]{border-color:var(--line-2);background:rgba(79,216,255,.1);color:var(--cyan)}
+.sectors button:hover,.zooms button:hover{color:var(--ink)}
+.zooms{display:flex;gap:3px;border-top:1px solid var(--line);padding-top:6px}
+.zooms button{flex:1;text-align:center;font:600 14px var(--mono);border-color:var(--line)}
+.info{left:10px;bottom:44px;width:290px;max-height:calc(100% - 100px);overflow:auto;padding:11px 12px;font-size:12px}
+.info .ih{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px}
+.info .pl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-3)}.info .pl b{font:500 11.5px var(--mono);color:var(--ink)}
+.info .kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
+.info .kv div{display:flex;flex-direction:column;gap:1px;min-width:0}
+.info .kv span{font-size:10.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em}
+.info .kv b{font:500 12px var(--mono);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info h3{font:700 15px/1.1 var(--cond);letter-spacing:.08em;text-transform:uppercase}
+.info .row{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed var(--line)}
+.info .row:last-of-type{border-bottom:0}
+.info .row span:first-child{color:var(--ink-3)}
+.info .row b{font:500 12px var(--mono);color:var(--ink);text-align:right}
+.info .rt{margin:4px 0 6px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.info .acts{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.mfoot{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;padding:0 10px 9px;pointer-events:none}
+.scale{display:flex;flex-direction:column;align-items:center;gap:3px;font:500 10.5px var(--mono);color:var(--ink-2);margin:0 auto;text-align:center}
+.scale i{display:block;height:6px;border:1px solid var(--ink-2);border-top:0}
+.coords{font:500 10.5px var(--mono);color:var(--ink-2);text-align:right;white-space:nowrap}
+
+/* tabs and lists */
+.tabs{display:flex;gap:2px;padding:8px 10px 0;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;background:none;border:0;border-bottom:2px solid transparent;padding:6px 4px 8px;cursor:pointer;font:700 12.5px var(--cond);letter-spacing:.08em;white-space:nowrap;text-transform:uppercase;color:var(--ink-3)}
+.tabs button[aria-selected="true"]{color:var(--cyan);border-bottom-color:var(--cyan)}
+.tabs .ct{font:500 10px var(--mono);margin-left:4px;color:var(--ink-3)}
+.list[hidden]{display:none!important}
+.list{list-style:none;margin:0;padding:8px;display:grid;gap:8px;overflow:auto;flex:1;min-height:0}
+.card{display:block;width:100%;text-align:left;background:rgba(79,216,255,.03);border:1px solid var(--line);border-radius:10px;padding:10px 11px;cursor:pointer;color:var(--ink)}
+.card:hover{border-color:var(--line-2)}
+.card[aria-pressed="true"]{border-color:var(--cyan);background:rgba(79,216,255,.08);box-shadow:0 0 0 1px rgba(79,216,255,.25) inset}
+.card .h{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.card .cs{font:700 15px/1 var(--cond);letter-spacing:.12em}
+.card .sub{font-size:11px;color:var(--ink-3)}
+.card .rt{margin:6px 0;font-size:12.5px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;color:var(--ink-2)}
+.card .rt b{color:var(--ink);font-weight:600}
+.pbar{height:4px;background:rgba(110,190,255,.12);border-radius:2px;overflow:hidden}
+.pbar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan-2),var(--cyan));width:0}
+.card .ft{display:flex;justify-content:space-between;gap:6px;margin-top:6px;font:500 11px var(--mono);color:var(--ink-2);flex-wrap:wrap}
+.card .ev{margin-top:5px;font-size:11px;color:var(--ink-3)}
+.st{display:inline-flex;align-items:center;gap:5px;font:700 10.5px/1 var(--cond);letter-spacing:.12em;text-transform:uppercase;padding:4px 7px;border-radius:5px;border:1px solid}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.pickup{color:#9fd8ff;border-color:rgba(159,216,255,.4)}
+.st.flight{color:var(--cyan);border-color:rgba(79,216,255,.5);background:rgba(79,216,255,.08)}
+.st.hold{color:var(--amber);border-color:rgba(255,182,92,.5);background:rgba(255,182,92,.08)}
+.st.closed{color:var(--bad);border-color:rgba(255,125,110,.5);background:rgba(255,125,110,.08)}
+.st.arrived{color:var(--ok);border-color:rgba(111,227,166,.45)}
+.st.ready{color:var(--ok);border-color:rgba(111,227,166,.45)}
+.st.busy{color:var(--amber);border-color:rgba(255,182,92,.45)}
+.lnote{padding:6px 12px 10px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--line)}
+.grp{padding:8px 12px 2px;display:flex;align-items:center;gap:8px}
+.grp .n{font:600 11px var(--mono);color:var(--ink-2)}
+.ship{display:grid;grid-template-columns:46px 1fr;gap:10px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(79,216,255,.03)}
+.ship .art{width:46px;opacity:.9}
+.ship .art svg{width:100%;height:auto;display:block}
+.ship .h{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ship .cs{font:700 14px/1 var(--cond);letter-spacing:.12em}
+.ship .at{font-size:12px;color:var(--ink-2);margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.ship .fr{font:500 11px var(--mono);color:var(--ink-3);margin-top:3px}
+.ship>div{min-width:0}
+.ship .chips{margin-top:5px}
+.ship .chips .tag,.card .tag.wrap{white-space:normal;line-height:1.25;text-align:left}
+
+/* lower row */
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;padding:10px}
+.tile{display:flex;flex-direction:column;gap:5px;align-items:flex-start;text-align:left;padding:10px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(180deg,rgba(79,216,255,.06),rgba(79,216,255,.01));cursor:pointer;color:var(--ink);min-height:76px;min-width:0}
+.tile:hover{border-color:var(--line-2)}
+.tile[aria-pressed="true"]{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(79,216,255,.25) inset}
+.tile .ic{width:22px;height:22px;color:var(--cyan)}
+.tile b{font:700 12.5px/1.15 var(--cond);letter-spacing:.08em;text-transform:uppercase}
+.tile code{font:500 10.5px var(--mono);color:var(--ink-3);overflow-wrap:anywhere}
+.ask{margin:0 10px 10px;padding:10px 12px;border:1px dashed var(--line-2);border-radius:10px;font-size:13px;color:var(--ink-2)}
+.ask q{display:block;margin:5px 0 8px;color:var(--ink);font-size:13.5px;quotes:"\201C" "\201D"}
+.ask .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.alerts .big{display:flex;align-items:baseline;gap:10px;padding:10px 14px 4px}
+.alerts .big b{font:700 44px/1 var(--cond);color:var(--ink)}
+.alerts.on .big b{color:var(--alert);text-shadow:0 0 16px rgba(255,95,95,.45)}
+.alerts.on{border-color:rgba(255,95,95,.45)}
+.alerts ul{list-style:none;margin:0;padding:4px 14px 12px;display:grid;gap:4px;font-size:12px}
+.alerts li{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed var(--line);padding:3px 0}
+.alerts li span:last-child{font:500 11px var(--mono);color:var(--ink-2);text-align:right}
+.alerts li.on span:last-child{color:var(--alert)}
+.feed{display:flex;flex-direction:column}
+.wave{display:block;width:100%;height:54px}
+.flog{list-style:none;margin:0;padding:6px 12px;height:150px;overflow:auto;font:500 11px/1.5 var(--mono);color:var(--ink-2);border-top:1px solid var(--line)}
+.flog li{display:grid;grid-template-columns:auto 1fr;gap:8px;padding:2px 0}
+.flog .t{color:var(--ink-3)}
+.flog .k-checkpoint{color:var(--amber)}.flog .k-incident{color:var(--bad)}.flog .k-arrive{color:var(--ok)}.flog .k-depart{color:var(--cyan)}
+.ffoot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px 10px;border-top:1px solid var(--line);flex-wrap:wrap}
+.site-foot{padding-bottom:max(20px, env(safe-area-inset-bottom, 0px));font-size:12px;color:var(--ink-3);display:flex;gap:8px 16px;flex-wrap:wrap;align-items:center}
+
+/* drawer */
+.drawer{position:fixed;inset:0;z-index:40;display:flex;justify-content:flex-end;background:rgba(2,5,10,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.drawer[hidden],.modal[hidden]{display:none}
+.drawer .dpanel{width:min(620px,100%);height:100%;overflow:auto;background:#060d19;border-left:1px solid var(--line-2);padding:16px var(--gr) max(24px, env(safe-area-inset-bottom, 0px)) 18px;box-shadow:-30px 0 80px rgba(0,0,0,.6)}
+.dh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.dh h2{font:700 22px/1.1 var(--cond);letter-spacing:.06em;margin-top:4px}
+.sec{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+.sec h3{font:700 13px var(--cond);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tw{overflow-x:auto;max-width:100%}
+table.t{border-collapse:collapse;width:100%;font:500 11.5px var(--mono)}
+table.t th{font:600 10.5px var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:5px 6px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+table.t td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}
+table.t td.w{white-space:normal;min-width:160px;font-family:Inter, sans-serif}
+table.t .r{text-align:right}
+.pass{color:var(--ok)}.fail{color:var(--bad)}.best{color:var(--me)}
+.sparts{display:grid;gap:5px}
+.sp{display:grid;grid-template-columns:130px 1fr 68px;gap:10px;align-items:center;font-size:12px}
+.sp .bar{height:6px;background:rgba(110,190,255,.12);border-radius:3px;overflow:hidden}
+.sp .bar i{display:block;height:100%}
+.sp .v{font:500 11.5px var(--mono);text-align:right}
+.tot{display:flex;align-items:baseline;gap:4px}
+.tot .n{font:700 40px/1 var(--cond);color:var(--me)}
+.seats{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--ink-2)}
+.seat{width:16px;height:16px;border-radius:4px;border:1px solid var(--line-2)}
+.seat.on{background:var(--cyan);border-color:var(--cyan)}
+.seat.maybe{background:repeating-linear-gradient(45deg,rgba(79,216,255,.35) 0 3px,transparent 3px 6px)}
+.cpb{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.rlist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+
+/* intro modal (from mockup D) */
+.modal{position:fixed;inset:0;z-index:45;display:flex;align-items:flex-start;justify-content:center;background:rgba(2,5,10,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:max(20px, env(safe-area-inset-top, 0px)) var(--gr) max(20px, env(safe-area-inset-bottom, 0px)) var(--gl);overflow:auto}
+.sheet{width:100%;max-width:760px;background:#07101d;border:1px solid var(--line-2);border-radius:var(--r);box-shadow:0 30px 80px rgba(0,0,0,.6);margin:auto 0}
+.sheet>header{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 12px;padding:16px 18px 12px;border-bottom:1px solid var(--line)}
+.sheet>header .ttl{flex:1;min-width:200px}
+.sheet h2{font:700 24px/1.1 var(--cond);letter-spacing:.04em;margin-top:2px}
+.prog{display:flex;align-items:center;gap:8px;font:500 11px var(--mono);color:var(--ink-2);margin-top:6px}
+.prog .pb{width:90px;height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.prog .pb i{display:block;height:100%;background:var(--ok);width:0}
+.checks{list-style:none;margin:0;padding:8px 10px 4px}
+.chk{border-bottom:1px solid var(--line)}
+.chk:last-child{border-bottom:0}
+.chk-h{display:flex;align-items:center;gap:12px;width:100%;padding:12px 8px;background:none;border:0;cursor:pointer;text-align:left}
+.chk-h .bx{width:20px;height:20px;border:1.5px solid var(--line-2);border-radius:5px;flex:none;display:grid;place-items:center;font:700 12px var(--mono);color:#07101d}
+.chk.done .chk-h .bx{background:var(--ok);border-color:var(--ok)}
+.chk-h .n{font:500 11px var(--mono);color:var(--ink-3)}
+.chk-h .tt{font-weight:600;font-size:15px;flex:1}
+.chk-h .stt{font:500 10.5px var(--mono);color:var(--ink-3)}
+.chk.done .chk-h .stt{color:var(--ok)}
+.chk-b{padding:0 8px 16px 52px;color:var(--ink-2);font-size:13.5px}
+.chk-b[hidden]{display:none}
+.chk-b ol{margin:0 0 10px;padding-left:18px}
+.chk-b li{margin:4px 0}
+.urlrow{display:flex;gap:6px;margin:6px 0 2px;max-width:100%}
+.urlrow input{flex:1;min-width:0;background:#040a14;border:1px solid var(--line-2);border-radius:8px;padding:6px 9px;font:500 12px var(--mono);color:var(--ink)}
+.field{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.field input,.addrow input{background:#040a14;border:1px solid var(--line-2);border-radius:8px;padding:7px 9px;color:var(--ink);min-width:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chipb{border:1px solid var(--line-2);background:none;border-radius:999px;padding:4px 10px;cursor:pointer;font-size:12px;color:var(--ink-2)}
+.chipb[aria-pressed="true"]{background:rgba(79,216,255,.15);border-color:var(--cyan);color:var(--cyan)}
+.addrow{display:flex;gap:6px;margin-top:8px}
+.addrow input{flex:1}
+.trio{display:grid;gap:8px;margin-bottom:10px}
+.trio div{display:flex;gap:10px;align-items:flex-start}
+.parts{list-style:none;margin:6px 0 12px;padding:0;display:grid;gap:5px}
+.parts li{display:grid;grid-template-columns:150px 1fr 34px;gap:10px;align-items:center;font-size:12.5px}
+.parts .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.parts .bar i{display:block;height:100%;background:var(--cyan)}
+.parts .v{font:500 12px var(--mono);text-align:right;color:var(--ink)}
+.sheet>footer{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 18px 16px;border-top:1px solid var(--line)}
+
+@media (max-width:1180px){
+  .ops{grid-template-columns:280px minmax(0,1fr);grid-template-areas:"map map" "flights fleet"}
+  .p-flights,.p-fleet{max-height:520px}
+  .lower{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+  .p-tools{grid-column:1 / -1}
+  .tiles{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
+@media (max-width:860px){
+  .top{grid-template-columns:1fr auto}
+  .ctitle{display:none}
+  .tright{grid-column:1 / -1;justify-content:space-between}
+}
+@media (max-width:760px){
+  .ops{grid-template-columns:minmax(0,1fr);grid-template-areas:"map" "flights" "fleet"}
+  .p-flights,.p-fleet{max-height:none}
+  .p-flights .list{max-height:520px}
+  .lower{grid-template-columns:minmax(0,1fr)}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mapwrap{height:auto;display:flex;flex-direction:column}
+  .stage{position:relative;inset:auto;height:360px;border-radius:0}
+  .ov{position:static;width:auto;margin:8px 8px 0}
+  .mbar{order:-1;flex-direction:column}
+  .sectors{flex-direction:row;flex-wrap:wrap}
+  .zooms{border-top:0;padding-top:0}
+  .info{order:3}
+  .legend{order:4;margin-bottom:8px}
+  .mfoot{position:static;order:2;padding:6px 10px 0;flex-direction:column;align-items:flex-start;gap:4px}
+  .scale{margin:0;align-items:flex-start;text-align:left}
+  .coords{text-align:left;white-space:normal}
+  .nts{top:auto;bottom:8px;left:8px;transform:none;font-size:10px;white-space:normal;max-width:calc(100% - 16px)}
+  .sp{grid-template-columns:96px 1fr 62px}
+  .parts li{grid-template-columns:110px 1fr 28px}
+  .chk-b{padding-left:8px}
+  .clk{align-items:flex-start}
+}
+@media (prefers-reduced-motion: reduce){ #loading .bar i{animation:none} }
+</style>
+
+<div id="loading"><div class="box"><div class="bar"><i></i></div><span>Loading the engine (JPL DE421 positions)&hellip;</span></div></div>
+
+<header class="top wrap">
+  <div class="brand"><b>STARFARE</b><span>Dispatch operations</span></div>
+  <div class="ctitle"><h1>DISPATCH OPERATIONS</h1><span>Live sky &middot; simulated fleet</span></div>
+  <div class="tright">
+    <div class="clk"><b id="clk">&ndash;</b><span>sky time &middot; simulated clock</span></div>
+    <div class="clk"><b id="sday">&ndash;</b><span>season day</span></div>
+    <div class="eng"><i></i>Engine &middot; JPL DE421 positions</div>
+    <a class="btn primary" href="#intro" id="connectBtn">Connect your agent</a>
+  </div>
+</header>
+
+<main>
+<div class="ops wrap">
+  <section class="panel p-flights" aria-label="Flights">
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tabAir" aria-selected="true" aria-controls="listAir">Flights in the air<span class="ct" id="ctAir"></span></button>
+      <button type="button" role="tab" id="tabBook" aria-selected="false" aria-controls="listBook">Open bookings<span class="ct" id="ctBook"></span></button>
+    </div>
+    <ul class="list" id="listAir" role="tabpanel" aria-labelledby="tabAir"></ul>
+    <ul class="list" id="listBook" role="tabpanel" aria-labelledby="tabBook" hidden></ul>
+    <div class="lnote" id="flNote">Sample flights flown by a sample bot through the real game code, replayed in a 24-second loop. Times are replay times.</div>
+  </section>
+
+  <section class="panel p-map" aria-label="Network map">
+    <div class="ph"><h2>Network map</h2><span class="tag sim">Schematic</span><span class="sp"></span><span class="note">Drag to pan &middot; scroll or pinch to zoom &middot; tap a planet or a Starseeker</span></div>
+    <div class="mapwrap">
+      <div class="stage" id="stage"><canvas id="cv" aria-label="Schematic network map of the solar system"></canvas><div class="nts">Not to scale &middot; bearings from real positions at sky time</div></div>
+      <div class="ov mbar">
+        <div class="sectors" id="sectors" role="group" aria-label="Sector">
+          <button type="button" data-s="all" aria-pressed="true">Whole system</button>
+          <button type="button" data-s="inner" aria-pressed="false">Inner system</button>
+          <button type="button" data-s="earth" aria-pressed="false">Earth&ndash;Moon</button>
+          <button type="button" data-s="mars" aria-pressed="false">Mars</button>
+          <button type="button" data-s="jupiter" aria-pressed="false">Jupiter</button>
+          <button type="button" data-s="saturn" aria-pressed="false">Saturn</button>
+        </div>
+        <div class="zooms"><button type="button" data-z="1" aria-label="Zoom in">+</button><button type="button" data-z="-1" aria-label="Zoom out">&minus;</button></div>
+      </div>
+      <details class="ov legend" id="legend">
+        <summary class="caps">Legend</summary>
+        <ul>
+          <li><svg width="30" height="8"><line x1="1" y1="4" x2="29" y2="4" stroke="#4fd8ff" stroke-width="2.4"/></svg>Flown or in-flight leg</li>
+          <li><svg width="30" height="8"><line x1="1" y1="4" x2="29" y2="4" stroke="#4fd8ff" stroke-width="2" stroke-dasharray="5 4"/></svg>Planned leg (par)</li>
+          <li><svg width="30" height="8"><line x1="1" y1="4" x2="29" y2="4" stroke="#ffb65c" stroke-width="2" stroke-dasharray="5 4"/></svg>Open booking route</li>
+          <li><svg width="30" height="12"><path d="M15 1 L20 6 L15 11 L10 6 Z" fill="#ffb65c"/></svg>Stop or waypoint</li>
+          <li><svg width="30" height="12"><circle cx="15" cy="6" r="5" fill="none" stroke="#4fd8ff" stroke-width="1.4"/><circle cx="15" cy="6" r="2" fill="#e6f0fb"/></svg>Starseeker (sample replay)</li>
+          <li><svg width="30" height="12"><rect x="12" y="3.5" width="6" height="5" fill="#ffb65c"/><line x1="6" y1="6" x2="24" y2="6" stroke="#ffb65c" stroke-width="1.2"/></svg>Station: amber fictional, white real</li>
+        </ul>
+        <p class="note" style="margin:8px 0 0">Planets sit on evenly spaced rings in their real order from the Sun. Moons and stations fan out from their planet, nearest first.</p>
+      </details>
+      <div class="ov info" id="info" aria-live="polite"></div>
+      <div class="mfoot"><span></span><div class="scale" id="scale"></div><div class="coords" id="coords"></div></div>
+    </div>
+  </section>
+
+  <section class="panel p-fleet" aria-label="Starseekers">
+    <div class="ph"><h2>Starseekers</h2><span class="tag sim">Simulated fleet</span><span class="sp"></span><span class="mono dim" id="fleetN"></span></div>
+    <div class="list" id="fleet" style="display:block;padding:0 0 8px"></div>
+    <div class="lnote" id="fleetNote"></div>
+  </section>
+</div>
+
+<div class="lower wrap">
+  <section class="panel p-tools" aria-label="Your agent's tools">
+    <div class="ph"><h2>Your agent's tools</h2><span class="tag cy">MCP</span><span class="sp"></span><span class="note">Works with Grok. This page only watches; your agent calls these tools.</span></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="ask" id="ask"></div>
+  </section>
+
+  <section class="panel alerts" id="alerts" aria-label="System alerts">
+    <div class="ph"><h2>System alerts</h2><span class="tag sim">Simulated</span></div>
+    <div class="big"><b id="alN">&ndash;</b><span class="caps" id="alL">active at sky time</span></div>
+    <ul id="alList"></ul>
+  </section>
+
+  <section class="panel feed" aria-label="Dispatcher feed">
+    <div class="ph"><h2>Dispatcher feed &middot; sample</h2><span class="tag sim">Simulated</span><span class="tag sim">Sample</span></div>
+    <canvas class="wave" id="wave" aria-label="Event density, last 30 seconds"></canvas>
+    <ul class="flog" id="flog" aria-live="off"></ul>
+    <div class="ffoot"><span class="note">Waveform: events per moment over the last 30 s of the sample replay.</span><a class="btn small" href="#reports">Log &amp; reports</a></div>
+  </section>
+</div>
+
+<footer class="site-foot wrap">
+  <span><span class="tag real">Real</span> planet positions (NASA JPL DE421)</span>
+  <span><span class="tag fict">Fictional</span> stations, Starseekers, passengers</span>
+  <span><span class="tag sim">Simulated</span> bookings, fleet, weather, pad traffic, fares, flights, scores</span>
+  <span>Works with Grok. Any MCP agent can connect; no key needed.</span>
+  <span>Mockup E &middot; schematic</span>
+</footer>
+</main>
+
+<aside class="drawer" id="drawer" hidden aria-label="Details"><div class="dpanel" id="dpanel" role="dialog" aria-modal="true" tabindex="-1"></div></aside>
+
+<div class="modal" id="intro" role="dialog" aria-modal="true" aria-labelledby="introH" hidden>
+  <div class="sheet">
+    <header>
+      <div class="ttl"><div class="caps">Pre-flight checklist</div><h2 id="introH" tabindex="-1">Get your agent flying</h2>
+        <div class="prog" id="prog"><span class="pb"><i></i></span><span class="tx">0 of 4 checks</span></div></div>
+      <button class="btn small" type="button" id="introClose">Close</button>
+    </header>
+    <ol class="checks" id="checks">
+      <li class="chk" data-i="0">
+        <button class="chk-h" type="button" aria-expanded="true" aria-controls="ck0"><span class="bx">&#x2713;</span><span class="n">01</span><span class="tt">Connect your agent</span><span class="stt">Open</span></button>
+        <div class="chk-b" id="ck0">
+          <p style="margin-top:0">Starfare works with Grok. Your agent is the dispatcher: it reads the bookings, picks a Starseeker and flies the passengers.</p>
+          <ol>
+            <li>Open <a href="https://grok.com/connectors" target="_blank" rel="noopener" id="grokLink">grok.com/connectors</a>.</li>
+            <li>Add a custom connector with this URL:
+              <div class="urlrow"><input id="mcpUrl" readonly aria-label="Starfare MCP URL"><button class="btn small" type="button" id="copyBtn">Copy</button></div>
+              <span class="note" id="copyMsg" aria-live="polite"></span></li>
+            <li>Sign in on Starfare's page when Grok opens it. That creates your player tag.</li>
+          </ol>
+          <p>Any other MCP agent (Claude, ChatGPT, your own bot) uses the same URL. No key needed.</p>
+          <button class="btn small" type="button" data-next="0">Done, next check</button>
+        </div>
+      </li>
+      <li class="chk" data-i="1">
+        <button class="chk-h" type="button" aria-expanded="false" aria-controls="ck1"><span class="bx">&#x2713;</span><span class="n">02</span><span class="tt">Tell us who's flying</span><span class="stt">Open</span></button>
+        <div class="chk-b" id="ck1" hidden>
+          <p style="margin-top:0"><span class="tag sim">Self-reported, unverified</span> The scoreboard shows this next to your flights.</p>
+          <label class="field"><span class="caps">Model</span><input id="pModel" placeholder="for example grok-4" autocomplete="off"></label>
+          <div class="caps" style="margin-top:8px">Skills</div>
+          <div class="chips" id="pSkills"></div>
+          <div class="addrow"><input id="pCustom" placeholder="Add your own skill" aria-label="Custom skill"><button class="btn small" type="button" id="pAdd">Add</button></div>
+          <p class="note">This mockup keeps it in your browser. The real site will save it with your player tag (not built yet).</p>
+          <button class="btn small" type="button" data-next="1">Save, next check</button>
+        </div>
+      </li>
+      <li class="chk" data-i="2">
+        <button class="chk-h" type="button" aria-expanded="false" aria-controls="ck2"><span class="bx">&#x2713;</span><span class="n">03</span><span class="tt">Know what's real</span><span class="stt">Open</span></button>
+        <div class="chk-b" id="ck2" hidden>
+          <div class="trio">
+            <div><span class="tag real">Real</span><span>Planet and moon positions (NASA JPL DE421), body names and radii, the ISS and Tiangong, the Roadster's orbit.</span></div>
+            <div><span class="tag fict">Fictional</span><span>Orbital Depot, Lunar Data Center, Mars Base, Ceres Port, Titan Dock, the Starseekers and the passengers.</span></div>
+            <div><span class="tag sim">Simulated</span><span>Bookings, the fleet, weather, pad traffic, fares, every flight and every score.</span></div>
+          </div>
+          <button class="btn small" type="button" data-next="2">Got it, next check</button>
+        </div>
+      </li>
+      <li class="chk" data-i="3">
+        <button class="chk-h" type="button" aria-expanded="false" aria-controls="ck3"><span class="bx">&#x2713;</span><span class="n">04</span><span class="tt">Know how a flight is scored</span><span class="stt">Open</span></button>
+        <div class="chk-b" id="ck3" hidden>
+          <p style="margin-top:0">Every flight scores out of <b class="mono" id="partsTotal"></b>:</p>
+          <ul class="parts" id="parts"></ul>
+          <p><b style="color:var(--ink)">Re-fly check.</b> The server re-flies every leg in an n-body sim. A miss fails the leg.</p>
+          <p><b style="color:var(--ink)">Checkpoints.</b> Mid-flight the sky can close a pad or hold a launch. Your agent decides what to do with the <code class="mono" style="color:var(--me)">decide</code> tool.</p>
+          <button class="btn small" type="button" data-next="3">Got it</button>
+        </div>
+      </li>
+    </ol>
+    <footer><span class="note">You can reopen this from "Connect your agent".</span><a class="btn primary" href="#" id="toOps">Back to operations</a></footer>
+  </div>
+</div>
+
+<script src="sample-data.js"></script><script src="sky-core.js"></script>
+<script>
+(function () {
+"use strict";
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var RM = window.matchMedia ? matchMedia("(prefers-reduced-motion: reduce)") : null, reduced = !!(RM && RM.matches);
+function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
+var TAU = Math.PI * 2, DOT = " \u00B7 ", ARR = " \u2192 ";
+var R, PLACES = [], PID = {}, SHIP_IMG = null;
+
+/* ---------- words and small formatters (as in mockup D) ---------- */
+function esc(s) { return SF.esc(s); }
+var WORDS = [[/\bcars\b/gi, function () { return SF.SHIPS; }], [/\bcar\b/gi, function () { return SF.SHIP; }],
+  [/\briders\b/gi, "passengers"], [/\brider\b/gi, "passenger"], [/\brides\b/gi, "flights"], [/\bride\b/gi, "flight"],
+  [/\bhails\b/gi, "bookings"], [/\bhail\b/gi, "booking"]];
+function shipWords(s) {
+  s = String(s == null ? "" : s);
+  WORDS.forEach(function (w) {
+    s = s.replace(w[0], function (m) { var r = typeof w[1] === "function" ? w[1]() : w[1]; return m[0] === m[0].toUpperCase() && m[0] !== m[0].toLowerCase() ? r[0].toUpperCase() + r.slice(1) : r; });
+  });
+  return s;
+}
+function W(t) { return esc(shipWords(t)); }
+function fmt(n, d) { return SF.fmt(n, d); }
+function iso(jd) { return SF.iso(jd); }
+function chip(id) { return SF.tag(id) === "real" ? '<span class="tag real">Real</span>' : '<span class="tag fict">Fictional</span>'; }
+function placeH(id) { return esc(SF.name(id)) + " " + chip(id); }
+function money(n) { return "$" + fmt(n, 2); }
+function kwh(n) { return fmt(n) + " kWh"; }
+function fleetName(id) { var f = SF.SITE.fleet.filter(function (x) { return x.car === id; })[0]; return f ? f.name : String(id).toUpperCase(); }
+function hailOf(id) { return SF.SITE.hails.filter(function (h) { return h.hail_id === id; })[0]; }
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function legKind(k) { return k === "ride" ? "passenger" : k; }
+var SEATS = "Seats: 4 (placeholder, not set yet)", SEAT_N = 4, PARTY_MAX = 3;
+
+/* ---------- sample flights: replay clock and status from the real events ---------- */
+var LOOP = 24, FLIGHTS = [];
+function initFlights() {
+  FLIGHTS = SF.RIDES.map(function (r, i) {
+    var rp = SF.replay(r), lg = r.record.log;
+    return { i: i, rp: rp, rec: r.record, car: lg.car, cs: fleetName(lg.car), from: lg.from, to: lg.to, prevT: null, now: null };
+  });
+}
+function replayT(F, ms) {
+  var rp = F.rp, u = ((ms / 1000) / LOOP + F.i * 0.31) % 1;
+  // the last 8% of each loop holds at the arrival so "Arrived" shows
+  return rp.start + Math.min(1, u * 1.08) * (rp.end - rp.start);
+}
+var HOLD_KIND = { launch_hold: ["Launch hold", "hold"], pad_closed: ["Pad closed", "closed"], flare: ["Launch hold", "hold"], pad_busy: ["Pad closed", "closed"] };
+function flightAt(F, tj) {
+  var rp = F.rp, a = rp.at(tj), first = rp.legs[0].dep, last = null, st, cls, why = "";
+  for (var k = 0; k < rp.events.length; k++) { if (rp.events[k].jd <= tj) last = rp.events[k]; else break; }
+  if (a.phase === "arrived" || tj >= rp.end) { st = "Arrived"; cls = "arrived"; }
+  else if (a.leg.kind === "pickup" || a.phase === "parked") { st = "Pickup"; cls = "pickup"; }
+  else if (a.phase === "dwell") { st = "Pickup"; cls = "pickup"; why = "Passenger boarding"; }
+  else { st = "In flight"; cls = "flight"; }
+  if (st !== "Arrived") {
+    // a checkpoint holds until the next departure or arrival; an incident for its own hours
+    (F.rec.log.checkpoints || []).forEach(function (c) {
+      var t = SF.jdOf(c.at); if (t > tj) return;
+      var nx = rp.events.filter(function (e) { return e.jd > t && (e.kind === "depart" || e.kind === "arrive"); })[0];
+      if (!nx || tj < nx.jd) { var h = HOLD_KIND[c.kind]; if (h) { st = h[0]; cls = h[1]; why = "Checkpoint " + c.n + ": " + c.kind.replace("_", " ") + " at " + SF.name(c.place); } }
+    });
+    F.rec.score.incidents.forEach(function (x) {
+      var t = SF.jdOf(x.at), h = HOLD_KIND[x.kind]; if (!h || !(x.hours > 0)) return;
+      if (tj >= t && tj < t + x.hours / 24 && cls !== "hold" && cls !== "closed") { st = h[0]; cls = h[1]; why = shipWords(x.kind.replace("_", " ") + " at " + x.place); }
+    });
+  }
+  return { tj: tj, a: a, st: st, cls: cls, why: why, prog: clamp((tj - first) / (rp.end - first), 0, 1), eta: Math.max(0, rp.end - tj), last: last };
+}
+
+/* ---------- schematic layout: real bearings, rings by order from the Sun ---------- */
+var RING = 92, ANCH = ["mercury", "venus", "earth", "mars", "ceres", "jupiter", "saturn", "uranus", "neptune"], KIDS = {};
+var ATMO = { venus: "#f3dfae", earth: "#7fb6ff", mars: "#ff9a70", jupiter: "#e8c69c", saturn: "#efdcac", uranus: "#a8f0ec", neptune: "#7f9dff", titan: "#f0b56a" };
+function initKids() {
+  var jd = SF.sky().jd;
+  PLACES.forEach(function (p) { if (p.parent && p.parent !== "sun") (KIDS[p.parent] = KIDS[p.parent] || []).push(p.id); });
+  function d(id) { var a = SF.pos(id, jd), b = SF.pos(PID[id].parent, jd); return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
+  Object.keys(KIDS).forEach(function (k) { KIDS[k].sort(function (a, b) { return d(a) - d(b); }); });
+}
+function disc(p) {
+  var r = p.radius_km || 1;
+  if (p.kind === "planet") return 5 + 9 * Math.sqrt(r / 71492);
+  if (p.kind === "moon") return 2.2 + 3.6 * Math.sqrt(r / 2631.2);
+  if (p.kind === "station") return 2.6;
+  return 2 + 2.2 * Math.sqrt(Math.min(r, 469.7) / 469.7);
+}
+function anchors(jd) {
+  var A = [[0, 0]];
+  ANCH.forEach(function (id, k) { var q = SF.pos(id, jd); A.push([Math.hypot(q[0], q[1]), k + 1]); });
+  A.sort(function (a, b) { return a[0] - b[0]; });
+  return A;
+}
+function ringOf(A, r) {
+  for (var i = 1; i < A.length; i++) if (r <= A[i][0]) return A[i - 1][1] + (r - A[i - 1][0]) / (A[i][0] - A[i - 1][0]) * (A[i][1] - A[i - 1][1]);
+  var a = A[A.length - 2], b = A[A.length - 1]; return b[1] + (r - b[0]) / (b[0] - a[0]);
+}
+function auOf(A, u) {
+  for (var i = 1; i < A.length; i++) if (u <= A[i][1]) return A[i - 1][0] + (u - A[i - 1][1]) * (A[i][0] - A[i - 1][0]);
+  var a = A[A.length - 2], b = A[A.length - 1]; return b[0] + (u - b[1]) * (b[0] - a[0]);
+}
+function auPerRing(A, u) { for (var i = 1; i < A.length; i++) if (u <= A[i][1]) return A[i][0] - A[i - 1][0]; return A[A.length - 1][0] - A[A.length - 2][0]; }
+function layout(jd) {
+  var N = { sun: { id: "sun", x: 0, y: 0, d: 18, lvl: 0 } }, A = anchors(jd);
+  PLACES.forEach(function (p) {
+    if (p.parent !== "sun") return;
+    var q = SF.pos(p.id, jd), r = Math.hypot(q[0], q[1]), u = ringOf(A, r), th = Math.atan2(q[1], q[0]);
+    N[p.id] = { id: p.id, x: u * RING * Math.cos(th), y: -u * RING * Math.sin(th), d: disc(p), lvl: 0, u: u, rAU: r, th: th, kind: p.kind };
+  });
+  function fan(pid, gx, gy, lvl) {
+    var P = N[pid], ks = KIDS[pid]; if (!ks) return;
+    var dir = Math.atan2(P.y - gy, P.x - gx), n = ks.length, spread = n > 1 ? Math.min(2.6, 0.9 * (n - 1)) : 0;
+    ks.forEach(function (id, k) {
+      var a = dir + (n > 1 ? spread * (k / (n - 1) - 0.5) : 0), dist = P.d + 10 + 12 * k, pl = PID[id];
+      N[id] = { id: id, x: P.x + dist * Math.cos(a), y: P.y + dist * Math.sin(a), d: disc(pl), lvl: lvl, parent: pid, kind: pl.kind };
+      fan(id, P.x, P.y, lvl + 1);
+    });
+  }
+  Object.keys(N).forEach(function (id) { if (id !== "sun") fan(id, 0, 0, 1); });
+  return { N: N, A: A };
+}
+function subtree(id) { var out = [id]; (KIDS[id] || []).forEach(function (k) { out = out.concat(subtree(k)); }); return out; }
+
+/* ---------- curves ---------- */
+function curve(A, B) {
+  var dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy) || 1, mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2, nx = -dy / L, ny = dx / L;
+  if (mx * nx + my * ny < 0) { nx = -nx; ny = -ny; }
+  var b = L * (L < 120 ? 0.35 : 0.18);
+  return { a: A, c: { x: mx + nx * b, y: my + ny * b }, b: B };
+}
+function qpt(q, t) { var u = 1 - t; return { x: u * u * q.a.x + 2 * u * t * q.c.x + t * t * q.b.x, y: u * u * q.a.y + 2 * u * t * q.c.y + t * t * q.b.y }; }
+function qtan(q, t) { return { x: 2 * (1 - t) * (q.c.x - q.a.x) + 2 * t * (q.b.x - q.c.x), y: 2 * (1 - t) * (q.c.y - q.a.y) + 2 * t * (q.b.y - q.c.y) }; }
+
+/* ---------- map: camera, input, drawing ---------- */
+var cv, ctx, CW = 0, CH = 0, DPR = 1, cam = { x: 0, y: 0, k: 0.4 }, tween = null, LAY = null, PICK = [];
+var SECTOR = "all", FOLLOW = null, FITK = null;
+var SEL = { type: "flight", i: 0 }, SEL_BOOK = null, BOOK_PLAN = {};
+function resize() {
+  var r = cv.getBoundingClientRect(); DPR = Math.min(2, window.devicePixelRatio || 1);
+  CW = Math.max(10, r.width); CH = Math.max(10, r.height);
+  cv.width = Math.round(CW * DPR); cv.height = Math.round(CH * DPR);
+  setSector(SECTOR, true);
+}
+function W2S(p) { return { x: (p.x - cam.x) * cam.k + CW / 2, y: (p.y - cam.y) * cam.k + CH / 2 }; }
+function S2W(x, y) { return { x: (x - CW / 2) / cam.k + cam.x, y: (y - CH / 2) / cam.k + cam.y }; }
+function sectorBox(s) {
+  if (s === "all") return { x: 0, y: 0, r: 9 * RING + 34 };
+  if (s === "inner") return { x: 0, y: 0, r: 5 * RING + 24 };
+  var ids = subtree(s), N = LAY.N, x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  ids.forEach(function (id) { var n = N[id]; if (!n) return; var e = n.d * (id === "saturn" ? 2.4 : 1.6) + 6; x0 = Math.min(x0, n.x - e); x1 = Math.max(x1, n.x + e); y0 = Math.min(y0, n.y - e); y1 = Math.max(y1, n.y + e); });
+  return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, r: Math.max(x1 - x0, y1 - y0) / 2 + 14 };
+}
+function setSector(s, instant) {
+  SECTOR = s;
+  $$("#sectors [data-s]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.s === s ? "true" : "false"); });
+  if (!LAY) return;
+  var b = sectorBox(s), fr = freeRect(s === "all" || s === "inner"), k = clamp(Math.min(fr.w / (2 * b.r), fr.h / (2 * b.r)), 0.15, 14);
+  FOLLOW = s === "all" || s === "inner" ? null : s; FITK = k; FOFF = { x: fr.cx - CW / 2, y: fr.cy - CH / 2 };
+  goTo(b.x - FOFF.x / k, b.y - FOFF.y / k, k, instant);
+}
+// the part of the canvas not covered by the overlay panels (desktop only)
+var FOFF = { x: 0, y: 0 };
+function freeRect(full) {
+  var pad = CW < 500 ? 14 : 30, l = pad, r = pad, t = 40, b = 34, info = $("#info"), bar = $(".mbar");
+  if (!full && getComputedStyle(bar).position === "absolute") {
+    if (info.innerHTML) l = info.offsetWidth + 24;
+    r = bar.offsetWidth + 24;
+    if (CW - l - r < 220) { l = pad; r = pad; }
+  }
+  return { w: CW - l - r, h: CH - t - b, cx: l + (CW - l - r) / 2, cy: t + (CH - t - b) / 2 };
+}
+function goTo(x, y, k, instant) {
+  if (instant || reduced) { cam.x = x; cam.y = y; cam.k = k; tween = null; return; }
+  tween = { t0: performance.now(), d: 450, from: { x: cam.x, y: cam.y, k: cam.k }, to: { x: x, y: y, k: k } };
+}
+function zoomAt(sx, sy, f) {
+  var w = S2W(sx, sy), k = clamp(cam.k * f, 0.15, 14);
+  cam.x = w.x - (sx - CW / 2) / k; cam.y = w.y - (sy - CH / 2) / k; cam.k = k; tween = null; userMoved();
+}
+function userMoved() { if (FOLLOW || SECTOR) { FOLLOW = null; SECTOR = ""; $$("#sectors [data-s]").forEach(function (b) { b.setAttribute("aria-pressed", "false"); }); } }
+function bindMap() {
+  var ptr = {}, moved = 0, pinch = 0;
+  function pt(e) { var r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  cv.addEventListener("pointerdown", function (e) { cv.setPointerCapture(e.pointerId); ptr[e.pointerId] = pt(e); moved = 0; pinch = 0; cv.classList.add("grabbing"); });
+  cv.addEventListener("pointermove", function (e) {
+    if (!ptr[e.pointerId]) return;
+    var p = pt(e), o = ptr[e.pointerId], ks = Object.keys(ptr);
+    if (ks.length === 1) {
+      var dx = p[0] - o[0], dy = p[1] - o[1]; moved += Math.abs(dx) + Math.abs(dy);
+      if (moved > 4) { cam.x -= dx / cam.k; cam.y -= dy / cam.k; tween = null; userMoved(); }
+      ptr[e.pointerId] = p;
+    } else if (ks.length === 2) {
+      ptr[e.pointerId] = p; moved = 99;
+      var a = ptr[ks[0]], b = ptr[ks[1]], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      if (pinch) zoomAt((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, d / pinch);
+      pinch = d;
+    }
+  });
+  function up(e) {
+    if (ptr[e.pointerId] && moved < 5 && Object.keys(ptr).length === 1) pick(ptr[e.pointerId][0], ptr[e.pointerId][1]);
+    delete ptr[e.pointerId]; pinch = 0; if (!Object.keys(ptr).length) cv.classList.remove("grabbing");
+  }
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+  cv.addEventListener("wheel", function (e) { e.preventDefault(); var p = pt(e); zoomAt(p[0], p[1], Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+  $("#sectors").addEventListener("click", function (e) { var b = e.target.closest("[data-s]"); if (b) setSector(b.dataset.s); });
+  $$(".zooms button").forEach(function (b) { b.addEventListener("click", function () { zoomAt(CW / 2, CH / 2, b.dataset.z === "1" ? 1.4 : 1 / 1.4); }); });
+}
+function pick(x, y) {
+  var best = null, bd = 1e9;
+  PICK.forEach(function (p) { var d = Math.hypot(p.x - x, p.y - y); if (d < Math.max(10, p.r + 4) && d < bd) { bd = d; best = p; } });
+  if (!best) return;
+  if (best.type === "flight") select({ type: "flight", i: best.i });
+  else select({ type: "place", id: best.id });
+}
+
+function hexRgb(h) { var n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function rgba(c, a, m) { m = m || 1; return "rgba(" + Math.min(255, Math.round(c[0] * m)) + "," + Math.min(255, Math.round(c[1] * m)) + "," + Math.min(255, Math.round(c[2] * m)) + "," + a + ")"; }
+function prng(seed) { var s = seed >>> 0 || 1; return function () { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 100000) / 100000; }; }
+function hash(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h; }
+
+function drawSun(s, r) {
+  var g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r * 4);
+  g.addColorStop(0, "rgba(255,228,170,.55)"); g.addColorStop(0.25, "rgba(255,182,92,.18)"); g.addColorStop(1, "rgba(255,182,92,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(s.x, s.y, r * 4, 0, TAU); ctx.fill();
+  var g2 = ctx.createRadialGradient(s.x - r * 0.2, s.y - r * 0.2, 0, s.x, s.y, r);
+  g2.addColorStop(0, "#fff6dc"); g2.addColorStop(0.6, "#ffd27a"); g2.addColorStop(1, "#ff9f3f");
+  ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, TAU); ctx.fill();
+}
+function saturnRings(x, y, r, front) {
+  var tilt = -0.38;
+  [[2.25, 0.55, 0.5], [1.95, 0.48, 0.75], [1.6, 0.4, 0.45]].forEach(function (q) {
+    ctx.strokeStyle = "rgba(239,220,172," + q[2] + ")"; ctx.lineWidth = Math.max(1, r * 0.16);
+    ctx.beginPath(); ctx.ellipse(x, y, r * q[0], r * q[0] * 0.3, tilt, front ? 0 : Math.PI, front ? Math.PI : TAU); ctx.stroke();
+  });
+}
+function rocks(id, x, y, r, col) {
+  var rnd = prng(hash(id)), c = hexRgb(col);
+  for (var i = 0; i < 9; i++) {
+    var a = rnd() * TAU, d = r * (1.5 + rnd() * 1.6), s = r * (0.16 + rnd() * 0.22), px = x + Math.cos(a) * d, py = y + Math.sin(a) * d;
+    ctx.fillStyle = rgba(c, 0.55 + rnd() * 0.3, 0.7 + rnd() * 0.5); ctx.beginPath();
+    for (var j = 0; j < 6; j++) { var b = j / 6 * TAU, q = s * (0.7 + rnd() * 0.5); ctx[j ? "lineTo" : "moveTo"](px + Math.cos(b) * q, py + Math.sin(b) * q); }
+    ctx.closePath(); ctx.fill();
+  }
+}
+function drawBody(id, x, y, r, sunA) {
+  var p = PID[id], col = SF.color(id), c = hexRgb(col), rocky = p && p.kind === "small";
+  if (ATMO[id]) {
+    var ac = hexRgb(ATMO[id]), ga = ctx.createRadialGradient(x, y, r * 0.85, x, y, r * 1.7);
+    ga.addColorStop(0, rgba(ac, 0.42)); ga.addColorStop(1, rgba(ac, 0));
+    ctx.fillStyle = ga; ctx.beginPath(); ctx.arc(x, y, r * 1.7, 0, TAU); ctx.fill();
+  }
+  if (id === "saturn") saturnRings(x, y, r, false);
+  if (rocky && id !== "roadster") rocks(id, x, y, r, col);
+  var lx = x + Math.cos(sunA) * r * 0.45, ly = y + Math.sin(sunA) * r * 0.45;
+  var g = ctx.createRadialGradient(lx, ly, r * 0.05, x, y, r);
+  g.addColorStop(0, rgba(c, 1, 1.35)); g.addColorStop(0.55, rgba(c, 1, 0.95)); g.addColorStop(1, rgba(c, 1, 0.5));
+  ctx.save(); ctx.beginPath();
+  if (rocky && id !== "roadster") { var rnd = prng(hash(id + "b")); for (var j = 0; j < 9; j++) { var b = j / 9 * TAU, q = r * (0.82 + rnd() * 0.28); ctx[j ? "lineTo" : "moveTo"](x + Math.cos(b) * q, y + Math.sin(b) * q); } ctx.closePath(); }
+  else ctx.arc(x, y, r, 0, TAU);
+  ctx.fillStyle = g; ctx.fill(); ctx.clip();
+  if ((id === "jupiter" || id === "saturn") && r > 5) {
+    var rb = prng(hash(id + "s"));
+    for (var k = -4; k <= 4; k++) { ctx.fillStyle = rgba(c, 0.18 + rb() * 0.2, k % 2 ? 0.72 : 1.18); ctx.fillRect(x - r, y + k * r * 0.22 - r * 0.07, r * 2, r * (0.08 + rb() * 0.08)); }
+  }
+  // terminator: the night side faces away from the Sun
+  var tg = ctx.createLinearGradient(x + Math.cos(sunA) * r, y + Math.sin(sunA) * r, x - Math.cos(sunA) * r, y - Math.sin(sunA) * r);
+  tg.addColorStop(0, "rgba(2,6,14,0)"); tg.addColorStop(0.46, "rgba(2,6,14,0)"); tg.addColorStop(0.62, "rgba(2,6,14,.6)"); tg.addColorStop(1, "rgba(2,6,14,.88)");
+  ctx.fillStyle = tg; ctx.fillRect(x - r * 1.2, y - r * 1.2, r * 2.4, r * 2.4);
+  ctx.restore();
+  if (r > 3) { ctx.strokeStyle = rgba(c, 0.6, 1.3); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, r, sunA - 1.1, sunA + 1.1); ctx.stroke(); }
+  if (id === "saturn") saturnRings(x, y, r, true);
+}
+function drawStation(id, x, y, s) {
+  var real = SF.tag(id) === "real", col = real ? "#e6f0fb" : "#ffb65c";
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(x - s * 2.2, y); ctx.lineTo(x + s * 2.2, y); ctx.stroke();
+  ctx.fillRect(x - s * 2.4, y - s * 0.9, s * 0.7, s * 1.8); ctx.fillRect(x + s * 1.7, y - s * 0.9, s * 0.7, s * 1.8);
+  ctx.fillStyle = "#07101e"; ctx.fillRect(x - s * 0.8, y - s * 0.8, s * 1.6, s * 1.6); ctx.strokeRect(x - s * 0.8, y - s * 0.8, s * 1.6, s * 1.6);
+}
+function diamond(x, y, s, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x, y - s); ctx.lineTo(x + s, y); ctx.lineTo(x, y + s); ctx.lineTo(x - s, y); ctx.closePath(); ctx.fill(); ctx.strokeStyle = "rgba(4,9,18,.9)"; ctx.lineWidth = 1; ctx.stroke(); }
+var LABELS = [];
+function label(text, x, y, col, font, force) {
+  ctx.font = font || "600 11px Rajdhani, Inter, sans-serif";
+  var w = ctx.measureText(text).width, h = 12, lx = clamp(x - w / 2, 4, CW - w - 4), ly = clamp(y, h + 2, CH - 4);
+  var box = [lx - 2, ly - h, lx + w + 2, ly + 2];
+  if (!force) for (var i = 0; i < LABELS.length; i++) { var b = LABELS[i]; if (box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1]) return; }
+  LABELS.push(box);
+  ctx.fillStyle = "rgba(4,9,18,.72)"; ctx.fillRect(box[0], box[1], box[2] - box[0], box[3] - box[1]);
+  ctx.fillStyle = col; ctx.fillText(text, lx, ly - 1);
+}
+function strokeCurve(q, from, to) {
+  var a = W2S(q.a), c = W2S(q.c), b = W2S(q.b);
+  ctx.beginPath(); ctx.moveTo(a.x, a.y);
+  if (from === undefined) { ctx.quadraticCurveTo(c.x, c.y, b.x, b.y); }
+  else { for (var i = 0; i <= 24; i++) { var t = from + (to - from) * i / 24, p = W2S(qpt(q, t)); ctx.lineTo(p.x, p.y); } }
+  ctx.stroke();
+}
+function drawMap(now, s) {
+  var N = LAY.N, k = cam.k;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, CW, CH);
+  LABELS = []; PICK = [];
+  var sun = W2S({ x: 0, y: 0 });
+  // rings and bearing spokes
+  ctx.lineWidth = 1;
+  for (var i = 1; i <= 9; i++) {
+    var rr = i * RING * k; if (rr < 4) continue;
+    ctx.strokeStyle = i === 5 ? "rgba(255,182,92,.12)" : "rgba(110,190,255,.12)"; ctx.setLineDash(i === 5 ? [3, 5] : []);
+    ctx.beginPath(); ctx.arc(sun.x, sun.y, rr, 0, TAU); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  ctx.strokeStyle = "rgba(110,190,255,.06)";
+  for (var a = 0; a < 12; a++) {
+    var ang = a * Math.PI / 6, ex = sun.x + Math.cos(ang) * 9.4 * RING * k, ey = sun.y - Math.sin(ang) * 9.4 * RING * k;
+    ctx.beginPath(); ctx.moveTo(sun.x, sun.y); ctx.lineTo(ex, ey); ctx.stroke();
+    if (ex > 14 && ex < CW - 14 && ey > 14 && ey < CH - 14) { ctx.font = "500 9.5px 'JetBrains Mono', monospace"; ctx.fillStyle = "rgba(157,176,198,.55)"; ctx.fillText(a * 30 + "\u00B0", ex - 8, ey); }
+  }
+  drawSun(sun, Math.max(5, 18 * Math.pow(k, 0.6)));
+  var showKids = k >= 0.6, kidLabels = k >= 1.6;
+  // booking routes (dashed amber), the selected one brighter; its par plan dashed cyan
+  ctx.lineWidth = 1.6; ctx.setLineDash([6, 5]);
+  DESK.forEach(function (d) {
+    if (!d.open || !N[d.from] || !N[d.to]) return;
+    var on = SEL.type === "booking" && SEL.id === d.id;
+    ctx.strokeStyle = on ? "rgba(255,182,92,.95)" : "rgba(255,182,92,.32)"; ctx.lineWidth = on ? 2.2 : 1.4;
+    strokeCurve(curve(N[d.from], N[d.to]));
+  });
+  if (SEL.type === "booking" && BOOK_PLAN[SEL.id] && BOOK_PLAN[SEL.id].par) {
+    ctx.strokeStyle = "rgba(79,216,255,.85)"; ctx.lineWidth = 2;
+    BOOK_PLAN[SEL.id].par.legs.forEach(function (L) { if (N[L.from] && N[L.to]) strokeCurve(curve(N[L.from], N[L.to])); });
+  }
+  ctx.setLineDash([]);
+  // sample flight legs: flown / in flight solid, still to fly dashed
+  FLIGHTS.forEach(function (F) {
+    var on = SEL.type === "flight" && SEL.i === F.i, al = on ? 1 : 0.42, n = F.now; if (!n) return;
+    F.rp.legs.forEach(function (L, j) {
+      if (!N[L.from] || !N[L.to]) return;
+      var q = curve(N[L.from], N[L.to]), flown = n.tj >= L.dep;
+      ctx.strokeStyle = "rgba(79,216,255," + al + ")"; ctx.lineWidth = on ? 2.6 : 1.8; ctx.setLineDash(flown ? [] : [6, 5]);
+      if (on && flown) { ctx.shadowColor = "rgba(79,216,255,.7)"; ctx.shadowBlur = 8; }
+      strokeCurve(q); ctx.shadowBlur = 0;
+    });
+    ctx.setLineDash([]);
+  });
+  // bodies
+  var order = Object.keys(N).filter(function (id) { return id !== "sun"; }).sort(function (a, b) { return N[a].lvl - N[b].lvl; });
+  order.forEach(function (id) {
+    var n = N[id], p = W2S(n), lvl = n.lvl; if (lvl > 0 && !showKids) return;
+    var sunA = Math.atan2(sun.y - p.y, sun.x - p.x), r;
+    if (p.x < -60 || p.x > CW + 60 || p.y < -60 || p.y > CH + 60) return;
+    if (n.kind === "station") { r = clamp(2.2 * Math.pow(k, 0.35), 1.6, 4); drawStation(id, p.x, p.y, r); r *= 2.4; }
+    else { r = Math.max(lvl ? 1.8 : 2.6, n.d * Math.pow(k, 0.6)); drawBody(id, p.x, p.y, r, sunA); }
+    PICK.push({ type: "place", id: id, x: p.x, y: p.y, r: r });
+    if (SEL.type === "place" && SEL.id === id) { ctx.strokeStyle = "#4fd8ff"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(p.x, p.y, r + 5, 0, TAU); ctx.stroke(); }
+    n.sr = r; n.sx = p.x; n.sy = p.y;
+  });
+  // stops and waypoints (amber diamonds) for the sample flights and the selected booking
+  var stops = {};
+  FLIGHTS.forEach(function (F) { F.rp.legs.forEach(function (L) { stops[L.from] = 1; stops[L.to] = 1; }); });
+  if (SEL.type === "booking") { var d0 = DESK.filter(function (d) { return d.id === SEL.id; })[0]; if (d0) { stops[d0.from] = 1; stops[d0.to] = 1; } }
+  Object.keys(stops).forEach(function (id) { var n = N[id]; if (!n || (n.lvl > 0 && !showKids)) return; var p = W2S(n); diamond(p.x + (n.sr || 4) + 5, p.y - (n.sr || 4) - 3, 3.6, "#ffb65c"); });
+  // Starseekers on the sample replays
+  FLIGHTS.forEach(function (F) {
+    var n = F.now; if (!n) return;
+    var L = n.a.leg, q = N[L.from] && N[L.to] ? curve(N[L.from], N[L.to]) : null; if (!q) return;
+    var t = n.a.phase === "flight" ? n.a.f : n.a.phase === "arrived" ? 1 : 0, wp = qpt(q, t), tg = qtan(q, Math.min(0.999, Math.max(0.001, t))), p = W2S(wp);
+    var on = SEL.type === "flight" && SEL.i === F.i, ang = Math.atan2(tg.y, tg.x);
+    ctx.save(); ctx.translate(p.x, p.y);
+    ctx.strokeStyle = n.cls === "hold" ? "#ffb65c" : n.cls === "closed" ? "#ff7d6e" : "#4fd8ff"; ctx.lineWidth = on ? 1.8 : 1.2;
+    ctx.beginPath(); ctx.arc(0, 0, on ? 11 : 8, 0, TAU); ctx.stroke();
+    if (on && !reduced) { var pr = (now / 1200) % 1; ctx.globalAlpha = 1 - pr; ctx.beginPath(); ctx.arc(0, 0, 11 + pr * 10, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
+    ctx.rotate(ang);
+    if (SHIP_IMG && SHIP_IMG.complete && SHIP_IMG.naturalWidth) ctx.drawImage(SHIP_IMG, -9, -6, 18, 12); else { ctx.fillStyle = "#e6f0fb"; ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, TAU); ctx.fill(); }
+    ctx.restore();
+    PICK.push({ type: "flight", i: F.i, x: p.x, y: p.y, r: 12 });
+    label(F.cs + DOT + n.st, p.x, p.y - 14, on ? "#4fd8ff" : "#9db0c6", "700 11px Rajdhani, Inter, sans-serif", on);
+  });
+  // labels: planets always, moons and stations when zoomed in or on a selected route
+  var hot = {};
+  if (SEL.type === "flight") FLIGHTS[SEL.i].rp.legs.forEach(function (L) { hot[L.from] = hot[L.to] = 1; });
+  if (SEL.type === "booking") DESK.forEach(function (d) { if (d.id === SEL.id) hot[d.from] = hot[d.to] = 1; });
+  if (SEL.type === "place") hot[SEL.id] = 1;
+  order.forEach(function (id) {
+    var n = N[id]; if (n.sx == null || (n.lvl > 0 && !showKids)) return;
+    if (n.lvl > 0 && !kidLabels && !hot[id]) return;
+    var real = SF.tag(id) === "real";
+    label(SF.name(id).toUpperCase(), n.sx, n.sy + n.sr + 13, n.lvl ? (real ? "#c9d6e6" : "#ffcf7a") : "#e6f0fb", n.lvl ? "600 10px Rajdhani, Inter, sans-serif" : "700 11.5px Rajdhani, Inter, sans-serif", !!hot[id]);
+    n.sx = null;
+  });
+  label("SUN", sun.x, sun.y + Math.max(5, 18 * Math.pow(k, 0.6)) + 13, "#ffcf7a", "700 11px Rajdhani, Inter, sans-serif");
+}
+
+/* ---------- map readouts: scale and centre ---------- */
+function readouts() {
+  var A = LAY.A, cu = Math.hypot(cam.x, cam.y) / RING, bar = 80, rings = bar / cam.k / RING, au = rings * auPerRing(A, cu);
+  $("#scale").innerHTML = '<i style="width:' + bar + 'px"></i><span>' + (au >= 0.1 ? fmt(au, 2) : fmt(au, 3)) + " AU radially, here</span>";
+  var r = auOf(A, cu), th = (Math.atan2(-cam.y, cam.x) * 180 / Math.PI + 360) % 360, inC = "";
+  Object.keys(KIDS).forEach(function (id) { var n = LAY.N[id]; if (n && n.lvl === 0 && Math.hypot(n.x - cam.x, n.y - cam.y) < 70 && cam.k > 1.5) inC = SF.name(id); });
+  $("#coords").innerHTML = "Map centre" + DOT + (inC ? inC + " cluster (fanned, not to scale)" : fmt(r, 2) + " AU from the Sun" + DOT + "bearing " + fmt(th, 1) + "\u00B0") + "<br>Heliocentric ecliptic" + DOT + "sky " + iso(SF.sky().jd);
+}
+
+/* ---------- flights list ---------- */
+function flightsHtml() {
+  return FLIGHTS.map(function (F) {
+    var h = hailOf(F.rec.log.hail) || {};
+    return '<li><button type="button" class="card" data-f="' + F.i + '" aria-pressed="false">' +
+      '<div class="h"><span class="cs">' + esc(F.cs) + '</span><span class="sub">' + SF.SHIP + '</span><span style="flex:1"></span><span class="tag sim">Sample</span></div>' +
+      '<div class="rt">' + placeH(F.from) + ' <span class="dim">&rarr;</span> ' + placeH(F.to) + "</div>" +
+      '<div class="pbar"><i data-k="bar"></i></div>' +
+      '<div class="ft"><span data-k="pct"></span><span data-k="eta"></span></div>' +
+      '<div class="ft"><span data-k="arr"></span><span class="st" data-k="st"></span></div>' +
+      '<div class="ev" data-k="ev"></div>' +
+      '<div class="sub" style="margin-top:4px">' + esc(shipWords(h.title || "")) + DOT + "booking " + esc(F.rec.log.hail) + "</div>" +
+    "</button></li>";
+  }).join("");
+}
+function updateFlights() {
+  FLIGHTS.forEach(function (F) {
+    var n = F.now, el = $('[data-f="' + F.i + '"]'); if (!n || !el) return;
+    $('[data-k="bar"]', el).style.width = (n.prog * 100).toFixed(1) + "%";
+    $('[data-k="pct"]', el).textContent = fmt(n.prog * 100) + "% of the trip";
+    $('[data-k="eta"]', el).textContent = n.st === "Arrived" ? "ETA arrived" : "ETA " + SF.dur(n.eta);
+    $('[data-k="arr"]', el).textContent = "Arrives " + iso(F.rp.end);
+    var st = $('[data-k="st"]', el); st.className = "st " + n.cls; st.textContent = n.st;
+    $('[data-k="ev"]', el).textContent = "Replay " + iso(n.tj) + (n.why ? DOT + n.why : n.last ? DOT + shipWords(n.last.title) : "");
+    el.setAttribute("aria-pressed", SEL.type === "flight" && SEL.i === F.i ? "true" : "false");
+  });
+}
+
+/* ---------- open bookings (SF.desk) ---------- */
+var DESK = [], DESK_KEY = "";
+function renderBookings() {
+  var key = DESK.map(function (d) { return d.id + d.ready_jd + d.open; }).join("|") + (SEL.type === "booking" ? SEL.id : "");
+  if (key === DESK_KEY) return; DESK_KEY = key;
+  $("#ctBook").textContent = DESK.filter(function (d) { return d.open; }).length;
+  $("#listBook").innerHTML = DESK.map(function (d) {
+    return '<li><button type="button" class="card" data-b="' + esc(d.id) + '" aria-pressed="' + (SEL.type === "booking" && SEL.id === d.id) + '">' +
+      '<div class="h"><span class="cs" style="font-size:14px">' + W(d.title) + '</span><span style="flex:1"></span><span class="tag sim">Simulated</span></div>' +
+      '<div class="rt">' + placeH(d.from) + ' <span class="dim">&rarr;</span> ' + placeH(d.to) + "</div>" +
+      '<div class="sub">' + W(d.rider) + "</div>" +
+      '<div class="ft"><span>' + (d.kind === "quick" ? "Quick hop" : "Long haul") + "</span><span>Ready " + iso(d.ready_jd) + "</span></div>" +
+      '<div class="ft"><span>' + (d.open ? '<span class="st ready">Open</span>' : '<span class="st busy">Closed until the reset</span>') + "</span><span>booking " + esc(d.id) + "</span></div>" +
+    "</button></li>";
+  }).join("");
+}
+
+/* ---------- Starseekers ---------- */
+function fleetCtx() {
+  var d = SEL.type === "booking" ? DESK.filter(function (x) { return x.id === SEL.id; })[0] : null;
+  return d || DESK.filter(function (x) { return x.open; })[0] || DESK[0];
+}
+var FLEET_KEY = "";
+function renderFleet(s) {
+  var d = fleetCtx(); if (!d) return;
+  var fs = R.fleetState(d.id, d.ready_jd, String(s.season)), onF = {};
+  FLIGHTS.forEach(function (F) { if (F.now && F.now.st !== "Arrived" && !(F.now.a.phase === "parked")) onF[F.car] = F; });
+  var groups = { ready: [], fly: [], busy: [] };
+  fs.forEach(function (c) { if (onF[c.car]) groups.fly.push(c); else if (c.busy_until_jd) groups.busy.push(c); else groups.ready.push(c); });
+  var key = JSON.stringify([d.id, d.ready_jd, fs.map(function (c) { return c.busy_until_jd; }), Object.keys(onF), Object.keys(onF).map(function (k) { return onF[k].now.st; })]);
+  if (key === FLEET_KEY) return; FLEET_KEY = key;
+  function card(c, kind) {
+    var F = onF[c.car], art = SF.SHIP_SVG, body;
+    if (kind === "fly") body = '<div class="at">' + placeH(F.from) + ' <span class="dim">&rarr;</span> ' + placeH(F.to) + '</div><div class="fr">Sample replay' + DOT + esc(F.now.st) + DOT + "arrives " + iso(F.rp.end) + "</div>";
+    else body = '<div class="at"><span class="dim">Parked at</span> ' + placeH(c.at) + '</div><div class="fr">' + (c.busy_until_jd ? "Frees up " + iso(c.busy_until_jd) : "Free now") + "</div>";
+    var st = kind === "ready" ? '<span class="st ready">Ready</span>' : kind === "fly" ? '<span class="st flight">On a flight</span>' : '<span class="st busy">Busy</span>';
+    return '<div class="ship" style="margin:8px 10px 0"><div class="art">' + art + '</div><div><div class="h"><span class="cs">' + esc(c.name) + '</span><span class="dim" style="font-size:11px">' + SF.SHIP + '</span><span style="flex:1"></span>' + st + "</div>" + body +
+      '<div class="chips"><span class="tag sim">' + SEATS + "</span></div></div></div>";
+  }
+  function grp(title, list, kind, chipTxt) {
+    return '<div class="grp"><span class="caps">' + title + '</span><span class="n">' + list.length + "</span>" + (chipTxt ? '<span class="tag sim">' + chipTxt + "</span>" : "") + "</div>" +
+      (list.length ? list.map(function (c) { return card(c, kind); }).join("") : '<p class="note" style="margin:4px 12px 0">None right now.</p>');
+  }
+  $("#fleet").innerHTML = grp("Ready", groups.ready, "ready") + grp("On a flight", groups.fly, "fly", "Sample replay") + grp("Docked or busy", groups.busy, "busy", "Simulated");
+  $("#fleetN").textContent = fs.length + " " + SF.SHIPS;
+  $("#fleetNote").innerHTML = "Busy times as <code class=\"mono\">take_hail</code> would show them now for " + W(d.title) + " (ready " + iso(d.ready_jd) + "). On a flight: the sample replays.";
+}
+
+/* ---------- info card on the map ---------- */
+function infoHtml() {
+  if (SEL.type === "flight") {
+    var F = FLIGHTS[SEL.i], n = F.now, sc = F.rec.score; if (!n) return "";
+    return '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="caps">Selected flight</span><span class="tag sim">Sample</span><span class="tag sim">Simulated</span></div>' +
+      '<div class="ih"><h3>' + esc(F.cs) + DOT + SF.SHIP + '</h3><span class="st ' + n.cls + '">' + esc(n.st) + "</span></div>" +
+      '<div class="rt">' + placeH(F.from) + ' <span class="dim">&rarr;</span> ' + placeH(F.to) + "</div>" +
+      '<div class="pl"><span>Progress</span><b>' + fmt(n.prog * 100) + "%</b></div>" +
+      '<div class="pbar" style="margin:3px 0 6px"><i style="width:' + (n.prog * 100).toFixed(1) + '%"></i></div>' +
+      '<div class="kv"><div><span>ETA</span><b>' + (n.st === "Arrived" ? "arrived" : SF.dur(n.eta)) + '</b></div><div><span>Arrival</span><b>' + iso(F.rp.end) + "</b></div>" +
+      '<div><span>Energy used</span><b>' + kwh(sc.used_kwh) + '</b></div><div><span>Fare</span><b>' + money(sc.fare_usd) + "</b></div></div>" +
+      '<div class="acts"><a class="btn small primary" href="#flight' + (F.i + 1) + '">View flight</a><span class="note">Replay ' + iso(n.tj) + "</span></div>";
+  }
+  if (SEL.type === "booking") {
+    var d = DESK.filter(function (x) { return x.id === SEL.id; })[0]; if (!d) return "";
+    var P = BOOK_PLAN[d.id], body;
+    if (P === "busy") body = '<p class="note">The engine is planning this booking&hellip;</p>';
+    else if (P && P.closed) body = '<p class="note">' + W(P.closed) + "</p>";
+    else if (P && P.par) {
+      var ride = P.par.legs[P.par.legs.length - 1];
+      body = '<div class="row"><span>Par ' + SF.SHIP + "</span><b>" + esc(fleetName(P.par.car)) + "</b></div>" +
+        '<div class="row"><span>Par energy</span><b>' + kwh(P.par.kwh) + "</b></div>" +
+        '<div class="row"><span>Par arrival</span><b>' + iso(P.par.arr_jd) + "</b></div>" +
+        '<div class="row"><span>Arrive by</span><b>' + iso(P.arrive_by_jd) + "</b></div>" +
+        '<div class="row"><span>Passenger leg fare</span><b>' + money(ride.fare) + "</b></div>" +
+        '<p class="note" style="margin:6px 0 0">Par plan from the engine at sky time ' + iso(P.at_jd) + ', for the booking as it stood then. Drawn dashed cyan. Simulated.</p>';
+    } else body = '<div class="acts"><button class="btn small" type="button" id="planBtn">Plan with the engine</button><span class="note">Takes a moment for a long haul.</span></div>';
+    return '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="caps">Selected booking</span><span class="tag sim">Simulated</span></div>' +
+      '<h3 style="margin-top:5px">' + W(d.title) + "</h3>" +
+      '<div class="rt">' + placeH(d.from) + ' <span class="dim">&rarr;</span> ' + placeH(d.to) + "</div>" +
+      '<div class="row"><span>Passenger</span><b style="font-family:Inter">' + W(d.rider) + "</b></div>" +
+      '<div class="row"><span>Ready</span><b>' + iso(d.ready_jd) + "</b></div>" + body;
+  }
+  if (SEL.type === "place") {
+    var id = SEL.id, p = PID[id], q = SF.pos(id, SF.sky().jd), here = R.FLEET.filter(function (c) { return c.at === id; }).map(function (c) { return c.name; });
+    return '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="caps">Selected place</span>' + chip(id) + "</div>" +
+      '<h3 style="margin-top:5px">' + esc(SF.name(id)) + "</h3>" +
+      '<div class="row"><span>Kind</span><b>' + esc(p ? p.kind : "") + "</b></div>" +
+      (p && p.parent && p.parent !== "sun" ? '<div class="row"><span>Orbits</span><b>' + esc(SF.name(p.parent)) + "</b></div>" : "") +
+      '<div class="row"><span>From the Sun</span><b>' + fmt(Math.hypot(q[0], q[1], q[2]), 3) + " AU</b></div>" +
+      '<div class="row"><span>' + SF.SHIPS + " parked</span><b>" + (here.length ? esc(here.join(", ")) : "none") + "</b></div>" +
+      '<p class="note" style="margin:6px 0 0">Distance from the engine at sky time ' + iso(SF.sky().jd) + ".</p>";
+  }
+  return "";
+}
+var INFO_T = 0;
+function renderInfo(force) {
+  var h = infoHtml();
+  if (!force && SEL.type === "booking" && INFO_T++ % 4) return;
+  if (!force && SEL.type === "place" && INFO_T++ % 4) return;
+  $("#info").innerHTML = h;
+  var pb = $("#planBtn");
+  if (pb) pb.addEventListener("click", function () {
+    var id = SEL.id; BOOK_PLAN[id] = "busy"; renderInfo(true);
+    setTimeout(function () { try { BOOK_PLAN[id] = SF.plan(id); BOOK_PLAN[id].at_jd = SF.sky().jd; } catch (e) { BOOK_PLAN[id] = { closed: "The engine could not plan this booking now." }; } FLEET_KEY = ""; renderInfo(true); }, 30);
+  });
+}
+function select(s) {
+  SEL = s;
+  if (s.type === "booking") { $("#tabBook").click(); DESK_KEY = ""; renderBookings(); }
+  FLEET_KEY = ""; renderInfo(true); updateFlights();
+  if (s.type === "booking" && LAY) {
+    var d = DESK.filter(function (x) { return x.id === s.id; })[0];
+    if (d) { var a = LAY.N[d.from], b = LAY.N[d.to]; if (a && b) { var cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2, r = Math.hypot(a.x - b.x, a.y - b.y) / 2 + 40; FOLLOW = null; SECTOR = ""; $$("#sectors [data-s]").forEach(function (x) { x.setAttribute("aria-pressed", "false"); }); var fr = freeRect(false), kk = clamp(Math.min(fr.w, fr.h) / (2 * r), 0.15, 8); goTo(cx - (fr.cx - CW / 2) / kk, cy - (fr.cy - CH / 2) / kk, kk); } }
+  }
+}
+
+/* ---------- tools ---------- */
+var ICON = {
+  list: '<path d="M5 6h14M5 12h14M5 18h9" />', take: '<path d="M12 4v16M4 12h16"/>', get: '<circle cx="12" cy="12" r="7"/><path d="M12 9v4l2 2"/>',
+  pick: '<path d="M4 18 L12 6 L20 18"/><circle cx="12" cy="6" r="2"/>', ride: '<path d="M3 16c4-8 14-8 18 0"/><circle cx="3" cy="16" r="1.6"/><circle cx="21" cy="16" r="1.6"/>',
+  pad: '<rect x="4" y="13" width="16" height="5" rx="1"/><path d="M8 13V8h8v5"/>', wx: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',
+  go: '<path d="M5 12h12M13 6l6 6-6 6"/>', decide: '<path d="M12 3v7M12 10l-6 7M12 10l6 7"/>', log: '<path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6"/>'
+};
+var TOOLS = [
+  ["list_hails", "See open bookings", "list", "Use Starfare's list_hails tool and tell me which bookings are open and which Starseekers are near them."],
+  ["take_hail", "Take a booking", "take", "Take the ISS crew change booking on Starfare with take_hail and read me its terms."],
+  ["get_hail", "Read the booking", "get", "Call get_hail and remind me when the passenger is ready and when they must arrive."],
+  ["plan_pickup", "Plan the pickup", "pick", "Use plan_pickup to plan the nearest free Starseeker's flight to the passenger, then tell me the energy and the arrival."],
+  ["plan_ride", "Plan the passenger leg", "ride", "Use plan_ride to plan the passenger leg after that pickup and tell me the fare it returns."],
+  ["check_pad", "Check a pad", "pad", "Before you dispatch, call check_pad for the destination and tell me how many berths are booked."],
+  ["space_weather", "Space weather", "wx", "Call space_weather and tell me the flare odds for the next few sky days."],
+  ["dispatch", "Dispatch the flight", "go", "If the plan looks good, dispatch it with the fare from plan_ride and an arrival you are sure of."],
+  ["decide", "Answer a checkpoint", "decide", "If a checkpoint comes up, use decide and explain why you chose to wait or replan."],
+  ["get_my_rides", "Your flights", "log", "Call get_my_rides and summarise my last flights, their scores and any incidents."]
+];
+var TOOL_SEL = 0;
+function renderTools() {
+  $("#tiles").innerHTML = TOOLS.map(function (t, i) {
+    return '<button type="button" class="tile" data-t="' + i + '" aria-pressed="' + (i === TOOL_SEL) + '"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[t[2]] + "</svg><b>" + esc(t[1]) + "</b><code>" + esc(t[0]) + "</code></button>";
+  }).join("");
+  var t = TOOLS[TOOL_SEL];
+  $("#ask").innerHTML = '<span class="caps">Ask your agent</span><q id="askQ">' + esc(t[3]) + "</q>" +
+    '<div class="acts"><button class="btn small" type="button" id="askCopy">Copy</button><a class="btn small" href="#intro">Connect your agent</a><span class="note" id="askMsg" aria-live="polite">Your agent calls <code class="mono">' + esc(t[0]) + "</code> on the Starfare server. This page does not fly or book anything.</span></div>";
+  $("#askCopy").addEventListener("click", function () {
+    var msg = $("#askMsg");
+    function fallback() { var r = document.createRange(); r.selectNodeContents($("#askQ")); var s = getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected. Press Ctrl+C or Cmd+C to copy."; }
+    try { navigator.clipboard.writeText(t[3]).then(function () { msg.textContent = "Copied. Paste it to your agent."; }, fallback); } catch (e) { fallback(); }
+  });
+}
+
+/* ---------- system alerts (simulated hazards at sky time) ---------- */
+var AL_KEY = "";
+function renderAlerts(s) {
+  var H = R.hazards(String(s.season)), jd = s.jd, flare = H.flareAt(jd), dust = H.weatherAt("mars-base", jd), haze = H.weatherAt("titan-dock", jd), hr = Math.floor(jd * 24), full = [];
+  PLACES.forEach(function (p) { if (H.docked(p.id, hr, null, false) >= H.berths(p.id)) full.push(p.id); });
+  var n = (flare ? 1 : 0) + (dust ? 1 : 0) + (haze ? 1 : 0) + full.length;
+  var key = [!!flare, !!dust, !!haze, full.join(","), Math.floor(jd)].join("|"); if (key === AL_KEY) return; AL_KEY = key;
+  $("#alN").textContent = n; $("#alerts").classList.toggle("on", n > 0);
+  $("#alL").textContent = n === 1 ? "alert active at sky time" : "alerts active at sky time";
+  function li(on, k, v) { return '<li class="' + (on ? "on" : "") + '"><span>' + k + "</span><span>" + v + "</span></li>"; }
+  $("#alList").innerHTML =
+    li(flare, "Solar flare", flare ? "active until " + iso(flare.end) : "none" + DOT + "odds today " + fmt(H.flareOdds(Math.floor(jd)) * 100) + "%") +
+    li(dust, "Mars dust storm", dust ? "until " + iso(dust.end) : "none") +
+    li(haze, "Titan haze", haze ? "until " + iso(haze.end) : "none") +
+    li(full.length, "Pads full (closed)", full.length ? full.map(function (id) { return SF.name(id); }).join(", ") : "none") +
+    '<li><span class="note">From the engine\'s seeded hazards for season ' + s.season + ".</span><span></span></li>";
+}
+
+/* ---------- dispatcher feed and waveform ---------- */
+var FEED = [], BUCKETS = new Array(150).fill(0), BUCKET_T = 0, waveCv, wctx;
+function pushFeed(F, e) {
+  FEED.unshift('<li><span class="t">' + iso(e.jd) + '</span><span class="k-' + e.kind + '">' + esc(F.cs) + DOT + W(e.title) + (e.kind === "checkpoint" || e.kind === "incident" ? DOT + W(e.text) : "") + "</span></li>");
+  if (FEED.length > 60) FEED.length = 60;
+  BUCKETS[BUCKETS.length - 1] += 1;
+}
+function feedTick(ms) {
+  FLIGHTS.forEach(function (F) {
+    var t = F.now ? F.now.tj : null;
+    if (F.prevT != null && t != null && t > F.prevT) F.rp.events.forEach(function (e) { if (e.jd > F.prevT && e.jd <= t) pushFeed(F, e); });
+    F.prevT = t;
+  });
+  var b = Math.floor(ms / 200);
+  if (b !== BUCKET_T) { var steps = Math.min(BUCKETS.length, BUCKET_T ? b - BUCKET_T : 1); for (var i = 0; i < steps; i++) { BUCKETS.shift(); BUCKETS.push(0); } BUCKET_T = b; }
+}
+var FEED_N = -1;
+function renderFeed() { if (FEED_N === FEED.length && FEED.length < 60) return; FEED_N = FEED.length; $("#flog").innerHTML = FEED.join("") || '<li><span class="t"></span><span>Waiting for the next sample event&hellip;</span></li>'; }
+function drawWave(now) {
+  var r = waveCv.getBoundingClientRect(), w = Math.max(10, r.width), h = Math.max(10, r.height), d = Math.min(2, window.devicePixelRatio || 1);
+  if (waveCv.width !== Math.round(w * d)) { waveCv.width = Math.round(w * d); waveCv.height = Math.round(h * d); }
+  wctx.setTransform(d, 0, 0, d, 0, 0); wctx.clearRect(0, 0, w, h);
+  wctx.strokeStyle = "rgba(110,190,255,.12)"; wctx.lineWidth = 1; wctx.beginPath(); wctx.moveTo(0, h / 2); wctx.lineTo(w, h / 2); wctx.stroke();
+  var n = BUCKETS.length, sm = [];
+  for (var i = 0; i < n; i++) { var a = 0, c = 0; for (var j = -4; j <= 4; j++) { var v = BUCKETS[i + j]; if (v != null) { a += v * (5 - Math.abs(j)); c += 5 - Math.abs(j); } } sm.push(a / c); }
+  var mx = Math.max(0.35, Math.max.apply(null, sm)), ph = reduced ? 0 : now / 160;
+  wctx.strokeStyle = "#6fe3a6"; wctx.lineWidth = 1.4; wctx.shadowColor = "rgba(111,227,166,.6)"; wctx.shadowBlur = 6; wctx.beginPath();
+  for (var x = 0; x <= w; x += 2) {
+    var k = Math.min(n - 1, Math.floor(x / w * n)), amp = 1.5 + (sm[k] / mx) * (h / 2 - 5);
+    var y = h / 2 + Math.sin(x * 0.35 + ph) * amp * (0.6 + 0.4 * Math.sin(x * 0.07 - ph * 0.5));
+    if (x) wctx.lineTo(x, y); else wctx.moveTo(x, y);
+  }
+  wctx.stroke(); wctx.shadowBlur = 0;
+  wctx.font = "500 9.5px 'JetBrains Mono', monospace"; wctx.fillStyle = "rgba(157,176,198,.7)"; wctx.fillText("-30 s", 4, h - 4); wctx.fillText("now", w - 24, h - 4);
+}
+
+/* ---------- receipts and reports (a short version of mockup D's debrief) ---------- */
+function partOf(sc, k) { return sc.parts.filter(function (p) { return p.key === k; })[0]; }
+function partCell(p) {
+  if (!p) return '<span class="dim">not scored</span>';
+  var f = p.got / p.max, c = f >= 0.999 ? "pass" : f >= 0.5 ? "best" : "fail";
+  return '<span class="' + c + '" title="' + esc(shipWords(p.note)) + '">' + fmt(p.got, p.got % 1 ? 1 : 0) + " / " + p.max + "</span>";
+}
+function seatsHtml(n) {
+  var cells = "", cls = []; for (var b = 0; b < n; b++) { cls.push("on"); for (var k = 1; k < PARTY_MAX; k++) cls.push("maybe"); }
+  for (var j = 0; j < SEAT_N; j++) cells += '<span class="seat' + (cls[j] ? " " + cls[j] : "") + '"></span>';
+  return '<div class="seats">' + cells + "<span>Seats: " + n + " lead passenger + party not set yet / " + SEAT_N + ' (placeholder)</span><span class="tag sim">Placeholder, not set yet</span></div>';
+}
+function receipt(i) {
+  var r = SF.RIDES[i], rec = r.record, sc = rec.score, lg = rec.log, h = hailOf(lg.hail) || {}, F = FLIGHTS[i];
+  var parts = sc.parts.map(function (p) {
+    var f = p.got / p.max, col = f >= 0.999 ? "var(--ok)" : f >= 0.5 ? "var(--amber)" : "var(--bad)";
+    return '<div class="sp"><span>' + esc(p.label) + '</span><span class="bar"><i style="width:' + (f * 100).toFixed(1) + "%;background:" + col + '"></i></span><span class="v">' + fmt(p.got, p.got % 1 ? 1 : 0) + " / " + p.max + "</span></div>";
+  }).join("");
+  var legs = r.legs.map(function (L, j) {
+    var f = lg.flown[j] || {}, rf = L.refly || {}, ok = rf.result === "PASS";
+    var rft = ok ? '<span class="pass">PASS</span>' + DOT + "miss " + fmt(rf.final_miss_km, 1) + " km" : /local/.test(rf.result || "") ? '<span class="dim">Local hop, not re-flown</span>' : '<span class="fail">' + esc(rf.result || "") + "</span>";
+    return "<tr><td>" + esc(legKind(L.kind)) + '</td><td class="w">' + (f.from ? placeH(f.from) : esc(L.from)) + " &rarr; " + (f.to ? placeH(f.to) : esc(L.to)) + "</td><td>" + esc(f.depart || L.depart) + "</td><td>" + esc(f.arrive || L.arrive) + '</td><td class="r">' + fmt(f.kwh != null ? f.kwh : L.battery_kwh) + '</td><td class="r">' + money(L.fare_usd) + "</td><td>" + rft + "</td></tr>";
+  }).join("");
+  var cps = (lg.checkpoints || []).map(function (cp) {
+    var rows = cp.options_hindsight.map(function (o) {
+      var chosen = o.option.indexOf(cp.decision.action) === 0, best = o.option === cp.best;
+      return "<tr><td" + (best ? ' class="best"' : "") + ">" + (best ? "\u2605 " : "") + esc(shipWords(o.option)) + "</td><td>" + (chosen ? '<span class="tag cy">Agent chose</span>' : "") + '</td><td class="r">' + fmt(o.used_kwh) + "</td><td>" + esc(o.arrive) + "</td></tr>";
+    }).join("");
+    return '<div class="cpb"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="st hold">Checkpoint ' + cp.n + "</span><b>" + esc(cp.kind.replace("_", " ")) + " at " + esc(SF.name(cp.place)) + '</b><span class="mono dim" style="font-size:11px">' + esc(cp.at) + DOT + "cause " + esc(cp.cause.replace("_", " ")) + "</span></div>" +
+      '<p style="margin:6px 0">The agent called <code class="mono" style="color:var(--me)">decide</code> and chose <b>' + esc(cp.decision.action) + '</b>. Best in hindsight: <b class="best">' + esc(cp.best) + "</b>.</p>" +
+      '<div class="tw"><table class="t"><thead><tr><th>Option (hindsight)</th><th></th><th class="r">kWh</th><th>Arrival</th></tr></thead><tbody>' + rows + "</tbody></table></div></div>";
+  }).join("") || '<p class="note">No checkpoints on this flight.</p>';
+  var pax = '<div class="tw"><table class="t"><thead><tr><th>Booking</th><th>Lead passenger</th><th>Party</th><th>Boards at</th><th>Gets off at</th><th class="r">On time</th><th class="r">Fare</th></tr></thead><tbody><tr><td>' + esc(lg.hail) + '</td><td class="w">' + esc((h.rider || "not in the data").split(",")[0]) + ' <span class="tag sim">Simulated</span></td><td class="dim">not set yet (1\u2013' + PARTY_MAX + ", placeholder)</td><td class=\"w\">" + placeH(lg.from) + '</td><td class="w">' + placeH(lg.to) + '</td><td class="r">' + partCell(partOf(sc, "on_time")) + '</td><td class="r">' + partCell(partOf(sc, "fare")) + "</td></tr></tbody></table></div>" + seatsHtml(1);
+  return '<div class="dh"><div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="caps">Flight receipt</span><span class="tag sim">Simulated</span><span class="tag sim">Sample</span></div>' +
+      "<h2>" + esc(SF.name(lg.from)) + " &rarr; " + esc(SF.name(lg.to)) + "</h2>" +
+      '<div class="note" style="margin-top:4px">' + esc(F.cs) + DOT + SF.SHIP + DOT + "season " + rec.season + DOT + "booking " + esc(lg.hail) + '</div><div class="note">Sample flight flown by a sample bot, not a player.</div></div>' +
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px"><button class="btn small" type="button" data-close>Close</button><div class="tot"><span class="n">' + fmt(sc.total) + '</span><span class="dim">/ ' + sc.out_of + "</span></div></div></div>" +
+    '<div class="sec"><h3>Passenger list <span class="tag sim">Simulated</span></h3>' + pax + "</div>" +
+    '<div class="sec"><h3>Legs and re-fly checks <span class="tag sim">As flown</span></h3><div class="tw"><table class="t"><thead><tr><th>Leg</th><th>Route</th><th>Depart</th><th>Arrive</th><th class="r">kWh</th><th class="r">Fare</th><th>Re-fly</th></tr></thead><tbody>' + legs + "</tbody></table></div></div>" +
+    '<div class="sec"><h3>Checkpoints</h3>' + cps + "</div>" +
+    '<div class="sec"><h3>Score <span class="mono" style="color:var(--me);letter-spacing:0">' + fmt(sc.total) + " / " + sc.out_of + '</span></h3><div class="sparts">' + parts + "</div>" +
+      '<p class="note" style="margin:8px 0 0">Energy used ' + kwh(sc.used_kwh) + " against par " + kwh(sc.par_kwh) + DOT + "fare " + money(sc.fare_usd) + DOT + "arrived " + esc(sc.arrive) + " (promised " + esc(sc.promised_arrival) + ").</p></div>";
+}
+function reports() {
+  var rows = SF.RIDES.map(function (r, i) { return { i: i, r: r }; }).sort(function (a, b) { return b.r.record.score.total - a.r.record.score.total; }).map(function (x, k) {
+    var rec = x.r.record, sc = rec.score, lg = rec.log;
+    return "<tr><td>" + (k + 1) + "</td><td>" + esc(rec.player_tag || "sample bot") + '</td><td class="dim">not set (self-reported, unverified)</td><td class="w">' + placeH(lg.from) + " &rarr; " + placeH(lg.to) + "</td><td>" + esc(fleetName(lg.car)) + '</td><td class="r">' + fmt(sc.total) + " / " + sc.out_of + '</td><td class="r">' + fmt(sc.used_kwh) + " / " + fmt(sc.par_kwh) + "</td></tr>";
+  }).join("");
+  var links = SF.RIDES.map(function (r, i) {
+    var lg = r.record.log;
+    return '<li><a class="card" href="#flight' + (i + 1) + '" style="text-decoration:none"><div class="h"><span class="cs">' + esc(fleetName(lg.car)) + '</span><span class="sub">' + esc(shipWords(r.label)) + '</span><span style="flex:1"></span><span class="tag sim">Sample</span></div><div class="rt">' + placeH(lg.from) + ' <span class="dim">&rarr;</span> ' + placeH(lg.to) + '</div><div class="ft"><span>Score ' + fmt(r.record.score.total) + " / " + r.record.score.out_of + "</span><span>Open receipt &rarr;</span></div></a></li>";
+  }).join("");
+  return '<div class="dh"><div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="caps">Log &amp; reports</span><span class="tag sim">Simulated</span><span class="tag sim">Sample</span></div><h2>Sample scoreboard</h2>' +
+    '<div class="note" style="margin-top:4px">Three sample flights flown by a sample bot through the real game code. Not players. The live scoreboard is on the public site.</div></div><button class="btn small" type="button" data-close>Close</button></div>' +
+    '<div class="sec"><div class="tw"><table class="t"><thead><tr><th>#</th><th>Player</th><th>Model and skills</th><th>Flight</th><th>' + SF.SHIP + '</th><th class="r">Score</th><th class="r">kWh used / par</th></tr></thead><tbody>' + rows + "</tbody></table></div></div>" +
+    '<div class="sec"><h3>Flight receipts</h3><ul class="rlist">' + links + "</ul></div>";
+}
+function openDrawer(html) {
+  $("#dpanel").innerHTML = html; $("#drawer").hidden = false; $("#dpanel").scrollTop = 0;
+  $$("#dpanel [data-close]").forEach(function (b) { b.addEventListener("click", closeOverlay); });
+  setTimeout(function () { $("#dpanel").focus(); }, 0);
+}
+
+/* ---------- intro (mockup D's pre-flight checklist) ---------- */
+var CK = store("sf-ops-checks") || [false, false, false, false];
+function renderChecks(open) {
+  $$("#checks .chk").forEach(function (li, i) {
+    li.classList.toggle("done", !!CK[i]);
+    $(".stt", li).textContent = CK[i] ? "Checked" : "Open";
+    if (open != null) { var b = $(".chk-b", li), on = i === open; b.hidden = !on; $(".chk-h", li).setAttribute("aria-expanded", on ? "true" : "false"); }
+  });
+  var n = CK.filter(Boolean).length;
+  $("#prog .tx").textContent = n + " of 4 checks"; $("#prog .pb i").style.width = n * 25 + "%";
+  store("sf-ops-checks", CK);
+}
+var PILOT = store("sf-ops-pilot") || { model: "", skills: [] }, SKILLS = ["planning", "weather", "pricing"];
+function renderSkills() {
+  var all = SKILLS.concat(PILOT.skills.filter(function (s) { return SKILLS.indexOf(s) < 0; }));
+  $("#pSkills").innerHTML = all.map(function (s) { return '<button type="button" class="chipb" data-s="' + esc(s) + '" aria-pressed="' + (PILOT.skills.indexOf(s) >= 0) + '">' + esc(s) + "</button>"; }).join("");
+}
+function initIntro() {
+  $("#mcpUrl").value = SF.MCP_URL;
+  $("#partsTotal").textContent = SF.SCORE_PARTS.reduce(function (a, p) { return a + p[2]; }, 0);
+  var mx = Math.max.apply(null, SF.SCORE_PARTS.map(function (p) { return p[2]; }));
+  $("#parts").innerHTML = SF.SCORE_PARTS.map(function (p) { return "<li><span>" + esc(p[1]) + '</span><span class="bar"><i style="width:' + (p[2] / mx * 100) + '%"></i></span><span class="v">' + p[2] + "</span></li>"; }).join("");
+  $("#pModel").value = PILOT.model || "";
+  renderSkills(); renderChecks(0);
+  $("#copyBtn").addEventListener("click", function () {
+    var inp = $("#mcpUrl"), msg = $("#copyMsg");
+    function fallback() { inp.focus(); inp.select(); msg.textContent = "Selected. Press Ctrl+C or Cmd+C to copy."; }
+    try { navigator.clipboard.writeText(SF.MCP_URL).then(function () { msg.textContent = "Copied."; CK[0] = true; renderChecks(); }, fallback); } catch (e) { fallback(); }
+  });
+  $("#grokLink").addEventListener("click", function () { CK[0] = true; renderChecks(); });
+  $("#pSkills").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-s]"); if (!b) return;
+    var s = b.dataset.s, k = PILOT.skills.indexOf(s);
+    if (k >= 0) PILOT.skills.splice(k, 1); else PILOT.skills.push(s);
+    store("sf-ops-pilot", PILOT); renderSkills();
+  });
+  $("#pAdd").addEventListener("click", function () {
+    var v = $("#pCustom").value.trim().toLowerCase().slice(0, 24); if (!v) return;
+    if (PILOT.skills.indexOf(v) < 0) PILOT.skills.push(v);
+    $("#pCustom").value = ""; store("sf-ops-pilot", PILOT); renderSkills();
+  });
+  $("#pCustom").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("#pAdd").click(); } });
+  $("#pModel").addEventListener("input", function () { PILOT.model = this.value.slice(0, 60); store("sf-ops-pilot", PILOT); });
+  $$("[data-next]").forEach(function (b) { b.addEventListener("click", function () { var i = +b.dataset.next; CK[i] = true; renderChecks(i < 3 ? i + 1 : -1); if (i === 3) $("#toOps").focus(); }); });
+  $$(".chk-h").forEach(function (b, i) { b.addEventListener("click", function () { var open = b.getAttribute("aria-expanded") === "true"; renderChecks(open ? -1 : i); }); });
+  $("#introClose").addEventListener("click", closeOverlay);
+  $("#intro").addEventListener("click", function (e) { if (e.target === $("#intro")) closeOverlay(); });
+  $("#drawer").addEventListener("click", function (e) { if (e.target === $("#drawer")) closeOverlay(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && (!$("#intro").hidden || !$("#drawer").hidden)) closeOverlay(); });
+}
+function closeOverlay() { if (location.hash) history.replaceState(null, "", location.pathname + location.search); route(); }
+
+/* ---------- routing ---------- */
+function route() {
+  var h = (location.hash || "").slice(1), m = /^flight([1-9])$/.exec(h);
+  $("#intro").hidden = h !== "intro";
+  if (h === "intro") { $("#drawer").hidden = true; setTimeout(function () { $("#introH").focus(); }, 0); return; }
+  if (m && SF.RIDES[+m[1] - 1]) { select({ type: "flight", i: +m[1] - 1 }); openDrawer(receipt(+m[1] - 1)); return; }
+  if (h === "reports") { openDrawer(reports()); return; }
+  $("#drawer").hidden = true;
+}
+
+/* ---------- loop ---------- */
+var raf = 0, lastSlow = 0, lastMid = 0;
+function frame(now) {
+  raf = 0;
+  var ms = Date.now(), s = SF.sky(ms);
+  FLIGHTS.forEach(function (F) { F.now = flightAt(F, replayT(F, ms)); });
+  LAY = layout(s.jd);
+  if (tween) {
+    var f = Math.min(1, (now - tween.t0) / tween.d), e = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+    cam.x = tween.from.x + (tween.to.x - tween.from.x) * e; cam.y = tween.from.y + (tween.to.y - tween.from.y) * e; cam.k = tween.from.k + (tween.to.k - tween.from.k) * e;
+    if (f >= 1) tween = null;
+  } else if (FOLLOW) { var b = sectorBox(FOLLOW); cam.x = b.x - FOFF.x / cam.k; cam.y = b.y - FOFF.y / cam.k; }
+  drawMap(now, s);
+  feedTick(ms);
+  drawWave(now);
+  if (now - lastMid > 250) {
+    lastMid = now;
+    $("#clk").textContent = iso(s.jd) + " UTC";
+    $("#sday").textContent = "Season " + s.season + DOT + "day " + fmt(s.day + 1) + " of " + fmt(SF.SKY.len_days);
+    updateFlights(); renderInfo(false); readouts(); renderFeed();
+  }
+  if (now - lastSlow > 1000) {
+    lastSlow = now;
+    DESK = SF.desk(ms); renderBookings(); renderFleet(s); renderAlerts(s);
+  }
+  if (!document.hidden) raf = requestAnimationFrame(frame);
+}
+function startLoop() { if (!raf && !document.hidden) raf = requestAnimationFrame(frame); }
+
+/* ---------- start ---------- */
+function start() {
+  R = SF.R; PLACES = SF.E.PLACES; PLACES.forEach(function (p) { PID[p.id] = p; });
+  SHIP_IMG = new Image();
+  SHIP_IMG.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SF.SHIP_TOP_SVG.indexOf("xmlns") < 0 ? SF.SHIP_TOP_SVG.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ') : SF.SHIP_TOP_SVG);
+  initKids(); initFlights();
+  cv = $("#cv"); ctx = cv.getContext("2d"); waveCv = $("#wave"); wctx = waveCv.getContext("2d");
+  DESK = SF.desk(); LAY = layout(SF.sky().jd);
+  $("#listAir").innerHTML = flightsHtml(); $("#ctAir").textContent = FLIGHTS.length;
+  $("#listAir").addEventListener("click", function (e) { var b = e.target.closest("[data-f]"); if (b) select({ type: "flight", i: +b.dataset.f }); });
+  $("#listBook").addEventListener("click", function (e) { var b = e.target.closest("[data-b]"); if (b) select({ type: "booking", id: b.dataset.b }); });
+  $("#tabAir").addEventListener("click", function () { tab("air"); });
+  $("#tabBook").addEventListener("click", function () { tab("book"); });
+  $("#tiles").addEventListener("click", function (e) { var b = e.target.closest("[data-t]"); if (b) { TOOL_SEL = +b.dataset.t; renderTools(); $('[data-t="' + TOOL_SEL + '"]').focus(); } });
+  renderTools(); initIntro(); bindMap(); renderBookings();
+  if (window.ResizeObserver) new ResizeObserver(resize).observe($("#stage")); else addEventListener("resize", resize);
+  resize(); setSector("all", true);
+  document.addEventListener("visibilitychange", startLoop);
+  addEventListener("hashchange", route);
+  route(); renderInfo(true); startLoop();
+  $("#loading").remove();
+}
+function tab(t) {
+  $("#tabAir").setAttribute("aria-selected", t === "air"); $("#tabBook").setAttribute("aria-selected", t === "book");
+  $("#listAir").hidden = t !== "air"; $("#listBook").hidden = t !== "book";
+  $("#flNote").textContent = t === "air" ? "Sample flights flown by a sample bot through the real game code, replayed in a 24-second loop. Times are replay times." : "Open bookings from the engine at sky time. Your agent takes one with take_hail; this page only shows them.";
+}
+SF.loadEngine().then(start).catch(function (e) {
+  $("#loading .box").innerHTML = "The engine did not load (" + SF.esc(e && e.message) + "). Reload to try again.";
+});
+})();
+</script>
