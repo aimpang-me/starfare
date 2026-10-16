@@ -22,18 +22,30 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
 import { SEASON_END, computeLeg, isoJD } from "../src/game.js";
+import { SEALED_NOTE } from "../src/bench-host.js";
+import { naive } from "../bench/agents.mjs";
+import { readSuite } from "../bench/backend.mjs";
+import { verifyTrace } from "../bench/verify.mjs";
 
 const DIR = fileURLToPath(new URL("..", import.meta.url));
 const MODE = (process.argv.find((a) => a.startsWith("--mode=")) || "--mode=both").slice(7);
 if (!["off", "on", "both"].includes(MODE)) throw new Error("--mode must be off, on or both");
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
+const v1 = () => readSuite(join(DIR, "src", "suites", "v1.json"));
+const BENCH_KEY = "e2e-bench-key"; // a throwaway key for wrangler dev; the live one is a Wrangler secret
 const TOOLS = ["check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_leg", "plan_pickup", "plan_ride", "space_weather", "start_bench", "take_hail"];
 
 const results = [];
+let workerLog = [];
 async function check(name, fn) {
+  const from = workerLog.length;
   try { await fn(); results.push({ name, ok: true }); console.log(`PASS  ${name}`); }
-  catch (error) { results.push({ name, ok: false }); console.log(`FAIL  ${name}\n      ${String(error?.stack ?? error).split("\n").slice(0, 6).join("\n      ")}`); }
+  catch (error) {
+    results.push({ name, ok: false }); console.log(`FAIL  ${name}\n      ${String(error?.stack ?? error).split("\n").slice(0, 6).join("\n      ")}`);
+    const errs = workerLog.slice(from).join("").split("\n").filter((l) => /error|exception|uncaught/i.test(l)).slice(0, 12);
+    if (errs.length) console.log(`      wrangler dev said:\n      ${errs.join("\n      ")}`);
+  }
 }
 const freePort = () => new Promise((res, rej) => { const s = createServer(); s.once("error", rej); s.listen(0, "127.0.0.1", () => { const { port } = s.address(); s.close(() => res(port)); }); });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -41,7 +53,7 @@ const running = new Set();
 process.on("exit", () => { for (const c of running) try { process.kill(-c.pid, "SIGKILL"); } catch {} });
 
 async function startWorker(vars = {}) {
-  const port = await freePort(), persist = mkdtempSync(join(tmpdir(), "sol-e2e-")), log = [];
+  const port = await freePort(), persist = mkdtempSync(join(tmpdir(), "sol-e2e-")), log = workerLog = [];
   const args = [join(DIR, "node_modules", "wrangler", "bin", "wrangler.js"), "dev", "--port", String(port), "--ip", "127.0.0.1", "--persist-to", persist];
   for (const [k, v] of Object.entries(vars)) args.push("--var", `${k}:${v}`);
   const child = spawn(process.execPath, args, { cwd: DIR, detached: true, env: { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "1" } });
@@ -69,6 +81,16 @@ async function call(client, name, args = {}) {
   const text = r.content[0].text;
   let value; try { value = JSON.parse(text); } catch { value = text; }
   return { isError: r.isError === true, value, ms: Date.now() - t };
+}
+/** naive over a bench session's tasks until a ride arrives; End on the page closes each task naive gives up on. */
+async function flyOne(bot, watch) {
+  const play = async (tool, input) => { const r = await call(bot, tool, input); return r.isError ? { error: r.value } : r.value; };
+  for (let k = 1; k <= 5; k++) {
+    const d = await naive(play, E);
+    if (d?.bench?.ended?.why === "arrived") return { flown: d, k };
+    await (await fetch(`${watch}/end`, { method: "POST" })).body?.cancel();
+  }
+  assert.fail("naive's ride arrived on none of the session's 5 tasks");
 }
 let scored = 0; // dispatches that locked a score, for the board check
 const timings = []; // wall time per tool call through wrangler dev (includes MCP + Durable Object hops)
@@ -135,7 +157,7 @@ const partsStr = (score) => score.parts.map((p) => `${p.key} ${p.got}/${p.max}`)
 async function phaseOff() {
   console.log("\n== STARFARE_OAUTH=off (default) ==");
   const report = {};
-  const w = await startWorker({ STARFARE_OAUTH: "off" }); // wrangler.jsonc ships "on" (the live setting)
+  const w = await startWorker({ STARFARE_OAUTH: "off", STARFARE_BENCH_KEY: BENCH_KEY, RATE_PER_MIN: "1000" }); // wrangler.jsonc ships "on" (the live setting)
   console.log(`wrangler dev up at ${w.base}`);
   const client = await connect(w.base);
 
@@ -463,23 +485,53 @@ async function phaseOff() {
       assert.deepEqual(v.trace[1].result.hails, list.hails);
       assert.deepEqual([v.current.task, v.current.calls_used, v.tasks.map((t) => t.status)], [1, 1, ["current", "waiting", "waiting", "waiting", "waiting"]]);
       assert.deepEqual((await (await fetch(`${start.watch}.json?after=2`)).json()).trace, []);
+      const early = await fetch(`${start.watch}/trace.json`);
+      assert.deepEqual([early.status, (await early.json()).error], [409, "The trace is published once every task in this session is played."]);
 
-      let end;
-      for (let k = 0; k < 5; k++) end = await (await fetch(`${start.watch}/end`, { method: "POST" })).json();
-      assert.equal(end.done, true);
+      const board = await (await fetch(`${w.base}/board.json`)).text();
+      const { flown, k } = await flyOne(bot, start.watch);
+      assert.deepEqual([flown.status, flown.bench.task, flown.bench.ended.why, typeof flown.bench.ended.total], ["arrived", `${k} of 5`, "arrived", "number"]);
+      assert.equal(await (await fetch(`${w.base}/board.json`)).text(), board, "a bench ride that arrived left /board.json as it was");
+
+      for (let j = k; j < 5; j++) await (await fetch(`${start.watch}/end`, { method: "POST" })).body?.cancel();
       const again = await fetch(`${start.watch}/end`, { method: "POST" });
       assert.equal(again.status, 409); await again.body?.cancel();
       const over = await call(bot, "list_hails");
       assert.deepEqual([over.isError, over.value], [true, "This bench session is over. start_bench starts a new one."]);
       assert.deepEqual((await ok(bot, "list_hails")).hails.map((h) => h.hail_id), R.HAILS.map((h) => h.id));
 
-      const done = await (await fetch(`${start.watch}.json`)).json();
-      assert.deepEqual([done.done, done.current, done.tasks.map((t) => t.result.ended)], [true, null, Array(5).fill("ended on the watch page")]);
-      assert.deepEqual(done.trace.map((r) => r.tool).slice(2), [...Array(5).fill("end task (watch page)"), "list_hails"]);
-      for (const [path, method, status] of [[`/bench/b_${"0".repeat(20)}.json`, "GET", 404], [`/bench/${start.bench_id}.json`, "POST", 405], [`/bench/${start.bench_id}/end`, "GET", 405], ["/bench/nope", "GET", 404]]) {
+      let done;
+      for (let t = Date.now(); Date.now() - t < 30_000; await sleep(300)) if ((done = await (await fetch(`${start.watch}.json`)).json()).verified != null) break;
+      assert.deepEqual([done.done, done.current, done.verified, done.tasks.map((t) => t.result.ended)],
+        [true, null, true, Array.from({ length: 5 }, (_, j) => (j === k - 1 ? "arrived" : "ended on the watch page"))]);
+      assert.equal(done.tasks[k - 1].result.total, flown.bench.ended.total);
+      const tr = await fetch(`${start.watch}/trace.json`), trace = await tr.json();
+      assert.deepEqual([trace.calls.filter((c) => c.tool === "end task (watch page)").length, trace.calls.at(-1).tool], [4, "list_hails"]);
+      assert.match(tr.headers.get("content-disposition"), new RegExp(`attachment; filename="starfare-${start.bench_id}-trace.json"`));
+      assert.deepEqual([trace.format, trace.simulated, trace.split, trace.verified, trace.start.player, trace.total], ["starfare.bench-trace/1", true, "dev", true, undefined, flown.bench.ended.total]);
+      assert.equal((await verifyTrace(trace, v1())).verified, true, "the downloaded trace replays in Node to the Worker's results");
+      assert.equal((await verifyTrace({ ...trace, results: [{ ...trace.results[0], total: trace.results[0].total + 1 }, ...trace.results.slice(1)] }, v1())).verified, false);
+      assert.equal(await (await fetch(`${w.base}/board.json`)).text(), board, "a finished bench session left /board.json as it was");
+      for (const [path, method, status] of [[`/bench/b_${"0".repeat(20)}.json`, "GET", 404], [`/bench/b_${"0".repeat(20)}/trace.json`, "GET", 404], [`/bench/${start.bench_id}.json`, "POST", 405], [`/bench/${start.bench_id}/end`, "GET", 405], ["/bench/nope", "GET", 404]]) {
         const r = await fetch(`${w.base}${path}`, { method });
         assert.equal(r.status, status, `${method} ${path}`); await r.body?.cancel();
       }
+    } finally { await bot.close(); }
+  });
+  await check("start_bench split test: with STARFARE_BENCH_KEY set, a held-out task that arrives says only that it flew, and the page shows no score", async () => {
+    const bot = await connect(w.base);
+    try {
+      const start = await call(bot, "start_bench", { split: "test" });
+      if (!v1().splits.test) {
+        assert.deepEqual([start.isError, start.value], [true, "Suite v1 has no test split yet. start_bench with split dev (practice) still works."]);
+        return;
+      }
+      assert.deepEqual([start.value.practice, start.value.suite], [false, "v1 (held-out test split)"]);
+      const { flown } = await flyOne(bot, start.value.watch);
+      assert.deepEqual([flown.status, flown.note, flown.bench.ended, flown.score, flown.total], ["flown", SEALED_NOTE, { why: "arrived", phase: "arrived" }, undefined, undefined]);
+      const v = await (await fetch(`${start.value.watch}.json`)).json();
+      assert.deepEqual([v.sealed, v.total, v.tasks.some((t) => t.result)], [true, null, false]);
+      assert.ok(!JSON.stringify(v).includes(BENCH_KEY));
     } finally { await bot.close(); }
   });
   await client.close();
@@ -756,6 +808,11 @@ async function phaseOn() {
       const lines = (await ex.text()).trim().split("\n").map((l) => JSON.parse(l));
       assert.deepEqual(lines.map((l) => l.run_id), [second.hail.run_id, good.hail.run_id]);
       assert.deepEqual(lines[1], detail); assert.ok(lines.every((l) => l.format === "starfare.ride/1" && l.simulated === true));
+    });
+    await check("on: with no STARFARE_BENCH_KEY, start_bench refuses the test split and still starts practice", async () => {
+      const t = await call(b.client, "start_bench", { split: "test" });
+      assert.deepEqual([t.isError, t.value], [true, "The test split needs STARFARE_BENCH_KEY on this server, and it has none. start_bench with split dev (practice) still works."]);
+      assert.equal((await ok(b.client, "start_bench", { split: "dev" })).practice, true);
     });
     await a.client.close(); await b?.client.close();
   } finally { await w.stop(); }

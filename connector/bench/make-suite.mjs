@@ -4,14 +4,16 @@
 // number from each stratum (quick or long, by the lead hail; clear or hazard, by whether naive's ride met an incident),
 // plus a few anchors naive already solves. Every candidate's scores go to the selection file, so the choice can be audited.
 //   node bench/make-suite.mjs --id v1 --out src/suites/v1.json [--candidates 80 --per-stratum 5 --anchors 3]
-//   STARFARE_BENCH_KEY=... node bench/make-suite.mjs --id v1 --test-out <path outside the repo>
-// The dev split's candidates come from a public seed, so anyone can rerun this and get the same file.
-import { mkdirSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+//   STARFARE_BENCH_KEY=... node bench/make-suite.mjs --test-into src/suites/v1.json --test-selection <path outside the repo>
+// The dev split's candidates come from a public seed, so anyone can rerun this and get the same file. The test split's
+// candidates and worlds come from the key: --test-into adds its task list (id, hail or hails, sky day; no stratum or anchor,
+// which say how naive fared in a hidden world) to the suite file, and its scores go only to --test-selection.
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import META from "../src/engine/meta.json" with { type: "json" };
 import { SCORE_VERSION, SEASON_END, SKY } from "../src/game.js";
-import { SUITE_FORMAT, seedFor } from "../src/suite.js";
+import { SUITE_FORMAT, loadSuite, seedFor } from "../src/suite.js";
 import { BenchBackend, flags, loadEngine, openTask } from "./backend.mjs";
 import { naive, random, reference, rngOf } from "./agents.mjs";
 
@@ -95,8 +97,13 @@ async function cut({ id, split, n, key, rule, log }) {
   return { suite: { ...suite, splits: { [split]: tasks } }, selection };
 }
 
+/** What the suite file may say about a test task. */
+export const publicTask = ({ id, hail_id, hails, clock_jd }) => ({ id, ...(hails ? { hails } : { hail_id }), clock_jd });
+const REPO = fileURLToPath(new URL("../..", import.meta.url));
+const inRepo = (path) => { const r = relative(REPO, resolve(path)); return !r.startsWith("..") && !isAbsolute(r); };
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const a = flags(process.argv.slice(2), ["id", "out", "test-out", "candidates", "per-stratum", "anchors", "margin", "budget"]);
+  const a = flags(process.argv.slice(2), ["id", "out", "test-into", "test-selection", "candidates", "per-stratum", "anchors", "margin", "budget"]);
   const rule = { margin: +(a.margin ?? 5), perStratum: +(a["per-stratum"] ?? 5), anchors: +(a.anchors ?? 3), budget: +(a.budget ?? 60) };
   const id = a.id || "v1", n = +(a.candidates ?? 80), log = (s) => console.error(s);
   const write = (path, obj) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, JSON.stringify(obj, null, 2) + "\n"); };
@@ -106,12 +113,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     write(a.out.replace(/\.json$/, "") + ".selection.json", selection);
     console.log("dev: " + suite.splits.dev.length + " tasks of " + n + " candidates; wrote " + a.out);
   }
-  if (a["test-out"]) {
-    const key = process.env.STARFARE_BENCH_KEY;
-    if (!key) throw new Error("--test-out needs STARFARE_BENCH_KEY in the environment");
-    const { suite, selection } = await cut({ id, split: "test", n, key, rule, log });
-    write(a["test-out"], suite);
-    write(a["test-out"].replace(/\.json$/, "") + ".selection.json", selection);
-    console.log("test: " + suite.splits.test.length + " tasks; wrote " + a["test-out"]);
+  if (a["test-into"]) {
+    const key = process.env.STARFARE_BENCH_KEY, sel = a["test-selection"];
+    if (!key) throw new Error("--test-into needs STARFARE_BENCH_KEY in the environment");
+    if (!sel || inRepo(sel)) throw new Error("--test-selection must be a path outside the repo: it holds the test split's scores");
+    const into = loadSuite(readFileSync(a["test-into"], "utf8"));
+    const { suite, selection } = await cut({ id: into.id, split: "test", n, key, rule: { ...rule, budget: into.budget, margin: into.margin }, log });
+    write(a["test-into"], { ...into, splits: { ...into.splits, test: suite.splits.test.map(publicTask) } });
+    write(sel, selection);
+    console.log("test: " + suite.splits.test.length + " tasks of " + n + " candidates; added to " + a["test-into"] + ", scores in " + sel);
   }
 }

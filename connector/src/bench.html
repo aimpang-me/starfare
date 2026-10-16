@@ -125,9 +125,10 @@ footer{border-top:1px solid var(--line);padding:24px max(28px, var(--gut)) 40px;
 <section class="sec" id="watch" hidden>
   <div class="head">
     <div>
-      <span class="k">Bench · practice · <span id="suite"></span></span>
+      <span class="k">Bench · <span id="kind">practice</span> · <span id="suite"></span></span>
       <h1 id="title">Bench session</h1>
       <p class="dim small" id="sub"></p>
+      <p class="small" id="check" hidden><span id="check-text"></span> <a id="check-link" href="#">Download the trace (.json)</a></p>
     </div>
     <div class="total"><span class="k">Total</span><span class="big num" id="total">0</span><span class="faint small num" id="outof"></span></div>
   </div>
@@ -180,14 +181,15 @@ function gist(c) {
   if (r.truncated) return r.truncated;
   const b = r.bench, bits = [];
   if (c.tool === "start_bench") bits.push(r.tasks + " tasks, a budget of " + r.budget + " calls each");
-  if (c.tool === "end task (watch page)") bits.push(r.task_id + " ended here: " + r.total + " points");
+  if (c.tool === "end task (watch page)") bits.push(r.task_id + " ended here: " + pts(r.total));
   for (const k of ["status", "hail_id", "leg_id", "car", "kwh", "fare_usd", "arrive"]) if (r[k] != null && typeof r[k] !== "object") bits.push(k + " " + r[k]);
   if (r.refly && r.refly.result) bits.push("re-fly " + r.refly.result);
   if (Array.isArray(r.bookings)) bits.push(r.bookings.length + " bookings");
   if (Array.isArray(r.hails)) bits.push(r.hails.length > 3 ? r.hails.length + " hails" : r.hails.map((h) => h.shared_flight ? "shared flight: " + h.shared_flight.join(" + ") : h.hail_id).join(", "));
-  if (b && b.ended) bits.push("task " + b.task.split(" ")[0] + " ended (" + b.ended.why + "): " + b.ended.total + " points");
+  if (b && b.ended) bits.push("task " + b.task.split(" ")[0] + " ended (" + b.ended.why + "): " + pts(b.ended.total));
   return bits.join(" · ") || "ok";
 }
+const pts = (n) => (n == null ? "score sealed" : n + " points");
 
 function row(c) {
   const d = el("details", "call"), r = c.result || {};
@@ -206,15 +208,23 @@ function row(c) {
 }
 
 function render(v) {
+  $("kind").textContent = v.practice ? "practice" : "held-out test";
   $("suite").textContent = "suite " + v.suite + ", " + v.split + " split";
   $("title").textContent = v.done ? "Bench session finished" : "Bench session, task " + v.current.task + " of " + v.tasks.length;
-  $("sub").textContent = "Started " + new Date(v.started_ms).toLocaleString() + ". Each task has a budget of " + v.budget + " tool calls. Simulated.";
-  $("total").textContent = v.total;
+  $("sub").textContent = "Started " + new Date(v.started_ms).toLocaleString() + ". Each task has a budget of " + v.budget + " tool calls. Simulated." +
+    (v.sealed ? " Held-out test: every score stays sealed until all tasks are played." : "");
+  $("total").textContent = v.total == null ? "Sealed" : v.total;
   $("outof").textContent = "of " + v.out_of;
+  $("check").hidden = !v.done;
+  if (v.done) {
+    $("check-text").textContent = v.verified == null ? "Replaying the stored trace to check these scores…"
+      : v.verified ? "Replay verified: the stored trace reproduces every task's score." : "Replay check failed: the stored trace does not reproduce these scores.";
+    $("check-link").href = "/bench/" + v.bench_id + "/trace.json";
+  }
   $("tasks").replaceChildren(...v.tasks.map((t, k) => {
     const c = el("div", "task " + t.status);
-    c.append(el("span", "k", "Task " + (k + 1) + " · " + (t.status === "done" ? t.result.phase : t.status)),
-      el("span", "pts num", t.result ? String(t.result.total) : "–"), el("span", "id", t.task_id));
+    c.append(el("span", "k", "Task " + (k + 1) + " · " + (t.result ? t.result.phase : t.status)),
+      el("span", "pts num", t.result ? String(t.result.total) : t.status === "done" ? "sealed" : "–"), el("span", "id", t.task_id));
     if (t.hails.length > 1) c.append(el("span", "faint small", "Shared flight of " + t.hails.length + " bookings"));
     if (t.result) c.append(el("span", "faint small num", t.result.calls_used + " of " + t.result.budget + " calls · " + t.result.ended));
     return c;
@@ -255,8 +265,8 @@ async function watch(id) {
         after = v.trace[v.trace.length - 1].seq;
         first = false;
       }
-      done = v.done;
-      $("live").textContent = done ? "Finished" : "Live · updated " + new Date().toLocaleTimeString();
+      done = v.done && v.verified != null;
+      $("live").textContent = v.done ? "Finished" : "Live · updated " + new Date().toLocaleTimeString();
       if (!done || v.trace.length) timer = setTimeout(tick, v.trace.length === 50 ? 0 : 1500);
     } catch {
       $("live").textContent = "Reconnecting…";
