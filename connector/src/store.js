@@ -10,7 +10,7 @@ import { DurableObject } from "cloudflare:workers";
 import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
 import {
-  GameError, applyTool, computeLeg, hailInfo, leaveRun, legKey, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord, rideStats, rideSummary,
+  GameError, applyTool, computeLeg, hailInfo, leaveRun, legKey, legPub, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord, rideStats, rideSummary,
   seasonInstance,
 } from "./game.js";
 
