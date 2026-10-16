@@ -192,7 +192,8 @@ button.lbl:hover{color:var(--ink)}
 .ihd .art{width:58px;flex:none}
 .ihd .art svg{width:100%;height:auto;display:block}
 .ihd .nm{font:600 16px var(--mono);letter-spacing:.05em}
-.ihd .st{margin-left:auto;align-self:flex-start}
+.ihd .who{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.ihd .who .st{margin-top:2px}
 .irt{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px;margin-top:6px;font-size:12px}
 .ipb{height:3px;background:rgba(120,180,255,.12);margin-top:8px;border-radius:2px;overflow:hidden}
 .ipb i{display:block;height:100%;width:0;background:var(--cy)}
@@ -1393,7 +1394,7 @@ function renderInfo() {
   if (SEL.t === "f") {
     var F = FL[SEL.i], rec = F.rp.record, sc = rec.score, lg = rec.log;
     el.innerHTML = '<div class="caps" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">Selected flight <span class="tag sim">Sample</span><span class="tag sim">Simulated</span></div>' +
-      '<div class="ihd"><div class="art">' + SF.SHIP_SVG + '</div><div><div class="nm">' + esc(F.call) + '</div><div class="dim" style="font-size:11px">' + esc(SF.SHIP) + ' <span class="tag fict">Fictional</span></div></div><span class="st" id="iSt"></span></div>' +
+      '<div class="ihd"><div class="art">' + SF.SHIP_SVG + '</div><div class="who"><div class="nm">' + esc(F.call) + '</div><div class="dim" style="font-size:11px">' + esc(SF.SHIP) + ' <span class="tag fict">Fictional</span></div><span class="st" id="iSt"></span></div></div>' +
       '<div class="irt">' + placeH(lg.from) + ' <span class="dim">&rarr;</span> ' + placeH(lg.to) + "</div>" +
       '<div class="note" id="iW" style="margin-top:3px"></div><div class="ipb"><i id="iBar"></i></div>' +
       '<dl class="kv"><dt>Progress</dt><dd id="iP"></dd><dt>ETA</dt><dd id="iEta"></dd><dt>Arrival</dt><dd>' + esc(arrOf(F)) + "</dd><dt>Energy used</dt><dd>" + kwh(sc.used_kwh) + "</dd><dt>Fare</dt><dd>" + money(sc.fare_usd) + "</dd><dt>Score</dt><dd>" + fmt(sc.total) + " / " + sc.out_of + "</dd></dl>" +
