@@ -22,6 +22,10 @@ Alvin's game loop, in his words (2026-10-16):
 - **Spec**: "SOL Final Spec" Claude Doc https://claude.ai/code/artifact/33317ff6-abf3-461e-b47a-8fdcfdd98aa6 (section "The game: robotaxi dispatcher arena", and "Later ideas").
 - Before the hazards, Grok scored 100 every time; a naive bot now averages about 92-98 on quick hails.
 
+## Web pages and design
+- All pages, their links, sources and how to build and publish them: `docs/WEBSITES.md` (Open Sky, Stranded at Titan, Dispatch Desk, the Roadster teaser in `teaser/`, the spec).
+- The visual design, tokens, Alvin's mockups and his Terminal design system: `docs/DESIGN.md`.
+
 ## Decisions already made (don't relitigate)
 - It's ride hailing for flying cars, not deliveries (the older delivery game `sol-missions.js` is legacy).
 - Bring-your-own-agent is Grok-first: players add the connector in their own Grok at grok.com/connectors. No xAI key on our side, ever.

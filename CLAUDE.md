@@ -6,6 +6,7 @@ Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi gam
 - `world/engine/`: the engine. `sol-engine.js` (planner, n-body re-fly checker), `sol-rides.js` (ride hails, hazards, scoring), `sol-missions.js` (older delivery game). `python3 world/bundle.py` bundles them into `engine/sol-page.js`.
 - `world/template.html` -> `python3 world/build.py` -> `world/open-sky.html` (the Open Sky page, published as a claude.ai artifact).
 - `connector/`: the Grok MCP connector, a Cloudflare Worker named `starfare`. `node build.mjs` copies the engine bundle into `src/engine/`. Docs: `DEPLOY.md`, `TEST.md`.
+- `day5/` (Stranded at Titan page), `site/` (Dispatch Desk page), `teaser/` (Ride to the Roadster page).
 - `code/`, `day1`-`day6/`, `audit/`, `receipts/`: the original Python planner, checker, evals.
 
 ## Tests
@@ -22,7 +23,7 @@ Starfare (working title SOL) is Alvin Impang's portfolio project: a robotaxi gam
 
 ## Open items (2026-10-16)
 - Done: merged with the live connector (DO classes StarfareMcp/Run/Hub/Auth, STARFARE_OAUTH); MCP server named "starfare"; live Worker version 31d63a4c (main c9b50df). Don't rename the DO classes again without a wrangler migration.
-- See docs/HANDOFF.md for the game's vision, decisions and build order.
+- See docs/HANDOFF.md (vision, decisions, build order), docs/WEBSITES.md (every page, link, build, publish) and docs/DESIGN.md (look, tokens, mockups).
 - Old Worker `sol-connector` still running; delete only when Alvin says.
 - Done and deployed: mid-ride checkpoints (launch_hold, pad_closed) with the `decide` tool, on the connector and the Open Sky page; get_my_rides with ride history and run logs.
 - Later ideas: leaderboard by model + skills, daily seed, dispatch bidding, comfort max-g, charging stops, pooling.

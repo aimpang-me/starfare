@@ -1,0 +1,344 @@
+<title>Ride to the Roadster</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+@font-face{font-family:"Departure Mono";src:url("fonts/DepartureMono-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+:root{
+  color-scheme: light;
+  --paper:#fbfcfd; --ink:#0d1117; --ink-2:#454c59; --ink-3:#626a77; --wash:#eceff3; --pass:#4d6b58; --fail:#94524b;
+  --mono:"Departure Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sym:"Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols 2", "DejaVu Sans", sans-serif;
+  --s1:11px; --s2:22px; --s3:33px; --s4:44px; --s5:55px;
+}
+*{box-sizing:border-box}
+html{-webkit-font-smoothing:none;-moz-osx-font-smoothing:grayscale;font-smooth:never}
+body{background:var(--paper);color:var(--ink);font-family:var(--mono);font-size:16.5px;line-height:22px}
+.wrap{max-width:1100px;margin:0 auto;padding-block:var(--s5);
+  padding-left:max(var(--s2), env(safe-area-inset-left, 0px));padding-right:max(var(--s2), env(safe-area-inset-right, 0px));
+  display:flex;flex-direction:column;gap:var(--s5)}
+@media (max-width:700px){ .wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:var(--s4)} }
+p{margin:0}
+.label{font-size:11px;line-height:22px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+@media (max-width:700px){ .label{font-size:16.5px} }
+.dim{color:var(--ink-2)}
+.sym{font-family:var(--sym);display:inline-block;width:2ch;text-align:center}
+h1{font-weight:400;font-size:55px;line-height:55px;letter-spacing:-5px;margin:0;text-transform:uppercase;text-wrap:balance}
+@media (min-width:1000px){ h1{font-size:88px;line-height:80px;letter-spacing:-8px} }
+@media (max-width:420px){ h1{font-size:44px;line-height:44px;letter-spacing:-4px} }
+h2{font-weight:400;font-size:33px;line-height:33px;letter-spacing:-1px;margin:0;text-transform:uppercase}
+h2::before{content:"$ ";color:var(--ink-3)}
+@media (max-width:700px){ h2{font-size:22px;line-height:33px;letter-spacing:0} }
+.lead{font-size:22px;line-height:33px;max-width:40ch}
+@media (max-width:700px){ .lead{font-size:16.5px;line-height:22px} }
+.sec{display:flex;flex-direction:column;gap:var(--s2)}
+
+/* header */
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:end}
+@media (max-width:860px){ .top{grid-template-columns:1fr} }
+.margin{font-size:11px;line-height:22px;letter-spacing:.08em;color:var(--ink-2);white-space:pre;max-width:100%;overflow:hidden}
+@media (max-width:700px){ .margin{font-size:13px} }
+.hdr{display:flex;flex-direction:column;gap:var(--s2)}
+.cursor{display:inline-block;width:.6em;height:1em;background:var(--ink);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion: reduce){ .cursor{animation:none} }
+
+/* panels */
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--s2)}
+@media (max-width:860px){ .grid2{grid-template-columns:1fr} }
+.mini{display:flex;flex-direction:column;min-width:0}
+.tab{align-self:flex-start;background:var(--ink);color:var(--paper);font-size:11px;line-height:22px;letter-spacing:.08em;padding:0 var(--s1);text-transform:uppercase}
+@media (max-width:700px){ .tab{font-size:16.5px} .panel{padding:var(--s1)} }
+.panel{background:var(--wash);border-top:2px solid var(--ink);padding:var(--s2);display:flex;flex-direction:column;gap:var(--s1);min-width:0;flex:1}
+.box{overflow-x:auto;white-space:pre;font-size:16.5px;line-height:22px;margin:0;font-family:var(--mono)}
+@media (max-width:480px){ .box{font-size:13px;line-height:19px} }
+.box .k{color:var(--ink-2)}
+.box b{font-weight:400;background:var(--ink);color:var(--paper)}
+.tick{font-variant-numeric:tabular-nums}
+
+/* map */
+.map svg{display:block;width:100%;height:auto;max-width:520px;margin:0 auto;aspect-ratio:1}
+.legend{display:flex;flex-wrap:wrap;gap:4px var(--s2);font-size:13px;color:var(--ink-2)}
+
+/* buttons */
+.btn{font:inherit;font-size:16.5px;color:var(--ink);background:transparent;border:1px solid var(--ink);padding:0 var(--s1);min-height:33px;cursor:pointer;text-transform:uppercase;letter-spacing:.04em}
+.btn:hover{background:var(--wash)}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media (max-width:700px){ .btn{min-height:44px} }
+.row{display:flex;flex-wrap:wrap;gap:var(--s1);align-items:center}
+
+/* receipt (the one raised object) */
+.quote{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:var(--s3);align-items:start}
+@media (max-width:860px){ .quote{grid-template-columns:1fr} }
+.lift{position:relative;z-index:0;margin:0 var(--s1) var(--s1) 0}
+.lift::before{content:"";position:absolute;inset:0;transform:translate(11px,11px);z-index:-1;opacity:.25;
+  background:repeating-conic-gradient(var(--ink) 0 25%, transparent 0 50%) 0 0/4px 4px}
+.receipt{position:relative;background:var(--paper);border:2px solid var(--ink);padding:var(--s2);display:flex;flex-direction:column;gap:var(--s1)}
+.receipt pre{margin:0;font-family:var(--mono);white-space:pre-wrap;overflow-wrap:anywhere}
+.rl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 var(--s2)}
+.rl dt{color:var(--ink-3);font-size:11px;letter-spacing:.08em;text-transform:uppercase;line-height:22px}
+@media (max-width:700px){ .rl dt{font-size:13px} }
+.rl dd{margin:0;min-width:0;text-align:right}
+.rule{border:0;border-top:1px dashed var(--ink);margin:var(--s1) 0}
+.fare{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s1);font-size:22px;line-height:33px}
+.check{border:1px solid var(--pass);color:var(--pass);padding:var(--s1);display:flex;flex-direction:column;gap:4px}
+.check .h{text-transform:uppercase;letter-spacing:.06em}
+.side{display:flex;flex-direction:column;gap:var(--s2)}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--s1)}
+.steps li{display:grid;grid-template-columns:3ch minmax(0,1fr);gap:var(--s1)}
+.steps li span:first-child{color:var(--ink-3)}
+.msg{display:flex;flex-direction:column;gap:var(--s1)}
+.out{min-height:22px;color:var(--ink-2)}
+
+/* chart */
+.chart svg{display:block;width:100%;height:auto}
+footer{border-top:1px solid var(--ink);padding-top:var(--s2);display:flex;flex-direction:column;gap:var(--s1);color:var(--ink-2);font-size:13px;line-height:19px}
+footer p{max-width:90ch}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="hdr">
+      <p class="label">SOL · A RIDE-HAIL FOR THE SOLAR SYSTEM · TEASER</p>
+      <h1>Ride to the Roadster</h1>
+      <p class="lead">Tonight a new Roadster is unveiled on Earth. The first one has been circling the Sun since February 2018. Here is where it is, and what a ride there costs, with every quote re-flown by a physics checker.<span class="cursor" aria-hidden="true"></span></p>
+    </div>
+    <p class="margin" aria-label="Note">░  NO ROUTE IS SHOWN
+░  UNTIL THE CHECKER
+░  HAS RE-FLOWN IT.</p>
+  </header>
+
+  <section class="sec" aria-labelledby="h-where">
+    <h2 id="h-where">whereis roadster</h2>
+    <div class="grid2">
+      <div class="mini">
+        <span class="tab">DRIVER STATUS · LIVE</span>
+        <div class="panel">
+          <pre class="box" id="board" aria-live="off"></pre>
+          <div class="msg">
+            <div class="row"><button type="button" class="btn" id="msg-btn">&gt; MESSAGE THE DRIVER</button></div>
+            <p class="out" id="msg-out" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+      <div class="mini map">
+        <span class="tab">INNER SOLAR SYSTEM · TOP DOWN</span>
+        <div class="panel">
+          <svg id="map" viewBox="-1.9 -1.9 3.8 3.8" role="img" aria-labelledby="map-t"><title id="map-t">Orbits of Earth, Mars and the Roadster, with today's positions and the selected ride</title></svg>
+          <div class="legend" id="map-legend"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-quote">
+    <h2 id="h-quote">sol quote --to roadster</h2>
+    <div class="row" role="group" aria-label="Ride type" id="ride-tabs"></div>
+    <div class="quote">
+      <div class="lift"><div class="receipt" id="receipt"></div></div>
+      <div class="side">
+        <div class="mini">
+          <span class="tab">WHAT THE CHECKER DID</span>
+          <div class="panel"><ol class="steps" id="steps"></ol></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec chart" aria-labelledby="h-fares">
+    <h2 id="h-fares">sol fares --next 12mo</h2>
+    <p class="dim" id="fare-note" style="max-width:62ch"></p>
+    <div class="mini">
+      <span class="tab">CHEAPEST FARE BY PICKUP DATE · KM/S</span>
+      <div class="panel"><svg id="chart" viewBox="0 0 640 220" role="img" aria-labelledby="chart-t"><title id="chart-t">Cheapest fare by pickup date: lowest on Oct 16, 2026 at 3.45 km/s, about 4.16 km/s a year later</title></svg></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-how">
+    <h2 id="h-how">cat roadmap.txt</h2>
+    <div class="grid2">
+      <div class="mini"><span class="tab">THIS PAGE</span><div class="panel">
+        <p>The deterministic core: real positions from JPL, a trajectory solver, and an independent n-body checker that re-flies every route from a 200 km parking orbit before it is quoted.</p></div></div>
+      <div class="mini"><span class="tab">NEXT · AGENTS PROPOSE, PHYSICS DISPOSES</span><div class="panel">
+        <p>Dispatcher agents take requests like "pizza to the Roadster, before my birthday, nothing over 4 km/s". Every quote they write passes this checker, and any number that didn't come from a tool gets struck.</p></div></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Positions: JPL Horizons, Roadster trajectory solution #11 (fit to observations from February-March 2018, so today's position is an extrapolation), fetched for 2026-10-15 00:00 TDB and checked against Horizons' own range, range-rate and light-time columns. A second Horizons state for 2027-01-01, re-flown back 78 days by this checker, lands within <span id="xc"></span> of it. Planets: JPL DE421.</p>
+    <p>Rides: Lambert solver written from Izzo (2015), <span id="nsolves"></span> solves over a year of pickup dates. Checker: Sun, eight planets and the Moon, DOP853 integrator, Newton retargeting. Fares are Δv from a 200 km low Earth orbit and leave out the launch itself. Not affiliated with Tesla or SpaceX. Built by Alvin Impang.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var D = __DATA__;
+var EPOCH = Date.UTC(2026, 9, 15, 0, 0, 0) - 69200; // 2026-10-15 00:00 TDB is about 69 s earlier in UTC
+function $(id){ return document.getElementById(id); }
+function fmt(n, d){ return n.toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
+function mkm(km){ return fmt(km / 1e6, 1) + " million km"; }
+function dt(iso){ var m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; var p = iso.split("-"); return m[+p[1] - 1] + " " + (+p[2]) + ", " + p[0]; }
+var T = D.today;
+function mon(iso){ var m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return m[+iso.slice(5, 7) - 1] + " " + iso.slice(0, 4); }
+
+/* ---------- status board ---------- */
+function pad(s, n){ s = String(s); while (s.length < n) s += " "; return s; }
+function board(){
+  var secs = Math.max(0, (Date.now() - EPOCH) / 1000);
+  var odo = D.odometer_km + T.speed_sun_kms * secs;
+  var rows = [
+    ["DRIVER", "Starman (mannequin)"],
+    ["FROM EARTH", mkm(T.earth_km)],
+    ["FROM SUN", fmt(T.sun_au, 2) + " AU"],
+    ["SPEED", fmt(T.speed_sun_kms, 1) + " km/s vs Sun"],
+    ["", fmt(T.speed_earth_kms, 1) + " km/s vs Earth"],
+    ["LAPS", fmt(D.laps, 2) + " since 2018"],
+    ["ODOMETER", fmt(odo) + " km"],
+    ["NEXT MARS", fmt(D.closest_mars.km / 1e6, 1) + "M km, " + mon(D.closest_mars.date)],
+    ["NEXT EARTH", fmt(D.closest_earth.km / 1e6, 1) + "M km, " + mon(D.closest_earth.date)]
+  ];
+  var w = 0; rows.forEach(function(r){ w = Math.max(w, r[1].length); });
+  var line = "─".repeat(12) + "┬" + "─".repeat(w + 2);
+  var out = "┌" + line + "┐\n";
+  rows.forEach(function(r){ out += "│ " + pad(r[0], 11) + "│ " + pad(r[1], w) + " │\n"; });
+  out += "└" + line.replace("┬", "┴") + "┘";
+  $("board").textContent = out;
+  $("board").setAttribute("aria-label", rows.map(function(r){ return (r[0] || "") + " " + r[1]; }).join(". "));
+}
+board(); setInterval(board, 1000);
+
+/* ---------- message the driver ---------- */
+var msgTimer = null;
+$("msg-btn").addEventListener("click", function(){
+  var total = Math.round(T.light_min_earth * 60), left = total, out = $("msg-out");
+  if (msgTimer) clearInterval(msgTimer);
+  function show(){
+    var m = Math.floor(left / 60), s = left % 60;
+    out.textContent = left > 0
+      ? "Sent at the speed of light. Arrives in " + m + " min " + String(s).padStart(2, "0") + " s."
+      : "Delivered " + Math.floor(total / 60) + " min " + (total % 60) + " s after you sent it. No reply expected.";
+  }
+  show();
+  msgTimer = setInterval(function(){ left--; show(); if (left <= 0) { clearInterval(msgTimer); msgTimer = null; } }, 1000);
+});
+
+/* ---------- map ---------- */
+var NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent){ var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (parent || $("map")).appendChild(e); return e; }
+function path(pts, close){ return pts.map(function(p, i){ return (i ? "L" : "M") + p[0].toFixed(4) + " " + (-p[1]).toFixed(4); }).join(" ") + (close ? " Z" : ""); }
+var svg = $("map");
+var defs = el("defs", {});
+var pat = el("pattern", { id: "dith", width: ".02", height: ".02", patternUnits: "userSpaceOnUse" }, defs);
+el("rect", { width: ".01", height: ".01", fill: "#0d1117" }, pat); el("rect", { x: ".01", y: ".01", width: ".01", height: ".01", fill: "#0d1117" }, pat);
+el("circle", { cx: 0, cy: 0, r: .09, fill: "url(#dith)" });
+el("circle", { cx: 0, cy: 0, r: .05, fill: "#0d1117" });
+el("path", { d: path(D.track_earth_au, true), fill: "none", stroke: "#454c59", "stroke-width": .008 });
+el("path", { d: path(D.track_mars_au, true), fill: "none", stroke: "#454c59", "stroke-width": .008 });
+el("path", { d: path(D.track_roadster_au, true), fill: "none", stroke: "#0d1117", "stroke-width": .01, "stroke-dasharray": ".035 .025" });
+var arc = el("path", { d: "", fill: "none", stroke: "#4d6b58", "stroke-width": .022 });
+var arrMk = el("rect", { width: .07, height: .07, fill: "#fbfcfd", stroke: "#4d6b58", "stroke-width": .016 });
+function dot(p, r, fill){ return el("circle", { cx: p[0], cy: -p[1], r: r, fill: fill, stroke: "#0d1117", "stroke-width": .012 }); }
+function lab(p, text, dx, dy, anchor){ var t = el("text", { x: p[0] + dx, y: -p[1] + dy, "font-size": .1, "font-family": "Departure Mono, monospace", fill: "#0d1117", "text-anchor": anchor || "start" }); t.textContent = text; return t; }
+dot(T.earth_au, .045, "#fbfcfd"); lab(T.earth_au, "EARTH", .07, .035);
+dot(T.mars_au, .04, "#94524b"); lab(T.mars_au, "MARS", .07, .035);
+el("rect", { x: T.pos_au[0] - .045, y: -T.pos_au[1] - .045, width: .09, height: .09, fill: "#0d1117" });
+lab(T.pos_au, "ROADSTER", .02, .2, "middle");
+lab([0, 0], "SUN", 0, -.13, "middle");
+var arrLab = lab([0, 0], "", 0, 0);
+$("map-legend").innerHTML = "<span>■ Roadster today</span><span>- - its orbit</span><span>── Earth, Mars orbits</span><span id=\"lg-ride\"></span>";
+function drawRide(r){
+  arc.setAttribute("d", path(r.arc_au));
+  arrMk.setAttribute("x", r.arr_roadster_au[0] - .035); arrMk.setAttribute("y", -r.arr_roadster_au[1] - .035);
+  arrLab.setAttribute("x", r.arr_roadster_au[0] + .07); arrLab.setAttribute("y", -r.arr_roadster_au[1] + .035);
+  arrLab.textContent = "MEET " + dt(r.arr).toUpperCase();
+  $("lg-ride").textContent = "━ the ride, " + dt(r.dep) + " to " + dt(r.arr);
+}
+
+/* ---------- rides ---------- */
+var RIDES = [
+  { key: "flyby", name: "CHEAPEST", sub: "Pizza drop. The cheapest ride flies past the Roadster without stopping." },
+  { key: "express", name: "EXPRESS", sub: "Fastest ride with a fare at or under 4.5 km/s. Also a fly-past." },
+  { key: "rendezvous", name: "STOP & VISIT", sub: "Arrive matched to the Roadster's speed and park alongside." }
+];
+var cur = 0;
+function when(iso){ var p = iso.split("-"), t = Date.UTC(+p[0], +p[1] - 1, +p[2]), n = Date.now(), day = 864e5;
+  if (n >= t + day) return " (departed)"; if (n >= t) return " (today)"; if (n >= t - day) return " (tomorrow)"; return ""; }
+function tabs(){
+  var box = $("ride-tabs"); box.innerHTML = "";
+  RIDES.forEach(function(R, i){
+    var b = document.createElement("button"); b.type = "button"; b.className = "btn"; b.textContent = "[" + R.name + "]";
+    b.setAttribute("aria-pressed", i === cur ? "true" : "false");
+    b.addEventListener("click", function(){ cur = i; render(); });
+    box.appendChild(b);
+  });
+}
+function render(){
+  tabs();
+  var R = RIDES[cur], r = D.rides[R.key], v = r.verify, park = R.key === "rendezvous";
+  var depChecked = v.dv_dep_corrected_kms, total = depChecked + (park ? r.vrel_arr_kms : 0);
+  $("receipt").innerHTML =
+    '<p class="label">SOL RIDE RECEIPT · ' + R.name + '</p>' +
+    '<p>' + R.sub + '</p>' +
+    '<hr class="rule">' +
+    '<dl class="rl">' +
+      '<dt>Pickup</dt><dd>' + dt(r.dep) + when(r.dep) + '</dd>' +
+      '<dt>From</dt><dd>200 km low Earth orbit</dd>' +
+      '<dt>Drop-off</dt><dd>' + dt(r.arr) + '</dd>' +
+      '<dt>Ride time</dt><dd>' + fmt(r.tof_days) + ' days</dd>' +
+      '<dt>Arrive at</dt><dd>' + (park ? fmt(r.vrel_arr_kms, 2) + " km/s, then brake" : fmt(r.vrel_arr_kms, 1) + " km/s past the car") + '</dd>' +
+      '<dt>Departure burn</dt><dd>' + fmt(depChecked, 2) + ' km/s</dd>' +
+      (park ? '<dt>Arrival burn</dt><dd>' + fmt(r.vrel_arr_kms, 2) + ' km/s</dd>' : '') +
+    '</dl>' +
+    '<hr class="rule">' +
+    '<div class="fare"><span>FARE (Δv)</span><span>' + fmt(total, 2) + ' km/s</span></div>' +
+    '<div class="check"><span class="h"><span class="sym" aria-hidden="true">✓</span>Checked: route re-flown</span>' +
+      '<span>Final miss ' + fmt(v.final_miss_km, 1) + ' km after a ' + fmt(v.retarget_ms, 1) + ' m/s correction.</span></div>' +
+    '<p class="label">Δv = change in speed the rocket must make. Lower is cheaper.</p>';
+  $("steps").innerHTML = [
+    "The solver drew the route as if only the Sun pulled on the ship.",
+    "The checker re-flew it with Earth, the Moon and every planet pulling, from a real parking orbit.",
+    "That raw route missed the Roadster by " + fmt(v.raw_miss_km) + " km.",
+    "It nudged the departure burn by " + fmt(v.retarget_ms, 1) + " m/s, re-flying " + v.iterations + " times.",
+    "Final miss: " + fmt(v.final_miss_km, 1) + " km. Only then was the quote shown."
+  ].map(function(s, i){ return "<li><span>" + String(i + 1).padStart(2, "0") + "</span><span>" + s + "</span></li>"; }).join("");
+  drawRide(r);
+}
+render();
+
+/* ---------- fares chart ---------- */
+(function(){
+  var C = D.fare_curve, s = $("chart"), W = Math.max(340, Math.min(1000, Math.round(s.getBoundingClientRect().width) || 640)), H = 220, L = 52, Rm = 12, Tp = 14, B = 34;
+  var lo = 3.3, hi = 4.2;
+  s.setAttribute("viewBox", "0 0 " + W + " " + H);
+  function x(i){ return L + i / (C.length - 1) * (W - L - Rm); }
+  function y(v){ return Tp + (hi - v) / (hi - lo) * (H - Tp - B); }
+  function e(tag, a){ var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); s.appendChild(n); return n; }
+  var d2 = e("defs", {}), p2 = document.createElementNS(NS, "pattern");
+  p2.setAttribute("id", "dith2"); p2.setAttribute("width", 4); p2.setAttribute("height", 4); p2.setAttribute("patternUnits", "userSpaceOnUse"); d2.appendChild(p2);
+  [[0,0],[2,2]].forEach(function(q){ var r = document.createElementNS(NS, "rect"); r.setAttribute("x", q[0]); r.setAttribute("y", q[1]); r.setAttribute("width", 2); r.setAttribute("height", 2); r.setAttribute("fill", "#0d1117"); p2.appendChild(r); });
+  [3.4, 3.6, 3.8, 4.0, 4.2].forEach(function(v){
+    e("line", { x1: L, x2: W - Rm, y1: y(v), y2: y(v), stroke: "#c3c8d0", "stroke-width": 1 });
+    var t = e("text", { x: L - 8, y: y(v) + 4, "text-anchor": "end", "font-size": 11, fill: "#454c59", "font-family": "Departure Mono, monospace" }); t.textContent = v.toFixed(1);
+  });
+  var pts = C.map(function(c, i){ return [x(i), y(c[1])]; });
+  var step = "M" + pts[0][0] + " " + pts[0][1];
+  for (var i = 1; i < pts.length; i++) step += " H" + pts[i][0].toFixed(1) + " V" + pts[i][1].toFixed(1);
+  e("path", { d: step + " V" + y(lo) + " H" + L + " Z", fill: "url(#dith2)", opacity: .25 });
+  e("path", { d: step, fill: "none", stroke: "#0d1117", "stroke-width": 2 });
+  e("rect", { x: pts[0][0] - 4, y: pts[0][1] - 4, width: 8, height: 8, fill: "#4d6b58" });
+  var tl = e("text", { x: pts[0][0] + 10, y: pts[0][1] + 18, "font-size": 11, fill: "#0d1117", "font-family": "Departure Mono, monospace" }); tl.textContent = "OCT 16 " + C[0][1].toFixed(2);
+  var idx = C.map(function(c, i){ return [c[0], i]; }).filter(function(c){ return /-01$|-02$/.test(c[0]); });
+  var seen = {};
+  idx.forEach(function(c){ var m = c[0].slice(0, 7); if (seen[m]) return; seen[m] = 1;
+    var mo = +c[0].slice(5, 7); if ((mo - 10 + 12) % 3) return;
+    var t = e("text", { x: x(c[1]), y: H - 12, "text-anchor": "middle", "font-size": 11, fill: "#454c59", "font-family": "Departure Mono, monospace" });
+    t.textContent = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][mo - 1] + " " + c[0].slice(2, 4); });
+  var last = C[C.length - 1];
+  $("fare-note").textContent = "The cheapest pickup in the twelve months after tonight is Oct 16, 2026, at " + C[0][1].toFixed(2) + " km/s. Wait until " + dt(last[0]) + " and the cheapest ride costs " + last[1].toFixed(2) + " km/s.";
+})();
+
+$("xc").textContent = fmt(D.crosscheck_km) + " km";
+$("nsolves").textContent = fmt(D.scan_solves);
+})();
+</script>
