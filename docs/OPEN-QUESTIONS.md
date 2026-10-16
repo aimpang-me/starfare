@@ -18,5 +18,5 @@ Decisions only Alvin can make. Ask them one at a time, with the options below an
 - Name: Starfare (2026-10-16).
 - Repo home: aimpang-me/starfare, worked on in the desktop Code tab on his PC (2026-10-16).
 - Ride hailing, not deliveries; Grok-first bring-your-own-agent; no xAI key on our side (2026-10-16).
-- Where the public website lives: (b), the `starfare` Worker serves it at `/` (`connector/src/site.html`), with the board at `/board` (2026-10-16, by starting the website session). Built on branch claude/mystifying-germain-497196; not deployed.
+- Where the public website lives: (b), the `starfare` Worker serves it at `/` (`connector/src/site.html`), with the board at `/board` (2026-10-16, by starting the website session). Deployed 2026-10-16 (Worker version 9b7a7f33).
 - Which look ships: Dark SOL for the game and the landing page (2026-10-16). He compared a mock of the landing page in each look and chose Dark SOL; no Terminal variant or style toggle.
