@@ -106,7 +106,7 @@ h1,h2,h3{margin:0;font-weight:600}
 .fc{width:100%;text-align:left;display:block;padding:10px 11px;border-radius:4px;border:1px solid var(--line);background:rgba(5,12,24,.5);cursor:pointer;color:var(--ink);position:relative}
 .fc:hover{border-color:var(--line-2)}
 .fc[aria-pressed="true"]{border-color:var(--cy);background:rgba(92,200,255,.07);box-shadow:inset 3px 0 0 var(--cy)}
-.fc .r1{display:flex;align-items:center;gap:8px}
+.fc .r1{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
 .fc .cs{font:600 15px var(--mono);letter-spacing:.06em}
 .fc .r1 .st{margin-left:auto}
 .fc .rt{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px;margin-top:6px;font-size:12.5px}
@@ -263,7 +263,15 @@ button.lbl:hover{color:var(--ink)}
 .al li.k-flare{border-left-color:var(--bad)}
 .al li b{display:block;font-weight:600;font-size:12.5px}
 .al li span{font:500 10.5px var(--mono);color:var(--ink-3)}
-.wave{display:block;width:100%;height:46px;margin-top:2px;border:1px solid var(--line);border-radius:3px;background:rgba(3,8,16,.6)}
+.wv{padding:8px 10px 6px;border:1px solid var(--line);border-radius:4px;background:linear-gradient(180deg,rgba(92,200,255,.05),rgba(3,8,16,.5) 70%)}
+.wvh{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.wvh .caps{font-size:9.5px}
+.wvh .mono{font-size:10.5px;color:var(--ink-3)}
+.wvh .mono b{font:600 15px/1 var(--cond);letter-spacing:.04em;color:var(--ink);margin-right:3px}
+.wave{display:block;width:100%;height:50px;margin-top:6px}
+.wvx{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px;font:500 9.5px/1 var(--mono);color:var(--ink-3)}
+.wvk{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 10px;font-family:Inter;letter-spacing:.06em;text-transform:uppercase;font-size:9px}
+.wvk i{display:inline-block;width:6px;height:6px;border-radius:1px;margin-right:4px;vertical-align:0}
 .feed{list-style:none;margin:8px 0 0;padding:0;height:170px;overflow:auto;font:500 11px/1.45 var(--mono);color:var(--ink-2)}
 .feed li{padding:3px 0;border-bottom:1px solid rgba(120,180,255,.06);animation:fin .35s ease-out}
 .feed .tm{color:var(--ink-3);margin-right:6px}
@@ -507,8 +515,11 @@ p{text-wrap:pretty}
     <section class="panel" aria-labelledby="fdH">
       <div class="ph"><h2 id="fdH">Dispatcher feed &middot; sample</h2><div class="tags"><span class="tag sim">Sample</span><span class="tag sim">Simulated</span></div></div>
       <div class="pb">
-        <canvas class="wave" id="wave" aria-label="Event density in the feed over the last minute"></canvas>
-        <div class="note" style="margin-top:3px">Event density, last 60 s of real time</div>
+        <div class="wv">
+          <div class="wvh"><span class="caps">Feed activity</span><span class="mono"><b id="wvN">0</b>events &middot; last 60 s</span></div>
+          <canvas class="wave" id="wave" role="img" aria-label="Feed events per second over the last minute of real time, by kind"></canvas>
+          <div class="wvx"><span>&minus;60 s</span><span class="wvk"><span><i style="background:var(--cy)"></i>Flight</span><span><i style="background:var(--me)"></i>Checkpoint</span><span><i style="background:var(--sun)"></i>Hazard</span><span><i style="background:var(--ok)"></i>Clear</span></span><span>now</span></div>
+        </div>
         <ul class="feed" id="feed" aria-live="off"></ul>
       </div>
     </section>
@@ -789,7 +800,7 @@ function parName(car) { var f = SF.SITE.fleet.filter(function (x) { return x.car
 /* =========================================================
    THE 3D MAP (three.js r128): tilted ecliptic, log-compressed radius, true bearings and dates
    ========================================================= */
-var GL = null, scene, cam, GW = 1, GH = 1, MAPJD = 0, LIVEJD = 0, QUANT = true;
+var GL = null, scene, cam, GW = 1, GH = 1, MAPJD = 0, LIVEJD = 0, LIVEMAP = true;
 function V(x, y, z) { return new THREE.Vector3(x || 0, y || 0, z || 0); }
 function initGL() {
   function fail() { GL = null; $("#nogl").hidden = false; }
@@ -900,7 +911,7 @@ function lineOf(pts, color, opacity, dashed) {
 function setLine(l, pts) {
   l.geometry.dispose(); l.geometry = new THREE.BufferGeometry().setFromPoints(pts.length > 1 ? pts : [V(), V()]);
   if (l.material.isLineDashedMaterial) l.computeLineDistances();
-  l.visible = pts.length > 1;
+  l.visible = l.userData.has = pts.length > 1;
 }
 function glowPoints(n, color, size) {
   var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
@@ -965,10 +976,20 @@ function localOff(rel, par) {
   return axes(rel, dispR(par) * (1.3 + 0.9 * Math.log10(1 + km / R)) / au);
 }
 function d3(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
-// Stations and moons that circle in under three days would spin many times a second at one sky day per second; on
-// the live map they step once per sky day (each real second) instead of blurring.
+// Stations and moons that circle in under three days would spin many times a second at one sky day per second. On
+// the live map they glide from each whole sky day's true position to the next the short way round (a strobe of the
+// real orbit), so they, and the Starseekers parked at them, move smoothly instead of blurring or jumping.
 var FAST = {};
 function qjd(jd) { var j0 = SF.SKY.jd0; return j0 + Math.floor(jd - j0); }
+var QT = null, QI = null;
+function turn(a, b, f) {
+  if (!QT) { QT = new THREE.Quaternion(); QI = new THREE.Quaternion(); }
+  var la = a.length(), lb = b.length(); if (!la || !lb) return a.clone().lerp(b, f);
+  var ua = a.clone().divideScalar(la);
+  QT.setFromUnitVectors(ua, b.clone().divideScalar(lb));
+  return ua.applyQuaternion(QI.identity().slerp(QT, f)).multiplyScalar(la + (lb - la) * f);
+}
+function offAt(id, par, j) { return localOff(d3(SF.pos(id, j), SF.pos(par, j)), par); }
 var MEMO = {}, MEMON = 0;
 function marker(id, jd) {
   var k = id + "|" + jd, m = MEMO[k]; if (m) return m;
@@ -976,23 +997,27 @@ function marker(id, jd) {
   var P = SF.place(id), v;
   if (id === "sun" || !P) v = V();
   else if (P.parent === "sun") v = S(SF.pos(id, jd));
-  else { var j = QUANT && FAST[id] ? qjd(jd) : jd; v = marker(P.parent, jd).clone().add(localOff(d3(SF.pos(id, j), SF.pos(P.parent, j)), P.parent)); }
+  else {
+    var j0 = qjd(jd), off = LIVEMAP && FAST[id] ? turn(offAt(id, P.parent, j0), offAt(id, P.parent, j0 + 1), jd - j0) : offAt(id, P.parent, jd);
+    v = marker(P.parent, jd).clone().add(off);
+  }
   return (MEMO[k] = v);
 }
-// Where a replayed Starseeker is drawn. Hops inside one planet's system are drawn around that planet at jdNow.
+// Where a replayed Starseeker is drawn. Hops inside one planet's system are drawn around that planet at jdNow. On the
+// live map, cruises bend to meet their ends where the map draws them now, so a ship never jumps between pad and leg.
 function shipC(rp, jd, jdNow) {
   if (jdNow == null) jdNow = jd;
   var s = rp.at(jd), L = s.leg;
   if (s.phase !== "flight") return { v: marker(s.phase === "arrived" ? L.to : L.from, jdNow).clone(), s: s };
-  var f = s.f;
+  var f = s.f, a0 = LIVEMAP ? jdNow : L.dep, a1 = LIVEMAP ? jdNow : L.arr;
   if (L.sys) {
-    var sys = L.sys, base = function (p) { return localOff(d3(p, SF.pos(sys, jd)), sys); }, an = marker(sys, jdNow);
-    var v = base(s.p);
-    var e0 = marker(L.from, jdNow).clone().sub(an).sub(base(SF.pos(L.from, jd)));
-    var e1 = marker(L.to, jdNow).clone().sub(an).sub(base(SF.pos(L.to, jd)));
+    // the arc rides with its planet; the end corrections are fixed per leg (from where the arc starts and ends)
+    var sys = L.sys, an = marker(sys, jdNow), v = localOff(d3(s.p, SF.pos(sys, jd)), sys);
+    var e0 = marker(L.from, a0).clone().sub(marker(sys, a0)).sub(offAt(L.from, sys, L.dep));
+    var e1 = marker(L.to, a1).clone().sub(marker(sys, a1)).sub(offAt(L.to, sys, L.arr));
     return { v: v.add(e0.multiplyScalar(1 - f)).add(e1.multiplyScalar(f)).add(an), s: s };
   }
-  var w = S(s.p), c0 = marker(L.from, L.dep).clone().sub(S(SF.pos(L.from, L.dep))), c1 = marker(L.to, L.arr).clone().sub(S(SF.pos(L.to, L.arr)));
+  var w = S(s.p), c0 = marker(L.from, a0).clone().sub(S(SF.pos(L.from, L.dep))), c1 = marker(L.to, a1).clone().sub(S(SF.pos(L.to, L.arr)));
   return { v: w.add(c0.multiplyScalar(1 - f)).add(c1.multiplyScalar(f)), s: s };
 }
 function sampleRoute(rp, jdNow) {
@@ -1210,7 +1235,7 @@ function updateFlown() {
 }
 
 /* ---------- the render loop: paused when the tab is hidden or the map is off screen ---------- */
-var raf = 0, last = 0, MAPVIS = true;
+var raf = 0, last = 0, MAPVIS = true, AIM = null;
 function frame(t) {
   raf = requestAnimationFrame(frame);
   var dt = Math.min(0.1, Math.max(0, (t - last) / 1000)); last = t; MEMO = {}; MEMON = 0;
@@ -1220,9 +1245,10 @@ function glStart() { if (GL && !raf && !document.hidden && MAPVIS) { last = perf
 function glStop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
 function draw(dt, t) {
   var now = Date.now(), rep = FOLLOW && SEL.t === "f";
+  if (!AIM) AIM = new THREE.Object3D();
   LIVEJD = SF.sky(now).jd;
   FL.forEach(function (F) { F.jd = flightJd(F, now); });
-  QUANT = !rep;
+  LIVEMAP = !rep;
   MAPJD = rep ? FL[SEL.i].jd : LIVEJD;
   FL.forEach(function (F) { F.sc = shipC(F.rp, F.jd, MAPJD); });
   // camera
@@ -1249,22 +1275,34 @@ function draw(dt, t) {
   MOR.forEach(function (m) { m.g.position.copy(marker(m.par, MAPJD)); m.g.visible = LAY.moon && RIG.dist < 45; });
   GRID.visible = LAY.ring; ORB.visible = LAY.orb;
   // routes
-  if (routesDirty || t - lastRoute > (rep ? 250 : 1000)) { lastRoute = t; rebuildRoutes(); }
+  if (routesDirty || t - lastRoute > 200) { lastRoute = t; rebuildRoutes(); }
   if (t - lastFlown > 100) { lastFlown = t; updateFlown(); }
   var dash = RIG.dist * 0.012;
   DASHED.forEach(function (m) { m.dashSize = dash; m.gapSize = dash * 0.8; });
   FL.forEach(function (F, j) {
     var on = FILT.fl && !(rep && SEL.i !== j), sel = SEL.t === "f" && SEL.i === j;
-    F.full.visible = on && F.full.visible !== false; F.flown.visible = on && F.flown.visible !== false;
-    F.full.material.opacity = sel ? 0.6 : 0.28; F.flown.material.opacity = sel ? 1 : 0.55;
-    F.ship.visible = F.halo.visible = on;
-    if (!on) return;
-    var v = F.sc.v, s = pxw(v);
+    // the replay fades out at the end of its loop and back in at the start, so the ship never teleports home
+    var lt = loopPhase(F, now) * LOOP, fa = clamp(Math.min(lt, LOOP - lt) / 0.6, 0, 1);
+    fa = fa * fa * (3 - 2 * fa);
+    F.full.visible = on && F.full.userData.has; F.flown.visible = on && F.flown.userData.has;
+    F.full.material.opacity = (sel ? 0.6 : 0.28) * fa; F.flown.material.opacity = (sel ? 1 : 0.55) * fa;
+    F.ship.visible = F.halo.visible = on && fa > 0.01;
+    if (!F.ship.visible) { F.aimed = false; return; }
+    var v = F.sc.v, s = pxw(v) * fa;
     F.ship.position.copy(v); F.ship.scale.setScalar(s * (sel ? 30 : 22));
-    if (F.sc.s.phase === "flight") {
-      var L = F.sc.s.leg, nx = shipC(F.rp, Math.min(L.arr, F.jd + Math.max(1e-5, (L.arr - L.dep) / 300)), MAPJD).v;
-      if (nx.distanceToSquared(v) > 1e-12) F.ship.lookAt(nx);
+    if (F.sc.s.phase !== "arrived") {
+      // heading eases toward the direction of travel (or of the next departure) instead of snapping each frame
+      var L = F.sc.s.leg, st = Math.max(1e-5, (L.arr - L.dep) / 300), ja = Math.min(Math.max(F.jd, L.dep), L.arr - st);
+      var pa = shipC(F.rp, ja, MAPJD).v, nx = shipC(F.rp, ja + st, MAPJD).v;
+      if (nx.distanceToSquared(pa) > 1e-12) {
+        AIM.position.copy(pa); AIM.lookAt(nx);
+        // a ship creeping under a pixel a frame turns slowly, so it never spins in place
+        var mv = F.aimed ? clamp(v.distanceTo(F.lastV) / s / 1.5, 0, 1) : 1;
+        if (F.aimed && !reduced) F.ship.quaternion.slerp(AIM.quaternion, (1 - Math.exp(-dt * 6)) * (0.2 + 0.8 * mv)); else F.ship.quaternion.copy(AIM.quaternion);
+        F.aimed = true;
+      }
     }
+    (F.lastV || (F.lastV = V())).copy(v);
     F.halo.position.copy(v); F.halo.scale.setScalar(s * (sel ? 34 : 24));
     F.halo.material.color.setScalar(sel ? 1.5 : 0.75); // over the bloom threshold only when selected
     if (F.ship.userData.update) F.ship.userData.update(t, F.sc.s.phase === "flight", reduced);
@@ -1286,7 +1324,7 @@ function draw(dt, t) {
   setPts(PARK_R, pr); setPts(PARK_B, pb);
   LBL.update(cam, GW, GH);
   var tb = $("#tbox");
-  if (SEL.t === "f" && FILT.fl) { var F0 = FL[SEL.i]; tb.className = "tbox " + (F0.st ? F0.st.k : ""); tbox(tb, F0.sc.v, 34); }
+  if (SEL.t === "f" && FILT.fl && FL[SEL.i].ship.visible) { var F0 = FL[SEL.i]; tb.className = "tbox " + (F0.st ? F0.st.k : ""); tbox(tb, F0.sc.v, 34); }
   else tbox(tb, null);
   if (t - lastHud > 250) { lastHud = t; mapHud(); }
   if (GL.post) GL.post.render(scene, cam); else GL.r.render(scene, cam);
@@ -1461,15 +1499,16 @@ function renderAlerts() {
   var html = A.map(function (a) { return '<li class="k-' + a.k + '"><b>' + ic(a.k === "flare" ? "solar_flare" : a.k === "pad" ? "pad_closed" : /dust/i.test(a.t) ? "dust_storm" : "launch_hold") + esc(a.t) + "</b><span>" + esc(a.d) + "</span></li>"; }).join("") || '<li style="border-left-color:var(--ok)"><b>All clear</b><span>No simulated flare, storm or full pad at ' + iso(s.jd) + "</span></li>";
   if (html !== renderAlerts.last) { renderAlerts.last = html; $("#alList").innerHTML = html; }
 }
-var BINS = [], BIN0 = 0;
-for (var bi = 0; bi < 60; bi++) BINS.push(0);
+// one bin per real second for the last minute, counting feed lines by kind: flight, checkpoint, hazard, clear
+var BINS = [], BIN0 = 0, WVK = { checkpoint: 1, incident: 2, alert: 2, clear: 3 }, WVC = ["#5cc8ff", "#ffcf7a", "#ffb65c", "#6fe0a8"];
+for (var bi = 0; bi < 60; bi++) BINS.push([0, 0, 0, 0]);
 function pushFeed(o) {
   var ul = $("#feed"); if (!ul) return;
   var li = document.createElement("li"); li.className = "k-" + o.kind;
   li.innerHTML = '<span class="tm">' + iso(o.jd) + "</span><b>" + esc(o.who) + "</b>" + W(o.txt);
   ul.insertBefore(li, ul.firstChild);
   while (ul.children.length > 40) ul.removeChild(ul.lastChild);
-  BINS[59]++;
+  BINS[59][WVK[o.kind] || 0]++;
 }
 function feedTick() {
   FL.forEach(function (F) {
@@ -1485,20 +1524,38 @@ function feedTick() {
 function waveTick(now) {
   var s = Math.floor(now / 1000);
   if (!BIN0) BIN0 = s;
-  while (BIN0 < s) { BINS.shift(); BINS.push(0); BIN0++; }
+  if (s - BIN0 > 60) BIN0 = s - 60;
+  while (BIN0 < s) { BINS.shift(); BINS.push([0, 0, 0, 0]); BIN0++; }
+  var tot = BINS.map(function (b) { return b[0] + b[1] + b[2] + b[3]; }), n = tot.reduce(function (a, b) { return a + b; }, 0);
+  var wn = $("#wvN"); if (wn.textContent !== String(n)) wn.textContent = n;
   var cv = $("#wave"), dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
   if (!w) return;
-  if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
   var g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-  g.strokeStyle = "rgba(92,200,255,.18)"; g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke();
-  var bw = w / 60, ph = now / 300;
-  g.fillStyle = "rgba(92,200,255,.85)";
+  var base = h - 1.5, top = 4, bw = w / 60, cw = Math.max(2, Math.round(bw * 0.55)), unit = (base - top) / Math.max(4, Math.max.apply(null, tot));
+  // quarter-minute rules and the baseline
+  g.fillStyle = "rgba(120,180,255,.1)";
+  for (var q = 1; q < 4; q++) g.fillRect(Math.round(w * q / 4), top, 1, base - top);
+  g.fillStyle = "rgba(120,190,255,.32)"; g.fillRect(0, Math.round(base), w, 1);
+  // a smoothed density trace behind the bars
+  var sm = tot.map(function (_, i) { var a = 0, k = 0; for (var d = -2; d <= 2; d++) { var v = tot[i + d]; if (v != null) { var wt = 3 - Math.abs(d); a += v * wt; k += wt; } } return a / k; });
+  g.beginPath(); g.moveTo(0, base);
+  sm.forEach(function (v, i) { g.lineTo((i + 0.5) * bw, base - v * unit); });
+  g.lineTo(w, base); g.closePath();
+  var gr = g.createLinearGradient(0, top, 0, base); gr.addColorStop(0, "rgba(92,200,255,.22)"); gr.addColorStop(1, "rgba(92,200,255,0)");
+  g.fillStyle = gr; g.fill();
+  g.beginPath(); sm.forEach(function (v, i) { g[i ? "lineTo" : "moveTo"]((i + 0.5) * bw, base - v * unit); });
+  g.strokeStyle = "rgba(92,200,255,.45)"; g.lineWidth = 1; g.stroke();
+  // one stacked column per second, older seconds dimmer; quiet seconds are a tick on the baseline
   for (var i = 0; i < 60; i++) {
-    var d = Math.min(1, BINS[i] / 4), amp = (0.06 + d * 0.86) * (h / 2 - 2) * (d ? 1 : 0.6 + 0.4 * Math.sin(ph + i * 0.7));
-    g.globalAlpha = 0.35 + d * 0.65;
-    g.fillRect(i * bw + bw * 0.2, h / 2 - amp, bw * 0.6, amp * 2);
+    var x = Math.round((i + 0.5) * bw - cw / 2), y = base;
+    g.globalAlpha = 0.4 + 0.6 * i / 59;
+    if (!tot[i]) { g.fillStyle = "rgba(120,190,255,.35)"; g.fillRect(x, base - 2, cw, 2); continue; }
+    for (var k = 0; k < 4; k++) if (BINS[i][k]) { var bh = BINS[i][k] * unit; g.fillStyle = WVC[k]; g.fillRect(x, Math.round(y - bh + 1), cw, Math.max(1, Math.round(bh) - 1)); y -= bh; }
   }
   g.globalAlpha = 1;
+  // the now cursor
+  g.fillStyle = "rgba(92,200,255,.7)"; g.fillRect(w - 1, top - 2, 1, base - top + 2);
 }
 
 /* ---------- tools ---------- */
