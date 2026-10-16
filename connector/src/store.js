@@ -7,7 +7,7 @@
 // Every RPC method returns plain data; game errors come back as { error } instead of throwing across RPC.
 import { DurableObject } from "cloudflare:workers";
 import { engine } from "./engine.js";
-import { GameError, checkPad, computeLeg, dispatch, hailInfo, legKey, legPub, newRun, planPickup, planRideLeg, spaceWeather } from "./game.js";
+import { GameError, abandonRun, checkPad, computeLeg, decide, dispatch, hailInfo, legKey, legPub, newRun, phaseOf, planPickup, planRideLeg, spaceWeather } from "./game.js";
 
 export const RUN_ID = /^run_[0-9a-f]{20}$/;
 export const hub = (env) => env.STARFARE_HUB.get(env.STARFARE_HUB.idFromName("hub"));
@@ -18,6 +18,23 @@ const CACHE_MAX = 5000;
 export class StarfareRun extends DurableObject {
   async #run() { return (await this.ctx.storage.get("run")) ?? null; }
   async #save(run) { await this.ctx.storage.put("run", run); }
+  /** Plans go through the hub's leg cache; plan_pickup, plan_ride_leg and a replan at a checkpoint share it. */
+  #legFn(E) {
+    const h = hub(this.env);
+    return async (from, to, t, obj, end) => {
+      const key = legKey(from, to, t, obj, end), hit = await h.legGet(key);
+      if (hit) return { leg: hit, cached: true };
+      const leg = computeLeg(E, from, to, t, obj, end);
+      await h.legPut(key, leg);
+      return { leg, cached: false };
+    };
+  }
+  /** The board holds arrived runs only. */
+  async #record(run, r) {
+    await hub(this.env).record({ hail_id: run.id, title: run.title, run_tag: run.run_id.slice(4, 10), points: r.total, car: r.car,
+      wait_h: Math.round((run.pickup_jd - run.t0) * 240) / 10, kwh: Math.round(r.used_kwh), par: Math.round(r.par_kwh), plans: run.calls, at: Date.now(),
+      ...(run.player_id ? { player_tag: run.player_id.slice(2, 8) } : {}) });
+  }
   async #guard(fn) {
     try { return await fn(); }
     catch (e) { if (e instanceof GameError) return { error: e.message }; throw e; }
@@ -54,16 +71,9 @@ export class StarfareRun extends DurableObject {
     return this.#guard(async () => {
       const run = await this.#run();
       if (!run) return { error: "unknown run_id. Call take_hail to get one." };
-      const E = await engine(), h = hub(this.env);
-      const legFn = async (from, to, t, obj, end) => {
-        const key = legKey(from, to, t, obj, end), hit = await h.legGet(key);
-        if (hit) return { leg: hit, cached: true };
-        const leg = computeLeg(E, from, to, t, obj, end);
-        await h.legPut(key, leg);
-        return { leg, cached: false };
-      };
+      const E = await engine();
       try {
-        const { leg, cached } = await (role === "pickup" ? planPickup : planRideLeg)(E, run, inp, legFn);
+        const { leg, cached } = await (role === "pickup" ? planPickup : planRideLeg)(E, run, inp, this.#legFn(E));
         await this.#save(run);
         return Object.assign(legPub(E, leg), { plans_used: run.calls, cached });
       } catch (e) {
@@ -89,24 +99,39 @@ export class StarfareRun extends DurableObject {
     return this.#guard(async () => {
       const run = await this.#run();
       if (!run) return { error: "unknown run_id. Call take_hail to get one." };
-      const E = await engine();
+      const E = await engine(), before = phaseOf(run);
       let r;
       try { r = dispatch(E, run, inp, Date.now()); }
-      catch (e) { if (run.abandoned) await this.#save(run); throw e; }
+      catch (e) { if (phaseOf(run) !== before) await this.#save(run); throw e; } // a cold hail is abandoned
       if (r.ok && !r.already_dispatched) {
         await this.#save(run);
-        await hub(this.env).record({ hail_id: run.id, title: run.title, run_tag: run.run_id.slice(4, 10), points: r.total, car: r.car,
-          wait_h: Math.round((run.pickup_jd - run.t0) * 240) / 10, kwh: Math.round(r.used_kwh), par: Math.round(r.par_kwh), plans: run.calls, at: Date.now(),
-          ...(run.player_id ? { player_tag: run.player_id.slice(2, 8) } : {}) });
+        if (phaseOf(run) === "arrived") await this.#record(run, r);
       }
       return r;
     });
   }
 
-  /** One bot holds one run at a time: taking a new hail in the same MCP session abandons the open one. */
+  /** An answer at a checkpoint. A replan is a plan, so it is saved even when the checker rejects the new leg. */
+  async decide(inp) {
+    return this.#guard(async () => {
+      const run = await this.#run();
+      if (!run) return { error: "unknown run_id. Call take_hail to get one." };
+      const E = await engine(), before = phaseOf(run);
+      let r;
+      try { r = await decide(E, run, inp, this.#legFn(E)); }
+      catch (e) { if (e && e.counted) await this.#save(run); throw e; }
+      if (!r.already_decided) {
+        await this.#save(run);
+        if (before === "in_flight" && phaseOf(run) === "arrived") await this.#record(run, r);
+      }
+      return r;
+    });
+  }
+
+  /** One bot holds one run at a time: taking a new hail in the same MCP session abandons the open one if it is still planning. */
   async abandon() {
     const run = await this.#run();
-    if (run && !run.started && !run.abandoned) { run.abandoned = true; await this.#save(run); }
+    if (run && abandonRun(run)) await this.#save(run);
     return { ok: true };
   }
 }
@@ -132,8 +157,9 @@ export class StarfareHub extends DurableObject {
   legGet(k) { const v = this.#get("legcache", k); this.#bump(v ? "leg_hit" : "leg_miss"); return v; }
   legPut(k, v) { this.#put("legcache", k, v); }
   // Terms depend on the hazard seed (par flies the season's hazards), so the seed is part of the key.
-  termsGet(id, t0, end, seed) { const v = this.#get("termscache", `${id}|${t0}|${end}|s${seed}`); this.#bump(v ? "terms_hit" : "terms_miss"); return v; }
-  termsPut(id, t0, end, seed, v) { this.#put("termscache", `${id}|${t0}|${end}|s${seed}`, v); }
+  // p2: par now answers each checkpoint with hindsight, so terms cached before that are stale.
+  termsGet(id, t0, end, seed) { const v = this.#get("termscache", `${id}|${t0}|${end}|s${seed}|p2`); this.#bump(v ? "terms_hit" : "terms_miss"); return v; }
+  termsPut(id, t0, end, seed, v) { this.#put("termscache", `${id}|${t0}|${end}|s${seed}|p2`, v); }
 
   /** Fixed one-minute window per IP. Returns { ok, n, limit }. */
   hit(ip, limit) {

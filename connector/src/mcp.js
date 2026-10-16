@@ -1,6 +1,6 @@
 // The MCP server a player's Grok bot calls: the Starfare robotaxi dispatcher. Same game as the in-page dispatcher
-// (get_hail, plan_pickup, plan_ride, dispatch) plus list_hails and take_hail, and two free forecast tools for the
-// simulated hazards (check_pad, space_weather). Tools only forward to the run's
+// (get_hail, plan_pickup, plan_ride, dispatch) plus list_hails and take_hail, two free forecast tools for the
+// simulated hazards (check_pad, space_weather), and decide for the checkpoints a ride stops at. Tools only forward to the run's
 // Durable Object; this class holds nothing but the session's current run_id (and, with STARFARE_OAUTH on, the
 // grant's player id in this.props).
 import { McpAgent } from "agents/mcp";
@@ -19,7 +19,12 @@ const INSTRUCTIONS =
   "Hazards (simulated, seeded per season, the same for every player): pads have few berths and other traffic, solar flares hold any launch with a rider aboard, " +
   "Mars dust storms and Titan haze close those pads, a leg between planets that leaves late needs a correction burn, and holding in orbit for a berth costs 250 kWh an hour. " +
   "You only get forecasts: check_pad (booked berths per hour and local weather odds; unscheduled traffic, about a quarter, is never shown) and space_weather (flare odds per day). " +
-  "Both are free and do not count as plans. The dispatch result says what actually happened (incidents, extra kWh, actual arrival) and returns a log you can learn from.\n" +
+  "Both are free and do not count as plans.\n" +
+  "Once dispatched, the car flies the season's hazards. When a flare grounds a launch or a pad is closed when the car arrives, the ride stops at a checkpoint and the result is status \"checkpoint\" " +
+  "with a situation: what happened, where the car is, the kWh used so far and the options. Answer with decide: at a launch hold, wait or replan the leg from a later time (a replan counts as a plan); " +
+  "at a closed pad, hold in orbit or divert to a nearby pad. Small holds are decided for you: dispatch's ask_after_hours (default 1, or \"never\") sets how long before the ride asks. " +
+  "The ride's sky clock is stopped at a checkpoint, and get_hail shows the open one. When the ride arrives the result says what actually happened (incidents, extra kWh, actual arrival), " +
+  "what each choice at each checkpoint would have cost in hindsight, and a log you can learn from.\n" +
   "Goal: pick the rider up fast, arrive by arrive_by, use the least battery actually flown, and keep your promise. The quoted arrival is a promise scored against the actual arrival: " +
   "late costs the most (0 at 6 hours late on a quick hail, 1 day on a long haul), early costs a quarter as much. Each plan counts: 6 are free, then each costs a point.\n" +
   "Hard rules: every number you write must be copied from a tool result or the player's words, dates exactly as given. Never estimate a number. Never dispatch a leg whose refly.result is FAIL. " +
@@ -82,7 +87,8 @@ export class StarfareMcp extends McpAgent {
       },
     }, async ({ run_id, ...inp }) => out(await runStub(this.env, run_id).plan("ride", inp)));
 
-    const from = z.string().regex(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/).describe("sky time YYYY-MM-DD HH:MM to start from (default: when the rider is ready)").optional();
+    const skyTime = z.string().regex(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+    const from = skyTime.describe("sky time YYYY-MM-DD HH:MM to start from (default: when the rider is ready, or the open checkpoint's time in flight)").optional();
     s.registerTool("check_pad", {
       description: "Forecast for a pad (simulated): its berths, how many are booked each hour, and local weather odds (Mars dust, Titan haze) if any. Scheduled traffic only: about a quarter of ships are unscheduled and never show here. Free; does not count as a plan.",
       inputSchema: {
@@ -103,15 +109,35 @@ export class StarfareMcp extends McpAgent {
     }, async ({ run_id, ...inp }) => out(await runStub(this.env, run_id).forecast("flares", inp)));
 
     s.registerTool("dispatch", {
-      description: "Dispatch the car: the pickup leg, the ride leg, the fare you quote (copy the ride leg's fare_usd) and the arrival you promise the rider. The season's hazards are then flown: the result says what actually happened (actual pickup and arrival, delay, extra kWh, incidents), the locked score and a run log. The score goes on the /board page.",
+      description: "Dispatch the car: the pickup leg, the ride leg, the fare you quote (copy the ride leg's fare_usd) and the arrival you promise the rider. The season's hazards are then flown. " +
+        "If a hazard stops the ride, the result is status \"checkpoint\" with the situation; answer it with decide. Otherwise the ride arrives and the result says what actually happened " +
+        "(actual pickup and arrival, delay, extra kWh, incidents), the locked score and a run log. Arrived scores go on the /board page.",
       inputSchema: {
         run_id: runId,
         pickup_leg: z.string(),
         ride_leg: z.string(),
         quoted_fare_usd: z.number().describe("the fare you tell the rider, in US dollars"),
         quoted_arrival: z.string().describe("the arrival time you promise the rider, YYYY-MM-DD HH:MM"),
+        ask_after_hours: z.union([z.number().min(0).max(24), z.literal("never")]).optional()
+          .describe("stop at a checkpoint once a hold or pad wait passes this many hours (0-24, default 1); \"never\" flies the default answers without stopping"),
       },
     }, async ({ run_id, ...inp }) => out(await runStub(this.env, run_id).dispatch(inp)));
+
+    s.registerTool("decide", {
+      description: "Answer the open checkpoint of a dispatched ride. At a launch_hold (a flare grounds the launch): action wait, or replan with depart_after and objective (re-planned and re-flown " +
+        "in the n-body checker; counts as a plan). At a pad_closed (no berth, dust or haze): action hold, with hours to ask again after that long or none to hold until it opens, or divert " +
+        "with place (one of the situation's alternates) and wait_hours on the ground there. Returns the next checkpoint or the arrived result. Sending the same answer again returns where the ride stands.",
+      inputSchema: {
+        run_id: runId,
+        checkpoint: z.number().int().min(1).describe("the situation's checkpoint number"),
+        action: z.enum(["wait", "replan", "hold", "divert"]),
+        hours: z.number().optional().describe("hold: hours before the ride asks again (default: until the pad opens)"),
+        place: z.string().min(1).max(64).optional().describe("divert: an alternate's place id or name"),
+        wait_hours: z.number().min(0).optional().describe("divert: hours on the ground at the alternate before flying back (default 0)"),
+        depart_after: skyTime.optional().describe("replan: leave no earlier than this sky time YYYY-MM-DD HH:MM (default: the checkpoint's time)"),
+        objective: z.enum(["energy", "time"]).optional().describe("replan: least battery or fastest (default energy)"),
+      },
+    }, async ({ run_id, ...inp }) => out(await runStub(this.env, run_id).decide(inp)));
   }
 }
 

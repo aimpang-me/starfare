@@ -28,7 +28,7 @@ const MODE = (process.argv.find((a) => a.startsWith("--mode=")) || "--mode=both"
 if (!["off", "on", "both"].includes(MODE)) throw new Error("--mode must be off, on or both");
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
-const TOOLS = ["check_pad", "dispatch", "get_hail", "list_hails", "plan_pickup", "plan_ride", "space_weather", "take_hail"];
+const TOOLS = ["check_pad", "decide", "dispatch", "get_hail", "list_hails", "plan_pickup", "plan_ride", "space_weather", "take_hail"];
 
 const results = [];
 async function check(name, fn) {
@@ -94,16 +94,17 @@ function nodeScore(hailId, riderReady, season, carId, planCalls, quote, objectiv
   return { T, p, r, F, s };
 }
 
-/** take_hail, plan_pickup with one car, plan_ride after it, dispatch with the ride leg's own fare and arrival (or a given quote). */
-async function playHail(client, hailId, car, { quote = "exact", objective } = {}) {
+/** take_hail, plan_pickup with one car, plan_ride after it, dispatch with the ride leg's own fare and arrival (or a given quote).
+ *  ask "never" flies the default answer at every checkpoint, which is what R.fly does in Node. */
+async function playHail(client, hailId, car, { quote = "exact", objective, ask = "never" } = {}) {
   timings.push({ tool: `--- ${hailId} ${car ?? "par car"}` });
   const hail = await ok(client, "take_hail", { hail_id: hailId });
   car ??= nodeParCar(hail);
   const pickup = await ok(client, "plan_pickup", { run_id: hail.run_id, car, ...(objective ? { objective } : {}) });
   const ride = await ok(client, "plan_ride", { run_id: hail.run_id, after_leg: pickup.leg_id, ...(objective ? { objective } : {}) });
   const q = quote === "exact" ? { quoted_fare_usd: ride.fare_usd, quoted_arrival: ride.arrive } : typeof quote === "function" ? quote(ride) : quote;
-  const score = await ok(client, "dispatch", { run_id: hail.run_id, pickup_leg: pickup.leg_id, ride_leg: ride.leg_id, ...q });
-  if (score.ok) scored++;
+  const score = await ok(client, "dispatch", { run_id: hail.run_id, pickup_leg: pickup.leg_id, ride_leg: ride.leg_id, ...q, ask_after_hours: ask });
+  if (score.ok && score.status !== "checkpoint") scored++;
   return { hail, car, pickup, ride, score };
 }
 /** The par car, as the engine computes it in Node for the hail's rider_ready time and season. */
@@ -138,7 +139,7 @@ async function phaseOff() {
   console.log(`wrangler dev up at ${w.base}`);
   const client = await connect(w.base);
 
-  await check("tools/list is exactly the eight ride-hail tools", async () => {
+  await check("tools/list is exactly the nine ride-hail tools", async () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     assert.deepEqual(names, TOOLS);
   });
@@ -186,7 +187,47 @@ async function phaseOff() {
     const p = await call(client, "plan_pickup", { run_id: good.hail.run_id, car: "sf-01" });
     assert.equal(p.isError, true); assert.match(p.value, /already been dispatched/);
     const info = await ok(client, "get_hail", { run_id: good.hail.run_id });
-    assert.equal(info.dispatched, true); assert.equal(info.plans_used, 2);
+    assert.equal(info.dispatched, true); assert.equal(info.plans_used, 2); assert.equal(info.phase, "arrived");
+    const late = await call(client, "decide", { run_id: good.hail.run_id, checkpoint: 1, action: "wait" });
+    assert.equal(late.isError, true); assert.match(late.value, /checkpoint 1 has not happened; the ride arrived after 0 checkpoints/);
+    const fresh = await ok(client, "take_hail", { hail_id: "iss-crew" });
+    const early = await call(client, "decide", { run_id: fresh.run_id, checkpoint: 1, action: "wait" });
+    assert.equal(early.isError, true); assert.match(early.value, /dispatch first/);
+  });
+
+  await check("a ride that stops at checkpoints (ask_after_hours 0), answered with decide's defaults, lands where R.fly does in Node; get_hail shows the open checkpoint", async () => {
+    const tried = [];
+    let stop = null;
+    for (const hailId of ["iss-crew", "phobos-commute", "jovian-hop"]) { // titan-home stays unplayed for the board's empty-row check
+      for (const car of R.FLEET.map((c) => c.id)) {
+        const play = await playHail(client, hailId, car, { ask: 0 });
+        tried.push(`${hailId} ${car} ${play.score.status ?? "refused"}`);
+        if (play.score.status === "checkpoint") { stop = play; break; }
+        noteBest(play);
+      }
+      if (stop) break;
+    }
+    assert.ok(stop, "no ride stopped in " + tried.join(", "));
+    const seen = [];
+    let out = stop.score;
+    while (out.status === "checkpoint") {
+      const s = out.situation, info = await ok(client, "get_hail", { run_id: stop.hail.run_id });
+      assert.equal(info.phase, "in_flight"); assert.deepEqual(info.situation, s);
+      assert.equal(s.ask_after_hours, 0); assert.match(s.note, /Simulated/);
+      const pad = await ok(client, "check_pad", { run_id: stop.hail.run_id, place: s.place.id, hours: 1 });
+      assert.equal(pad.from, s.sky_at);
+      seen.push(`${s.checkpoint} ${s.kind} ${s.cause} ${s.place.id} ${s.sky_at} -> ${s.default.action}`);
+      const answer = { run_id: stop.hail.run_id, checkpoint: s.checkpoint, ...s.default };
+      out = await ok(client, "decide", answer);
+      const again = await ok(client, "decide", answer);
+      assert.equal(again.already_decided, true);
+    }
+    assert.equal(out.status, "arrived"); assert.equal(out.checkpoints, seen.length);
+    stop.score = out; scored++; noteBest(stop);
+    assertMatchesNode(stop, 2);
+    assert.deepEqual(out.log.checkpoints.map((c) => c.n), seen.map((_, i) => i + 1));
+    for (const c of out.log.checkpoints) assert.ok(c.options_hindsight.length >= 2 && typeof c.best === "string", JSON.stringify(c));
+    report.checkpoints = { tried, hail: stop.hail.hail_id, car: stop.car, seen, total: out.total, used_kwh: out.used_kwh, hindsight: out.log.checkpoints.map((c) => [c.n, c.best]) };
   });
 
   let far;
@@ -261,7 +302,7 @@ async function phaseOff() {
     const info = await ok(client, "get_hail", { run_id: h.run_id });
     assert.equal(info.plans_used, 0);
     const p = await ok(client, "plan_pickup", { run_id: h.run_id, car: nodeParCar(h) }), r = await ok(client, "plan_ride", { run_id: h.run_id, after_leg: p.leg_id });
-    const d = await ok(client, "dispatch", { run_id: h.run_id, pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare_usd, quoted_arrival: r.arrive });
+    const d = await ok(client, "dispatch", { run_id: h.run_id, pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare_usd, quoted_arrival: r.arrive, ask_after_hours: "never" });
     scored++; noteBest({ hail: h, score: d });
     assert.equal(d.parts.find((x) => x.key === "economy").note, "2 plans, 6 free");
     assert.deepEqual(d.log.forecasts.map((x) => x.tool), ["check_pad", "check_pad", "check_pad", "space_weather", "space_weather"]);
@@ -502,7 +543,7 @@ async function phaseOn() {
       assert.deepEqual(asMeta.scopes_supported, ["play"]);
       report.www_authenticate = challenge; report.protected_resource = meta;
     });
-    await check("on: SDK OAuth flow: 401, discovery, dynamic registration, PKCE S256, one-click Allow, token, then tools/list is the eight ride-hail tools", async () => {
+    await check("on: SDK OAuth flow: 401, discovery, dynamic registration, PKCE S256, one-click Allow, token, then tools/list is the nine ride-hail tools", async () => {
       a = await sdkSignIn(base, "sol e2e player A");
       const q = a.auth.authUrl.searchParams;
       assert.equal(q.get("code_challenge_method"), "S256"); assert.ok(q.get("code_challenge"));
