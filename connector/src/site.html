@@ -363,12 +363,12 @@ code.tool{display:block;font:500 12px var(--mono);background:#030407;border:1px 
       <div class="ph"><h2 id="paxH">Passenger list</h2><span class="tag sim">Simulated</span></div>
       <div class="pb" id="pax"><div class="empty">Pick a booking to see who boards and who gets off at each stop of the par plan.</div></div>
     </section>
-    <section class="panel" id="board" aria-labelledby="boardH">
+    <section class="panel" id="board" aria-labelledby="boardH"><span id="scores"></span>
       <div class="ph"><h2 id="boardH">Scoreboard</h2><span class="tag sim">Simulated flights</span></div>
       <div class="pb">
         <p class="sub" id="boardLead">The best arrived flight for each booking, this season.</p>
         <ul class="board" id="boardList"><li><div><span class="sc none">&#x2026;</span><span class="lb">Loading the scoreboard&#x2026;</span></div></li></ul>
-        <p class="note" style="margin:10px 0 0">The same scores as a page at <a href="/board">/board</a> and as JSON at <a href="/board.json">/board.json</a>. Every arrived flight also has a public log at <code>/rides/&lt;run_id&gt;.json</code>. Only whoever holds the run_id can find it: the bot gets it from <code>take_hail</code>, and <code>get_my_rides</code> lists a signed-in player's flights with download links.</p>
+        <p class="note" style="margin:10px 0 0">The same scores as a page at <a href="/board">/board</a> and as JSON at <a href="/board.json">/board.json</a>. Every arrived flight also has a public log at <code>/rides/&lt;run_id&gt;.json</code>. Flights in the air show their run_id on <a href="/live.json">/live.json</a>, so these logs are public, not secret. The bot gets the run_id from <code>take_hail</code>, and <code>get_my_rides</code> lists a signed-in player's flights with download links.</p>
       </div>
     </section>
   </div>
@@ -387,7 +387,7 @@ code.tool{display:block;font:500 12px var(--mono);background:#030407;border:1px 
   <ul class="live" id="liveList"></ul>
 </section>
 
-<section class="sec wrap" id="connect" aria-labelledby="connectH">
+<section class="sec wrap" id="connect" aria-labelledby="connectH"><span id="play"></span>
   <span class="tag ride">Works with Grok</span>
   <h2 id="connectH">How to connect Grok</h2>
   <p class="lead">Bring your own Grok. Starfare is an MCP server, so Grok connects to it as a custom connector and plays through its tools. You don't need an API key, and nothing to install.</p>
@@ -650,9 +650,13 @@ function liveStatus(f, w) {
   if (w.landed) return "Landed at " + name(w.at);
   return "At " + name(w.at) + (w.next ? " · leaves " + iso(w.next.dep_jd) : "");
 }
-function liveOk(f) {
-  return f && typeof f.run_id === "string" && Array.isArray(f.legs) && Array.isArray(f.track) && f.track.length &&
-    f.legs.every(function (L) { return PID[L.from] && PID[L.to] && isFinite(L.dep_jd) && isFinite(L.arr_jd); }) && (f.legs.length || PID[f.home]);
+// Keeps the legs with known places and real times (a leg's arr_jd can be null) and drops flights with nothing to place.
+function liveClean(f) {
+  if (!f || typeof f.run_id !== "string" || !Array.isArray(f.legs) || !Array.isArray(f.track)) return null;
+  var track = f.track.filter(function (p) { return Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]); });
+  var legs = f.legs.filter(function (L) { return L && PID[L.from] && PID[L.to] && Number.isFinite(L.dep_jd) && Number.isFinite(L.arr_jd); });
+  if (!track.length || !(legs.length || PID[f.home])) return null;
+  return Object.assign({}, f, { legs: legs, track: track });
 }
 function renderLive() {
   var ms = Date.now();
@@ -670,7 +674,7 @@ function renderLive() {
 function loadLive() {
   fetch("/live.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
     if (!E || !j || !Array.isArray(j.flights)) throw new Error("shape");
-    LIVE.list = j.flights.filter(liveOk);
+    LIVE.list = j.flights.map(liveClean).filter(Boolean);
     $("#live").hidden = false;
     renderLive();
     if (!liveTimer) liveTimer = setInterval(function () { if (!document.hidden) loadLive(); }, 30000);
