@@ -16,7 +16,7 @@ ok("fly() with no checkpoints is exactly what it was for 298 fixture rides", () 
   for (const r of FX.rides) assert.deepStrictEqual(R.fly(r.hail, r.car, r.legs, r.t0, r.seed), r.flown, r.hail + " seed " + r.seed + " " + r.car);
 });
 
-ok("ask_after_hours \"never\" is fly(); answering with defaults flies the same ride unless the car waited on the pad for the answer", () => {
+ok("ask_after_hours \"never\" is fly(); answering with defaults flies the same ride unless the ship waited on the pad for the answer", () => {
   const waited = [];
   for (const r of FX.rides.filter((x) => x.kind === "par")) {
     const never = R.start(r.hail, r.car, r.legs, r.t0, r.seed, { ask_after_hours: "never", end_jd: END });
@@ -58,7 +58,7 @@ ok("launch_hold for a solar flare at Ceres Port: a replan beats waiting out the 
   const leg = { from: "ceres-port", to: "mars-base", dep_jd: b.dep_jd, arr_jd: b.arr_jd, kwh: b.battery.energy_kwh, fare: b.fare.total_usd, gate: "PASS" };
   const rp = finish(R.step(st.ride, { action: "replan", leg }));
   assert.deepStrictEqual([leg.kwh, rp.used_kwh, R.iso(rp.arrive_jd)], [81995, 82493, "2034-03-10 05:11"]);
-  assert.throws(() => R.step(st.ride, { action: "replan", leg: Object.assign({}, leg, { dep_jd: cp.sky_at }) }), /depart at or after 2032-03-28 04:40, when the answer reaches the car/);
+  assert.throws(() => R.step(st.ride, { action: "replan", leg: Object.assign({}, leg, { dep_jd: cp.sky_at }) }), /depart at or after 2032-03-28 04:40, when the answer reaches the ship/);
   assert.throws(() => R.step(st.ride, { action: "hold" }), /takes wait or replan/);
 });
 

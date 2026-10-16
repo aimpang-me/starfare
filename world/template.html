@@ -519,8 +519,8 @@ function hailRules(){
     "Compare cars and objectives (energy = least battery, time = fastest). Cars parked near the rider or the destination are usually the ones worth trying.\n" +
     "Hazards are simulated and seeded, and you only see forecasts, never what will happen. Before dispatching, check_pad the pickup around the pickup's arrive and the destination around the ride's arrive, and call space_weather from the ride's depart. " +
     "Both are free and don't count as plans. A full pad means the car holds in orbit at " + RR.HOLD_KWH + " kWh an hour, and about " + Math.round(UNSCHED * 100) + "% of traffic is unscheduled and not in the forecast. " +
-    "A solar flare holds launches with a rider aboard (an empty car still flies); Mars dust storms and Titan haze close pads; a leg between planets that leaves late needs a correction burn. " +
-    "A storm erupts at the Sun and its particles travel out at 1500 km/s, so it reaches Earth about a day later and Saturn about 11 days later, and fewer reach far out. You dispatch from HQ on Earth, which controls every station and car, so at a checkpoint the car acts on your answer only when it arrives (light-time there and back). " +
+    "A solar flare holds launches with a rider aboard (an empty ship still flies); Mars dust storms and Titan haze close pads; a leg between planets that leaves late needs a correction burn. " +
+    "A storm erupts at the Sun and its particles travel out at 1500 km/s, so it reaches Earth about a day later and Saturn about 11 days later, and fewer reach far out. You dispatch from HQ on Earth, which controls every station and Starseeker, so at a checkpoint the ship acts on your answer only when it arrives (light-time there and back). " +
     "If the forecast looks bad, you may replan with wait_days to dodge it, but waiting costs pickup or arrival points.\n" +
     "Then dispatch with the pickup leg, the ride leg, quoted_fare_usd copied exactly from the ride leg's fare_usd, and quoted_arrival: an arrival you can keep, YYYY-MM-DD HH:MM. Start from the ride leg's arrive; you may add a buffer for likely holds. " +
     "The promise score falls to 0 at 6 h after the promised time on quick hails and 1 day on long hauls, and arriving early costs a quarter as much.\n" +
@@ -734,7 +734,7 @@ function hailRulesText(){ return "Pick a car from the fleet; a car on another ri
   "plan_ride flies the rider from the pickup to the destination, after boarding. Then dispatch with the pickup leg, the ride leg, the ride leg's fare, and the arrival you promise the rider. " +
   "Hazards are simulated and seeded per season, and you only see forecasts: check_pad shows booked berths per hour (about " + Math.round(UNSCHED * 100) + "% of traffic is unscheduled and not shown; with every berth taken the car holds in orbit at " + RR.HOLD_KWH + " kWh an hour), " +
   "space_weather shows solar flare odds at a place (a flare holds launches with a rider aboard) and Mars dust or Titan haze odds (they close the pad). A leg between planets that leaves late needs a correction burn. " +
-  "A storm erupts at the Sun and its particles travel out at 1500 km/s, so it reaches Earth about a day later and Saturn about 11 days later, and fewer reach far out. You dispatch from HQ on Earth, which controls every station and car, so at a checkpoint the car acts on your answer only when it reaches it (light-time there and back). " +
+  "A storm erupts at the Sun and its particles travel out at 1500 km/s, so it reaches Earth about a day later and Saturn about 11 days later, and fewer reach far out. You dispatch from HQ on Earth, which controls every station and Starseeker, so at a checkpoint the ship acts on your answer only when it reaches it (light-time there and back). " +
   "A hold or closed pad longer than an hour stops the ride at a checkpoint: wait or replan a held launch, hold or divert at a closed pad. Once it arrives, the result shows what each choice would have cost. " +
   "Score out of 100, from what actually happens: fast pickup 20 (versus the quickest nearby car), arrived on time 20 (falls to 0 at half the trip's allowed time late), energy flown including holds and corrections versus par 20, " +
   "kept the promise 15 (falls to 0 at 6 h after the promised arrival on quick hails, 1 day on long hauls; arriving early costs a quarter as much), every leg checked 10, honest fare 10 (within $1 of the ride leg's fare_usd), " +
@@ -769,7 +769,7 @@ function wxOut(inp){
   return { simulated: true, days_from: isoM(Math.floor(from)), day_note: "each sky day runs 12:00 to 12:00 UTC",
     flare_place: { id: at, name: stopName(at) }, storm_travel_hours: rnd(reach.travel_days * 24, 1), storm_share: Math.round(reach.share * 1000) / 1000,
     flares: RR.flareForecast(from, days, H.seed, at).map(function(x){ return { day: isoM(x.day_jd), odds_pct: Math.round(x.flare_odds * 100) }; }),
-    flare_rule: "the chance a solar radiation storm starts at flare_place that day; it holds launches with a rider aboard until it passes, and an empty car can still fly. Each storm reaches there storm_travel_hours after it erupts at 1500 km/s, and storm_share is the share strong enough there (1/r^2)",
+    flare_rule: "the chance a solar radiation storm starts at flare_place that day; it holds launches with a rider aboard until it passes, and an empty ship can still fly. Each storm reaches there storm_travel_hours after it erupts at 1500 km/s, and storm_share is the share strong enough there (1/r^2)",
     local_weather: [h.from, h.to].map(function(p){ return RR.weatherForecast(p, from, days, H.seed); }).filter(function(w){ return w.kind; }).map(function(w){
       return { place: { id: w.place, name: stopName(w.place) }, kind: w.kind, odds_are: w.odds_are, days: w.days.map(function(x){ return { day: isoM(x.day_jd), odds_pct: Math.round(x.odds * 100) }; }) }; }) };
 }
@@ -863,7 +863,7 @@ function cpOut(H){
     signal_delay_minutes: cp.signal_delay_minutes, reply_arrives: isoM(cp.reply_jd), car: cp.car, rider_aboard: cp.rider_aboard,
     held_hours: rnd(cp.held_hours, 1), behind_plan_hours: rnd(cp.behind_plan_hours, 1), extra_kwh: cp.extra_kwh, used_kwh: cp.used_kwh, options: options, default: cp.default,
     checkpoints_left: RR.MAX_CHECKPOINTS - H.ride.checkpoints.length, simulated: true,
-    note: "The ride's clock is stopped here until you decide. You dispatch from HQ on Earth, which controls every station and car: your answer reaches the car at reply_arrives, and it holds or waits until then. You never see when a storm or haze ends, nor the unscheduled traffic." };
+    note: "The ride's clock is stopped here until you decide. You dispatch from HQ on Earth, which controls every station and Starseeker: your answer reaches the ship at reply_arrives, and it holds or waits until then. You never see when a storm or haze ends, nor the unscheduled traffic." };
 }
 // connector decide(): the same answers, checked the same way. A replan plans a fresh leg (it counts as a plan).
 function decideHail(inp){
@@ -879,7 +879,7 @@ function decideHail(inp){
   if (d) return Promise.resolve(stepHail(H, d));
   var jd = inp.depart_after ? quoteJd(inp.depart_after) : cp.reply_jd, obj = objOf(inp), S = H.ride.segs[H.ride.at.seg];
   if (jd == null) throw new Error("depart_after must be a sky time as YYYY-MM-DD HH:MM, at or after " + isoM(cp.reply_jd));
-  if (jd < cp.reply_jd - 1 / 1440) throw new Error("a replan must depart at or after " + isoM(cp.reply_jd) + ", when your answer reaches the car");
+  if (jd < cp.reply_jd - 1 / 1440) throw new Error("a replan must depart at or after " + isoM(cp.reply_jd) + ", when your answer reaches the ship");
   return planHailLeg(H, S.role, S.role === "pickup" ? H.car : null, S.from, S.to, Math.max(jd, cp.reply_jd), obj).then(function(L){
     if (L.gate === "FAIL") throw new Error(L.leg_id + " was rejected by the checker; checkpoint " + cp.n + " is still open (wait, or replan from another time)");
     return stepHail(H, { action: "replan", leg: { from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate } });
@@ -1060,14 +1060,14 @@ function hailHTML(){
         (o.divert ? o.divert.alternates.map(function(a){ return '<button class="btn ghost" type="button" data-cp="divert" data-place="' + esc(a.place) + '">Divert to ' + esc(a.name) +
           ' · ' + kwhs(a.hop_kwh) + ' · ' + fmt(a.hop_hours, 1) + ' h</button>'; }).join("") : "");
     var facts = cp.kind === "launch_hold"
-      ? "Leaving when your answer reaches the car would need a correction burn of " + kwhs(o.wait.correction_kwh_if_it_left_on_reply) + "; it grows " + o.wait.correction_pct_per_hour_late + "% of the leg an hour, to at most " + o.wait.correction_cap_pct + "%. A replan counts as a plan."
+      ? "Leaving when your answer reaches the ship would need a correction burn of " + kwhs(o.wait.correction_kwh_if_it_left_on_reply) + "; it grows " + o.wait.correction_pct_per_hour_late + "% of the leg an hour, to at most " + o.wait.correction_cap_pct + "%. A replan counts as a plan."
       : "Holding costs " + fmt(o.hold.kwh_per_hour) + " kWh an hour; held " + fmt(rnd(cp.held_hours, 1), 1) + " h so far, at most " + fmt(rnd(o.hold.max_hold_hours_left, 1), 1) + " h more." +
         (o.divert ? " A divert hops to another pad and back; the kWh shown is one hop." : " No other pad is near enough to divert to.");
     return head + '<div class="cp"><span class="k caps faint" style="font-size:10.5px">Checkpoint ' + cp.n + ' · simulated</span>' +
       '<p class="t">' + esc(cp.kind === "launch_hold" ? "Launch held" : "Pad closed") + ' · ' + esc(cp.place_name) + '</p>' +
       '<p class="small">' + esc(cp.why.charAt(0).toUpperCase() + cp.why.slice(1)) + '. The car is ' + esc(cp.car) + (cp.rider_aboard ? " with " + esc(riderName(h)) + " aboard" : "") + '.</p>' +
       '<div class="mmeta num small"><div><span class="k">Sky time</span><span>' + isoM(cp.sky_at) + '</span></div><div><span class="k">Behind plan</span><span>' + fmt(rnd(cp.behind_plan_hours, 1), 1) + ' h</span></div>' +
-      '<div><span class="k">Answer reaches car</span><span>' + isoM(cp.reply_jd) + '</span></div><div><span class="k">Signal from Earth</span><span>' + fmt(cp.signal_delay_minutes, 1) + ' min each way</span></div>' +
+      '<div><span class="k">Answer reaches ship</span><span>' + isoM(cp.reply_jd) + '</span></div><div><span class="k">Signal from Earth</span><span>' + fmt(cp.signal_delay_minutes, 1) + ' min each way</span></div>' +
       '<div><span class="k">Used so far</span><span>' + kwhs(cp.used_kwh) + '</span></div><div><span class="k">Extra so far</span><span>' + kwhs(cp.extra_kwh) + '</span></div></div>' +
       '<p class="small dim num">' + esc(facts) + '</p><div class="mrow cpb">' + btns + '</div>' +
       '<p class="small faint">The ride\'s clock is stopped until you choose. You never see when a storm or haze ends, or the unscheduled traffic. The score locks when the car arrives.</p></div></div>';

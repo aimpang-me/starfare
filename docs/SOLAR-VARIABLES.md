@@ -10,7 +10,7 @@ Four constants from the Assumptions sheet now drive the hazards. They sit at the
 
 | Constant | Value | Workbook source | Used for |
 |---|---|---|---|
-| `C_KMS` | 299792.458 km/s | Speed of light, exact (SI) | Signal delay between Earth and the car |
+| `C_KMS` | 299792.458 km/s | Speed of light, exact (SI) | Signal delay between Earth and the ship |
 | `AU_KM` | 149597870.7 km | Astronomical unit (IAU) | How strong a storm still is at a place |
 | `CME_KMS` | 1500 km/s | Fast CME speed, held constant | When a storm reaches a place |
 | `CRUISE_MSV_DAY` | 1.84 mSv/day | Curiosity RAD, cruise to Mars | Rider dose |
@@ -21,14 +21,14 @@ Measured on seed 1 over 1500 sky days, storms that ground launches: Sun 320, Mer
 
 `flareAt(jd, place)` and `flareForecast(fromJd, days, seed, place)` take the place. The forecast blends the Sun's odds for the eruption days that land on each sky day, times the share. Without a place they keep the old meaning, the odds at the Sun.
 
-**Signal delay.** Dispatch HQ is on Earth and controls every station and car (a simulated assumption; Alvin's call, 2026-10-16). A checkpoint's news takes the one-way light time to reach Earth, and the answer takes as long back, so the car acts at `reply_jd = sky_at + 2 × one-way`. Measured one-way delays: Mars 6 to 19 min, Ceres 14.2 min in the flare test, Saturn system 77 to 84 min. The workbook's best and worst cases bracket these (Mars 3.0 to 22.3 min, Saturn 67.0 to 92.2 min).
+**Signal delay.** Dispatch HQ is on Earth and controls every station and Starseeker (a simulated assumption; Alvin's call, 2026-10-16). A checkpoint's news takes the one-way light time to reach Earth, and the answer takes as long back, so the ship acts at `reply_jd = sky_at + 2 × one-way`. Measured one-way delays: Mars 6 to 19 min, Ceres 14.2 min in the flare test, Saturn system 77 to 84 min. The workbook's best and worst cases bracket these (Mars 3.0 to 22.3 min, Saturn 67.0 to 92.2 min).
 
 What the delay changes:
-- A launch hold's correction burn is priced as if the car leaves when the answer arrives (`correction_kwh_if_it_left_on_reply`).
+- A launch hold's correction burn is priced as if the ship leaves when the answer arrives (`correction_kwh_if_it_left_on_reply`).
 - A replan must depart at or after `reply_jd`. The connector's `depart_after_min` and its error messages say so.
-- After "wait", the car stays on the pad until at least `reply_jd`. If the hazard cleared sooner, the ride logs an `awaiting_answer` incident for the extra ground time. Of the 100 fixture par rides, 2 do this: titan-home seed 10 (the haze lasted 0.6 h, the round trip 2.8 h) and ceres-shift seed 17.
+- After "wait", the ship stays on the pad until at least `reply_jd`. If the hazard cleared sooner, the ride logs an `awaiting_answer` incident for the extra ground time. Of the 100 fixture par rides, 2 do this: titan-home seed 10 (the haze lasted 0.6 h, the round trip 2.8 h) and ceres-shift seed 17.
 - A hold for N hours counts from `reply_jd`.
-- A divert happens at `reply_jd`. If the pad opens before the answer arrives, the car lands where it is and logs `divert_overtaken`.
+- A divert happens at `reply_jd`. If the pad opens before the answer arrives, the ship lands where it is and logs `divert_overtaken`.
 - Hindsight (regret) measures from `reply_jd` too. The Mars Base dust case's best answer moved from "divert to Phobos, wait 88.4 h" (44358 kWh) to "wait 88.2 h" (44419 kWh).
 
 **Rider dose.** Every finished ride reports `rider_dose_msv = 1.84 × days from pickup to arrival`. It is a ceiling. Stations inside a magnetosphere get less, and storms and shielding are not modelled. Fixture par rides: ISS Crew 9.3 to 11.9 mSv, Phobos Commute 0.3 to 2.7, Jovian Hop 3.9 to 4.8, Ceres Shift 1011 to 3380, Titan Home 2878 to 3549. It is shown in `fly()`, `score()`, the connector's ride result and the Open Sky page. It does not change the score.
@@ -37,7 +37,7 @@ What the delay changes:
 
 ## Where it shows
 
-- **Connector.** `space_weather` takes an optional `place` (id or name; default the open checkpoint's place, else the pickup). It returns `place`, `storm_travel_hours` and `storm_share`, and its note names the 1500 km/s speed and the 1/r² rule. A checkpoint shows `signal_delay_minutes`, `reply_arrives` and a `signal` line. A finished ride shows `rider_dose_msv`. The game rules text tells the bot it dispatches from HQ on Earth, which controls every station and car.
+- **Connector.** `space_weather` takes an optional `place` (id or name; default the open checkpoint's place, else the pickup). It returns `place`, `storm_travel_hours` and `storm_share`, and its note names the 1500 km/s speed and the 1/r² rule. A checkpoint shows `signal_delay_minutes`, `reply_arrives` and a `signal` line. A finished ride shows `rider_dose_msv`. The game rules text tells the bot it dispatches from HQ on Earth, which controls every station and Starseeker.
 - **Open Sky page.** The same checkpoint fields, the dose, and incident labels for "Awaiting answer" and "Divert overtaken".
 - **Fixture.** `world/engine/fixtures/fly-baseline.json` was recaptured, because storms now reach each place at a different time. Par for ceres-shift seed 1 went from 56183 to 85063 kWh.
 
@@ -86,8 +86,8 @@ Worth fixing in the workbook. None of them feed the engine.
 ## Decisions (2026-10-16)
 
 Alvin: follow the recommendations; dispatch HQ is on Earth but controls all stations. Recorded in `docs/OPEN-QUESTIONS.md` (Answered).
-1. **Dispatcher.** HQ on Earth controls every station and car, so every checkpoint answer crosses the light time from Earth. No regional dispatchers.
-2. **Dose.** Shown only. Ceres and Titan rides give 1 to 3.5 Sv at the cruise rate, against NASA-STD-3001's 600 mSv career limit; it is not scored or capped until there is shielding or faster cars.
+1. **Dispatcher.** HQ on Earth controls every station and Starseeker, so every checkpoint answer crosses the light time from Earth. No regional dispatchers.
+2. **Dose.** Shown only. Ceres and Titan rides give 1 to 3.5 Sv at the cruise rate, against NASA-STD-3001's 600 mSv career limit; it is not scored or capped until there is shielding or faster ships.
 3. **Flare frequency.** Keep the simulated 27-day spells. The workbook has no flare rate, and a fitted solar cycle would be an invented number.
 4. **CME direction.** Keep storms reaching every place, thinned by 1/r². Cones would need a direction model the workbook does not give.
 5. **Mars Base** stays an orbit station with Mars dust weather.

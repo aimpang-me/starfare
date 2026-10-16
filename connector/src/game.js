@@ -124,9 +124,9 @@ const rules = (E) =>
   "Hazards (all simulated, the same for every player this season): you only see forecasts, and the dispatch result tells you what actually happened. " +
   "Pads have a few berths and other ships use them. check_pad shows the berths and how many are booked each hour, but about a quarter of the traffic is unscheduled and never shows in the forecast. " +
   "If every berth is taken when the car arrives, it holds in orbit until one frees up, and holding costs 250 kWh an hour. " +
-  "Solar radiation storms (space_weather gives the odds per day at a place) hold any launch with a rider aboard until the storm passes; an empty car on its pickup can fly through. " +
+  "Solar radiation storms (space_weather gives the odds per day at a place) hold any launch with a rider aboard until the storm passes; an empty ship on its pickup can fly through. " +
   "A storm's particles leave the Sun at 1500 km/s (a fast CME), so a storm reaches Earth about a day after it erupts and Saturn about 11 days after, and fewer reach far out (1/r^2). " +
-  "You dispatch from HQ on Earth, which controls every station and car: at a checkpoint the car acts on your answer only when it arrives, after the light-time there and back (minutes at Mars, over two hours at Saturn). " +
+  "You dispatch from HQ on Earth, which controls every station and Starseeker: at a checkpoint the ship acts on your answer only when it arrives, after the light-time there and back (minutes at Mars, over two hours at Saturn). " +
   "Mars dust storms (Mars, Mars Base) and Titan haze (Titan, Titan Dock) close those pads: the car waits on the ground, or holds in orbit if it is arriving. check_pad gives their odds. " +
   "A leg between planets that leaves late needs a correction burn (2% of its energy per hour late, up to 30%). " +
   "Score out of 100, from what actually happened: fast pickup 20 (versus the quickest nearby car), arrived on time 20 (falls to 0 at half the trip's allowed time late), " +
@@ -268,7 +268,7 @@ export function spaceWeather(E, run, inp, nowMs) {
     note: "Forecast only (simulated). flare_odds is the chance a solar radiation storm starts at " + p.name + " in that sky day (noon to noon UTC). " +
       "Storms erupt at the Sun, last 4 to 48 hours (mostly short) and run in spells of about 27 days (the Sun's rotation); each reaches " + p.name + " storm_travel_hours later at 1500 km/s, " +
       "and storm_share is the share strong enough there (1/r^2 from the Sun, 1 inside Earth's orbit). " +
-      "While a storm is on, no car launches with a rider aboard: the ride waits on the ground until it passes, and a ride between planets that leaves late needs a correction burn. An empty car on its pickup can fly through.",
+      "While a storm is on, no ship launches with a rider aboard: the ride waits on the ground until it passes, and a ride between planets that leaves late needs a correction burn. An empty ship on its pickup can fly through.",
   };
 }
 
@@ -334,7 +334,7 @@ function situation(E, run) {
     o.action === "replan" ? Object.assign({}, o, { depart_after_min: isoJD(cp.reply_jd), plans_used: run.calls, plans_left: Math.max(0, MAX_PLANS_PER_RUN - run.calls), free_plans_left: Math.max(0, FREE_PLANS - run.calls) })
       : o.action === "hold" ? Object.assign({}, o, { held_hours: r1(o.held_hours), max_hold_hours_left: r1(o.max_hold_hours_left) }) : o);
   const how = cp.kind === "launch_hold"
-    ? "decide with checkpoint " + cp.n + " and action \"wait\", or action \"replan\" with depart_after (at or after " + isoJD(cp.reply_jd) + ", when your answer reaches the car; the default) and objective energy or time."
+    ? "decide with checkpoint " + cp.n + " and action \"wait\", or action \"replan\" with depart_after (at or after " + isoJD(cp.reply_jd) + ", when your answer reaches the ship; the default) and objective energy or time."
     : "decide with checkpoint " + cp.n + " and action \"hold\" (with hours to ask again after that many hours, or none to hold until the pad opens), " +
       "or action \"divert\" with place (one of the alternates) and wait_hours on the ground there (default 0).";
   return {
@@ -343,7 +343,7 @@ function situation(E, run) {
     options, default: cp.default, checkpoints_left: R.MAX_CHECKPOINTS - ride.checkpoints.length, ask_after_hours: ride.ask_after_hours,
     incidents: incidentsPub(E, ride.incidents),
     hidden: "You never see when a storm or haze ends, nor the unscheduled traffic. check_pad and space_weather forecast from this checkpoint's sky time.",
-    signal: "You dispatch from HQ on Earth, which controls every station and car. This checkpoint's news took signal_delay_minutes to reach you, and your answer takes as long back: the car acts on it at reply_arrives, and holds or waits on the default until then.",
+    signal: "You dispatch from HQ on Earth, which controls every station and Starseeker. This checkpoint's news took signal_delay_minutes to reach you, and your answer takes as long back: the ship acts on it at reply_arrives, and holds or waits on the default until then.",
     note: "Simulated. The ride's clock is stopped here until you decide.",
     how_to_answer: how,
   };
@@ -408,7 +408,7 @@ export async function decide(E, run, inp, legFn) {
     if (run.calls >= MAX_PLANS_PER_RUN) fail("this run has used its " + MAX_PLANS_PER_RUN + " plans; answer with wait instead");
     const jd = jdOfIso(input.depart_after), latest = Math.min(cp.reply_jd + 400, SEASON_END);
     if (jd == null) fail("depart_after must be a sky time as YYYY-MM-DD HH:MM, at or after " + isoJD(cp.reply_jd));
-    if (jd < cp.reply_jd - 1 / 1440) fail("a replan must depart at or after " + isoJD(cp.reply_jd) + ", when your answer reaches the car");
+    if (jd < cp.reply_jd - 1 / 1440) fail("a replan must depart at or after " + isoJD(cp.reply_jd) + ", when your answer reaches the ship");
     if (jd > latest) fail("depart_after must be by " + isoJD(latest));
     const S = ride.segs[ride.at.seg];
     const { leg: L } = await addLeg(run, S.role, S.role === "pickup" ? run.car : null, S.from, S.to, Math.max(jd, cp.reply_jd), input.objective, legFn || defaultLegFn(E),

@@ -229,7 +229,7 @@ test("space_weather shows flare odds at a place only, never the actual storms; f
   const pair = f.find((a) => stormy(a.day_jd) && f.some((b) => !stormy(b.day_jd) && b.flare_odds === a.flare_odds));
   assert.ok(pair, "no stormy and calm day with the same odds in 60 days");
   assert.equal(spaceWeather(E, run, {}, NOW).days.length, 10);
-  assert.match(out.note, /rider aboard/); assert.match(out.note, /empty car/); assert.match(out.note, /1500 km\/s/);
+  assert.match(out.note, /rider aboard/); assert.match(out.note, /empty ship/); assert.match(out.note, /1500 km\/s/);
 });
 
 test("forecast tools validate input, are free (not plans) and are noted in the dispatch log", async () => {
@@ -316,7 +316,7 @@ test("a pad closed on arrival stops the ride at a checkpoint; diverting to Phobo
   assert.deepEqual([s.checkpoint, s.kind, s.cause, s.place.id, s.leg, s.sky_at, s.car, s.rider_aboard, s.held_hours, s.ask_after_hours, s.checkpoints_left],
     [1, "pad_closed", "dust_storm", "mars-base", "ride", "2029-02-08 03:56", "holding in orbit at Mars Base", true, 1, 1, 7]);
   assert.deepEqual(s.options.map((o) => o.action), ["hold", "divert"]);
-  assert.deepEqual([s.signal_delay_minutes, s.reply_arrives], [7.3, "2029-02-08 04:10"]); assert.match(s.signal, /dispatch from HQ on Earth, which controls every station and car/);
+  assert.deepEqual([s.signal_delay_minutes, s.reply_arrives], [7.3, "2029-02-08 04:10"]); assert.match(s.signal, /dispatch from HQ on Earth, which controls every station and Starseeker/);
   assert.deepEqual(s.options[1].alternates, [{ place: "phobos", name: "Phobos", hop_kwh: 11027, hop_hours: 2.2, berths: 3, booked_now: 1 }]);
   assert.deepEqual(s.default, { action: "hold" });
   assert.deepEqual(hailInfo(E, a.run, DUST_NOW).situation, s);
@@ -366,7 +366,7 @@ test("a flare at launch: replan is a plan and beats waiting; a leg the checker r
 
   const { run } = await ceresRide("run_replan");
   await assert.rejects(decide(E, run, { checkpoint: 1, action: "hold" }), /a launch_hold checkpoint takes wait or replan, not hold/);
-  await assert.rejects(decide(E, run, { checkpoint: 1, action: "replan", depart_after: "2032-03-28 03:33" }), /depart at or after 2032-03-28 04:02, when your answer reaches the car/);
+  await assert.rejects(decide(E, run, { checkpoint: 1, action: "replan", depart_after: "2032-03-28 03:33" }), /depart at or after 2032-03-28 04:02, when your answer reaches the ship/);
   assert.equal(run.calls, 2);
   const rejecting = (from, to, t, obj, end) => ({ leg: Object.assign(computeLeg(E, from, to, t, obj, end), { gate: "FAIL" }), cached: false });
   await assert.rejects(decide(E, run, { checkpoint: 1, action: "replan" }, rejecting), (e) => e instanceof GameError && e.counted && /rejected by the checker; checkpoint 1 is still open/.test(e.message));

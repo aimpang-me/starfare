@@ -1191,7 +1191,7 @@ var C_KMS = 299792.458;    // speed of light, exact (SI)
 var AU_KM = 149597870.7;   // astronomical unit (IAU 2012)
 var CME_KMS = 1500;        // a fast CME, held at constant speed (real CMEs slow down on the way out)
 var CRUISE_MSV_DAY = 1.84; // dose inside a spacecraft in deep space (Curiosity RAD, cruise to Mars; Zeitlin et al. 2013)
-// Dispatch HQ is on Earth and controls every station and car (a simulated assumption): every answer to a checkpoint
+// Dispatch HQ is on Earth and controls every station and Starseeker (a simulated assumption): every answer to a checkpoint
 // crosses the real light time.
 var DIST = new Map();
 function helioAt(place, jd){ var R = E.EPHEM_RANGE; return E.placeState(place, Math.min(R[1], Math.max(R[0], jd))).r; }
@@ -1375,7 +1375,7 @@ function arrivePhase(ride){
   var land = hd.jd;
   bookHold(ride, S, land);
   if (hd.act) ride.incidents.push({ kind: "divert_overtaken", leg: S.role, where: place, at_jd: land, hours: 0, kwh: 0,
-    note: "The pad opened before the dispatcher's divert to " + hd.act.name + " reached the car, so it landed at " + nameOf(place) });
+    note: "The pad opened before the dispatcher's divert to " + hd.act.name + " reached the ship, so it landed at " + nameOf(place) });
   S.flew.land_jd = land;
   if (S.role === "pickup" && S.to === S.target) ride.pickup_jd = land;
   var nx = at.seg + 1, N = ride.segs[nx];
@@ -1410,13 +1410,13 @@ function checkpoint(ride, kind, cause, place, T){
     options = [
       { action: "wait", leg_kwh: S.kwh, correction_pct_per_hour_late: 2, correction_cap_pct: 30, correction_kwh_if_it_left_on_reply: Math.round(S.kwh * Math.min(0.3, 0.02 * late * 24)),
         note: "Wait until the launch is clear, then fly this leg late; the correction burn grows with every hour late" },
-      { action: "replan", note: "Plan a fresh leg from " + nameOf(S.from) + " to " + nameOf(S.to) + " departing at or after " + iso(reply) + " (when the answer reaches the car); it counts as a plan" }];
+      { action: "replan", note: "Plan a fresh leg from " + nameOf(S.from) + " to " + nameOf(S.to) + " departing at or after " + iso(reply) + " (when the answer reaches the ship); it counts as a plan" }];
   } else {
     options = [{ action: "hold", kwh_per_hour: HOLD_KWH, held_hours: held, max_hold_hours_left: Math.max(0, MAX_HOLD_H - held),
-      note: "Hold in orbit until the pad opens (or for the hours you give after the answer reaches the car, then ask again)" }];
+      note: "Hold in orbit until the pad opens (or for the hours you give after the answer reaches the ship, then ask again)" }];
     var alts = alternates(ride, place, S.target, reply);
     if (alts.length) options.push({ action: "divert", alternates: alts,
-      note: "When the answer reaches the car, hop to another pad, land, wait on the ground for free for wait_hours, then hop back" + (S.kind !== "divert" && between(S) ? "; priced as a local hop from " + nameOf(place) + "'s orbit" : "") });
+      note: "When the answer reaches the ship, hop to another pad, land, wait on the ground for free for wait_hours, then hop back" + (S.kind !== "divert" && between(S) ? "; priced as a local hop from " + nameOf(place) + "'s orbit" : "") });
   }
   return { n: ride.checkpoints.length + 1, kind: kind, cause: cause, why: CAUSE[cause], place: place, place_name: nameOf(place), leg: S.role, sky_at: T,
     signal_delay_minutes: Math.round(oneWay * 14400) / 10, reply_jd: reply,
@@ -1427,11 +1427,11 @@ function checkpoint(ride, kind, cause, place, T){
 function applyLaunch(ride, cp, d){
   if (d.action === "wait"){ ride.at.waived = true;
     if (cp.reply_jd > ride.at.jd + 1e-9) ride.incidents.push({ kind: "awaiting_answer", leg: ride.segs[ride.at.seg].role, where: cp.place, at_jd: ride.at.jd, hours: (cp.reply_jd - ride.at.jd) * 24, kwh: 0,
-      note: "The car waited on the pad for the dispatcher's answer from Earth (" + cp.signal_delay_minutes + " min each way)" });
+      note: "The Starseeker waited on the pad for the dispatcher's answer from Earth (" + cp.signal_delay_minutes + " min each way)" });
     ride.at.jd = Math.max(ride.at.jd, cp.reply_jd); return { action: "wait" }; }
   var S = ride.segs[ride.at.seg], L = d.leg;
   if (!L || L.from !== S.from || L.to !== S.to) throw new Error("a replan must go from " + nameOf(S.from) + " to " + nameOf(S.to));
-  if (!(L.dep_jd >= cp.reply_jd - 1e-9) || !(L.arr_jd > L.dep_jd) || !isFinite(L.kwh)) throw new Error("a replan must depart at or after " + iso(cp.reply_jd) + ", when the answer reaches the car");
+  if (!(L.dep_jd >= cp.reply_jd - 1e-9) || !(L.arr_jd > L.dep_jd) || !isFinite(L.kwh)) throw new Error("a replan must depart at or after " + iso(cp.reply_jd) + ", when the answer reaches the ship");
   if (L.dep_jd > cp.sky_at + 1e-9) ride.incidents.push({ kind: "replanned", leg: S.role, where: S.from, at_jd: cp.sky_at, hours: (L.dep_jd - cp.sky_at) * 24, kwh: 0,
     note: "Because " + CAUSE[cp.cause] + ", the car waited on the ground and left on a new plan" });
   var leg = { from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate || null };
@@ -1455,7 +1455,7 @@ function applyPad(ride, cp, d){
   hd.act = { place: alt.place, name: alt.name, wait: wait, at: cp.reply_jd, cause: cp.cause };
   return { action: "divert", place: alt.place, wait_hours: wait };
 }
-// The car carries out a divert once the answer reaches it (arrivePhase calls this at act.at).
+// The ship carries out a divert once the answer reaches it (arrivePhase calls this at act.at).
 function divert(ride, act){
   var S = ride.segs[ride.at.seg], T = act.at, b = planned(S.to, act.place, T, "energy", ride.end_jd);
   S.flew.left_jd = T;
@@ -1464,7 +1464,7 @@ function divert(ride, act){
   var nx = ride.at.seg + 1, N = ride.segs[nx];
   ride.segs.splice(nx, N && N.kind === "return" && N.from === S.to ? 1 : 0, hop, back);
   ride.incidents.push({ kind: "divert", leg: S.role, where: S.to, at_jd: T, hours: 0, kwh: 0,
-    note: "Because " + CAUSE[act.cause] + ", the car diverted to " + act.name + " (" + k(hop.kwh) + " kWh hop), to wait " + (Math.round(act.wait * 10) / 10) + " h on the ground and hop back" });
+    note: "Because " + CAUSE[act.cause] + ", the ship diverted to " + act.name + " (" + k(hop.kwh) + " kWh hop), to wait " + (Math.round(act.wait * 10) / 10) + " h on the ground and hop back" });
   ride.at = { seg: nx, phase: "depart", jd: T };
 }
 function outcome(ride){
@@ -1486,7 +1486,7 @@ function fly(id, car, legs, t0, seed){
     delay_hours: o.delay_hours, rider_dose_msv: o.rider_dose_msv };
 }
 // With hindsight: what each choice at a checkpoint could be. A replan leaves when the hold really ends (not before the
-// answer reaches the car); a divert waits at the alternate so it lands back as the closed pad reopens (at once if only full).
+// answer reaches the ship); a divert waits at the alternate so it lands back as the closed pad reopens (at once if only full).
 function hindsight(ride, cp){
   var H = hazards(ride.seed), S = ride.segs[ride.at.seg], out = [];
   if (cp.kind === "launch_hold"){
