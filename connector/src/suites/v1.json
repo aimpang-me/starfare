@@ -1,7 +1,7 @@
 {
   "format": "starfare.suite/1",
   "id": "v1",
-  "engine_sha256": "cc4d09d233c5d9211b0541d0ec13ae37d2f3cbf80718c5913e1f7ed13828c546",
+  "engine_sha256": "ad94cc691b07d519d7747a53d73af868a5184bd87a4c88a35adb67d57e82717f",
   "score_version": 1,
   "budget": 60,
   "world": "per_task",
@@ -31,12 +31,6 @@
           "jovian-hop"
         ],
         "clock_jd": 2461965.5,
-        "stratum": "long/hazard"
-      },
-      {
-        "id": "ceres-shift/0884",
-        "hail_id": "ceres-shift",
-        "clock_jd": 2462213.5,
         "stratum": "long/hazard"
       },
       {
@@ -114,6 +108,12 @@
         ],
         "clock_jd": 2465945.5,
         "stratum": "quick/hazard"
+      },
+      {
+        "id": "ceres-shift/2358",
+        "hail_id": "ceres-shift",
+        "clock_jd": 2463687.5,
+        "stratum": "long/hazard"
       },
       {
         "id": "ceres-shift+iss-crew/4510",

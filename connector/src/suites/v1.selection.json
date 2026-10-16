@@ -33,11 +33,11 @@
     "titan-home/0490",
     "iss-crew/4289",
     "iss-crew+titan-home/1035",
-    "iss-crew/6264",
+    "jovian-hop/3114",
     "titan-home/1269",
     "iss-crew/3706",
     "ceres-shift+phobos-commute/5293",
-    "iss-crew/0783",
+    "titan-home+jovian-hop/2880",
     "iss-crew/1649"
   ],
   "candidates": [
@@ -337,11 +337,11 @@
     {
       "task_id": "titan-home+phobos-commute/2793",
       "naive": {
-        "total": 69,
+        "total": 70,
         "parts": {
           "pickup": 10,
           "on_time": 10,
-          "energy": 14.5,
+          "energy": 14.7,
           "promise": 15,
           "checker": 10,
           "fare": 10,
@@ -354,7 +354,7 @@
         "parts": {
           "pickup": 0,
           "on_time": 10,
-          "energy": 1.7,
+          "energy": 1.8,
           "promise": 7,
           "checker": 10,
           "fare": 10,
@@ -377,10 +377,10 @@
         "plan": "energy",
         "choices": []
       },
-      "headroom": 11,
+      "headroom": 10,
       "stratum": "long/clear",
       "selected": true,
-      "reason": "headroom 11 > margin 5"
+      "reason": "headroom 10 > margin 5"
     },
     {
       "task_id": "jovian-hop/6400",
@@ -913,24 +913,24 @@
     {
       "task_id": "ceres-shift/0884",
       "naive": {
-        "total": 60,
+        "total": 100,
         "parts": {
-          "pickup": 0,
+          "pickup": 20,
           "on_time": 20,
-          "energy": 7.4,
-          "promise": 7.7,
+          "energy": 20,
+          "promise": 15,
           "checker": 10,
           "fare": 10,
           "economy": 5
         },
-        "incidents": 2
+        "incidents": 1
       },
       "random": {
-        "total": 63,
+        "total": 62,
         "parts": {
           "pickup": 0,
-          "on_time": 19.5,
-          "energy": 3.6,
+          "on_time": 19.1,
+          "energy": 3.2,
           "promise": 15,
           "checker": 10,
           "fare": 10,
@@ -939,28 +939,24 @@
         "incidents": 0
       },
       "reference": {
-        "total": 95,
+        "total": 100,
         "parts": {
           "pickup": 20,
           "on_time": 20,
           "energy": 20,
           "promise": 15,
-          "checker": 5,
+          "checker": 10,
           "fare": 10,
           "economy": 5
         },
         "car": "sf-04",
-        "plan": "energy/time",
-        "choices": [
-          "hold until open",
-          "replan, leaving 2029-08-15 04:45",
-          "hold until open"
-        ]
+        "plan": "energy/energy",
+        "choices": []
       },
-      "headroom": 35,
+      "headroom": 0,
       "stratum": "long/hazard",
-      "selected": true,
-      "reason": "headroom 35 > margin 5"
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
     },
     {
       "task_id": "jovian-hop/5387",
@@ -1306,30 +1302,30 @@
     {
       "task_id": "iss-crew+jovian-hop/0176",
       "naive": {
-        "total": 49,
+        "total": 72,
         "parts": {
-          "pickup": 0.1,
-          "on_time": 8,
-          "energy": 13.1,
-          "promise": 7.5,
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 17.5,
+          "promise": 14.4,
           "checker": 10,
           "fare": 10,
           "economy": 0
         },
-        "incidents": 1
+        "incidents": 2
       },
       "random": {
-        "total": 39,
+        "total": 42,
         "parts": {
-          "pickup": 3.3,
+          "pickup": 0,
           "on_time": 0,
-          "energy": 4.4,
-          "promise": 10,
+          "energy": 2.1,
+          "promise": 15,
           "checker": 10,
           "fare": 10,
-          "economy": 1
+          "economy": 5
         },
-        "incidents": 2
+        "incidents": 0
       },
       "reference": {
         "total": 80,
@@ -1346,10 +1342,10 @@
         "plan": "energy",
         "choices": []
       },
-      "headroom": 31,
+      "headroom": 8,
       "stratum": "quick/hazard",
       "selected": true,
-      "reason": "headroom 31 > margin 5"
+      "reason": "headroom 8 > margin 5"
     },
     {
       "task_id": "iss-crew/0527",
@@ -1402,11 +1398,11 @@
     {
       "task_id": "iss-crew+jovian-hop/4111",
       "naive": {
-        "total": 67,
+        "total": 66,
         "parts": {
           "pickup": 10,
           "on_time": 10,
-          "energy": 14.6,
+          "energy": 14.1,
           "promise": 11.9,
           "checker": 10,
           "fare": 10,
@@ -1442,7 +1438,7 @@
         "plan": "energy",
         "choices": []
       },
-      "headroom": 13,
+      "headroom": 14,
       "stratum": "quick/hazard",
       "reason": "stratum quick/hazard already has 5",
       "selected": false
@@ -1559,11 +1555,11 @@
         "incidents": 2
       },
       "random": {
-        "total": 40,
+        "total": 41,
         "parts": {
           "pickup": 0,
           "on_time": 0,
-          "energy": 0.3,
+          "energy": 0.8,
           "promise": 15,
           "checker": 10,
           "fare": 10,
@@ -1922,30 +1918,30 @@
     {
       "task_id": "ceres-shift+iss-crew/4237",
       "naive": {
-        "total": 70,
+        "total": 74,
         "parts": {
           "pickup": 10,
           "on_time": 10,
           "energy": 20,
-          "promise": 9.9,
+          "promise": 14.4,
           "checker": 10,
           "fare": 10,
           "economy": 0
         },
-        "incidents": 3
+        "incidents": 2
       },
       "random": {
-        "total": 47,
+        "total": 52,
         "parts": {
           "pickup": 0.1,
           "on_time": 15.1,
-          "energy": 4.3,
-          "promise": 2.5,
+          "energy": 4.7,
+          "promise": 7.5,
           "checker": 10,
           "fare": 10,
           "economy": 5
         },
-        "incidents": 2
+        "incidents": 1
       },
       "reference": {
         "total": 80,
@@ -1962,10 +1958,10 @@
         "plan": "energy",
         "choices": []
       },
-      "headroom": 10,
+      "headroom": 6,
       "stratum": "long/hazard",
       "selected": true,
-      "reason": "headroom 10 > margin 5"
+      "reason": "headroom 6 > margin 5"
     },
     {
       "task_id": "jovian-hop/0711",
@@ -2744,23 +2740,23 @@
       },
       "headroom": 7,
       "stratum": "long/hazard",
-      "reason": "stratum long/hazard already has 5",
-      "selected": false
+      "selected": true,
+      "reason": "headroom 7 > margin 5"
     },
     {
       "task_id": "ceres-shift+iss-crew/4510",
       "naive": {
-        "total": 68,
+        "total": 75,
         "parts": {
           "pickup": 10,
           "on_time": 10,
-          "energy": 17.9,
-          "promise": 9.9,
+          "energy": 19.6,
+          "promise": 15,
           "checker": 10,
           "fare": 10,
           "economy": 0
         },
-        "incidents": 3
+        "incidents": 1
       },
       "random": {
         "total": 53,
@@ -2790,10 +2786,10 @@
         "plan": "energy",
         "choices": []
       },
-      "headroom": 16,
+      "headroom": 9,
       "stratum": "long/hazard",
       "selected": true,
-      "reason": "headroom 16 > margin 5"
+      "reason": "headroom 9 > margin 5"
     },
     {
       "task_id": "titan-home/4530",
