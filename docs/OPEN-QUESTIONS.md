@@ -22,6 +22,6 @@ None waiting. Everything asked on 2026-10-16 is under Answered.
 - Bench pass^k success (2026-10-16): a task succeeds when the flight arrived and scored at least the naive bot's score on that task. Chosen over "landed at all" and "scored 90 or more".
 - Day 7 video and write-up (2026-10-16): after the next deploy, once the bench, flight page and tighter difficulty are live.
 - Math audit (2026-10-16): yes, before the video, against independent tools.
-- Repo visibility (2026-10-16): make aimpang-me/starfare private until launch.
+- Repo visibility (2026-10-16): make aimpang-me/starfare private until launch. Done 2026-10-16.
 - Clean-up (2026-10-16): delete the old `sol-connector` Worker, the duplicate repo `aimpang/starfare` and `Documents\starfare-mine`. Chosen over waiting and over deleting only the Worker.
 - Old scores (2026-10-16): let them go with the `sol-connector` Worker; no copy and no "old rules" table.
