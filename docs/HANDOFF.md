@@ -26,6 +26,9 @@ Alvin's game loop, in his words (2026-10-16):
 - All pages, their links, sources and how to build and publish them: `docs/WEBSITES.md` (Open Sky, Stranded at Titan, Dispatch Desk, the Roadster teaser in `teaser/`, the spec).
 - The visual design, tokens, Alvin's mockups and his Terminal design system: `docs/DESIGN.md`.
 
+## Open questions
+Everything still waiting on Alvin, with options and a recommendation: `docs/OPEN-QUESTIONS.md`. Ask him, one at a time.
+
 ## Decisions already made (don't relitigate)
 - It's ride hailing for flying cars, not deliveries (the older delivery game `sol-missions.js` is legacy).
 - Bring-your-own-agent is Grok-first: players add the connector in their own Grok at grok.com/connectors. No xAI key on our side, ever.
