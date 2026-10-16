@@ -34,7 +34,7 @@ h1,h2,h3{margin:0;font-weight:600;letter-spacing:.01em}
 .wrap{padding-left:var(--gl);padding-right:var(--gr)}
 
 /* top bar */
-.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding-top:max(10px, env(safe-area-inset-top, 0px));padding-bottom:10px;background:rgba(6,8,12,.86);border-bottom:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.top{position:sticky;top:env(safe-area-inset-top, 0px);z-index:20;display:flex;align-items:center;gap:12px;padding-top:10px;padding-bottom:10px;background:rgba(6,8,12,.86);border-bottom:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .brand{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--ink);min-width:0}
 .brand b{font-weight:700;letter-spacing:.32em;font-size:14px}
 .brand span{font:500 10px var(--mono);letter-spacing:.12em;color:var(--ride);text-transform:uppercase}
@@ -713,10 +713,12 @@ Tac.prototype.orbits = function (jd, hi) {
 };
 Tac.prototype.label = function (x, y, t, pri, col) { this.lab.push({ x: x, y: y, t: t, pri: pri || 0, col: col || "rgba(238,241,245,.85)" }); };
 Tac.prototype.flush = function () {
-  var c = this.ctx, placed = [];
+  var c = this.ctx, placed = [], W = this.W, H = this.H;
   c.font = '500 10.5px Inter, sans-serif'; c.textBaseline = "middle";
   this.lab.sort(function (a, b) { return b.pri - a.pri; }).forEach(function (L) {
     var w = c.measureText(L.t).width, opts = [[L.x + 9, L.y - 9], [L.x - 9 - w, L.y - 9], [L.x + 9, L.y + 10], [L.x - 9 - w, L.y + 10]];
+    var fits = opts.filter(function (o) { return o[0] >= 4 && o[0] + w <= W - 4 && o[1] >= 9 && o[1] <= H - 9; });
+    opts = fits.length ? fits : opts.map(function (o) { return [Math.max(4, Math.min(W - 4 - w, o[0])), Math.max(9, Math.min(H - 9, o[1]))]; });
     for (var i = 0; i < opts.length; i++) {
       var r = [opts[i][0] - 2, opts[i][1] - 7, w + 4, 14], hit = placed.some(function (q) { return r[0] < q[0] + q[2] && q[0] < r[0] + r[2] && r[1] < q[1] + q[3] && q[1] < r[1] + r[3]; });
       if (!hit) { placed.push(r); c.fillStyle = "rgba(6,8,12,.55)"; c.fillRect(r[0], r[1], r[2], r[3]); c.fillStyle = L.col; c.fillText(L.t, opts[i][0], opts[i][1]); return; }
@@ -773,7 +775,7 @@ Tac.prototype.bracket = function (x, y, s, col, txt) {
     c.beginPath(); c.moveTo(x + q[0] * s, y + q[1] * (s - L)); c.lineTo(x + q[0] * s, y + q[1] * s); c.lineTo(x + q[0] * (s - L), y + q[1] * s); c.stroke();
   });
   c.lineWidth = 1;
-  if (txt) { c.font = '600 9px Inter, sans-serif'; c.fillStyle = col; c.textBaseline = "bottom"; c.fillText(txt, x - s, y - s - 3); c.textBaseline = "middle"; }
+  if (txt) { c.font = '600 9px Inter, sans-serif'; c.fillStyle = col; c.textBaseline = "bottom"; c.fillText(txt, Math.max(4, Math.min(this.W - 4 - c.measureText(txt).width, x - s)), Math.max(14, y - s - 3)); c.textBaseline = "middle"; }
 };
 Tac.prototype.ship = function (x, y, ang, w, alpha) {
   var c = this.ctx; c.save(); c.globalAlpha = alpha == null ? 1 : alpha; c.translate(x, y); c.rotate(ang);

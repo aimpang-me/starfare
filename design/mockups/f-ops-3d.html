@@ -47,7 +47,7 @@ h1,h2,h3{margin:0;font-weight:600}
 .pb{padding:10px 13px 13px}
 
 /* top bar */
-.top{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;padding-top:max(9px, env(safe-area-inset-top, 0px));padding-bottom:9px;background:rgba(5,10,20,.88);border-bottom:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.top{position:sticky;top:env(safe-area-inset-top, 0px);z-index:20;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;padding-top:9px;padding-bottom:9px;background:rgba(5,10,20,.88);border-bottom:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(92,200,255,.6) 30%,rgba(255,182,92,.5) 70%,transparent)}
 .brand{display:flex;flex-direction:column;min-width:0}
 .brand b{font:700 18px/1 var(--cond);letter-spacing:.34em}
@@ -83,7 +83,7 @@ h1,h2,h3{margin:0;font-weight:600}
 .c-fl .scroll,.c-sk .scroll{flex:1;min-height:0;overflow:auto}
 .c-map{grid-area:map;display:flex;flex-direction:column}
 .bot{grid-area:bot;display:grid;gap:10px;grid-template-columns:minmax(0,1.4fr) minmax(0,.9fr) minmax(0,1.25fr) minmax(0,.8fr)}
-@media (max-width:1100px){
+@media (max-width:1300px){
   .ops{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto;grid-template-areas:"map map" "fl sk" "bot bot"}
   .c-map{height:620px}
   .c-fl,.c-sk{max-height:560px}
@@ -242,7 +242,6 @@ button.lbl:hover{color:var(--ink)}
 
 /* bottom row */
 .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-@media (max-width:1300px) and (min-width:1101px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:760px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .tile{display:flex;flex-direction:column;gap:4px;text-align:left;padding:9px 10px;border:1px solid var(--line);border-radius:4px;background:rgba(5,12,24,.5);cursor:pointer;color:var(--ink);min-width:0}
 .tile:hover{border-color:rgba(92,200,255,.5)}
