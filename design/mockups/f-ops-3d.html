@@ -390,6 +390,14 @@ table.t td.wrapc{white-space:normal;min-width:220px;font-family:Inter;font-size:
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition:none!important}
   .planning i{border-right-color:var(--cy)}
 }
+
+/* polish: balanced headings, press feedback, touch-size targets */
+h1,h2,h3{text-wrap:balance}
+p{text-wrap:pretty}
+.btn,.chipb{transition:background-color .15s, border-color .15s, color .15s, transform .12s cubic-bezier(.2,0,0,1)}
+.btn:active,.chipb:active{transform:scale(.96)}
+@media (pointer:coarse){.btn,.btn.small,.chipb,.seg button,.tabs button{min-height:44px}}
+@media (pointer:coarse){.popm label{min-height:44px}}
 </style>
 
 <div id="loading" role="status"><div class="box"><b class="caps" style="color:var(--cy)">Starfare &middot; Dispatch operations</b>Loading the engine<div class="bar"><i></i></div></div></div>

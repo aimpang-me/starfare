@@ -289,6 +289,14 @@ table.t .r{text-align:right}
   .clk{align-items:flex-start}
 }
 @media (prefers-reduced-motion: reduce){ #loading .bar i{animation:none} }
+
+/* polish: balanced headings, press feedback, touch-size targets */
+h1,h2,h3{text-wrap:balance}
+p{text-wrap:pretty}
+.btn,.chipb,.zooms button{transition:background-color .15s, border-color .15s, color .15s, transform .12s cubic-bezier(.2,0,0,1)}
+.btn:active,.chipb:active,.zooms button:active{transform:scale(.96)}
+@media (pointer:coarse){.btn,.btn.small,.chipb,.sectors button,.zooms button,.tabs button{min-height:44px}}
+@media (prefers-reduced-motion: reduce){.btn,.chipb,.zooms button{transition:none}}
 </style>
 
 <div id="loading"><div class="box"><div class="bar"><i></i></div><span>Loading the engine (JPL DE421 positions)&hellip;</span></div></div>

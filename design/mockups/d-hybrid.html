@@ -376,6 +376,16 @@ table.t td.wrapc{white-space:normal;min-width:220px;font-family:Inter;font-size:
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition:none!important}
   .planning i{border-right-color:var(--ride)}
 }
+
+/* polish: balanced headings, press feedback, touch-size targets */
+h1,h2,h3{text-wrap:balance}
+p{text-wrap:pretty}
+.btn,.zb,.playb,.chipb,.trafbtn{transition:background-color .15s, border-color .15s, color .15s, transform .12s cubic-bezier(.2,0,0,1)}
+.btn:active,.zb:active,.playb:active,.chipb:active,.trafbtn:active{transform:scale(.96)}
+.zb,.trafbtn{position:relative}
+.zb::after,.trafbtn::after{content:"";position:absolute;left:0;right:0;top:min(0px, calc(50% - 20px));bottom:min(0px, calc(50% - 20px))}
+@media (pointer:coarse){.btn,.btn.small,.chipb,.seg button,.rtabs a,.trafbtn,.ctl select{min-height:44px}}
+@media (pointer:coarse){.zb{width:44px;height:44px}.rtabs a{display:inline-flex;align-items:center}}
 </style>
 
 <div id="loading" role="status"><div class="box"><b class="caps" style="color:var(--ride)">Starfare Dispatch Deck</b>Loading the engine (511 KB)<div class="bar"><i></i></div></div></div>
