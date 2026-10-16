@@ -222,14 +222,6 @@
         "clock_jd": 2462746.5
       },
       {
-        "id": "ceres-shift+titan-home/0996",
-        "hails": [
-          "ceres-shift",
-          "titan-home"
-        ],
-        "clock_jd": 2462325.5
-      },
-      {
         "id": "iss-crew/4464",
         "hail_id": "iss-crew",
         "clock_jd": 2465793.5
