@@ -84,4 +84,26 @@ ok("a ride stored before stops existed steps the same as one started today", () 
   assert.deepStrictEqual(old, now);
   assert.deepStrictEqual(now.ride.segs.map((s) => s.kind + " stop " + s.stop), ["planned stop 1", "planned stop 2", "divert stop 2", "return stop 2"]);
 });
+ok("stop orders: every booking boards before it lands, and events at the same place in a row are one stop", () => {
+  assert.deepStrictEqual([R.stopOrders(["iss-crew", "phobos-commute"]).length, R.stopOrders(["iss-crew", "phobos-commute", "jovian-hop"]).length], [6, 90]);
+  assert.deepStrictEqual(R.stopOrders(["ceres-shift", "phobos-commute"]).map((o) => o.map((s) => s.at).join(">")),
+    ["ceres-port>mars-base>phobos>mars-base", "ceres-port>phobos>mars-base", "phobos>ceres-port>mars-base", "phobos>mars-base>ceres-port>mars-base"]);
+  assert.deepStrictEqual(R.stopOrders(["ceres-shift", "phobos-commute"])[1][2], { at: "mars-base", board: [], alight: ["ceres-shift", "phobos-commute"] });
+  assert.throws(() => R.parSet(["iss-crew", "phobos-commute", "jovian-hop", "titan-home"], t0, END, SEED), /1 to 3 bookings/);
+  assert.throws(() => R.parSet(["iss-crew", "iss-crew"], t0, END, SEED), /in the set twice/);
+});
+
+ok("par for a set: the best pooled flight checks and flies to its par, the split baseline is each booking's own par, and terms stay each booking's own", () => {
+  const T = R.termsSet(["ceres-shift", "phobos-commute"], t0, END, SEED), p = T.par, P = p.pooled;
+  assert.deepStrictEqual([P.car, P.plan.stops.map((s) => s.at), P.kwh, P.choices], ["sf-04", ["ceres", "ceres-port", "mars-base", "phobos", "mars-base"], 99781, []]);
+  assert.deepStrictEqual(R.check("ceres-shift", P.car, P.plan, t0, SEED), []);
+  assert.strictEqual(R.fly("ceres-shift", P.car, P.plan, t0, SEED).used_kwh, P.kwh);
+  const solo = ["ceres-shift", "phobos-commute"].map((id) => R.terms(id, t0, END, SEED));
+  assert.deepStrictEqual(solo.map((s) => [s.par.car, s.par.kwh]), [["sf-04", 77727], ["sf-03", 22054]]);
+  assert.deepStrictEqual([p.split.kwh, p.kwh, p.pool_wins], [99781, 99781, false]); // SF-04 flying both trips back to back saves nothing
+  assert.deepStrictEqual(T.bookings, {
+    "ceres-shift": { t0, arrive_by_jd: solo[0].arrive_by_jd, best_wait_days: solo[0].par.best_wait_days },
+    "phobos-commute": { t0, arrive_by_jd: solo[1].arrive_by_jd, best_wait_days: solo[1].par.best_wait_days } });
+  assert.deepStrictEqual([T.bookings["ceres-shift"].arrive_by_jd, T.bookings["phobos-commute"].arrive_by_jd], [2463209.5, 2461703.5]);
+});
 console.log(n, "passed");

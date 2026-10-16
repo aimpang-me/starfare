@@ -29,6 +29,13 @@ Per booking, the parts that are about a passenger: fast pickup, on time, kept pr
 ## Par for a set of bookings
 Par becomes a small pickup-and-delivery search. For every nearby ship with enough seats, try every stop order that boards each booking before it alights (2 bookings give 6 orders, 3 give 90), plan each leg for least energy, fly it through the season's hazards and keep the least energy. The oracle stays as it is, per ordering. This bounds a task's size: 3 bookings at most until timing says otherwise. Par also gains a "split" baseline: each booking flown by its own ship. Pooling has to beat that to be worth anything, which is the decision the benchmark measures.
 
+Built as `parSet(ids, t0, endJd, seed)` and `termsSet` in `sol-rides.js` (`test-shared.js` pins them). Choices made there, open until Alvin says otherwise:
+- The first booking in a set is the lead. It keys every ship's busy time, as the hail a dispatcher passes to `check` does.
+- Pooled par plans each leg once the ship has really landed at the stop before it. It doesn't wait on the ground the way a quick hail's par does (0 to 12 h per leg), because that would multiply the search by 4 per leg.
+- The split baseline sums each booking's own par even when two bookings want the same ship. That makes it a floor the pool has to beat.
+- Each booking keeps the terms it would have alone: ready at the set's `t0`, its own arrive-by and its own best wait. Pooling never loosens a deadline, and a detour costs on-time points.
+- One `t0` for the whole set.
+
 ## Benchmark impact
 `Instance.hail_id` becomes `hails: [ids]`, and a suite task is a set of bookings. That is what lifts the saturation in BENCHMARK-GAPS gap 2. A suite can still hold one-booking tasks, so today's five hails stay as the easy class.
 

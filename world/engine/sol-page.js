@@ -1671,8 +1671,79 @@ function par(id, t0, endJd, seed){
 }
 // What the dispatcher is told when it takes the hail: when the rider is ready and when they must arrive.
 function terms(id, t0, endJd, seed){
-  var p = par(id, t0, endJd, seed), span = p.planned_arr_jd - t0;
-  return { hail: id, t0: t0, arrive_by_jd: Math.min(endJd, t0 + Math.ceil(span * 1.5 + 1)), par: p };
+  var p = par(id, t0, endJd, seed);
+  return { hail: id, t0: t0, arrive_by_jd: arriveBy(p, t0, endJd), par: p };
+}
+function arriveBy(p, t0, endJd){ return Math.min(endJd, t0 + Math.ceil((p.planned_arr_jd - t0) * 1.5 + 1)); }
+
+/* ---------- par for a set of bookings (docs/SHARED-FLIGHTS.md, build-order item 2) ----------
+   Most bookings in one set: a placeholder until Alvin sets it (open number 3); 3 bookings give 90 stop orders. */
+var MAX_BOOKINGS = 3;
+// Every order of stops that boards each booking before it lands it; events at the same place in a row are one stop.
+function stopOrders(ids){
+  var out = [], seen = {};
+  (function walk(seq, aboard, done){
+    if (done.length === ids.length){
+      var stops = [];
+      seq.forEach(function(e){ var at = e.board ? BY[e.id].from : BY[e.id].to, s = stops[stops.length - 1];
+        if (!s || s.at !== at) stops.push(s = { at: at, board: [], alight: [] });
+        s[e.board ? "board" : "alight"].push(e.id); });
+      var key = JSON.stringify(stops.map(function(s){ return [s.at, s.board.slice().sort(), s.alight.slice().sort()]; }));
+      if (!seen[key]){ seen[key] = 1; out.push(stops); }
+      return;
+    }
+    ids.forEach(function(id){
+      if (aboard.indexOf(id) < 0 && done.indexOf(id) < 0) walk(seq.concat([{ id: id, board: true }]), aboard.concat([id]), done);
+      else if (aboard.indexOf(id) >= 0) walk(seq.concat([{ id: id, board: false }]), aboard.filter(function(x){ return x !== id; }), done.concat([id]));
+    });
+  })([], [], []);
+  return out;
+}
+// Par for a set: the best pooled flight and the split baseline, each booking on its own ship.
+// Pooled: for every ship near any booking with enough seats and every stop order, each leg planned for least energy
+// once the car has really landed at the stop before it (and DWELL after a boarding), flown through the season's
+// hazards, with hindsight (oracle) as in par. No ground waits, unlike a quick hail's par.
+// Split: the sum of each booking's own par, even when two of them want the same ship, so it is a floor the pool has to beat.
+// The first id is the lead booking: it keys every ship's busy time, as the id a dispatcher passes to check does.
+function parSet(ids, t0, endJd, seed){
+  if (!Array.isArray(ids) || !ids.length || ids.length > MAX_BOOKINGS) throw new Error("a set is 1 to " + MAX_BOOKINGS + " bookings");
+  ids.forEach(function(id, i){ if (!BY[id]) throw new Error("unknown hail " + id); if (ids.indexOf(id) !== i) throw new Error(id + " is in the set twice"); });
+  var lead = ids[0], H = hazards(seed), orders = stopOrders(ids), best = null, cars = [];
+  ids.forEach(function(id){ nearCars(BY[id]).forEach(function(c){ if (cars.indexOf(c) < 0) cars.push(c); }); });
+  cars.forEach(function(c){
+    var st = H.pickupStart(lead, c.id, t0);
+    orders.forEach(function(order){
+      var stops = [{ at: c.at }].concat(order), plan = { stops: stops, legs: [] }, M = manifest({ stops: stops, legs: [] }), F = null;
+      if (Math.max.apply(null, M.party) > c.seats) return;
+      try {
+        for (var i = 0, after = st; i < order.length; i++){
+          var b = planned(stops[i].at, stops[i + 1].at, after, "energy", endJd);
+          plan.legs.push(slim(b, stops[i].at, stops[i + 1].at));
+          F = fly(lead, c.id, { stops: stops.slice(0, i + 2), legs: plan.legs }, t0, seed);
+          after = Math.max(b.arr_jd, F.arrive_jd) + (stops[i + 1].board.length ? DWELL : 0);
+        }
+      } catch (e) { return; }
+      var row = function(o, path){ return { car: c.id, kwh: o.used_kwh, planned_kwh: o.planned_kwh, arr_jd: o.arrive_jd, plan: plan, choices: path,
+        arrivals: ids.reduce(function(a, id){ a[id] = (o.bookings || {})[id] ? o.bookings[id].arrive_jd : o.arrive_jd; return a; }, {}) }; };
+      if (!best || F.used_kwh < best.kwh - 1e-9) best = row(F, []);
+      // Holds and corrections only add energy, so a local plan planned above the best can't win; a replan or divert might.
+      if (plan.legs.some(function(L){ return system(L.from) !== system(L.to); }) || F.planned_kwh < best.kwh - 1e-9){
+        var O = oracle(lead, c.id, plan, t0, seed, endJd);
+        if (O.used_kwh < best.kwh - 1e-9) best = row(O.outcome, O.path);
+      }
+    });
+  });
+  var solo = {}; ids.forEach(function(id){ solo[id] = par(id, t0, endJd, seed); });
+  var split = { kwh: ids.reduce(function(a, id){ return a + solo[id].kwh; }, 0), bookings: solo };
+  return { hails: ids, kwh: best ? Math.min(best.kwh, split.kwh) : split.kwh, pool_wins: !!best && best.kwh < split.kwh - 1e-9, pooled: best, split: split };
+}
+// Terms for a set: each booking keeps the terms it would have alone (ready at t0, its own arrive-by and best wait),
+// so pooling never loosens a deadline; a detour shows up in the on-time part (open number 6: no detour limit).
+// The rows are score's ctx.bookings; par_kwh for a pooled flight is par.pooled.kwh.
+function termsSet(ids, t0, endJd, seed){
+  var p = parSet(ids, t0, endJd, seed), bookings = {};
+  ids.forEach(function(id){ var s = p.split.bookings[id]; bookings[id] = { t0: t0, arrive_by_jd: arriveBy(s, t0, endJd), best_wait_days: s.best_wait_days }; });
+  return { hails: ids, t0: t0, bookings: bookings, par: p };
 }
 // A dispatch is a car plus a flight plan: today's two legs [pickup, ride], or { stops, legs } for a shared flight.
 // id is the booking the dispatcher took (it keys the car's busy time) and must be on the plan.
@@ -1771,6 +1842,7 @@ function score(id, legs, ctx){
 }
 return { DWELL: DWELL, WINDOW: WINDOW, LEAD: LEAD, FLEET: FLEET, CAR: CAR, HAILS: HAILS, BY: BY, system: system, nearCars: nearCars,
   planLeg: planLeg, par: par, terms: terms, check: check, score: score, planOf: planOf, manifest: manifest, iso: iso,
+  MAX_BOOKINGS: MAX_BOOKINGS, stopOrders: stopOrders, parSet: parSet, termsSet: termsSet,
   HOLD_KWH: HOLD_KWH, BERTHS: BERTHS, hazards: hazards, siphash24: siphash24, fly: fly, pickupStart: pickupStart, fleetState: fleetState,
   padForecast: padForecast, flareForecast: flareForecast, weatherForecast: weatherForecast,
   start: start, step: step, regret: regret, oracle: oracle, hindsight: hindsight, ORACLE_DEPTH: ORACLE_DEPTH, EVENTS: EVENTS, MAX_CHECKPOINTS: MAX_CHECKPOINTS };
