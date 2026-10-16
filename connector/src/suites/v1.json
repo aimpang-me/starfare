@@ -1,0 +1,178 @@
+{
+  "format": "starfare.suite/1",
+  "id": "v1",
+  "engine_sha256": "2e77512f1a34c7d24576de8eca59abd23d778ebae6fbc82fa52e272b5e9930e9",
+  "score_version": 1,
+  "budget": 60,
+  "world": "per_task",
+  "margin": 5,
+  "splits": {
+    "dev": [
+      {
+        "id": "titan-home/3391",
+        "hail_id": "titan-home",
+        "clock_jd": 2464720.5,
+        "stratum": "long/clear",
+        "anchor": true
+      },
+      {
+        "id": "titan-home+phobos-commute/2793",
+        "hails": [
+          "titan-home",
+          "phobos-commute"
+        ],
+        "clock_jd": 2464122.5,
+        "stratum": "long/clear"
+      },
+      {
+        "id": "iss-crew+titan-home/1035",
+        "hails": [
+          "iss-crew",
+          "titan-home"
+        ],
+        "clock_jd": 2462364.5,
+        "stratum": "quick/clear"
+      },
+      {
+        "id": "ceres-shift+jovian-hop/0636",
+        "hails": [
+          "ceres-shift",
+          "jovian-hop"
+        ],
+        "clock_jd": 2461965.5,
+        "stratum": "long/hazard"
+      },
+      {
+        "id": "ceres-shift/0884",
+        "hail_id": "ceres-shift",
+        "clock_jd": 2462213.5,
+        "stratum": "long/clear"
+      },
+      {
+        "id": "ceres-shift/2335",
+        "hail_id": "ceres-shift",
+        "clock_jd": 2463664.5,
+        "stratum": "long/clear",
+        "anchor": true
+      },
+      {
+        "id": "iss-crew/2370",
+        "hail_id": "iss-crew",
+        "clock_jd": 2463699.5,
+        "stratum": "quick/hazard"
+      },
+      {
+        "id": "iss-crew+jovian-hop/0176",
+        "hails": [
+          "iss-crew",
+          "jovian-hop"
+        ],
+        "clock_jd": 2461505.5,
+        "stratum": "quick/hazard"
+      },
+      {
+        "id": "iss-crew+phobos-commute/0784",
+        "hails": [
+          "iss-crew",
+          "phobos-commute"
+        ],
+        "clock_jd": 2462113.5,
+        "stratum": "quick/hazard"
+      },
+      {
+        "id": "ceres-shift+iss-crew/4237",
+        "hails": [
+          "ceres-shift",
+          "iss-crew"
+        ],
+        "clock_jd": 2465566.5,
+        "stratum": "long/hazard"
+      },
+      {
+        "id": "phobos-commute+jovian-hop/5865",
+        "hails": [
+          "phobos-commute",
+          "jovian-hop"
+        ],
+        "clock_jd": 2467194.5,
+        "stratum": "quick/clear"
+      },
+      {
+        "id": "phobos-commute+titan-home/4638",
+        "hails": [
+          "phobos-commute",
+          "titan-home"
+        ],
+        "clock_jd": 2465967.5,
+        "stratum": "quick/clear"
+      },
+      {
+        "id": "titan-home+jovian-hop/4698",
+        "hails": [
+          "titan-home",
+          "jovian-hop"
+        ],
+        "clock_jd": 2466027.5,
+        "stratum": "long/clear"
+      },
+      {
+        "id": "iss-crew+titan-home/4616",
+        "hails": [
+          "iss-crew",
+          "titan-home"
+        ],
+        "clock_jd": 2465945.5,
+        "stratum": "quick/hazard"
+      },
+      {
+        "id": "ceres-shift/2358",
+        "hail_id": "ceres-shift",
+        "clock_jd": 2463687.5,
+        "stratum": "long/hazard"
+      },
+      {
+        "id": "ceres-shift+iss-crew/4510",
+        "hails": [
+          "ceres-shift",
+          "iss-crew"
+        ],
+        "clock_jd": 2465839.5,
+        "stratum": "long/hazard"
+      },
+      {
+        "id": "titan-home+jovian-hop/2888",
+        "hails": [
+          "titan-home",
+          "jovian-hop"
+        ],
+        "clock_jd": 2464217.5,
+        "stratum": "long/hazard"
+      },
+      {
+        "id": "titan-home/3452",
+        "hail_id": "titan-home",
+        "clock_jd": 2464781.5,
+        "stratum": "long/clear",
+        "anchor": true
+      },
+      {
+        "id": "ceres-shift+titan-home/4573",
+        "hails": [
+          "ceres-shift",
+          "titan-home"
+        ],
+        "clock_jd": 2465902.5,
+        "stratum": "long/clear"
+      },
+      {
+        "id": "jovian-hop+iss-crew/4995",
+        "hails": [
+          "jovian-hop",
+          "iss-crew"
+        ],
+        "clock_jd": 2466324.5,
+        "stratum": "quick/hazard"
+      }
+    ]
+  }
+}

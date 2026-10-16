@@ -1,0 +1,3848 @@
+{
+  "format": "starfare.selection/1",
+  "suite": "v1",
+  "split": "dev",
+  "simulated": true,
+  "rule": {
+    "headroom": "reference total - naive total",
+    "margin": 5,
+    "per_stratum": 5,
+    "anchors": 3,
+    "anchor_rule": "naive >= 95 and headroom <= 0",
+    "strata": "quick|long by the lead hail x clear|hazard by whether naive's ride met an incident"
+  },
+  "counts": {
+    "quick/clear": {
+      "candidates": 20,
+      "selected": 3
+    },
+    "quick/hazard": {
+      "candidates": 29,
+      "selected": 5
+    },
+    "long/clear": {
+      "candidates": 18,
+      "selected": 4
+    },
+    "long/hazard": {
+      "candidates": 13,
+      "selected": 5
+    }
+  },
+  "unselected_sample": [
+    "phobos-commute/3138",
+    "iss-crew/4289",
+    "iss-crew/3706",
+    "iss-crew/5927",
+    "phobos-commute/3113",
+    "iss-crew/1649",
+    "titan-home/4530",
+    "jovian-hop/5196",
+    "jovian-hop/1986",
+    "iss-crew/0620"
+  ],
+  "candidates": [
+    {
+      "task_id": "titan-home/2257",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 61,
+        "parts": {
+          "pickup": 0.5,
+          "on_time": 20,
+          "energy": 3,
+          "promise": 12.6,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 4
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew+jovian-hop/2775",
+      "naive": {
+        "total": 73,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 19.1,
+          "promise": 13.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 43,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 2.8,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 3
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 7,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "phobos-commute/0909",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 36,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 0.3,
+          "promise": 10.3,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-03",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew/4289",
+      "naive": {
+        "total": 93,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.4,
+          "promise": 8.9,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 2
+      },
+      "random": {
+        "total": 31,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 0.6,
+          "promise": 5.1,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.5,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": [
+          "divert to Tiangong, wait 0 h",
+          "hold until open",
+          "divert to Moon, wait 0 h"
+        ]
+      },
+      "headroom": 7,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home/3391",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 55,
+        "parts": {
+          "pickup": 0,
+          "on_time": 11.8,
+          "energy": 3.2,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/clear",
+      "reason": "anchor: naive scores 100",
+      "anchor": true,
+      "selected": true
+    },
+    {
+      "task_id": "titan-home/0504",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 46,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 5.8,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home+phobos-commute/2793",
+      "naive": {
+        "total": 69,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 14.5,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 44,
+        "parts": {
+          "pickup": 0,
+          "on_time": 10,
+          "energy": 1.7,
+          "promise": 7,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 3
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 11,
+      "stratum": "long/clear",
+      "selected": true,
+      "reason": "headroom 11 > margin 5"
+    },
+    {
+      "task_id": "jovian-hop/6400",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 75,
+        "parts": {
+          "pickup": 6.5,
+          "on_time": 20,
+          "energy": 8.4,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "jovian-hop/1986",
+      "naive": {
+        "total": 95,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 9.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 75,
+        "parts": {
+          "pickup": 6.5,
+          "on_time": 20,
+          "energy": 8.4,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 5,
+      "stratum": "quick/hazard",
+      "reason": "headroom 5 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew+ceres-shift/1431",
+      "naive": {
+        "total": 39,
+        "parts": {
+          "pickup": 0,
+          "on_time": 2.1,
+          "energy": 9.4,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 40,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 8.8,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 4
+        },
+        "incidents": 2
+      },
+      "reference": {
+        "total": 71,
+        "parts": {
+          "pickup": 10,
+          "on_time": 12.1,
+          "energy": 8.5,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 32,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew+titan-home/1035",
+      "naive": {
+        "total": 52,
+        "parts": {
+          "pickup": 10,
+          "on_time": 0,
+          "energy": 6.5,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 42,
+        "parts": {
+          "pickup": 0.1,
+          "on_time": 10,
+          "energy": 2.8,
+          "promise": 4.4,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 3
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 19.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 28,
+      "stratum": "quick/clear",
+      "selected": true,
+      "reason": "headroom 28 > margin 5"
+    },
+    {
+      "task_id": "iss-crew/3706",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "phobos-commute/3113",
+      "naive": {
+        "total": 92,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 92,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-03",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 8,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "jovian-hop/6419",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 42,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 1.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home/3350",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "ceres-shift+jovian-hop/0636",
+      "naive": {
+        "total": 66,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 18.3,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 68,
+        "parts": {
+          "pickup": 3.3,
+          "on_time": 10,
+          "energy": 15,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 78,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 18.3,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-04",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 12,
+      "stratum": "long/hazard",
+      "selected": true,
+      "reason": "headroom 12 > margin 5"
+    },
+    {
+      "task_id": "ceres-shift/3136",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 44,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 3.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-04",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home/0717",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 61,
+        "parts": {
+          "pickup": 0,
+          "on_time": 17,
+          "energy": 3.8,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "ceres-shift/0884",
+      "naive": {
+        "total": 70,
+        "parts": {
+          "pickup": 0,
+          "on_time": 20,
+          "energy": 9.6,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 63,
+        "parts": {
+          "pickup": 0,
+          "on_time": 19.5,
+          "energy": 3.6,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 95,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 5,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-04",
+        "plan": "energy/time",
+        "choices": [
+          "hold until open",
+          "replan, leaving 2029-08-15 04:12",
+          "hold until open"
+        ]
+      },
+      "headroom": 25,
+      "stratum": "long/clear",
+      "selected": true,
+      "reason": "headroom 25 > margin 5"
+    },
+    {
+      "task_id": "jovian-hop/5387",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 41,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 0.8,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "ceres-shift/2335",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 47,
+        "parts": {
+          "pickup": 0,
+          "on_time": 5.2,
+          "energy": 1.7,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-04",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/clear",
+      "reason": "anchor: naive scores 100",
+      "anchor": true,
+      "selected": true
+    },
+    {
+      "task_id": "iss-crew/0877",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 61,
+        "parts": {
+          "pickup": 0.1,
+          "on_time": 15.5,
+          "energy": 5.1,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home/4792",
+      "naive": {
+        "total": 99,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.6,
+          "promise": 14.7,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 2
+      },
+      "random": {
+        "total": 50,
+        "parts": {
+          "pickup": 0.9,
+          "on_time": 20,
+          "energy": 0.7,
+          "promise": 3.6,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 2
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.6,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 1,
+      "stratum": "long/hazard",
+      "reason": "headroom 1 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "ceres-shift/1629",
+      "naive": {
+        "total": 95,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 14.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 43,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0.9,
+          "energy": 2.5,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 95,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 14.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-04",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/hazard",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew/2370",
+      "naive": {
+        "total": 82,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.2,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 82,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.2,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 97,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.2,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 15,
+      "stratum": "quick/hazard",
+      "selected": true,
+      "reason": "headroom 15 > margin 5"
+    },
+    {
+      "task_id": "iss-crew/0545",
+      "naive": {
+        "total": 83,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.7,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 3
+      },
+      "random": {
+        "total": 83,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.7,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 3
+      },
+      "reference": {
+        "total": 99,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 18.6,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": [
+          "hold until open",
+          "divert to Moon, wait 0 h",
+          "divert to Moon, wait 0 h"
+        ]
+      },
+      "headroom": 16,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew+jovian-hop/0176",
+      "naive": {
+        "total": 49,
+        "parts": {
+          "pickup": 0.1,
+          "on_time": 8,
+          "energy": 13.1,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 39,
+        "parts": {
+          "pickup": 3.3,
+          "on_time": 0,
+          "energy": 4.4,
+          "promise": 10,
+          "checker": 10,
+          "fare": 10,
+          "economy": 1
+        },
+        "incidents": 2
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 31,
+      "stratum": "quick/hazard",
+      "selected": true,
+      "reason": "headroom 31 > margin 5"
+    },
+    {
+      "task_id": "iss-crew/0527",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 41,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 1,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew+jovian-hop/4111",
+      "naive": {
+        "total": 67,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 14.6,
+          "promise": 11.9,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 38,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 5.3,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 2
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 13,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew/0584",
+      "naive": {
+        "total": 85,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 3
+      },
+      "random": {
+        "total": 52,
+        "parts": {
+          "pickup": 0.1,
+          "on_time": 14.4,
+          "energy": 5,
+          "promise": 7.6,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 15,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "jovian-hop/6071",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "phobos-commute/0978",
+      "naive": {
+        "total": 82,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.4,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 2
+      },
+      "random": {
+        "total": 40,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 0.3,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 97,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.4,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-03",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 15,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew+phobos-commute/0784",
+      "naive": {
+        "total": 68,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 35,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 2.3,
+          "promise": 7.2,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 3
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 12,
+      "stratum": "quick/hazard",
+      "selected": true,
+      "reason": "headroom 12 > margin 5"
+    },
+    {
+      "task_id": "titan-home/6491",
+      "naive": {
+        "total": 94,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 16.7,
+          "promise": 12,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 3
+      },
+      "random": {
+        "total": 0,
+        "parts": null,
+        "incidents": null
+      },
+      "reference": {
+        "total": 97,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 16.7,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 3,
+      "stratum": "long/hazard",
+      "reason": "headroom 3 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "jovian-hop/3114",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 42,
+        "parts": {
+          "pickup": 0.1,
+          "on_time": 0,
+          "energy": 1.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew/6264",
+      "naive": {
+        "total": 85,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 18.6,
+          "promise": 1.4,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 2
+      },
+      "random": {
+        "total": 27,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 1.9,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 99,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 18.6,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 14,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew/5927",
+      "naive": {
+        "total": 98,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.9,
+          "promise": 13.6,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 26,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 1.4,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 2
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 2,
+      "stratum": "quick/hazard",
+      "reason": "headroom 2 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew/2042",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 39,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 0.6,
+          "promise": 13.7,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "jovian-hop/6021",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 77,
+        "parts": {
+          "pickup": 8.2,
+          "on_time": 20,
+          "energy": 8.4,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "ceres-shift+iss-crew/4237",
+      "naive": {
+        "total": 74,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 14,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 2
+      },
+      "random": {
+        "total": 49,
+        "parts": {
+          "pickup": 0.1,
+          "on_time": 17,
+          "energy": 4.2,
+          "promise": 2.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 5
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-04",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 6,
+      "stratum": "long/hazard",
+      "selected": true,
+      "reason": "headroom 6 > margin 5"
+    },
+    {
+      "task_id": "jovian-hop/0711",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 43,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 3.4,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "phobos-commute/1795",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 40,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 0.3,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-03",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "phobos-commute/1523",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-03",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew+jovian-hop/1347",
+      "naive": {
+        "total": 64,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 13.1,
+          "promise": 11,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 35,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 3.2,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 4
+        },
+        "incidents": 3
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 19.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 16,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew/1984",
+      "naive": {
+        "total": 82,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.3,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 41,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 1.4,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 98,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.6,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": [
+          "divert to Tiangong, wait 0 h",
+          "divert to Tiangong, wait 0 h",
+          "divert to Tiangong, wait 0 h"
+        ]
+      },
+      "headroom": 16,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "phobos-commute+jovian-hop/5865",
+      "naive": {
+        "total": 0,
+        "parts": null,
+        "incidents": null
+      },
+      "random": {
+        "total": 0,
+        "parts": null,
+        "incidents": null
+      },
+      "reference": {
+        "total": 78,
+        "parts": {
+          "pickup": 7.6,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 78,
+      "stratum": "quick/clear",
+      "selected": true,
+      "reason": "headroom 78 > margin 5"
+    },
+    {
+      "task_id": "phobos-commute+titan-home/4638",
+      "naive": {
+        "total": 0,
+        "parts": null,
+        "incidents": null
+      },
+      "random": {
+        "total": 0,
+        "parts": null,
+        "incidents": null
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 80,
+      "stratum": "quick/clear",
+      "selected": true,
+      "reason": "headroom 80 > margin 5"
+    },
+    {
+      "task_id": "jovian-hop/3996",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 42,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 2.2,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home+jovian-hop/4698",
+      "naive": {
+        "total": 0,
+        "parts": null,
+        "incidents": null
+      },
+      "random": {
+        "total": 48,
+        "parts": {
+          "pickup": 1.9,
+          "on_time": 10,
+          "energy": 3.9,
+          "promise": 12.7,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 3
+      },
+      "reference": {
+        "total": 65,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 4.8,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "time",
+        "choices": []
+      },
+      "headroom": 65,
+      "stratum": "long/clear",
+      "selected": true,
+      "reason": "headroom 65 > margin 5"
+    },
+    {
+      "task_id": "ceres-shift/3463",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 53,
+        "parts": {
+          "pickup": 0.1,
+          "on_time": 10.7,
+          "energy": 2.8,
+          "promise": 14.6,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-04",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew+titan-home/4616",
+      "naive": {
+        "total": 65,
+        "parts": {
+          "pickup": 10.2,
+          "on_time": 20,
+          "energy": 0.1,
+          "promise": 14.3,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 3
+      },
+      "random": {
+        "total": 40,
+        "parts": {
+          "pickup": 0.2,
+          "on_time": 10,
+          "energy": 0.2,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 2
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 19.8,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 15,
+      "stratum": "quick/hazard",
+      "selected": true,
+      "reason": "headroom 15 > margin 5"
+    },
+    {
+      "task_id": "iss-crew/0679",
+      "naive": {
+        "total": 81,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 16.4,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 3
+      },
+      "random": {
+        "total": 39,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 0.9,
+          "promise": 12.6,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 97,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.2,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": [
+          "hold until open",
+          "divert to Moon, wait 0 h",
+          "divert to Moon, wait 0 h"
+        ]
+      },
+      "headroom": 16,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "jovian-hop/3707",
+      "naive": {
+        "total": 98,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.9,
+          "promise": 13.3,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 42,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 1.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 2,
+      "stratum": "quick/hazard",
+      "reason": "headroom 2 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew+titan-home/1373",
+      "naive": {
+        "total": 64,
+        "parts": {
+          "pickup": 10,
+          "on_time": 12.2,
+          "energy": 6.9,
+          "promise": 14.4,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 50,
+        "parts": {
+          "pickup": 0,
+          "on_time": 8,
+          "energy": 1.7,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 16,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home+jovian-hop/2880",
+      "naive": {
+        "total": 57,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 9.6,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 2
+      },
+      "random": {
+        "total": 46,
+        "parts": {
+          "pickup": 0.3,
+          "on_time": 10,
+          "energy": 3.1,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 2
+      },
+      "reference": {
+        "total": 71,
+        "parts": {
+          "pickup": 9.8,
+          "on_time": 10,
+          "energy": 12.6,
+          "promise": 15,
+          "checker": 8.3,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "time",
+        "choices": [
+          "divert to Titan Dock, wait 0 h",
+          "replan, leaving 2035-02-09 21:51"
+        ]
+      },
+      "headroom": 14,
+      "stratum": "long/hazard",
+      "reason": "stratum long/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew/0783",
+      "naive": {
+        "total": 93,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.3,
+          "promise": 8.4,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 93,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.3,
+          "promise": 8.4,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 99,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.3,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 6,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "ceres-shift/2358",
+      "naive": {
+        "total": 92,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.3,
+          "promise": 7.8,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 3
+      },
+      "random": {
+        "total": 92,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.3,
+          "promise": 7.8,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 3
+      },
+      "reference": {
+        "total": 99,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.3,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-04",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 7,
+      "stratum": "long/hazard",
+      "selected": true,
+      "reason": "headroom 7 > margin 5"
+    },
+    {
+      "task_id": "ceres-shift+iss-crew/4510",
+      "naive": {
+        "total": 64,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 18,
+          "promise": 6,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 3
+      },
+      "random": {
+        "total": 53,
+        "parts": {
+          "pickup": 0,
+          "on_time": 10,
+          "energy": 3.2,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 81,
+        "parts": {
+          "pickup": 10,
+          "on_time": 20,
+          "energy": 11.3,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 17,
+      "stratum": "long/hazard",
+      "selected": true,
+      "reason": "headroom 17 > margin 5"
+    },
+    {
+      "task_id": "titan-home/4530",
+      "naive": {
+        "total": 98,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19,
+          "promise": 14.3,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 2
+      },
+      "random": {
+        "total": 90,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 10.3,
+          "promise": 14.7,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 2
+      },
+      "reference": {
+        "total": 99,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 1,
+      "stratum": "long/hazard",
+      "reason": "headroom 1 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew/5728",
+      "naive": {
+        "total": 97,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.7,
+          "promise": 11.9,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 26,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 0.6,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.7,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 3,
+      "stratum": "quick/hazard",
+      "reason": "headroom 3 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home+ceres-shift/2739",
+      "naive": {
+        "total": 75,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 52,
+        "parts": {
+          "pickup": 0.4,
+          "on_time": 8.4,
+          "energy": 4.8,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 3
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 5,
+      "stratum": "long/clear",
+      "reason": "headroom 5 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home+jovian-hop/2888",
+      "naive": {
+        "total": 63,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 9.2,
+          "promise": 14,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 2
+      },
+      "random": {
+        "total": 53,
+        "parts": {
+          "pickup": 10,
+          "on_time": 4,
+          "energy": 0,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 4
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 76,
+        "parts": {
+          "pickup": 10,
+          "on_time": 20,
+          "energy": 5.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "time",
+        "choices": []
+      },
+      "headroom": 13,
+      "stratum": "long/hazard",
+      "selected": true,
+      "reason": "headroom 13 > margin 5"
+    },
+    {
+      "task_id": "titan-home/3452",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 51,
+        "parts": {
+          "pickup": 0,
+          "on_time": 10.9,
+          "energy": 0,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/clear",
+      "reason": "anchor: naive scores 100",
+      "anchor": true,
+      "selected": true
+    },
+    {
+      "task_id": "jovian-hop/2970",
+      "naive": {
+        "total": 96,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.8,
+          "promise": 11.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 26,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 0.9,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.8,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 4,
+      "stratum": "quick/hazard",
+      "reason": "headroom 4 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home/0490",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 43,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 3.2,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home/2436",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 61,
+        "parts": {
+          "pickup": 0,
+          "on_time": 18.9,
+          "energy": 2.1,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "ceres-shift+titan-home/4573",
+      "naive": {
+        "total": 0,
+        "parts": null,
+        "incidents": null
+      },
+      "random": {
+        "total": 0,
+        "parts": null,
+        "incidents": null
+      },
+      "reference": {
+        "total": 90,
+        "parts": {
+          "pickup": 10,
+          "on_time": 19.9,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 90,
+      "stratum": "long/clear",
+      "selected": true,
+      "reason": "headroom 90 > margin 5"
+    },
+    {
+      "task_id": "phobos-commute/3138",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 40,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 0.3,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-03",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew+titan-home/2798",
+      "naive": {
+        "total": 56,
+        "parts": {
+          "pickup": 10.2,
+          "on_time": 13.2,
+          "energy": 5,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 2
+      },
+      "random": {
+        "total": 48,
+        "parts": {
+          "pickup": 0.2,
+          "on_time": 8.7,
+          "energy": 1.5,
+          "promise": 12.9,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 19.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 24,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home+phobos-commute/2453",
+      "naive": {
+        "total": 66,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 18.4,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 32,
+        "parts": {
+          "pickup": 0,
+          "on_time": 1.9,
+          "energy": 0.1,
+          "promise": 7.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 3
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 14,
+      "stratum": "long/hazard",
+      "reason": "stratum long/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home/1602",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 60,
+        "parts": {
+          "pickup": 0,
+          "on_time": 16,
+          "energy": 3.6,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 2
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew/6477",
+      "naive": {
+        "total": 85,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 57,
+        "parts": {
+          "pickup": 0.1,
+          "on_time": 14.4,
+          "energy": 5.1,
+          "promise": 12.1,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 15,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "ceres-shift+phobos-commute/5293",
+      "naive": {
+        "total": 75,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 50,
+        "parts": {
+          "pickup": 10.7,
+          "on_time": 2,
+          "energy": 1.2,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 1
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-04",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 5,
+      "stratum": "long/hazard",
+      "reason": "headroom 5 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "jovian-hop+iss-crew/4995",
+      "naive": {
+        "total": 60,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 0
+        },
+        "incidents": 2
+      },
+      "random": {
+        "total": 55,
+        "parts": {
+          "pickup": 0.1,
+          "on_time": 7,
+          "energy": 7.8,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 80,
+        "parts": {
+          "pickup": 10,
+          "on_time": 10,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy",
+        "choices": []
+      },
+      "headroom": 20,
+      "stratum": "quick/hazard",
+      "selected": true,
+      "reason": "headroom 20 > margin 5"
+    },
+    {
+      "task_id": "iss-crew/2412",
+      "naive": {
+        "total": 82,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.1,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 41,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 0.7,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 97,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.1,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 15,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew/1649",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 39,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 0.6,
+          "promise": 13.5,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "quick/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home/3508",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "random": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 20,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/clear",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "jovian-hop/5196",
+      "naive": {
+        "total": 99,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.9,
+          "promise": 13.7,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 28,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 2.5,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-05",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 1,
+      "stratum": "quick/hazard",
+      "reason": "headroom 1 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home/1269",
+      "naive": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 58,
+        "parts": {
+          "pickup": 0,
+          "on_time": 15.9,
+          "energy": 2.6,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 0
+      },
+      "reference": {
+        "total": 100,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 19.9,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-07",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 0,
+      "stratum": "long/hazard",
+      "reason": "headroom 0 <= margin 5",
+      "selected": false
+    },
+    {
+      "task_id": "iss-crew/0620",
+      "naive": {
+        "total": 82,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.2,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 1
+      },
+      "random": {
+        "total": 26,
+        "parts": {
+          "pickup": 0,
+          "on_time": 0,
+          "energy": 1.3,
+          "promise": 0,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "incidents": 2
+      },
+      "reference": {
+        "total": 97,
+        "parts": {
+          "pickup": 20,
+          "on_time": 20,
+          "energy": 17.2,
+          "promise": 15,
+          "checker": 10,
+          "fare": 10,
+          "economy": 5
+        },
+        "car": "sf-01",
+        "plan": "energy/energy",
+        "choices": []
+      },
+      "headroom": 15,
+      "stratum": "quick/hazard",
+      "reason": "stratum quick/hazard already has 5",
+      "selected": false
+    }
+  ]
+}
