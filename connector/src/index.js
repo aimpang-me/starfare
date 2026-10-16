@@ -3,9 +3,12 @@
 // STARFARE_OAUTH = "on" puts /mcp behind OAuth (src/oauth.js): one-click consent, an anonymous player id per grant.
 import { boardHtml } from "./board.js";
 import { engine } from "./engine.js";
-import { listHails } from "./game.js";
+import META from "./engine/meta.json" with { type: "json" };
+import engineSrc from "./engine/sol-page.txt";
+import { fleet, listHails } from "./game.js";
 import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
+import siteHtml from "./site.html";
 import { RUN_ID, hub, runStub } from "./store.js";
 
 export { StarfareMcp } from "./mcp.js";
@@ -13,7 +16,9 @@ export { StarfareAuth } from "./oauth.js";
 export { StarfareHub, StarfareRun } from "./store.js";
 
 const isMcpPath = (p) => p === "/mcp" || p.startsWith("/mcp/");
-const isPublicPage = (p) => p === "/" || p === "/board" || p === "/board.json" || p.startsWith("/rides/");
+// The landing page runs the engine in the browser. ?v= changes with every engine build, so that URL can be cached for good.
+const ENGINE_PATH = "/engine.js", ENGINE_V = META.sha256.slice(0, 16);
+const isPublicPage = (p) => p === "/" || p === ENGINE_PATH || p === "/board" || p === "/board.json" || p.startsWith("/rides/");
 const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
 
 function tooMany(limit) {
@@ -69,8 +74,16 @@ export default {
       return new Response(boardHtml(hails, data), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
     }
     if (url.pathname.startsWith("/rides/")) return rides(req, url.pathname, env);
+    if (url.pathname === ENGINE_PATH) {
+      const cache = url.searchParams.get("v") === ENGINE_V ? "public, max-age=31536000, immutable" : "no-cache";
+      return new Response(engineSrc, { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": cache } });
+    }
     if (url.pathname === "/") {
-      return new Response(`Starfare connector. Add ${url.origin}/mcp as a custom connector at grok.com/connectors. Scores: ${url.origin}/board\n`, { headers: { "content-type": "text/plain; charset=utf-8" } });
+      const E = await engine();
+      const site = { sky: META.sky, look: META.look, hails: listHails(E), fleet: fleet(E) };
+      const html = siteHtml.replaceAll("__ORIGIN__", url.origin).replace("__ENGINE_URL__", `${ENGINE_PATH}?v=${ENGINE_V}`)
+        .replace("__SITE__", () => JSON.stringify(site).replace(/</g, "\\u003c"));
+      return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } });
     }
     return new Response("Not found", { status: 404 });
   },
