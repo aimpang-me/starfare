@@ -5,13 +5,13 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFileSync, writeFileSync } from "node:fs";
-import { SKY, isoJD, newRun, hailInfo, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, leaveRun, rideSummary, rideRecord } from "../src/game.js";
+import { SKY, isoJD, openRun, seasonInstance, hailInfo, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, leaveRun, rideSummary, rideRecord } from "../src/game.js";
 
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
 const NOW = Date.UTC(2026, 9, 16, 12, 0, 0);
 const GOLDEN = new URL("./fixtures/live-golden.json", import.meta.url);
-const take = (hail, nowMs, runId) => newRun(E, hail, nowMs, runId);
+const take = (hail, nowMs, runId) => openRun(E, seasonInstance(E, hail, nowMs), runId, nowMs);
 
 async function views() {
   const out = {};

@@ -9,8 +9,8 @@
 import { DurableObject } from "cloudflare:workers";
 import { engine } from "./engine.js";
 import {
-  GameError, checkPad, computeLeg, decide, dispatch, hailInfo, leaveRun, legKey, legPub, newRun, phaseOf, planPickup, planRideLeg, rideCursor,
-  rideCursorOf, rideRecord, rideStats, rideSummary, spaceWeather,
+  GameError, checkPad, computeLeg, decide, dispatch, hailInfo, leaveRun, legKey, legPub, openRun, phaseOf, planPickup, planRideLeg, rideCursor,
+  rideCursorOf, rideRecord, rideStats, rideSummary, seasonInstance, spaceWeather,
 } from "./game.js";
 
 export const RUN_ID = /^run_[0-9a-f]{20}$/;
@@ -65,7 +65,7 @@ export class StarfareRun extends DurableObject {
         await h.termsPut(id, t0, end, seed, slim);
         return slim;
       };
-      const run = await newRun(E, hailId, Date.now(), runId, termsFn);
+      const now = Date.now(), run = await openRun(E, seasonInstance(E, hailId, now), runId, now, termsFn);
       if (playerId) run.player_id = playerId; // STARFARE_OAUTH on only; a label, the run_id rules do not change
       await this.#save(run);
       await this.#index(E, run);

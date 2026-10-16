@@ -3,16 +3,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { SKY, SEASON_END, MAX_PLANS_PER_RUN, sky, isoJD, jdOfIso, newRun, hailInfo, legPub, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, seedOf, phaseOf, leaveRun, computeLeg, GameError,
+import { SKY, SEASON_END, MAX_PLANS_PER_RUN, sky, isoJD, jdOfIso, openRun, seasonInstance, hailInfo, legPub, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, seedOf, phaseOf, leaveRun, computeLeg, GameError,
   RIDE_FORMAT, rideSummary, rideRecord, rideStats, rideCursor, rideCursorOf } from "../src/game.js";
 
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
 const NOW = Date.UTC(2026, 9, 16, 12, 0, 0);
 const DAY_MS = 1000; // 1 real second = 1 sky day
+const seasonRun = async (E, hail, nowMs, runId) => openRun(E, seasonInstance(E, hail, nowMs), runId, nowMs);
 
 async function play(hail, car, objective = "energy", nowMs = NOW, quote = "exact", runId = "run_" + hail) {
-  const run = await newRun(E, hail, nowMs, runId);
+  const run = await seasonRun(E, hail, nowMs, runId);
   car ??= run.par_car;
   const p = (await planPickup(E, run, { car, objective })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
   const q = quote === "exact" ? { quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd) } : typeof quote === "function" ? quote(r, run, p) : quote;
@@ -47,10 +48,10 @@ test("isoJD rounds to the minute exactly like the engine; jdOfIso reads it back 
 });
 
 test("t0: quick hails 1 sky day ahead, long-haul hails LEAD days ahead; the hazard seed is the season number", async () => {
-  const q = await newRun(E, "iss-crew", NOW, "run_a");
+  const q = await seasonRun(E, "iss-crew", NOW, "run_a");
   assert.equal(q.t0, Math.floor(sky(NOW).jd + 1) + 0.5);
   assert.equal(q.seed, String(sky(NOW).season));
-  const l = await newRun(E, "ceres-shift", NOW, "run_b");
+  const l = await seasonRun(E, "ceres-shift", NOW, "run_b");
   assert.equal(l.t0, Math.floor(sky(NOW).jd + R.LEAD) + 0.5);
   const T = R.terms("ceres-shift", l.t0, SEASON_END, l.seed);
   assert.equal(l.par_kwh, T.par.kwh); assert.equal(l.arrive_by_jd, T.arrive_by_jd); assert.equal(l.best_wait_days, T.par.best_wait_days);
@@ -61,7 +62,7 @@ test("t0: quick hails 1 sky day ahead, long-haul hails LEAD days ahead; the haza
 test("get_hail: each car is free or busy_until the engine's fleetState; the rules explain the hazards and the promise", async () => {
   let busySeen = 0;
   for (const h of ["iss-crew", "phobos-commute", "jovian-hop"]) for (let k = 0; k < 5; k++) {
-    const run = await newRun(E, h, NOW + k * DAY_MS, "run_f"), info = hailInfo(E, run, NOW);
+    const run = await seasonRun(E, h, NOW + k * DAY_MS, "run_f"), info = hailInfo(E, run, NOW);
     const st = R.fleetState(h, run.t0, run.seed);
     info.fleet.forEach((c, i) => {
       assert.equal(c.car, st[i].car);
@@ -70,7 +71,7 @@ test("get_hail: each car is free or busy_until the engine's fleetState; the rule
     });
   }
   assert.ok(busySeen > 0, "no busy car in 15 hails");
-  const rules = hailInfo(E, await newRun(E, "iss-crew", NOW, "run_r"), NOW).rules;
+  const rules = hailInfo(E, await seasonRun(E, "iss-crew", NOW, "run_r"), NOW).rules;
   for (const re of [/busy_until/, /booked/, /unscheduled/, /250 kWh an hour/, /rider aboard/, /dust/, /haze/, /promise/, /check_pad/, /space_weather/, /goes cold/, /decide/, /ask_after_hours/])
     assert.match(rules, re);
   assert.doesNotMatch(rules, /honest quote 10/); // the old score text is gone
@@ -145,7 +146,7 @@ test("the quoted arrival is a promise scored against the actual arrival; a wrong
 });
 
 test("arriving late costs points on a sliding scale", async () => {
-  const run = await newRun(E, "iss-crew", NOW, "run_late");
+  const run = await seasonRun(E, "iss-crew", NOW, "run_late");
   const p = (await planPickup(E, run, { car: "sf-01" })).leg;
   const r = (await planRideLeg(E, run, { after_leg: p.leg_id, wait_days: 6 })).leg;
   const out = dispatch(E, run, { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd), ask_after_hours: "never" }, NOW);
@@ -155,7 +156,7 @@ test("arriving late costs points on a sliding scale", async () => {
 
 test("busy cars: plan_pickup leaves no earlier than R.pickupStart + wait_days and says so; dispatch refuses an earlier pickup", async () => {
   const found = await findDay(100, async (nowMs) => {
-    const run = await newRun(E, "iss-crew", nowMs, "run_busy");
+    const run = await seasonRun(E, "iss-crew", nowMs, "run_busy");
     for (const car of ["sf-01", "sf-02"]) {
       const st = R.pickupStart(run.id, car, run.t0, run.seed);
       if (st > run.t0) return { run, car, st, nowMs };
@@ -182,7 +183,7 @@ test("busy cars: plan_pickup leaves no earlier than R.pickupStart + wait_days an
 });
 
 test("check_pad shows booked (scheduled) berths only, never the hidden unscheduled traffic", async () => {
-  const run = await newRun(E, "iss-crew", NOW, "run_pad"), H = R.hazards(run.seed);
+  const run = await seasonRun(E, "iss-crew", NOW, "run_pad"), H = R.hazards(run.seed);
   let hidden = 0;
   // iss-crew's rush is at the ISS, so only the other places are compared with the raw pad counts
   for (const [place, k] of [["iss", 0], ["ISS", 1], ["Lunar Data Center", 2], ["orbital-depot", 3], ["mars-base", 4], ["Titan Dock", 5]]) {
@@ -211,7 +212,7 @@ test("check_pad shows booked (scheduled) berths only, never the hidden unschedul
 });
 
 test("space_weather shows flare odds only, never the actual storms", async () => {
-  const run = await newRun(E, "iss-crew", NOW, "run_sw"), H = R.hazards(run.seed);
+  const run = await seasonRun(E, "iss-crew", NOW, "run_sw"), H = R.hazards(run.seed);
   const out = spaceWeather(E, run, { days: 60 }, NOW);
   assert.equal(out.days.length, 60);
   const f = R.flareForecast(run.t0, 60, run.seed);
@@ -228,7 +229,7 @@ test("space_weather shows flare odds only, never the actual storms", async () =>
 });
 
 test("forecast tools validate input, are free (not plans) and are noted in the dispatch log", async () => {
-  const run = await newRun(E, "iss-crew", NOW, "run_fv");
+  const run = await seasonRun(E, "iss-crew", NOW, "run_fv");
   for (const inp of [{ place: "nowhere" }, { place: "constructor" }, { place: "__proto__" }, { place: "iss", hours: 0 }, { place: "iss", hours: 73 }, { place: "iss", hours: 1.5 },
     { place: "iss", from: "2030-02-30 00:00" }, { place: "iss", from: "tomorrow" }, { place: "iss", from: "1999-01-01 00:00" }])
     assert.throws(() => checkPad(E, run, inp, NOW), GameError, JSON.stringify(inp));
@@ -256,7 +257,7 @@ test("hazards are deterministic per season: the same season replays the same, th
   // the same sky date one season later: same t0, the next seed, different hazards
   const NEXT = NOW + SKY.len_days * 1000;
   assert.equal(sky(NEXT).jd, sky(NOW).jd); assert.equal(sky(NEXT).season, sky(NOW).season + 1);
-  const c = await newRun(E, "iss-crew", NEXT, "run_d3");
+  const c = await seasonRun(E, "iss-crew", NEXT, "run_d3");
   assert.equal(c.t0, a.run.t0); assert.equal(c.seed, String(+a.run.seed + 1));
   const sig = (run) => JSON.stringify([R.HAILS.map((h) => R.fleetState(h.id, run.t0, run.seed)), R.flareForecast(run.t0, 60, run.seed)]);
   assert.notEqual(sig(c), sig(a.run));
@@ -266,7 +267,7 @@ test("hazards are deterministic per season: the same season replays the same, th
 });
 
 test("long haul: the hail goes cold if the first interplanetary departure passes before dispatch", async () => {
-  const run = await newRun(E, "ceres-shift", NOW, "run_cold");
+  const run = await seasonRun(E, "ceres-shift", NOW, "run_cold");
   const p = (await planPickup(E, run, { car: "sf-04" })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
   assert.equal(r.gate === "local", false);
   const late = NOW + (r.dep_jd - sky(NOW).jd + 2) * 1000;
@@ -275,7 +276,7 @@ test("long haul: the hail goes cold if the first interplanetary departure passes
 });
 
 test("wrong legs are refused; validation failures are not counted; the plan cap holds", async () => {
-  const run = await newRun(E, "iss-crew", NOW, "run_v");
+  const run = await seasonRun(E, "iss-crew", NOW, "run_v");
   await assert.rejects(planPickup(E, run, { car: "nope" }), /unknown car/);
   await assert.rejects(planRideLeg(E, run, { after_leg: "leg9" }), /unknown leg_id/);
   assert.equal(run.calls, 0);
@@ -291,7 +292,7 @@ const skyAt = (jd) => SKY.t0_ms + Math.round((jd - SKY.jd0) * 1000);
 const DUST_NOW = skyAt(2462172.6), CERES_NOW = skyAt(2461497.6);
 /** A Phobos commute whose ride lands into a 93.8 h Mars Base dust storm. */
 async function dustRide(runId, extra = {}) {
-  const run = await newRun(E, "phobos-commute", DUST_NOW, runId);
+  const run = await seasonRun(E, "phobos-commute", DUST_NOW, runId);
   const start = R.pickupStart(run.id, "sf-03", run.t0, run.seed);
   const p = (await planPickup(E, run, { car: "sf-03", wait_days: 2462174.529253031 - start })).leg;
   const r = (await planRideLeg(E, run, { after_leg: p.leg_id, wait_days: 2462175.529253031 - p.arr_jd - R.DWELL })).leg;
@@ -299,7 +300,7 @@ async function dustRide(runId, extra = {}) {
 }
 /** Ceres Shift on the par car, whose ride is grounded by a solar flare at launch. */
 async function ceresRide(runId) {
-  const run = await newRun(E, "ceres-shift", CERES_NOW, runId);
+  const run = await seasonRun(E, "ceres-shift", CERES_NOW, runId);
   const p = (await planPickup(E, run, { car: "sf-04" })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
   return { run, p, r, out: dispatch(E, run, { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd) }, CERES_NOW) };
 }
@@ -346,7 +347,7 @@ test("decide is idempotent: the same answer returns where the ride stands, a dif
   await assert.rejects(decide(E, run, { checkpoint: 1, action: "hold" }), /checkpoint 1 was already decided: \{"action":"divert","place":"phobos","wait_hours":88.4\}/);
   await assert.rejects(decide(E, run, { checkpoint: 2, action: "hold" }), /checkpoint 2 has not happened; the ride arrived after 1 checkpoint$/);
   assert.equal(dispatch(E, run, {}, DUST_NOW).already_dispatched, true);
-  const planning = await newRun(E, "iss-crew", NOW, "run_plan");
+  const planning = await seasonRun(E, "iss-crew", NOW, "run_plan");
   await assert.rejects(decide(E, planning, { checkpoint: 1, action: "wait" }), /dispatch first/);
 });
 
@@ -404,7 +405,7 @@ test("runs stored before phases existed keep working", async () => {
   assert.equal(phaseOf(done), "arrived");
   assert.equal(dispatch(E, done, {}, NOW).already_dispatched, true);
   await assert.rejects(decide(E, done, { checkpoint: 1, action: "wait" }), /the ride arrived after 0 checkpoints/);
-  const old = await newRun(E, "iss-crew", NOW, "run_old");
+  const old = await seasonRun(E, "iss-crew", NOW, "run_old");
   delete old.phase;
   assert.equal(hailInfo(E, old, NOW).phase, "planning");
   assert.deepEqual(leaveRun(E, old), { ok: true, status: "abandoned", run_id: "run_old" });
@@ -441,12 +442,12 @@ test("ride history: a summary copies the score and log, and names the checkpoint
 });
 
 test("ride history: planning, abandoned (newer hail, cold) rows carry only what exists", async () => {
-  const a = await newRun(E, "iss-crew", NOW, "run_plan");
+  const a = await seasonRun(E, "iss-crew", NOW, "run_plan");
   const s = rideSummary(E, a);
   assert.deepEqual([s.phase, s.total, s.parts, s.reason], ["planning", undefined, undefined, undefined]);
   assert.equal(leaveRun(E, a).status, "abandoned");
   assert.deepEqual([rideSummary(E, a).phase, rideSummary(E, a).reason, rideRecord(E, a).reason, rideRecord(E, a).score], ["abandoned", "newer_hail", "newer_hail", null]);
-  const run = await newRun(E, "ceres-shift", NOW, "run_cold2");
+  const run = await seasonRun(E, "ceres-shift", NOW, "run_cold2");
   const p = (await planPickup(E, run, { car: "sf-04" })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
   assert.throws(() => dispatch(E, run, { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd) }, NOW + (r.dep_jd - sky(NOW).jd + 2) * 1000), /went cold/);
   assert.deepEqual([rideSummary(E, run).reason, rideSummary(E, run).plans_used], ["cold", 2]);

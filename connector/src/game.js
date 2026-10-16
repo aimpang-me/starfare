@@ -69,19 +69,56 @@ export function runFleet(E, run) {
   return fleet(E).map((c) => Object.assign(c, { busy_until: st[c.car] ? isoJD(st[c.car]) : "free" }));
 }
 
-/** Page takeHail(): t0 and the hazard seed (the season number) from the sky clock, then R.terms. termsFn lets the
- *  caller cache R.terms; its cache key must include the seed. */
-export async function newRun(E, hailId, nowMs, runId, termsFn) {
+// An Instance is the world of one attempt: { hail_id, t0, end_jd, seed, clock, tag, budget }.
+//   clock: { kind: "wall" } reads the sky clock; { kind: "frozen", jd } holds sky time at jd for the whole attempt.
+//   tag: null for a season run; a bench run's task_id, which is what it prints in place of the season.
+//   budget: null for a season run; a bench run's call budget.
+/** The hail and its t0 when taken at sky time jd: quick hails 1 sky day ahead, long hauls LEAD days ahead. */
+function takeAt(E, hailId, jd) {
   const R = E.R, h = own(R.BY, hailId);
   if (!h) fail("unknown hail_id " + hailId + ". Call list_hails for the ids.");
-  const s = sky(nowMs), seed = String(s.season);
-  const t0 = Math.floor(s.jd + (h.kind === "quick" ? 1 : R.LEAD)) + 0.5;
+  return Math.floor(jd + (h.kind === "quick" ? 1 : R.LEAD)) + 0.5;
+}
+/** Page takeHail(): t0 and the hazard seed (the season number) from the sky clock. */
+export function seasonInstance(E, hailId, nowMs) {
+  const s = sky(nowMs), t0 = takeAt(E, hailId, s.jd);
   if (t0 + 30 > SEASON_END) fail("The season ends too soon for a new hail. Wait for the reset.");
-  const T = await (termsFn ? termsFn(hailId, t0, SEASON_END, seed) : R.terms(hailId, t0, SEASON_END, seed));
+  return { hail_id: hailId, t0, end_jd: SEASON_END, seed: String(s.season), clock: { kind: "wall" }, tag: null, budget: null };
+}
+/** A bench task: sky time frozen at clockJd, where a live take would have read it, so t0 is after the clock. */
+export function suiteInstance(E, task, { seed, clockJd, tag, budget }) {
+  return { hail_id: task.hail_id, t0: takeAt(E, task.hail_id, clockJd), end_jd: SEASON_END, seed: String(seed), clock: { kind: "frozen", jd: clockJd }, tag, budget };
+}
+/** A new run in planning for an instance. termsFn lets the caller cache R.terms; its cache key must include the seed. */
+export async function openRun(E, inst, runId, nowMs, termsFn) {
+  const R = E.R, { hail_id: hailId, t0, end_jd, seed } = inst;
+  const T = await (termsFn ? termsFn(hailId, t0, end_jd, seed) : R.terms(hailId, t0, end_jd, seed));
   return {
-    run_id: runId, id: hailId, title: h.title, t0, seed, arrive_by_jd: T.arrive_by_jd, par_kwh: T.par.kwh, par_car: T.par.car,
+    run_id: runId, id: hailId, title: R.BY[hailId].title, t0, seed, arrive_by_jd: T.arrive_by_jd, par_kwh: T.par.kwh, par_car: T.par.car,
     best_wait_days: T.par.best_wait_days, calls: 0, lseq: 0, legs: {}, forecasts: [], phase: "planning", score: null, created_ms: nowMs,
+    end_jd, clock: inst.clock, tag: inst.tag, budget: inst.budget,
   };
+}
+/** Sky time for a run: the only reader of the clock. Runs stored before clocks existed read the wall. */
+export const skyNow = (run, nowMs) => (run.clock && run.clock.kind === "frozen" ? run.clock.jd : sky(nowMs).jd);
+/** The world a run names in its output: its season, or a bench run's task_id. Never the seed: bench seeds are secret. */
+export const worldOf = (run) => (run.tag == null ? { season: +seedOf(run) } : { task_id: run.tag });
+
+// The fields each view may print. Anything else on a run, its seed above all, never reaches a tool result.
+const VIEWS = Object.fromEntries(Object.entries({
+  hail: "run_id hail_id title rider note pickup_at destination rider_ready arrive_by boarding_hours season task_id fleet sky_now plans_used phase dispatched situation player_id rules",
+  arrived: "ok run_id hail_id planned_by player_id",
+  score: "status total out_of parts car pickup arrive planned_pickup planned_arrive promised_arrival arrive_by delay_hours promise_slip_hours fare_usd planned_kwh extra_kwh divert_kwh used_kwh par_kwh par_car beat_par checkpoints incidents season task_id",
+  log: "hail kind season task_id from to rider_ready arrive_by car par_car par_kwh fleet planned dispatched quote forecasts checkpoints flown happened incidents parts total",
+  summary: "run_id hail_id title kind season task_id phase taken_at rider_ready arrive_by plans_used reason open_checkpoint car par_car total out_of parts used_kwh par_kwh beat_par promised_arrival arrive promise_slip_hours delay_hours incidents checkpoints",
+  record: "format simulated note run_id player_tag hail_id season task_id phase taken_at reason open_checkpoint score log",
+}).map(([k, v]) => [k, new Set(v.split(" "))]));
+// A season run's own fields; a bench run never prints them (its season would be its seed, and no Grok bot planned it).
+const SEASON_ONLY = new Set(["season", "planned_by"]);
+/** o with only the fields view may print for this run, in o's order. */
+export function project(run, view, o) {
+  const keep = VIEWS[view], bench = run.tag != null;
+  return Object.fromEntries(Object.entries(o).filter(([k]) => keep.has(k) && !(bench && SEASON_ONLY.has(k))));
 }
 
 // A run is planning, then in_flight (stopped at a checkpoint) or arrived (scored), or abandoned (a newer hail or a cold one).
@@ -107,15 +144,15 @@ export function leaveRun(E, run) {
 }
 
 export function hailInfo(E, run, nowMs) {
-  const R = E.R, h = R.BY[run.id], { placeName } = names(E), s = sky(nowMs), phase = phaseOf(run);
-  return {
+  const R = E.R, h = R.BY[run.id], { placeName } = names(E), phase = phaseOf(run);
+  return project(run, "hail", {
     run_id: run.run_id, hail_id: run.id, title: h.title, rider: h.rider + " (simulated)", note: h.blurb,
     pickup_at: { id: h.from, name: placeName(h.from) }, destination: { id: h.to, name: placeName(h.to) },
-    rider_ready: isoJD(run.t0), arrive_by: isoJD(run.arrive_by_jd), boarding_hours: +(R.DWELL * 24).toFixed(2), season: +seedOf(run),
-    fleet: runFleet(E, run), sky_now: isoJD(s.jd), plans_used: run.calls, phase, dispatched: phase === "in_flight" || phase === "arrived",
+    rider_ready: isoJD(run.t0), arrive_by: isoJD(run.arrive_by_jd), boarding_hours: +(R.DWELL * 24).toFixed(2), ...worldOf(run),
+    fleet: runFleet(E, run), sky_now: isoJD(skyNow(run, nowMs)), plans_used: run.calls, phase, dispatched: phase === "in_flight" || phase === "arrived",
     ...(phase === "in_flight" ? { situation: situation(E, run) } : {}), ...(run.player_id ? { player_id: run.player_id } : {}),
     rules: rules(E),
-  };
+  });
 }
 const rules = (E) =>
   "Pick a car from the fleet. A car with a busy_until time is finishing another (simulated) job and can't leave before then; \"free\" cars can leave when the rider is ready. " +
@@ -241,7 +278,7 @@ export function checkPad(E, run, inp, nowMs) {
   const hours = intIn(inp.hours, 1, 72, 24, "hours"), from = forecastFrom(run, inp);
   const f = R.padForecast(p.id, from, hours, run.id, run.t0, seed);
   const wx = f.local_weather ? R.weatherForecast(p.id, from, Math.min(60, Math.ceil(hours / 24) + 1), seed) : null;
-  logForecast(run, { tool: "check_pad", place: p.id, from: isoJD(from), hours, max_booked: Math.max(...f.hours.map((x) => x.booked)), berths: f.berths, sky_now: isoJD(sky(nowMs).jd) });
+  logForecast(run, { tool: "check_pad", place: p.id, from: isoJD(from), hours, max_booked: Math.max(...f.hours.map((x) => x.booked)), berths: f.berths, sky_now: isoJD(skyNow(run, nowMs)) });
   return {
     run_id: run.run_id, place: { id: p.id, name: p.name }, berths: f.berths, from: isoJD(from),
     hours: f.hours.map((x) => ({ hour: isoJD(x.hour_jd), booked: x.booked, free: Math.max(0, f.berths - x.booked) })),
@@ -256,7 +293,7 @@ export function checkPad(E, run, inp, nowMs) {
 export function spaceWeather(E, run, inp, nowMs) {
   const R = E.R, days = intIn(inp.days, 1, 60, 10, "days"), from = forecastFrom(run, inp);
   const f = R.flareForecast(from, days, seedOf(run));
-  logForecast(run, { tool: "space_weather", from: isoJD(from), days, max_odds: Math.max(...f.map((d) => d.flare_odds)), sky_now: isoJD(sky(nowMs).jd) });
+  logForecast(run, { tool: "space_weather", from: isoJD(from), days, max_odds: Math.max(...f.map((d) => d.flare_odds)), sky_now: isoJD(skyNow(run, nowMs)) });
   return {
     run_id: run.run_id, from: isoJD(from),
     days: f.map((d) => Object.assign(dayPub(d.day_jd), { flare_odds: d.flare_odds })),
@@ -290,11 +327,11 @@ export function dispatch(E, run, inp, nowMs) {
     [p, r].forEach((L) => { if (L.gate === "FAIL") probs.push(L.leg_id + " was rejected by the checker"); });
   }
   if (probs.length) return { ok: false, problems: probs };
-  const firstFar = [p, r].filter((L) => L.gate !== "local")[0];
-  if (firstFar && sky(nowMs).jd > firstFar.dep_jd) {
+  const firstFar = [p, r].filter((L) => L.gate !== "local")[0], now = skyNow(run, nowMs);
+  if (firstFar && now > firstFar.dep_jd) {
     setPhase(run, "abandoned");
     run.abandoned_reason = "cold";
-    fail("The hail went cold: " + firstFar.leg_id + " was due to depart " + isoJD(firstFar.dep_jd) + " and sky time is now " + isoJD(sky(nowMs).jd) + ". Take the hail again.");
+    fail("The hail went cold: " + firstFar.leg_id + " was due to depart " + isoJD(firstFar.dep_jd) + " and sky time is now " + isoJD(now) + ". Take the hail again.");
   }
   run.route = [p.leg_id, r.leg_id];
   run.car = p.car;
@@ -317,7 +354,7 @@ function next(E, run, st) {
   return atCheckpoint(E, run);
 }
 const atCheckpoint = (E, run) => ({ ok: true, status: "checkpoint", run_id: run.run_id, hail_id: run.id, situation: situation(E, run) });
-const arrived = (run) => Object.assign({ ok: true, run_id: run.run_id, hail_id: run.id, planned_by: "Grok bot (connector)" }, run.player_id ? { player_id: run.player_id } : {}, run.score);
+const arrived = (run) => Object.assign(project(run, "arrived", { ok: true, run_id: run.run_id, hail_id: run.id, planned_by: "Grok bot (connector)", ...(run.player_id ? { player_id: run.player_id } : {}) }), run.score);
 
 const FREE_PLANS = 6; // R.score's planning economy: 6 plans free, then a point each
 /** The open checkpoint as a bot sees it: what stopped the car, where it stands, and what each answer costs so far. */
@@ -342,7 +379,7 @@ function situation(E, run) {
 }
 
 function land(E, run, F) {
-  const R = E.R, p = run.legs[run.route[0]], r = run.legs[run.route[1]], quote = run.quote, seed = seedOf(run);
+  const R = E.R, p = run.legs[run.route[0]], r = run.legs[run.route[1]], quote = run.quote;
   const sc = R.score(run.id, [p, r], { t0: run.t0, arrive_by_jd: run.arrive_by_jd, par_kwh: run.par_kwh, best_wait_days: run.best_wait_days, plan_calls: run.calls,
     kind: R.BY[run.id].kind, quote, flown: F });
   // The promised arrival, read the way R.score reads it (date, then a space or T, then HH:MM).
@@ -351,15 +388,15 @@ function land(E, run, F) {
   const incidents = incidentsPub(E, sc.incidents);
   setPhase(run, "arrived");
   run.pickup_jd = sc.pickup_jd; // actual, for the board's pickup wait
-  run.score = {
+  run.score = project(run, "score", {
     status: "arrived", total: sc.total, out_of: 100, parts: sc.parts, car: R.CAR[p.car].name,
     pickup: isoJD(sc.pickup_jd), arrive: isoJD(sc.arrive_jd), planned_pickup: isoJD(p.arr_jd), planned_arrive: isoJD(sc.planned_arrive_jd),
     promised_arrival: qj == null ? null : isoJD(qj), arrive_by: isoJD(run.arrive_by_jd),
     delay_hours: r1(F.delay_hours), promise_slip_hours: qj == null ? null : r1((sc.arrive_jd - qj) * 24),
     fare_usd: sc.fare_usd, planned_kwh: F.planned_kwh, extra_kwh: sc.extra_kwh, divert_kwh: F.divert_kwh, used_kwh: sc.used_kwh,
     par_kwh: run.par_kwh, par_car: R.CAR[run.par_car].name, beat_par: sc.beat_par, checkpoints: F.checkpoints.length,
-    incidents, season: +seed,
-  };
+    incidents, ...worldOf(run),
+  });
   run.score.log = runLog(E, run, p, r, quote, incidents, sc, F);
   return arrived(run);
 }
@@ -419,8 +456,8 @@ export async function decide(E, run, inp, legFn) {
 /** The run log a bot can learn from: what it was asked, what it planned and checked, what happened, how it scored. */
 function runLog(E, run, p, r, quote, incidents, sc, F) {
   const R = E.R, h = R.BY[run.id];
-  return {
-    hail: run.id, kind: kindOf(h), season: +seedOf(run), from: h.from, to: h.to, rider_ready: isoJD(run.t0), arrive_by: isoJD(run.arrive_by_jd),
+  return project(run, "log", {
+    hail: run.id, kind: kindOf(h), ...worldOf(run), from: h.from, to: h.to, rider_ready: isoJD(run.t0), arrive_by: isoJD(run.arrive_by_jd),
     car: p.car, par_car: run.par_car, par_kwh: run.par_kwh,
     fleet: R.fleetState(run.id, run.t0, seedOf(run)).filter((c) => c.busy_until_jd).map((c) => ({ car: c.car, busy_until: isoJD(c.busy_until_jd) })),
     planned: Object.values(run.legs).map((L) => ({ leg: L.leg_id, kind: L.role, ...(L.car ? { car: L.car } : {}), ...(L.after ? { after: L.after } : {}), ...(L.replan_of ? { replan_of: L.replan_of } : {}),
@@ -432,7 +469,7 @@ function runLog(E, run, p, r, quote, incidents, sc, F) {
     happened: { pickup: isoJD(sc.pickup_jd), arrive: isoJD(sc.arrive_jd), extra_kwh: sc.extra_kwh, divert_kwh: F.divert_kwh, used_kwh: sc.used_kwh },
     incidents: incidents.map((x) => ({ kind: x.kind, leg: x.leg, place: x.place, at: x.at, hours: x.hours, kwh: x.kwh })),
     parts: Object.fromEntries(sc.parts.map((x) => [x.key, x.got])), total: sc.total,
-  };
+  });
 }
 /** Each checkpoint, what was decided, and (with hindsight, simulated) what every choice there would have used. */
 function checkpointLog(E, run) {
@@ -454,13 +491,13 @@ const takenAt = (run) => new Date(run.created_ms || 0).toISOString();
 /** One row of a player's history: the ride's terms, and once it arrived, its score, incidents and each checkpoint's hindsight best. */
 export function rideSummary(E, run) {
   const phase = phaseOf(run), h = own(E.R.BY, run.id);
-  const base = { run_id: run.run_id, hail_id: run.id, title: run.title, kind: h ? kindOf(h) : null, season: +seedOf(run), phase, taken_at: takenAt(run),
+  const base = { run_id: run.run_id, hail_id: run.id, title: run.title, kind: h ? kindOf(h) : null, ...worldOf(run), phase, taken_at: takenAt(run),
     rider_ready: isoJD(run.t0), arrive_by: isoJD(run.arrive_by_jd), plans_used: run.calls };
-  if (phase === "abandoned") return Object.assign(base, { reason: run.abandoned_reason || null });
-  if (phase === "in_flight") return Object.assign(base, { open_checkpoint: run.ride.pending });
-  if (phase !== "arrived") return base;
+  if (phase === "abandoned") return project(run, "summary", Object.assign(base, { reason: run.abandoned_reason || null }));
+  if (phase === "in_flight") return project(run, "summary", Object.assign(base, { open_checkpoint: run.ride.pending }));
+  if (phase !== "arrived") return project(run, "summary", base);
   const s = run.score, cps = (s.log && s.log.checkpoints) || [];
-  return Object.assign(base, {
+  return project(run, "summary", Object.assign(base, {
     car: s.car, par_car: s.par_car, total: s.total, out_of: s.out_of, parts: Object.fromEntries(s.parts.map((x) => [x.key, { got: x.got, max: x.max }])),
     used_kwh: s.used_kwh, par_kwh: s.par_kwh, beat_par: s.beat_par, promised_arrival: s.promised_arrival, arrive: s.arrive,
     promise_slip_hours: s.promise_slip_hours, delay_hours: s.delay_hours,
@@ -469,19 +506,19 @@ export function rideSummary(E, run) {
       const b = (c.options_hindsight || []).filter((o) => o.option === c.best)[0];
       return { n: c.n, kind: c.kind, cause: c.cause, decision: c.decision, best: c.best == null ? null : c.best, best_used_kwh: b ? b.used_kwh : null, best_arrive: b ? b.arrive : null };
     }),
-  });
+  }));
 }
 /** The full ride as get_my_rides' detail mode and the /rides downloads give it: the score and the whole run log. */
 export function rideRecord(E, run) {
   const phase = phaseOf(run), arrivedRun = phase === "arrived";
   let score = null, log = null;
   if (arrivedRun) { const { log: l, ...rest } = run.score; score = rest; log = l || null; }
-  return {
+  return project(run, "record", {
     format: RIDE_FORMAT, simulated: true, note: SIM_NOTE, run_id: run.run_id, player_tag: run.player_id ? run.player_id.slice(2, 8) : null,
-    hail_id: run.id, season: +seedOf(run), phase, taken_at: takenAt(run),
+    hail_id: run.id, ...worldOf(run), phase, taken_at: takenAt(run),
     ...(phase === "abandoned" ? { reason: run.abandoned_reason || null } : {}), ...(phase === "in_flight" ? { open_checkpoint: run.ride.pending } : {}),
     score, log,
-  };
+  });
 }
 const mean1 = (xs) => Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10;
 /** Per-hail sums and means over arrived summaries (newest first): rides, best, last and mean total, the mean of each part,
