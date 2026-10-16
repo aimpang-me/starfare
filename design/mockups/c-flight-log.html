@@ -1,0 +1,1218 @@
+<title>Starfare Flight Log</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#06080c;--bg-2:#0b0e14;--glass:rgba(18,22,30,.72);--line:rgba(255,255,255,.12);--line-2:rgba(255,255,255,.22);
+  --ink:#eef1f5;--ink-2:#a3abb6;--ink-3:#6e7783;--sun:#ffb65c;--me:#ffcf7a;--ride:#9cc3ff;--sim:#7f8a99;--ok:#86d9a8;--bad:#ff8f80;--r:14px;
+  --hud:"Chakra Petch",Inter,system-ui,sans-serif;
+  --gl:max(16px,env(safe-area-inset-left,0px));--gr:max(16px,env(safe-area-inset-right,0px));
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--ride)}
+:focus-visible{outline:2px solid var(--ride);outline-offset:3px;border-radius:6px}
+button{font:inherit;color:inherit}
+.caps{font:600 11px/1.4 var(--hud);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.num{font-variant-numeric:tabular-nums}
+.disp{font-family:var(--hud);font-weight:600;letter-spacing:.02em;text-transform:uppercase;line-height:.95;margin:0}
+.tag{display:inline-flex;align-items:center;font:600 9.5px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;border-radius:999px;border:1px solid;vertical-align:middle;white-space:nowrap}
+.tag.real{color:var(--ok);border-color:rgba(134,217,168,.42);background:rgba(134,217,168,.08)}
+.tag.fict{color:var(--sun);border-color:rgba(255,182,92,.42);background:rgba(255,182,92,.08)}
+.tag.sim{color:var(--ink-2);border-color:rgba(127,138,153,.5);background:rgba(127,138,153,.1)}
+.tag.par{color:var(--me);border-color:rgba(255,207,122,.5);background:rgba(255,207,122,.1)}
+.tag.unv{color:var(--bad);border-color:rgba(255,143,128,.45);background:rgba(255,143,128,.08)}
+
+/* stage */
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;background:var(--bg)}
+.scrim{position:fixed;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(6,8,12,.86) 0,rgba(6,8,12,.55) 38%,rgba(6,8,12,0) 66%);opacity:0}
+.bars{position:fixed;inset:0;z-index:1;pointer-events:none;background:linear-gradient(rgba(0,0,0,.55),transparent 12%,transparent 86%,rgba(0,0,0,.6))}
+.hud{position:fixed;left:0;right:0;bottom:0;z-index:1;pointer-events:none;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
+  padding:0 var(--gr) calc(12px + env(safe-area-inset-bottom,0px)) var(--gl);font:500 10px/1.6 var(--hud);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+.hud .lg{display:flex;flex-wrap:wrap;gap:4px 14px}
+.hud i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.hud .slate{text-align:right;color:var(--ink-2)}
+.hud .slate b{display:block;font-weight:600;color:var(--ink);letter-spacing:.2em}
+
+/* top bar */
+.top{position:fixed;top:0;left:0;right:0;z-index:6;display:flex;align-items:center;gap:14px;
+  padding:calc(10px + env(safe-area-inset-top,0px)) var(--gr) 10px var(--gl);background:linear-gradient(rgba(6,8,12,.92),rgba(6,8,12,.6) 70%,rgba(6,8,12,0))}
+.brand{font:700 15px/1 var(--hud);letter-spacing:.28em;text-transform:uppercase;color:var(--ink);text-decoration:none;white-space:nowrap}
+.brand span{color:var(--me)}
+.nav{display:flex;gap:4px;margin-left:8px}
+.nav a{font:500 11px/1 var(--hud);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);text-decoration:none;padding:8px 10px;border-radius:999px}
+.nav a:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+.spacer{flex:1}
+.pill{font:500 11px/1 var(--hud);letter-spacing:.12em;color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:7px 11px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.btn{display:inline-flex;align-items:center;gap:8px;font:600 12px/1 var(--hud);letter-spacing:.14em;text-transform:uppercase;text-decoration:none;cursor:pointer;
+  padding:11px 16px;border-radius:999px;border:1px solid var(--line-2);background:rgba(255,255,255,.04);color:var(--ink);white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.1)}
+.btn.pri{background:var(--me);color:#1a1205;border-color:var(--me)}
+.btn.pri:hover{background:#ffe0a6}
+.btn.sm{padding:8px 12px;font-size:11px}
+.link{font:500 12px/1 var(--hud);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line-2);padding-bottom:3px}
+.link:hover{color:var(--ink)}
+.loading{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(46px + env(safe-area-inset-bottom,0px));z-index:7;font:500 11px/1 var(--hud);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-2);background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:9px 14px;backdrop-filter:blur(10px);white-space:nowrap}
+.loading[hidden]{display:none}
+
+/* story */
+main{position:relative;z-index:2}
+main[hidden]{display:none}
+.shot{position:relative;min-height:118vh;padding:18vh var(--gr) 10vh var(--gl)}
+.col{max-width:560px;margin-left:clamp(0px,5vw,84px)}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);padding:28px;backdrop-filter:blur(14px) saturate(1.15);-webkit-backdrop-filter:blur(14px) saturate(1.15)}
+.chno{font:400 13px/1 var(--hud);letter-spacing:.3em;color:var(--me);text-transform:uppercase;margin:0 0 14px}
+.chno b{font-weight:600;color:var(--ink)}
+h2.disp{font-size:clamp(32px,6vw,52px);margin-bottom:18px}
+.lead{font-size:17px;color:var(--ink-2);margin:0 0 18px}
+p{margin:0 0 12px}
+.muted{color:var(--ink-3);font-size:14px}
+
+/* cold open */
+.open{min-height:100vh;display:grid;place-items:center;text-align:center;padding:14vh var(--gr) 12vh var(--gl)}
+.open h1{font-size:clamp(64px,15vw,168px);letter-spacing:.06em;text-shadow:0 0 40px rgba(6,8,12,.9)}
+.open .sub{font:500 clamp(15px,2.4vw,22px)/1.3 var(--hud);letter-spacing:.24em;text-transform:uppercase;color:var(--me);margin:14px 0 30px;text-shadow:0 0 24px rgba(6,8,12,.9)}
+.clock{display:inline-block;text-align:center;padding:14px 22px;border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2);background:rgba(6,8,12,.45)}
+.clock .t{font:500 clamp(24px,4.6vw,40px)/1.1 var(--hud);letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.clock .s{font:500 11px/1.5 var(--hud);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);margin-top:6px}
+.open .pitch{max-width:540px;margin:26px auto 26px;color:var(--ink-2);text-shadow:0 0 18px rgba(6,8,12,1)}
+.open .acts{display:flex;gap:18px;justify-content:center;align-items:center;flex-wrap:wrap}
+.cue{position:absolute;left:50%;bottom:4vh;transform:translateX(-50%);font:500 10px/1 var(--hud);letter-spacing:.3em;color:var(--ink-3);text-transform:uppercase}
+.cue::after{content:"";display:block;width:1px;height:34px;margin:10px auto 0;background:linear-gradient(var(--ink-3),transparent)}
+
+/* chapters */
+ol.steps{margin:0 0 18px;padding:0;list-style:none;counter-reset:s}
+ol.steps li{counter-increment:s;position:relative;padding:0 0 14px 40px}
+ol.steps li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:1px;font:600 12px/1.6 var(--hud);letter-spacing:.1em;color:var(--me)}
+.urlbox{display:flex;gap:8px;align-items:stretch;margin:10px 0 4px}
+.urlbox input{flex:1;min-width:0;font:500 13px/1 var(--hud);letter-spacing:.04em;color:var(--ink);background:rgba(0,0,0,.35);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px}
+.works{font:600 11px/1 var(--hud);letter-spacing:.2em;text-transform:uppercase;color:var(--ok);margin-bottom:16px}
+.field{display:block;margin:0 0 16px}
+.field>span{display:block;margin-bottom:8px}
+.field input{width:100%;font:400 15px/1.2 Inter,sans-serif;color:var(--ink);background:rgba(0,0,0,.35);border:1px solid var(--line-2);border-radius:10px;padding:11px 12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:500 12px/1 var(--hud);letter-spacing:.1em;text-transform:uppercase;padding:9px 12px;border-radius:999px;border:1px solid var(--line-2);background:transparent;cursor:pointer;color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:rgba(156,195,255,.16);border-color:var(--ride);color:var(--ink)}
+.addrow{display:flex;gap:8px;margin-top:10px}
+.addrow input{flex:1;min-width:0;font:400 14px/1.2 Inter,sans-serif;color:var(--ink);background:rgba(0,0,0,.35);border:1px solid var(--line-2);border-radius:10px;padding:9px 12px}
+.saved{font-size:13px;color:var(--ink-3);margin-top:12px}
+.real-list{display:grid;gap:14px;margin:6px 0 0}
+.real-list div{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:start}
+.real-list .tag{justify-self:start;margin-top:3px}
+.parts{display:grid;gap:10px;margin:8px 0 22px}
+.part{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center}
+.part .bar{grid-column:1/-1;height:6px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}
+.part .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ride),var(--me))}
+.part .n{font:600 13px/1 var(--hud);color:var(--ink);font-variant-numeric:tabular-nums}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+.duo h3{font:600 12px/1.3 var(--hud);letter-spacing:.16em;text-transform:uppercase;margin:0 0 6px}
+.duo p{font-size:14px;color:var(--ink-2)}
+
+/* manifest */
+.desk{min-height:auto;padding-top:16vh}
+.board-wrap{max-width:780px;margin-left:clamp(0px,5vw,84px)}
+.board{background:rgba(9,11,16,.86);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.bhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px 16px;padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.bhead .disp{font-size:clamp(24px,4vw,34px);color:var(--me)}
+.bcols,.brow{display:grid;grid-template-columns:1.25fr 1.35fr 1.7fr 1.25fr .6fr;gap:12px;align-items:center;padding:12px 20px}
+.bcols{padding-top:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.brow{width:100%;text-align:left;border:0;border-bottom:1px solid rgba(255,255,255,.06);background:transparent;cursor:pointer;color:var(--ink)}
+.brow:hover{background:rgba(255,255,255,.04)}
+.brow[aria-pressed="true"]{background:rgba(255,207,122,.08);box-shadow:inset 3px 0 0 var(--me)}
+.brow .code{display:block;font:600 13px/1.2 var(--hud);letter-spacing:.12em;text-transform:uppercase;color:var(--me)}
+.brow .ttl{display:block;font-size:12.5px;color:var(--ink-2)}
+.brow .rider{font-size:13px;color:var(--ink-2);line-height:1.35}
+.ph{display:block;font-size:11.5px;color:var(--ink-3);font-style:italic}
+.mani{margin:12px 0;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.25);font-size:13.5px;text-align:left}
+.mani .caps{display:block;margin-bottom:6px}
+.mani div{display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-top:1px solid rgba(255,255,255,.06)}
+.mani div:first-of-type{border-top:0}
+.mani .ph{display:inline;font-size:13px}
+.pstops{list-style:none;margin:14px 0 8px;padding:0;text-align:left}
+.pstops li{position:relative;padding:0 0 12px 34px;border-left:1px dashed rgba(255,207,122,.45);margin-left:11px}
+.pstops li:last-child{border-left-color:transparent}
+.pstops .n{position:absolute;left:-12px;top:0;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--me);background:var(--bg);color:var(--me);font:600 11px/19px var(--hud);text-align:center}
+.pstops .leg{display:block;font-size:12.5px;color:var(--ink-2);margin-top:3px;font-variant-numeric:tabular-nums}
+.brow .route{font-size:13.5px;line-height:1.5}
+.brow .kind{font:500 11px/1.3 var(--hud);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.brow .kind .st{display:block;margin-top:4px;color:var(--ok)}
+.brow .kind .st.no{color:var(--bad)}
+.arr{color:var(--ink-3);margin:0 2px}
+.fl{display:inline-block;width:.68em;text-align:center;background:#111620;border-radius:2px;margin:0 1px 2px 0;font:500 14px/1.45 var(--hud);color:var(--ink);
+  box-shadow:inset 0 -1px 0 rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.05);font-variant-numeric:tabular-nums}
+.fl.sp{background:transparent;box-shadow:none;width:.4em}
+.fl.flip{animation:flip .38s ease-out}
+@keyframes flip{0%{transform:perspective(80px) rotateX(85deg);color:var(--me)}100%{transform:none}}
+.bfoot{display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:space-between;padding:12px 20px;font-size:12.5px;color:var(--ink-3)}
+.window{height:0}
+.window p{display:none}
+.plan{margin-top:18px}
+.plan .glass{padding:22px}
+.planning{font:500 13px/1.4 var(--hud);letter-spacing:.14em;text-transform:uppercase;color:var(--me)}
+.planning::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--me);margin-right:10px;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+.parsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 18px}
+.parsum div{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:rgba(0,0,0,.25)}
+.parsum b{display:block;font:500 15px/1.3 var(--hud);font-variant-numeric:tabular-nums;color:var(--ink)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.card{border:1px solid var(--line);border-radius:12px;padding:14px;background:rgba(0,0,0,.28);position:relative}
+.card.is-par{border-color:rgba(255,207,122,.55);box-shadow:0 0 0 1px rgba(255,207,122,.2) inset}
+.card .art{height:46px;margin:-2px 0 6px}
+.card .art svg{height:100%;width:auto}
+.card h4{margin:0 0 2px;font:600 17px/1.2 var(--hud);letter-spacing:.08em}
+.card .tag.par{position:absolute;top:12px;right:12px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px;margin-top:8px}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.cta{margin-top:18px;border-top:1px solid var(--line);padding-top:18px}
+.cta h3{font:600 20px/1.2 var(--hud);letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px}
+.code-line{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 14px}
+code{font:500 13px/1.4 var(--hud);letter-spacing:.03em;background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--me);overflow-wrap:anywhere}
+
+.flights{min-height:auto;padding-bottom:16vh}
+.fl-list{display:grid;gap:10px;margin-top:6px}
+.frow{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.28);text-decoration:none;color:var(--ink)}
+.frow:hover{border-color:var(--line-2);background:rgba(255,255,255,.05)}
+.frow .ic{width:46px;height:30px}
+.frow .ic svg{width:100%;height:100%}
+.frow .mid b{display:block;font:600 14px/1.3 var(--hud);letter-spacing:.08em;text-transform:uppercase}
+.frow .mid span{font-size:13px;color:var(--ink-2)}
+.frow .sc{text-align:right;font:600 22px/1 var(--hud);font-variant-numeric:tabular-nums}
+.frow .sc small{display:block;font:500 10px/1.6 var(--hud);letter-spacing:.14em;color:var(--ink-3)}
+footer{position:relative;z-index:2;padding:40px var(--gr) 90px var(--gl);color:var(--ink-3);font-size:13px;border-top:1px solid var(--line);background:rgba(6,8,12,.85)}
+footer .in{max-width:780px;margin-left:clamp(0px,5vw,84px)}
+
+/* ride page */
+.rtitle{min-height:100vh;padding-top:16vh}
+.rtitle h1{font-size:clamp(40px,8vw,84px);margin:8px 0 14px}
+.hero-ship{width:min(340px,80%);margin:4px 0 10px}
+.hero-ship svg{width:100%;height:auto;display:block}
+.facts{display:flex;flex-wrap:wrap;gap:8px 18px;margin:12px 0 16px;font-size:14px;color:var(--ink-2)}
+.facts b{color:var(--ink);font-weight:500}
+.bigscore{font:600 44px/1 var(--hud);font-variant-numeric:tabular-nums}
+.bigscore small{font-size:16px;color:var(--ink-3)}
+.warn{font-size:13.5px;color:var(--me)}
+.track{position:relative}
+.rhud{position:sticky;top:calc(52px + env(safe-area-inset-top,0px));z-index:3;padding:0 var(--gr) 0 var(--gl)}
+.rhud .in{max-width:780px;margin-left:clamp(0px,5vw,84px);background:rgba(9,11,16,.84);border:1px solid var(--line);border-radius:12px;padding:12px 14px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.rhud .row1{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline}
+.rhud .clk{font:500 20px/1.2 var(--hud);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.rhud .ph{font:600 11px/1.3 var(--hud);letter-spacing:.16em;text-transform:uppercase;color:var(--me)}
+.rhud .leg{font-size:13px;color:var(--ink-2)}
+.rhud .ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.rhud input[type=range]{flex:1;min-width:120px;accent-color:var(--me)}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:7px 10px;font:600 10.5px/1 var(--hud);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);cursor:pointer}
+.seg button[aria-pressed="true"]{background:rgba(255,255,255,.14);color:var(--ink)}
+.evc{position:absolute;left:var(--gl);right:var(--gr);z-index:2}
+.evc .in{max-width:420px;margin-left:clamp(0px,5vw,84px);background:var(--glass);border:1px solid var(--line);border-left:3px solid var(--ride);border-radius:12px;padding:14px 16px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.evc.checkpoint .in{border-left-color:var(--me)}
+.evc.incident .in{border-left-color:var(--bad)}
+.evc h4{margin:4px 0 6px;font:600 16px/1.3 var(--hud);letter-spacing:.04em}
+.evc p{font-size:14px;color:var(--ink-2);margin:0}
+.credits{padding:18vh var(--gr) 10vh var(--gl);text-align:center}
+.credits .roll{max-width:640px;margin:0 auto;background:rgba(6,8,12,.78);border:1px solid var(--line);border-radius:var(--r);padding:34px 24px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.credits h2{font-size:clamp(28px,5vw,44px);margin:6px 0 10px}
+.credits h3{font:600 12px/1 var(--hud);letter-spacing:.3em;text-transform:uppercase;color:var(--me);margin:38px 0 14px}
+.crow{display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px dotted rgba(255,255,255,.14);font-size:14px;text-align:left}
+.crow span:first-child{color:var(--ink-3)}
+.crow span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.cblock{text-align:left;margin:0 0 18px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.25)}
+.cblock .caps{margin-bottom:8px}
+.cblock .note{font-size:13px;color:var(--ink-3);margin-top:8px}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.opt{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:8px 0;border-top:1px solid rgba(255,255,255,.07);font-size:13.5px;text-align:left}
+.opt .meta{grid-column:1/-1;color:var(--ink-3);font-size:12.5px;font-variant-numeric:tabular-nums}
+.sbar{text-align:left;margin:0 0 12px}
+.sbar .top2{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.sbar .top2 b{font:600 14px/1.4 var(--hud);font-variant-numeric:tabular-nums}
+.sbar .tr{height:7px;border-radius:4px;background:rgba(255,255,255,.07);margin:5px 0 4px;overflow:hidden}
+.sbar .tr i{display:block;height:100%;background:linear-gradient(90deg,var(--ride),var(--me))}
+.sbar .nt{font-size:12.5px;color:var(--ink-3)}
+.ebar{margin:8px 0}
+.ebar .tr{height:8px;border-radius:4px;background:rgba(255,255,255,.05);overflow:hidden}
+.ebar .tr i{display:block;height:100%}
+.endnav{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:30px}
+
+@media (max-width:980px){.scrim{display:none}}
+@media (max-width:760px){
+  .nav{display:none}
+  .shot{padding-top:14vh}
+  .glass{padding:20px}
+  .bcols{display:none}
+  .brow{grid-template-columns:1fr auto;grid-template-areas:"f r" "o o" "p p" "k k";gap:6px 12px;padding:14px 16px}
+  .brow .c-f{grid-area:f}.brow .c-r{grid-area:r;text-align:right}.brow .c-o{grid-area:o}.brow .c-p{grid-area:p}.brow .c-k{grid-area:k}
+  .brow .c-r{grid-area:r}
+  .brow .kind .st{display:inline;margin:0 0 0 10px}
+  .bhead,.bfoot{padding-left:16px;padding-right:16px}
+  .window{height:52vh;display:flex;align-items:flex-end;justify-content:center}
+  .window p{display:block;font:500 10px/1.4 var(--hud);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);text-align:center;margin:0 0 8px}
+  .duo{grid-template-columns:1fr}
+  .real-list div{grid-template-columns:1fr;gap:4px}
+  .hud .slate{display:none}
+  .credits .roll{padding:26px 16px}
+  .crow{font-size:13px}
+}
+@media (max-width:420px){.top .pill{display:none}.top .btn{padding:9px 12px;font-size:10.5px}}
+@media (prefers-reduced-motion:reduce){.fl.flip{animation:none}.planning::before{animation:none}}
+</style>
+
+<canvas id="stage" aria-hidden="true"></canvas>
+<div class="scrim" id="scrim" aria-hidden="true"></div>
+<div class="bars" aria-hidden="true"></div>
+<div class="hud" aria-hidden="true">
+  <div>
+    <div class="lg"><span>Not to scale</span><span id="hudFrame">Distances compressed</span></div>
+    <div class="lg" id="hudLegend">
+      <span><i style="background:#ffcf7a"></i>Open booking</span>
+      <span><i style="background:#9cc3ff"></i>Starseeker parked</span>
+      <span><i style="background:transparent;border:1px solid #9cc3ff"></i>Sample traffic (not live)</span>
+      <span><i style="background:#ffb65c"></i>Fictional place</span>
+    </div>
+  </div>
+  <div class="slate"><b id="slateName">Cold open</b><span id="slateSub">Planet positions real, JPL DE421</span></div>
+</div>
+
+<header class="top">
+  <a class="brand" href="#top" data-nav>Star<span>fare</span></a>
+  <nav class="nav" aria-label="Sections">
+    <a href="#intro" data-nav>Intro</a><a href="#sky" data-nav>Sky</a><a href="#flights" data-nav>Flights</a>
+  </nav>
+  <span class="spacer"></span>
+  <span class="pill" id="topClock" aria-live="off">Sky clock</span>
+  <a class="btn sm pri" href="#intro" data-nav>Connect your agent</a>
+</header>
+<div class="loading" id="loading" role="status">Loading the engine (511 KB)</div>
+
+<main id="home">
+  <section class="open" id="top" data-shot="open" data-name="Cold open" data-sub="The real solar system, now">
+    <div>
+      <p class="caps">A simulated robotaxi network &middot; real planet positions</p>
+      <h1 class="disp">Starfare</h1>
+      <p class="sub">Robotaxi Starseekers for the solar system</p>
+      <div class="clock" aria-label="Sky clock">
+        <div class="t" id="bigClock">----:--:-- --:--</div>
+        <div class="s" id="bigSeason">Sky time</div>
+      </div>
+      <p class="pitch">Your AI agent is the dispatcher. It takes a passenger's booking, picks a Starseeker and plans the flight. The server re-flies every leg and scores the flight.</p>
+      <div class="acts">
+        <a class="btn pri" href="#intro" data-nav>Start the flight log</a>
+        <a class="link" href="#sky" data-nav>Skip to the sky</a>
+      </div>
+    </div>
+    <div class="cue" aria-hidden="true">Scroll</div>
+  </section>
+
+  <div id="intro">
+    <section class="shot" id="ch1" data-shot="earth" data-name="Shot 02 &middot; Earth" data-sub="Connect your agent">
+      <div class="col glass">
+        <p class="chno"><b>01</b> / 04 &nbsp;Connect your agent</p>
+        <h2 class="disp">Your agent flies the fleet</h2>
+        <p class="works">Works with Grok</p>
+        <ol class="steps">
+          <li>Open <a href="https://grok.com/connectors" target="_blank" rel="noopener">grok.com/connectors</a>.</li>
+          <li>Add a custom connector with this URL:
+            <div class="urlbox"><input id="mcpUrl" readonly aria-label="MCP URL" value=""><button class="btn sm" type="button" id="copyUrl">Copy</button></div>
+            <span class="muted" id="copyMsg" role="status"></span>
+          </li>
+          <li>Sign in through Starfare's OAuth page. No key needed.</li>
+        </ol>
+        <p class="muted">Any other MCP agent (Claude, ChatGPT, your own bot) uses the same URL.</p>
+        <p style="margin-top:16px"><a class="link" href="#sky" data-nav>Skip to the sky</a></p>
+      </div>
+    </section>
+
+    <section class="shot" id="ch2" data-shot="fleet" data-name="Shot 03 &middot; Earth and Moon" data-sub="Who's flying">
+      <div class="col glass">
+        <p class="chno"><b>02</b> / 04 &nbsp;Tell us who's flying</p>
+        <h2 class="disp">Name your model</h2>
+        <p class="lead">The board will group runs by model and skills. <span class="tag unv">Self-reported, unverified</span></p>
+        <label class="field"><span class="caps">Model</span><input id="model" type="text" placeholder="For example Grok 4" autocomplete="off"></label>
+        <div class="field"><span class="caps" id="skillsLbl">Skills</span>
+          <div class="chips" id="skills" role="group" aria-labelledby="skillsLbl"></div>
+          <div class="addrow"><input id="customSkill" type="text" placeholder="Add your own skill" aria-label="Custom skill"><button class="btn sm" type="button" id="addSkill">Add</button></div>
+        </div>
+        <button class="btn" type="button" id="saveAgent">Save in this browser</button>
+        <p class="saved" id="savedMsg" role="status">The real site saves this with your player tag (not built yet). This mockup keeps it in your browser only.</p>
+      </div>
+    </section>
+
+    <section class="shot" id="ch3" data-name="" data-sub="">
+      <div class="col glass">
+        <div data-shot="realA" data-name="Shot 04 &middot; Pan across the planets" data-sub="What's real">
+          <p class="chno"><b>03</b> / 04 &nbsp;What's real</p>
+          <h2 class="disp">Real sky, simulated traffic</h2>
+          <p class="lead">Every place, Starseeker and flight carries one of three chips.</p>
+        </div>
+        <div class="real-list" data-shot="realB" data-name="Shot 04 &middot; Pan across the planets" data-sub="What's real">
+          <div><span class="tag real">Real</span><span>Planet and moon positions (NASA JPL DE421, through the engine), body names and sizes, the ISS and Tiangong, the Roadster's orbit.</span></div>
+          <div><span class="tag fict">Fictional</span><span><span id="fictNames">The made-up places</span>, the Starseekers and the passengers.</span></div>
+          <div><span class="tag sim">Simulated</span><span>Bookings, seats, fleet, weather, pad traffic, fares, and every flight and score.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="shot" id="ch4" data-shot="score" data-name="Shot 05 &middot; Overhead" data-sub="How a flight is scored">
+      <div class="col glass">
+        <p class="chno"><b>04</b> / 04 &nbsp;How a flight is scored</p>
+        <h2 class="disp">Checked, then scored</h2>
+        <p class="lead">Seven parts, <span id="partsSum">100</span> points.</p>
+        <div class="parts" id="parts"></div>
+        <div class="duo">
+          <div><h3>Re-fly check</h3><p>The server re-flies every leg in an n-body sim. A miss fails the leg.</p></div>
+          <div><h3>Checkpoints</h3><p>Mid-flight the sky can close a pad or hold a launch. Your agent decides with the <code>decide</code> tool.</p></div>
+        </div>
+        <p style="margin-top:18px"><a class="btn pri" href="#sky" data-nav>Go to the sky</a></p>
+      </div>
+    </section>
+  </div>
+
+  <section class="shot desk" id="sky" data-shot="desk" data-name="Shot 06 &middot; The manifest" data-sub="Open bookings and their pickup places">
+    <div class="board-wrap">
+      <p class="chno"><b>05</b> &nbsp;The manifest</p>
+      <div class="board">
+        <div class="bhead">
+          <h2 class="disp">Departures</h2>
+          <span class="caps num" id="boardClock">Sky time</span>
+        </div>
+        <div class="bcols caps" aria-hidden="true"><span>Booking</span><span>Passengers</span><span>From &rarr; To</span><span>Ready (sky time)</span><span>Kind</span></div>
+        <div id="rows"><p class="planning" style="padding:18px 20px;margin:0">Loading the engine (511 KB)</p></div>
+        <div class="bfoot"><span>Pick a booking to see the engine's par plan. <span class="tag sim">Simulated</span></span><a class="link" href="#intro" data-nav>Show intro</a></div>
+      </div>
+      <div class="window" aria-hidden="true"><p>Par route on the sky &middot; not to scale</p></div>
+      <div class="plan" id="plan" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="shot" id="pool" data-shot="pool" data-name="Shot 07 &middot; Concept: pooled flight" data-sub="Not built yet">
+    <div class="col glass">
+      <p class="chno"><b>06</b> &nbsp;Concept: pooled flight (not built yet)</p>
+      <h2 class="disp" style="font-size:clamp(28px,5vw,44px)">One Starseeker, several bookings</h2>
+      <p class="lead">A Starseeker has seats. A booking can be a party. Your agent decides who flies together and where the ship stops.</p>
+      <p class="muted">Seats per ship, party sizes and pooling rules are not set yet. The stops below are a sketch, but the engine plans each leg live, so the times, kWh and fares below come from the engine.</p>
+      <div id="poolStops"><p class="planning">Loading the engine (511 KB)</p></div>
+      <p style="margin-top:6px"><span class="tag sim">Simulated</span> <span class="tag unv">Concept, not built yet</span></p>
+    </div>
+  </section>
+
+  <section class="shot flights" id="flights" data-shot="traffic" data-name="Shot 08 &middot; Sample traffic" data-sub="Recent flights (samples)">
+    <div class="board-wrap">
+      <p class="chno"><b>07</b> &nbsp;Recent flights (samples)</p>
+      <div class="glass">
+        <h2 class="disp" style="font-size:clamp(26px,4.4vw,38px)">Flight logs</h2>
+        <p class="muted">A sample bot flew these through the real game code. They are not player runs. The live board reads <code>/board.json</code>.</p>
+        <div class="fl-list" id="flist"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<main id="ride" hidden></main>
+
+<footer>
+  <div class="in">
+    <p>Starfare is Alvin Impang's portfolio project. Passengers, bookings, fleet, weather, pad traffic, fares and scores are simulated. Planet positions are real (NASA JPL DE421). Sizes and distances on the sky are not to scale.</p>
+    <p>Works with Grok. Any MCP agent can connect. No Tesla, SpaceX, Grok or xAI affiliation.</p>
+    <p><a class="link" href="#intro" data-nav>Show intro</a> &nbsp; <a class="link" href="#sky" data-nav>The sky</a></p>
+  </div>
+</footer>
+
+<script src="sample-data.js"></script>
+<script src="sky-core.js"></script>
+<script>
+(function () {
+"use strict";
+var $ = function (id) { return document.getElementById(id); };
+var esc = SF.esc, fmt = SF.fmt, AU = SF.AU;
+var RMQ = window.matchMedia ? matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
+function rm() { return !!RMQ.matches; }
+var S = { ready: false, view: "home", sel: null, selId: null, cam: null, ride: null, last: performance.now(), play: null, speed: 1, overhead: false, slate: "" };
+var ANCH = ["mercury", "venus", "earth", "mars", "jupiter", "saturn", "uranus", "neptune", "ceres"];
+var PLACES = [], RPS = [];
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+
+/* ---------- vectors ---------- */
+function sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+function add(a, b) { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
+function mul(a, k) { return [a[0] * k, a[1] * k, a[2] * k]; }
+function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+function len(a) { return Math.sqrt(dot(a, a)); }
+function norm(a) { var l = len(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; }
+function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+function lerp(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+function smooth(t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); }
+function ease(t) { t = clamp(t, 0, 1); return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+
+/* ---------- display mapping (not to scale) ----------
+   Heliocentric AU is compressed radially (square root). Near a planet, offsets are re-inflated on a log scale so
+   moons, stations and local hops are visible; the blend fades out between 0.02 and 0.25 AU from the planet. */
+function C(p) { var r = len(p); if (r < 1e-12) return [0, 0, 0]; return mul(p, Math.sqrt(r) / r); }
+function kInf(km) { return 0.05 + 0.045 * Math.log10(Math.max(km, 2000) / 2000); }
+function anchors(jd) { var A = {}; ANCH.forEach(function (id) { A[id] = SF.pos(id, jd); }); return A; }
+function D(p, A) {
+  var best = null, bd = 1e9;
+  for (var i = 0; i < ANCH.length; i++) { var d = len(sub(p, A[ANCH[i]])); if (d < bd) { bd = d; best = ANCH[i]; } }
+  var c = C(p);
+  if (bd > 0.25) return c;
+  var q = A[best], inf = bd > 1e-12 ? add(C(q), mul(sub(p, q), kInf(bd * AU) / bd)) : C(q);
+  var w = bd <= 0.02 ? 1 : 1 - smooth((Math.log(bd) - Math.log(0.02)) / (Math.log(0.25) - Math.log(0.02)));
+  return lerp(c, inf, w);
+}
+function inflOff(v) { var d = len(v); return d > 1e-12 ? mul(v, kInf(d * AU) / d) : [0, 0, 0]; }
+function Lf(v) { var d = len(v); if (d < 1e-15) return [0, 0, 0]; return mul(v, Math.sqrt(d * AU) / 100 / d); } // planet-centred km frame, square-root compressed
+
+var RAD = { sun: .11, mercury: .022, venus: .03, earth: .032, mars: .026, jupiter: .07, saturn: .062, uranus: .045, neptune: .045, ceres: .012, moon: .016, titan: .015, ganymede: .015 };
+function bodyR(p) { return RAD[p.id] || (p.kind === "moon" ? .011 : p.kind === "small" ? .008 : 0); }
+
+/* ---------- canvas + camera ---------- */
+var cv = $("stage"), ctx = cv.getContext("2d"), W = 0, H = 0, DPR = 1, B = null, focal = 1, cx = 0, cy = 0;
+function resize() { DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); if (S.ride) layoutTrack(); }
+addEventListener("resize", resize); resize();
+function setCam(c) {
+  var ce = Math.cos(c.el), p = [c.t[0] + c.d * ce * Math.cos(c.az), c.t[1] + c.d * ce * Math.sin(c.az), c.t[2] + c.d * Math.sin(c.el)];
+  var f = norm(sub(c.t, p)), r = norm(cross(f, [0, 0, 1])), u = cross(r, f);
+  B = { p: p, f: f, r: r, u: u, near: c.d * 0.03 };
+  focal = (Math.min(W, H) / 2) / Math.tan(25 * Math.PI / 180);
+  cx = W / 2 + (W >= 980 ? c.side * W * 0.19 : 0); cy = H * (W < 760 ? 0.46 : 0.52);
+}
+function P(w) { var v = sub(w, B.p), z = dot(v, B.f); if (z < B.near) return null; var s = focal / z; return [cx + dot(v, B.r) * s, cy - dot(v, B.u) * s, z, s]; }
+function mixCam(a, b, t) {
+  var da = Math.atan2(Math.sin(b.az - a.az), Math.cos(b.az - a.az));
+  return { t: lerp(a.t, b.t, t), d: Math.exp(Math.log(a.d) + (Math.log(b.d) - Math.log(a.d)) * t), az: a.az + da * t, el: a.el + (b.el - a.el) * t,
+    side: a.side + (b.side - a.side) * t, focus: t < .5 ? a.focus : b.focus };
+}
+var STARS = (function () { var a = [], s = 11; function r() { s = (s * 16807) % 2147483647; return s / 2147483647; }
+  for (var i = 0; i < 700; i++) { var z = 2 * r() - 1, t = 2 * Math.PI * r(), q = Math.sqrt(1 - z * z); a.push([q * Math.cos(t), q * Math.sin(t), z, r() * r()]); } return a; })();
+function drawStars() {
+  for (var i = 0; i < STARS.length; i++) {
+    var d = STARS[i], z = dot(d, B.f); if (z < .05) continue;
+    var x = cx + dot(d, B.r) / z * focal, y = cy - dot(d, B.u) / z * focal; if (x < 0 || y < 0 || x > W || y > H) continue;
+    ctx.fillStyle = "rgba(220,230,255," + (0.15 + d[3] * 0.7) + ")"; ctx.fillRect(x, y, d[3] > .6 ? 1.6 : 1, d[3] > .6 ? 1.6 : 1);
+  }
+}
+function poly(pts, col, w, dash) {
+  ctx.strokeStyle = col; ctx.lineWidth = w || 1; ctx.setLineDash(dash || []); ctx.beginPath(); var on = false;
+  for (var i = 0; i < pts.length; i++) { var q = P(pts[i]); if (!q || Math.abs(q[0]) > 1e5 || Math.abs(q[1]) > 1e5) { on = false; continue; } on ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); on = true; }
+  ctx.stroke(); ctx.setLineDash([]);
+}
+function lightDir(w, sunW) { var l = norm(sub(sunW, w)); var x = dot(l, B.r), y = -dot(l, B.u), m = Math.hypot(x, y); return m < 1e-6 ? [0, 0, 0] : [x / m * Math.min(1, m * 1.4), y / m * Math.min(1, m * 1.4)]; }
+function sphere(q, r, col, ld, ring) {
+  if (ring) { ctx.strokeStyle = "rgba(227,207,154,.45)"; ctx.lineWidth = Math.max(1, r * .18); ctx.beginPath(); ctx.ellipse(q[0], q[1], r * 2.1, r * 2.1 * Math.max(.12, Math.abs(B.f[2])), -0.35, 0, 2 * Math.PI); ctx.stroke(); }
+  var g = ctx.createRadialGradient(q[0], q[1], 0, q[0], q[1], r * 3.2); g.addColorStop(0, col.replace(")", ",.22)").replace("rgb", "rgba")); g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(q[0], q[1], r * 3.2, 0, 7); ctx.fill();
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, 7); ctx.fill();
+  if (r > 3) {
+    var sh = ctx.createRadialGradient(q[0] + ld[0] * r * .55, q[1] + ld[1] * r * .55, r * .2, q[0] + ld[0] * r * .55, q[1] + ld[1] * r * .55, r * 1.6);
+    sh.addColorStop(0, "rgba(255,255,255,.18)"); sh.addColorStop(.45, "rgba(0,0,0,0)"); sh.addColorStop(.75, "rgba(3,4,8,.78)"); sh.addColorStop(1, "rgba(3,4,8,.92)");
+    ctx.fillStyle = sh; ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, 7); ctx.fill();
+  }
+}
+function hexRgb(h) { var n = parseInt(h.slice(1), 16); return "rgb(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + ")"; }
+var LBL = [];
+function label(x, y, t, col, pri, size) { if (x < -20 || y < -20 || x > W + 20 || y > H + 20) return; LBL.push({ x: x, y: y, t: t, col: col, pri: pri || 0, size: size || 10 }); }
+function flushLabels() {
+  LBL.sort(function (a, b) { return b.pri - a.pri; }); var boxes = [];
+  ctx.textBaseline = "middle";
+  LBL.forEach(function (L) {
+    ctx.font = "600 " + L.size + "px \"Chakra Petch\", Inter, sans-serif"; if ("letterSpacing" in ctx) ctx.letterSpacing = "1.5px";
+    var w = ctx.measureText(L.t).width, b = [L.x + 8, L.y - 7, L.x + 12 + w, L.y + 7];
+    if (b[2] > W - 4) { b = [L.x - 12 - w, b[1], L.x - 8, b[3]]; }
+    for (var i = 0; i < boxes.length; i++) { var o = boxes[i]; if (b[0] < o[2] && b[2] > o[0] && b[1] < o[3] && b[3] > o[1]) return; }
+    boxes.push(b); ctx.fillStyle = "rgba(6,8,12,.55)"; ctx.fillText(L.t, b[0] + 1, L.y + 1); ctx.fillStyle = L.col; ctx.fillText(L.t, b[0], L.y);
+  });
+  if ("letterSpacing" in ctx) ctx.letterSpacing = "0px"; LBL = [];
+}
+function brackets(x, y, s, col, txt) {
+  s = Math.max(14, s); var k = s * .35; ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.beginPath();
+  [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(function (c) { var X = x + c[0] * s, Y = y + c[1] * s; ctx.moveTo(X, Y - c[1] * -k); ctx.lineTo(X, Y); ctx.lineTo(X - c[0] * k, Y); });
+  ctx.stroke();
+  if (txt) { ctx.font = "600 10px \"Chakra Petch\", Inter, sans-serif"; if ("letterSpacing" in ctx) ctx.letterSpacing = "2px"; ctx.fillStyle = col; ctx.textBaseline = "alphabetic"; ctx.fillText(txt, x - s, y - s - 7); if ("letterSpacing" in ctx) ctx.letterSpacing = "0px"; }
+}
+function shipGlyph(q, col, dir) {
+  var a = dir ? Math.atan2(dir[1], dir[0]) : 0; ctx.save(); ctx.translate(q[0], q[1]); ctx.rotate(a);
+  ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(7, 0); ctx.lineTo(-4, -4.5); ctx.lineTo(-2, 0); ctx.lineTo(-4, 4.5); ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function glowDot(q, col, r) { var g = ctx.createRadialGradient(q[0], q[1], 0, q[0], q[1], r * 4); g.addColorStop(0, col); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(q[0], q[1], r * 4, 0, 7); ctx.fill(); ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(q[0], q[1], r * .6, 0, 7); ctx.fill(); }
+
+/* ---------- orbit caches ---------- */
+var ORB = {};
+// SF.orbit samples a full period ahead, which runs past the ephemeris table for Saturn and beyond, so planet rings
+// propagate the osculating orbit with the engine's Kepler propagator instead.
+function planetRing(id, jd) {
+  var k = "p" + id + Math.floor(jd / 400); if (ORB[k]) return ORB[k];
+  var st = SF.E.placeState(id, jd), Pd = SF.E.periodDays(st), pts = [];
+  for (var i = 0; i <= 160; i++) { var r = i ? SF.E.propagate(st.r, st.v, Pd * 86400 * i / 160).r : st.r; pts.push(C([r[0] / AU, r[1] / AU, r[2] / AU])); }
+  return (ORB[k] = pts);
+}
+// SF.orbit times a moon's ring by its heliocentric period, so moon rings sample one sidereal period (place.period_days).
+function moonRingRel(id, jd) {
+  var k = "m" + id + Math.floor(jd / 30); if (ORB[k]) return ORB[k];
+  var p = SF.place(id), Pd = p.period_days || 1, pts = [];
+  for (var i = 0; i <= 96; i++) { var t = jd + Pd * i / 96; pts.push(sub(SF.pos(id, t), SF.pos(p.parent, t))); }
+  return (ORB[k] = pts);
+}
+
+/* ---------- world drawing (heliocentric, compressed) ---------- */
+function drawSystem(jd, A, now, opts) {
+  var W3 = {}, sunW = [0, 0, 0];
+  PLACES.forEach(function (p) { W3[p.id] = D(SF.pos(p.id, jd), A); });
+  SF.PLANETS.forEach(function (id) { poly(planetRing(id, jd), "rgba(255,255,255,.09)", 1); });
+  // moon rings when they are big enough to read
+  PLACES.forEach(function (p) {
+    if (p.kind !== "moon") return; var c = W3[p.parent], q = P(c), qm = P(W3[p.id]); if (!q || !qm) return;
+    if (Math.hypot(q[0] - qm[0], q[1] - qm[1]) < 14) return;
+    var cp = C(A[p.parent] || SF.pos(p.parent, jd)); poly(moonRingRel(p.id, jd).map(function (v) { return add(cp, inflOff(v)); }), "rgba(255,255,255,.07)", 1);
+  });
+  var items = [{ id: "sun", w: sunW }].concat(PLACES.map(function (p) { return { id: p.id, w: W3[p.id], p: p }; }));
+  items.forEach(function (it) { it.q = P(it.w); });
+  items = items.filter(function (it) { return it.q; }).sort(function (a, b) { return b.q[2] - a.q[2]; });
+  var Q = {};
+  items.forEach(function (it) {
+    var q = it.q; Q[it.id] = q;
+    if (it.id === "sun") {
+      var r = clamp(RAD.sun * q[3], 6, 70), g = ctx.createRadialGradient(q[0], q[1], 0, q[0], q[1], r * 5);
+      g.addColorStop(0, "rgba(255,226,170,1)"); g.addColorStop(.18, "rgba(255,182,92,.6)"); g.addColorStop(1, "rgba(255,150,60,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(q[0], q[1], r * 5, 0, 7); ctx.fill(); label(q[0], q[1] + r + 6, "SUN", "#ffb65c", 6); return;
+    }
+    var p = it.p, par = p.parent && p.parent !== "sun" ? Q[p.parent] || P(W3[p.parent]) : null;
+    var sep = par ? Math.hypot(q[0] - par[0], q[1] - par[1]) : 999;
+    if (p.kind === "station") {
+      if (sep < 7) return;
+      var fict = !p.real; ctx.fillStyle = fict ? "#ffb65c" : "#cfd8e3"; ctx.fillRect(q[0] - 1.6, q[1] - 1.6, 3.2, 3.2);
+      if (sep > 20) label(q[0], q[1], SF.name(p.id).toUpperCase(), fict ? "#ffb65c" : "#a3abb6", 2, 9.5);
+      return;
+    }
+    if (p.kind === "moon" && sep < 5) return;
+    var col = hexRgb(SF.color(p.id)), r = bodyR(p) * q[3], min = p.kind === "planet" ? (RAD[p.id] > .04 ? 3.4 : 2.6) : 1.6;
+    r = clamp(r, min, 90);
+    sphere(q, r, col, lightDir(it.w, sunW), p.id === "saturn");
+    var big = p.kind === "planet", pri = big ? 5 : p.kind === "moon" ? 3 : 2;
+    if (big || sep > 18 || p.kind === "small") label(q[0] + r * .7, q[1], SF.name(p.id).toUpperCase(), big ? "#eef1f5" : "#a3abb6", pri, big ? 10.5 : 9.5);
+  });
+  return { W3: W3, Q: Q };
+}
+function placeQ(R, id) { return R.Q[id] || (R.W3[id] ? P(R.W3[id]) : null); }
+
+/* ---------- home scene ---------- */
+var TRAFFIC_LOOP = 26;
+function trafficPos(rp, i, jd, A, tSec) {
+  var span = rp.end - rp.start, per = TRAFFIC_LOOP * (rm() ? 4 : 1), out = [];
+  for (var k = 0; k < 7; k++) {
+    var ph = ((tSec - k * 0.09) / per + i / 3) % 1; if (ph < 0) ph += 1;
+    var tt = rp.start + ph * span, a = rp.at(tt), L = a.leg, g = a.phase === "flight" ? a.f : a.phase === "arrived" ? 1 : 0;
+    var fs = SF.system(L.from), ts = SF.system(L.to), p = a.p;
+    var nf = A[fs] || SF.pos(fs, jd), nt = A[ts] || SF.pos(ts, jd);
+    p = add(p, add(mul(sub(nf, SF.pos(fs, tt)), 1 - g), mul(sub(nt, SF.pos(ts, tt)), g)));
+    out.push({ w: D(p, A), phase: a.phase });
+  }
+  return out;
+}
+function selPoints(A, jd, s) {
+  s = s || S.sel; if (!s) return null;
+  return s.legs.map(function (L) { return L.local ? L.off.map(function (o) { return D(add(o, A[L.sys] || SF.pos(L.sys, jd)), A); }) : L.pts; });
+}
+function homeFrame(now, tSec) {
+  var jd = SF.sky(now).jd, A = anchors(jd), route = selPoints(A, jd), pool = S.pool ? selPoints(A, jd, S.pool) : null;
+  function frameRoute(rt, focus) {
+    var pts = [].concat.apply([], rt), lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+    pts.forEach(function (p) { for (var i = 0; i < 3; i++) { lo[i] = Math.min(lo[i], p[i]); hi[i] = Math.max(hi[i], p[i]); } });
+    var c = lerp(lo, hi, .5), ext = len(sub(hi, lo)), a = Math.atan2(c[1], c[0]);
+    return { t: c, d: Math.max(.38, ext * 1.55), az: (ext > 1 ? -1.1 : a + 1.0), el: ext > 1 ? .75 : .55, side: 1, focus: focus };
+  }
+  var sc = { jd: jd, A: A, route: route };
+  sc.shots = {
+    open: function () { return { t: [0, 0, 0], d: 14.5, az: -0.9 + (rm() ? 0 : tSec * 0.025), el: .55, side: 0 }; },
+    earth: function () { var e = A.earth, a = Math.atan2(e[1], e[0]); return { t: C(e), d: .5, az: a + .75, el: .32, side: 1, focus: "earth" }; },
+    fleet: function () { var e = A.earth, a = Math.atan2(e[1], e[0]); return { t: C(e), d: .8, az: a + 1.7, el: .85, side: 1, focus: "earth" }; },
+    realA: function () { var m = A.mars, a = Math.atan2(m[1], m[0]); return { t: C(m), d: 2.4, az: a + 1.25, el: .14, side: 1, focus: "mars" }; },
+    realB: function () { var m = A.saturn, a = Math.atan2(m[1], m[0]); return { t: C(m), d: 3.2, az: a + 1.05, el: .2, side: 1, focus: "saturn" }; },
+    score: function () { return { t: [0, 0, 0], d: 12.5, az: -1.57, el: 1.4, side: 1 }; },
+    desk: function () {
+      if (route && route.length) return frameRoute(route, S.sel.hail.from);
+      return { t: [0, 0, 0], d: 11.5, az: -1.15, el: .62, side: 1 };
+    },
+    pool: function () {
+      if (pool && pool.length) { var c = frameRoute(pool, null); c.d *= 1.3; c.el = .7; return c; }
+      var e = A.earth; return { t: C(e), d: .8, az: Math.atan2(e[1], e[0]) + 1, el: .7, side: 1 };
+    },
+    traffic: function () { return { t: [0, 0, 0], d: 9, az: .5 + (rm() ? 0 : tSec * 0.012), el: .95, side: 1 }; },
+  };
+  sc.draw = function () {
+    var R = drawSystem(jd, A, now);
+    // fleet parked at its places
+    var stack = {};
+    SF.SITE.fleet.forEach(function (f) {
+      var q = placeQ(R, f.parked_at.id); if (!q) return; var n = stack[f.parked_at.id] = (stack[f.parked_at.id] || 0) + 1;
+      var qq = [q[0] - 9 * n, q[1] + 9]; shipGlyph(qq, "#9cc3ff", [1, 0]);
+      if (S.cam && S.cam.d < 3) label(qq[0] - 4, qq[1] + 9, f.name, "#9cc3ff", 1, 9);
+    });
+    // open hails pulsing at pickup places
+    SF.SITE.hails.forEach(function (h, i) {
+      var q = placeQ(R, h.from.id); if (!q) return; var ph = rm() ? .45 : ((now / 1700) + i * .2) % 1, sel = S.selId === h.hail_id;
+      ctx.strokeStyle = "rgba(255,207,122," + (sel ? 1 : .9) * (1 - ph) + ")"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(q[0], q[1], 5 + ph * 14, 0, 7); ctx.stroke();
+      ctx.fillStyle = "#ffcf7a"; ctx.beginPath(); ctx.arc(q[0], q[1], 2.4, 0, 7); ctx.fill();
+      label(q[0] + 4, q[1] - 12, "BOOKING \u00b7 " + h.title.toUpperCase(), "#ffcf7a", sel ? 9 : 4, 9.5);
+    });
+    // sample traffic, labelled
+    RPS.forEach(function (rp, i) {
+      var tr = trafficPos(rp, i, jd, A, tSec), qs = tr.map(function (t) { return P(t.w); });
+      for (var k = qs.length - 1; k > 0; k--) { if (!qs[k] || !qs[k - 1]) continue; ctx.strokeStyle = "rgba(156,195,255," + (0.5 * (1 - k / qs.length)) + ")"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(qs[k][0], qs[k][1]); ctx.lineTo(qs[k - 1][0], qs[k - 1][1]); ctx.stroke(); }
+      if (qs[0]) { glowDot(qs[0], "rgba(156,195,255,.75)", 2.2); label(qs[0][0], qs[0][1] + 10, "SAMPLE TRAFFIC (NOT LIVE)", "#7f8a99", 1, 8.5); }
+    });
+    // concept: pooled flight, drawn only while its shot is on screen
+    if (pool && S.shotName === "pool") {
+      pool.forEach(function (pts) { poly(pts, "rgba(255,207,122,.95)", 2, [7, 4]); });
+      S.pool.stops.forEach(function (id, i) {
+        var q = placeQ(R, id); if (!q) return;
+        ctx.fillStyle = "#06080c"; ctx.strokeStyle = "#ffcf7a"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(q[0], q[1], 8, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#ffcf7a"; ctx.font = "600 10px 'Chakra Petch', Inter, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(i + 1), q[0], q[1] + .5); ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
+        label(q[0] + 6, q[1] - 14, "STOP " + (i + 1) + " \u00b7 " + SF.name(id).toUpperCase(), "#ffcf7a", 9, 9.5);
+      });
+    }
+    // the selected booking's par route
+    if (route && S.shotName !== "pool") {
+      route.forEach(function (pts, i) { var last = i === route.length - 1; poly(pts, last ? "rgba(255,207,122,.95)" : "rgba(156,195,255,.9)", last ? 2.2 : 1.6, last ? [] : [5, 4]); });
+      (S.sel.ghosts || []).forEach(function (g) { var q = P(g.w); if (!q) return; ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.arc(q[0], q[1], 8, 0, 7); ctx.stroke(); ctx.setLineDash([]); label(q[0] + 4, q[1], g.label.toUpperCase(), "#a3abb6", 7, 9); });
+      var q0 = placeQ(R, S.sel.hail.from); if (q0) brackets(q0[0], q0[1], 18, "rgba(255,207,122,.9)", "PICKUP \u00b7 " + SF.name(S.sel.hail.from).toUpperCase());
+    } else if (S.cam && S.cam.focus) {
+      var qf = placeQ(R, S.cam.focus); if (qf) brackets(qf[0], qf[1], clamp(bodyR({ id: S.cam.focus }) * qf[3] * 1.6, 16, 120), "rgba(238,241,245,.55)", SF.name(S.cam.focus).toUpperCase());
+    }
+    flushLabels();
+  };
+  return sc;
+}
+
+/* ---------- ride scene ---------- */
+function rideFrame(now, tSec) {
+  var R = S.ride, rp = R.rp, jd = S.rideJd == null ? rp.start : S.rideJd, a = rp.at(jd), sc = { jd: jd };
+  var local = rp.focus !== "sun", fpos = local ? SF.pos(rp.focus, jd) : null, A = local ? null : anchors(jd);
+  var carW = local ? Lf(sub(a.p, fpos)) : D(a.p, A);
+  var prog = (jd - rp.start) / (rp.end - rp.start);
+  sc.car = carW; sc.a = a;
+  var near = local ? 0 : (function () { var bd = 1e9; ANCH.forEach(function (id) { bd = Math.min(bd, len(sub(a.p, A[id]))); }); return bd; })();
+  var wide = R.wide;
+  sc.shots = {
+    rtitle: function () { return { t: wide.c, d: wide.d, az: .4 + (rm() ? 0 : tSec * .02), el: .5, side: 1 }; },
+    follow: function () {
+      var d = local ? 1.3 + .45 * len(carW) : .55 + 3.6 * smooth((Math.log(Math.max(near, 1e-6)) - Math.log(.02)) / (Math.log(1.2) - Math.log(.02)));
+      return { t: carW, d: d, az: .5 + prog * 1.5, el: S.overhead ? 1.38 : .36, side: 1 };
+    },
+    credits: function () { return { t: wide.c, d: wide.d * 1.15, az: .4 + (rm() ? 0 : tSec * .015), el: 1.05, side: 0 }; },
+  };
+  sc.draw = function () {
+    var Rq = null, sunW;
+    if (local) {
+      var fp = SF.place(rp.focus); sunW = Lf(mul(fpos, -1));
+      var items = [{ id: rp.focus, w: [0, 0, 0], p: fp }];
+      R.locals.forEach(function (p) {
+        var w = Lf(sub(SF.pos(p.id, jd), fpos)); items.push({ id: p.id, w: w, p: p });
+        if (p.kind === "moon") poly(R.rings[p.id], "rgba(255,255,255,.1)", 1);
+      });
+      items.forEach(function (it) { it.q = P(it.w); });
+      items.filter(function (it) { return it.q; }).sort(function (x, y) { return y.q[2] - x.q[2]; }).forEach(function (it) {
+        var p = it.p, q = it.q;
+        if (p.kind === "station") { var fict = !p.real; ctx.fillStyle = fict ? "#ffb65c" : "#cfd8e3"; ctx.fillRect(q[0] - 2, q[1] - 2, 4, 4); label(q[0], q[1], SF.name(p.id).toUpperCase(), fict ? "#ffb65c" : "#a3abb6", 3, 9.5); return; }
+        var r = clamp((p.id === rp.focus ? Math.sqrt(p.radius_km) / 100 : Math.max(.05, Math.sqrt(p.radius_km) / 100 * .6)) * q[3], 2.5, 400);
+        sphere(q, r, hexRgb(SF.color(p.id)), lightDir(it.w, sunW), false);
+        label(q[0] + r * .7, q[1] - (p.id === rp.focus ? r * .8 : 0), SF.name(p.id).toUpperCase(), "#eef1f5", 5, 10.5);
+      });
+    } else {
+      Rq = drawSystem(jd, A, now);
+    }
+    // route: flown part bright, the rest dim
+    var pts = R.path, done = [], rest = [];
+    pts.forEach(function (p) { (p.jd <= jd ? done : rest).push(p.w); });
+    if (done.length) rest.unshift(done[done.length - 1]);
+    rest.length > 1 && poly(rest, "rgba(156,195,255,.35)", 1.3, [4, 4]);
+    done.push(carW); done.length > 1 && poly(done, "rgba(255,207,122,.95)", 2.2);
+    R.evw.forEach(function (e) { var q = P(e.w); if (!q) return; ctx.fillStyle = e.kind === "checkpoint" ? "#ffcf7a" : e.kind === "incident" ? "#ff8f80" : "#9cc3ff"; ctx.beginPath(); ctx.arc(q[0], q[1], e.jd <= jd ? 3.2 : 2.2, 0, 7); ctx.fill(); });
+    var q = P(carW);
+    if (q) {
+      var ahead = rp.at(Math.min(rp.end, jd + (rp.end - rp.start) / 400)), aw = local ? Lf(sub(ahead.p, SF.pos(rp.focus, Math.min(rp.end, jd + (rp.end - rp.start) / 400)))) : D(ahead.p, A), qa = P(aw);
+      var dir = qa ? [qa[0] - q[0], qa[1] - q[1]] : [1, 0]; if (Math.hypot(dir[0], dir[1]) < .5) dir = [1, 0];
+      glowDot(q, "rgba(255,207,122,.8)", 3); shipGlyph([q[0], q[1]], "#ffcf7a", dir);
+      brackets(q[0], q[1], 20, "rgba(255,207,122,.9)", (R.ship + " \u00b7 " + a.phase).toUpperCase());
+    }
+    flushLabels();
+  };
+  return sc;
+}
+function prepRide(i) {
+  var rp = RPS[i], ride = SF.RIDES[i], local = rp.focus !== "sun", R = { i: i, rp: rp, ride: ride, ship: ride.record.score.car };
+  var n = 260, t0 = rp.legs[0].dep, t1 = rp.end, path = [];
+  for (var k = 0; k <= n; k++) {
+    var jd = t0 + (t1 - t0) * k / n, a = rp.at(jd);
+    path.push({ jd: jd, w: local ? Lf(sub(a.p, SF.pos(rp.focus, jd))) : D(a.p, anchors(jd)) });
+  }
+  R.path = path;
+  R.evw = rp.events.map(function (e) { var a = rp.at(e.jd); return { jd: e.jd, kind: e.kind, w: local ? Lf(sub(a.p, SF.pos(rp.focus, e.jd))) : D(a.p, anchors(e.jd)) }; });
+  if (local) {
+    R.locals = PLACES.filter(function (p) { return p.id !== rp.focus && SF.system(p.id) === rp.focus; });
+    R.rings = {};
+    R.locals.forEach(function (p) {
+      if (p.kind !== "moon") return;
+      R.rings[p.id] = moonRingRel(p.id, rp.start).map(Lf);
+    });
+  }
+  var lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+  path.forEach(function (p) { for (var j = 0; j < 3; j++) { lo[j] = Math.min(lo[j], p.w[j]); hi[j] = Math.max(hi[j], p.w[j]); } });
+  var ext = Math.max(.3, len(sub(hi, lo)));
+  R.wide = local ? { c: [0, 0, 0], d: Math.max(len(lo), len(hi), ext) * 2.4 } : { c: lerp(lo, hi, .5), d: ext * 1.5 };
+  return R;
+}
+
+/* ---------- shots from scroll ---------- */
+function desiredCam(sc) {
+  var root = S.view === "ride" ? $("ride") : $("home"), els = root.querySelectorAll("[data-shot]"), ih = innerHeight, ref = scrollY, list = [];
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i], r = el.getBoundingClientRect(), top = r.top + scrollY;
+    list.push({ el: el, y0: top - ih * .25, y1: top + Math.max(0, r.height - ih * .75), name: el.getAttribute("data-shot") });
+  }
+  if (!list.length) return sc.shots.open ? sc.shots.open() : sc.shots.rtitle();
+  var cur = list[0], cam;
+  if (ref <= list[0].y1) cam = sc.shots[list[0].name]();
+  else {
+    for (var k = 0; k < list.length; k++) {
+      var a = list[k], b = list[k + 1];
+      if (ref >= a.y0 && ref <= a.y1) { cur = a; cam = sc.shots[a.name](); break; }
+      if (!b) { cur = a; cam = sc.shots[a.name](); break; }
+      if (ref > a.y1 && ref < b.y0) {
+        var t = (ref - a.y1) / Math.max(1, b.y0 - a.y1);
+        if (rm()) { cur = t < .5 ? a : b; cam = sc.shots[cur.name](); }
+        else { cur = t < .5 ? a : b; cam = mixCam(sc.shots[a.name](), sc.shots[b.name](), ease(t)); }
+        break;
+      }
+    }
+  }
+  S.shotName = cur.name;
+  var nm = cur.el.getAttribute("data-name"), sb = cur.el.getAttribute("data-sub");
+  if (nm && nm !== S.slate) { S.slate = nm; $("slateName").innerHTML = nm; $("slateSub").textContent = sb || ""; }
+  return cam;
+}
+function smoothCam(c, d, k) {
+  if (!c) return d;
+  var m = mixCam(c, d, k); m.focus = d.focus; return m;
+}
+
+/* ---------- frame loop ---------- */
+var lastUi = 0;
+function frame(now) {
+  var dt = Math.min(.1, (now - S.last) / 1000); S.last = now;
+  var tSec = now / 1000;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = "#06080c"; ctx.fillRect(0, 0, W, H);
+  if (!S.ready) { setCam({ t: [0, 0, 0], d: 14, az: -0.9 + (rm() ? 0 : tSec * .025), el: .55, side: 0 }); drawStars(); requestAnimationFrame(frame); return; }
+  if (S.play) stepPlay(dt);
+  if (S.view === "ride" && S.ride) S.rideJd = jdFromScroll();
+  var sc = S.view === "ride" && S.ride ? rideFrame(Date.now(), tSec) : homeFrame(Date.now(), tSec);
+  var des = desiredCam(sc);
+  S.cam = rm() ? des : smoothCam(S.cam, des, 1 - Math.exp(-dt * 5));
+  setCam(S.cam);
+  $("scrim").style.opacity = String(clamp(S.cam.side, 0, 1));
+  drawStars();
+  try { sc.draw(); } catch (e) { if (!S.err) { S.err = 1; console.error(e); } }
+  if (now - lastUi > 120) { lastUi = now; ui(sc); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ---------- live text ---------- */
+var lastReady = {};
+function ui(sc) {
+  var s = SF.sky(), t = SF.iso(s.jd);
+  $("topClock").textContent = "Sky " + t + " \u00b7 S" + s.season;
+  if (S.view === "home") {
+    $("bigClock").textContent = t;
+    $("bigSeason").textContent = "Season " + s.season + " \u00b7 day " + fmt(s.day) + " of " + fmt(SF.SKY.len_days) + " \u00b7 1 real second = 1 sky day";
+    $("boardClock").textContent = "Sky " + t + " \u00b7 season " + s.season;
+    updateDesk();
+  } else if (S.ride) rideHud(sc);
+}
+
+/* ---------- onboarding ---------- */
+$("mcpUrl").value = SF.MCP_URL;
+function copyText(text, onOk, onFail) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(onOk, onFail);
+    else onFail();
+  } catch (e) { onFail(); }
+}
+$("copyUrl").addEventListener("click", function () {
+  copyText(SF.MCP_URL, function () { $("copyMsg").textContent = "Copied. Paste it into the connector's URL field."; },
+    function () { var i = $("mcpUrl"); i.focus(); i.select(); $("copyMsg").textContent = "Selected. Press Ctrl+C (or Cmd+C) to copy."; });
+});
+var SKILLS = ["planning", "weather", "pricing"], agent = { model: "", skills: [] };
+try { var sv = JSON.parse(store("starfare.c.agent") || "null"); if (sv && typeof sv === "object") agent = { model: String(sv.model || ""), skills: Array.isArray(sv.skills) ? sv.skills.map(String) : [] }; } catch (e) {}
+agent.skills.forEach(function (k) { if (SKILLS.indexOf(k) < 0) SKILLS.push(k); });
+$("model").value = agent.model;
+function renderSkills() {
+  $("skills").innerHTML = SKILLS.map(function (k) { return '<button type="button" class="chip" data-skill="' + esc(k) + '" aria-pressed="' + (agent.skills.indexOf(k) >= 0) + '">' + esc(k) + '</button>'; }).join("");
+}
+renderSkills();
+$("skills").addEventListener("click", function (e) {
+  var b = e.target.closest("[data-skill]"); if (!b) return; var k = b.getAttribute("data-skill"), i = agent.skills.indexOf(k);
+  i >= 0 ? agent.skills.splice(i, 1) : agent.skills.push(k); b.setAttribute("aria-pressed", String(i < 0));
+});
+function addSkill() { var v = $("customSkill").value.trim().slice(0, 32); if (!v) return; if (SKILLS.indexOf(v) < 0) SKILLS.push(v); if (agent.skills.indexOf(v) < 0) agent.skills.push(v); $("customSkill").value = ""; renderSkills(); }
+$("addSkill").addEventListener("click", addSkill);
+$("customSkill").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addSkill(); } });
+$("saveAgent").addEventListener("click", function () {
+  agent.model = $("model").value.trim().slice(0, 60);
+  store("starfare.c.agent", JSON.stringify(agent));
+  $("savedMsg").innerHTML = "Saved in this browser: <b>" + esc(agent.model || "no model") + "</b>" + (agent.skills.length ? " with " + esc(agent.skills.join(", ")) : "") +
+    ". <span class=\"tag unv\">Unverified</span> The real site saves this with your player tag (not built yet).";
+});
+(function () {
+  var sum = 0; $("parts").innerHTML = SF.SCORE_PARTS.map(function (p) { sum += p[2];
+    return '<div class="part"><span>' + esc(p[1]) + '</span><span class="n">' + p[2] + '</span><div class="bar"><i style="width:' + (p[2] / 20 * 100) + '%"></i></div></div>'; }).join("");
+  $("partsSum").textContent = sum;
+})();
+
+/* ---------- desk ---------- */
+function chip(id) { return SF.tag(id) === "real" ? '<span class="tag real">Real</span>' : '<span class="tag fict">Fictional</span>'; }
+// Player-facing words: flight, booking, passenger, Starseeker. Data prose from the engine and sample-data.js still says
+// ride, hail, rider and car, so it goes through words() for display. Tool names (take_hail, hail_id) have no word break and stay.
+function words(s) {
+  var M = { "ride leg": "passenger leg", rides: "flights", ride: "flight", riders: "passengers", rider: "passenger", hails: "bookings", hail: "booking", cars: SF.SHIPS, car: SF.SHIP };
+  return String(s == null ? "" : s).replace(/\b(ride leg|rides|ride|riders|rider|hails|hail|cars|car)\b/gi, function (m) {
+    var r = M[m.toLowerCase()]; return m.charAt(0) === m.charAt(0).toUpperCase() ? r.charAt(0).toUpperCase() + r.slice(1) : r;
+  });
+}
+var ONEBOOK = '<div><span>Bookings aboard</span><span>One booking on this flight; pooling not built yet</span></div>';
+function legWord(kind) { return kind === "ride" ? "passenger" : kind; }
+function manifestHtml(rider, extra) {
+  return '<div class="mani"><span class="caps">Passenger manifest &middot; simulated</span>' +
+    '<div><span>Named passenger</span><span>' + esc(rider || "not in the data") + '</span></div>' +
+    '<div><span>Party size</span><span class="ph">not in the data yet</span></div>' +
+    '<div><span>Seats</span><span class="ph">not set yet</span></div>' + (extra || "") + '</div>';
+}
+function flap(str, old) {
+  return str.split("").map(function (c, i) { var ch = old != null && old.charAt(i) !== c ? " flip" : "";
+    return c === " " ? '<br>' : '<span class="fl' + ch + '">' + esc(c) + '</span>'; }).join("");
+}
+function shipName(id) { return SF.SHIP + " " + id; }
+function buildDesk() {
+  var d = SF.desk();
+  $("rows").innerHTML = d.map(function (h) {
+    lastReady[h.id] = SF.iso(h.ready_jd);
+    return '<button class="brow" type="button" data-hail="' + esc(h.id) + '" aria-pressed="false">' +
+      '<span class="c-f"><span class="code">' + esc(h.id) + '</span><span class="ttl">' + esc(h.title) + '</span></span>' +
+      '<span class="c-o rider">' + esc(h.rider) + '<span class="ph">Party size: not in the data yet</span><span class="ph">Seats: not set yet</span></span>' +
+      '<span class="c-p route">' + esc(SF.name(h.from)) + ' ' + chip(h.from) + ' <span class="arr">&rarr;</span> ' + esc(SF.name(h.to)) + ' ' + chip(h.to) + '</span>' +
+      '<span class="c-r num" data-ready="' + esc(h.id) + '">' + flap(lastReady[h.id]) + '</span>' +
+      '<span class="c-k kind">' + esc(h.kind) + '<span class="st' + (h.open ? "" : " no") + '" data-st="' + esc(h.id) + '">' + (h.open ? "Open" : "Closed") + '</span></span></button>';
+  }).join("");
+}
+function updateDesk() {
+  if (!S.ready) return;
+  SF.desk().forEach(function (h) {
+    var s = SF.iso(h.ready_jd); if (s === lastReady[h.id]) return;
+    var el = document.querySelector('[data-ready="' + h.id + '"]'); if (el) el.innerHTML = flap(s, lastReady[h.id]);
+    var st = document.querySelector('[data-st="' + h.id + '"]'); if (st) { st.textContent = h.open ? "Open" : "Closed"; st.className = "st" + (h.open ? "" : " no"); }
+    lastReady[h.id] = s;
+  });
+}
+$("rows").addEventListener("click", function (e) { var b = e.target.closest("[data-hail]"); if (b) select(b.getAttribute("data-hail")); });
+function select(id) {
+  S.selId = id; S.sel = null;
+  [].forEach.call(document.querySelectorAll("[data-hail]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-hail") === id)); });
+  $("plan").innerHTML = '<div class="glass"><p class="planning">Engine planning&hellip;</p><p class="muted">The engine flies the par plan for this booking with this season\'s hazards. Long hauls take a second or two.</p></div>';
+  requestAnimationFrame(function () { setTimeout(function () {
+    if (S.selId !== id) return; var p;
+    try { p = SF.plan(id); } catch (err) { $("plan").innerHTML = '<div class="glass"><p>The engine could not plan this booking: ' + esc(err.message) + '</p></div>'; return; }
+    if (S.selId !== id) return;
+    if (p.closed) { $("plan").innerHTML = '<div class="glass"><p class="caps">' + esc(p.hail.title) + '</p><p>' + esc(words(p.closed)) + '</p>' + ctaHtml(id) + '</div>'; return; }
+    S.sel = buildSel(p);
+    $("plan").innerHTML = planHtml(p);
+    if (innerWidth < 760) { var w = document.querySelector(".window"); if (w) w.scrollIntoView({ behavior: rm() ? "auto" : "smooth", block: "start" }); }
+  }, 30); });
+}
+function buildSel(p) {
+  var ghosts = [], legs = [];
+  p.par.legs.forEach(function (L) {
+    var n = L.arc.length; if (!n) return; var fs = SF.system(L.from), ts = SF.system(L.to);
+    if (L.local && fs === ts) legs.push({ local: true, sys: fs, off: L.arc.map(function (q, i) { return sub(q, SF.pos(fs, L.dep_jd + (L.arr_jd - L.dep_jd) * i / Math.max(1, n - 1))); }) });
+    else {
+      legs.push({ local: false, pts: L.arc.map(function (q, i) { return D(q, anchors(L.dep_jd + (L.arr_jd - L.dep_jd) * i / Math.max(1, n - 1))); }) });
+      ghosts.push({ w: C(SF.pos(fs, L.dep_jd)), label: SF.name(fs) + " at departure" }, { w: C(SF.pos(ts, L.arr_jd)), label: SF.name(ts) + " at arrival" });
+    }
+  });
+  return { hail: p.hail, legs: legs, ghosts: ghosts };
+}
+function ctaHtml(id) {
+  var call = 'take_hail {"hail_id":"' + id + '"}';
+  return '<div class="cta"><h3>Ask your agent to take this booking</h3><p class="muted">Only an agent can dispatch. Paste this to Grok, or let it find the booking itself:</p>' +
+    '<div class="code-line"><code id="takeCode">' + esc(call) + '</code><button class="btn sm" type="button" data-copy-call="' + esc(call) + '">Copy</button><span class="muted" id="callMsg" role="status"></span></div>' +
+    '<a class="btn pri" href="#intro" data-nav>Connect your agent</a></div>';
+}
+function planHtml(p) {
+  var h = p.hail, parName = (p.cars.filter(function (c) { return c.par; })[0] || {}).name || p.par.car;
+  var cards = p.cars.map(function (c) {
+    var busy = c.busy_until_jd && c.busy_until_jd > h.ready_jd ? "Busy until " + SF.iso(c.busy_until_jd) : "Free by the ready time", L = c.pickup;
+    return '<div class="card' + (c.par ? " is-par" : "") + '">' + (c.par ? '<span class="tag par">Par pick</span>' : "") +
+      '<div class="art">' + SF.SHIP_SVG + '</div><p class="caps" style="margin:0">' + esc(SF.SHIP) + '</p><h4>' + esc(c.name) + '</h4>' +
+      '<div class="muted" style="font-size:13px">Parked at ' + esc(SF.name(c.at)) + ' ' + chip(c.at) + '</div>' +
+      '<dl class="kv"><dt>Status</dt><dd>' + esc(busy) + '</dd><dt>Seats</dt><dd><span class="ph">not set yet</span></dd>' +
+      (L ? '<dt>Pickup departs</dt><dd>' + SF.iso(L.dep_jd) + '</dd><dt>Reaches passenger</dt><dd>' + SF.iso(L.arr_jd) + '</dd><dt>Energy</dt><dd>' + fmt(L.kwh) + ' kWh</dd><dt>Pickup fare</dt><dd>$' + fmt(L.fare, 2) + '</dd>' + (L.local ? '<dt>Leg</dt><dd>Local hop</dd>' : "")
+         : '<dt>Pickup</dt><dd>No pickup leg before the season ends</dd>') + '</dl></div>';
+  }).join("");
+  return '<div class="glass"><p class="caps">Selected booking &middot;' + esc(h.kind) + '</p><h3 class="disp" style="font-size:clamp(24px,4vw,32px);margin:6px 0 8px">' + esc(h.title) + '</h3>' +
+    '<p class="muted">' + esc(words(h.blurb)) + '</p>' + manifestHtml(h.rider) +
+    '<p style="margin:10px 0 0"><span class="tag sim">Engine par plan, simulated</span></p>' +
+    '<div class="parsum"><div><span class="caps">Passenger ready</span><b>' + SF.iso(h.ready_jd) + '</b></div><div><span class="caps">Par arrival</span><b>' + SF.iso(p.par.arr_jd) + '</b></div>' +
+    '<div><span class="caps">Arrive by</span><b>' + SF.iso(p.arrive_by_jd) + '</b></div><div><span class="caps">Par energy</span><b>' + fmt(p.par.kwh) + ' kWh</b></div>' +
+    '<div><span class="caps">Par ' + esc(SF.SHIP) + '</span><b>' + esc(parName) + '</b></div></div>' +
+    '<h3 class="caps" style="margin:0 0 10px;color:var(--ink-2)">Choose your ' + esc(SF.SHIP) + ' &middot; engine par plan, simulated</h3><div class="cards">' + cards + '</div>' +
+    '<p class="muted" style="margin-top:12px">The par route is drawn on the sky: pickup leg dashed blue, passenger leg gold. Not to scale.</p>' + ctaHtml(h.id) + '</div>';
+}
+document.addEventListener("click", function (e) {
+  var b = e.target.closest("[data-copy-call]"); if (!b) return;
+  var call = b.getAttribute("data-copy-call");
+  copyText(call, function () { var m = $("callMsg"); if (m) m.textContent = "Copied."; }, function () {
+    var c = $("takeCode"); if (c) { var r = document.createRange(); r.selectNodeContents(c); var s = getSelection(); s.removeAllRanges(); s.addRange(r); } var m = $("callMsg"); if (m) m.textContent = "Selected. Press Ctrl+C to copy.";
+  });
+});
+
+/* ---------- recent flights ---------- */
+function hailOf(rec) { return SF.SITE.hails.filter(function (h) { return h.hail_id === rec.hail_id; })[0] || { title: rec.hail_id, rider: "" }; }
+function buildFlights() {
+  $("flist").innerHTML = SF.RIDES.map(function (r, i) {
+    var rec = r.record, h = hailOf(rec), sc = rec.score;
+    return '<a class="frow" href="#flight' + (i + 1) + '" data-nav><span class="ic">' + SF.SHIP_TOP_SVG + '</span><span class="mid"><b>' + esc(h.title) + '</b>' +
+      '<span>' + esc(SF.name(rec.log.from)) + ' &rarr; ' + esc(SF.name(rec.log.to)) + ' &middot; ' + esc(SF.SHIP) + ' ' + esc(sc.car) + ' &middot; arrived ' + esc(sc.arrive) + ' &middot; ' + esc(words(r.label)) + ' &middot; one booking' + '</span></span>' +
+      '<span class="sc">' + sc.total + '<small>/ ' + sc.out_of + ' &middot; sample</small></span></a>';
+  }).join("");
+}
+
+/* ---------- ride page ---------- */
+function rideHtml(i) {
+  var r = SF.RIDES[i], rec = r.record, sc = rec.score, log = rec.log, h = hailOf(rec);
+  return '<section class="shot rtitle" data-shot="rtitle" data-name="Flight log ' + (i + 1) + ' &middot; Establishing shot" data-sub="' + esc(h.title) + '"><div class="col glass">' +
+    '<p class="caps">Flight log &middot; sample flight ' + (i + 1) + ' of ' + SF.RIDES.length + ' &middot; ' + esc(words(r.label)) + '</p>' +
+    '<h1 class="disp">' + esc(h.title) + '</h1>' +
+    '<div class="hero-ship">' + SF.SHIP_SVG + '</div>' +
+    '<p class="lead" style="margin-bottom:6px">' + esc(h.rider) + '</p>' + manifestHtml(h.rider, ONEBOOK) +
+    '<p>' + esc(SF.name(log.from)) + ' ' + chip(log.from) + ' <span class="arr">&rarr;</span> ' + esc(SF.name(log.to)) + ' ' + chip(log.to) + '</p>' +
+    '<div class="facts"><span>' + esc(SF.SHIP) + ' <b>' + esc(sc.car) + '</b></span><span>Season <b>' + esc(rec.season) + '</b></span><span>Pickup <b class="num">' + esc(sc.pickup) + '</b></span><span>Arrived <b class="num">' + esc(sc.arrive) + '</b></span></div>' +
+    '<p class="bigscore">' + sc.total + ' <small>/ ' + sc.out_of + '</small> &nbsp;<span class="tag sim">Simulated</span></p>' +
+    '<p class="warn">Sample flight flown by a sample bot, not a player.</p>' +
+    '<div class="acts" style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:14px"><button class="btn pri" type="button" data-play>Play the flight</button><a class="link" href="#" data-credits>Skip to the receipt</a></div>' +
+    '<p class="muted" style="margin-top:14px">Scroll to fly it. The page scroll is the sky clock.</p></div></section>' +
+    '<section class="track" id="track" data-shot="follow" data-name="Flight log ' + (i + 1) + ' &middot; Chase" data-sub="Scroll scrubs sky time">' +
+    '<div class="rhud"><div class="in"><div class="row1"><span class="clk" id="rClock">--</span><span class="ph" id="rPhase">--</span><span class="leg" id="rLeg"></span></div>' +
+    '<div class="leg" id="rDist" style="margin-top:2px"></div>' +
+    '<div class="ctl"><button class="btn sm pri" type="button" data-play id="playBtn">Play</button>' +
+    '<input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Scrub the replay">' +
+    '<span class="seg" role="group" aria-label="Speed"><button type="button" data-speed="0.5" aria-pressed="false">0.5&times;</button><button type="button" data-speed="1" aria-pressed="true">1&times;</button><button type="button" data-speed="2" aria-pressed="false">2&times;</button></span>' +
+    '<span class="seg" role="group" aria-label="Camera"><button type="button" data-camm="chase" aria-pressed="true">Chase</button><button type="button" data-camm="over" aria-pressed="false">Overhead</button></span></div></div></div>' +
+    '<div id="evcards"></div></section>' +
+    creditsHtml(i);
+}
+function evCards() {
+  var R = S.ride; $("evcards").innerHTML = R.keys.filter(function (k) { return k.ev != null; }).map(function (k) {
+    var e = R.rp.events[k.ev];
+    return '<div class="evc ' + e.kind + '" style="top:' + Math.round(k.s + innerHeight * .5) + 'px"><div class="in"><span class="caps">' + esc(e.kind) + ' &middot; <span class="num">' + SF.iso(e.jd) + '</span></span>' +
+      '<h4>' + esc(words(e.title)) + '</h4><p>' + esc(words(e.text)) + '</p></div></div>';
+  }).join("");
+}
+function layoutTrack() {
+  var R = S.ride; if (!R || !$("track")) return;
+  var rp = R.rp, ih = innerHeight, keys = [{ jd: rp.start }];
+  rp.events.forEach(function (e, i) { keys.push({ jd: e.jd, ev: i }); });
+  keys.push({ jd: rp.end });
+  var base = ih * 3.4, span = rp.end - rp.start, s = 0; keys[0].s = 0;
+  for (var i = 1; i < keys.length; i++) { s += Math.max(ih * .42, (keys[i].jd - keys[i - 1].jd) / span * base); keys[i].s = s; }
+  R.keys = keys; R.total = s;
+  $("track").style.height = Math.round(s + ih * 1.1) + "px";
+  evCards();
+}
+function trackTop() { var t = $("track"); return t ? t.getBoundingClientRect().top + scrollY : 0; }
+function jdFromScroll() {
+  var R = S.ride; if (!R.keys) return R.rp.start;
+  var y = clamp(scrollY - trackTop(), 0, R.total), k = R.keys;
+  for (var i = 1; i < k.length; i++) if (y <= k[i].s) { var f = (y - k[i - 1].s) / Math.max(1e-9, k[i].s - k[i - 1].s); return k[i - 1].jd + (k[i].jd - k[i - 1].jd) * f; }
+  return k[k.length - 1].jd;
+}
+var scrubbing = false;
+function rideHud(sc) {
+  var R = S.ride, a = sc.a, jd = sc.jd, L = a.leg;
+  $("rClock").textContent = SF.iso(jd);
+  var ph = a.phase === "flight" ? "In flight" : a.phase === "parked" ? "Parked, before the pickup leg" : a.phase === "dwell" ? "At " + SF.name(L.from) + ", passenger boarding" : "Arrived";
+  $("rPhase").textContent = ph;
+  $("rLeg").textContent = (L.kind === "pickup" ? "Pickup leg" : "Passenger leg") + ": " + SF.name(L.from) + " \u2192 " + SF.name(L.to);
+  var dest = SF.pos(L.to, jd), km = len(sub(a.p, dest)) * AU;
+  $("rDist").textContent = a.phase === "arrived" ? "At " + SF.name(L.to) + " \u00b7 simulated flight" : (km > 1e7 ? fmt(km / AU, 2) + " AU" : fmt(km) + " km") + " to " + SF.name(L.to) + " (from engine positions) \u00b7 simulated flight";
+  if (!scrubbing) $("scrub").value = String(Math.round(clamp((scrollY - trackTop()) / R.total, 0, 1) * 1000));
+  $("playBtn").textContent = S.play ? "Pause" : "Play";
+}
+function creditsHtml(i) {
+  var r = SF.RIDES[i], rec = r.record, sc = rec.score, log = rec.log, h = hailOf(rec);
+  function row(a, b) { return '<div class="crow"><span>' + a + '</span><span>' + b + '</span></div>'; }
+  var g = function (x) { return Number.isInteger(x) ? fmt(x) : fmt(x, 1); };
+  var legs = r.legs.map(function (L, k) {
+    var fl = (log.flown || [])[k], ok = L.refly && L.refly.result === "PASS";
+    var refly = ok ? '<span class="ok">PASS</span>, miss ' + fmt(L.refly.final_miss_km) + ' km' : /local/.test(L.refly && L.refly.result || "") ? "Local hop (not re-flown)" : esc(L.refly && L.refly.result || "");
+    return '<div class="cblock"><div class="caps">' + esc(L.leg_id) + ' &middot; ' + esc(legWord(L.kind)) + ' leg &middot; ' + esc(L.from) + ' &rarr; ' + esc(L.to) + '</div>' +
+      row("Departs", esc(L.depart)) + row("Arrives", esc(L.arrive)) + row("Duration", SF.dur(L.tof_days)) + row("Energy", fmt(L.battery_kwh) + " kWh") + row("Burn", fmt(L.burn_total_kms, 3) + " km/s") +
+      row("Fare", "$" + fmt(L.fare_usd, 2)) + row("Re-fly check", refly) +
+      (fl ? row("As flown", esc(fl.depart) + " &rarr; " + esc(fl.arrive)) : "") + (L.note ? '<p class="note">' + esc(words(L.note)) + '</p>' : "") + '</div>';
+  }).join("");
+  var cps = (log.checkpoints || []).map(function (c) {
+    return '<div class="cblock"><div class="caps">Checkpoint ' + c.n + ' &middot; ' + esc(c.kind.replace("_", " ")) + ' &middot; ' + esc(c.at) + '</div>' +
+      '<p style="font-size:14px">At ' + esc(SF.name(c.place)) + ' on the ' + esc(legWord(c.leg)) + ' leg. Cause: ' + esc(c.cause.replace("_", " ")) + '.</p>' +
+      '<p style="font-size:14px">Agent chose: <b>' + esc(c.decision.action) + '</b></p>' +
+      c.options_hindsight.map(function (o) { var best = o.option === c.best;
+        return '<div class="opt"><span>' + esc(o.option) + '</span><span>' + (best ? '<span class="tag real">Best in hindsight</span>' : "") + '</span><span class="meta">' + fmt(o.used_kwh) + ' kWh &middot; arrives ' + esc(o.arrive) + '</span></div>'; }).join("") + '</div>';
+  }).join("") || '<p class="muted">No checkpoints on this flight.</p>';
+  var inc = sc.incidents.map(function (x) {
+    return '<div class="cblock"><div class="caps">' + esc(x.kind.replace("_", " ")) + ' &middot; ' + esc(x.place) + ' &middot; ' + esc(x.at) + '</div><p style="font-size:14px;margin:0">' + esc(words(x.note)) + '</p>' +
+      row("Leg", esc(legWord(x.leg))) + row("Hours lost", fmt(x.hours, 1)) + row("Extra energy", fmt(x.kwh) + " kWh") + '</div>';
+  }).join("") || '<p class="muted">No incidents.</p>';
+  var parts = sc.parts.map(function (p) {
+    return '<div class="sbar"><div class="top2"><span>' + esc(p.label) + '</span><b>' + g(p.got) + ' / ' + p.max + '</b></div><div class="tr" style="width:' + (p.max / 20 * 100) + '%"><i style="width:' + (p.got / p.max * 100) + '%"></i></div><div class="nt">' + esc(words(p.note)) + '</div></div>';
+  }).join("");
+  var stops = '<ol class="pstops">' + [r.legs[0].from].concat(r.legs.map(function (L) { return L.to; })).map(function (nm, k) {
+    var role = k === 0 ? "Starseeker parked" : k === r.legs.length ? "Drop-off" : "Pickup";
+    return '<li><span class="n">' + (k + 1) + '</span><b>' + esc(nm) + '</b> <span class="muted">&middot; ' + role + '</span></li>'; }).join("") + '</ol>';
+  var mx = Math.max(sc.used_kwh, sc.par_kwh);
+  var fc = (log.forecasts || []).map(function (f) {
+    return row(esc(f.tool), f.tool === "check_pad" ? esc(SF.name(f.place)) + ", " + fmt(f.hours) + " h from " + esc(f.from) + ": up to " + fmt(f.max_booked) + " of " + fmt(f.berths) + " berths booked"
+      : f.tool === "space_weather" ? fmt(f.days) + " days from " + esc(f.from) + ": flare odds up to " + fmt(f.max_odds, 2) : esc(JSON.stringify(f)));
+  }).join("");
+  return '<section class="credits" id="credits" data-shot="credits" data-name="Flight log ' + (i + 1) + ' &middot; End credits" data-sub="The receipt"><div class="roll">' +
+    '<p class="caps">End credits &middot; the receipt</p><h2 class="disp">' + esc(h.title) + '</h2>' +
+    '<p style="color:var(--ink-2)">' + esc(h.rider) + '</p>' +
+    '<p>' + esc(SF.name(log.from)) + ' ' + chip(log.from) + ' &rarr; ' + esc(SF.name(log.to)) + ' ' + chip(log.to) + '</p>' + manifestHtml(h.rider, ONEBOOK) +
+    '<p class="bigscore" style="margin:16px 0 6px">' + sc.total + ' <small>/ ' + sc.out_of + '</small></p>' +
+    '<p><span class="tag sim">Simulated</span> &nbsp;<span class="muted">' + esc(SF.SHIP) + ' ' + esc(sc.car) + ' &middot; season ' + esc(rec.season) + '</span></p>' +
+    '<p class="warn">Sample flight flown by a sample bot, not a player.</p>' +
+    '<h3>Stops</h3>' + stops +
+    '<h3>The promise</h3>' + row("Quoted arrival", esc(sc.promised_arrival)) + row("Actual arrival", esc(sc.arrive)) + row("Arrive by", esc(sc.arrive_by)) + row("Slip", fmt(sc.promise_slip_hours, 1) + " h") + row("Fare", "$" + fmt(sc.fare_usd, 2)) +
+    '<div class="ebar" style="text-align:left;margin-top:14px"><div class="crow" style="border:0"><span>Energy used</span><span>' + fmt(sc.used_kwh) + ' kWh</span></div><div class="tr"><i style="width:' + (sc.used_kwh / mx * 100) + '%;background:var(--me)"></i></div>' +
+    '<div class="crow" style="border:0"><span>Par</span><span>' + fmt(sc.par_kwh) + ' kWh</span></div><div class="tr"><i style="width:' + (sc.par_kwh / mx * 100) + '%;background:var(--ride)"></i></div></div>' +
+    '<h3>Score</h3>' + parts +
+    '<h3>Legs</h3><p class="muted">As dispatched, with the flown times. Not to scale on the map.</p>' + legs +
+    '<h3>Checkpoints</h3>' + cps +
+    '<h3>Incidents</h3>' + inc +
+    (fc ? '<h3>What the agent checked first</h3>' + fc : "") +
+    '<h3>Raw log</h3><p><code>/rides/' + esc(rec.run_id) + '.json</code></p><p class="muted">On the real site this path serves the full run log.</p>' +
+    '<div class="endnav"><a class="btn" href="#sky" data-nav>Back to the sky</a><a class="btn pri" href="#flight' + ((i + 1) % SF.RIDES.length + 1) + '" data-nav>Next flight log</a></div>' +
+    '</div></section>';
+}
+function showRide(i) {
+  stopPlay();
+  S.view = "ride"; $("home").hidden = true; var m = $("ride"); m.hidden = false; S.slate = "";
+  if (!S.ready) { m.innerHTML = '<section class="shot rtitle"><div class="col glass"><p class="planning">Loading the engine (511 KB)</p></div></section>'; S.ride = null; return; }
+  S.ride = prepRide(i); S.rideJd = S.ride.rp.start; S.cam = null;
+  m.innerHTML = rideHtml(i); layoutTrack();
+  $("hudFrame").textContent = S.ride.rp.focus === "sun" ? "Distances compressed (square root)" : "Centred on " + SF.name(S.ride.rp.focus) + ", km, square-root compressed";
+  scrollTo(0, 0);
+}
+function showHome() {
+  stopPlay();
+  if (S.view !== "home") { S.view = "home"; $("ride").hidden = true; $("ride").innerHTML = ""; $("home").hidden = false; S.ride = null; S.cam = null; S.slate = ""; $("hudFrame").textContent = "Distances compressed"; return true; }
+  return false;
+}
+/* play: auto-scroll through the track (30 s at 1x); reduced motion steps from event to event */
+function startPlay() {
+  var R = S.ride; if (!R) return; var top = trackTop();
+  if (scrollY < top - 2 || scrollY >= top + R.total - 2) scrollTo(0, top);
+  S.play = { acc: 0, y: scrollY };
+}
+function stopPlay() { S.play = null; }
+function stepPlay(dt) {
+  var R = S.ride; if (!R) return stopPlay(); var top = trackTop(), end = top + R.total;
+  if (rm()) {
+    S.play.acc += dt; if (S.play.acc < 1.8 / S.speed) return; S.play.acc = 0;
+    var y = scrollY - top, nx = R.keys.filter(function (k) { return k.s > y + 2; })[0];
+    if (!nx) return stopPlay(); scrollTo(0, top + nx.s); return;
+  }
+  S.play.y = Math.max(S.play.y, scrollY) + R.total / (30 / S.speed) * dt;
+  if (S.play.y >= end) { scrollTo(0, end); return stopPlay(); }
+  scrollTo(0, S.play.y);
+}
+["wheel", "touchstart"].forEach(function (ev) { addEventListener(ev, function () { if (S.play) stopPlay(); }, { passive: true }); });
+addEventListener("keydown", function (e) { if (S.play && /^(Arrow|Page|Home|End| )/.test(e.key)) stopPlay(); });
+document.addEventListener("click", function (e) {
+  var t = e.target;
+  if (t.closest("[data-play]")) { S.play ? stopPlay() : startPlay(); return; }
+  var sp = t.closest("[data-speed]"); if (sp) { S.speed = +sp.getAttribute("data-speed"); [].forEach.call(document.querySelectorAll("[data-speed]"), function (b) { b.setAttribute("aria-pressed", String(b === sp)); }); return; }
+  var cm = t.closest("[data-camm]"); if (cm) { S.overhead = cm.getAttribute("data-camm") === "over"; [].forEach.call(document.querySelectorAll("[data-camm]"), function (b) { b.setAttribute("aria-pressed", String(b === cm)); }); return; }
+  if (t.closest("[data-credits]")) { e.preventDefault(); stopPlay(); var c = $("credits"); if (c) c.scrollIntoView({ behavior: rm() ? "auto" : "smooth" }); }
+});
+document.addEventListener("input", function (e) {
+  if (e.target.id !== "scrub" || !S.ride) return; stopPlay(); scrubbing = true;
+  scrollTo(0, trackTop() + S.ride.total * (+e.target.value / 1000));
+});
+document.addEventListener("change", function (e) { if (e.target.id === "scrub") scrubbing = false; });
+
+/* ---------- routing ---------- */
+function go(el, smooth) { if (!el) return; var y = el.getBoundingClientRect().top + scrollY - 56; scrollTo({ top: Math.max(0, y), behavior: smooth && !rm() ? "smooth" : "auto" }); }
+function route(h, smooth) {
+  h = h || location.hash || ""; var m = /^#(?:flight|ride)([1-9])$/.exec(h);
+  if (m && +m[1] <= SF.RIDES.length) { showRide(+m[1] - 1); return; }
+  var changed = showHome();
+  var el = h === "#intro" ? $("ch1") : h === "#sky" ? $("sky") : h === "#flights" ? $("flights") : h === "#top" ? $("top") : null;
+  if (h === "#top") { scrollTo({ top: 0, behavior: smooth && !changed && !rm() ? "smooth" : "auto" }); return; }
+  if (el) go(el, smooth && !changed);
+}
+document.addEventListener("click", function (e) {
+  var a = e.target.closest("a[data-nav]"); if (!a) return; var h = a.getAttribute("href"); if (!h || h.charAt(0) !== "#") return;
+  e.preventDefault();
+  try { history.pushState(null, "", h); } catch (err) {}
+  route(h, true);
+});
+addEventListener("popstate", function () { route(location.hash, false); });
+addEventListener("hashchange", function () { route(location.hash, false); });
+try { history.scrollRestoration = "manual"; } catch (e) {}
+
+function firstRoute() {
+  if (location.hash) { route(location.hash, false); return; }
+  if (store("starfare.c.seen")) route("#sky", false); else { store("starfare.c.seen", "1"); scrollTo(0, 0); }
+}
+
+/* ---------- concept: pooled flight ---------- */
+// A sketch of one Starseeker carrying two bookings with a stop in between. The stops are picked by hand; each leg
+// is planned live by the engine from the current sky time. Boarding time at the middle stop is not modelled.
+var POOL_STOPS = ["orbital-depot", "iss", "lunar-data-center"];
+function buildPool() {
+  var t = Math.floor(SF.sky().jd) + 0.5, at = t, legs = [];
+  try {
+    for (var i = 0; i < POOL_STOPS.length - 1; i++) {
+      var p = SF.R.planLeg(POOL_STOPS[i], POOL_STOPS[i + 1], t, "energy", SF.SEASON_END);
+      legs.push({ from: POOL_STOPS[i], to: POOL_STOPS[i + 1], dep_jd: p.dep_jd, arr_jd: p.arr_jd, kwh: p.battery.energy_kwh, fare: p.fare.total_usd, local: !!p.local, arc: p.arc_au || [], tof: p.tof_days });
+      t = p.arr_jd;
+    }
+  } catch (e) { $("poolStops").innerHTML = '<p class="muted">The engine could not plan the sketch legs at this sky time (' + esc(e.message) + ').</p>'; return; }
+  var sel = buildSel({ par: { legs: legs }, hail: null });
+  S.pool = { stops: POOL_STOPS, legs: sel.legs };
+  var roles = ["Booking A boards", "Booking A drops off, booking B boards", "Booking B drops off"];
+  $("poolStops").innerHTML = '<ol class="pstops">' + POOL_STOPS.map(function (id, k) {
+    var L = legs[k];
+    return '<li><span class="n">' + (k + 1) + '</span><b>' + esc(SF.name(id)) + '</b> ' + chip(id) + ' <span class="muted">&middot; ' + roles[k] + ' (sketch)</span>' +
+      (L ? '<span class="leg">Leg ' + (k + 1) + ': departs ' + SF.iso(L.dep_jd) + ', arrives ' + SF.iso(L.arr_jd) + ' (' + SF.dur(L.tof) + ') &middot; ' + fmt(L.kwh) + ' kWh &middot; $' + fmt(L.fare, 2) + '</span>' : "") + '</li>';
+  }).join("") + '</ol>' +
+    '<p class="muted" style="font-size:12.5px">Planned by the engine from sky ' + SF.iso(at) + '. No boarding time is modelled at stop 2. Party sizes and seats: not in the data yet. Route drawn on the sky, not to scale.</p>';
+}
+
+/* ---------- start ---------- */
+function start() {
+  PLACES = SF.E.PLACES.slice();
+  RPS = SF.RIDES.map(function (r) { return SF.replay(r); });
+  $("fictNames").textContent = PLACES.filter(function (p) { return !p.real; }).map(function (p) { return SF.name(p.id); }).join(", ");
+  buildDesk(); buildFlights(); buildPool();
+  S.ready = true; $("loading").hidden = true;
+  if (S.view === "ride" || /^#(flight|ride)/.test(location.hash)) route(location.hash, false);
+}
+var wasHash = location.hash;
+if (/^#(flight|ride)/.test(wasHash)) route(wasHash, false);
+SF.loadEngine().then(function () { start(); if (!/^#(flight|ride)/.test(wasHash)) firstRoute(); })
+  .catch(function (e) { $("loading").textContent = "The engine did not load. Positions and plans need it."; console.error(e); });
+})();
+</script>
