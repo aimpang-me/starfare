@@ -637,9 +637,9 @@ const PLACES = [
   { id: "enceladus", name: "Enceladus", kind: "moon", parent: "saturn", real: true, mu: 7.211, radius_km: 252.1, park_alt_km: 50, orbit_km: 238040, period_days: 1.370218 },
   { id: "titan", name: "Titan", kind: "moon", parent: "saturn", real: true, mu: 8978.14, radius_km: 2574.7, park_alt_km: 1500, orbit_km: 1221870, period_days: 15.945, atmosphere: true },
   { id: "triton", name: "Triton", kind: "moon", parent: "neptune", real: true, mu: 1427.6, radius_km: 1353.4, park_alt_km: 100, orbit_km: 354759, period_days: 5.876854, retrograde: true },
-  // small bodies: planner uses 2-body Kepler from the data/targets.json Horizons states (as quote.py/trip.py);
-  // the re-fly uses the baked n-body orbit (as refly.py).  Ceres has a gravity well; Bennu's (GM 4.9e-9) and
-  // the Roadster's are ignored.
+  // small bodies: the planner and the re-fly both use the baked n-body orbit (refly.py's), not quote.py/trip.py's
+  // 2-body Kepler, which is 11 million km off for Ceres by 2041.  Ceres has a gravity well; Bennu's (GM 4.9e-9)
+  // and the Roadster's are ignored.
   { id: "roadster", name: "Tesla Roadster", kind: "small", parent: "sun", real: true, mu: 0, radius_km: 0.002, park_alt_km: 0 },
   { id: "bennu", name: "Bennu", kind: "small", parent: "sun", real: true, mu: 0, radius_km: 0.245, park_alt_km: 0 },
   { id: "ceres", name: "Ceres", kind: "small", parent: "sun", real: true, mu: 62.6284, radius_km: 469.7, park_alt_km: 200 },
@@ -689,25 +689,15 @@ function circular(parentState, a, mu, periodDays, basis, jd) {
            v: [0, 1, 2].map((k) => parentState.v[k] + n * a * (-s * Pv[k] + c * Qv[k])) };
 }
 let TARGETS = null;  // data/targets.json Horizons states (embedded copy, ecliptic J2000, TDB)
-const SMALL_BODY_STATES = {
-  roadster: { jd_tdb: 2461041.5, r_km: [-121937684.133715, -145434535.6405588, -3555409.154399596], v_kms: [15.63608359499852, -22.0083734821753, -0.1008298301279567] },
-  bennu: { jd_tdb: 2461329.5, r_km: [-77245207.50220667, -186436017.8109072, -19412083.73700891], v_kms: [21.08016643595898, -8.713704663899525, -0.9968246997876311] },
-  ceres: { jd_tdb: 2461329.5, r_km: [18443624.77021215, 397688713.3340791, 9192212.410331458], v_kms: [-18.28361713097338, -0.5402250433091254, 3.350980975751574] },
-};
-// state(body, jd, {smallBody: "kepler"|"nbody"}) -> {r, v} heliocentric
-function state(body, jd, opts = {}) {
+// state(body, jd) -> {r, v} heliocentric; small bodies are the n-body orbits in the table, as the re-fly flies them
+function state(body, jd) {
   need();
   const id = String(body).toLowerCase();
   const p = P[id];
   if (!p) throw new Error(`unknown body '${body}'`);
   if (p.kind === "planet" || id === "moon") return ephState(id, jd);
-  if (p.kind === "small") {
-    if ((opts.smallBody || "kepler") === "nbody") return ephState(id + "@nbody", jd);
-    checkJd(jd);
-    const S = SMALL_BODY_STATES[id];
-    return kepler(MU_SUN, S.r_km, S.v_kms, (jd - S.jd_tdb) * DAY);
-  }
-  const par = state(p.parent, jd, opts);
+  if (p.kind === "small") return ephState(id, jd);
+  const par = state(p.parent, jd);
   if (p.kind === "moon")
     return circular(par, p.orbit_km, PLANET_MU[p.parent], p.period_days, planeBasis(p.parent, 0, p.retrograde), jd);
   // station
@@ -717,10 +707,10 @@ function state(body, jd, opts = {}) {
 const placeState = (id, jd) => state(id, jd);
 
 // stateOf(origin, jd): origin = body id | {place: id} | {ship: {r, v, jd}} | {r, v, jd}; ships propagate 2-body
-function stateOf(origin, jd, opts) {
+function stateOf(origin, jd) {
   const o = normEndpoint(origin);
   if (o.ship) { checkJd(jd); return kepler(MU_SUN, o.ship.r, o.ship.v, (jd - o.ship.jd) * DAY); }
-  return state(o.place, jd, opts);
+  return state(o.place, jd);
 }
 function normEndpoint(x) {
   if (typeof x === "string") return { place: x.toLowerCase() };
@@ -811,11 +801,12 @@ function isoFromJd(jd, withTime = false) {
 // ------------------------------------------------------------------ planner
 const BRANCHES = [[0, true], [1, true], [1, false]];
 // A multi-rev leg within 2% of the Lambert minimum time sits on the fold, where the n-body
-// re-fly's Newton step diverges (velocity goes as 1/sqrt(T - Tmin)); probes failed up to 1.25%.
+// re-fly's Newton step diverges (velocity goes as 1/sqrt(T - Tmin)). Ceres legs re-fly clean from
+// 0.5%; Titan-Earth M=1 legs still fail 21% of probes at 2% and 27% at 1%, so the margin stays.
 const FOLD_MARGIN = 0.02;
 const hohmannDays = (a1, a2, mu = MU_SUN) => Math.PI * Math.sqrt(((a1 + a2) / 2) ** 3 / mu) / DAY;
 
-// anchor state for the planner (small bodies: Kepler, as quote.py/trip.py; ships: Kepler)
+// anchor state for the planner and the re-fly (ships: Kepler)
 function anchorState(m, ep, jd) {
   if (ep.ship) { checkJd(jd); return kepler(MU_SUN, ep.ship.r, ep.ship.v, (jd - ep.ship.jd) * DAY); }
   return state(m.anchor, jd);
@@ -1277,8 +1268,6 @@ function reflyInner(leg, opts) {
   const dep = leg.dep_jd, tof = leg.tof_days, arr = dep + tof;
   checkJd(dep); checkJd(arr);
   const M = leg.revs || 0, low = leg.lowpath ?? true;
-  const where = (m, ep, jd) => ep.ship ? kepler(MU_SUN, ep.ship.r, ep.ship.v, (jd - ep.ship.jd) * DAY)
-    : (m.kind === "small" || P[m.anchor]?.kind === "small") ? ephState(m.anchor + "@nbody", jd) : state(m.anchor, jd);
   const earthOrbit = !o.ship && mo.anchor === "earth" && mo.chain.length === 1;
   const mode = opts.mode || leg.mode || (earthOrbit ? "leo" : "centre");
   const tdep = (dep - J2000) * DAY, ta = (arr - J2000) * DAY;
@@ -1287,7 +1276,7 @@ function reflyInner(leg, opts) {
   // Uranus REJECT), while 1e-12 converges on every leg tested at the same retarget.  Default 1e-12; pass
   // {rtol: 1e-10} for bit-for-bit parity with refly.py.
   const rtol = opts.rtol ?? 1e-12;
-  const target = where(md, d, arr).r;
+  const target = anchorState(md, d, arr).r;
   const dstNaif = !d.ship && NAIF_OF[md.anchor];
   let fun, x0, start, active, h = 1e-4;
   if (mode === "leo") {
@@ -1301,7 +1290,7 @@ function reflyInner(leg, opts) {
     fun = (vinf) => { const ys = hyperbolaStart(E.r, E.v, vinf, GM[399], rp); const r = dop853(model.rhs, tdep, ys, ta, rtol, ATOL); return sub(r.y.slice(0, 3), target); };
     start = { r: E.r, v: E.v };
   } else {
-    start = where(mo, o, dep);
+    start = anchorState(mo, o, dep);
     const L = lambert(start.r, target, tof * DAY, MU_SUN, M, low);
     x0 = L.v1;
     const off = [!o.ship && NAIF_OF[mo.anchor], dstNaif].filter(Boolean);

@@ -80,15 +80,15 @@ EMB minus k times the geocentric Moon, with k = 1/(1+EMRAT) read from DE421, so 
 **Coverage: 2026-10-01 to 2053-09-25**, which is more than the 2026-10-01 to 2046-12-31 asked for. The longer span
 lets the day-2 Uranus and Neptune legs (arrivals in 2050 to 2052) be planned and re-flown. Cut to 2046-12-31, the table
 would be about 300 KiB. Small bodies (Roadster, Bennu, Ceres) are their n-body orbits, integrated in the bake with the
-same `nbody.Model` + DOP853 rtol 1e-12 as refly.py, from `data/targets.json`. The planner, like quote.py and
-trip.py, uses 2-body Kepler from those same states and needs no table. Errors vs DE421 are in table G. The worst
+same `nbody.Model` + DOP853 rtol 1e-12 as refly.py, from `data/targets.json`. The planner flies the same
+table orbits (quote.py and trip.py still use 2-body Kepler from those states, 11 million km off for Ceres by 2041). Errors vs DE421 are in table G. The worst
 position errors are the Moon at 25 m and Mercury at 11 m; all others are at most 5.5 m. The worst velocity error is
 3.1 mm/s (Moon); all others are at most 1 mm/s.
 
 ## Engine (deliverables 2 and the coordinator's addendum)
 
 - `state(body, jd)` covers planets (DE421 barycentres; DE421's 1->199, 2->299 and 4->499 offsets are zero), Earth,
-  the Moon and the small bodies (`{smallBody: "nbody"}` for the re-fly orbit). It also covers the moons Phobos, Io, Europa,
+  the Moon and the small bodies (their n-body orbits from the table). It also covers the moons Phobos, Io, Europa,
   Ganymede, Callisto, Enceladus, Titan and Triton as **approximate** circular orbits about the parent: radius and
   period from the JPL SSD mean elements as listed in the source, the plane is the parent's IAU equator, and the
   phase is arbitrary. Triton is retrograde in Neptune's equator, which is about 23 degrees off its real plane. Titan uses trip.py's 1,221,870 km and 15.945 d.

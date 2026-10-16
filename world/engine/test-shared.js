@@ -12,19 +12,19 @@ const POOL = { stops: [{ at: "ceres" }, { at: "ceres-port", board: ["ceres-shift
   { at: "mars-base", board: [], alight: ["ceres-shift", "phobos-commute"] }], legs: [L1, L2, L3] };
 
 ok("a two-booking flight checks, flies with per-booking times, and scores passengers per booking and the ship per flight", () => {
-  assert.deepStrictEqual([L1.arr_jd, L2.dep_jd, L2.arr_jd, L3.arr_jd, L2.fare, L3.fare], [2461700.5981143885, 2461820.6481143883, 2462706.5590501833, 2462706.7018929045, 519713.83, 1811.11]);
+  assert.deepStrictEqual([L1.arr_jd, L2.dep_jd, L2.arr_jd, L3.arr_jd, L2.fare, L3.fare], [2461700.5981143885, 2461820.6481143883, 2462706.2877681972, 2462706.4306109184, 519551.03, 1811.11]);
   assert.deepStrictEqual(R.check("ceres-shift", "sf-04", POOL, t0, SEED), []);
   const st = R.start("ceres-shift", "sf-04", POOL, t0, SEED, { ask_after_hours: null, end_jd: END });
   assert.deepStrictEqual(st.ride.hails, ["ceres-shift", "phobos-commute"]);
   assert.deepStrictEqual(st.ride.segs.map((s) => s.role + " " + s.from + ">" + s.to + " stop " + s.stop), ["pickup ceres>ceres-port stop 1", "ride ceres-port>phobos stop 2", "ride phobos>mars-base stop 3"]);
   const F = R.fly("ceres-shift", "sf-04", POOL, t0, SEED);
-  assert.deepStrictEqual(F, { pickup_jd: 2461700.5981143885, ride_depart_jd: 2461820.6481143883, arrive_jd: 2462710.0563098914, planned_kwh: 90956, extra_kwh: 12305, used_kwh: 103261,
-    incidents: [{ kind: "flare", leg: "ride", where: "phobos", at_jd: 2462706.609050183, hours: 31.285493195056915, kwh: 0, note: "Solar storm at Phobos: no launches with a rider aboard until it passed" },
+  assert.deepStrictEqual(F, { pickup_jd: 2461700.5981143885, ride_depart_jd: 2461820.6481143883, arrive_jd: 2462710.0563098914, planned_kwh: 90793, extra_kwh: 12305, used_kwh: 103098,
+    incidents: [{ kind: "flare", leg: "ride", where: "phobos", at_jd: 2462706.337768197, hours: 37.79626085981727, kwh: 0, note: "Solar storm at Phobos: no launches with a rider aboard until it passed" },
       { kind: "dust_storm", leg: "ride", where: "mars-base", at_jd: 2462708.005455121, hours: 49.22051449120045, kwh: 12305, note: "Dust storm closed the pad; the car held in orbit" }],
-    delay_hours: 80.50600768625736, rider_dose_msv: 1857.4,
-    bookings: { "ceres-shift": { pickup_jd: 2461700.5981143885, arrive_jd: 2462710.0563098914 }, "phobos-commute": { pickup_jd: 2462706.5590501833, arrive_jd: 2462710.0563098914 } } });
+    delay_hours: 87.01677535101771, rider_dose_msv: 1857.4,
+    bookings: { "ceres-shift": { pickup_jd: 2461700.5981143885, arrive_jd: 2462710.0563098914 }, "phobos-commute": { pickup_jd: 2462706.2877681972, arrive_jd: 2462710.0563098914 } } });
   const ctx = { t0, arrive_by_jd: t0 + 800, par_kwh: 100000, best_wait_days: 0.1, plan_calls: 3, flown: F, bookings: {
-    "ceres-shift": { t0, arrive_by_jd: t0 + 800, best_wait_days: 0.1, quote: { fare_usd: 521525, arrival: "2030-07-27 13:21" } },
+    "ceres-shift": { t0, arrive_by_jd: t0 + 800, best_wait_days: 0.1, quote: { fare_usd: 521362, arrival: "2030-07-27 13:21" } },
     "phobos-commute": { t0: t0 + 600, arrive_by_jd: t0 + 700, best_wait_days: 0.5, quote: { fare_usd: 1811, arrival: "2030-07-27 15:45" } } } };
   const sc = R.score("ceres-shift", POOL, ctx);
   assert.deepStrictEqual(sc.parts.map((p) => p.key), ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy"]);
@@ -32,9 +32,9 @@ ok("a two-booking flight checks, flies with per-booking times, and scores passen
   assert.deepStrictEqual(got(sc.bookings["phobos-commute"]), [0, 0, 13.5, 10]);
   assert.deepStrictEqual(got(sc), [10, 4.8, 18.8, 14.2, 10, 10, 5]); // passenger parts: the party-weighted mean of the two bookings
   assert.strictEqual(sc.total, 73);
-  assert.strictEqual(sc.parts[0].note, "ceres-shift: rider waited 2.4 h, best possible 2.4 h; phobos-commute: rider waited 406.1 days, best possible 12.0 h");
-  assert.strictEqual(sc.parts[5].note, "ceres-shift: fare matches the ride leg's $521,525; phobos-commute: fare matches the ride leg's $1,811");
-  assert.deepStrictEqual([sc.bookings["ceres-shift"].fare_usd, sc.bookings["phobos-commute"].fare_usd, sc.fare_usd], [521524.94, 1811.11, 521524.94]);
+  assert.strictEqual(sc.parts[0].note, "ceres-shift: rider waited 2.4 h, best possible 2.4 h; phobos-commute: rider waited 405.8 days, best possible 12.0 h");
+  assert.strictEqual(sc.parts[5].note, "ceres-shift: fare matches the ride leg's $521,362; phobos-commute: fare matches the ride leg's $1,811");
+  assert.deepStrictEqual([sc.bookings["ceres-shift"].fare_usd, sc.bookings["phobos-commute"].fare_usd, sc.fare_usd], [521362.14, 1811.11, 521362.14]);
   assert.deepStrictEqual([sc.wait_days, sc.late_days, sc.beat_par], [0.09811438852921128, 209.556309891399, false]);
 });
 
@@ -96,12 +96,12 @@ ok("stop orders: every booking boards before it lands, and events at the same pl
 
 ok("par for a set: the best pooled flight checks and flies to its par, the split baseline is each booking's own par, and terms stay each booking's own", () => {
   const T = R.termsSet(["ceres-shift", "phobos-commute"], t0, END, SEED), p = T.par, P = p.pooled;
-  assert.deepStrictEqual([P.car, P.plan.stops.map((s) => s.at), P.kwh, P.choices], ["sf-04", ["ceres", "ceres-port", "mars-base", "phobos", "mars-base"], 99908, []]);
+  assert.deepStrictEqual([P.car, P.plan.stops.map((s) => s.at), P.kwh, P.choices], ["sf-04", ["ceres", "ceres-port", "mars-base", "phobos", "mars-base"], 99775, []]);
   assert.deepStrictEqual(R.check("ceres-shift", P.car, P.plan, t0, SEED), []);
   assert.strictEqual(R.fly("ceres-shift", P.car, P.plan, t0, SEED).used_kwh, P.kwh);
   const solo = ["ceres-shift", "phobos-commute"].map((id) => R.terms(id, t0, END, SEED));
-  assert.deepStrictEqual(solo.map((s) => [s.par.car, s.par.kwh]), [["sf-04", 77727], ["sf-03", 22054]]);
-  assert.deepStrictEqual([p.split.kwh, p.kwh, p.pool_wins], [99781, 99781, false]); // pooled, SF-04 uses 127 kWh more than the split, so the split is par
+  assert.deepStrictEqual(solo.map((s) => [s.par.car, s.par.kwh]), [["sf-04", 77721], ["sf-03", 22054]]);
+  assert.deepStrictEqual([p.split.kwh, p.kwh, p.pool_wins], [99775, 99775, false]); // pooled, SF-04 ties the split to the kWh, and a tie does not win, so the split is par
   assert.deepStrictEqual(T.bookings, {
     "ceres-shift": { t0, arrive_by_jd: solo[0].arrive_by_jd, best_wait_days: solo[0].par.best_wait_days },
     "phobos-commute": { t0, arrive_by_jd: solo[1].arrive_by_jd, best_wait_days: solo[1].par.best_wait_days } });

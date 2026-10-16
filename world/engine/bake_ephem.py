@@ -9,8 +9,8 @@ Contents (all heliocentric J2000 ECLIPTIC, km, TDB Julian dates, the same frame 
   Moon heliocentric = Earth + moon_geo.  (DE421 has zero offsets 1->199, 2->299, 4->499, so barycentre = body.)
   roadster, bennu, ceres: n-body orbits integrated here with the SAME code the Python re-fly uses
   (code/nbody.py Model + DOP853, rtol 1e-12, Sun + 8 planets + Moon from HermiteTable) from their Horizons
-  states in data/targets.json, so the JS re-fly targets these exactly as refly.py does.  (The planner uses
-  2-body Kepler from the same Horizons states, like quote.py/trip.py; JS does that itself, no table needed.)
+  states in data/targets.json, so the JS planner and re-fly both fly these exactly as refly.py does.
+  (quote.py/trip.py still use 2-body Kepler from the same Horizons states.)
 
 Format per body: piecewise Chebyshev in time, uniform segments of seg_days, degree deg per axis, fitted by
 interpolation at Chebyshev-Gauss-Lobatto nodes (segment end points are nodes, so position is continuous).

@@ -30,7 +30,7 @@ ok("ask_after_hours \"never\" is fly(); answering with defaults flies the same r
     assert.strictEqual(asked.used_kwh, r.flown.used_kwh, r.hail + " seed " + r.seed);
     assert.strictEqual(asked.arrive_jd, r.flown.arrive_jd);
   }
-  assert.deepStrictEqual(waited, [["titan-home", "10", 134731, "2035-05-02 05:29"], ["ceres-shift", "17", 115313, "2034-02-04 22:46"]]);
+  assert.deepStrictEqual(waited, [["titan-home", "10", 134731, "2035-05-02 05:29"], ["ceres-shift", "17", 115209, "2034-02-04 16:12"]]);
 });
 
 ok("pad_closed at Mars Base: diverting to Phobos beats holding through the storm", () => {
@@ -51,14 +51,14 @@ ok("launch_hold for a solar flare at Ceres Port: a replan beats waiting out the 
   const r = FX.rides.find((x) => x.hail === "ceres-shift" && x.seed === "17" && x.kind === "par");
   const st = R.start(r.hail, r.car, r.legs, r.t0, r.seed, { ask_after_hours: 1, end_jd: END }), cp = st.checkpoint;
   assert.deepStrictEqual([cp.n, cp.kind, cp.cause, cp.place, cp.leg, R.iso(cp.sky_at)], [1, "launch_hold", "solar_flare", "ceres-port", "ride", "2032-03-28 04:12"]);
-  assert.deepStrictEqual([cp.signal_delay_minutes, R.iso(cp.reply_jd), cp.options[0].correction_kwh_if_it_left_on_reply], [14.2, "2032-03-28 04:40", 838]);
+  assert.deepStrictEqual([cp.signal_delay_minutes, R.iso(cp.reply_jd), cp.options[0].correction_kwh_if_it_left_on_reply], [14.3, "2032-03-28 04:41", 839]);
   const wait = finish(R.step(st.ride, { action: "wait" }));
-  assert.deepStrictEqual([wait.used_kwh, wait.incidents.find((x) => x.kind === "correction_burn").kwh], [115313, 26496]);
+  assert.deepStrictEqual([wait.used_kwh, wait.incidents.find((x) => x.kind === "correction_burn").kwh], [115209, 26472]);
   const b = R.planLeg("ceres-port", "mars-base", 2463322.571546903, "energy", END);
   const leg = { from: "ceres-port", to: "mars-base", dep_jd: b.dep_jd, arr_jd: b.arr_jd, kwh: b.battery.energy_kwh, fare: b.fare.total_usd, gate: "PASS" };
   const rp = finish(R.step(st.ride, { action: "replan", leg }));
-  assert.deepStrictEqual([leg.kwh, rp.used_kwh, R.iso(rp.arrive_jd)], [81995, 82493, "2034-03-10 05:11"]);
-  assert.throws(() => R.step(st.ride, { action: "replan", leg: Object.assign({}, leg, { dep_jd: cp.sky_at }) }), /depart at or after 2032-03-28 04:40, when the answer reaches the ship/);
+  assert.deepStrictEqual([leg.kwh, rp.used_kwh, R.iso(rp.arrive_jd)], [82168, 82666, "2034-03-09 06:56"]);
+  assert.throws(() => R.step(st.ride, { action: "replan", leg: Object.assign({}, leg, { dep_jd: cp.sky_at }) }), /depart at or after 2032-03-28 04:41, when the answer reaches the ship/);
   assert.throws(() => R.step(st.ride, { action: "hold" }), /takes wait or replan/);
 });
 
@@ -94,6 +94,6 @@ ok("par is what the fixture says, and hindsight never needs more energy than fly
     if (p.kwh < plain) lower++;
   }
   console.log("   hindsight lowered par on", lower, "of", FX.terms.length, "hails");
-  assert.strictEqual(R.terms("ceres-shift", 2461647.5, END, "1").par.kwh, 85063);
+  assert.strictEqual(R.terms("ceres-shift", 2461647.5, END, "1").par.kwh, 84884);
 });
 console.log(n, "passed");
