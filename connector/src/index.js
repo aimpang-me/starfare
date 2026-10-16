@@ -8,6 +8,7 @@ import engineSrc from "./engine/sol-page.txt";
 import { fleet, listHails } from "./game.js";
 import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
+import flightHtml from "./flight.html";
 import siteHtml from "./site.html";
 import { RUN_ID, hub, runStub } from "./store.js";
 
@@ -18,8 +19,8 @@ export { StarfareHub, StarfareRun } from "./store.js";
 const isMcpPath = (p) => p === "/mcp" || p.startsWith("/mcp/");
 // The landing page runs the engine in the browser. ?v= changes with every engine build, so that URL can be cached for good.
 const ENGINE_PATH = "/engine.js", ENGINE_V = META.sha256.slice(0, 16);
-const isPublicPage = (p) => p === "/" || p === ENGINE_PATH || p === "/board" || p === "/board.json" || p.startsWith("/rides/");
-const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
+const isPublicPage = (p) => p === "/" || p === ENGINE_PATH || p === "/board" || p === "/board.json" || p.startsWith("/rides/") || p.startsWith("/flight/");
+const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), FLIGHT_PATH = new RegExp("^/flight/(" + RUN_ID.source.slice(1, -1) + ")$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
 
 function tooMany(limit) {
   return new Response(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32000, message: `Rate limit: more than ${limit} requests a minute from this address. Try again in a minute.` } }), {
@@ -84,6 +85,19 @@ export default {
       const html = siteHtml.replaceAll("__ORIGIN__", url.origin).replace("__ENGINE_URL__", `${ENGINE_PATH}?v=${ENGINE_V}`)
         .replace("__SITE__", () => JSON.stringify(site).replace(/</g, "\\u003c"));
       return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } });
+    }
+    // The flight page: replay and receipt of one arrived ride. The page fetches /rides/<run_id>.json itself; the drawn
+    // arcs ride in the page so the download stays the starfare.ride/1 record get_my_rides returns.
+    const flight = FLIGHT_PATH.exec(url.pathname);
+    if (flight) {
+      const limit = Number(env.RATE_PER_MIN) || 120;
+      if (!(await hub(env).hit("rides:" + (req.headers.get("cf-connecting-ip") || "unknown"), limit)).ok) return new Response("Too many requests. Try again in a minute.", { status: 429, headers: { "retry-after": "60" } });
+      const fl = await runStub(env, flight[1]).flight();
+      const site = { sky: META.sky, look: META.look, hails: listHails(await engine()) };
+      const json = (v) => JSON.stringify(v).replace(/</g, "\\u003c");
+      const html = flightHtml.replace("__ENGINE_URL__", `${ENGINE_PATH}?v=${ENGINE_V}`)
+        .replace("__SITE__", () => json(site)).replace("__RUN__", () => json({ run_id: flight[1], ...(fl || { legs: [], arcs: {} }) }));
+      return new Response(html, { status: fl ? 200 : 404, headers: { "content-type": "text/html; charset=utf-8", "cache-control": fl ? "public, max-age=60" : "no-store" } });
     }
     return new Response("Not found", { status: 404 });
   },

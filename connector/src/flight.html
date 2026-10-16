@@ -1,0 +1,1114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Starfare flight</title>
+<meta name="description" content="Replay and receipt of one simulated Starfare flight: the path in 3D from real planet positions, the passenger list and the score. Works with Grok.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#06080c; --bg-2:#0b0e14; --glass:rgba(18,22,30,.72); --line:rgba(255,255,255,.12); --line-2:rgba(255,255,255,.22);
+  --ink:#eef1f5; --ink-2:#a3abb6; --ink-3:#6e7783; --sun:#ffb65c; --me:#ffcf7a; --ride:#9cc3ff; --sim:#7f8a99; --ok:#86d9a8; --bad:#ff8f80; --r:14px;
+  --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --gl:max(16px, env(safe-area-inset-left, 0px)); --gr:max(16px, env(safe-area-inset-right, 0px)); --gut:var(--gl);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:14px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--ride)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--me);outline-offset:2px;border-radius:6px}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:.01em}
+.caps{text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;font-weight:600;color:var(--ink-3)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-2)}.dim{color:var(--ink-3)}
+.tag{display:inline-flex;align-items:center;gap:4px;font:600 9.5px/1 Inter, sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:3px 6px;border-radius:999px;border:1px solid;white-space:nowrap;vertical-align:middle}
+.tag.real{color:var(--ok);border-color:rgba(134,217,168,.4);background:rgba(134,217,168,.08)}
+.tag.fict{color:var(--sun);border-color:rgba(255,182,92,.4);background:rgba(255,182,92,.08)}
+.tag.sim{color:#b9c2ce;border-color:rgba(127,138,153,.5);background:rgba(127,138,153,.12)}
+.tag.ride{color:var(--ride);border-color:rgba(156,195,255,.45);background:rgba(156,195,255,.08)}
+.tag.me{color:var(--me);border-color:rgba(255,207,122,.5);background:rgba(255,207,122,.1)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:7px 14px;border-radius:10px;border:1px solid var(--line-2);background:rgba(255,255,255,.04);cursor:pointer;text-decoration:none;color:var(--ink);font-weight:600;font-size:13px}
+.btn:hover{background:rgba(255,255,255,.08)}
+.btn.primary{background:var(--me);border-color:var(--me);color:#1a1206}
+.btn.primary:hover{background:#ffd994}
+.btn.small{min-height:30px;padding:4px 10px;font-size:12px}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.wrap{padding-left:var(--gl);padding-right:var(--gr)}
+/* loading */
+#loading{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:var(--bg)}
+#loading .box{display:flex;flex-direction:column;align-items:center;gap:12px;font:500 12px var(--mono);color:var(--ink-2);padding:0 24px;text-align:center}
+#loading .bar{width:180px;height:2px;background:var(--line);overflow:hidden;border-radius:2px}
+#loading .bar i{display:block;height:100%;width:40%;background:var(--ride);animation:ld 1.2s ease-in-out infinite}
+@keyframes ld{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px 8px}
+.ph h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)}
+.pb{padding:0 14px 14px}
+.sub{margin:0 0 10px;color:var(--ink-3);font-size:12.5px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:6px 10px;font:600 11px Inter;letter-spacing:.06em;color:var(--ink-2);cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:rgba(156,195,255,.14);color:var(--ride)}
+.hudbox{border-left:2px solid var(--ride);padding:4px 8px;background:rgba(6,8,12,.55)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:6px 0 0;font-size:12.5px}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0;text-align:right;font-family:var(--mono);font-size:12px}
+.stops{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.stops li{display:grid;grid-template-columns:26px 1fr;gap:2px 8px;font-size:12.5px}
+.stops .wp{grid-row:span 2;width:22px;height:22px;border:1.5px solid var(--me);color:var(--me);display:grid;place-items:center;font:600 10px var(--mono);border-radius:4px}
+.stops .m{font:500 11px var(--mono);color:var(--ink-2)}
+[hidden]{display:none!important}
+.note{font-size:12px;color:var(--ink-3)}
+/* flight page: letterboxed chase-cam replay (three.js r128) beside the passenger list */
+.fdeck{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) 320px;padding-top:12px}
+.fdeck>*{min-width:0}
+@media (max-width:999px){.fdeck{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;height:calc(100vh - 82px);height:calc(100dvh - 82px);min-height:460px;max-height:980px;overflow:hidden;background:#000;border:1px solid var(--line);border-radius:var(--r)}
+.gl-host{position:absolute;inset:0;touch-action:none;cursor:grab}
+.gl-host:active{cursor:grabbing}
+.gl-host canvas{display:block;width:100%;height:100%}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;white-space:nowrap;font:600 10.5px/1 Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);padding:3px 5px 3px 10px;border:0;background:none;visibility:hidden;will-change:transform}
+.lbl::before{content:"";position:absolute;left:0;top:50%;width:6px;height:1px;background:currentColor;opacity:.6}
+button.lbl{pointer-events:auto;cursor:pointer}
+button.lbl:hover{color:var(--ink)}
+.lbl.k-planet{color:#d8dde4;font-size:11px}
+.lbl.k-place{color:var(--ink-3);font-size:9.5px}
+.lbl.k-fleet,.lbl.k-ghost{color:var(--ride);font-size:9.5px}
+.lbl.k-hail{color:var(--me)}
+.tbox{position:absolute;left:0;top:0;pointer-events:none;width:40px;height:40px;visibility:hidden}
+.tbox i{position:absolute;width:10px;height:10px;border:1.5px solid var(--me)}
+.tbox i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}.tbox i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
+.tbox i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}.tbox i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+.tbox .ti{position:absolute;left:calc(100% + 10px);top:0;font:500 10.5px/1.45 var(--mono);color:var(--ink-2);white-space:nowrap;text-shadow:0 1px 6px #000}
+.tbox .ti b{display:block;font:600 11px/1.3 Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--me)}
+.tbox.alert i{border-color:var(--bad)}
+.nogl-msg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;background:radial-gradient(ellipse at 50% 40%,#121826,var(--bg) 70%)}
+.nogl-msg p{max-width:420px;color:var(--ink-2)}
+.lbar{position:absolute;left:0;right:0;z-index:3;background:rgba(3,4,7,.92);padding:0 14px;display:flex;align-items:center;gap:10px}
+.lbar.t{top:0;height:clamp(52px,9vh,76px);border-bottom:1px solid var(--line)}
+.lbar.b{bottom:0;min-height:clamp(60px,10vh,84px);padding-top:8px;padding-bottom:8px;border-top:1px solid var(--line);flex-wrap:wrap;align-content:center;row-gap:6px}
+.lbar .ttl{flex:1;min-width:0}
+.lbar .ttl .caps{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lbar .ttl b{display:block;margin-top:3px;font:600 15px/1.25 Inter, sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.back .s{display:none}
+.playb{width:38px;height:38px;border-radius:50%;border:1px solid var(--line-2);background:rgba(255,255,255,.05);cursor:pointer;display:grid;place-items:center;flex:none}
+.playb:hover{background:rgba(255,255,255,.1)}
+.playb svg{width:14px;height:14px;fill:var(--ink)}
+.scrub{position:relative;flex:1;min-width:140px;height:28px}
+.scrub input{position:absolute;inset:0;width:100%;margin:0;opacity:.001;cursor:pointer}
+.scrub .trk{position:absolute;left:0;right:0;top:13px;height:2px;background:rgba(255,255,255,.16)}
+.scrub .fill{position:absolute;left:0;top:13px;height:2px;background:var(--me)}
+.scrub .knob{position:absolute;top:7px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--me);box-shadow:0 0 10px rgba(255,207,122,.55);pointer-events:none}
+.scrub input:focus-visible ~ .knob{outline:2px solid var(--ink);outline-offset:2px}
+.scrub .tick{position:absolute;top:8px;width:2px;height:12px;margin-left:-1px;background:var(--ride);opacity:.85;pointer-events:none}
+.scrub .tick.checkpoint{background:var(--me)}.scrub .tick.incident{background:var(--bad)}
+.ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ctl select{background:#030407;border:1px solid var(--line-2);border-radius:8px;padding:5px 6px;font:500 12px var(--mono)}
+.tcode{font:500 12.5px var(--mono);color:var(--ink);min-width:118px}
+.r-tele{position:absolute;z-index:2;right:12px;top:calc(clamp(52px,9vh,76px) + 12px);text-align:right;pointer-events:none;font:500 10.5px/1.55 var(--mono);color:var(--ink-2);max-width:calc(100% - 24px)}
+.r-tele .hudbox{border-left:0;border-right:2px solid var(--me);background:rgba(6,8,12,.66)}
+.r-tele .caps{font-size:9.5px}
+.r-tele .big{font-size:15px;color:var(--ink);font-weight:500;letter-spacing:.02em}
+.r-tele b{color:var(--ink);font-weight:500}
+.callouts{position:absolute;z-index:2;left:12px;top:calc(clamp(52px,9vh,76px) + 12px);width:min(340px,calc(100% - 24px));display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.co{padding:8px 11px 9px;border:1px solid var(--line-2);border-left:3px solid var(--ride);background:rgba(6,8,12,.82);border-radius:8px;animation:co .3s ease-out;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.co.checkpoint{border-left-color:var(--me)}.co.incident{border-left-color:var(--bad)}
+.co .k{font:600 9.5px Inter, sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.co .k .mono{letter-spacing:0;font-weight:500}
+.co b{display:block;font-weight:600;font-size:13px;margin:2px 0}
+.co p{margin:0;font-size:12px;color:var(--ink-2)}
+@keyframes co{from{transform:translateX(-12px);opacity:0}to{transform:none;opacity:1}}
+.r-note{position:absolute;z-index:2;left:12px;bottom:calc(clamp(60px,10vh,84px) + 10px);font-size:11.5px;color:var(--ink-3);pointer-events:none;text-shadow:0 1px 4px #000;max-width:calc(100% - 24px)}
+@media (max-width:520px){
+  .lbar{padding:0 10px;gap:8px}
+  .back .l{display:none}.back .s{display:inline}
+  .lbar.b{gap:8px}
+  .tcode{font-size:11px;min-width:0}
+  .r-tele{font-size:9.5px}.r-tele .big{font-size:12px}
+  .callouts{top:auto;bottom:150px}
+  .r-note{bottom:112px}
+}
+
+/* passenger list (shared-flight shape: stops with who boards and who gets off) */
+.plist{max-height:calc(100vh - 82px);max-height:calc(100dvh - 82px);overflow:auto}
+@media (max-width:999px){.plist{max-height:none}}
+.seats{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.2)}
+.seat{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line-2);flex:none}
+.seat.on{background:var(--ride);border-color:var(--ride)}
+.seat.maybe{border-color:rgba(156,195,255,.6);background:repeating-linear-gradient(45deg,rgba(156,195,255,.4) 0 2px,transparent 2px 5px)}
+.seats .st{flex:1 1 150px;min-width:0;margin-left:4px;font:500 11.5px/1.4 var(--mono);color:var(--ink-2)}
+.seats .st b{color:var(--ink);font-weight:500}
+.pstops{list-style:none;margin:10px 0 0;padding:0}
+.pst{display:grid;grid-template-columns:26px minmax(0,1fr);gap:2px 8px;padding:8px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.18);transition:border-color .2s, background .2s}
+.pst .wp{grid-row:span 3;width:22px;height:22px;border:1.5px solid var(--me);color:var(--me);display:grid;place-items:center;font:600 10px var(--mono);border-radius:4px}
+.pst .nm{font-size:13px;font-weight:600}
+.pst .m{font:500 10.5px var(--mono);color:var(--ink-3)}
+.pst ul{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:3px;font-size:12px;color:var(--ink-2)}
+.pst .bd,.pst .al{font:600 9.5px Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase;margin-right:4px}
+.pst .bd{color:var(--ok)}.pst .al{color:var(--me)}
+.pst.on{border-color:var(--ride);box-shadow:inset 3px 0 0 var(--ride);background:rgba(156,195,255,.07)}
+.pst.past{opacity:.6}
+.pleg{margin:0 0 0 18px;padding:7px 0 7px 14px;border-left:1.5px dashed var(--line-2);font:500 11px/1.45 var(--mono);color:var(--ink-3)}
+.pleg .r{font:600 9.5px Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase}
+.pleg.on{border-left:2px solid var(--ride);color:var(--ride)}
+.pleg.past{opacity:.6}
+
+/* receipt: passenger list per booking, the ship block, timeline */
+.pt{min-width:760px}
+.tl{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.tl button{display:grid;grid-template-columns:150px minmax(0,1fr);gap:1px 12px;width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:8px;padding:6px 8px;cursor:pointer}
+.tl button:hover{border-color:var(--line);background:rgba(255,255,255,.03)}
+.tl .tm{font:500 11px var(--mono);color:var(--ink-3);grid-row:span 2}
+.tl b{font-size:12.5px;font-weight:600}
+.tl .tx{font-size:12px;color:var(--ink-2)}
+.tl .k-checkpoint b{color:var(--me)}.tl .k-incident b{color:var(--bad)}
+@media (max-width:560px){.tl button{grid-template-columns:minmax(0,1fr)}.tl .tm{grid-row:auto}}
+
+/* debrief */
+.debrief{padding-top:16px;padding-bottom:48px}
+.sheet2{border:1px solid var(--line-2);border-radius:var(--r);background:#080a0f;overflow:hidden}
+.dh{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg, rgba(156,195,255,.05), transparent)}
+.dh h2{font-size:22px;margin:4px 0 6px}
+.dh .who{color:var(--ink-2);font-size:13px}
+.dh .meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font:500 12px var(--mono);color:var(--ink-2)}
+.dh .meta b{color:var(--ink);font-weight:500}
+.dh .tot{text-align:right}
+.dh .tot .n{font:600 46px/1 var(--mono);color:var(--me)}
+.dh .tot .d{font:500 14px var(--mono);color:var(--ink-3)}
+.dh .art{width:150px;margin:8px 0 0 auto}
+.dh .art svg{width:100%;height:auto;display:block}
+@media (max-width:560px){.dh{grid-template-columns:1fr}.dh .tot{text-align:left;display:flex;align-items:flex-end;gap:14px}.dh .art{margin:0 0 0 auto;width:120px}}
+.sec{padding:16px 18px;border-bottom:1px solid var(--line)}
+.sec:last-child{border-bottom:0}
+.sec h3{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table.t{border-collapse:collapse;width:100%;font:500 12px var(--mono);min-width:640px}
+table.t th{font:600 9.5px Inter;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap;vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.r,table.t th.r{text-align:right}
+table.t td.wrapc{white-space:normal;min-width:220px;font-family:Inter;font-size:12.5px;color:var(--ink-2)}
+.pass{color:var(--ok)}.fail{color:var(--bad)}
+.best{color:var(--me)}
+.cp{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.cp .h{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-bottom:8px}
+.cp .h b{font-size:14px}
+.sparts{display:grid;gap:10px}
+.sp{display:grid;grid-template-columns:160px minmax(0,1fr) 70px;gap:4px 14px;align-items:center}
+.sp .lb{font-weight:600;font-size:13px}
+.sp .bar{height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+.sp .bar i{display:block;height:100%;border-radius:4px}
+.sp .v{font:500 12.5px var(--mono);text-align:right}
+.sp .nt{grid-column:2/-1;font-size:12px;color:var(--ink-3);margin-top:-2px}
+@media (max-width:560px){.sp{grid-template-columns:minmax(0,1fr) 64px}.sp .bar{grid-column:1/-1;grid-row:2}.sp .nt{grid-column:1/-1}}
+.cmp{display:grid;gap:12px;grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:760px){.cmp{grid-template-columns:minmax(0,1fr)}}
+.cmp .c{border:1px solid var(--line);border-radius:10px;padding:12px}
+.cmp .ebar{height:8px;border-radius:4px;background:rgba(255,255,255,.07);margin:4px 0 8px;overflow:hidden}
+.cmp .ebar i{display:block;height:100%}
+.raw{font:500 12.5px var(--mono);color:var(--me);background:#030407;border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:inline-block;word-break:break-all}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition:none!important}
+  .planning i{border-right-color:var(--ride)}
+}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px max(28px, var(--gut));border-bottom:1px solid var(--line);background:var(--bg)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:500;font-size:22px;letter-spacing:.32em;text-transform:uppercase;text-decoration:none;color:var(--ink)}
+.logo svg{width:26px;height:26px}
+.links{display:flex;gap:28px}
+.links a{color:var(--ink-2);text-decoration:none;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:500}
+.links a:hover{color:var(--ink)}
+.pill{border:1px solid var(--line-2);border-radius:999px;padding:6px 14px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+@media (max-width:900px){ .links{display:none} }
+@media (max-width:560px){ .nav{padding:12px 16px} .logo{font-size:17px;letter-spacing:.24em} .pill{padding:4px 10px;font-size:10.5px;letter-spacing:.08em} }
+footer{border-top:1px solid var(--line);padding:28px max(28px, var(--gut)) 48px;color:var(--ink-3);font-size:12.5px;display:flex;flex-direction:column;gap:8px;max-width:1240px;margin:0 auto}
+footer p{margin:0;max-width:100ch}
+.works{display:inline-flex;align-self:flex-start;border:1px solid var(--line-2);border-radius:8px;padding:6px 12px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:var(--ink-2)}
+#loading .box a{color:var(--ride)}
+</style>
+</head>
+<body>
+<header class="nav">
+  <a class="logo" href="/" aria-label="Starfare home">
+    <svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M13 1.8v3M13 21.2v3M1.8 13h3M21.2 13h3M5.1 5.1l2.1 2.1M18.8 18.8l2.1 2.1M5.1 20.9l2.1-2.1M18.8 7.2l2.1-2.1"/></g></svg>
+    Starfare
+  </a>
+  <nav class="links" aria-label="Sections"><a href="/#hails">Ride hails</a><a href="/#scores">Scoreboard</a><a href="/#play">Play</a></nav>
+  <span class="pill num" id="skydate" title="Sky clock: one real second is one sky day">Sky clock</span>
+</header>
+<div id="loading" role="status"><div class="box"><b class="caps" style="color:var(--ride)">Starfare flight</b>Loading the engine and the run log<div class="bar"><i></i></div></div></div>
+<main id="v-ride" aria-label="Flight replay and receipt">
+  <div class="fdeck wrap">
+    <div class="stage" id="rstage">
+      <div class="gl-host" id="rhost" aria-hidden="true"></div>
+      <div class="labels" id="rlabels"></div>
+      <div class="tbox" id="rtbox"><i></i><i></i><i></i><i></i><div class="ti" id="rti"></div></div>
+      <div class="nogl-msg" id="rnogl" hidden><p><b>The 3D replay needs WebGL, which is off in this browser.</b><br>The timeline, callouts, passenger list and the receipt below still work.</p></div>
+      <div class="lbar t">
+        <a class="btn small back" href="/" aria-label="Back to the sky"><span class="l">&#x2190; Back to the sky</span><span class="s">&#x2190; Sky</span></a>
+        <div class="ttl"><div class="caps">Flight replay <span class="tag sim" id="rwho">Connector run</span><span class="tag sim">Simulated</span></div><b id="rtitle"></b></div>
+      </div>
+      <div class="r-tele" id="rtele"></div>
+      <div class="callouts" id="callouts" aria-live="polite"></div>
+      <div class="r-note" id="rnote"></div>
+      <div class="lbar b">
+        <button class="playb" id="play" type="button" aria-label="Play"><svg viewBox="0 0 16 16" id="playicon" aria-hidden="true"><path d="M4 2l10 6-10 6z"/></svg></button>
+        <div class="scrub" id="scrub"><div class="trk"></div><div class="fill" id="sfill"></div><div id="sticks"></div><input type="range" min="0" max="1000" step="1" value="0" id="srange" aria-label="Replay position"><div class="knob" id="sknob"></div></div>
+        <div class="ctl">
+          <span class="tcode" id="tcode"></span>
+          <label class="caps" for="speed">Speed</label>
+          <select id="speed"><option value="0.5">0.5&#xD7;</option><option value="1" selected>1&#xD7;</option><option value="2">2&#xD7;</option><option value="4">4&#xD7;</option></select>
+          <div class="seg" role="group" aria-label="Camera"><button type="button" id="cammode" aria-pressed="false">Overhead</button></div>
+        </div>
+      </div>
+    </div>
+    <aside class="panel plist" aria-labelledby="plH">
+      <div class="ph"><h2 id="plH">Passenger list</h2><span class="tag sim">Simulated</span></div>
+      <div class="pb">
+        <p class="sub">Who boards and who gets off at each stop, from the run log. It follows the replay.</p>
+        <div class="seats" id="plSeats"></div>
+        <ol class="pstops" id="plStops"></ol>
+        <div class="caps" style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">Cabin <span class="tag sim">Simulated &#xB7; placeholder, not set yet</span></div>
+        <dl class="kv" id="plKv"></dl>
+      </div>
+    </aside>
+  </div>
+  <section class="debrief wrap" id="debrief" aria-label="Flight receipt"></section>
+</main>
+
+<footer>
+  <span class="works">Works with Grok</span>
+  <p>Starfare is a concept demo by Alvin Impang. It's a made-up robotaxi service with simulated passengers, a simulated fleet and simulated hazards, and it isn't affiliated with any real company. This flight was flown in the simulation through the Starfare connector; every number on this page comes from its run log or from the engine.</p>
+  <p>Planet positions: NASA JPL DE421. Sky time runs fast: one real second is one sky day, and the sky resets at the end of each season.</p>
+</footer>
+
+<script>window.SITE = __SITE__; window.FLIGHT = __RUN__;</script>
+<script src="__ENGINE_URL__" defer></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () { // after the deferred engine script
+"use strict";
+// The mockups' data layer (design/mockups/sky-core.js), cut down to what the flight page reads. Positions come from
+// the engine (window.SOLE, served at /engine.js); the flight comes from /rides/<run_id>.json.
+var SF = (function () {
+  var AU = 149597870.7, SITE = window.SITE, SKY = SITE.sky, SEASON_END = SKY.jd0 + SKY.len_days - 1;
+  var E = null, R = null, PID = {};
+  function init(sole) { E = sole; R = E.R; E.PLACES.forEach(function (p) { PID[p.id] = p; }); }
+  function sky(ms) {
+    var e = ((ms == null ? Date.now() : ms) - SKY.t0_ms) / 1000, n = Math.floor(e / SKY.len_days);
+    return { season: n + 1, jd: SKY.jd0 + (e - n * SKY.len_days), day: Math.floor(e - n * SKY.len_days) };
+  }
+  function iso(jd) { return new Date((jd - 2440587.5) * 864e5).toISOString().slice(0, 16).replace("T", " "); }
+  function jdOf(s) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/.exec(s || ""); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 864e5 + 2440587.5 : null; }
+  function fmt(n, d) { return Number(n).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
+  function dur(days) { var h = days * 24; return h < 48 ? fmt(h, h < 10 ? 1 : 0) + " h" : days < 400 ? fmt(days, 1) + " days" : fmt(days / 365.25, 1) + " years"; }
+
+  // Places. "system" is the planet (or the Sun's child) a place orbits; tag is what the page's chip says.
+  function place(id) { return PID[id]; }
+  function system(id) { var p = PID[id]; while (p && p.parent && p.parent !== "sun") p = PID[p.parent]; return p ? p.id : id; }
+  function name(id) { var p = PID[id]; return id === "roadster" ? "Roadster" : p ? p.name : id; }
+  function tag(id) { var p = PID[id]; return p && p.real ? "real" : "fict"; }
+  function color(id) { var L = SITE.look[id] || SITE.look[system(id)]; return L ? L.color : "#a3abb6"; }
+  function pos(id, jd) { if (id === "sun") return [0, 0, 0]; var r = E.placeState(id, jd).r; return [r[0] / AU, r[1] / AU, r[2] / AU]; }
+  // The leg's stored arc: the one between the same places whose planned departure is nearest the flown one (a
+  // checkpoint can re-plan a leg). Runs stored before arcs were kept get the engine's energy-mode plan instead.
+  function arcFor(ride, f, dep) {
+    var best = null;
+    Object.keys(ride.arcs).forEach(function (k) {
+      var a = ride.arcs[k];
+      if (a.from === f.from && a.to === f.to && a.arc_au && a.arc_au.length && (!best || Math.abs(a.dep_jd - dep) < Math.abs(best.dep_jd - dep))) best = a;
+    });
+    if (best) return best;
+    try { var b = R.planLeg(f.from, f.to, dep, "energy", SEASON_END); return { dep_jd: b.dep_jd, arr_jd: b.arr_jd, arc_au: b.arc_au || [] }; } catch (e) { return null; }
+  }
+  function replay(ride) {
+    var log = ride.record.log;
+    var legs = log.flown.map(function (f) {
+      var dep = jdOf(f.depart);
+      return { kind: f.leg, from: f.from, to: f.to, dep: dep, arr: jdOf(f.arrive), kwh: f.kwh, gate: f.gate, arc: arcFor(ride, f, dep),
+        sys: system(f.from) === system(f.to) ? system(f.from) : null };
+    });
+    var start = legs[0].dep - 0.25 * (legs[legs.length - 1].arr - legs[0].dep) / Math.max(1, legs.length), end = legs[legs.length - 1].arr;
+    start = Math.min(start, legs[0].dep - 1 / 24);
+    function ends(L) { // the arc's start and end offsets from the real places at the flown departure and arrival
+      if (L.err) return L.err;
+      var A = L.arc.arc_au, a0 = A[0], a1 = A[A.length - 1];
+      if (L.sys) { var d0 = sub(pos(L.sys, L.dep), pos(L.sys, L.arc.dep_jd)), d1 = sub(pos(L.sys, L.arr), pos(L.sys, L.arc.arr_jd)); a0 = add(a0, d0); a1 = add(a1, d1); }
+      return (L.err = [sub(pos(L.from, L.dep), a0), sub(pos(L.to, L.arr), a1)]);
+    }
+    function at(jd) {
+      for (var i = 0; i < legs.length; i++) {
+        var L = legs[i];
+        if (jd < L.dep) return { p: pos(L.from, jd), leg: L, i: i, f: 0, phase: i ? "dwell" : "parked" };
+        if (jd <= L.arr) {
+          var f = (jd - L.dep) / Math.max(1e-9, L.arr - L.dep);
+          if (!L.arc || !L.arc.arc_au || !L.arc.arc_au.length) { var a0 = pos(L.from, L.dep), a1 = pos(L.to, L.arr); return { p: lerp(a0, a1, f), leg: L, i: i, f: f, phase: "flight" }; }
+          var A = L.arc.arc_au, k = f * (A.length - 1), j = Math.min(A.length - 2, Math.floor(k)), p = lerp(A[j], A[j + 1], k - j);
+          if (L.sys) { var tp = L.arc.dep_jd + f * (L.arc.arr_jd - L.arc.dep_jd), s0 = pos(L.sys, tp), s1 = pos(L.sys, jd); p = [p[0] - s0[0] + s1[0], p[1] - s0[1] + s1[1], p[2] - s0[2] + s1[2]]; }
+          // Blend out the end errors so the car leaves exactly from, and lands exactly on, the place at the flown times.
+          var e0 = ends(L), w0 = 1 - f;
+          p = [p[0] + w0 * e0[0][0] + f * e0[1][0], p[1] + w0 * e0[0][1] + f * e0[1][1], p[2] + w0 * e0[0][2] + f * e0[1][2]];
+          return { p: p, leg: L, i: i, f: f, phase: "flight" };
+        }
+      }
+      var last = legs[legs.length - 1];
+      return { p: pos(last.to, jd), leg: last, i: legs.length - 1, f: 1, phase: "arrived" };
+    }
+    var ev = [];
+    legs.forEach(function (L) {
+      ev.push({ jd: L.dep, kind: "depart", title: (L.kind === "pickup" ? "Pickup leg departs " : "Ride departs ") + name(L.from), text: name(L.from) + " to " + name(L.to) });
+      ev.push({ jd: L.arr, kind: "arrive", title: (L.kind === "pickup" ? "Rider aboard at " : "Arrived at ") + name(L.to), text: L.gate === "PASS" ? "Re-fly check: PASS" : "Local hop (not re-flown)" });
+    });
+    (log.checkpoints || []).forEach(function (c) {
+      ev.push({ jd: jdOf(c.at), kind: "checkpoint", title: "Checkpoint " + c.n + ": " + c.kind.replace("_", " ") + " at " + name(c.place),
+        text: "Cause: " + c.cause.replace("_", " ") + ". Agent chose: " + c.decision.action + ". Best in hindsight: " + c.best + ".", cp: c });
+    });
+    ride.record.score.incidents.forEach(function (x) {
+      ev.push({ jd: jdOf(x.at), kind: "incident", title: x.kind.replace("_", " ") + " at " + name(x.place), text: x.note + (x.hours ? " (" + fmt(x.hours, 1) + " h" : "") + (x.kwh ? (x.hours ? ", " : " (") + fmt(x.kwh) + " kWh)" : x.hours ? ")" : "") });
+    });
+    ev.sort(function (a, b) { return a.jd - b.jd; });
+    var focus = legs.every(function (L) { return L.sys; }) && legs.every(function (L) { return L.sys === legs[0].sys; }) ? legs[0].sys : "sun";
+    return { legs: legs, start: start, end: end, at: at, events: ev, focus: focus, record: ride.record, pub: ride.legs };
+  }
+  function sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+  function add(a, b) { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
+  function lerp(a, b, f) { return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]; }
+
+  return {
+    AU: AU, SITE: SITE, init: init, sky: sky, iso: iso, jdOf: jdOf, fmt: fmt, esc: esc, dur: dur,
+    place: place, system: system, name: name, tag: tag, color: color, pos: pos, replay: replay,
+    get E() { return E; }, get R() { return R; },
+    // The Starseeker: an original short-hop passenger ship. Not modelled on any real or game vehicle. Nose to the right.
+    SHIP_SVG: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" aria-hidden="true"><defs><linearGradient id="ssh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a6578"/><stop offset=".5" stop-color="#1c2230"/><stop offset="1" stop-color="#07090d"/></linearGradient><linearGradient id="ssg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffb65c" stop-opacity="0"/><stop offset="1" stop-color="#ffcf7a"/></linearGradient><linearGradient id="ssw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0b0f16"/><stop offset="1" stop-color="#2a4266"/></linearGradient></defs><ellipse cx="8" cy="47" rx="14" ry="4" fill="url(#ssg)"/><path d="M70 54 L44 70 L100 61 Z" fill="#141a24" stroke="rgba(255,255,255,.18)"/><path d="M32 33 L22 13 L50 27 Z" fill="#1c2230" stroke="rgba(255,255,255,.2)"/><path d="M18 40 C30 30 52 24 84 23 C120 22 160 30 190 45 C170 52 140 57 100 58 L40 58 C28 57 20 50 18 40 Z" fill="url(#ssh)" stroke="rgba(255,255,255,.28)"/><path d="M72 31 C102 27 140 29 168 39 C140 36 104 35 76 37 Z" fill="url(#ssw)"/><g fill="#9cc3ff" opacity=".75"><rect x="86" y="31.5" width="7" height="2.4" rx="1"/><rect x="98" y="31" width="7" height="2.4" rx="1"/><rect x="110" y="31" width="7" height="2.4" rx="1"/><rect x="122" y="31.5" width="7" height="2.4" rx="1"/><rect x="134" y="32.5" width="7" height="2.4" rx="1"/></g><path d="M40 50 C90 53 140 51 182 45" fill="none" stroke="#9cc3ff" stroke-width="1.2" opacity=".7"/><ellipse cx="24" cy="47" rx="9" ry="6.5" fill="#10141c" stroke="rgba(255,255,255,.25)"/><ellipse cx="17" cy="47" rx="2.6" ry="4.6" fill="#ffcf7a"/></svg>',
+    // Display word for the vehicle. Tool fields and run-log JSON keep "car" (car, par_car); pages show "Starseeker".
+    SHIP: "Starseeker", SHIPS: "Starseekers"
+  };
+})();
+
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var RM = window.matchMedia ? matchMedia("(prefers-reduced-motion: reduce)") : null, reduced = !!(RM && RM.matches);
+if (RM && RM.addEventListener) RM.addEventListener("change", function (e) { reduced = e.matches; });
+function esc(s) { return SF.esc(s); }
+// Display words only. Data fields, tool calls and paths keep car / ride / rider / hail.
+var WORDS = [[/\bcars\b/gi, function () { return SF.SHIPS; }], [/\bcar\b/gi, function () { return SF.SHIP; }],
+  [/\briders\b/gi, "passengers"], [/\brider\b/gi, "passenger"], [/\brides\b/gi, "flights"], [/\bride\b/gi, "flight"],
+  [/\bhails\b/gi, "bookings"], [/\bhail\b/gi, "booking"]];
+function shipWords(s) {
+  s = String(s == null ? "" : s);
+  WORDS.forEach(function (w) {
+    s = s.replace(w[0], function (m) { var r = typeof w[1] === "function" ? w[1]() : w[1]; return m[0] === m[0].toUpperCase() && m[0] !== m[0].toLowerCase() ? r[0].toUpperCase() + r.slice(1) : r; });
+  });
+  return s;
+}
+function legKind(k) { return k === "ride" ? "passenger" : k; }
+function chip(id) { return SF.tag(id) === "real" ? '<span class="tag real">Real</span>' : '<span class="tag fict">Fictional</span>'; }
+function placeH(id) { return esc(SF.name(id)) + " " + chip(id); }
+function money(n) { return "$" + SF.fmt(n, 2); }
+function kwh(n) { return SF.fmt(n) + " kWh"; }
+function hailOf(id) { return SF.SITE.hails.filter(function (h) { return h.hail_id === id; })[0]; }
+
+var GL = null, RS = null;
+function fmt(n, d) { return SF.fmt(n, d); }
+function iso(jd) { return SF.iso(jd); }
+function dist(km) { return km >= 0.05 * AU ? fmt(km / AU, 2) + " AU" : km >= 1e6 ? fmt(km / 1e6, 2) + " million km" : fmt(km) + " km"; }
+function W(t) { return esc(shipWords(t)); }
+
+function initGL() {
+  function fail() { GL = null; $("#rnogl").hidden = false; }
+  if (!window.THREE) return fail();
+  try {
+    var c = document.createElement("canvas");
+    var ok = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+    if (!ok) return fail();
+    var r = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance", logarithmicDepthBuffer: true });
+    r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    r.setClearColor(0x06080c, 1);
+    GL = { r: r, tex: {} };
+  } catch (e) { return fail(); }
+}
+function attachCanvas(host) {
+  if (GL.r.domElement.parentNode !== host) host.appendChild(GL.r.domElement);
+  onResize();
+}
+function onResize() {
+  if (!GL) return;
+  var host = GL.r.domElement.parentNode; if (!host || !host.clientWidth) return;
+  var w = host.clientWidth || 1, h = host.clientHeight || 1;
+  GL.r.setSize(w, h);
+  if (RS && RS.cam) { RS.cam.aspect = w / h; RS.cam.updateProjectionMatrix(); }
+  GL.W = w; GL.H = h; GUT = null;
+}
+/* ---------- textures and meshes ---------- */
+function V(x, y, z) { return new THREE.Vector3(x || 0, y || 0, z || 0); }
+function prng(seed) { var s = seed >>> 0 || 1; return function () { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 100000) / 100000; }; }
+function hash(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h; }
+function glowTex(inner, outer) {
+  var k = inner + outer; if (GL.tex[k]) return GL.tex[k];
+  var c = document.createElement("canvas"); c.width = c.height = 128; var g = c.getContext("2d");
+  var gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, inner); gr.addColorStop(0.25, outer); gr.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  return (GL.tex[k] = new THREE.CanvasTexture(c));
+}
+function planetTex(id) {
+  if (GL.tex["p" + id]) return GL.tex["p" + id];
+  var c = document.createElement("canvas"); c.width = 256; c.height = 128; var g = c.getContext("2d"), col = new THREE.Color(SF.color(id)), rnd = prng(hash(id));
+  function sh(k, a) { return "rgba(" + Math.round(Math.min(1, col.r * (1 + k)) * 255) + "," + Math.round(Math.min(1, col.g * (1 + k)) * 255) + "," + Math.round(Math.min(1, col.b * (1 + k)) * 255) + "," + (a == null ? 1 : a) + ")"; }
+  g.fillStyle = sh(0); g.fillRect(0, 0, 256, 128);
+  if (/^(jupiter|saturn|uranus|neptune)$/.test(id)) {
+    var amp = id === "jupiter" ? 0.32 : id === "saturn" ? 0.18 : 0.08;
+    for (var y = 0; y < 128;) { var hgt = 2 + Math.floor(rnd() * 7); g.fillStyle = sh((rnd() - 0.5) * amp * 2); g.fillRect(0, y, 256, hgt); y += hgt; }
+    if (id === "jupiter") { g.fillStyle = "rgba(200,110,80,.7)"; g.beginPath(); g.ellipse(170, 80, 16, 8, 0, 0, 7); g.fill(); }
+  } else if (id === "earth") {
+    g.fillStyle = "#1d4f9c"; g.fillRect(0, 0, 256, 128);
+    for (var i = 0; i < 26; i++) { g.fillStyle = rnd() < 0.5 ? "#4f7d4a" : "#7a8a55"; g.beginPath(); g.ellipse(rnd() * 256, 20 + rnd() * 88, 6 + rnd() * 26, 4 + rnd() * 14, rnd() * 3, 0, 7); g.fill(); }
+    for (i = 0; i < 40; i++) { g.fillStyle = "rgba(255,255,255," + (0.25 + rnd() * 0.4) + ")"; g.beginPath(); g.ellipse(rnd() * 256, rnd() * 128, 4 + rnd() * 22, 1 + rnd() * 4, 0, 0, 7); g.fill(); }
+    g.fillStyle = "rgba(255,255,255,.85)"; g.fillRect(0, 0, 256, 6); g.fillRect(0, 122, 256, 6);
+  } else {
+    for (i = 0; i < 180; i++) { g.fillStyle = sh((rnd() - 0.55) * 0.5, 0.45); g.beginPath(); g.arc(rnd() * 256, rnd() * 128, 1 + rnd() * 10, 0, 7); g.fill(); }
+  }
+  var t = new THREE.CanvasTexture(c); return (GL.tex["p" + id] = t);
+}
+var GEO = {};
+function sphereGeo() { return GEO.s || (GEO.s = new THREE.SphereGeometry(1, 40, 20)); }
+function stars() {
+  var n = 2600, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), rnd = prng(7);
+  for (var i = 0; i < n; i++) {
+    var u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, s = Math.sqrt(1 - u * u), R = 3600;
+    pos[i * 3] = R * s * Math.cos(th); pos[i * 3 + 1] = R * u; pos[i * 3 + 2] = R * s * Math.sin(th);
+    var b = 0.35 + rnd() * 0.65, w = rnd(); col[i * 3] = b * (w > 0.85 ? 1 : 0.85); col[i * 3 + 1] = b * 0.9; col[i * 3 + 2] = b * (w < 0.2 ? 1 : 0.95);
+  }
+  var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  return new THREE.Points(g, new THREE.PointsMaterial({ size: 1.5, sizeAttenuation: false, vertexColors: true, depthWrite: false }));
+}
+function sunObj(r) {
+  var g = new THREE.Group();
+  g.add(new THREE.Mesh(sphereGeo(), new THREE.MeshBasicMaterial({ color: 0xffe2b0 })));
+  g.children[0].scale.setScalar(r);
+  var s1 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(255,236,200,1)", "rgba(255,170,80,.45)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  s1.scale.setScalar(r * 7); g.add(s1);
+  var s2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(255,190,110,.35)", "rgba(255,140,60,.08)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  s2.scale.setScalar(r * 22); g.add(s2);
+  return g;
+}
+function planetMesh(id) {
+  var m = new THREE.Mesh(sphereGeo(), new THREE.MeshLambertMaterial({ map: planetTex(id), emissive: new THREE.Color(SF.color(id)).multiplyScalar(0.05) }));
+  if (id === "saturn") {
+    var rg = new THREE.RingGeometry(1.35, 2.3, 64);
+    var ring = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ color: 0xd9c79a, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false }));
+    ring.rotation.x = -Math.PI / 2 + 0.47; m.add(ring);
+  }
+  m.rotation.z = 0.35;
+  return m;
+}
+function atmo(color, r) {
+  var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(0,0,0,0)", color), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  s.scale.setScalar(r * 2.9); return s;
+}
+function lineOf(pts, color, opacity, dashed) {
+  var g = new THREE.BufferGeometry().setFromPoints(pts);
+  var m = dashed ? new THREE.LineDashedMaterial({ color: color, transparent: true, opacity: opacity, dashSize: 1.2, gapSize: 1.2, depthWrite: false })
+    : new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: opacity, depthWrite: false });
+  var l = new THREE.Line(g, m); if (dashed) l.computeLineDistances(); return l;
+}
+function glowPoints(n, color, size) {
+  var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  return new THREE.Points(g, new THREE.PointsMaterial({ size: size, sizeAttenuation: false, map: glowTex("rgba(255,255,255,1)", "rgba(156,195,255,.5)"), color: color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+}
+function setPts(obj, pts) {
+  var a = obj.geometry.attributes.position, n = Math.min(pts.length, a.count);
+  for (var i = 0; i < n; i++) a.setXYZ(i, pts[i].x, pts[i].y, pts[i].z);
+  a.needsUpdate = true; obj.geometry.setDrawRange(0, n); obj.geometry.computeBoundingSphere();
+}
+
+/* The Starseeker: lifting-body hull (lathe teardrop, widest behind the middle), blue window band, swept stub wings,
+   a dorsal fin and one round aft thruster. Nose along +z, length 1. Built from primitives; original design. */
+var SHIPMAT = null;
+function makeShip() {
+  if (!SHIPMAT) {
+    var pts = [], N = 22;
+    function rr(t) { return 0.15 * (t < 0.36 ? 0.6 + 0.4 * Math.sin(t / 0.36 * Math.PI / 2) : Math.pow(Math.cos((t - 0.36) / 0.64 * Math.PI / 2), 0.85)); }
+    pts.push(new THREE.Vector2(0.001, -0.5));
+    for (var i = 0; i <= N; i++) { var t = i / N; pts.push(new THREE.Vector2(Math.max(0.001, rr(t)), -0.5 + t)); }
+    var hull = new THREE.LatheGeometry(pts, 20); hull.rotateX(Math.PI / 2); hull.scale(1.25, 0.52, 1);
+    var fin = new THREE.Shape(); fin.moveTo(0, 0); fin.lineTo(0.2, 0); fin.lineTo(0.02, 0.13); fin.lineTo(-0.03, 0.13); fin.lineTo(0, 0);
+    var finG = new THREE.ExtrudeGeometry(fin, { depth: 0.012, bevelEnabled: false }); finG.translate(0, 0, -0.006); finG.rotateY(-Math.PI / 2);
+    var stripe = [];
+    for (i = 2; i <= 20; i++) { var tt = i / 22; stripe.push(V(rr(tt) * 1.25 * 1.01, -0.012, -0.5 + tt)); }
+    SHIPMAT = {
+      hull: hull, finG: finG, stripe: stripe,
+      wingG: new THREE.BoxGeometry(0.3, 0.012, 0.12),
+      hullM: new THREE.MeshStandardMaterial({ color: 0x2b3446, metalness: 0.55, roughness: 0.38, flatShading: true, emissive: 0x0b0f16 }),
+      wingM: new THREE.MeshStandardMaterial({ color: 0x1a202c, metalness: 0.5, roughness: 0.5, flatShading: true }),
+      winM: new THREE.MeshStandardMaterial({ color: 0x2a4266, emissive: 0x9cc3ff, emissiveIntensity: 0.55, metalness: 0.2, roughness: 0.15 }),
+      thrM: new THREE.MeshBasicMaterial({ color: 0xffcf7a }),
+      stripeM: new THREE.LineBasicMaterial({ color: 0x9cc3ff, transparent: true, opacity: 0.9 }),
+      glow: glowTex("rgba(255,230,180,1)", "rgba(255,182,92,.55)")
+    };
+  }
+  var S_ = SHIPMAT, g = new THREE.Group();
+  g.add(new THREE.Mesh(S_.hull, S_.hullM));
+  var band = new THREE.Mesh(sphereGeo(), S_.winM); band.scale.set(0.07, 0.034, 0.3); band.position.set(0, 0.052, 0.07); g.add(band);
+  [1, -1].forEach(function (s) {
+    var w = new THREE.Mesh(S_.wingG, S_.wingM); w.position.set(s * 0.22, -0.04, -0.1); w.rotation.y = s * 0.5; w.rotation.z = s * -0.08; g.add(w);
+    var st = lineOf(S_.stripe.map(function (p) { return V(p.x * s, p.y, p.z); }), 0x9cc3ff, 0.9); st.material = S_.stripeM; g.add(st);
+  });
+  var f = new THREE.Mesh(S_.finG, S_.wingM); f.position.set(0, 0.055, -0.42); g.add(f);
+  var tor = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.012, 8, 24), S_.thrM); tor.position.z = -0.5; g.add(tor);
+  var disc = new THREE.Mesh(new THREE.CircleGeometry(0.05, 20), S_.thrM); disc.position.z = -0.502; disc.rotation.y = Math.PI; g.add(disc);
+  var gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: S_.glow, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  gl.position.z = -0.58; gl.scale.setScalar(0.42); g.add(gl); g.userData.glow = gl;
+  return g;
+}
+
+/* ---------- compressed solar-system scale ---------- */
+var K = 30;
+var SIZE = { sun: 5, mercury: 0.45, venus: 0.8, earth: 0.85, mars: 0.6, jupiter: 2.4, saturn: 2.0, uranus: 1.3, neptune: 1.3, ceres: 0.3, bennu: 0.1, roadster: 0.1, moon: 0.25, phobos: 0.12, io: 0.2, europa: 0.2, ganymede: 0.25, callisto: 0.22, enceladus: 0.12, titan: 0.25, triton: 0.18 };
+function dispR(id) { return SIZE[id] || 0.08; }
+function axes(v, s) { return V(v[0] * s, v[2] * s, -v[1] * s); }
+function S(p) { var r = Math.hypot(p[0], p[1], p[2]); return r ? axes(p, K / Math.sqrt(r)) : V(); }
+function localOff(rel, par) {
+  var au = Math.hypot(rel[0], rel[1], rel[2]); if (!au) return V();
+  var P = SF.place(par), R = (P && P.radius_km) || 1000, km = au * AU;
+  return axes(rel, dispR(par) * (1.3 + 0.9 * Math.log10(1 + km / R)) / au);
+}
+function d3(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+var MEMO = {}, MEMON = 0;
+function marker(id, jd) {
+  var k = id + "|" + jd, m = MEMO[k]; if (m) return m;
+  if (++MEMON > 6000) { MEMO = {}; MEMON = 0; }
+  var P = SF.place(id), v;
+  if (id === "sun" || !P) v = V();
+  else if (P.parent === "sun") v = S(SF.pos(id, jd));
+  else v = marker(P.parent, jd).clone().add(localOff(d3(SF.pos(id, jd), SF.pos(P.parent, jd)), P.parent));
+  return (MEMO[k] = v);
+}
+// Where a replayed Starseeker is drawn in the compressed scene. Local hops are drawn around their planet at jdNow.
+function shipC(rp, jd, jdNow) {
+  if (jdNow == null) jdNow = jd;
+  var s = rp.at(jd), L = s.leg;
+  if (s.phase !== "flight") return { v: marker(s.phase === "arrived" ? L.to : L.from, jdNow).clone(), s: s };
+  var f = s.f;
+  if (L.sys) {
+    var sys = L.sys, base = function (p) { return localOff(d3(p, SF.pos(sys, jd)), sys); }, an = marker(sys, jdNow);
+    var v = base(s.p);
+    var e0 = marker(L.from, jdNow).clone().sub(an).sub(base(SF.pos(L.from, jd)));
+    var e1 = marker(L.to, jdNow).clone().sub(an).sub(base(SF.pos(L.to, jd)));
+    return { v: v.add(e0.multiplyScalar(1 - f)).add(e1.multiplyScalar(f)).add(an), s: s };
+  }
+  // Moon and station offsets are exaggerated in the scene; take them at departure and arrival, so a moon's orbit doesn't wobble the path.
+  var w = S(s.p), c0 = marker(L.from, L.dep).clone().sub(S(SF.pos(L.from, L.dep))), c1 = marker(L.to, L.arr).clone().sub(S(SF.pos(L.to, L.arr)));
+  return { v: w.add(c0.multiplyScalar(1 - f)).add(c1.multiplyScalar(f)), s: s };
+}
+// Osculating orbit ring from a state vector (km, km/s): points relative to the attractor, in km.
+function kring(r, v, mu, n) {
+  function cr(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+  function ln(a) { return Math.hypot(a[0], a[1], a[2]); }
+  function sc(a, k) { return [a[0] * k, a[1] * k, a[2] * k]; }
+  var h = cr(r, v), hm = ln(h), rm = ln(r), vh = cr(v, h);
+  var ev = [vh[0] / mu - r[0] / rm, vh[1] / mu - r[1] / rm, vh[2] / mu - r[2] / rm], e = ln(ev);
+  if (e >= 0.98 || !hm) return [];
+  var p = hm * hm / mu, P = e > 1e-6 ? sc(ev, 1 / e) : sc(r, 1 / rm), W = sc(h, 1 / hm), Q = cr(W, P), out = [];
+  for (var i = 0; i <= n; i++) { var nu = 2 * Math.PI * i / n, rad = p / (1 + e * Math.cos(nu)), c = Math.cos(nu) * rad, s = Math.sin(nu) * rad; out.push([P[0] * c + Q[0] * s, P[1] * c + Q[1] * s, P[2] * c + Q[2] * s]); }
+  return out;
+}
+function relState(id, jd) {
+  var P = SF.place(id), a = SF.E.placeState(id, jd), mu, r = a.r, v = a.v;
+  if (P.parent === "sun") mu = SF.E.MU_SUN;
+  else { var b = SF.E.placeState(P.parent, jd); r = d3(a.r, b.r); v = d3(a.v, b.v); mu = SF.place(P.parent).mu; }
+  return { r: r, v: v, mu: mu };
+}
+
+/* ---------- labels and the target box ---------- */
+function LabelSet(root) {
+  var items = [], pv = null;
+  return {
+    add: function (o) {
+      var el = document.createElement(o.click ? "button" : "div");
+      el.className = "lbl " + (o.cls || ""); el.innerHTML = o.html;
+      if (o.click) { el.type = "button"; el.addEventListener("click", o.click); }
+      root.appendChild(el); o.el = el; o.w = 0; o.on = false;
+      items.push(o); items.sort(function (a, b) { return b.pri - a.pri; }); return o;
+    },
+    clear: function () { items.forEach(function (o) { o.el.remove(); }); items = []; },
+    remove: function (o) { o.el.remove(); items = items.filter(function (x) { return x !== o; }); },
+    update: function (cam, W, H) {
+      pv = pv || V(); var placed = [];
+      for (var i = 0; i < items.length; i++) {
+        var o = items[i], p = o.hide && o.hide() ? null : o.pos(), show = false;
+        if (p) {
+          pv.copy(p).project(cam);
+          if (pv.z < 1 && pv.z > -1 && Math.abs(pv.x) < 1.05 && Math.abs(pv.y) < 1.05) {
+            if (!o.w) { o.w = o.el.offsetWidth || 60; o.h = o.el.offsetHeight || 16; }
+            var g = gut(), ok = true;
+            var x = clamp((pv.x + 1) / 2 * W + 4, g.l, W - g.r - o.w), y = clamp((1 - pv.y) / 2 * H - o.h / 2, g.t, H - g.b - o.h);
+            for (var j = 0; ok && j < placed.length; j++) { var r = placed[j]; if (x < r[2] && x + o.w > r[0] && y < r[3] && y + o.h > r[1]) ok = false; }
+            if (ok) { placed.push([x, y, x + o.w, y + o.h]); o.el.style.transform = "translate3d(" + x.toFixed(1) + "px," + y.toFixed(1) + "px,0)"; show = true; }
+          }
+        }
+        if (show !== o.on) { o.el.style.visibility = show ? "visible" : "hidden"; o.on = show; }
+      }
+    }
+  };
+}
+var TV = null;
+function tbox(el, cam, W, H, p, rad, minPx) {
+  if (!p) { el.style.visibility = "hidden"; return; }
+  TV = TV || V(); TV.copy(p).project(cam);
+  if (TV.z >= 1 || Math.abs(TV.x) > 1.2 || Math.abs(TV.y) > 1.2) { el.style.visibility = "hidden"; return; }
+  var d = cam.position.distanceTo(p), rpx = rad / (d * Math.tan(cam.fov * Math.PI / 360)) * H / 2;
+  var s = Math.max(minPx || 34, rpx * 2.6), x = (TV.x + 1) / 2 * W, y = (1 - TV.y) / 2 * H;
+  el.style.width = el.style.height = s.toFixed(0) + "px";
+  el.style.transform = "translate3d(" + (x - s / 2).toFixed(1) + "px," + (y - s / 2).toFixed(1) + "px,0)";
+  el.style.visibility = "visible";
+  // Keep the box's caption on screen: flip it to the left of the box near the right edge, then clamp to the safe gutters.
+  var ti = el.querySelector(".ti");
+  if (ti) {
+    var g = gut(), tw = ti.offsetWidth, th = ti.offsetHeight, bx = x - s / 2, by = y - s / 2, lx = bx + s + 10;
+    if (lx + tw > W - g.r) lx = bx - 10 - tw;
+    lx = clamp(lx, g.l, W - g.r - tw);
+    ti.style.left = (lx - bx).toFixed(1) + "px"; ti.style.top = (clamp(by, g.t, H - g.b - th) - by).toFixed(1) + "px";
+  }
+}
+function clamp(v, a, b) { return b < a ? a : v < a ? a : v > b ? b : v; }
+// Safe-area gutters for things drawn over the scene: at least 16px at the sides.
+var GUT = null;
+function gut() {
+  if (GUT) return GUT;
+  var d = document.createElement("div"), n = function (v) { return parseFloat(v) || 0; };
+  d.style.cssText = "position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)";
+  document.body.appendChild(d);
+  var cs = getComputedStyle(d);
+  GUT = { l: Math.max(16, n(cs.paddingLeft)), r: Math.max(16, n(cs.paddingRight)), t: 8 + n(cs.paddingTop), b: 8 + n(cs.paddingBottom) };
+  d.remove(); return GUT;
+}
+function pxw(cam, v, H) { return cam.position.distanceTo(v) * 2 * Math.tan(cam.fov * Math.PI / 360) / H; }
+
+/* ---------- pointer rig (drag to orbit, wheel / pinch to zoom) ---------- */
+function bindRig(host, rig) {
+  var ptrs = {}, last = null, pinch = 0;
+  host.addEventListener("pointerdown", function (e) { ptrs[e.pointerId] = [e.clientX, e.clientY]; host.setPointerCapture(e.pointerId); rig.touched = performance.now(); });
+  host.addEventListener("pointermove", function (e) {
+    if (!ptrs[e.pointerId]) return;
+    var prev = ptrs[e.pointerId]; ptrs[e.pointerId] = [e.clientX, e.clientY];
+    var ids = Object.keys(ptrs);
+    if (ids.length === 2) {
+      var a = ptrs[ids[0]], b = ptrs[ids[1]], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      if (pinch) rig.zoom(pinch / d); pinch = d;
+    } else {
+      rig.az -= (e.clientX - prev[0]) * 0.006; rig.el = Math.max(-1.35, Math.min(1.45, rig.el + (e.clientY - prev[1]) * 0.005));
+    }
+    rig.touched = performance.now();
+  });
+  function up(e) { delete ptrs[e.pointerId]; pinch = 0; }
+  host.addEventListener("pointerup", up); host.addEventListener("pointercancel", up);
+  host.addEventListener("wheel", function (e) { e.preventDefault(); rig.zoom(Math.exp(e.deltaY * 0.0012)); rig.touched = performance.now(); }, { passive: false });
+}
+
+/* ---------- loop ---------- */
+var glRaf = 0, glLast = 0, rHudT = 0;
+function glFrame(t) {
+  glRaf = requestAnimationFrame(glFrame);
+  var dt = Math.min(0.1, Math.max(0, (t - glLast) / 1000)); glLast = t; MEMO = {}; MEMON = 0;
+  try { rideFrame(dt, t); } catch (e) { if (!glFrame.err) { glFrame.err = 1; console.error(e); } }
+}
+function glStart() { if (!glRaf && !document.hidden) { glLast = performance.now(); glRaf = requestAnimationFrame(glFrame); } }
+function glStop() { if (glRaf) cancelAnimationFrame(glRaf); glRaf = 0; }
+
+/* ---------- passenger list ----------
+   The shared-flight shape: stop 0 is where the Starseeker is parked; each later stop is
+   { at, board: [bookings], alight: [bookings] }. Each booking boards once and gets off once, at its own from and to.
+   A leg is a pickup while the cabin is empty and a passenger leg once anyone is aboard. Each flight carries one
+   booking for now. Seats, party size and bookings per flight are placeholders, not in the data. */
+var SEAT_N = 4, PARTY_MAX = 3;
+function passengerList(i) {
+  var lg = RIDE.record.log, fl = lg.flown || [], h = hailOf(lg.hail) || {};
+  var bk = { id: lg.hail, lead: (h.rider || "").split(",")[0], from: lg.from, to: lg.to, b: -1, a: -1 };
+  var stops = fl.length ? [{ at: fl[0].from, arrive: null, leave: fl[0].depart, board: [], alight: [] }] : [];
+  fl.forEach(function (f, k) { stops.push({ at: f.to, arrive: f.arrive, leave: fl[k + 1] ? fl[k + 1].depart : null, board: [], alight: [] }); });
+  stops.forEach(function (s, k) {
+    if (bk.b < 0 && s.at === bk.from) bk.b = k;
+    else if (bk.b >= 0 && bk.a < 0 && s.at === bk.to) bk.a = k;
+  });
+  if (bk.b >= 0) stops[bk.b].board.push(bk);
+  if (bk.a >= 0) stops[bk.a].alight.push(bk);
+  return { stops: stops, bookings: [bk], legs: fl };
+}
+// Bookings in the cabin once the Starseeker has reached stop r (and while it flies the leg after it).
+function aboardAt(P, r) { return P.bookings.filter(function (b) { return b.b >= 0 && b.b <= r && (b.a < 0 || r < b.a); }); }
+function seatsHtml(on) {
+  var cls = [];
+  on.forEach(function () { cls.push("on"); for (var k = 1; k < PARTY_MAX; k++) cls.push("maybe"); });
+  var cells = "";
+  for (var k = 0; k < SEAT_N; k++) cells += '<span class="seat' + (cls[k] ? " " + cls[k] : "") + '"></span>';
+  var txt = on.length
+    ? "Seats in use <b>" + on.length + " lead passenger" + (on.length > 1 ? "s" : "") + "</b> + party not set yet / <b>4</b> (placeholder)"
+    : "Seats in use <b>0</b>, cabin empty / <b>4</b> (placeholder)";
+  return cells + '<span class="st">' + txt + "</span>";
+}
+function renderPlist() {
+  var P = RS.pl, n = P.stops.length - 1;
+  $("#plStops").innerHTML = P.stops.map(function (s, k) {
+    var ev = [];
+    s.board.forEach(function (b) { ev.push('<li><span class="bd">Boards</span>booking <b class="mono">' + esc(b.id) + "</b> \u00B7 lead " + esc(b.lead || "not in the data") + " \u00B7 party not set yet (1\u20133, placeholder)</li>"); });
+    s.alight.forEach(function (b) { ev.push('<li><span class="al">Gets off</span>booking <b class="mono">' + esc(b.id) + "</b></li>"); });
+    if (!ev.length) ev.push('<li class="dim">' + (k === 0 ? "Parked here, cabin empty" : "No one boards or gets off") + "</li>");
+    var tm = k === 0 ? "leaves " + s.leave : "arrives " + s.arrive + (s.leave ? " \u00B7 leaves " + s.leave : " \u00B7 end of flight");
+    var out = '<li class="pst" data-k="' + k + '"><span class="wp">' + k + '</span><div class="nm">' + placeH(s.at) + '</div><div class="m">Stop ' + k + (k === 0 ? ", parked" : "") + " \u00B7 " + esc(tm) + "</div><ul>" + ev.join("") + "</ul></li>";
+    if (k < n) {
+      var on = aboardAt(P, k), f = P.legs[k];
+      out += '<li class="pleg" data-l="' + k + '"><span class="r">Leg ' + (k + 1) + " \u00B7 " + (on.length ? "passenger leg" : "pickup") + "</span><br>" + (on.length ? on.length + " booking aboard" : "cabin empty") + " \u00B7 " + fmt(f.kwh) + " kWh flown</li>";
+    }
+    return out;
+  }).join("");
+  $("#plKv").innerHTML = "<dt>Bookings on this flight</dt><dd>" + P.bookings.length + " (run log)</dd><dt>Bookings per flight</dt><dd>up to 3 (placeholder)</dd><dt>Seats on the " + esc(SF.SHIP) + "</dt><dd>4 (placeholder)</dd><dt>Party per booking</dt><dd>1\u20133 (placeholder)</dd>";
+  RS.plKey = null;
+}
+function plistTick(st) {
+  var P = RS.pl, n = P.stops.length - 1, fl = st.phase === "flight";
+  var r = st.phase === "arrived" ? n : st.phase === "parked" ? 0 : st.i;
+  var key = r + st.phase;
+  if (key === RS.plKey) return;
+  RS.plKey = key;
+  $$("#plStops .pst").forEach(function (li, k) {
+    var on = !fl && k === r;
+    li.classList.toggle("on", on); li.classList.toggle("past", k < r || (fl && k === r));
+    if (on) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
+  });
+  $$("#plStops .pleg").forEach(function (li, k) { li.classList.toggle("on", fl && k === r); li.classList.toggle("past", k < r); });
+  $("#plSeats").innerHTML = seatsHtml(aboardAt(P, r));
+}
+
+/* ---------- replay ---------- */
+function bindRide() {
+  $("#play").addEventListener("click", function () { if (!RS) return; if (RS.cur >= RS.rp.end) RS.cur = RS.rp.start; RS.playing = !RS.playing; playIcon(); });
+  $("#srange").addEventListener("input", function () { if (!RS) return; RS.cur = RS.rp.start + (RS.rp.end - RS.rp.start) * (+this.value / 1000); RS.scrubbed = true; });
+  $("#speed").addEventListener("change", function () { if (RS) RS.speed = +this.value; });
+  $("#cammode").addEventListener("click", function () { if (!RS) return; RS.over = !RS.over; this.setAttribute("aria-pressed", String(RS.over)); });
+  bindRig($("#rhost"), { set az(v) { if (RS) RS.yaw = v; }, get az() { return RS ? RS.yaw : 0; }, set el(v) { if (RS) RS.pitch = v; }, get el() { return RS ? RS.pitch : 0; }, zoom: function (k) { if (RS) RS.zf = Math.max(0.25, Math.min(8, RS.zf * k)); } });
+}
+function playIcon() {
+  $("#playicon").innerHTML = RS && RS.playing ? '<path d="M3 2h4v12H3zM9 2h4v12H9z"/>' : '<path d="M4 2l10 6-10 6z"/>';
+  $("#play").setAttribute("aria-label", RS && RS.playing ? "Pause" : "Play");
+}
+function loadRide(i) {
+  if (RS && RS.i === i) return;
+  var ride = RIDE, rp = SF.replay(ride), rec = rp.record, h = hailOf(rec.hail_id) || {};
+  var span = rp.end - rp.start, local = rp.focus !== "sun";
+  // Local scenes open further out and higher, so the planet frames the shot instead of filling it.
+  RS = { pax: (h.rider || "").split(",")[0] || "passenger", i: i, rp: rp, cur: rp.start, playing: !reduced, speed: +$("#speed").value, rate: span / 28, over: false,
+    yaw: 0, pitch: local ? 0.55 : 0.3, zf: rp.focus === "earth" ? 2.6 : local ? 1.6 : 1, fwd: window.THREE ? V(0, 0, 1) : null, camp: null, local: local };
+  RS.pl = passengerList(i);
+  $("#cammode").setAttribute("aria-pressed", "false");
+  $("#rwho").textContent = rec.player_tag ? "Player run" : "Connector run";
+  $("#rwho").className = "tag " + (rec.player_tag ? "me" : "sim");
+  $("#rtitle").textContent = shipWords(h.title || rec.hail_id) + " \u00B7 " + SF.name(rec.log.from) + " \u2192 " + SF.name(rec.log.to);
+  $("#rnote").textContent = local ? "Centred on " + SF.name(rp.focus) + ", distances in km. Not to scale: the " + SF.SHIP + " and small moons are enlarged. The flight is simulated."
+    : "Not to scale: distances compressed, sizes exaggerated. Planet positions are real; the flight is simulated.";
+  $("#sticks").innerHTML = rp.events.map(function (e) { return '<span class="tick ' + e.kind + '" style="left:' + ((e.jd - rp.start) / span * 100).toFixed(2) + '%" title="' + W(e.title) + '"></span>'; }).join("");
+  $("#callouts").innerHTML = ""; RS.ckey = null;
+  playIcon();
+  renderPlist();
+  renderDebrief(i);
+  if (GL) {
+    buildRideScene();
+    var L0 = rp.legs[0], d0 = shipPos(L0.arr).sub(shipPos(L0.dep)); // face along the first leg from the start
+    if (d0.lengthSq() > 1e-12) RS.fwd.copy(d0.normalize());
+  }
+}
+function placeK(id, jd) { var b = SF.pos(RS.rp.focus, jd); return axes(d3(SF.pos(id, jd), b), AU / 1000); }
+function buildRideScene() {
+  if (RS.sc) return;
+  var rp = RS.rp, focus = rp.focus, sc = new THREE.Scene(), local = focus !== "sun";
+  var cam = new THREE.PerspectiveCamera(50, (GL.W || 1) / (GL.H || 1), local ? 0.002 : 0.02, 9000);
+  if (RS.labels) RS.labels.clear();
+  $("#rlabels").textContent = ""; // drop the last flight's labels
+  var labels = LabelSet($("#rlabels")); RS.labels = labels; RS.sc = sc; RS.cam = cam; RS.bodies = [];
+  sc.add(stars());
+  if (local) {
+    sc.add(new THREE.AmbientLight(0x2c3442, 0.7));
+    var dl = new THREE.DirectionalLight(0xfff1dc, 1.5); sc.add(dl); sc.add(dl.target); RS.dl = dl;
+    var sun = sunObj(30); sc.add(sun); RS.sun = sun;
+    var P = SF.place(focus), R = P.radius_km / 1000, pm = planetMesh(focus); pm.scale.setScalar(R); sc.add(pm);
+    pm.add(atmo(focus === "earth" ? "rgba(120,170,255,.35)" : "rgba(230,140,100,.22)", 1));
+    RS.bodies.push({ id: focus, m: pm, r: R });
+    labels.add({ html: esc(SF.name(focus)), cls: "k-planet", pri: 50, pos: function () { return V(); } });
+    SF.E.PLACES.forEach(function (Q) {
+      if (Q.id === focus || SF.system(Q.id) !== focus) return;
+      var id = Q.id, m, r;
+      if (Q.kind === "moon") { r = Math.max(0.05, Q.radius_km / 1000); m = planetMesh(id); m.scale.setScalar(r); }
+      else { r = 0.03; m = new THREE.Mesh(GEO.oct || (GEO.oct = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: Q.real ? 0xdfe6ee : 0xffb65c, wireframe: true })); m.scale.setScalar(r); }
+      sc.add(m); RS.bodies.push({ id: id, m: m, r: r });
+      var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 160).map(function (q) { return axes(q, 1 / 1000); });
+      if (ring.length) { var g = new THREE.Group(); g.add(lineOf(ring, 0xffffff, 0.14)); sc.add(g); RS.bodies.push({ id: Q.parent, ringOf: id, m: g, r: 0 }); }
+      labels.add({ html: esc(SF.name(id)), cls: Q.kind === "moon" ? "k-planet" : "k-place", pri: Q.kind === "moon" ? 40 : 30, pos: function () { return placeK(id, RS.cur); } });
+    });
+  } else {
+    sc.add(new THREE.AmbientLight(0x3a4252, 0.6)); sc.add(new THREE.PointLight(0xfff1dc, 1.7, 0)); sc.add(sunObj(SIZE.sun));
+    var used = {}; rp.legs.forEach(function (L) { used[L.from] = used[L.to] = 1; });
+    SF.E.PLACES.forEach(function (Q) {
+      var id = Q.id, m, minPx = 2;
+      if (Q.kind === "planet" || id === "ceres") {
+        m = planetMesh(id); minPx = 2.6;
+        var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 180).map(function (q) { return S([q[0] / AU, q[1] / AU, q[2] / AU]); });
+        if (ring.length) sc.add(lineOf(ring, 0xffffff, 0.12));
+      } else if (Q.kind === "moon" && used[id]) m = planetMesh(id);
+      else if (used[id]) m = new THREE.Mesh(GEO.oct || (GEO.oct = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: Q.real ? 0xdfe6ee : 0xffb65c, wireframe: true }));
+      else return;
+      m.scale.setScalar(dispR(id)); sc.add(m);
+      RS.bodies.push({ id: id, m: m, r: Q.kind === "station" ? 0.05 : dispR(id), minPx: minPx, helio: true });
+      labels.add({ html: esc(SF.name(id)), cls: Q.kind === "planet" ? "k-planet" : "k-place", pri: used[id] ? 60 : 40, pos: function () { return marker(id, RS.cur); } });
+    });
+  }
+  // The flown path, dim in full and bright up to now. Only the flights are drawn: a parked Starseeker rides its moon
+  // or station around the planet, and months of that sampled coarsely would scribble zigzags over the scene.
+  var pts = [], ts = [], fly = rp.legs.reduce(function (a, L) { return a + (L.arr - L.dep); }, 0) || 1;
+  rp.legs.forEach(function (L) {
+    var n = Math.max(8, Math.round(600 * (L.arr - L.dep) / fly));
+    for (var k = 0; k <= n; k++) { var j = L.dep + (L.arr - L.dep) * k / n; ts.push(j); pts.push(shipPos(j)); }
+  });
+  RS.path = lineOf(pts, 0x9cc3ff, 0.22); RS.done = lineOf(pts, 0x9cc3ff, 1); RS.done.geometry.setDrawRange(0, 0); RS.ts = ts;
+  sc.add(RS.path); sc.add(RS.done);
+  RS.ship = makeShip(); sc.add(RS.ship);
+  RS.shipScale = local ? 0.14 : 0.55;
+  RS.ship.scale.setScalar(RS.shipScale);
+  onResize();
+}
+var NEAR = 0.06;
+function shipPos(jd) {
+  if (RS.rp.focus === "sun") return shipC(RS.rp, jd).v;
+  var s = RS.rp.at(jd), b = SF.pos(RS.rp.focus, jd); return axes(d3(s.p, b), AU / 1000);
+}
+// Sky days per real second. In the heliocentric scene a parked or waiting Starseeker circles its moon every few
+// days, so those stretches play slower: each takes at least about 8 s at 1x.
+function effRate() {
+  var rp = RS.rp, base = RS.rate * RS.speed;
+  if (RS.local) return base;
+  var st = rp.at(RS.cur), w;
+  if (st.phase === "parked") w = rp.legs[0].dep - rp.start;
+  else if (st.phase === "dwell" && st.i > 0) w = rp.legs[st.i].dep - rp.legs[st.i - 1].arr;
+  else return base;
+  return Math.min(base, Math.max(w / 8, 0.25) * RS.speed);
+}
+function rideFrame(dt, t) {
+  if (!RS) return;
+  var rp = RS.rp, span = rp.end - rp.start, er = effRate();
+  if (RS.playing) { RS.cur += dt * er; if (RS.cur >= rp.end) { RS.cur = rp.end; RS.playing = false; playIcon(); } }
+  var jd = RS.cur, f = (jd - rp.start) / span, st = rp.at(jd), L = st.leg, jump = !!RS.scrubbed; // a scrub jumps the camera, no swoop
+  var fl = st.phase === "flight";
+  if (t - rHudT > 90 || RS.scrubbed) {
+    rHudT = t; RS.scrubbed = false;
+    if (document.activeElement !== $("#srange")) $("#srange").value = String(Math.round(f * 1000));
+    $("#sfill").style.width = (f * 100).toFixed(2) + "%"; $("#sknob").style.left = (f * 100).toFixed(2) + "%";
+    $("#tcode").textContent = iso(jd);
+    plistTick(st);
+    var P = RS.pl, r = st.phase === "arrived" ? P.stops.length - 1 : st.phase === "parked" ? 0 : st.i, on = aboardAt(P, r);
+    var dkm = Math.hypot.apply(null, d3(SF.pos(L.to, jd), st.p)) * AU;
+    $("#rtele").innerHTML = '<div class="hudbox"><div class="caps">Sky time \u00B7 UTC \u00B7 simulated</div><div class="big">' + iso(jd) + "</div>1 s = <b>" + SF.dur(er) + "</b>" + (er < RS.rate * RS.speed - 1e-9 ? " (slowed while waiting)" : "") + "<br>" +
+      esc(SF.SHIP) + " <b>" + esc(rp.record.score.car) + "</b><br>Leg <b>" + (st.i + 1) + "/" + rp.legs.length + "</b> \u00B7 " + esc(on.length || fl && L.kind !== "pickup" ? "passenger" : legKind(L.kind)) + " \u00B7 <b>" + esc(st.phase) + "</b><br>" +
+      esc(SF.name(L.from)) + " \u2192 " + esc(SF.name(L.to)) + "<br>To " + esc(SF.name(L.to)) + " <b>" + (st.phase === "arrived" ? "arrived" : dist(dkm)) + "</b><br>" +
+      (on.length ? "Aboard <b>" + esc(RS.pax) + "</b> \u00B7 party not set yet" : "Cabin empty \u00B7 picking up <b>" + esc(RS.pax) + "</b>") + "<br>Seats <b>4</b> (placeholder)</div>";
+    var win = er * 6, vis = rp.events.filter(function (e) { return e.jd <= jd && jd - e.jd <= Math.max(win, span * 0.02); }).slice(-3);
+    var key = vis.map(function (e) { return e.jd + e.kind; }).join();
+    if (key !== RS.ckey) {
+      RS.ckey = key;
+      $("#callouts").innerHTML = vis.map(function (e) { return '<div class="co ' + e.kind + '"><div class="k">' + esc(e.kind) + ' \u00B7 <span class="mono">' + iso(e.jd) + "</span></div><b>" + W(e.title) + "</b><p>" + W(e.text) + "</p></div>"; }).join("");
+      RS.alert = vis.some(function (e) { return e.kind === "checkpoint" || e.kind === "incident"; });
+    }
+    if (t - (RS.pillT || -1e9) > 1000) { RS.pillT = t; var s = SF.sky(); $("#skydate").textContent = "Season " + s.season + " \u00B7 " + iso(s.jd).slice(0, 10); }
+  }
+  if (!GL || !RS.sc) return;
+  var cam = RS.cam, GW = GL.W, GH = GL.H, p = shipPos(jd);
+  // Bodies. In the compressed heliocentric scene, a body near the Starseeker shrinks to a fraction of its distance
+  // from the ship, so the ship stays the subject (the scene is already labelled "not to scale").
+  RS.bodies.forEach(function (b) {
+    if (RS.local) {
+      if (b.ringOf) { b.m.position.copy(b.id === rp.focus ? V() : placeK(b.id, jd)); return; }
+      if (b.id !== rp.focus) b.m.position.copy(placeK(b.id, jd));
+    } else {
+      var v = marker(b.id, jd), rr = Math.min(b.r, Math.max(0.03, v.distanceTo(p) * NEAR));
+      b.m.position.copy(v); b.m.scale.setScalar(Math.max(rr, pxw(cam, v, GH) * (b.minPx || 2)));
+    }
+  });
+  if (RS.local) {
+    var sd = axes(d3([0, 0, 0], SF.pos(rp.focus, jd)), 1); sd.normalize();
+    RS.dl.position.copy(sd.clone().multiplyScalar(100)); RS.sun.position.copy(sd.clone().multiplyScalar(3000));
+  }
+  var q = shipPos(Math.min(rp.end, jd + span / 900)), d = q.clone().sub(p);
+  // Near a planet a parked Starseeker rides its station's orbit, often several laps per second of replay. The camera
+  // then rides with it, locked to the orbit (ahead along the motion, up away from the planet), instead of chasing.
+  var snap = reduced || jump || (RS.local && !fl);
+  if (d.lengthSq() > 1e-12 && (fl || RS.local)) RS.fwd.lerp(d.normalize(), snap ? 1 : 1 - Math.exp(-dt * 6)).normalize();
+  RS.ship.position.copy(p); RS.ship.lookAt(p.clone().add(RS.fwd));
+  RS.ship.userData.glow.material.opacity = fl ? 1 : 0.2;
+  RS.ship.userData.glow.scale.setScalar(fl ? 0.42 + (reduced ? 0 : 0.06 * Math.sin(t / 45)) : 0.25);
+  var nd = 0; while (nd < RS.ts.length && RS.ts[nd] <= jd) nd++;
+  RS.done.geometry.setDrawRange(0, nd);
+  // Camera: chase (behind and above) or overhead. In the heliocentric scene a parked or waiting Starseeker circles
+  // its moon fast, so the camera holds on that planet's system instead of chasing the ship around it.
+  var D = (RS.local ? 0.75 : 3.2) * RS.zf, want, look, hold = null;
+  if (!RS.local && !RS.over && !fl) { var pl = st.phase === "arrived" ? L.to : L.from, sys = SF.system(pl); if (sys && sys !== pl && sys !== "sun") hold = sys; }
+  if (hold) {
+    var c = marker(hold, jd), R = Math.max(c.distanceTo(p) * 3.5, D * 1.2), cp = Math.cos(RS.pitch);
+    want = c.clone().add(V(Math.sin(RS.yaw) * cp, Math.sin(RS.pitch) + 0.1, Math.cos(RS.yaw) * cp).multiplyScalar(R)); look = c.clone();
+  } else if (!RS.over) {
+    // Near a planet "up" is away from its centre, so a low orbit opens on the ship over the limb, not on a wall of planet.
+    var up = RS.local && p.lengthSq() > 1e-12 ? p.clone().normalize() : V(0, 1, 0);
+    var back = RS.fwd.clone().multiplyScalar(-1).applyAxisAngle(up, RS.yaw);
+    want = p.clone().add(back.multiplyScalar(D)).add(up.clone().multiplyScalar(D * Math.max(0.05, Math.sin(RS.pitch) + 0.1)));
+    look = p.clone().add(RS.fwd.clone().multiplyScalar(D * 0.6));
+    if (RS.local) {
+      var Rp = SF.place(rp.focus).radius_km / 1000 * 1.06; if (want.length() < Rp) want.setLength(Rp); // never inside the planet
+      RS.up = RS.up && !snap ? RS.up.lerp(up, 1 - Math.exp(-dt * 3)).normalize() : up.clone();
+    }
+  } else {
+    var Hgt = (RS.local ? SF.place(rp.focus).radius_km / 1000 * 7 : 70) * RS.zf;
+    want = p.clone().add(V(Math.sin(RS.yaw) * Hgt * 0.15, Hgt, Math.cos(RS.yaw) * Hgt * 0.15)); look = p.clone();
+  }
+  if (!RS.camp || snap) RS.camp = want.clone(); else RS.camp.lerp(want, 1 - Math.exp(-dt * 5));
+  if (!RS.look || snap) RS.look = look.clone(); else RS.look.lerp(look, 1 - Math.exp(-dt * 5));
+  if (RS.camp.distanceTo(p) > D * 30 && !RS.over && !hold) { RS.camp.copy(want); RS.look.copy(look); }
+  cam.up.copy(RS.local && !RS.over && !hold && RS.up ? RS.up : V(0, 1, 0));
+  cam.position.copy(RS.camp); cam.lookAt(RS.look);
+  RS.labels.update(cam, GW, GH);
+  var tb = $("#rtbox"); tb.classList.toggle("alert", !!RS.alert);
+  tbox(tb, cam, GW, GH, p, RS.shipScale * 0.6, 44);
+  if (t - (RS.tt || 0) > 150) { RS.tt = t; $("#rti").innerHTML = "<b>" + esc(SF.SHIP) + " " + esc(rp.record.score.car) + "</b>" + esc(st.phase) + " \u00B7 " + (fl ? Math.round(st.f * 100) + "% of leg" : esc(SF.name(st.phase === "arrived" ? L.to : L.from))); }
+  GL.r.render(RS.sc, cam);
+}
+
+/* ---------- receipt ---------- */
+function partOf(sc, k) { return sc.parts.filter(function (p) { return p.key === k; })[0]; }
+function partCell(p) {
+  if (!p) return '<span class="dim">not scored</span>';
+  var f = p.got / p.max, c = f >= 0.999 ? "pass" : f >= 0.5 ? "best" : "fail";
+  return '<span class="' + c + '" title="' + esc(shipWords(p.note)) + '">' + fmt(p.got, p.got % 1 ? 1 : 0) + " / " + p.max + "</span>";
+}
+function renderDebrief(i) {
+  $("#debrief").innerHTML = debrief(i);
+  $$("#debrief [data-ev]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var e = RS.rp.events[+b.dataset.ev];
+      RS.cur = Math.min(RS.rp.end, e.jd + (RS.rp.end - RS.rp.start) * 0.001); RS.playing = false; RS.scrubbed = true; playIcon();
+      window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+    });
+  });
+}
+function debrief(i) {
+  var r = RIDE, rec = r.record, sc = rec.score, lg = rec.log, h = hailOf(lg.hail) || {}, P = RS.pl;
+  var parts = sc.parts.map(function (p) {
+    var f = p.got / p.max, col = f >= 0.999 ? "var(--ok)" : f >= 0.5 ? "var(--sun)" : "var(--bad)";
+    return '<div class="sp"><span class="lb">' + esc(p.label) + '</span><span class="bar"><i style="width:' + (f * 100).toFixed(1) + "%;background:" + col + '"></i></span><span class="v">' + fmt(p.got, p.got % 1 ? 1 : 0) + " / " + p.max + '</span><span class="nt">' + esc(shipWords(p.note)) + "</span></div>";
+  }).join("");
+  var legRows = r.legs.map(function (L, j) {
+    var f = lg.flown[j] || {}, rf = L.refly || {}, ok = rf.result === "PASS";
+    var rfTxt = ok ? '<span class="pass">PASS</span> \u00B7 miss ' + fmt(rf.final_miss_km, 1) + " km" : /local/.test(rf.result || "") ? '<span class="dim">Local hop</span>' : '<span class="fail">' + esc(rf.result || "") + "</span>";
+    return "<tr><td>" + esc(L.leg_id) + " \u00B7 " + esc(legKind(L.kind)) + '</td><td style="font-family:Inter">' + (f.from ? placeH(f.from) : esc(L.from)) + " \u2192 " + (f.to ? placeH(f.to) : esc(L.to)) + "</td><td>" + esc(L.depart) + "</td><td>" + esc(L.arrive) + '</td><td class="r">' + SF.dur(L.tof_days) + '</td><td class="r">' + fmt(L.battery_kwh) + '</td><td class="r">' + money(L.fare_usd) + "</td><td>" + rfTxt + "</td></tr>";
+  }).join("");
+  var flownRows = lg.flown.map(function (f) {
+    return "<tr><td>" + esc(legKind(f.leg)) + '</td><td style="font-family:Inter">' + placeH(f.from) + " \u2192 " + placeH(f.to) + "</td><td>" + esc(f.depart) + "</td><td>" + esc(f.arrive) + '</td><td class="r">' + fmt(f.kwh) + "</td><td>" + (f.gate === "PASS" ? '<span class="pass">PASS</span>' : f.gate === "local" ? '<span class="dim">Local hop</span>' : esc(f.gate)) + "</td></tr>";
+  }).join("");
+  var cps = (lg.checkpoints || []).map(function (cp) {
+    var rows = cp.options_hindsight.map(function (o) {
+      var chosen = o.option.indexOf(cp.decision.action) === 0, best = o.option === cp.best;
+      return "<tr><td" + (best ? ' class="best"' : "") + ">" + (best ? "\u2605 " : "") + esc(shipWords(o.option)) + "</td><td>" + (chosen ? '<span class="tag ride">Agent chose</span>' : "") + (best ? ' <span class="tag me">Best</span>' : "") + '</td><td class="r">' + fmt(o.used_kwh) + "</td><td>" + esc(o.arrive) + "</td></tr>";
+    }).join("");
+    return '<div class="cp"><div class="h"><span class="tag me">Checkpoint ' + cp.n + "</span><b>" + esc(cp.kind.replace("_", " ")) + " at " + esc(SF.name(cp.place)) + '</b><span class="mono dim">' + esc(cp.at) + " \u00B7 " + esc(legKind(cp.leg)) + " leg \u00B7 cause " + esc(cp.cause.replace("_", " ")) + "</span></div>" +
+      '<p style="margin:0 0 8px">The agent called <code class="mono" style="color:var(--me)">decide</code> and chose <b>' + esc(cp.decision.action) + "</b>. Best in hindsight: <b class=\"best\">" + esc(cp.best) + "</b>.</p>" +
+      '<div class="tw"><table class="t"><thead><tr><th>Option (hindsight)</th><th></th><th class="r">Energy used, kWh</th><th>Arrival</th></tr></thead><tbody>' + rows + "</tbody></table></div></div>";
+  }).join("") || '<p class="dim" style="margin:0">No checkpoints on this flight.</p>';
+  var inc = sc.incidents.length ? '<div class="tw"><table class="t"><thead><tr><th>Incident</th><th>Leg</th><th>Place</th><th>At</th><th class="r">Hours</th><th class="r">kWh</th><th>Note</th></tr></thead><tbody>' + sc.incidents.map(function (x) {
+    return "<tr><td>" + esc(x.kind.replace("_", " ")) + "</td><td>" + esc(legKind(x.leg)) + "</td><td>" + esc(SF.name(x.place)) + "</td><td>" + esc(x.at) + '</td><td class="r">' + fmt(x.hours, 1) + '</td><td class="r">' + fmt(x.kwh) + '</td><td class="wrapc">' + esc(shipWords(x.note)) + "</td></tr>";
+  }).join("") + "</tbody></table></div>" : '<p class="dim" style="margin:0">No incidents.</p>';
+  // Passenger list per booking (the booking half of the score) and the ship block (the flight half).
+  var paxRows = P.bookings.map(function (b) {
+    return '<tr><td class="mono">' + esc(b.id) + '</td><td style="font-family:Inter">' + esc(b.lead || "not in the data") + '</td><td class="dim">not set yet (1\u20133, placeholder)</td><td style="font-family:Inter">' + (b.b >= 0 ? placeH(P.stops[b.b].at) + ' <span class="dim">stop ' + b.b + "</span>" : '<span class="dim">not in the log</span>') + '</td><td style="font-family:Inter">' + (b.a >= 0 ? placeH(P.stops[b.a].at) + ' <span class="dim">stop ' + b.a + "</span>" : '<span class="dim">not in the log</span>') +
+      '</td><td class="r">' + partCell(partOf(sc, "pickup")) + '</td><td class="r">' + partCell(partOf(sc, "on_time")) + '</td><td class="r">' + partCell(partOf(sc, "promise")) + '</td><td class="r">' + partCell(partOf(sc, "fare")) + "</td></tr>";
+  }).join("");
+  var pe = partOf(sc, "energy"), pc = partOf(sc, "checker"), pn = partOf(sc, "economy");
+  var nPass = r.legs.filter(function (L) { return (L.refly || {}).result === "PASS"; }).length, nLocal = r.legs.filter(function (L) { return /local/.test((L.refly || {}).result || ""); }).length;
+  var mx = Math.max(sc.used_kwh, sc.par_kwh), over = sc.used_kwh - sc.par_kwh;
+  var onTime = SF.jdOf(sc.arrive) <= SF.jdOf(sc.arrive_by);
+  var stopsList = P.stops.map(function (s, k) {
+    var what = s.board.map(function (b) { return "booking " + esc(b.id) + " boards"; }).concat(s.alight.map(function (b) { return "booking " + esc(b.id) + " gets off"; })).join(", ") || (k === 0 ? "parked here, cabin empty" : "no one boards or gets off");
+    return '<li><span class="wp">' + k + "</span><span>" + placeH(s.at) + " \u00B7 " + what + '</span><span class="m">' + esc(k === 0 ? "leaves " + s.leave : "arrives " + s.arrive) + "</span></li>";
+  }).join("");
+  var evs = RS.rp.events.map(function (e, k) { return '<li><button type="button" class="k-' + e.kind + '" data-ev="' + k + '"><span class="tm">' + iso(e.jd) + "</span><b>" + W(e.title) + '</b><span class="tx">' + W(e.text) + "</span></button></li>"; }).join("");
+  return '<div class="sheet2">' +
+    '<div class="dh"><div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="caps">Flight receipt</span><span class="tag sim">Simulated</span>' + (rec.player_tag ? '<span class="tag me">Player run</span>' : '<span class="tag sim">Connector run</span>') + '</div>' +
+      "<h2>" + esc(SF.name(lg.from)) + " \u2192 " + esc(SF.name(lg.to)) + "</h2>" +
+      '<div class="who">' + esc(h.rider || "") + " \u00B7 " + chip(lg.from) + " \u2192 " + chip(lg.to) + '</div><div class="who" style="margin-top:4px">' + (rec.player_tag ? "Flown by a player's agent through the connector \u00B7 player tag <b class=\"mono\">" + esc(rec.player_tag) + "</b>" : "Flown through the connector without signing in, so no player tag") + '.</div>' +
+      '<div class="meta"><span>' + SF.SHIP + " <b>" + esc(sc.car) + "</b></span><span>Season <b>" + rec.season + "</b></span><span>Run <b>" + esc(rec.run_id) + "</b></span><span>Booking <b>" + esc(lg.hail) + "</b></span></div>" +
+      '<div class="note" style="margin-top:8px">' + esc(shipWords(rec.note)) + "</div></div>" +
+      '<div class="tot"><div><div class="caps">Total</div><span class="n">' + fmt(sc.total) + '</span><span class="d"> /' + sc.out_of + '</span></div><div class="art">' + SF.SHIP_SVG + "</div></div></div>" +
+    '<div class="sec"><h3>Passenger list <span class="tag sim">Simulated</span><span class="tag sim">Simulated \u00B7 placeholder, not set yet</span></h3>' +
+      '<p class="note" style="margin:0 0 8px">Each booking is scored on its own: fast pickup, on time, kept promise, honest fare. Hover a score for its note. Party size is a placeholder; bookings per flight: up to 3 (placeholder). This flight carries ' + P.bookings.length + " booking.</p>" +
+      '<div class="tw"><table class="t pt"><thead><tr><th>Booking</th><th>Lead passenger</th><th>Party</th><th>Boards at</th><th>Gets off at</th><th class="r">Fast pickup</th><th class="r">On time</th><th class="r">Kept promise</th><th class="r">Honest fare</th></tr></thead><tbody>' + paxRows + "</tbody></table></div>" +
+      '<div class="cmp" style="margin-top:12px">' +
+        '<div class="c"><div class="caps">Ship \u00B7 energy vs par</div><div class="mono" style="font-size:12px;margin:6px 0 2px">' + esc(pe ? pe.label : "Energy") + " " + partCell(pe) + '</div><div class="mono" style="font-size:12px">Used ' + kwh(sc.used_kwh) + '</div><div class="ebar"><i style="width:' + (sc.used_kwh / mx * 100).toFixed(1) + '%;background:var(--sun)"></i></div><div class="mono" style="font-size:12px">Par ' + kwh(sc.par_kwh) + '</div><div class="ebar"><i style="width:' + (sc.par_kwh / mx * 100).toFixed(1) + '%;background:var(--ride)"></i></div><div class="mono dim" style="font-size:11.5px">' + (sc.beat_par ? "beat par" : "over par by " + kwh(over)) + "</div></div>" +
+        '<div class="c"><div class="caps">Ship \u00B7 every leg checked</div><div class="mono" style="font-size:12px;margin:6px 0 2px">' + esc(pc ? pc.label : "Checker") + " " + partCell(pc) + '</div><dl class="kv"><dt>Re-fly PASS</dt><dd>' + nPass + " of " + r.legs.length + " legs</dd><dt>Local hops, not re-flown</dt><dd>" + nLocal + '</dd></dl><div class="note" style="margin-top:6px">' + esc(shipWords(pc ? pc.note : "")) + "</div></div>" +
+        '<div class="c"><div class="caps">Ship \u00B7 planning economy</div><div class="mono" style="font-size:12px;margin:6px 0 2px">' + esc(pn ? pn.label : "Economy") + " " + partCell(pn) + '</div><div class="note" style="margin-top:6px">' + esc(shipWords(pn ? pn.note : "")) + "</div></div>" +
+      "</div>" +
+      '<div class="caps" style="margin-top:14px">Stops</div><ol class="stops">' + stopsList + "</ol>" +
+    "</div>" +
+    '<div class="sec"><h3>Legs <span class="tag sim">As planned and checked</span></h3><div class="tw"><table class="t"><thead><tr><th>Leg</th><th>Route</th><th>Depart</th><th>Arrive</th><th class="r">Duration</th><th class="r">kWh</th><th class="r">Fare</th><th>Re-fly</th></tr></thead><tbody>' + legRows + "</tbody></table></div>" +
+      '<h3 style="margin-top:14px">As flown <span class="tag sim">After holds and checkpoints</span></h3><div class="tw"><table class="t"><thead><tr><th>Leg</th><th>Route</th><th>Depart</th><th>Arrive</th><th class="r">kWh</th><th>Gate</th></tr></thead><tbody>' + flownRows + "</tbody></table></div></div>" +
+    '<div class="sec"><h3>Checkpoints</h3>' + cps + "</div>" +
+    '<div class="sec"><h3>Incidents</h3>' + inc + "</div>" +
+    '<div class="sec"><h3>Score <span class="mono" style="color:var(--me);letter-spacing:0">' + fmt(sc.total) + " / " + sc.out_of + '</span></h3><div class="sparts">' + parts + "</div></div>" +
+    '<div class="sec"><h3>Promise vs actual</h3><div class="cmp">' +
+      '<div class="c"><div class="caps">Pickup</div><dl class="kv"><dt>Planned</dt><dd>' + esc(sc.planned_pickup) + "</dd><dt>Actual</dt><dd>" + esc(sc.pickup) + "</dd></dl></div>" +
+      '<div class="c"><div class="caps">Arrival</div><dl class="kv"><dt>Quoted</dt><dd>' + esc(sc.promised_arrival) + "</dd><dt>Actual</dt><dd>" + esc(sc.arrive) + "</dd><dt>Slip</dt><dd" + (sc.promise_slip_hours > 0 ? ' class="fail"' : "") + ">" + fmt(sc.promise_slip_hours, 1) + " h</dd><dt>Arrive by</dt><dd>" + esc(sc.arrive_by) + (onTime ? ' <span class="pass">met</span>' : ' <span class="fail">missed</span>') + "</dd></dl></div>" +
+      '<div class="c"><div class="caps">Fare</div><dl class="kv"><dt>Quoted</dt><dd>' + money(lg.quote.fare_usd) + "</dd><dt>Charged</dt><dd>" + money(sc.fare_usd) + "</dd></dl></div>" +
+    "</div></div>" +
+    '<div class="sec"><h3>Timeline <span class="tag sim">From the run log</span></h3><ol class="tl">' + evs + '</ol><p class="note" style="margin:8px 0 0">Pick an event to jump the replay there.</p></div>' +
+    '<div class="sec"><h3>Raw log</h3><a class="raw" href="/rides/' + esc(rec.run_id) + '.json">/rides/' + esc(rec.run_id) + '.json</a><p class="note" style="margin:8px 0 0">The full run log (' + esc(rec.format) + '), as JSON.</p></div>' +
+  "</div>";
+}
+
+/* ---------- start: engine, run log, then three.js (lazy, this page only) ---------- */
+var RIDE = null, AU = SF.AU, FL = window.FLIGHT, RUN = FL.run_id;
+function failMsg(html) { var b = $("#loading .box"); if (b) b.innerHTML = '<b class="caps" style="color:var(--ride)">Starfare flight</b>' + html; }
+function loadThree() {
+  return new Promise(function (ok) {
+    var s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"; s.integrity = "sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ=="; s.crossOrigin = "anonymous";
+    s.onload = s.onerror = function () { ok(); };
+    document.head.appendChild(s);
+  });
+}
+function start() {
+  initGL(); bindRide();
+  if (window.ResizeObserver) new ResizeObserver(onResize).observe($("#rstage")); else addEventListener("resize", onResize);
+  document.addEventListener("visibilitychange", function () { if (document.hidden) glStop(); else glStart(); });
+  loadRide(0);
+  if (GL) attachCanvas($("#rhost"));
+  glStart();
+  $("#loading").remove();
+}
+var raw = '<a href="/rides/' + esc(RUN) + '.json">/rides/' + esc(RUN) + ".json</a>";
+if (!window.SOLE) failMsg("The engine did not load, so the replay can't run. Reload to try again. The run log is at " + raw + ".");
+else {
+  SF.init(window.SOLE);
+  fetch("/rides/" + encodeURIComponent(RUN) + ".json").then(function (r) {
+    if (r.status === 404) throw { shown: "No arrived flight with this run id yet. Flights appear here once they have arrived. <a href=\"/\">Back to the sky</a>" };
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }).then(function (rec) {
+    if (!rec.log || !rec.log.flown || !rec.log.flown.length) throw { shown: "This run log has no flown legs to replay. It is at " + raw + "." };
+    RIDE = { record: rec, arcs: FL.arcs, legs: FL.legs };
+    return loadThree();
+  }).then(start).catch(function (e) {
+    if (e && e.shown) return failMsg(e.shown);
+    console.error(e);
+    failMsg("The flight did not load (" + esc(e && e.message) + "). Reload to try again. The run log is at " + raw + ".");
+  });
+}
+});
+</script>
+</body>
+</html>

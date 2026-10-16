@@ -30,7 +30,7 @@ export class StarfareRun extends DurableObject {
     const h = hub(this.env);
     return async (from, to, t, obj, end) => {
       const key = legKey(from, to, t, obj, end), hit = await h.legGet(key);
-      if (hit) return { leg: hit, cached: true };
+      if (hit && hit.arc_au) return { leg: hit, cached: true }; // rows cached before arcs were kept are planned again
       const leg = computeLeg(E, from, to, t, obj, end);
       await h.legPut(key, leg);
       return { leg, cached: false };
@@ -166,6 +166,16 @@ export class StarfareRun extends DurableObject {
   async record() {
     const run = await this.#run();
     return run && phaseOf(run) === "arrived" ? rideRecord(await engine(), run) : null;
+  }
+  /** What the /flight/<run_id> replay draws beside the record: the flown legs and their stored arcs, or null if not arrived. */
+  async flight() {
+    const run = await this.#run();
+    if (!run || phaseOf(run) !== "arrived") return null;
+    const E = await engine(), flown = Object.values(run.legs).filter((L) => run.route.includes(L.leg_id) || L.replan_of);
+    return {
+      legs: flown.map((L) => legPub(E, L)),
+      arcs: Object.fromEntries(flown.filter((L) => L.arc_au).map((L) => [L.leg_id, { from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, arc_au: L.arc_au }])),
+    };
   }
 }
 

@@ -703,6 +703,12 @@ async function phaseOn() {
       for (const path of [`/rides/${planning.run_id}.json`, `/rides/run_${"0".repeat(20)}.json`, "/rides/nope.json", `/rides/export/${"0".repeat(32)}.jsonl`, "/rides/"]) {
         const g = await fetch(`${base}${path}`); assert.equal(g.status, 404, path); await g.body?.cancel();
       }
+      const fl = await fetch(`${base}/flight/${good.hail.run_id}`), page = await fl.text();
+      assert.equal(fl.status, 200); assert.match(fl.headers.get("content-type"), /text\/html/);
+      const embedded = JSON.parse(/window\.FLIGHT = (.*?);<\/script>/.exec(page)[1]);
+      assert.equal(embedded.run_id, good.hail.run_id); assert.ok(embedded.legs.length >= 2);
+      assert.ok(Object.values(embedded.arcs).every((a) => a.arc_au.length > 1), "every stored leg keeps its drawn arc");
+      for (const path of [`/flight/${planning.run_id}`, "/flight/nope"]) { const g = await fetch(`${base}${path}`); assert.equal(g.status, 404, path); await g.body?.cancel(); }
       const ex = await fetch(base + mine.download.url);
       assert.equal(ex.status, 200); assert.match(ex.headers.get("content-type"), /application\/x-ndjson/);
       assert.match(ex.headers.get("content-disposition"), /starfare-rides\.jsonl/);
