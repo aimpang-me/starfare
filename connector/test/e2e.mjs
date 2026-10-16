@@ -28,7 +28,7 @@ const MODE = (process.argv.find((a) => a.startsWith("--mode=")) || "--mode=both"
 if (!["off", "on", "both"].includes(MODE)) throw new Error("--mode must be off, on or both");
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
-const TOOLS = ["check_pad", "decide", "dispatch", "get_hail", "list_hails", "plan_pickup", "plan_ride", "space_weather", "take_hail"];
+const TOOLS = ["check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_pickup", "plan_ride", "space_weather", "take_hail"];
 
 const results = [];
 async function check(name, fn) {
@@ -139,7 +139,7 @@ async function phaseOff() {
   console.log(`wrangler dev up at ${w.base}`);
   const client = await connect(w.base);
 
-  await check("tools/list is exactly the nine ride-hail tools", async () => {
+  await check("tools/list is exactly the ten ride-hail tools", async () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     assert.deepEqual(names, TOOLS);
   });
@@ -410,7 +410,7 @@ async function phaseOff() {
     assert.match(html, /no connector runs yet/); // titan-home etc. have no runs
     report.board = j;
   });
-  await check("off: no OAuth: /mcp needs no token, OAuth endpoints are 404, runs carry no player_id", async () => {
+  await check("off: no OAuth: /mcp needs no token, OAuth endpoints are 404, runs carry no player_id, get_my_rides asks for the sign-in", async () => {
     const r = await fetch(`${w.base}/mcp`, { method: "POST", headers: { "content-type": "application/json", accept: "application/json, text/event-stream" },
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "curl", version: "1" } } }) });
     assert.equal(r.status, 200); assert.equal(r.headers.get("www-authenticate"), null); await r.body?.cancel();
@@ -420,6 +420,8 @@ async function phaseOff() {
     }
     assert.equal(good.hail.player_id, undefined); assert.equal(good.score.player_id, undefined);
     assert.equal(report.board.best["iss-crew"].player_tag, undefined);
+    const h = await call(client, "get_my_rides", {});
+    assert.equal(h.isError, true); assert.match(h.value, /sign-in \(OAuth\)/);
   });
   await client.close();
   await w.stop();
@@ -543,7 +545,7 @@ async function phaseOn() {
       assert.deepEqual(asMeta.scopes_supported, ["play"]);
       report.www_authenticate = challenge; report.protected_resource = meta;
     });
-    await check("on: SDK OAuth flow: 401, discovery, dynamic registration, PKCE S256, one-click Allow, token, then tools/list is the nine ride-hail tools", async () => {
+    await check("on: SDK OAuth flow: 401, discovery, dynamic registration, PKCE S256, one-click Allow, token, then tools/list is the ten ride-hail tools", async () => {
       a = await sdkSignIn(base, "sol e2e player A");
       const q = a.auth.authUrl.searchParams;
       assert.equal(q.get("code_challenge_method"), "S256"); assert.ok(q.get("code_challenge"));
@@ -619,6 +621,76 @@ async function phaseOn() {
       const r = await fetch(asMeta.token_endpoint, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ grant_type: "authorization_code", code: location.searchParams.get("code"), redirect_uri: REDIRECT_URI, client_id: id, code_verifier: pkce().verifier, resource: `${base}/mcp` }) });
       assert.equal(r.status, 400); assert.equal((await r.json()).error, "invalid_grant");
+    });
+    let mine, second;
+    await check("on: get_my_rides lists player A's rides newest first, with totals, parts and stats copied from dispatch", async () => {
+      const dropped = await ok(a.client, "take_hail", { hail_id: "jovian-hop" }); // abandoned by the next take_hail
+      second = await playHail(a.client, "phobos-commute");
+      assert.equal(second.score.ok, true);
+      mine = await ok(a.client, "get_my_rides", {});
+      assert.equal(mine.player_id, good.hail.player_id); assert.equal(mine.simulated, true); assert.match(mine.note, /Simulated/);
+      assert.deepEqual(mine.rides.map((r) => r.run_id), [second.hail.run_id, good.hail.run_id]);
+      assert.equal(mine.total_rides, 2); assert.equal(mine.next_cursor, null);
+      for (const [row, play] of [[mine.rides[0], second], [mine.rides[1], good]]) {
+        assert.equal(row.phase, "arrived"); assert.equal(row.hail_id, play.hail.hail_id); assert.equal(row.season, play.hail.season);
+        assert.equal(row.total, play.score.total); assert.equal(row.used_kwh, play.score.used_kwh); assert.equal(row.par_kwh, play.score.par_kwh);
+        assert.equal(row.arrive, play.score.arrive); assert.equal(row.car, play.score.car);
+        assert.deepEqual(row.parts, Object.fromEntries(play.score.parts.map((x) => [x.key, { got: x.got, max: x.max }])));
+      }
+      const iss = mine.stats.find((x) => x.hail_id === "iss-crew");
+      assert.equal(iss.rides, 1); assert.equal(iss.best_total, good.score.total); assert.equal(iss.last_total, good.score.total); assert.equal(iss.mean_total, good.score.total);
+      assert.match(iss.note, /computed from your 1 arrived ride/);
+      assert.match(mine.download.url, /^\/rides\/export\/[0-9a-f]{32}\.jsonl$/); assert.ok(Date.parse(mine.download.expires) > Date.now());
+      const all = await ok(a.client, "get_my_rides", { include: "all" });
+      const phases = Object.fromEntries(all.rides.map((r) => [r.run_id, r.phase]));
+      assert.equal(phases[dropped.run_id], "abandoned"); assert.equal(all.rides.find((r) => r.run_id === dropped.run_id).reason, "newer_hail");
+      assert.ok(all.rides.some((r) => r.phase === "planning" && r.hail_id === "phobos-commute"), JSON.stringify(phases)); // the refresh check's run
+      assert.equal(all.total_rides, all.rides.length); assert.ok(all.total_rides >= 4);
+      const only = await ok(a.client, "get_my_rides", { hail_id: "phobos-commute" });
+      assert.deepEqual(only.rides.map((r) => r.run_id), [second.hail.run_id]); assert.deepEqual(only.stats.map((x) => x.hail_id), ["phobos-commute"]);
+      report.my_rides = { rides: mine.rides.map((r) => [r.hail_id, r.total, r.out_of]), stats: mine.stats, all: all.rides.map((r) => [r.hail_id, r.phase, r.reason ?? ""]) };
+    });
+    await check("on: get_my_rides pages with limit and next_cursor; a bad cursor is refused", async () => {
+      const p1 = await ok(a.client, "get_my_rides", { limit: 1 });
+      assert.deepEqual(p1.rides.map((r) => r.run_id), [second.hail.run_id]); assert.ok(p1.next_cursor); assert.ok(p1.stats && p1.download);
+      const p2 = await ok(a.client, "get_my_rides", { limit: 1, cursor: p1.next_cursor });
+      assert.deepEqual(p2.rides.map((r) => r.run_id), [good.hail.run_id]); assert.equal(p2.next_cursor, null);
+      assert.equal(p2.stats, undefined); assert.equal(p2.download, undefined);
+      const bad = await call(a.client, "get_my_rides", { cursor: "not-a-cursor" });
+      assert.equal(bad.isError, true); assert.match(bad.value, /cursor/);
+    });
+    let detail;
+    await check("on: get_my_rides with a run_id returns the ride's record: dispatch's score and its whole log", async () => {
+      detail = await ok(a.client, "get_my_rides", { run_id: good.hail.run_id });
+      assert.equal(detail.format, "starfare.ride/1"); assert.equal(detail.simulated, true); assert.match(detail.note, /JPL DE421/);
+      assert.equal(detail.run_id, good.hail.run_id); assert.equal(detail.player_tag, good.hail.player_id.slice(2, 8)); assert.equal(detail.phase, "arrived");
+      assert.deepEqual(detail.log, good.score.log);
+      assert.equal(detail.score.total, good.score.total); assert.deepEqual(detail.score.parts, good.score.parts); assert.equal(detail.score.log, undefined);
+    });
+    await check("on: player B sees none of A's rides and is refused A's run_id", async () => {
+      const none = await ok(b.client, "get_my_rides", {});
+      assert.equal(none.player_id, report.second_player); assert.deepEqual(none.rides, []); assert.equal(none.total_rides, 0); assert.deepEqual(none.stats, []);
+      const all = await ok(b.client, "get_my_rides", { include: "all" });
+      assert.ok(all.rides.every((r) => r.hail_id === "jovian-hop" && r.phase === "planning"), JSON.stringify(all.rides));
+      assert.ok(!all.rides.some((r) => [good.hail.run_id, second.hail.run_id].includes(r.run_id)));
+      const x = await call(b.client, "get_my_rides", { run_id: good.hail.run_id });
+      assert.equal(x.isError, true); assert.match(x.value, /not one of your rides/);
+    });
+    await check("on: /rides/<run_id>.json downloads one arrived ride; the export JSONL holds A's arrived rides; other ids and tokens are 404", async () => {
+      const r = await fetch(`${base}/rides/${good.hail.run_id}.json`);
+      assert.equal(r.status, 200); assert.match(r.headers.get("content-type"), /application\/json/);
+      assert.match(r.headers.get("content-disposition"), /attachment; filename="run_[0-9a-f]{20}\.json"/);
+      assert.deepEqual(await r.json(), detail);
+      const planning = (await ok(a.client, "get_my_rides", { include: "all" })).rides.find((x) => x.phase === "planning");
+      for (const path of [`/rides/${planning.run_id}.json`, `/rides/run_${"0".repeat(20)}.json`, "/rides/nope.json", `/rides/export/${"0".repeat(32)}.jsonl`, "/rides/"]) {
+        const g = await fetch(`${base}${path}`); assert.equal(g.status, 404, path); await g.body?.cancel();
+      }
+      const ex = await fetch(base + mine.download.url);
+      assert.equal(ex.status, 200); assert.match(ex.headers.get("content-type"), /application\/x-ndjson/);
+      assert.match(ex.headers.get("content-disposition"), /starfare-rides\.jsonl/);
+      const lines = (await ex.text()).trim().split("\n").map((l) => JSON.parse(l));
+      assert.deepEqual(lines.map((l) => l.run_id), [second.hail.run_id, good.hail.run_id]);
+      assert.deepEqual(lines[1], detail); assert.ok(lines.every((l) => l.format === "starfare.ride/1" && l.simulated === true));
     });
     await a.client.close(); await b?.client.close();
   } finally { await w.stop(); }

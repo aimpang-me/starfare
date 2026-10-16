@@ -92,6 +92,7 @@ function setPhase(run, phase) { run.phase = phase; delete run.started; delete ru
 export function abandonRun(run) {
   if (phaseOf(run) !== "planning") return false;
   setPhase(run, "abandoned");
+  run.abandoned_reason = "newer_hail";
   return true;
 }
 
@@ -282,6 +283,7 @@ export function dispatch(E, run, inp, nowMs) {
   const firstFar = [p, r].filter((L) => L.gate !== "local")[0];
   if (firstFar && sky(nowMs).jd > firstFar.dep_jd) {
     setPhase(run, "abandoned");
+    run.abandoned_reason = "cold";
     fail("The hail went cold: " + firstFar.leg_id + " was due to depart " + isoJD(firstFar.dep_jd) + " and sky time is now " + isoJD(sky(nowMs).jd) + ". Take the hail again.");
   }
   run.route = [p.leg_id, r.leg_id];
@@ -433,4 +435,68 @@ function checkpointLog(E, run) {
       ...(row ? { options_hindsight: row.options.map((o) => ({ option: o.option, used_kwh: o.used_kwh, arrive: isoJD(o.arrive_jd) })), best: row.best } : {}),
     };
   });
+}
+
+// ---- ride history (get_my_rides): every number is copied from the run, its score and its log. ----
+export const RIDE_FORMAT = "starfare.ride/1";
+const SIM_NOTE = "Simulated riders, fleet and hazards; planet positions are real (JPL DE421).";
+const takenAt = (run) => new Date(run.created_ms || 0).toISOString();
+/** One row of a player's history: the ride's terms, and once it arrived, its score, incidents and each checkpoint's hindsight best. */
+export function rideSummary(E, run) {
+  const phase = phaseOf(run), h = own(E.R.BY, run.id);
+  const base = { run_id: run.run_id, hail_id: run.id, title: run.title, kind: h ? kindOf(h) : null, season: +seedOf(run), phase, taken_at: takenAt(run),
+    rider_ready: isoJD(run.t0), arrive_by: isoJD(run.arrive_by_jd), plans_used: run.calls };
+  if (phase === "abandoned") return Object.assign(base, { reason: run.abandoned_reason || null });
+  if (phase === "in_flight") return Object.assign(base, { open_checkpoint: run.ride.pending });
+  if (phase !== "arrived") return base;
+  const s = run.score, cps = (s.log && s.log.checkpoints) || [];
+  return Object.assign(base, {
+    car: s.car, par_car: s.par_car, total: s.total, out_of: s.out_of, parts: Object.fromEntries(s.parts.map((x) => [x.key, { got: x.got, max: x.max }])),
+    used_kwh: s.used_kwh, par_kwh: s.par_kwh, beat_par: s.beat_par, promised_arrival: s.promised_arrival, arrive: s.arrive,
+    promise_slip_hours: s.promise_slip_hours, delay_hours: s.delay_hours,
+    incidents: s.incidents.map((x) => ({ kind: x.kind, place: x.place, hours: x.hours, kwh: x.kwh })),
+    checkpoints: cps.map((c) => {
+      const b = (c.options_hindsight || []).filter((o) => o.option === c.best)[0];
+      return { n: c.n, kind: c.kind, cause: c.cause, decision: c.decision, best: c.best == null ? null : c.best, best_used_kwh: b ? b.used_kwh : null, best_arrive: b ? b.arrive : null };
+    }),
+  });
+}
+/** The full ride as get_my_rides' detail mode and the /rides downloads give it: the score and the whole run log. */
+export function rideRecord(E, run) {
+  const phase = phaseOf(run), arrivedRun = phase === "arrived";
+  let score = null, log = null;
+  if (arrivedRun) { const { log: l, ...rest } = run.score; score = rest; log = l || null; }
+  return {
+    format: RIDE_FORMAT, simulated: true, note: SIM_NOTE, run_id: run.run_id, player_tag: run.player_id ? run.player_id.slice(2, 8) : null,
+    hail_id: run.id, season: +seedOf(run), phase, taken_at: takenAt(run),
+    ...(phase === "abandoned" ? { reason: run.abandoned_reason || null } : {}), ...(phase === "in_flight" ? { open_checkpoint: run.ride.pending } : {}),
+    score, log,
+  };
+}
+const mean1 = (xs) => Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10;
+/** Per-hail sums and means over arrived summaries (newest first): rides, best, last and mean total, the mean of each part,
+ *  and the part with the most points lost on average. */
+export function rideStats(rows) {
+  const by = new Map();
+  for (const r of rows) if (r.phase === "arrived") { if (!by.has(r.hail_id)) by.set(r.hail_id, []); by.get(r.hail_id).push(r); }
+  return [...by].map(([hail_id, rs]) => {
+    const keys = Object.keys(rs[0].parts), parts = {};
+    let lost = null;
+    for (const k of keys) {
+      const have = rs.filter((r) => r.parts[k]), m = mean1(have.map((r) => r.parts[k].got)), l = mean1(have.map((r) => r.parts[k].max - r.parts[k].got));
+      parts[k] = m;
+      if (l > 0 && (!lost || l > lost.mean_lost)) lost = { part: k, mean_lost: l, max: have[0].parts[k].max };
+    }
+    return { hail_id, rides: rs.length, best_total: Math.max(...rs.map((r) => r.total)), last_total: rs[0].total, mean_total: mean1(rs.map((r) => r.total)),
+      mean_parts: parts, lost_most: lost, note: "computed from your " + rs.length + " arrived ride" + (rs.length === 1 ? "" : "s") + " of " + hail_id };
+  });
+}
+/** get_my_rides paging: an opaque cursor for the last row of a page (newest first by created_ms, then run_id). */
+export const rideCursor = (row) => btoa(row.created_ms + ":" + row.run_id).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+export function rideCursorOf(c) {
+  let s = null;
+  try { s = atob(String(c).replace(/-/g, "+").replace(/_/g, "/")); } catch { s = null; }
+  const m = s && /^(\d{1,15}):(run_[0-9a-f]{20})$/.exec(s);
+  if (!m) fail("cursor is not one get_my_rides gave; leave it out for the first page");
+  return { created_ms: +m[1], run_id: m[2] };
 }

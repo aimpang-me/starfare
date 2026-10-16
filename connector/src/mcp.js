@@ -1,18 +1,19 @@
 // The MCP server a player's Grok bot calls: the Starfare robotaxi dispatcher. Same game as the in-page dispatcher
 // (get_hail, plan_pickup, plan_ride, dispatch) plus list_hails and take_hail, two free forecast tools for the
-// simulated hazards (check_pad, space_weather), and decide for the checkpoints a ride stops at. Tools only forward to the run's
-// Durable Object; this class holds nothing but the session's current run_id (and, with STARFARE_OAUTH on, the
-// grant's player id in this.props).
+// simulated hazards (check_pad, space_weather), decide for the checkpoints a ride stops at, and get_my_rides (a signed-in
+// player's past rides and logs). Tools only forward to the run's Durable Object or the hub; this class holds nothing but the
+// session's current run_id (and, with STARFARE_OAUTH on, the grant's player id in this.props).
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { engine } from "./engine.js";
 import { fleet, listHails } from "./game.js";
-import { RUN_ID, runStub } from "./store.js";
+import { RUN_ID, hub, runStub } from "./store.js";
 
 const INSTRUCTIONS =
   "Starfare is a concept robotaxi service for flying roadsters across the solar system. You are the dispatcher. Simulated riders hail a ride; you pick a car from the simulated fleet, " +
   "plan the pickup and the ride with Starfare's engine (every leg between planets is re-flown in an n-body checker), quote the rider a fare and arrival, and dispatch.\n" +
+  "Before planning, call get_my_rides: your past rides (simulated), what you lost points on, and at each checkpoint what the best choice would have used in hindsight.\n" +
   "Call list_hails, then take_hail to get a run_id and the fleet. Some cars are busy on another job until their busy_until time; their pickup can't leave earlier. " +
   "For each car worth trying, plan_pickup (car to rider), then plan_ride after that pickup. Compare cars, objectives (energy = least battery, time = fastest) and wait_days, " +
   "then dispatch with the pickup leg, the ride leg, the fare copied from the ride leg, and the arrival you promise the rider.\n" +
@@ -39,6 +40,8 @@ const out = (r) => (r && r.error ? err(r.error) : json(r));
 export class StarfareMcp extends McpAgent {
   server = new McpServer({ name: "starfare", version: "0.1.0" }, { instructions: INSTRUCTIONS });
   initialState = { run_id: null };
+  // With STARFARE_OAUTH on, the grant's anonymous player id. Off: null.
+  #player() { return this.props && typeof this.props.player_id === "string" ? this.props.player_id : null; }
 
   async init() {
     const s = this.server;
@@ -53,9 +56,8 @@ export class StarfareMcp extends McpAgent {
     }, async ({ hail_id }) => {
       const prev = this.state && this.state.run_id;
       const id = "run_" + [...crypto.getRandomValues(new Uint8Array(10))].map((b) => b.toString(16).padStart(2, "0")).join("");
-      // With STARFARE_OAUTH on, the grant's anonymous player id rides along on the run (and to the board). Off: null.
-      const player = this.props && typeof this.props.player_id === "string" ? this.props.player_id : null;
-      const r = await runStub(this.env, id).create(id, hail_id, player);
+      // With STARFARE_OAUTH on, the grant's anonymous player id rides along on the run (to the board and the player's history).
+      const r = await runStub(this.env, id).create(id, hail_id, this.#player());
       if (r.error) return err(r.error);
       if (prev) await runStub(this.env, prev).abandon();
       this.setState({ run_id: id });
@@ -138,6 +140,33 @@ export class StarfareMcp extends McpAgent {
         objective: z.enum(["energy", "time"]).optional().describe("replan: least battery or fastest (default energy)"),
       },
     }, async ({ run_id, ...inp }) => out(await runStub(this.env, run_id).decide(inp)));
+
+    s.registerTool("get_my_rides", {
+      description: "Your past rides (simulated), newest first: each ride's score and parts, energy against par, how far the arrival slipped from your promise, incidents, " +
+        "and at each checkpoint what you decided and the best choice in hindsight with the kWh and arrival it would have given. The first page adds stats per hail " +
+        "(best, last and mean total, the mean of each part, and the part you lose most on), computed from your rides. Page with next_cursor. include \"all\" adds rides " +
+        "still planning, in flight (answer the open checkpoint with decide) or abandoned (a newer hail, or it went cold). Pass run_id for one ride's full record and log. " +
+        "download.url is a 24-hour JSONL file of your rides on this server. Your history belongs to this connector sign-in: removing and re-adding the connector starts a new one.",
+      inputSchema: {
+        run_id: z.string().regex(RUN_ID).optional().describe("one of your rides: returns its full record and run log"),
+        limit: z.number().int().min(1).max(25).optional().describe("rides per page, 1-25 (default 10)"),
+        cursor: z.string().max(200).optional().describe("next_cursor from the previous page"),
+        hail_id: z.string().max(64).optional().describe("only rides of this hail"),
+        include: z.enum(["scored", "all"]).optional().describe("scored (default): arrived rides only; all: also planning, in flight and abandoned"),
+      },
+    }, async ({ run_id, ...q }) => {
+      const player = this.#player();
+      if (!player) return err("Ride history needs the connector's sign-in (OAuth), and this server runs without it. Scores still go to /board.");
+      if (run_id) return out(await runStub(this.env, run_id).ride(player));
+      const h = hub(this.env), r = await h.rides(player, q);
+      if (r.error) return err(r.error);
+      const dl = q.cursor ? null : await h.exportMint(player);
+      return json({
+        player_id: player, simulated: true, ...r, ...(dl ? { download: { url: "/rides/export/" + dl.token + ".jsonl", expires: dl.expires } } : {}),
+        note: "Simulated rides. Every number is copied from each ride's score and log; stats are sums and means over the rides listed. " +
+          "One ride's file: /rides/<run_id>.json on this server.",
+      });
+    });
   }
 }
 

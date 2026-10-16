@@ -3,7 +3,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { SKY, SEASON_END, MAX_PLANS_PER_RUN, sky, isoJD, jdOfIso, newRun, hailInfo, legPub, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, seedOf, phaseOf, abandonRun, computeLeg, GameError } from "../src/game.js";
+import { SKY, SEASON_END, MAX_PLANS_PER_RUN, sky, isoJD, jdOfIso, newRun, hailInfo, legPub, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, seedOf, phaseOf, abandonRun, computeLeg, GameError,
+  RIDE_FORMAT, rideSummary, rideRecord, rideStats, rideCursor, rideCursorOf } from "../src/game.js";
 
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
@@ -402,3 +403,60 @@ test("runs stored before phases existed keep working", async () => {
 });
 
 test("SEASON_END is the page's", () => { assert.equal(SEASON_END, SKY.jd0 + SKY.len_days - 1); });
+
+test("ride history: a summary copies the score and log, and names the checkpoint's hindsight best (the Phobos divert)", async () => {
+  const { run } = await dustRide("run_hist0000000000000");
+  const open = rideSummary(E, run);
+  assert.deepEqual([open.phase, open.open_checkpoint, open.hail_id, open.kind, open.season, open.taken_at, open.plans_used, open.total],
+    ["in_flight", 1, "phobos-commute", "quick", +run.seed, new Date(DUST_NOW).toISOString(), 2, undefined]);
+  await decide(E, run, { checkpoint: 1, action: "hold" });
+  const s = rideSummary(E, run), sc = run.score;
+  assert.equal(s.phase, "arrived");
+  for (const k of ["car", "par_car", "total", "out_of", "used_kwh", "par_kwh", "beat_par", "promised_arrival", "arrive", "promise_slip_hours", "delay_hours"]) assert.equal(s[k], sc[k], k);
+  assert.deepEqual([s.rider_ready, s.arrive_by, s.title], [sc.log.rider_ready, sc.log.arrive_by, run.title]);
+  assert.deepEqual(s.parts, Object.fromEntries(sc.parts.map((x) => [x.key, { got: x.got, max: x.max }])));
+  assert.deepEqual(Object.fromEntries(Object.entries(s.parts).map(([k, v]) => [k, v.got])), sc.log.parts);
+  assert.deepEqual(s.incidents, sc.incidents.map((x) => ({ kind: x.kind, place: x.place, hours: x.hours, kwh: x.kwh })));
+  assert.deepEqual(s.checkpoints, [{ n: 1, kind: "pad_closed", cause: "dust_storm", decision: { action: "hold" },
+    best: "divert to Phobos, wait 88.4 h", best_used_kwh: 44358, best_arrive: "2029-02-12 00:47" }]);
+  assert.deepEqual(JSON.parse(JSON.stringify(s)), s); // stored as JSON in the hub
+  const rec = rideRecord(E, run);
+  assert.deepEqual([rec.format, rec.simulated, rec.run_id, rec.hail_id, rec.phase, rec.player_tag], [RIDE_FORMAT, true, run.run_id, "phobos-commute", "arrived", null]);
+  assert.match(rec.note, /Simulated/);
+  assert.equal(rec.score.log, undefined);
+  assert.deepEqual(rec.log, sc.log);
+  assert.equal(rec.score.total, sc.total);
+  run.player_id = "p_0123456789abcdef";
+  assert.equal(rideRecord(E, run).player_tag, "012345");
+});
+
+test("ride history: planning, abandoned (newer hail, cold) rows carry only what exists", async () => {
+  const a = await newRun(E, "iss-crew", NOW, "run_plan");
+  const s = rideSummary(E, a);
+  assert.deepEqual([s.phase, s.total, s.parts, s.reason], ["planning", undefined, undefined, undefined]);
+  assert.equal(abandonRun(a), true);
+  assert.deepEqual([rideSummary(E, a).phase, rideSummary(E, a).reason, rideRecord(E, a).reason, rideRecord(E, a).score], ["abandoned", "newer_hail", "newer_hail", null]);
+  const run = await newRun(E, "ceres-shift", NOW, "run_cold2");
+  const p = (await planPickup(E, run, { car: "sf-04" })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
+  assert.throws(() => dispatch(E, run, { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd) }, NOW + (r.dep_jd - sky(NOW).jd + 2) * 1000), /went cold/);
+  assert.deepEqual([rideSummary(E, run).reason, rideSummary(E, run).plans_used], ["cold", 2]);
+});
+
+test("ride history stats: per hail, sums and means over arrived rows (newest first), and the part lost most", () => {
+  const row = (hail_id, total, x, y) => ({ phase: "arrived", hail_id, total, parts: { x: { got: x, max: 20 }, y: { got: y, max: 5 } } });
+  const st = rideStats([row("a", 80, 10, 5), { phase: "abandoned", hail_id: "a" }, row("a", 61, 4, 3), row("b", 100, 20, 5)]);
+  assert.deepEqual(st, [
+    { hail_id: "a", rides: 2, best_total: 80, last_total: 80, mean_total: 70.5, mean_parts: { x: 7, y: 4 }, lost_most: { part: "x", mean_lost: 13, max: 20 }, note: "computed from your 2 arrived rides of a" },
+    { hail_id: "b", rides: 1, best_total: 100, last_total: 100, mean_total: 100, mean_parts: { x: 20, y: 5 }, lost_most: null, note: "computed from your 1 arrived ride of b" },
+  ]);
+  assert.deepEqual(rideStats([]), []);
+});
+
+test("ride history cursor: base64url of created_ms and run_id, round trips, and rejects anything else", () => {
+  const row = { created_ms: 1792152000123, run_id: "run_" + "0f".repeat(10) };
+  const c = rideCursor(row);
+  assert.match(c, /^[A-Za-z0-9_-]+$/);
+  assert.deepEqual(rideCursorOf(c), row);
+  for (const bad of ["", "nope", "%%%", rideCursor({ created_ms: 1, run_id: "constructor" }), btoa("12:run_short")])
+    assert.throws(() => rideCursorOf(bad), (e) => e instanceof GameError && /cursor/.test(e.message), bad);
+});

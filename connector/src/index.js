@@ -6,19 +6,41 @@ import { engine } from "./engine.js";
 import { listHails } from "./game.js";
 import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
-import { hub } from "./store.js";
+import { RUN_ID, hub, runStub } from "./store.js";
 
 export { StarfareMcp } from "./mcp.js";
 export { StarfareAuth } from "./oauth.js";
 export { StarfareHub, StarfareRun } from "./store.js";
 
 const isMcpPath = (p) => p === "/mcp" || p.startsWith("/mcp/");
-const isPublicPage = (p) => p === "/" || p === "/board" || p === "/board.json";
+const isPublicPage = (p) => p === "/" || p === "/board" || p === "/board.json" || p.startsWith("/rides/");
+const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
 
 function tooMany(limit) {
   return new Response(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32000, message: `Rate limit: more than ${limit} requests a minute from this address. Try again in a minute.` } }), {
     status: 429, headers: { "content-type": "application/json", "retry-after": "60" },
   });
+}
+
+/** Ride downloads (simulated rides). /rides/<run_id>.json: one arrived ride, public like the board (the run_id is the capability).
+ *  /rides/export/<token>.jsonl: a player's newest arrived rides, one record per line, for 24 hours after get_my_rides minted the token. */
+async function rides(req, path, env) {
+  const limit = Number(env.RATE_PER_MIN) || 120;
+  if (!(await hub(env).hit("rides:" + (req.headers.get("cf-connecting-ip") || "unknown"), limit)).ok) return new Response("Too many downloads. Try again in a minute.", { status: 429, headers: { "retry-after": "60" } });
+  const one = RIDE_PATH.exec(path), all = EXPORT_PATH.exec(path);
+  const file = (body, type, name) => new Response(body, { headers: { "content-type": type, "content-disposition": `attachment; filename="${name}"`, "cache-control": "no-store" } });
+  if (one) {
+    const rec = await runStub(env, one[1]).record();
+    return rec ? file(JSON.stringify(rec), "application/json", one[1] + ".json") : new Response("Not found: no arrived ride with that run_id", { status: 404 });
+  }
+  if (all) {
+    const ids = await hub(env).exportRuns(all[1]);
+    if (!ids) return new Response("Not found: unknown or expired export link. Call get_my_rides for a new one.", { status: 404 });
+    const recs = [];
+    for (let i = 0; i < ids.length; i += 25) recs.push(...(await Promise.all(ids.slice(i, i + 25).map((id) => runStub(env, id).record()))));
+    return file(recs.filter(Boolean).map((r) => JSON.stringify(r) + "\n").join(""), "application/x-ndjson", "starfare-rides.jsonl");
+  }
+  return new Response("Not found", { status: 404 });
 }
 
 export default {
@@ -46,6 +68,7 @@ export default {
       if (url.pathname === "/board.json") return Response.json({ label: "planned by Grok bot", ...data });
       return new Response(boardHtml(hails, data), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
     }
+    if (url.pathname.startsWith("/rides/")) return rides(req, url.pathname, env);
     if (url.pathname === "/") {
       return new Response(`Starfare connector. Add ${url.origin}/mcp as a custom connector at grok.com/connectors. Scores: ${url.origin}/board\n`, { headers: { "content-type": "text/plain; charset=utf-8" } });
     }
