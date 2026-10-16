@@ -280,6 +280,20 @@ test("long haul: the hail goes cold if the first interplanetary departure passes
   assert.equal(run.phase, "abandoned");
 });
 
+const atClock = (jd) => SKY.t0_ms + (jd - SKY.jd0) * DAY_MS;
+
+test("long haul: the par car's ride leg near the Lambert fold still re-flies (ceres-shift, sky 2029-07-03)", async () => {
+  const now = atClock(2462170), run = await seasonRun(E, "ceres-shift", now, "run_fold");
+  const p = (await planPickup(E, run, { car: run.par_car })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
+  assert.deepEqual([run.par_car, r.from, r.to, r.refly.result], ["sf-04", "ceres-port", "mars-base", "PASS"]);
+});
+
+test("a long haul hailed after the last flight of the season can leave is refused with the season-end message", async () => {
+  for (const jd of [2468134, 2468148])
+    await assert.rejects(seasonRun(E, "ceres-shift", atClock(jd), "run_late"),
+      (e) => e instanceof GameError && e.message === "The season ends too soon for a new hail. Wait for the reset.");
+});
+
 test("wrong legs are refused; validation failures are not counted; the plan cap holds", async () => {
   const run = await seasonRun(E, "iss-crew", NOW, "run_v");
   await assert.rejects(planPickup(E, run, { car: "nope" }), /unknown ship/);
