@@ -19,4 +19,6 @@ Decisions only Alvin can make. Ask them one at a time, with the options below an
 - Repo home: aimpang-me/starfare, worked on in the desktop Code tab on his PC (2026-10-16).
 - Ride hailing, not deliveries; Grok-first bring-your-own-agent; no xAI key on our side (2026-10-16).
 - Where the public website lives: (b), the `starfare` Worker serves it at `/` (`connector/src/site.html`), with the board at `/board` (2026-10-16, by starting the website session). Deployed 2026-10-16 (Worker version 9b7a7f33).
+- Shared flights (2026-10-16): Starseekers carry more than one person. Bookings can be parties, ships have seats, and one ship can pool several bookings going the same way with several stops; the dispatcher decides who flies together. Chosen over "parties only" and "single riders for now". Seat counts and pooling rules are not set yet.
+- Words (2026-10-16): "flight", "booking", "passengers" replace "ride", "hail", "riders" in copy. Chosen over voyage, passage and trip. Tool and log field names stay.
 - Which look ships: Dark SOL for the game and the landing page (2026-10-16). He compared a mock of the landing page in each look and chose Dark SOL; no Terminal variant or style toggle.

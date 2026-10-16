@@ -24,5 +24,10 @@ Dark SOL for the game and the landing page. Alvin compared a mock of the landing
 ## Decision: the ships are Starseekers (2026-10-16)
 The vehicles are ships called **Starseekers**, not flying cars ("Starseeker SF-07 is en route to Titan"). Copy and art say Starseeker; "ship" is the generic word; fleet call signs (SF-07) stay. The art is an original ship design: not SpaceX Starship's steel rocket shape, not a Tesla, not a copy of any Star Citizen ship. Agent-facing tool fields and run-log JSON (`car`, `par_car`, ...) keep their names so Grok runs, old ride logs and tests keep working. Names rejected as taken: Starship (SpaceX), Starfarer (Star Citizen), Starfinder (Paizo), Cutter (Star Citizen). Open check: a trademark search on "Starseeker" before launch.
 
+Shared flights (decided the same day): a Starseeker carries several people. A booking can be a party, a ship has seats, and one ship can pool several bookings with several stops. Art and copy should show a cabin with seats and a passenger manifest, not a single passenger.
+
+## Decision: flights, not rides (2026-10-16)
+Copy says **flight** for the journey, **booking** for a request (was "hail") and **passengers** (was "riders"): "Flight SF-07 to Titan, 4 passengers". "Ride", "ride hail" and "rider" leave all user-facing copy. As with `car`, agent-facing tool names and fields and run-log JSON (`take_hail`, `ride`, `rider`, `starfare.ride/1`) keep their names until a versioned rename, so Grok runs, old logs and tests keep working.
+
 ## Rules
 No Tesla/SpaceX/xAI logos or claims; "Works with Grok" as text only. Label everything simulated. Keep the honesty gate visible.
