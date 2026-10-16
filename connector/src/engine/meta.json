@@ -1,0 +1,11 @@
+{
+  "source": "sol/world/engine/sol-page.js",
+  "sha256": "e8634d4297c3f306eaabf8b5b2d07fc48c7b3c4d2ffa67e337923c1e3c3df6ea",
+  "bytes": 493178,
+  "sky": {
+    "t0_ms": 1792108800000,
+    "jd0": 2461329.5,
+    "len_days": 7000
+  },
+  "window_days": 120
+}

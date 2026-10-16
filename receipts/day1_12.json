@@ -1,0 +1,16 @@
+{
+ "id": 12,
+ "request": "Sun-Earth L2 to visit JWST, and stay well clear of the Moon.",
+ "backend": "replay (recorded agent answer, tools re-run)",
+ "outcome": "DECLINE",
+ "roles": {
+  "broker": "Sorry, we can't take you to Sun-Earth L2 or to JWST. The planner doesn't support L2 points or meeting other spacecraft, so there is no route to quote and no way to plan around the Moon for it."
+ },
+ "tool_calls": [],
+ "provenance": {
+  "pass": true,
+  "untraced": []
+ },
+ "rider_sees": "Sorry, we can't take you to Sun-Earth L2 or to JWST. The planner doesn't support L2 points or meeting other spacecraft, so there is no route to quote and no way to plan around the Moon for it.",
+ "physics": []
+}

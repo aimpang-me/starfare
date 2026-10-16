@@ -1,0 +1,35 @@
+{
+ "cmd": "--dest mercury --dep-from 2027-01-01 --dep-to 2027-02-14 --objective c3 --verify",
+ "out": {
+  "ok": true,
+  "dest": "mercury",
+  "depart": "2027-02-14",
+  "arrive": "2027-12-11",
+  "tof_days": 300.0,
+  "c3_km2s2": 84.0,
+  "vinf_arrival_kms": 21.65,
+  "launchable": true,
+  "at_search_edge": true,
+  "feasible_solves": 8554,
+  "dep_jd": 2461450.5,
+  "revs": 1,
+  "lowpath": false,
+  "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+  "refly": {
+   "raw_miss_km": 679101.6,
+   "final_miss_km": 0.093,
+   "retarget_ms": 12.0,
+   "iterations": 3,
+   "c3_corrected_km2s2": 83.92,
+   "dv_dep_corrected_kms": 6.537,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+  },
+  "assumptions": [
+   "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+   "impulsive burns, no thrust limits or g-load model",
+   "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+   "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+  ]
+ }
+}

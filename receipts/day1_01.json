@@ -1,0 +1,59 @@
+{
+ "id": 1,
+ "request": "Pizza to Bennu, stop at the Moon on the way, and it has to arrive warm.",
+ "backend": "replay (recorded agent answer, tools re-run)",
+ "outcome": "COUNTER",
+ "roles": {
+  "broker": "We can't add a stop at the Moon because we only fly direct rides from Earth to one destination. We also can't promise the pizza arrives warm, since we don't model temperature. The fastest direct, launchable ride we found to Bennu leaves 2026-10-28 and arrives 2027-04-06 (160.0 days, C3 99.69 km2/s2), and an n-body re-fly checked it."
+ },
+ "tool_calls": [
+  {
+   "tool": "quote",
+   "args": "--dest bennu --dep-from 2026-10-16 --dep-to 2027-01-16 --objective tof --max-c3 100 --verify",
+   "seconds": 5.5,
+   "output": {
+    "ok": true,
+    "dest": "bennu",
+    "depart": "2026-10-28",
+    "arrive": "2027-04-06",
+    "tof_days": 160.0,
+    "c3_km2s2": 99.69,
+    "vinf_arrival_kms": 15.67,
+    "launchable": true,
+    "at_search_edge": false,
+    "feasible_solves": 10342,
+    "dep_jd": 2461341.5,
+    "revs": 0,
+    "lowpath": true,
+    "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+    "refly": {
+     "raw_miss_km": 56291.8,
+     "final_miss_km": 0.048,
+     "retarget_ms": 3.1,
+     "iterations": 2,
+     "c3_corrected_km2s2": 99.66,
+     "dv_dep_corrected_kms": 7.077,
+     "pass": true,
+     "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+    },
+    "assumptions": [
+     "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+     "impulsive burns, no thrust limits or g-load model",
+     "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+     "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+    ]
+   }
+  }
+ ],
+ "provenance": {
+  "pass": true,
+  "untraced": []
+ },
+ "rider_sees": "We can't add a stop at the Moon because we only fly direct rides from Earth to one destination. We also can't promise the pizza arrives warm, since we don't model temperature. The fastest direct, launchable ride we found to Bennu leaves 2026-10-28 and arrives 2027-04-06 (160.0 days, C3 99.69 km2/s2), and an n-body re-fly checked it.",
+ "physics": [
+  {
+   "args": "--dest bennu --dep-from 2026-10-16 --dep-to 2027-01-16 --objective tof --max-c3 100 --verify",
+   "refly_pass": true
+  }
+ ]
+}

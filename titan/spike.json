@@ -1,0 +1,41 @@
+{
+ "home": {
+  "depart": "2026-10-26",
+  "arrive": "2032-03-08",
+  "tof_days": 1960.0,
+  "tof_years": 5.366187542778919,
+  "vinf_saturn_kms": 5.61062718168678,
+  "dv_leave_titan_kms": 3.122934608003848,
+  "vinf_earth_kms": 12.518960356834233,
+  "entry_speed_kms": 16.715436533315412,
+  "au_travelled": 12.322941149795977
+ },
+ "home_fast": {
+  "depart": "2027-02-13",
+  "tof_days": 620.0,
+  "dv_leave_titan_kms": 14.854129646151101,
+  "vinf_earth_kms": 47.06659306024222,
+  "entry_speed_kms": 48.35230741528009,
+  "au_travelled": 8.447618826664659
+ },
+ "roadster_pickup": {
+  "depart": "2027-11-30",
+  "arrive": "2034-01-17",
+  "tof_days": 2240.0,
+  "tof_years": 6.132785763175907,
+  "dv_roadster_kms": 10.102501328830542,
+  "dv_capture_at_titan_kms": 2.682712266880385,
+  "au_travelled": 14.167525627577186
+ },
+ "battery_home": {
+  "propellant_kg": 142.6217021281862,
+  "energy_kwh": 29712.854610038794,
+  "packs": 148.56427305019398
+ },
+ "battery_premium_total": {
+  "propellant_kg": 909.2119566935102,
+  "energy_kwh": 189419.1576444813,
+  "packs": 947.0957882224066
+ },
+ "fare_home_usd": 992594.0567376061
+}

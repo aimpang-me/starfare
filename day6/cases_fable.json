@@ -1,0 +1,142 @@
+[
+ {
+  "id": 1,
+  "outcome": "COUNTER",
+  "dispatcher": {"intent": "Deliver a pizza to Bennu with a Moon stopover, arriving warm", "origin": "Earth", "destination": "Bennu", "constraints": ["stop at the Moon on the way", "pizza must arrive warm"], "ambiguous": false, "question": null},
+  "answer": "I can't honour either constraint: the planner only prices one-way Earth-to-target rides, so there is no Moon stopover, and the direct Bennu ride takes 730.0 days, so the pizza will not arrive warm. What I can offer is the cheapest direct ride to Bennu: depart 2028-10-24, arrive 2030-10-24, departure C3 0.26 km2/s2 (3.24 km/s burn from the 200 km parking orbit), arrival v-infinity 5.52 km/s, n-body re-fly passed. No capture or landing burn at Bennu is priced.",
+  "commands": ["--dest bennu --dep-from 2026-10-16 --dep-to 2028-12-31 --objective c3 --verify"]
+ },
+ {
+  "id": 2,
+  "outcome": "QUOTE",
+  "dispatcher": {"intent": "Cheapest Earth-to-Mars ride departing before Christmas 2026", "origin": "Earth", "destination": "Mars", "constraints": ["depart before 2026-12-25", "minimise departure energy (C3)"], "ambiguous": false, "question": null},
+  "answer": "Cheapest Mars ride before Christmas: depart 2026-10-31, arrive 2027-08-20, 293.0 days in flight. Departure C3 is 9.18 km2/s2 (3.637 km/s burn from the 200 km parking orbit), arrival v-infinity 2.71 km/s, and the n-body re-fly passed. Launch to orbit and the capture or landing burn at Mars are not included.",
+  "commands": ["--dest mars --dep-from 2026-10-16 --dep-to 2026-12-24 --objective c3 --verify"]
+ },
+ {
+  "id": 3,
+  "outcome": "QUOTE",
+  "dispatcher": {"intent": "Fastest Earth-to-Mars ride in the current window with departure C3 below 15", "origin": "Earth", "destination": "Mars", "constraints": ["this launch window (late 2026 / early 2027)", "departure C3 under 15 km2/s2", "minimise time of flight"], "ambiguous": false, "question": null},
+  "answer": "Fastest Mars ride this window under your C3 cap: depart 2026-11-09, arrive 2027-05-30, 202.0 days in flight, departure C3 14.98 km2/s2 (3.883 km/s burn from the 200 km parking orbit). Arrival v-infinity is 5.93 km/s and the n-body re-fly passed. Launch to orbit and the capture or landing burn at Mars are not included.",
+  "commands": ["--dest mars --dep-from 2026-10-16 --dep-to 2027-03-31 --max-c3 15 --objective tof --verify"]
+ },
+ {
+  "id": 4,
+  "outcome": "QUOTE",
+  "dispatcher": {"intent": "Earth-to-Mars ride minimising arrival speed, launching on a weekend", "origin": "Earth", "destination": "Mars", "constraints": ["weekend departure", "minimise arrival v-infinity"], "ambiguous": false, "question": null},
+  "answer": "Softest weekend Mars ride: depart Sunday 2026-11-08, arrive 2027-09-08 after 303.5 days, arrival v-infinity 2.56 km/s. Departure C3 is 9.98 km2/s2 (3.66 km/s burn from the 200 km parking orbit) and the n-body re-fly passed. Launch to orbit and the capture or landing burn at Mars are not included.",
+  "commands": ["--dest mars --dep-from 2026-10-16 --dep-to 2027-03-31 --weekend --objective vinf_arr --verify"]
+ },
+ {
+  "id": 5,
+  "outcome": "QUOTE",
+  "dispatcher": {"intent": "Cheapest Earth-to-Jupiter ride launching in 2027, arrival date open", "origin": "Earth", "destination": "Jupiter", "constraints": ["depart in 2027", "minimise departure energy (C3)", "any arrival date"], "ambiguous": false, "question": null},
+  "answer": "Cheapest 2027 Jupiter ride: depart 2027-12-06, arrive 2031-07-31, 1333.0 days in flight. Departure C3 is 79.06 km2/s2 (6.366 km/s burn from the 200 km parking orbit), arrival v-infinity 6.16 km/s, n-body re-fly passed. Launch to orbit and any capture burn at Jupiter are not included.",
+  "commands": ["--dest jupiter --dep-from 2027-01-01 --dep-to 2027-12-31 --objective c3 --verify"]
+ },
+ {
+  "id": 6,
+  "outcome": "QUOTE",
+  "dispatcher": {"intent": "Cheapest Earth-to-Ceres ride launching in 2027 and arriving before 2030", "origin": "Earth", "destination": "Ceres", "constraints": ["depart in 2027", "arrive before 2030-01-01", "minimise departure energy (C3)"], "ambiguous": false, "question": null},
+  "answer": "Cheapest 2027 Ceres ride that arrives before 2030: depart 2027-12-30, arrive 2028-11-02, 308.0 days in flight. Departure C3 is 84.7 km2/s2 (6.559 km/s burn from the 200 km parking orbit), arrival v-infinity 9.37 km/s, n-body re-fly passed. Note the best departure sits at the very end of 2027, right at the edge of your launch-year constraint; launch to orbit and any capture burn at Ceres are not included.",
+  "commands": ["--dest ceres --dep-from 2027-01-01 --dep-to 2027-12-31 --arr-by 2029-12-31 --objective c3 --verify"]
+ },
+ {
+  "id": 7,
+  "outcome": "COUNTER",
+  "dispatcher": {"intent": "Round trip Earth-Venus-Earth for a cat, back on Earth by 1 June 2027", "origin": "Earth", "destination": "Venus (and return to Earth)", "constraints": ["return to Earth by 2027-06-01", "passenger is a cat"], "ambiguous": false, "question": null},
+  "answer": "I can't offer the round trip: the planner only prices one-way Earth-to-target rides, so there is no return leg and your cat would not be home for her birthday on 1 June 2027. The one-way ride I can offer departs 2026-10-16 and reaches Venus 2027-03-25 after 160.0 days, with departure C3 16.82 km2/s2 (3.959 km/s burn from the 200 km parking orbit) and arrival v-infinity 8.53 km/s; the n-body re-fly passed. No capture burn at Venus is priced.",
+  "commands": ["--dest venus --dep-from 2026-10-16 --dep-to 2027-06-01 --arr-by 2027-06-01 --objective c3 --verify"]
+ },
+ {
+  "id": 8,
+  "outcome": "COUNTER",
+  "dispatcher": {"intent": "Earth to Mars via a Venus flyby, launching in 2028, total delta-v from LEO under 4 km/s", "origin": "Earth", "destination": "Mars (via Venus flyby)", "constraints": ["Venus flyby en route", "depart in 2028", "total delta-v from LEO under 4 km/s"], "ambiguous": false, "question": null},
+  "answer": "I can't honour the Venus flyby: the planner only prices direct Earth-to-target transfers. The direct 2028 Mars ride does meet your budget: depart 2028-11-30, arrive 2029-10-14 after 317.5 days, with a 3.625 km/s departure burn from the 200 km parking orbit (C3 9.0 km2/s2), arrival v-infinity 3.22 km/s, n-body re-fly passed. That 3.625 km/s is the departure burn only; no capture or landing burn at Mars is priced.",
+  "commands": ["--dest mars --dep-from 2028-01-01 --dep-to 2028-12-31 --objective c3 --verify"]
+ },
+ {
+  "id": 9,
+  "outcome": "COUNTER",
+  "dispatcher": {"intent": "Multi-stop trip Earth -> Moon -> Mars -> Earth, home by Thanksgiving 2028", "origin": "Earth", "destination": "Moon, then Mars, then Earth", "constraints": ["stop at the Moon first", "then Mars", "return to Earth by Thanksgiving 2028"], "ambiguous": false, "question": null},
+  "answer": "I can't offer the Moon-then-Mars-then-home itinerary: the planner only prices one-way rides from Earth to a single target, so the Moon-to-Mars leg and the return by Thanksgiving 2028 can't be planned or promised. What I can offer is the Moon leg on its own: depart 2026-12-20 18:00, arrive 2026-12-24 06:00, 3.5 days in flight, 3.131 km/s trans-lunar burn from the 200 km parking orbit, n-body re-fly passed. No capture or landing burn at the Moon is priced.",
+  "commands": ["--dest moon --dep-from 2026-10-16 --dep-to 2026-12-31 --objective c3 --verify"]
+ },
+ {
+  "id": 10,
+  "outcome": "COUNTER",
+  "dispatcher": {"intent": "Cheapest ride to Europa with no gravity assists", "origin": "Earth", "destination": "Europa (Jupiter system)", "constraints": ["no gravity assists", "minimise cost"], "ambiguous": false, "question": null},
+  "answer": "Europa itself isn't a destination I can price, so the closest I can offer is a direct ride to Jupiter with no gravity assists: depart 2028-12-24, arrive 2031-12-15, 1086.0 days in flight. Departure C3 is 75.84 km2/s2 (6.252 km/s burn from the 200 km parking orbit), arrival v-infinity 5.69 km/s, n-body re-fly passed. The ride ends at Jupiter; the hop to Europa and any capture burn are not included.",
+  "commands": ["--dest jupiter --dep-from 2026-10-16 --dep-to 2028-12-31 --objective c3 --verify"]
+ },
+ {
+  "id": 11,
+  "outcome": "COUNTER",
+  "dispatcher": {"intent": "Earth to Mars with a stop at Phobos, acceleration never above 2 g", "origin": "Earth", "destination": "Mars (via Phobos)", "constraints": ["coffee stop at Phobos", "never more than 2 g"], "ambiguous": false, "question": null},
+  "answer": "Two things I can't honour: Phobos isn't a destination I can price, so there's no Phobos stop, and the planner uses impulsive burns with no g-load model, so I can't guarantee the 2 g limit. The direct Mars ride I can offer departs 2026-10-31 and arrives 2027-08-20 after 293.0 days, departure C3 9.18 km2/s2 (3.637 km/s burn from the 200 km parking orbit), arrival v-infinity 2.71 km/s, n-body re-fly passed. No capture or landing burn at Mars is priced.",
+  "commands": ["--dest mars --dep-from 2026-10-16 --dep-to 2026-12-24 --objective c3 --verify"]
+ },
+ {
+  "id": 12,
+  "outcome": "DECLINE",
+  "dispatcher": {"intent": "Ride to Sun-Earth L2 to visit JWST, avoiding the Moon", "origin": "Earth", "destination": "Sun-Earth L2 (JWST)", "constraints": ["stay well clear of the Moon"], "ambiguous": false, "question": null},
+  "answer": "I'm sorry, Sun-Earth L2 and JWST aren't destinations our planner can price, so I have nothing to offer for this trip. Our available targets are Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, the Moon, the Roadster, Bennu and Ceres.",
+  "commands": []
+ },
+ {
+  "id": 13,
+  "outcome": "ASK",
+  "dispatcher": {"intent": "Ride to a 'diamond rain' planet (Uranus or Neptune) with a scenic pass by Saturn", "origin": "Earth", "destination": "Uranus or Neptune (unclear)", "constraints": ["scenic route past Saturn's rings"], "ambiguous": true, "question": "Diamond rain is thought to fall on both Uranus and Neptune - which one do you want to go to?"},
+  "answer": "Diamond rain is thought to fall on both Uranus and Neptune - which one do you want to go to? (Heads-up: our planner only prices direct rides, so a scenic pass by Saturn's rings won't be part of the route.)",
+  "commands": []
+ },
+ {
+  "id": 14,
+  "outcome": "QUOTE",
+  "dispatcher": {"intent": "Ride to the Tesla Roadster's current location", "origin": "Earth", "destination": "Tesla Roadster", "constraints": ["romantic (not a trajectory constraint)"], "ambiguous": false, "question": null},
+  "answer": "A ride to the real Roadster: depart 2026-10-16, arrive 2027-07-18 after 275.0 days, departure C3 4.96 km2/s2 (3.438 km/s burn from the 200 km parking orbit), arrival v-infinity 8.61 km/s, n-body re-fly passed. Romance isn't something the planner can price, but it's a quiet 275.0-day cruise for two. Launch to orbit and any rendezvous burn at the Roadster are not included.",
+  "commands": ["--dest roadster --dep-from 2026-10-16 --dep-to 2028-12-31 --objective c3 --revs 0 --verify"]
+ },
+ {
+  "id": 15,
+  "outcome": "ASK",
+  "dispatcher": {"intent": "A Mars trip inspired by The Martian, but cheaper", "origin": "Earth", "destination": "Mars (presumed)", "constraints": ["cheaper than an unspecified baseline"], "ambiguous": true, "question": "Do you want a one-way ride to Mars, and roughly when would you like to leave?"},
+  "answer": "Happy to price a Mars ride - do you want a one-way ride to Mars, and roughly when would you like to leave?",
+  "commands": []
+ },
+ {
+  "id": 16,
+  "outcome": "ASK",
+  "dispatcher": {"intent": "Deliver a cake to Mars (Jezero crater) on the day a friend's rover lands", "origin": "Earth", "destination": "Mars (Jezero crater)", "constraints": ["arrive on the rover's landing day (date unknown)"], "ambiguous": true, "question": "What date does your friend's rover land?"},
+  "answer": "What date does your friend's rover land? Once I have the date I can price a Mars ride timed to arrive that day.",
+  "commands": []
+ },
+ {
+  "id": 17,
+  "outcome": "COUNTER",
+  "dispatcher": {"intent": "Deliver a birthday cake to Jupiter's Great Red Spot by the next Jupiter opposition", "origin": "Earth", "destination": "Jupiter", "constraints": ["arrive by the next opposition", "deliver to the Great Red Spot"], "ambiguous": false, "question": null},
+  "answer": "I can't meet the opposition deadline: the fastest launchable Jupiter ride departs 2027-11-20 and arrives 2029-07-17 after 605.0 days, and nothing faster is launchable (C3 99.63 km2/s2, 7.075 km/s burn from the 200 km parking orbit, arrival v-infinity 10.36 km/s, n-body re-fly passed). I also can't deliver to the Great Red Spot itself - it's a storm in Jupiter's atmosphere with nothing to land on, and the ride ends at Jupiter with no capture or descent priced. If 2029-07-17 works for the cake, I can book that.",
+  "commands": ["--dest jupiter --dep-from 2026-10-16 --dep-to 2027-12-31 --max-c3 100 --objective tof --verify"]
+ },
+ {
+  "id": 18,
+  "outcome": "COUNTER",
+  "dispatcher": {"intent": "Overnight delivery to Mars", "origin": "Earth", "destination": "Mars", "constraints": ["arrive overnight (about one day)"], "ambiguous": false, "question": null},
+  "answer": "Overnight to Mars isn't possible: the fastest launchable ride takes 90.0 days. That one departs 2026-12-13 and arrives 2027-03-13 with departure C3 99.53 km2/s2 (7.069 km/s burn from the 200 km parking orbit) and a very hot 17.57 km/s arrival v-infinity; the n-body re-fly passed. If speed matters less than cost, the cheapest ride this window departs 2026-10-31 and arrives 2027-08-20 after 293.0 days with C3 9.18 km2/s2 and arrival v-infinity 2.71 km/s. No capture or landing burn at Mars is priced on either.",
+  "commands": ["--dest mars --dep-from 2026-10-16 --dep-to 2027-03-31 --max-c3 100 --objective tof --verify", "--dest mars --dep-from 2026-10-16 --dep-to 2026-12-24 --objective c3 --verify"]
+ },
+ {
+  "id": 19,
+  "outcome": "DECLINE",
+  "dispatcher": {"intent": "Deliver a letter to Voyager 1 before it leaves the solar system", "origin": "Earth", "destination": "Voyager 1", "constraints": ["catch Voyager 1 before it leaves the solar system"], "ambiguous": false, "question": null},
+  "answer": "I'm sorry, Voyager 1 isn't a destination our planner can price, so I have nothing to offer for this delivery. Our available targets are Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, the Moon, the Roadster, Bennu and Ceres.",
+  "commands": []
+ },
+ {
+  "id": 20,
+  "outcome": "COUNTER",
+  "dispatcher": {"intent": "Flowers to Mercury in the 1 Jan - 14 Feb 2027 window with launch C3 at most 20", "origin": "Earth", "destination": "Mercury", "constraints": ["launch between 2027-01-01 and 2027-02-14 (window may also mean arrival)", "launch C3 <= 20 km2/s2", "flowers (perishable)"], "ambiguous": false, "question": null},
+  "answer": "There is no direct Mercury transfer with C3 at most 20 in that window - the planner found zero feasible solutions whether the New Year to Valentine's Day window is read as launch dates or as arrival dates. The closest ride I can offer drops the C3 cap: depart 2027-02-14, arrive 2027-12-11 after 300.0 days, departure C3 84.0 km2/s2 (6.537 km/s burn from the 200 km parking orbit), arrival v-infinity 21.65 km/s, n-body re-fly passed. The flowers would arrive on 2027-12-11, not by Valentine's Day, and no capture burn at Mercury is priced.",
+  "commands": ["--dest mercury --dep-from 2027-01-01 --dep-to 2027-02-14 --max-c3 20 --objective c3 --verify", "--dest mercury --dep-from 2026-10-16 --dep-to 2027-02-14 --arr-from 2027-01-01 --arr-by 2027-02-14 --max-c3 20 --objective c3 --verify", "--dest mercury --dep-from 2027-01-01 --dep-to 2027-02-14 --objective c3 --verify"]
+ }
+]

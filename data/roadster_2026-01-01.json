@@ -1,0 +1,16 @@
+{
+ "target": "-143205 Roadster",
+ "jd_tdb": 2461041.5,
+ "frame": "ecliptic J2000, Sun-centred, km, km/s",
+ "r_km": [
+  -121937684.133715,
+  -145434535.6405588,
+  -3555409.154399596
+ ],
+ "v_kms": [
+  15.63608359499852,
+  -22.0083734821753,
+  -0.1008298301279567
+ ],
+ "source": "JPL Horizons API via WebFetch 2026-10-15; checked against RG/RR/LT columns"
+}

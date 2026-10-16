@@ -1,0 +1,5 @@
+{"source": "JPL Horizons API, EPHEM_TYPE=ELEMENTS, CENTER=500@399 (geocentric), ecliptic of J2000, epoch 2461329.5 TDB = 2026-10-16 00:00 (fetched 2026-10-16 via WebFetch; CelesTrak is blocked from this environment)",
+ "stations": {
+  "iss": {"name": "International Space Station", "horizons_id": "-125544", "jd_tdb": 2461329.5, "EC": 8.108476700603071E-04, "QR_km": 6.787172916714399E+03, "IN_deg": 4.436095476095024E+01, "OM_deg": 8.239907825875422E+01, "W_deg": 6.047265237902704E+01, "MA_deg": 1.784518363116003E+02, "A_km": 6.792680746070814E+03, "PR_s": 5.571508391499512E+03},
+  "tiangong": {"name": "Tiangong (Chinese Space Station)", "horizons_id": "-148274", "jd_tdb": 2461329.5, "EC": 6.815287185207730E-04, "QR_km": 6.757696647775898E+03, "IN_deg": 3.173861905615244E+01, "OM_deg": 2.780769317496699E+02, "W_deg": 1.395416879576964E+02, "MA_deg": 1.852442429391628E+02, "A_km": 6.762305353077427E+03, "PR_s": 5.534178339228533E+03}
+ }}

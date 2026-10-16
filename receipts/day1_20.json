@@ -1,0 +1,115 @@
+{
+ "id": 20,
+ "request": "Flowers to Mercury between New Year and Valentine's Day 2027, launch C3 at most 20.",
+ "backend": "replay (recorded agent answer, tools re-run)",
+ "outcome": "COUNTER",
+ "roles": {
+  "broker": "No direct route to Mercury keeps the launch C3 at most 20, not in your window and not anywhere from 2026-10-16 to 2027-12-31. If you launch between New Year and Valentine's Day 2027, the lowest-energy verified route departs 2027-02-14 and arrives 2027-12-11 (300.0 days), but its C3 is 84.0 km2/s2, well above your limit of 20. Having the flowers arrive within that window instead would need a C3 of 191.53 km2/s2, which can't be launched."
+ },
+ "tool_calls": [
+  {
+   "tool": "quote",
+   "args": "--dest mercury --dep-from 2026-10-16 --dep-to 2027-12-31 --max-c3 20 --verify",
+   "seconds": 7.2,
+   "output": {
+    "ok": false,
+    "error": "no feasible direct transfer under these constraints",
+    "solves_feasible": 0,
+    "scanned": "2026-10-16..2027-12-31, TOF 20-300 d"
+   }
+  },
+  {
+   "tool": "quote",
+   "args": "--dest mercury --dep-from 2027-01-01 --dep-to 2027-02-14 --verify",
+   "seconds": 5.1,
+   "output": {
+    "ok": true,
+    "dest": "mercury",
+    "depart": "2027-02-14",
+    "arrive": "2027-12-11",
+    "tof_days": 300.0,
+    "c3_km2s2": 84.0,
+    "vinf_arrival_kms": 21.65,
+    "launchable": true,
+    "at_search_edge": true,
+    "feasible_solves": 8554,
+    "dep_jd": 2461450.5,
+    "revs": 1,
+    "lowpath": false,
+    "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+    "refly": {
+     "raw_miss_km": 679101.6,
+     "final_miss_km": 0.093,
+     "retarget_ms": 12.0,
+     "iterations": 3,
+     "c3_corrected_km2s2": 83.92,
+     "dv_dep_corrected_kms": 6.537,
+     "pass": true,
+     "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+    },
+    "assumptions": [
+     "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+     "impulsive burns, no thrust limits or g-load model",
+     "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+     "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+    ]
+   }
+  },
+  {
+   "tool": "quote",
+   "args": "--dest mercury --dep-from 2026-10-16 --dep-to 2027-02-14 --arr-from 2027-01-01 --arr-by 2027-02-14 --verify",
+   "seconds": 2.5,
+   "output": {
+    "ok": true,
+    "dest": "mercury",
+    "depart": "2026-10-16",
+    "arrive": "2027-01-10",
+    "tof_days": 86.0,
+    "c3_km2s2": 191.53,
+    "vinf_arrival_kms": 41.0,
+    "launchable": false,
+    "at_search_edge": true,
+    "feasible_solves": 1760,
+    "dep_jd": 2461329.5,
+    "revs": 0,
+    "lowpath": true,
+    "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+    "refly": {
+     "raw_miss_km": 104320.9,
+     "final_miss_km": 0.032,
+     "retarget_ms": 10.1,
+     "iterations": 2,
+     "c3_corrected_km2s2": 191.46,
+     "dv_dep_corrected_kms": 9.898,
+     "pass": true,
+     "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+    },
+    "assumptions": [
+     "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+     "impulsive burns, no thrust limits or g-load model",
+     "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+     "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+    ]
+   }
+  }
+ ],
+ "provenance": {
+  "pass": true,
+  "untraced": []
+ },
+ "rider_sees": "No direct route to Mercury keeps the launch C3 at most 20, not in your window and not anywhere from 2026-10-16 to 2027-12-31. If you launch between New Year and Valentine's Day 2027, the lowest-energy verified route departs 2027-02-14 and arrives 2027-12-11 (300.0 days), but its C3 is 84.0 km2/s2, well above your limit of 20. Having the flowers arrive within that window instead would need a C3 of 191.53 km2/s2, which can't be launched.",
+ "physics": [
+  {
+   "args": "--dest mercury --dep-from 2026-10-16 --dep-to 2027-12-31 --max-c3 20 --verify",
+   "refly_pass": true
+  },
+  {
+   "args": "--dest mercury --dep-from 2027-01-01 --dep-to 2027-02-14 --verify",
+   "refly_pass": true
+  },
+  {
+   "args": "--dest mercury --dep-from 2026-10-16 --dep-to 2027-02-14 --arr-from 2027-01-01 --arr-by 2027-02-14 --verify",
+   "refly_pass": true
+  }
+ ]
+}

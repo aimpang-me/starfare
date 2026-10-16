@@ -1,0 +1,127 @@
+{
+ "mercury": {
+  "seg_days": 616,
+  "deg": 26,
+  "nseg": 243,
+  "chars": 68902,
+  "max_pos_err_km": 0.010851587819739385,
+  "rms_pos_err_km": 0.002100504881933507,
+  "max_vel_err_kms": 1.0170680810705806e-06
+ },
+ "venus": {
+  "seg_days": 44,
+  "deg": 10,
+  "nseg": 224,
+  "chars": 34218,
+  "max_pos_err_km": 0.002483408703218437,
+  "rms_pos_err_km": 0.0007904576218013476,
+  "max_vel_err_kms": 5.449556600409194e-08
+ },
+ "emb": {
+  "seg_days": 448,
+  "deg": 8,
+  "nseg": 352,
+  "chars": 39004,
+  "max_pos_err_km": 0.005209947506158612,
+  "rms_pos_err_km": 0.0016739926100012438,
+  "max_vel_err_kms": 6.828604772725596e-08
+ },
+ "mars": {
+  "seg_days": 64,
+  "deg": 13,
+  "nseg": 154,
+  "chars": 22598,
+  "max_pos_err_km": 0.004493964502241681,
+  "rms_pos_err_km": 0.0011669836793544667,
+  "max_vel_err_kms": 7.056417420417697e-08
+ },
+ "jupiter": {
+  "seg_days": 64,
+  "deg": 13,
+  "nseg": 154,
+  "chars": 19701,
+  "max_pos_err_km": 0.0044975910788107075,
+  "rms_pos_err_km": 0.0011241987448398004,
+  "max_vel_err_kms": 5.885757369103585e-08
+ },
+ "saturn": {
+  "seg_days": 64,
+  "deg": 13,
+  "nseg": 154,
+  "chars": 19033,
+  "max_pos_err_km": 0.004144400440387215,
+  "rms_pos_err_km": 0.001113597769401679,
+  "max_vel_err_kms": 6.108296181484244e-08
+ },
+ "uranus": {
+  "seg_days": 64,
+  "deg": 13,
+  "nseg": 154,
+  "chars": 18321,
+  "max_pos_err_km": 0.004178747753781118,
+  "rms_pos_err_km": 0.0011129900267716098,
+  "max_vel_err_kms": 6.300228037467223e-08
+ },
+ "neptune": {
+  "seg_days": 64,
+  "deg": 13,
+  "nseg": 154,
+  "chars": 18237,
+  "max_pos_err_km": 0.003938080576791221,
+  "rms_pos_err_km": 0.0011142754033881006,
+  "max_vel_err_kms": 6.01997100446578e-08
+ },
+ "moon_geo": {
+  "seg_days": 704,
+  "deg": 21,
+  "nseg": 448,
+  "chars": 91882,
+  "max_pos_err_km": 0.023233311622671882,
+  "rms_pos_err_km": 0.005026461796014424,
+  "max_vel_err_kms": 3.0894370171008273e-06
+ },
+ "roadster": {
+  "seg_days": 77,
+  "deg": 16,
+  "nseg": 133,
+  "chars": 23255,
+  "max_pos_err_km": 0.004320029922943638,
+  "rms_pos_err_km": 0.0010694956984805804,
+  "max_vel_err_kms": 3.210311609947996e-07
+ },
+ "bennu": {
+  "seg_days": 77,
+  "deg": 15,
+  "nseg": 130,
+  "chars": 24298,
+  "max_pos_err_km": 0.005519537196712936,
+  "rms_pos_err_km": 0.0014093329261784218,
+  "max_vel_err_kms": 7.56476889629633e-08
+ },
+ "ceres": {
+  "seg_days": 64,
+  "deg": 13,
+  "nseg": 154,
+  "chars": 21254,
+  "max_pos_err_km": 0.004133159036556095,
+  "rms_pos_err_km": 0.001143639156476454,
+  "max_vel_err_kms": 6.948480723314817e-08
+ },
+ "earth": {
+  "derived": true,
+  "max_pos_err_km": 0.005220932279605121,
+  "rms_pos_err_km": 0.0016823061496285866,
+  "max_vel_err_kms": 6.33428181272901e-08
+ },
+ "moon": {
+  "derived": true,
+  "max_pos_err_km": 0.02483217480006076,
+  "rms_pos_err_km": 0.0052468870458970565,
+  "max_vel_err_kms": 2.506848512489521e-06
+ },
+ "_total_json_bytes": 402060,
+ "_coverage": [
+  2461314.5,
+  2471170.5
+ ]
+}

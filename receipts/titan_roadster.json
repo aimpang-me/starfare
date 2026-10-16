@@ -1,0 +1,78 @@
+{
+ "ok": true,
+ "trip": "Titan -> Earth",
+ "driver": "roadster",
+ "objective": "energy",
+ "request_date": "2026-10-16",
+ "arrive_home": "2039-07-15",
+ "door_to_door_days": 4655,
+ "door_to_door_years": 12.74,
+ "au_travelled": 26.64,
+ "battery": {
+  "dv_kms": 15.982,
+  "propellant_kg": 914.7,
+  "energy_kwh": 190554,
+  "battery_pct": 95277
+ },
+ "fare": {
+  "energy_usd": 30488.64,
+  "time_usd": 2346120.0,
+  "total_usd": 2376608.64
+ },
+ "legs": [
+  {
+   "leg": "pickup",
+   "driver": "the real Roadster (JPL Horizons -143205)",
+   "depart": "2027-11-25",
+   "arrive_titan": "2033-08-15",
+   "tof_days": 2090.0,
+   "eta_days_from_request": 2495,
+   "dv_kms": 12.802,
+   "dv_roadster_kms": 10.103,
+   "dv_titan_capture_kms": 2.699,
+   "au": 13.67,
+   "revs": 0,
+   "refly": {
+    "raw_miss_km": 2365949.3,
+    "final_miss_km": 0.0029,
+    "retarget_ms": 5.1,
+    "iterations": 2,
+    "vinf_dep_corrected_kms": 10.1,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon; planet endpoints patched-conic (own gravity off)"
+   }
+  },
+  {
+   "leg": "ride",
+   "depart_titan": "2033-11-13",
+   "arrive_earth": "2039-07-15",
+   "tof_days": 2070.0,
+   "wait_at_titan_days": 90,
+   "dv_kms": 3.18,
+   "vinf_saturn_kms": 5.72,
+   "vinf_earth_kms": 10.617,
+   "earth_entry_kms": 15.34,
+   "au": 12.97,
+   "revs": 0,
+   "refly": {
+    "raw_miss_km": 419010.9,
+    "final_miss_km": 0.0023,
+    "retarget_ms": 5.0,
+    "iterations": 2,
+    "vinf_dep_corrected_kms": 5.716,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon; planet endpoints patched-conic (own gravity off)"
+   }
+  }
+ ],
+ "assumptions": [
+  "car 1300 kg dry with a 200 kWh pack",
+  "electric thruster: 30 km/s exhaust, 60% efficient, burns treated as instant",
+  "fare = $0.16/kWh energy + $0.35/min time fee",
+  "landing, aerobraking and life support are not priced",
+  "Titan parking orbit 1,500 km up; burns in the best direction",
+  "energy objective trades 0.1 km/s of burn per year of delay (so it will not wait years to save a little)",
+  "Sun-centred legs start/end at Saturn's and Earth's centres (patched conic)"
+ ],
+ "verified": true
+}

@@ -1,0 +1,100 @@
+{
+ "id": 18,
+ "request": "Overnight shipping to Mars.",
+ "backend": "replay (recorded agent answer, tools re-run)",
+ "outcome": "COUNTER",
+ "roles": {
+  "broker": "We can't ship overnight to Mars: the shortest trip the planner considers is 20.0 days, and even that needs a launch C3 of 15173.64 km2/s2, which can't be launched. The fastest launchable shipment is verified: depart 2026-12-12, arrive 2027-03-12 (90.0 days, C3 99.93 km2/s2)."
+ },
+ "tool_calls": [
+  {
+   "tool": "quote",
+   "args": "--dest mars --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --verify",
+   "seconds": 10.1,
+   "output": {
+    "ok": true,
+    "dest": "mars",
+    "depart": "2026-10-16",
+    "arrive": "2026-11-05",
+    "tof_days": 20.0,
+    "c3_km2s2": 15173.64,
+    "vinf_arrival_kms": 134.47,
+    "launchable": false,
+    "at_search_edge": true,
+    "feasible_solves": 31637,
+    "dep_jd": 2461329.5,
+    "revs": 0,
+    "lowpath": true,
+    "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+    "refly": {
+     "raw_miss_km": 6875.4,
+     "final_miss_km": 0.007,
+     "retarget_ms": 3.9,
+     "iterations": 1,
+     "c3_corrected_km2s2": 15173.64,
+     "dv_dep_corrected_kms": 115.888,
+     "pass": true,
+     "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+    },
+    "assumptions": [
+     "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+     "impulsive burns, no thrust limits or g-load model",
+     "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+     "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+    ]
+   }
+  },
+  {
+   "tool": "quote",
+   "args": "--dest mars --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --max-c3 100 --verify",
+   "seconds": 10.7,
+   "output": {
+    "ok": true,
+    "dest": "mars",
+    "depart": "2026-12-12",
+    "arrive": "2027-03-12",
+    "tof_days": 90.0,
+    "c3_km2s2": 99.93,
+    "vinf_arrival_kms": 17.62,
+    "launchable": true,
+    "at_search_edge": false,
+    "feasible_solves": 8914,
+    "dep_jd": 2461387.2916666637,
+    "revs": 0,
+    "lowpath": true,
+    "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+    "refly": {
+     "raw_miss_km": 62866.7,
+     "final_miss_km": 0.034,
+     "retarget_ms": 5.7,
+     "iterations": 2,
+     "c3_corrected_km2s2": 99.84,
+     "dv_dep_corrected_kms": 7.083,
+     "pass": true,
+     "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+    },
+    "assumptions": [
+     "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+     "impulsive burns, no thrust limits or g-load model",
+     "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+     "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+    ]
+   }
+  }
+ ],
+ "provenance": {
+  "pass": true,
+  "untraced": []
+ },
+ "rider_sees": "We can't ship overnight to Mars: the shortest trip the planner considers is 20.0 days, and even that needs a launch C3 of 15173.64 km2/s2, which can't be launched. The fastest launchable shipment is verified: depart 2026-12-12, arrive 2027-03-12 (90.0 days, C3 99.93 km2/s2).",
+ "physics": [
+  {
+   "args": "--dest mars --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --verify",
+   "refly_pass": true
+  },
+  {
+   "args": "--dest mars --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --max-c3 100 --verify",
+   "refly_pass": true
+  }
+ ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "starfare",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": {
+    "bindings": [
+      { "name": "MCP_OBJECT", "class_name": "SolMcp" },
+      { "name": "SOL_RUN", "class_name": "SolRun" },
+      { "name": "SOL_HUB", "class_name": "SolHub" },
+      // OAuth storage (clients, grants, tokens) when SOL_OAUTH is "on" and no OAUTH_KV namespace is bound. Unused when off.
+      { "name": "SOL_AUTH", "class_name": "SolAuth" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["SolMcp", "SolRun", "SolHub"] },
+    { "tag": "v2", "new_sqlite_classes": ["SolAuth"] }
+  ],
+  // Long-haul plan_leg calls take ~0.2-0.7 s CPU and start_mission up to ~1.3 s, so this needs the Workers
+  // paid plan (default 30 s CPU per request). The free plan's 10 ms is enough for none of the tools reliably.
+  // SOL_OAUTH: "on" (the live setting: OAuth with a one-click consent page; grok.com connects this way) or "off" (no auth). See DEPLOY.md.
+  "vars": { "RATE_PER_MIN": "120", "SOL_OAUTH": "on" }
+}

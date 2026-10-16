@@ -1,0 +1,21 @@
+{"cmd": "--dest mars --dep-from 2026-10-16 --dep-to 2026-12-24 --objective c3 --verify", "cached": true, "seconds": 0.0, "ok": true, "refly_pass": true}
+{"cmd": "--dest mars --dep-from 2026-10-16 --dep-to 2027-01-31 --max-c3 15 --objective tof --verify", "cached": false, "seconds": 10.7, "ok": true, "refly_pass": true}
+{"cmd": "--dest mars --dep-from 2026-10-16 --dep-to 2027-01-31 --objective vinf_arr --weekend --verify", "cached": false, "seconds": 5.2, "ok": true, "refly_pass": true}
+{"cmd": "--dest jupiter --dep-from 2027-01-01 --dep-to 2027-12-31 --objective c3 --verify", "cached": true, "seconds": 0.0, "ok": true, "refly_pass": true}
+{"cmd": "--dest ceres --dep-from 2027-01-01 --dep-to 2027-12-31 --arr-by 2029-12-31 --objective c3 --verify", "cached": true, "seconds": 0.0, "ok": true, "refly_pass": true}
+{"cmd": "--dest ceres --dep-from 2027-01-01 --dep-to 2027-12-31 --arr-by 2029-12-31 --objective c3 --revs 1 --verify", "cached": false, "seconds": 4.0, "ok": true, "refly_pass": true}
+{"cmd": "--dest ceres --dep-from 2027-12-01 --dep-to 2028-06-30 --arr-by 2029-12-31 --objective c3 --verify", "cached": false, "seconds": 3.1, "ok": true, "refly_pass": true}
+{"cmd": "--dest venus --dep-from 2026-10-16 --dep-to 2027-06-01 --arr-by 2027-06-01 --objective c3 --verify", "cached": false, "seconds": 5.6, "ok": true, "refly_pass": true}
+{"cmd": "--dest mars --dep-from 2028-01-01 --dep-to 2028-12-31 --objective c3 --verify", "cached": true, "seconds": 0.1, "ok": true, "refly_pass": true}
+{"cmd": "--dest moon --dep-from 2026-10-16 --dep-to 2026-11-30 --objective c3 --verify", "cached": false, "seconds": 5.8, "ok": true, "refly_pass": true}
+{"cmd": "--dest jupiter --dep-from 2026-10-16 --dep-to 2028-10-16 --objective c3 --verify", "cached": false, "seconds": 15.1, "ok": true, "refly_pass": true}
+{"cmd": "--dest mars --dep-from 2026-10-16 --dep-to 2027-01-31 --objective c3 --verify", "cached": false, "seconds": 12.5, "ok": true, "refly_pass": true}
+{"cmd": "--dest roadster --dep-from 2026-10-16 --dep-to 2027-10-16 --objective c3 --verify", "cached": false, "seconds": 11.1, "ok": true, "refly_pass": true}
+{"cmd": "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-02-10 --arr-by 2027-02-10 --objective tof --verify", "cached": false, "seconds": 1.4, "ok": true, "refly_pass": true}
+{"cmd": "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-02-10 --arr-by 2027-02-10 --max-c3 100 --objective tof --verify", "cached": false, "seconds": 0.6, "ok": false, "refly_pass": null}
+{"cmd": "--dest jupiter --dep-from 2026-10-16 --dep-to 2028-10-16 --max-c3 100 --objective tof --verify", "cached": false, "seconds": 10.0, "ok": true, "refly_pass": true}
+{"cmd": "--dest mars --dep-from 2026-10-16 --dep-to 2027-01-31 --max-c3 100 --objective tof --verify", "cached": false, "seconds": 10.3, "ok": true, "refly_pass": true}
+{"cmd": "--dest mercury --dep-from 2027-01-01 --dep-to 2027-02-14 --max-c3 20 --objective c3 --verify", "cached": true, "seconds": 0.1, "ok": false, "refly_pass": null}
+{"cmd": "--dest mercury --dep-from 2027-01-01 --dep-to 2027-02-14 --objective c3 --verify", "cached": true, "seconds": 0.0, "ok": true, "refly_pass": true}
+{"cmd": "--dest mercury --dep-from 2027-01-01 --dep-to 2027-12-31 --max-c3 20 --objective c3 --verify", "cached": false, "seconds": 8.1, "ok": false, "refly_pass": null}
+{"cmd": "--dest bennu --dep-from 2026-10-16 --dep-to 2027-10-16 --objective c3 --verify", "cached": false, "seconds": 8.2, "ok": true, "refly_pass": true}

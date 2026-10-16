@@ -1,0 +1,23 @@
+# 1 COUNTER  PASS
+# 2 QUOTE    FAIL
+      untraced numbers 4.2 -> The cheapest ride to Mars leaving before Christmas 2026 departs 2026-10-31 and arrives 2027-08-20 (293.0 days), with C3 9.18 km2/s2 and an arrival speed (v-infinity) of 2.71 km/s, checked by an n-body re-fly. The price assumes you start from a 200 km parking orbit. Launch to that orbit, capture at Mars and landing are not priced. Estimated fuel: ~~4.2~~[no tool made this] tonnes.
+# 3 QUOTE    PASS
+# 4 ASK      PASS
+# 5 QUOTE    PASS
+# 6 QUOTE    PASS
+# 7 DECLINE  PASS
+# 8 COUNTER  PASS
+# 9 DECLINE  PASS
+#10 COUNTER  PASS
+#11 COUNTER  PASS
+#12 DECLINE  PASS
+#13 ASK      PASS
+#14 QUOTE    PASS
+#15 ASK      PASS
+#16 ASK      PASS
+#17 COUNTER  PASS
+#18 COUNTER  PASS
+#19 DECLINE  PASS
+#20 COUNTER  PASS
+19/20 cases pass
+EXIT 1

@@ -1,0 +1,90 @@
+{
+ "id": 17,
+ "request": "Birthday cake to Jupiter's Great Red Spot by the next opposition.",
+ "backend": "replay (recorded agent answer, tools re-run)",
+ "outcome": "COUNTER",
+ "roles": {
+  "broker": "We can't reach Jupiter by its next opposition with a launchable ride: the best route arriving in time (arrive 2027-02-10) needs a launch C3 of 4776.92 km2/s2, and we can't target the Great Red Spot because rides arrive at Jupiter's centre with no atmospheric entry priced. The fastest launchable ride we can offer is verified: depart 2026-10-22, arrive 2028-07-01 (618.0 days, C3 99.51 km2/s2)."
+ },
+ "tool_calls": [
+  {
+   "tool": "quote",
+   "args": "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-10-16 --arr-by 2027-02-11",
+   "seconds": 0.3,
+   "output": {
+    "ok": true,
+    "dest": "jupiter",
+    "depart": "2026-10-22",
+    "arrive": "2027-02-10",
+    "tof_days": 111.0,
+    "c3_km2s2": 4776.92,
+    "vinf_arrival_kms": 85.66,
+    "launchable": false,
+    "at_search_edge": false,
+    "feasible_solves": 142,
+    "dep_jd": 2461335.583333333,
+    "revs": 0,
+    "lowpath": true,
+    "model": "Lambert 0-1 rev, DE421, unchecked (no n-body yet)",
+    "assumptions": [
+     "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+     "impulsive burns, no thrust limits or g-load model",
+     "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+     "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+    ]
+   }
+  },
+  {
+   "tool": "quote",
+   "args": "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --max-c3 100 --verify",
+   "seconds": 9.4,
+   "output": {
+    "ok": true,
+    "dest": "jupiter",
+    "depart": "2026-10-22",
+    "arrive": "2028-07-01",
+    "tof_days": 618.0,
+    "c3_km2s2": 99.51,
+    "vinf_arrival_kms": 9.76,
+    "launchable": true,
+    "at_search_edge": false,
+    "feasible_solves": 1153,
+    "dep_jd": 2461335.583333333,
+    "revs": 0,
+    "lowpath": true,
+    "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+    "refly": {
+     "raw_miss_km": 300391.8,
+     "final_miss_km": 0.628,
+     "retarget_ms": 4.5,
+     "iterations": 3,
+     "c3_corrected_km2s2": 99.5,
+     "dv_dep_corrected_kms": 7.071,
+     "pass": true,
+     "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+    },
+    "assumptions": [
+     "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+     "impulsive burns, no thrust limits or g-load model",
+     "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+     "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+    ]
+   }
+  }
+ ],
+ "provenance": {
+  "pass": true,
+  "untraced": []
+ },
+ "rider_sees": "We can't reach Jupiter by its next opposition with a launchable ride: the best route arriving in time (arrive 2027-02-10) needs a launch C3 of 4776.92 km2/s2, and we can't target the Great Red Spot because rides arrive at Jupiter's centre with no atmospheric entry priced. The fastest launchable ride we can offer is verified: depart 2026-10-22, arrive 2028-07-01 (618.0 days, C3 99.51 km2/s2).",
+ "physics": [
+  {
+   "args": "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-10-16 --arr-by 2027-02-11",
+   "refly_pass": true
+  },
+  {
+   "args": "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --max-c3 100 --verify",
+   "refly_pass": true
+  }
+ ]
+}

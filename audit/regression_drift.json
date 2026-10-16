@@ -1,0 +1,811 @@
+[
+ {
+  "cmd": "--dest bennu --dep-from 2026-10-16 --dep-to 2027-01-16 --objective tof --max-c3 100 --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km"
+  ],
+  "diffs": [
+   [
+    ".refly.final_miss_km",
+    0.048,
+    0.025
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "bennu",
+   "depart": "2026-10-28",
+   "arrive": "2027-04-06",
+   "tof_days": 160.0,
+   "c3_km2s2": 99.69,
+   "vinf_arrival_kms": 15.67,
+   "launchable": true,
+   "at_search_edge": false,
+   "feasible_solves": 10342,
+   "dep_jd": 2461341.5,
+   "revs": 0,
+   "lowpath": true,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 56291.8,
+    "final_miss_km": 0.025,
+    "retarget_ms": 3.1,
+    "iterations": 2,
+    "c3_corrected_km2s2": 99.66,
+    "dv_dep_corrected_kms": 7.077,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ },
+ {
+  "cmd": "--dest mars --dep-from 2026-10-16 --dep-to 2026-12-24 --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km"
+  ],
+  "diffs": [
+   [
+    ".refly.final_miss_km",
+    0.041,
+    0.648
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "mars",
+   "depart": "2026-10-31",
+   "arrive": "2027-08-20",
+   "tof_days": 293.0,
+   "c3_km2s2": 9.18,
+   "vinf_arrival_kms": 2.71,
+   "launchable": true,
+   "at_search_edge": false,
+   "feasible_solves": 22509,
+   "dep_jd": 2461344.5,
+   "revs": 0,
+   "lowpath": true,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 1183829.0,
+    "final_miss_km": 0.648,
+    "retarget_ms": 86.2,
+    "iterations": 3,
+    "c3_corrected_km2s2": 9.25,
+    "dv_dep_corrected_kms": 3.637,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ },
+ {
+  "cmd": "--dest mars --dep-from 2026-10-16 --dep-to 2027-03-31 --objective tof --max-c3 15 --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km"
+  ],
+  "diffs": [
+   [
+    ".refly.final_miss_km",
+    0.118,
+    0.271
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "mars",
+   "depart": "2026-11-09",
+   "arrive": "2027-05-30",
+   "tof_days": 202.0,
+   "c3_km2s2": 14.98,
+   "vinf_arrival_kms": 5.93,
+   "launchable": true,
+   "at_search_edge": false,
+   "feasible_solves": 2365,
+   "dep_jd": 2461354.3999999994,
+   "revs": 0,
+   "lowpath": true,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 700605.7,
+    "final_miss_km": 0.271,
+    "retarget_ms": 21.1,
+    "iterations": 2,
+    "c3_corrected_km2s2": 14.94,
+    "dv_dep_corrected_kms": 3.883,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ },
+ {
+  "cmd": "--dest jupiter --dep-from 2027-01-01 --dep-to 2027-12-31 --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km",
+   ".refly.raw_miss_km"
+  ],
+  "diffs": [
+   [
+    ".refly.raw_miss_km",
+    844178.7,
+    844177.7
+   ],
+   [
+    ".refly.final_miss_km",
+    0.749,
+    0.583
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "jupiter",
+   "depart": "2027-12-06",
+   "arrive": "2031-07-31",
+   "tof_days": 1333.0,
+   "c3_km2s2": 79.06,
+   "vinf_arrival_kms": 6.16,
+   "launchable": true,
+   "at_search_edge": false,
+   "feasible_solves": 27923,
+   "dep_jd": 2461746.2333333194,
+   "revs": 0,
+   "lowpath": true,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 844177.7,
+    "final_miss_km": 0.583,
+    "retarget_ms": 9.3,
+    "iterations": 2,
+    "c3_corrected_km2s2": 79.03,
+    "dv_dep_corrected_kms": 6.366,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ },
+ {
+  "cmd": "--dest ceres --dep-from 2027-01-01 --dep-to 2027-12-31 --arr-by 2029-12-31 --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km"
+  ],
+  "diffs": [
+   [
+    ".refly.final_miss_km",
+    0.166,
+    0.173
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "ceres",
+   "depart": "2027-12-30",
+   "arrive": "2028-11-02",
+   "tof_days": 308.0,
+   "c3_km2s2": 84.7,
+   "vinf_arrival_kms": 9.37,
+   "launchable": true,
+   "at_search_edge": true,
+   "feasible_solves": 12066,
+   "dep_jd": 2461770.499999985,
+   "revs": 0,
+   "lowpath": true,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 117050.6,
+    "final_miss_km": 0.173,
+    "retarget_ms": 11.8,
+    "iterations": 2,
+    "c3_corrected_km2s2": 84.53,
+    "dv_dep_corrected_kms": 6.559,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ },
+ {
+  "cmd": "--dest mars --dep-from 2028-01-01 --dep-to 2028-12-31 --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km",
+   ".refly.raw_miss_km"
+  ],
+  "diffs": [
+   [
+    ".refly.raw_miss_km",
+    619152.2,
+    619153.4
+   ],
+   [
+    ".refly.final_miss_km",
+    0.299,
+    0.361
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "mars",
+   "depart": "2028-11-30",
+   "arrive": "2029-10-14",
+   "tof_days": 317.5,
+   "c3_km2s2": 9.0,
+   "vinf_arrival_kms": 3.22,
+   "launchable": true,
+   "at_search_edge": false,
+   "feasible_solves": 36432,
+   "dep_jd": 2462106.0833333163,
+   "revs": 0,
+   "lowpath": true,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 619153.4,
+    "final_miss_km": 0.361,
+    "retarget_ms": 40.4,
+    "iterations": 2,
+    "c3_corrected_km2s2": 8.97,
+    "dv_dep_corrected_kms": 3.625,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ },
+ {
+  "cmd": "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-12-31 --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km",
+   ".refly.iterations",
+   ".refly.raw_miss_km"
+  ],
+  "diffs": [
+   [
+    ".refly.iterations",
+    5,
+    3
+   ],
+   [
+    ".refly.raw_miss_km",
+    775829.6,
+    775830.8
+   ],
+   [
+    ".refly.final_miss_km",
+    0.514,
+    0.74
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "jupiter",
+   "depart": "2027-12-05",
+   "arrive": "2031-07-17",
+   "tof_days": 1320.0,
+   "c3_km2s2": 79.07,
+   "vinf_arrival_kms": 6.11,
+   "launchable": true,
+   "at_search_edge": false,
+   "feasible_solves": 27690,
+   "dep_jd": 2461744.774999979,
+   "revs": 0,
+   "lowpath": true,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 775830.8,
+    "final_miss_km": 0.74,
+    "retarget_ms": 9.2,
+    "iterations": 3,
+    "c3_corrected_km2s2": 79.04,
+    "dv_dep_corrected_kms": 6.366,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ },
+ {
+  "cmd": "--dest mars --dep-from 2026-10-16 --dep-to 2027-10-16 --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km",
+   ".refly.iterations"
+  ],
+  "diffs": [
+   [
+    ".refly.iterations",
+    5,
+    6
+   ],
+   [
+    ".refly.final_miss_km",
+    0.919,
+    0.187
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "mars",
+   "depart": "2026-10-31",
+   "arrive": "2027-08-20",
+   "tof_days": 293.0,
+   "c3_km2s2": 9.18,
+   "vinf_arrival_kms": 2.71,
+   "launchable": true,
+   "at_search_edge": false,
+   "feasible_solves": 31637,
+   "dep_jd": 2461344.7083333326,
+   "revs": 0,
+   "lowpath": true,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 1656268.9,
+    "final_miss_km": 0.187,
+    "retarget_ms": 102.5,
+    "iterations": 6,
+    "c3_corrected_km2s2": 9.24,
+    "dv_dep_corrected_kms": 3.637,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ },
+ {
+  "cmd": "--dest roadster --dep-from 2026-10-16 --dep-to 2027-10-16 --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km",
+   ".refly.iterations"
+  ],
+  "diffs": [
+   [
+    ".refly.iterations",
+    8,
+    6
+   ],
+   [
+    ".refly.final_miss_km",
+    0.385,
+    0.893
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "roadster",
+   "depart": "2027-02-14",
+   "arrive": "2028-10-11",
+   "tof_days": 605.0,
+   "c3_km2s2": 3.6,
+   "vinf_arrival_kms": 5.32,
+   "launchable": true,
+   "at_search_edge": false,
+   "feasible_solves": 55580,
+   "dep_jd": 2461451.1666666605,
+   "revs": 1,
+   "lowpath": false,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 6545384.6,
+    "final_miss_km": 0.893,
+    "retarget_ms": 244.7,
+    "iterations": 6,
+    "c3_corrected_km2s2": 3.59,
+    "dv_dep_corrected_kms": 3.386,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ },
+ {
+  "cmd": "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --max-c3 100 --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km",
+   ".refly.iterations",
+   ".refly.raw_miss_km"
+  ],
+  "diffs": [
+   [
+    ".refly.iterations",
+    3,
+    2
+   ],
+   [
+    ".refly.raw_miss_km",
+    300391.8,
+    300392.2
+   ],
+   [
+    ".refly.final_miss_km",
+    0.628,
+    0.273
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "jupiter",
+   "depart": "2026-10-22",
+   "arrive": "2028-07-01",
+   "tof_days": 618.0,
+   "c3_km2s2": 99.51,
+   "vinf_arrival_kms": 9.76,
+   "launchable": true,
+   "at_search_edge": false,
+   "feasible_solves": 1153,
+   "dep_jd": 2461335.583333333,
+   "revs": 0,
+   "lowpath": true,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 300392.2,
+    "final_miss_km": 0.273,
+    "retarget_ms": 4.5,
+    "iterations": 2,
+    "c3_corrected_km2s2": 99.5,
+    "dv_dep_corrected_kms": 7.071,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ },
+ {
+  "cmd": "--dest mars --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km"
+  ],
+  "diffs": [
+   [
+    ".refly.final_miss_km",
+    0.007,
+    0.008
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "mars",
+   "depart": "2026-10-16",
+   "arrive": "2026-11-05",
+   "tof_days": 20.0,
+   "c3_km2s2": 15173.64,
+   "vinf_arrival_kms": 134.47,
+   "launchable": false,
+   "at_search_edge": true,
+   "feasible_solves": 31637,
+   "dep_jd": 2461329.5,
+   "revs": 0,
+   "lowpath": true,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 6875.4,
+    "final_miss_km": 0.008,
+    "retarget_ms": 3.9,
+    "iterations": 1,
+    "c3_corrected_km2s2": 15173.64,
+    "dv_dep_corrected_kms": 115.888,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ },
+ {
+  "cmd": "--dest mars --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --max-c3 100 --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km"
+  ],
+  "diffs": [
+   [
+    ".refly.final_miss_km",
+    0.034,
+    0.009
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "mars",
+   "depart": "2026-12-12",
+   "arrive": "2027-03-12",
+   "tof_days": 90.0,
+   "c3_km2s2": 99.93,
+   "vinf_arrival_kms": 17.62,
+   "launchable": true,
+   "at_search_edge": false,
+   "feasible_solves": 8914,
+   "dep_jd": 2461387.2916666637,
+   "revs": 0,
+   "lowpath": true,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 62866.7,
+    "final_miss_km": 0.009,
+    "retarget_ms": 5.7,
+    "iterations": 2,
+    "c3_corrected_km2s2": 99.84,
+    "dv_dep_corrected_kms": 7.083,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ },
+ {
+  "cmd": "--dest mercury --dep-from 2026-10-16 --dep-to 2027-12-31 --max-c3 20 --verify",
+  "ok": [
+   false,
+   false
+  ],
+  "pass": [
+   null,
+   null
+  ],
+  "diff_paths": [],
+  "diffs": [],
+  "new": {
+   "ok": false,
+   "error": "no feasible direct transfer under these constraints",
+   "solves_feasible": 0,
+   "scanned": "2026-10-16..2027-12-31, TOF 20-300 d"
+  }
+ },
+ {
+  "cmd": "--dest mercury --dep-from 2027-01-01 --dep-to 2027-02-14 --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km"
+  ],
+  "diffs": [
+   [
+    ".refly.final_miss_km",
+    0.093,
+    0.094
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "mercury",
+   "depart": "2027-02-14",
+   "arrive": "2027-12-11",
+   "tof_days": 300.0,
+   "c3_km2s2": 84.0,
+   "vinf_arrival_kms": 21.65,
+   "launchable": true,
+   "at_search_edge": true,
+   "feasible_solves": 8554,
+   "dep_jd": 2461450.5,
+   "revs": 1,
+   "lowpath": false,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 679101.2,
+    "final_miss_km": 0.094,
+    "retarget_ms": 12.0,
+    "iterations": 3,
+    "c3_corrected_km2s2": 83.92,
+    "dv_dep_corrected_kms": 6.537,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ },
+ {
+  "cmd": "--dest mercury --dep-from 2026-10-16 --dep-to 2027-02-14 --arr-from 2027-01-01 --arr-by 2027-02-14 --verify",
+  "ok": [
+   true,
+   true
+  ],
+  "pass": [
+   true,
+   true
+  ],
+  "diff_paths": [
+   ".refly.final_miss_km"
+  ],
+  "diffs": [
+   [
+    ".refly.final_miss_km",
+    0.032,
+    0.021
+   ]
+  ],
+  "new": {
+   "ok": true,
+   "dest": "mercury",
+   "depart": "2026-10-16",
+   "arrive": "2027-01-10",
+   "tof_days": 86.0,
+   "c3_km2s2": 191.53,
+   "vinf_arrival_kms": 41.0,
+   "launchable": false,
+   "at_search_edge": true,
+   "feasible_solves": 1760,
+   "dep_jd": 2461329.5,
+   "revs": 0,
+   "lowpath": true,
+   "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+   "refly": {
+    "raw_miss_km": 104320.9,
+    "final_miss_km": 0.021,
+    "retarget_ms": 10.1,
+    "iterations": 2,
+    "c3_corrected_km2s2": 191.46,
+    "dv_dep_corrected_kms": 9.898,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "assumptions": [
+    "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+    "impulsive burns, no thrust limits or g-load model",
+    "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+    "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+   ]
+  }
+ }
+]

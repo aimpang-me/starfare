@@ -1,0 +1,59 @@
+{
+ "id": 6,
+ "request": "Earth to Ceres, cheapest launch in 2027, arrive before 2030.",
+ "backend": "replay (recorded agent answer, tools re-run)",
+ "outcome": "QUOTE",
+ "roles": {
+  "broker": "The cheapest 2027 launch to Ceres that arrives before 2030 departs 2027-12-30 and arrives 2028-11-02 (308.0 days), with C3 84.7 km2/s2 and an arrival speed (v-infinity) of 9.37 km/s, checked by an n-body re-fly. That date sits at the very end of your 2027 window, so a cheaper launch may exist just after it. Capture at Ceres is not priced."
+ },
+ "tool_calls": [
+  {
+   "tool": "quote",
+   "args": "--dest ceres --dep-from 2027-01-01 --dep-to 2027-12-31 --arr-by 2029-12-31 --verify",
+   "seconds": 3.3,
+   "output": {
+    "ok": true,
+    "dest": "ceres",
+    "depart": "2027-12-30",
+    "arrive": "2028-11-02",
+    "tof_days": 308.0,
+    "c3_km2s2": 84.7,
+    "vinf_arrival_kms": 9.37,
+    "launchable": true,
+    "at_search_edge": true,
+    "feasible_solves": 12066,
+    "dep_jd": 2461770.499999985,
+    "revs": 0,
+    "lowpath": true,
+    "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+    "refly": {
+     "raw_miss_km": 117050.5,
+     "final_miss_km": 0.166,
+     "retarget_ms": 11.8,
+     "iterations": 2,
+     "c3_corrected_km2s2": 84.53,
+     "dv_dep_corrected_kms": 6.559,
+     "pass": true,
+     "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+    },
+    "assumptions": [
+     "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+     "impulsive burns, no thrust limits or g-load model",
+     "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+     "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+    ]
+   }
+  }
+ ],
+ "provenance": {
+  "pass": true,
+  "untraced": []
+ },
+ "rider_sees": "The cheapest 2027 launch to Ceres that arrives before 2030 departs 2027-12-30 and arrives 2028-11-02 (308.0 days), with C3 84.7 km2/s2 and an arrival speed (v-infinity) of 9.37 km/s, checked by an n-body re-fly. That date sits at the very end of your 2027 window, so a cheaper launch may exist just after it. Capture at Ceres is not priced.",
+ "physics": [
+  {
+   "args": "--dest ceres --dep-from 2027-01-01 --dep-to 2027-12-31 --arr-by 2029-12-31 --verify",
+   "refly_pass": true
+  }
+ ]
+}

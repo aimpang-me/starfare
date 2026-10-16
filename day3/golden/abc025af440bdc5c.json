@@ -1,0 +1,25 @@
+{
+ "cmd": "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-10-16 --arr-by 2027-02-11",
+ "out": {
+  "ok": true,
+  "dest": "jupiter",
+  "depart": "2026-10-22",
+  "arrive": "2027-02-10",
+  "tof_days": 111.0,
+  "c3_km2s2": 4776.92,
+  "vinf_arrival_kms": 85.66,
+  "launchable": false,
+  "at_search_edge": false,
+  "feasible_solves": 142,
+  "dep_jd": 2461335.583333333,
+  "revs": 0,
+  "lowpath": true,
+  "model": "Lambert 0-1 rev, DE421, unchecked (no n-body yet)",
+  "assumptions": [
+   "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+   "impulsive burns, no thrust limits or g-load model",
+   "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+   "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+  ]
+ }
+}

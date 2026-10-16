@@ -1,0 +1,35 @@
+{
+ "cmd": "--dest mars --dep-from 2026-10-16 --dep-to 2026-12-24 --verify",
+ "out": {
+  "ok": true,
+  "dest": "mars",
+  "depart": "2026-10-31",
+  "arrive": "2027-08-20",
+  "tof_days": 293.0,
+  "c3_km2s2": 9.18,
+  "vinf_arrival_kms": 2.71,
+  "launchable": true,
+  "at_search_edge": false,
+  "feasible_solves": 22509,
+  "dep_jd": 2461344.5,
+  "revs": 0,
+  "lowpath": true,
+  "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+  "refly": {
+   "raw_miss_km": 1183829.6,
+   "final_miss_km": 0.041,
+   "retarget_ms": 86.2,
+   "iterations": 3,
+   "c3_corrected_km2s2": 9.25,
+   "dv_dep_corrected_kms": 3.637,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+  },
+  "assumptions": [
+   "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+   "impulsive burns, no thrust limits or g-load model",
+   "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+   "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+  ]
+ }
+}

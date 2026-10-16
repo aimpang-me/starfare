@@ -1,0 +1,14 @@
+name: sol-regression
+on: [push, pull_request]
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install numpy scipy jplephem skyfield-data
+      - name: Regression suite (planner drift, provenance, n-body gate)
+        run: python day3/run_regression.py
+      - name: Self-test, a planted made-up number must turn the suite red
+        run: "! python day3/run_regression.py --plant 2"

@@ -1,0 +1,82 @@
+[
+ {
+  "id": 1,
+  "request": "Pizza to Bennu, stop at the Moon on the way, and it has to arrive warm."
+ },
+ {
+  "id": 2,
+  "request": "Cheapest ride from Earth to Mars, leaving before Christmas 2026."
+ },
+ {
+  "id": 3,
+  "request": "Fastest ride to Mars this window, but keep departure C3 under 15."
+ },
+ {
+  "id": 4,
+  "request": "Earth to Mars with the softest possible arrival, launching on a weekend."
+ },
+ {
+  "id": 5,
+  "request": "Earth to Jupiter, cheapest launch in 2027, any arrival date."
+ },
+ {
+  "id": 6,
+  "request": "Earth to Ceres, cheapest launch in 2027, arrive before 2030."
+ },
+ {
+  "id": 7,
+  "request": "Send my cat to Venus and back in time for her birthday, 1 June 2027."
+ },
+ {
+  "id": 8,
+  "request": "Venus flyby then Mars, total delta-v from LEO under 4 km/s, leave in 2028."
+ },
+ {
+  "id": 9,
+  "request": "Drop me at the Moon, then Mars, then home by Thanksgiving 2028."
+ },
+ {
+  "id": 10,
+  "request": "Cheapest way to Europa, but I get motion sick, so no gravity assists."
+ },
+ {
+  "id": 11,
+  "request": "Mars with a coffee stop at Phobos, and never more than 2 g."
+ },
+ {
+  "id": 12,
+  "request": "Sun-Earth L2 to visit JWST, and stay well clear of the Moon."
+ },
+ {
+  "id": 13,
+  "request": "Take me to the planet where it rains diamonds, via the scenic route past Saturn's rings."
+ },
+ {
+  "id": 14,
+  "request": "A ride to wherever the Tesla Roadster is, but make it romantic."
+ },
+ {
+  "id": 15,
+  "request": "Something like The Martian, but cheaper."
+ },
+ {
+  "id": 16,
+  "request": "Deliver a cake to my friend's rover the day it lands in Perseverance's crater."
+ },
+ {
+  "id": 17,
+  "request": "Birthday cake to Jupiter's Great Red Spot by the next opposition."
+ },
+ {
+  "id": 18,
+  "request": "Overnight shipping to Mars."
+ },
+ {
+  "id": 19,
+  "request": "Bring this letter to Voyager 1 before it leaves the solar system."
+ },
+ {
+  "id": 20,
+  "request": "Flowers to Mercury between New Year and Valentine's Day 2027, launch C3 at most 20."
+ }
+]

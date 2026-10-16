@@ -1,0 +1,36 @@
+{
+ "cmd": "--dest roadster --dep-from 2026-10-16 --dep-to 2028-12-31 --objective c3 --verify",
+ "out": {
+  "ok": false,
+  "dest": "roadster",
+  "depart": "2028-02-18",
+  "arrive": "2030-04-21",
+  "tof_days": 792.5,
+  "c3_km2s2": 0.84,
+  "vinf_arrival_kms": 2.58,
+  "launchable": true,
+  "at_search_edge": false,
+  "feasible_solves": 55098,
+  "dep_jd": 2461820.425000007,
+  "revs": 1,
+  "lowpath": false,
+  "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+  "refly": {
+   "raw_miss_km": 31708137.0,
+   "final_miss_km": 0.317,
+   "retarget_ms": 537.2,
+   "iterations": 8,
+   "c3_corrected_km2s2": 0.93,
+   "dv_dep_corrected_kms": 3.266,
+   "pass": false,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+  },
+  "error": "quote rejected by n-body checker",
+  "assumptions": [
+   "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+   "impulsive burns, no thrust limits or g-load model",
+   "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+   "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+  ]
+ }
+}

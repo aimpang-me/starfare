@@ -1,0 +1,28 @@
+[
+ {
+  "raw_miss_km": 751859.5,
+  "final_miss_km": 0.524,
+  "retarget_ms": 16.0,
+  "iterations": 7,
+  "c3_corrected_km2s2": 134.1,
+  "dv_dep_corrected_kms": 8.193,
+  "pass": true,
+  "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+  "seconds": 31.8,
+  "leg": "uranus (day 2)",
+  "rtol": 1e-12
+ },
+ {
+  "raw_miss_km": 25935443.9,
+  "final_miss_km": 0.921,
+  "retarget_ms": 72.3,
+  "iterations": 5,
+  "c3_corrected_km2s2": 1799.86,
+  "dv_dep_corrected_kms": 36.046,
+  "pass": true,
+  "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+  "seconds": 20.5,
+  "leg": "neptune (day-6 sweep)",
+  "rtol": 1e-12
+ }
+]

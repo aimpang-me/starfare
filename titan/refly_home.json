@@ -1,0 +1,8 @@
+{
+ "raw_miss_km": 2941419.056945626,
+ "final_miss_km": 0.0001862053767615436,
+ "retarget_ms": 9.475097376795478,
+ "iterations": 3,
+ "vinf_saturn_corrected_kms": 5.606710286693517,
+ "pass": true
+}

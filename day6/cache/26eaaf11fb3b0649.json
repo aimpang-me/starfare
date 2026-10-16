@@ -1,0 +1,9 @@
+{
+ "cmd": "--dest mercury --dep-from 2027-01-01 --dep-to 2028-12-31 --max-c3 20 --objective tof --verify",
+ "out": {
+  "ok": false,
+  "error": "no feasible direct transfer under these constraints",
+  "solves_feasible": 0,
+  "scanned": "2027-01-01..2028-12-31, TOF 20-300 d"
+ }
+}

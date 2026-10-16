@@ -1,0 +1,16 @@
+{
+ "id": 16,
+ "request": "Deliver a cake to my friend's rover the day it lands in Perseverance's crater.",
+ "backend": "replay (recorded agent answer, tools re-run)",
+ "outcome": "ASK",
+ "roles": {
+  "broker": "What date does your friend's rover land? The planner needs the arrival date. Please note we can only deliver to Mars itself: landing in the crater or meeting the rover isn't something we can plan or price."
+ },
+ "tool_calls": [],
+ "provenance": {
+  "pass": true,
+  "untraced": []
+ },
+ "rider_sees": "What date does your friend's rover land? The planner needs the arrival date. Please note we can only deliver to Mars itself: landing in the crater or meeting the rover isn't something we can plan or price.",
+ "physics": []
+}

@@ -1,0 +1,16 @@
+{
+ "id": 15,
+ "request": "Something like The Martian, but cheaper.",
+ "backend": "replay (recorded agent answer, tools re-run)",
+ "outcome": "ASK",
+ "roles": {
+  "broker": "Do you want a one-way ride from Earth to Mars, and roughly when would you like to leave? We can't do return legs, and we don't quote money prices. 'Cheaper' would mean finding the route with the lowest launch energy (C3)."
+ },
+ "tool_calls": [],
+ "provenance": {
+  "pass": true,
+  "untraced": []
+ },
+ "rider_sees": "Do you want a one-way ride from Earth to Mars, and roughly when would you like to leave? We can't do return legs, and we don't quote money prices. 'Cheaper' would mean finding the route with the lowest launch energy (C3).",
+ "physics": []
+}

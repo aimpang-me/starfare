@@ -1,0 +1,29 @@
+{
+ "cmd": "--dest moon --dep-from 2026-10-16 --dep-to 2026-11-30 --objective c3 --verify",
+ "out": {
+  "ok": true,
+  "dest": "moon",
+  "depart": "2026-11-22 12:00",
+  "arrive": "2026-11-26 00:00",
+  "tof_days": 3.5,
+  "c3_km2s2": -2.071,
+  "dv_tli_kms": 3.132,
+  "launchable": true,
+  "dep_jd": 2461367.0,
+  "model": "geocentric Lambert from 200 km LEO, n-body re-flown",
+  "refly": {
+   "raw_miss_km": 1497.8,
+   "final_miss_km": 0.088,
+   "retarget_ms": 28.6,
+   "iterations": 2,
+   "pass": true,
+   "model": "n-body Sun+8 planets (Moon's gravity off on approach), from 200 km LEO, aimed at Moon centre"
+  },
+  "assumptions": [
+   "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+   "impulsive burns, no thrust limits or g-load model",
+   "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+   "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+  ]
+ }
+}

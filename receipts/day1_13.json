@@ -1,0 +1,16 @@
+{
+ "id": 13,
+ "request": "Take me to the planet where it rains diamonds, via the scenic route past Saturn's rings.",
+ "backend": "replay (recorded agent answer, tools re-run)",
+ "outcome": "ASK",
+ "roles": {
+  "broker": "Which planet do you mean: Uranus or Neptune? Diamond rain is linked to both. Also, we can't take the scenic route past Saturn's rings because flybys aren't offered, so your ride would go direct from Earth."
+ },
+ "tool_calls": [],
+ "provenance": {
+  "pass": true,
+  "untraced": []
+ },
+ "rider_sees": "Which planet do you mean: Uranus or Neptune? Diamond rain is linked to both. Also, we can't take the scenic route past Saturn's rings because flybys aren't offered, so your ride would go direct from Earth.",
+ "physics": []
+}

@@ -1,0 +1,150 @@
+[
+ {
+  "id": 1,
+  "outcome": "COUNTER",
+  "answer": "We can't add a stop at the Moon because we only fly direct rides from Earth to one destination. We also can't promise the pizza arrives warm, since we don't model temperature. The fastest direct, launchable ride we found to Bennu leaves 2026-10-28 and arrives 2027-04-06 (160.0 days, C3 99.69 km2/s2), and an n-body re-fly checked it.",
+  "commands": [
+   "--dest bennu --dep-from 2026-10-16 --dep-to 2027-01-16 --objective tof --max-c3 100 --verify"
+  ]
+ },
+ {
+  "id": 2,
+  "outcome": "QUOTE",
+  "answer": "The cheapest ride to Mars leaving before Christmas 2026 departs 2026-10-31 and arrives 2027-08-20 (293.0 days), with C3 9.18 km2/s2 and an arrival speed (v-infinity) of 2.71 km/s, checked by an n-body re-fly. The price assumes you start from a 200 km parking orbit. Launch to that orbit, capture at Mars and landing are not priced.",
+  "commands": [
+   "--dest mars --dep-from 2026-10-16 --dep-to 2026-12-24 --verify"
+  ]
+ },
+ {
+  "id": 3,
+  "outcome": "QUOTE",
+  "answer": "The fastest ride to Mars this window with C3 under 15 departs 2026-11-09 and arrives 2027-05-30 (202.0 days). Its C3 is 14.98 km2/s2 (14.94 in the n-body re-fly) and its arrival speed (v-infinity) is 5.93 km/s. Capture at Mars and landing are not priced.",
+  "commands": [
+   "--dest mars --dep-from 2026-10-16 --dep-to 2027-03-31 --objective tof --max-c3 15 --verify"
+  ]
+ },
+ {
+  "id": 4,
+  "outcome": "ASK",
+  "answer": "Which launch window should we search: the Mars window open now this autumn, or a later one? Once you tell us, we'll find the weekend launch with the softest arrival in that window.",
+  "commands": []
+ },
+ {
+  "id": 5,
+  "outcome": "QUOTE",
+  "answer": "The cheapest 2027 launch to Jupiter departs 2027-12-06 and arrives 2031-07-31 (1333.0 days), with C3 79.06 km2/s2 and an arrival speed (v-infinity) of 6.16 km/s, checked by an n-body re-fly. Capture at Jupiter is not priced.",
+  "commands": [
+   "--dest jupiter --dep-from 2027-01-01 --dep-to 2027-12-31 --verify"
+  ]
+ },
+ {
+  "id": 6,
+  "outcome": "QUOTE",
+  "answer": "The cheapest 2027 launch to Ceres that arrives before 2030 departs 2027-12-30 and arrives 2028-11-02 (308.0 days), with C3 84.7 km2/s2 and an arrival speed (v-infinity) of 9.37 km/s, checked by an n-body re-fly. That date sits at the very end of your 2027 window, so a cheaper launch may exist just after it. Capture at Ceres is not priced.",
+  "commands": [
+   "--dest ceres --dep-from 2027-01-01 --dep-to 2027-12-31 --arr-by 2029-12-31 --verify"
+  ]
+ },
+ {
+  "id": 7,
+  "outcome": "DECLINE",
+  "answer": "Sorry, we can't do this. We only fly one-way rides from Earth with no return legs, so we can't get your cat to Venus and back in time for 1 June 2027. Our planner also covers only the trajectory, not keeping a passenger alive.",
+  "commands": []
+ },
+ {
+  "id": 8,
+  "outcome": "COUNTER",
+  "answer": "We can't include a Venus flyby because we don't offer flybys. We also can't price a total delta-v, because capture at Mars isn't priced. The closest option is a direct ride to Mars in 2028: it departs 2028-11-30 and arrives 2029-10-14 (317.5 days), with C3 9.0 km2/s2 and a departure burn of 3.625 km/s from a 200 km LEO in the n-body re-fly. The arrival speed of 3.22 km/s at Mars comes on top and isn't priced, so we can't confirm your total stays under 4 km/s.",
+  "commands": [
+   "--dest mars --dep-from 2028-01-01 --dep-to 2028-12-31 --verify"
+  ]
+ },
+ {
+  "id": 9,
+  "outcome": "DECLINE",
+  "answer": "Sorry, we can't serve this. We only fly a single one-way ride from Earth to one destination, with no stops, chained legs or return trips, so Moon, then Mars, then home by Thanksgiving 2028 isn't something we can do.",
+  "commands": []
+ },
+ {
+  "id": 10,
+  "outcome": "COUNTER",
+  "answer": "We can't take you to Europa, because we don't fly to moons of other planets. The closest option is a direct ride to Jupiter with no gravity assists. The cheapest one we found departs 2027-12-05 and arrives 2031-07-17 (1320.0 days), with C3 79.07 km2/s2, checked by an n-body re-fly. It is aimed at Jupiter itself, and any onward leg to Europa or capture is not priced.",
+  "commands": [
+   "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-12-31 --verify"
+  ]
+ },
+ {
+  "id": 11,
+  "outcome": "COUNTER",
+  "answer": "We can't make a coffee stop at Phobos because stops and moons of other planets aren't offered, and the planner has no g-load model, so we can't promise you'll stay under 2 g. What we can offer is a direct, verified ride to Mars: depart 2026-10-31, arrive 2027-08-20 (293.0 days, launch C3 9.18 km2/s2). It arrives at Mars's centre, and capture or landing is not priced.",
+  "commands": [
+   "--dest mars --dep-from 2026-10-16 --dep-to 2027-10-16 --verify"
+  ]
+ },
+ {
+  "id": 12,
+  "outcome": "DECLINE",
+  "answer": "Sorry, we can't take you to Sun-Earth L2 or to JWST. The planner doesn't support L2 points or meeting other spacecraft, so there is no route to quote and no way to plan around the Moon for it.",
+  "commands": []
+ },
+ {
+  "id": 13,
+  "outcome": "ASK",
+  "answer": "Which planet do you mean: Uranus or Neptune? Diamond rain is linked to both. Also, we can't take the scenic route past Saturn's rings because flybys aren't offered, so your ride would go direct from Earth.",
+  "commands": []
+ },
+ {
+  "id": 14,
+  "outcome": "QUOTE",
+  "answer": "Here's a verified ride to the Tesla Roadster: depart 2027-02-14 (Valentine's Day) and arrive 2028-10-11, which takes 605.0 days at a launch C3 of 3.6 km2/s2. We can't arrange anything romantic beyond the date, because the planner only plans the trajectory. You'd pass the Roadster at 5.32 km/s relative speed, since no rendezvous or capture burn is priced.",
+  "commands": [
+   "--dest roadster --dep-from 2026-10-16 --dep-to 2027-10-16 --verify"
+  ]
+ },
+ {
+  "id": 15,
+  "outcome": "ASK",
+  "answer": "Do you want a one-way ride from Earth to Mars, and roughly when would you like to leave? We can't do return legs, and we don't quote money prices. 'Cheaper' would mean finding the route with the lowest launch energy (C3).",
+  "commands": []
+ },
+ {
+  "id": 16,
+  "outcome": "ASK",
+  "answer": "What date does your friend's rover land? The planner needs the arrival date. Please note we can only deliver to Mars itself: landing in the crater or meeting the rover isn't something we can plan or price.",
+  "commands": []
+ },
+ {
+  "id": 17,
+  "outcome": "COUNTER",
+  "answer": "We can't reach Jupiter by its next opposition with a launchable ride: the best route arriving in time (arrive 2027-02-10) needs a launch C3 of 4776.92 km2/s2, and we can't target the Great Red Spot because rides arrive at Jupiter's centre with no atmospheric entry priced. The fastest launchable ride we can offer is verified: depart 2026-10-22, arrive 2028-07-01 (618.0 days, C3 99.51 km2/s2).",
+  "commands": [
+   "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-10-16 --arr-by 2027-02-11",
+   "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --max-c3 100 --verify"
+  ]
+ },
+ {
+  "id": 18,
+  "outcome": "COUNTER",
+  "answer": "We can't ship overnight to Mars: the shortest trip the planner considers is 20.0 days, and even that needs a launch C3 of 15173.64 km2/s2, which can't be launched. The fastest launchable shipment is verified: depart 2026-12-12, arrive 2027-03-12 (90.0 days, C3 99.93 km2/s2).",
+  "commands": [
+   "--dest mars --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --verify",
+   "--dest mars --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --max-c3 100 --verify"
+  ]
+ },
+ {
+  "id": 19,
+  "outcome": "DECLINE",
+  "answer": "Sorry, we can't deliver to Voyager 1, because the planner doesn't support meeting other spacecraft. We can only deliver to a fixed list of planets, the Moon, a few small bodies and the Tesla Roadster.",
+  "commands": []
+ },
+ {
+  "id": 20,
+  "outcome": "COUNTER",
+  "answer": "No direct route to Mercury keeps the launch C3 at most 20, not in your window and not anywhere from 2026-10-16 to 2027-12-31. If you launch between New Year and Valentine's Day 2027, the lowest-energy verified route departs 2027-02-14 and arrives 2027-12-11 (300.0 days), but its C3 is 84.0 km2/s2, well above your limit of 20. Having the flowers arrive within that window instead would need a C3 of 191.53 km2/s2, which can't be launched.",
+  "commands": [
+   "--dest mercury --dep-from 2026-10-16 --dep-to 2027-12-31 --max-c3 20 --verify",
+   "--dest mercury --dep-from 2027-01-01 --dep-to 2027-02-14 --verify",
+   "--dest mercury --dep-from 2026-10-16 --dep-to 2027-02-14 --arr-from 2027-01-01 --arr-by 2027-02-14 --verify"
+  ]
+ }
+]

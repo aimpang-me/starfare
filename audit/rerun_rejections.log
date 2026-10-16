@@ -1,0 +1,2 @@
+uranus (day 2) {"pass": true, "raw_miss_km": 751859.5, "final_miss_km": 0.524, "retarget_ms": 16.0, "iterations": 7, "seconds": 31.8}
+neptune (day-6 sweep) {"pass": true, "raw_miss_km": 25935443.9, "final_miss_km": 0.921, "retarget_ms": 72.3, "iterations": 5, "seconds": 20.5}

@@ -1,0 +1,59 @@
+{
+ "id": 8,
+ "request": "Venus flyby then Mars, total delta-v from LEO under 4 km/s, leave in 2028.",
+ "backend": "replay (recorded agent answer, tools re-run)",
+ "outcome": "COUNTER",
+ "roles": {
+  "broker": "We can't include a Venus flyby because we don't offer flybys. We also can't price a total delta-v, because capture at Mars isn't priced. The closest option is a direct ride to Mars in 2028: it departs 2028-11-30 and arrives 2029-10-14 (317.5 days), with C3 9.0 km2/s2 and a departure burn of 3.625 km/s from a 200 km LEO in the n-body re-fly. The arrival speed of 3.22 km/s at Mars comes on top and isn't priced, so we can't confirm your total stays under 4 km/s."
+ },
+ "tool_calls": [
+  {
+   "tool": "quote",
+   "args": "--dest mars --dep-from 2028-01-01 --dep-to 2028-12-31 --verify",
+   "seconds": 12.1,
+   "output": {
+    "ok": true,
+    "dest": "mars",
+    "depart": "2028-11-30",
+    "arrive": "2029-10-14",
+    "tof_days": 317.5,
+    "c3_km2s2": 9.0,
+    "vinf_arrival_kms": 3.22,
+    "launchable": true,
+    "at_search_edge": false,
+    "feasible_solves": 36432,
+    "dep_jd": 2462106.0833333163,
+    "revs": 0,
+    "lowpath": true,
+    "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+    "refly": {
+     "raw_miss_km": 619152.2,
+     "final_miss_km": 0.299,
+     "retarget_ms": 40.4,
+     "iterations": 2,
+     "c3_corrected_km2s2": 8.97,
+     "dv_dep_corrected_kms": 3.625,
+     "pass": true,
+     "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+    },
+    "assumptions": [
+     "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+     "impulsive burns, no thrust limits or g-load model",
+     "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+     "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+    ]
+   }
+  }
+ ],
+ "provenance": {
+  "pass": true,
+  "untraced": []
+ },
+ "rider_sees": "We can't include a Venus flyby because we don't offer flybys. We also can't price a total delta-v, because capture at Mars isn't priced. The closest option is a direct ride to Mars in 2028: it departs 2028-11-30 and arrives 2029-10-14 (317.5 days), with C3 9.0 km2/s2 and a departure burn of 3.625 km/s from a 200 km LEO in the n-body re-fly. The arrival speed of 3.22 km/s at Mars comes on top and isn't priced, so we can't confirm your total stays under 4 km/s.",
+ "physics": [
+  {
+   "args": "--dest mars --dep-from 2028-01-01 --dep-to 2028-12-31 --verify",
+   "refly_pass": true
+  }
+ ]
+}

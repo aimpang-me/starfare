@@ -1,0 +1,9 @@
+{
+ "cmd": "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-02-10 --arr-by 2027-02-10 --max-c3 100 --objective tof --verify",
+ "out": {
+  "ok": false,
+  "error": "no feasible direct transfer under these constraints",
+  "solves_feasible": 0,
+  "scanned": "2026-10-16..2027-02-10, TOF 20-2600 d"
+ }
+}

@@ -1,0 +1,1180 @@
+<title>Starfare Open Sky</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* A dark sky map with the ride desk floating over it, after Alvin's mockups. Single dark theme: it is a night sky. */
+:root{
+  color-scheme: dark;
+  --bg:#06080c; --bg-2:#0b0e14; --glass:rgba(18,22,30,.72); --glass-2:rgba(255,255,255,.04);
+  --line:rgba(255,255,255,.12); --line-2:rgba(255,255,255,.22);
+  --ink:#eef1f5; --ink-2:#a3abb6; --ink-3:#6e7783;
+  --sun:#ffb65c; --me:#ffcf7a; --ride:#9cc3ff; --sim:#7f8a99; --ok:#86d9a8; --bad:#ff8f80;
+  --r:14px; --sans:"Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --gut:max(16px, env(safe-area-inset-left, 0px));
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+p{margin:0}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--ink)}
+:focus-visible{outline:2px solid var(--me);outline-offset:2px}
+.caps{text-transform:uppercase;letter-spacing:.14em;font-size:12px;font-weight:500}
+.dim{color:var(--ink-2)} .faint{color:var(--ink-3)}
+.num{font-variant-numeric:tabular-nums}
+.ok{color:var(--ok)} .bad{color:var(--bad)}
+.tag{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);border-radius:999px;padding:2px 10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;white-space:nowrap}
+.tag.real{border-color:rgba(134,217,168,.5);color:var(--ok)}
+.tag.fict{border-color:rgba(255,182,92,.45);color:var(--sun)}
+.tag.sim{color:var(--ink-2)}
+
+/* nav */
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px max(28px, var(--gut));border-bottom:1px solid var(--line);position:relative;z-index:3;background:var(--bg)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:500;font-size:22px;letter-spacing:.32em}
+.logo svg{width:26px;height:26px}
+.links{display:flex;gap:28px}
+.links a{color:var(--ink-2);text-decoration:none;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:500}
+.links a:hover{color:var(--ink)}
+.clock{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.pill{border:1px solid var(--line-2);border-radius:999px;padding:6px 14px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+@media (max-width:900px){ .links{display:none} }
+@media (max-width:560px){ .nav{padding:12px 16px} .logo{font-size:18px} .pill{padding:4px 10px;font-size:11px} #online{display:none} }
+
+/* sky stage */
+.stage{position:relative;height:min(78vh, 820px);min-height:560px;overflow:hidden;border-bottom:1px solid var(--line)}
+#sky{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.ov{position:absolute;z-index:2}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.desk{left:24px;top:24px;bottom:24px;width:340px;display:flex;flex-direction:column;overflow:hidden}
+.choose{right:24px;bottom:24px;width:min(400px, calc(100% - 412px));display:flex;flex-direction:column;gap:10px;max-height:calc(100% - 96px);overflow-y:auto}
+.zoombar{right:24px;top:20px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.chip{background:rgba(10,13,18,.6);border:1px solid var(--line-2);border-radius:999px;padding:5px 12px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;min-height:30px}
+.chip:hover{border-color:var(--ink-2)} .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.hint{left:388px;top:24px;max-width:360px;font-size:12px;color:var(--ink-2);pointer-events:none}
+.pick{position:absolute;z-index:3;padding:12px 14px;min-width:200px;max-width:260px;display:flex;flex-direction:column;gap:6px}
+@media (max-width:1100px){ .hint{display:none} }
+@media (max-width:900px){
+  .stage{height:auto;min-height:0;overflow:visible;border-bottom:0}
+  #sky{position:relative;height:62vh;min-height:360px}
+  .ov{position:relative;inset:auto;left:auto;right:auto;top:auto;bottom:auto}
+  .zoombar{position:absolute;right:12px;top:10px;left:12px}
+  .desk{width:auto;margin:16px var(--gut) 0;max-height:none;min-height:420px}
+  .choose{width:auto;margin:16px var(--gut) 0;max-height:none;overflow:visible}
+}
+
+/* desk: you + dispatcher */
+.dh{padding:16px 16px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.dots3{color:var(--ink-3);letter-spacing:.2em}
+.you{padding:10px 16px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center}
+.orb{width:34px;height:34px;border-radius:50%;border:1px solid var(--line-2)}
+.you b{font-weight:500;display:block}
+.small{font-size:12px;line-height:1.45}
+.lnk{background:none;border:0;color:var(--ink-2);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:4px 0;font-size:12px}
+.chat{flex:1 1 auto;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-height:150px;-webkit-mask-image:linear-gradient(transparent 0, #000 18px);mask-image:linear-gradient(transparent 0, #000 18px)}
+.msg{padding:10px 12px;border-radius:12px;max-width:92%;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:rgba(255,255,255,.1)}
+.msg.bot{align-self:flex-start;background:var(--glass-2);border:1px solid var(--line)}
+.msg.bot .who{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
+.msg.sys{align-self:center;color:var(--ink-3);font-size:12px;text-align:center}
+.struck{color:var(--bad);text-decoration:line-through}
+.flag{color:var(--bad);font-size:11px;letter-spacing:.06em}
+.steps{font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;gap:2px}
+.sugg{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 10px}
+.sugg button{background:transparent;border:1px solid var(--line-2);border-radius:999px;padding:5px 10px;font-size:12px;color:var(--ink-2);cursor:pointer;min-height:32px}
+.sugg button:hover{color:var(--ink);border-color:var(--ink-2)} .sugg button:disabled{opacity:.4;cursor:default}
+.ask{display:flex;gap:8px;padding:12px 16px 16px;border-top:1px solid var(--line)}
+.ask input{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;font-size:16px}
+.ask input::placeholder{color:var(--ink-3)}
+.btn{background:var(--ink);color:var(--bg);border:0;border-radius:10px;padding:0 16px;min-height:44px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;font-size:12px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-2)}
+.btn.ghost:hover{border-color:var(--ink)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.offline{padding:10px 16px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;border-top:1px solid var(--line)}
+.offline #offline-why{grid-column:1/-1}
+.offline .btn{padding:0 12px}
+.offline select{background:rgba(255,255,255,.06);border:1px solid var(--line-2);border-radius:10px;padding:10px;min-height:44px}
+
+/* ride cards */
+.choose h3{margin:0;font-weight:500;font-size:13px;letter-spacing:.2em;text-transform:uppercase;text-align:right}
+@media (max-width:900px){ .choose h3{text-align:left} }
+@media (max-width:400px){ .card{grid-template-columns:104px minmax(0,1fr)} .car{width:104px;height:68px} .car svg{width:98px;height:52px} }
+.card{padding:16px;display:grid;grid-template-columns:132px minmax(0,1fr);gap:4px 14px;align-items:start}
+.car{grid-row:1/4;width:132px;height:84px;border-radius:10px;background:radial-gradient(120% 80% at 50% 110%, rgba(156,195,255,.16), transparent 62%), linear-gradient(#11151d, #07090d);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.car svg{width:124px;height:66px}
+.card .t{font-size:20px;font-weight:400;line-height:1.2}
+.card .meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px;grid-column:1/-1;border-top:1px solid var(--line);padding-top:10px;margin-top:8px}
+.card .meta div{display:flex;flex-direction:column}
+.card .meta .k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.card .meta .v{font-size:15px}
+.card .meta .big{font-size:22px}
+.card .gate{grid-column:1/-1;font-size:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card .go{grid-column:1/-1;margin-top:8px;display:flex;gap:8px}
+.card .go .btn{flex:1}
+.ridebar{padding:16px;display:flex;flex-direction:column;gap:8px}
+.prog{height:4px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+.prog i{display:block;height:100%;background:linear-gradient(90deg, var(--sun), var(--me));width:0}
+
+/* ride hails */
+.mcard{padding:16px;display:flex;flex-direction:column;gap:10px}
+.mcard .t{font-size:20px;line-height:1.2}
+.mmeta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px}
+.mmeta div{display:flex;flex-direction:column;min-width:0}
+.mmeta .k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.stops{display:flex;flex-wrap:wrap;gap:6px}
+.stop{border:1px solid var(--line-2);border-radius:999px;padding:4px 10px;font-size:12px;background:transparent;color:var(--ink-2);cursor:pointer;min-height:30px}
+.stop.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.stop.done{border-color:rgba(134,217,168,.6);color:var(--ok);cursor:default}
+.stop[disabled]{opacity:.4;cursor:not-allowed}
+span.stop{cursor:default}
+.stop .n{font-variant-numeric:tabular-nums;margin-right:4px;opacity:.7}
+.legs{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.leg{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:8px 10px;border-top:1px solid var(--line);font-size:12.5px}
+.leg:first-child{border-top:0}
+.leg .w{grid-column:1/-1;color:var(--ink-2);font-size:11.5px}
+.score{display:flex;flex-direction:column;gap:4px}
+.score .big{font-size:40px;font-weight:300;line-height:1}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;font-size:12.5px;padding:4px 0;border-top:1px solid var(--line)}
+.srow .w{grid-column:1/-1;color:var(--ink-3);font-size:11.5px}
+.bar{height:3px;background:rgba(255,255,255,.1);border-radius:3px;grid-column:1/-1;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok)}
+.mrow{display:flex;gap:8px;flex-wrap:wrap}
+.mrow .btn{flex:1}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px}
+.board .tile ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.board .tile li{font-size:13px}
+.stop .busy{color:var(--sun);display:block;font-size:11px} .stop.on .busy{color:#8a4e0b} .stop:has(.busy){border-radius:12px;text-align:left;padding:5px 12px}
+/* forecast panel: booked berths per hour, flare and weather odds per day (simulated; never what actually happens) */
+.fc{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.fc-h{display:flex;justify-content:space-between;gap:2px 10px;flex-wrap:wrap;font-size:11.5px}
+.fc-h b{font-weight:500}
+.hrs{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));gap:2px}
+.hrs i{height:14px;border-radius:2px;background:rgba(255,255,255,.07)}
+.hrs i.some{background:rgba(156,195,255,.38)}
+.hrs i.full{background:var(--bad)}
+.hrs i.at{outline:1.5px solid var(--me);outline-offset:1px}
+.fc-ax{display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-3)}
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.days span{font-size:10.5px;text-align:center;padding:2px 0;border-radius:4px;line-height:1.3;color:var(--ink)}
+.days span em{display:block;font-style:normal;color:rgba(238,241,245,.72);font-size:9.5px}
+.qrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.qrow input{flex:1 1 150px;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--line-2);border-radius:10px;padding:8px 10px;font-size:16px}
+.qrow input.bad{border-color:var(--bad)}
+.inc{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.inc li{font-size:12.5px;border-left:2px solid var(--sun);padding-left:8px}
+.inc li .w{display:block;color:var(--ink-2);font-size:11.5px}
+
+/* sections */
+.sec{padding:56px max(28px, var(--gut));display:flex;flex-direction:column;gap:20px;max-width:1240px;margin:0 auto}
+@media (max-width:900px){ .sec{padding:40px var(--gut)} }
+.sec h2{margin:0;font-weight:300;font-size:34px;letter-spacing:-.01em}
+.sec .lead{color:var(--ink-2);max-width:62ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:12px}
+.tile{padding:16px;display:flex;flex-direction:column;gap:6px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.tile .row{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.tile .t{font-size:17px}
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.list .li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
+.list .li:first-child{border-top:0}
+.dot{width:10px;height:10px;border-radius:50%}
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;counter-reset:s}
+@media (max-width:900px){ .flow{grid-template-columns:1fr 1fr} }
+@media (max-width:520px){ .flow{grid-template-columns:1fr} }
+.flow .tile::before{counter-increment:s;content:"0" counter(s);color:var(--sun);font-size:12px;letter-spacing:.14em}
+footer{border-top:1px solid var(--line);padding:28px max(28px, var(--gut)) 48px;color:var(--ink-3);font-size:12.5px;display:flex;flex-direction:column;gap:8px;max-width:1240px;margin:0 auto}
+footer p{max-width:100ch}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:20;padding:12px 18px;max-width:calc(100% - 32px)}
+[hidden]{display:none !important}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto !important} }
+</style>
+
+<header class="nav">
+  <div class="logo" aria-label="Starfare">
+    <svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M13 1.8v3M13 21.2v3M1.8 13h3M21.2 13h3M5.1 5.1l2.1 2.1M18.8 18.8l2.1 2.1M5.1 20.9l2.1-2.1M18.8 7.2l2.1-2.1"/></g></svg>
+    Starfare
+  </div>
+  <nav class="links" aria-label="Sections"><a href="#sky-stage">Sky</a><a href="#hails">Ride hails</a><a href="#now">Riders</a><a href="#stations">Stations</a><a href="#how">How it works</a></nav>
+  <div class="clock"><span class="pill num" id="skydate">SKY ----</span><span class="pill" id="online">1 online</span></div>
+</header>
+
+<section class="stage" id="sky-stage" aria-label="Solar system map with the ride desk">
+  <canvas id="sky" role="img" aria-label="Map of the solar system with you, other riders and stations"></canvas>
+  <div class="ov zoombar" role="group" aria-label="Map view">
+    <button class="chip" data-z="sky" aria-pressed="true">System</button>
+    <button class="chip" data-z="you">You</button>
+    <button class="chip" data-z="inner">Inner</button>
+    <button class="chip" data-z="outer">Outer</button>
+    <button class="chip" data-z="tilt" aria-pressed="true">Tilt</button>
+  </div>
+  <p class="ov hint" id="hint">Tap any planet, moon or station to ride there. Scroll or pinch to zoom.</p>
+
+  <aside class="ov desk glass" aria-label="Ride request">
+    <div class="dh"><span class="caps">Ride request</span><span class="dots3" aria-hidden="true">•••</span></div>
+    <div class="you">
+      <div class="orb" id="you-orb" aria-hidden="true"></div>
+      <div><span class="caps faint" style="font-size:10.5px" id="you-k">You are</span><b id="you-where">Spawning…</b><span class="small dim" id="you-sub"></span></div>
+      <button class="lnk" id="respawn">Respawn</button>
+    </div>
+    <div class="chat" id="chat" aria-live="polite"></div>
+    <div class="sugg" id="sugg"></div>
+    <form class="ask" id="ask" autocomplete="off"><input id="q" placeholder="Where to? e.g. ride me to the ISS" aria-label="Message the Starfare dispatcher" maxlength="400"><button class="btn" id="send">Send</button></form>
+    <div class="offline" id="offline" hidden>
+      <span class="small dim" id="offline-why">The dispatcher can't reach Claude in this view, so you can use the planner directly.</span>
+      <select id="dest" aria-label="Destination"></select>
+      <button class="btn ghost" type="button" data-obj="energy">Cheapest</button><button class="btn ghost" type="button" data-obj="time">Fastest</button>
+    </div>
+  </aside>
+
+  <aside class="ov choose" id="choose" aria-label="Choose your ride"></aside>
+</section>
+
+<section class="sec" id="hails" aria-labelledby="h-hails">
+  <h2 id="h-hails">Ride hails</h2>
+  <p class="lead">Simulated riders are hailing a robotaxi. Take a hail, then pick a car from the simulated fleet and send it yourself, or let Claude dispatch. You'll watch the car fly to the rider and then take them where they're going. Pads get busy and storms happen, and you only get forecasts. Your score compares what actually happened with the best nearby car, and with the arrival you promised.</p>
+  <div class="grid" id="h-grid"></div>
+  <h2 id="h-fleet" style="font-size:24px;margin-top:20px">The fleet</h2>
+  <p class="small dim">Seven simulated Starfare cars, each parked at a station or a moon. Every hail starts with a car leaving where it's parked.</p>
+  <div class="list" id="fleet"></div>
+  <h2 id="h-board" style="font-size:24px;margin-top:20px">Scoreboard</h2>
+  <p class="small dim" id="board-note">Best score per hail for everyone who shares this page. Each entry says who dispatched the car: Claude, or the player alone.</p>
+  <div class="board" id="board"></div>
+</section>
+
+<section class="sec" id="now" aria-labelledby="h-now">
+  <h2 id="h-now">In the sky now</h2>
+  <p class="lead">Everyone who has this page open shares one sky. Their rides show up on the map as they book them. Simulated fleet cars fill the rest, and they're marked as simulated.</p>
+  <div class="list" id="riders"></div>
+</section>
+
+<section class="sec" id="stations" aria-labelledby="h-st">
+  <h2 id="h-st">Stations</h2>
+  <p class="lead">Ride to a station and park there. Real stations use their real orbits from NASA JPL Horizons. Fictional ones are made up for the game, and they're labelled.</p>
+  <div class="grid" id="st-grid"></div>
+</section>
+
+<section class="sec" id="how" aria-labelledby="h-how">
+  <h2 id="h-how">How a ride is checked</h2>
+  <div class="flow">
+    <div class="tile"><p class="t">The dispatcher talks</p><p class="small dim">An AI dispatcher (Claude, through your own Claude account) reads your request and calls the planner. It can't make up a route.</p></div>
+    <div class="tile"><p class="t">The planner solves</p><p class="small dim">Lambert transfers between real planet positions from NASA JPL's DE421 ephemeris, with patched-conic burns to leave and arrive.</p></div>
+    <div class="tile"><p class="t">The checker re-flies</p><p class="small dim">An n-body simulation (Sun, 8 planets and the Moon) re-flies the route. It passes only if the final miss is under 1 km and the correction is under 500 m/s.</p></div>
+    <div class="tile"><p class="t">The gate strikes</p><p class="small dim">Any number in the dispatcher's reply that no tool printed gets struck out on screen. Only rides that pass the re-fly can be booked.</p></div>
+  </div>
+  <p class="small faint" id="how-note">Sky time runs 86,400 times faster than real time, so one real second is one day. Each season covers 2026 to 2046 and then the sky resets. In ride hails, pad traffic, solar flares, Mars dust storms, Titan haze and busy fleet cars are all simulated and seeded per season, so everyone in a season flies through the same ones; they aren't real forecasts.</p>
+</section>
+
+<footer>
+  <p>Starfare is a concept demo by Alvin Impang. It's a made-up robotaxi service with simulated riders and a simulated fleet, and it isn't affiliated with any real company. Burns, battery and fare come from stated, made-up car and thruster models. Landing, aerobraking, life support and orbital plane changes aren't priced.</p>
+  <p>Planet positions: NASA JPL DE421. ISS and Tiangong orbits: JPL Horizons, 2026-10-16. The dispatcher runs on Claude through each visitor's own account, and it's built so a Grok dispatcher can replace it. <span id="eng-note"></span></p>
+</footer>
+
+<div class="toast glass" id="toast" role="status" hidden></div>
+
+<script id="engine">
+/*__ENGINE__*/
+</script>
+<script>
+var WORLD = __WORLD__;
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+function fmt(n, d){ return Number(n).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
+function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+function smooth(x){ x = clamp(x, 0, 1); return x * x * (3 - 2 * x); }
+function store(k, v){ try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
+var AU = 149597870.7, DAY = 86400, REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+var E = window.SOLE; // the planner + checker engine (ported from the Python tools)
+var PL = WORLD.places, PID = {}; PL.forEach(function(p){ PID[p.id] = p; });
+
+/* ---------- sky clock: 1 real second = 1 sky day; a season spans the ephemeris, then resets ---------- */
+var SKY = WORLD.sky; // {t0_ms, jd0, len_days}
+function sky(){ var e = (Date.now() - SKY.t0_ms) / 1000, n = Math.floor(e / SKY.len_days); return { season: n + 1, jd: SKY.jd0 + (e - n * SKY.len_days) }; }
+function isoJD(jd, hm){ var s = new Date((jd - 2440587.5) * 864e5).toISOString(); return hm ? s.slice(0, 10) + " " + s.slice(11, 16) : s.slice(0, 10); }
+function dur(days){ return days < 2 ? fmt(days * 24, 1) + " h" : days < 400 ? fmt(days, 0) + " days" : fmt(days / 365.25, 1) + " years"; }
+
+/* ---------- where things are ---------- */
+function placePos(id, jd){ return E.placeState(id, jd).r; }
+function locPos(loc, jd){
+  if (!loc) return [AU, 0, 0];
+  if (loc.kind === "ship") return E.propagate(loc.r, loc.v, (jd - loc.jd) * DAY).r;
+  return placePos(loc.id, jd);
+}
+function ridePos(ride, jd){
+  var end = ride.land || ride.arr; // a hail car that has to hold (busy pad, storm) waits at the pad from land until arr
+  if (jd <= ride.dep) return locPos(ride.from, jd);
+  if (jd >= end) return placePos(ride.to, jd);
+  if (ride.gate === "local"){ var a0 = locPos(ride.from, jd), b0 = placePos(ride.to, jd), w0 = smooth((jd - ride.dep) / (end - ride.dep)); return [a0[0] + (b0[0] - a0[0]) * w0, a0[1] + (b0[1] - a0[1]) * w0, a0[2] + (b0[2] - a0[2]) * w0]; }
+  var A = ride.arc; if (!A || A.length < 2) return placePos(ride.to, jd);
+  var u = (jd - ride.dep) / (end - ride.dep) * (A.length - 1), i = Math.min(A.length - 2, Math.floor(u)), w = u - i, a = A[i], b = A[i + 1];
+  return [(a[0] + (b[0] - a[0]) * w) * AU, (a[1] + (b[1] - a[1]) * w) * AU, (a[2] + (b[2] - a[2]) * w) * AU];
+}
+function locName(loc){ return !loc ? "?" : loc.kind === "ship" ? "Your spaceship" : PID[loc.id].name; }
+
+/* ---------- me ---------- */
+var ME = null, KEY = "sol-sky-me-v1";
+function spawn(){
+  var r = Math.random(), s = sky();
+  if (r < 0.25){
+    var a = 0.8 + Math.random() * 5.2, th = Math.random() * 2 * Math.PI, e = Math.random() * 0.12, rr = a * (1 - e) * AU;
+    var vv = Math.sqrt(E.MU_SUN * (2 / rr - 1 / (a * AU))), inc = (Math.random() - 0.5) * 0.08;
+    ME = { season: s.season, loc: { kind: "ship", jd: s.jd, r: [rr * Math.cos(th), rr * Math.sin(th), 0], v: [-vv * Math.sin(th), vv * Math.cos(th) * Math.cos(inc), vv * Math.cos(th) * Math.sin(inc)] }, ride: null };
+  } else {
+    var pool = PL.filter(function(p){ return p.spawn; });
+    ME = { season: s.season, loc: { kind: "place", id: pool[Math.floor(Math.random() * pool.length)].id }, ride: null };
+  }
+  store(KEY, ME); renderYou(); presence();
+}
+function loadMe(){
+  var m = store(KEY), s = sky();
+  if (m && m.season === s.season && (m.ride ? m.ride.arr > s.jd || m.loc : m.loc)) { ME = m; delete ME.mission; if (!RR) ME.hail = null;
+    if (ME.hail && !ME.hail.seed && !ME.hail.started) ME.hail = null; // taken before hazards were seeded: its par no longer applies
+    if (ME.hail && ME.hail.plan) ME.hail.plan.legs.forEach(function(L){ LEGS[L.leg_id] = L; });
+    settle(); }
+  else spawn();
+}
+function settle(){ // a finished ride drops you at its destination; a dispatched car moves on from the pickup to the ride
+  var moved = false, H = ME.hail && ME.hail.started ? ME.hail : null;
+  while (ME.ride && sky().jd >= ME.ride.arr){
+    ME.loc = { kind: "place", id: ME.ride.to }; if (H){ (H.done = H.done || []).indexOf(ME.ride.to) < 0 && H.done.push(ME.ride.to); }
+    ME.ride = ME.trip && ME.trip.length ? ME.trip.shift() : null; moved = true;
+  }
+  if (!moved) return;
+  var h = H && RR ? RR.BY[H.id] : null;
+  if (ME.ride){ toast(h ? H.score.car + " picked up " + riderName(h) + " at " + PID[ME.loc.id].name + ". Next: " + PID[ME.ride.to].name + "." : "Arrived at " + PID[ME.loc.id].name + ". Next: " + PID[ME.ride.to].name + "."); publishRide(ME.ride); }
+  else { if (H) H.finished = true; toast(h ? "Ride complete. " + riderName(h) + " is at " + PID[ME.loc.id].name + "." : "You arrived at " + PID[ME.loc.id].name + "."); clearMyRide(); }
+  store(KEY, ME); presence(); if (H) renderHails();
+}
+function myPos(jd){ return ME.ride ? ridePos(ME.ride, jd) : locPos(ME.loc, jd); }
+function renderYou(){
+  var s = sky(), w, sub, H = hail(), follow = !!(ME.ride && H && H.started);
+  $("you-k").textContent = follow ? "You're following" : "You are";
+  if (follow){
+    var hr = RR.BY[H.id], R0 = ME.ride, b0 = s.jd < R0.dep, pk = !!(ME.trip && ME.trip.length), hold = R0.land && s.jd >= R0.land;
+    w = H.score.car + (hold ? " holding at " + PID[R0.to].name : pk ? (b0 ? " at " + locName(R0.from) : " on its way to " + riderName(hr)) : (b0 ? ", " + riderName(hr) + " boarding" : " riding to " + PID[R0.to].name));
+    sub = b0 ? "Departs " + isoJD(R0.dep) : (hold ? "Docks " : "Arrives ") + isoJD(R0.arr);
+  } else if (ME.ride){
+    var R = ME.ride, before = s.jd < R.dep;
+    w = before ? (R.from.kind === "ship" ? "Waiting aboard your spaceship" : "Waiting at " + locName(R.from)) : "Riding to " + PID[R.to].name;
+    sub = before ? "Departs " + isoJD(R.dep) : "Arrives " + isoJD(R.arr);
+  } else if (ME.loc.kind === "ship"){
+    var p = locPos(ME.loc, s.jd); w = "Adrift in a spaceship"; sub = fmt(Math.hypot(p[0], p[1], p[2]) / AU, 2) + " AU from the Sun";
+  } else { var P = PID[ME.loc.id]; w = P.name; sub = P.sub; }
+  $("you-where").textContent = w; $("you-sub").textContent = sub;
+  var col = ME.loc.kind === "ship" || ME.ride ? "#ffcf7a" : (PID[ME.loc.id].color || "#9aa3ad");
+  $("you-orb").style.background = "radial-gradient(circle at 35% 30%, #fff8, " + col + " 45%, #0008 100%)";
+  renderSugg();
+}
+
+/* ---------- toast ---------- */
+var tt = 0; function toast(t){ var el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(tt); tt = setTimeout(function(){ el.hidden = true; }, 4200); }
+
+/* ---------- shared sky: db rides, room presence, simulated fleet ---------- */
+var CAP = { db: null, room: null, user: null, sample: null, uid: null }, OTHERS = {}, PEERS = [], NAMES = {};
+function rideDoc(){ return CAP.db && CAP.uid ? CAP.db.doc("rides/" + CAP.uid) : null; }
+function publishRide(R){
+  var d = rideDoc(); if (!d) return Promise.resolve(false);
+  var o = { season: sky().season, from: R.from, to: R.to, dep: R.dep, arr: R.arr, arc: R.arc.map(function(p){ return [+p[0].toFixed(5), +p[1].toFixed(5), +p[2].toFixed(5)]; }),
+    dv: R.dv, kwh: R.kwh, fare: R.fare, gate: R.gate, at: Date.now() }; if (R.land) o.land = R.land;
+  return d.set(o).then(function(){ return true; }, function(){ return false; });
+}
+function clearMyRide(){ var d = rideDoc(); if (d) d.delete().catch(function(){}); }
+function presence(){
+  if (!CAP.room || !ME) return;
+  var w = ME.ride ? { kind: "ride" } : ME.loc.kind === "ship" ? { kind: "ship", jd: ME.loc.jd, r: ME.loc.r, v: ME.loc.v } : { kind: "place", id: ME.loc.id };
+  CAP.room.presence({ where: w, uid: CAP.uid || null }).catch(function(){});
+}
+function names(ids){
+  ids = ids.filter(function(id){ return id && !(id in NAMES); }); if (!ids.length || !CAP.user || !CAP.user.profiles) return;
+  ids.forEach(function(id){ NAMES[id] = ""; });
+  CAP.user.profiles(ids).then(function(ps){ ids.forEach(function(id){ NAMES[id] = (ps[id] && ps[id].name) || ""; }); renderRiders(); renderBoard(); }).catch(function(){});
+}
+function who(id){ return NAMES[id] || "A rider"; }
+function startShared(){
+  if (!window.claude || !claude.use) return;
+  claude.use("user").then(function(u){
+    CAP.user = u;
+    return u && u.id ? u.id() : null;
+  }).then(function(id){
+    CAP.uid = id || null;
+    return claude.use("db");
+  }).then(function(db){
+    CAP.db = db; if (!db) return;
+    db.collection("rides").where("season", "==", sky().season).onSnapshot(function(snap){
+      OTHERS = {}; snap.docs.forEach(function(d){ if (d.id !== CAP.uid) OTHERS[d.id] = d.data(); });
+      names(Object.keys(OTHERS)); renderRiders();
+    }, function(){});
+    if (ME && ME.ride) publishRide(ME.ride);
+    db.collection("scores").onSnapshot(function(snap){
+      BOARD = {}; snap.docs.forEach(function(d){ var v = d.data(); if (v && v.best) BOARD[d.id] = v.best; });
+      names(Object.keys(BOARD)); renderBoard();
+    }, function(){});
+  }).catch(function(){});
+  claude.use("room").then(function(room){
+    CAP.room = room; if (!room) return;
+    room.onPeers(function(ch){ PEERS = ch.peers.slice(); $("online").textContent = PEERS.length + " online"; names(PEERS.map(function(p){ return p.by || (p.presence && p.presence.uid); })); renderRiders(); }, function(){});
+    presence();
+  }).catch(function(){});
+  claude.use("sample").then(function(s){ CAP.sample = s; renderDeskMode(); }).catch(function(){ renderDeskMode(); });
+}
+var SIM = WORLD.sim; // baked simulated rides: same calendar every season
+function simActive(jd){ return SIM.filter(function(r){ return jd >= r.dep - 30 && jd <= r.arr + 20; }); }
+
+/* ---------- planning (in a worker when the page allows one) ---------- */
+var WK = null, WSEQ = 0, WCB = {};
+(function(){ try {
+  var src = document.getElementById("engine").textContent + "\nself.onmessage=function(e){var m=e.data,out;try{var f=m.fn.split(\".\").reduce(function(o,k){return o[k]},SOLE);out={ok:true,v:f.apply(null,m.args)}}catch(x){out={ok:false,err:String(x&&x.message||x)}}out.id=m.id;self.postMessage(out)};";
+  WK = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+  WK.onmessage = function(e){ var cb = WCB[e.data.id]; delete WCB[e.data.id]; if (cb) cb(e.data); };
+  WK.onerror = function(){ WK = null; Object.keys(WCB).forEach(function(id){ var cb = WCB[id]; delete WCB[id]; cb.retry(); }); };
+} catch (e) { WK = null; } })();
+function call(fn, args){
+  return new Promise(function(res, rej){
+    function done(m){ m.ok ? res(m.v) : rej(new Error(m.err)); }
+    function local(){ setTimeout(function(){ try { done({ ok: true, v: fn.split(".").reduce(function(o, k){ return o[k]; }, SOLE).apply(null, args) }); } catch (x) { done({ ok: false, err: String(x.message || x) }); } }, 30); }
+    if (WK){ var id = ++WSEQ; done.retry = local; WCB[id] = done; WK.postMessage({ id: id, fn: fn, args: args }); setTimeout(function(){ if (WCB[id]){ delete WCB[id]; local(); } }, 20000); }
+    else local();
+  });
+}
+var OPTS = {}, OSEQ = 0;
+function originDesc(){ var s = sky(); if (ME.ride) return null; return ME.loc.kind === "ship" ? { ship: { r: ME.loc.r, v: ME.loc.v, jd: ME.loc.jd } } : { place: ME.loc.id }; }
+function planFor(to, objective, onStep){
+  var s = sky(), o = originDesc();
+  if (!o) return Promise.reject(new Error("you are already on a ride"));
+  if (!PID[to]) return Promise.reject(new Error("unknown place: " + to));
+  if (o.place === to) return Promise.reject(new Error("you are already at " + PID[to].name));
+  var opts = { depFrom: s.jd + 1, depTo: s.jd + WORLD.window_days, arriveBy: SKY.jd0 + SKY.len_days - 1, objective: objective === "time" ? "time" : "energy", allLocal: true };
+  onStep && onStep("Planning " + locName(ME.loc) + " → " + PID[to].name + " (" + opts.objective + ")");
+  return call("planRide", [o, to, opts]).then(function(best){
+    if (!best || best.error) throw new Error(best && best.error || "no ride found");
+    onStep && onStep("Re-flying the route in the n-body checker");
+    return call("refly", [best]).then(function(g){ best.gate = g; return best; });
+  }).then(function(b){
+    var id = "opt" + (++OSEQ), O = shape(b, id, to); OPTS[id] = O; return O;
+  });
+}
+function shape(b, id, to){ // what the dispatcher and the cards both see: tool output, nothing added
+  var g = b.gate || {};
+  return { option_id: id, from: locName(ME.loc), to: PID[to].name, to_id: to, car: "Starfare fleet car (simulated)",
+    depart: isoJD(b.dep_jd), arrive: isoJD(b.arr_jd), tof_days: +b.tof_days.toFixed(1),
+    burn_depart_kms: +b.dv_dep_kms.toFixed(3), burn_arrive_kms: +b.dv_arr_kms.toFixed(3), burn_total_kms: +b.dv_total_kms.toFixed(3),
+    battery_kwh: b.battery.energy_kwh, battery_packs: +(b.battery.energy_kwh / 200).toFixed(1), fare_usd: b.fare.total_usd,
+    refly: g.local ? { result: "not re-flown: local transfer" } : g.error ? { result: "FAIL", note: g.error } : { final_miss_km: +(+g.final_miss_km).toFixed(3), retarget_ms: +(+g.retarget_ms).toFixed(1), iterations: g.iterations, result: g.pass ? "PASS" : "FAIL" },
+    not_priced: b.not_priced || ["landing", "aerobraking", "life support"], _raw: b };
+}
+function pub(O){ var c = {}; for (var k in O) if (k !== "_raw" && k !== "to_id") c[k] = O[k]; return c; }
+
+/* ---------- provenance gate (port of sol/code/provenance.py) ---------- */
+var DATE = "\\d{4}-\\d{2}-\\d{2}(?:[ T]\\d{2}:\\d{2})?", NUM = "[-+]?\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?|[-+]?\\d+(?:\\.\\d+)?";
+var TOKEN = new RegExp("(?<![A-Za-z0-9_.\\-])(" + DATE + "|" + NUM + ")(?![A-Za-z0-9_]|\\.\\d)", "g"), DATE_RE = new RegExp("^" + DATE + "$"), LABEL = /(?:Option|option|#)\s?$/;
+function flat(x, nums){ if (typeof x === "boolean" || x == null) return; if (typeof x === "number"){ nums.push(x); return; }
+  if (typeof x === "string"){ (x.match(TOKEN) || []).forEach(function(t){ if (!DATE_RE.test(t)) nums.push(parseFloat(t.replace(/,/g, ""))); }); return; }
+  (Array.isArray(x) ? x : Object.keys(x).map(function(k){ return x[k]; })).forEach(function(v){ flat(v, nums); }); }
+function rnd(v, d){ var f = Math.pow(10, d); return Math.round(v * f) / f; }
+function gate(text, tools, req){
+  var nums = []; flat(tools, nums); flat(req, nums); var blob = JSON.stringify(tools) + " " + req, out = "", last = 0, bad = [], m;
+  TOKEN.lastIndex = 0;
+  while ((m = TOKEN.exec(text))){
+    var t = m[1], s = m.index + m[0].length - t.length, e = s + t.length;
+    if (LABEL.test(text.slice(Math.max(0, s - 8), s))) continue;
+    var ok = DATE_RE.test(t) ? blob.indexOf(t) >= 0 : (function(){ var v = parseFloat(t.replace(/,/g, "")), d = t.indexOf(".") >= 0 ? t.split(".")[1].length : 0;
+      return nums.some(function(n){ return Math.abs(rnd(n, d) - rnd(v, d)) < 1e-9; }); })();
+    if (!ok){ bad.push(t); out += esc(text.slice(last, s)) + '<span class="struck">' + esc(t) + '</span><span class="flag"> [no tool made this]</span>'; last = e; }
+  }
+  return { html: out + esc(text.slice(last)), bad: bad };
+}
+
+/* ---------- dispatcher (Claude through the page) ---------- */
+var TURNS = [], TOOLOUT = [], BUSY = null;
+function rules(){
+  var s = sky();
+  return "You are the Starfare dispatcher in a concept solar-system ride-hail game. The rider is a real person using the page. Call where_am_i first for the sky date. Season ends " + isoJD(SKY.jd0 + SKY.len_days - 1) + ". Rides depart within " + WORLD.window_days + " sky days.\n" +
+    "Use the tools. where_am_i tells you where the rider is; list_places lists destinations (some real, some fictional; say which); plan_ride plans and re-flies one ride.\n" +
+    "Hard rules: every number you write must be copied from a tool result or the rider's words, rounded only if needed, dates exactly as given. Never estimate a number yourself. " +
+    "Only offer rides whose refly.result is PASS or 'not re-flown: local transfer'; if it says FAIL, say the checker rejected it. Booking happens on the ride cards, so tell the rider to tap BOOK; you cannot book. " +
+    "Mention what is not priced. Keep replies under 70 words, warm and plain. One request may need two plan_ride calls (energy and time); at most two.\n" +
+    "Sky time runs 1 day per real second, so earlier replies and rides go stale fast. Answer only the latest message with fresh tool calls. Never correct, compare with or mention earlier replies, rides or sky dates.";
+}
+var TOOLS = [
+  { name: "where_am_i", description: "Where the rider is now and the sky date. Returns {location, kind, detail, sky_date}.", execute: function(){
+      var s = sky(), r = { location: ME.ride ? "on a ride to " + PID[ME.ride.to].name : locName(ME.loc), kind: ME.ride ? "riding" : ME.loc.kind === "ship" ? "spaceship" : PID[ME.loc.id].kind, sky_date: isoJD(s.jd) };
+      if (!ME.ride && ME.loc.kind === "ship"){ var p = locPos(ME.loc, s.jd); r.detail = "heliocentric distance " + (Math.hypot(p[0], p[1], p[2]) / AU).toFixed(2) + " AU, no gravity well"; }
+      else if (!ME.ride) r.detail = PID[ME.loc.id].sub;
+      TOOLOUT.push(r); return r; } },
+  { name: "list_places", description: "All destinations: id, name, kind, real or fictional.", execute: function(){
+      var r = PL.map(function(p){ return { id: p.id, name: p.name, kind: p.kind, status: p.real ? "real" : "fictional" }; }); TOOLOUT.push(r); return r; } },
+  { name: "plan_ride", description: "Plan the best direct ride from the rider's current location to one destination, then re-fly it in the n-body checker. objective is energy (least battery) or time (fastest within a burn limit). Returns the option the ride card shows.",
+    inputSchema: { type: "object", properties: { to: { type: "string", description: "destination id from list_places" }, objective: { type: "string", enum: ["energy", "time"] } }, required: ["to"] },
+    execute: function(inp){
+      var to = String(inp.to || "").toLowerCase().trim(); if (!PID[to]){ var hit = PL.filter(function(p){ return p.name.toLowerCase().indexOf(to) >= 0; })[0]; if (hit) to = hit.id; }
+      return planFor(to, String(inp.objective || "energy"), step).then(function(O){ TOOLOUT.push(pub(O)); showOpts(); return pub(O); });
+    } }
+];
+function hailRules(){
+  return "You are the Starfare dispatcher in a concept robotaxi game: flying roadsters across the solar system. A simulated rider has hailed a ride, and you dispatch it for the player. Sky date: " + isoM(sky().jd) + ".\n" +
+    "Call get_hail first; its fleet says which cars are on other rides and when each is free (free_from). For each car worth trying, plan_pickup (car to rider), then plan_ride after that pickup (after_leg is the pickup's leg_id). " +
+    "Compare cars and objectives (energy = least battery, time = fastest). Cars parked near the rider or the destination are usually the ones worth trying.\n" +
+    "Hazards are simulated and seeded, and you only see forecasts, never what will happen. Before dispatching, check_pad the pickup around the pickup's arrive and the destination around the ride's arrive, and call space_weather from the ride's depart. " +
+    "Both are free and don't count as plans. A full pad means the car holds in orbit at " + RR.HOLD_KWH + " kWh an hour, and about " + Math.round(UNSCHED * 100) + "% of traffic is unscheduled and not in the forecast. " +
+    "A solar flare holds launches with a rider aboard (an empty car still flies); Mars dust storms and Titan haze close pads; a leg between planets that leaves late needs a correction burn. " +
+    "If the forecast looks bad, you may replan with wait_days to dodge it, but waiting costs pickup or arrival points.\n" +
+    "Then dispatch with the pickup leg, the ride leg, quoted_fare_usd copied exactly from the ride leg's fare_usd, and quoted_arrival: an arrival you can keep, YYYY-MM-DD HH:MM. Start from the ride leg's arrive; you may add a buffer for likely holds. " +
+    "The promise score falls to 0 at 6 h after the promised time on quick hails and 1 day on long hauls, and arriving early costs a quarter as much.\n" +
+    "Goal: pick the rider up fast, arrive by the arrive_by time, use the least energy as flown, keep the promise, and quote the fare honestly. Each plan counts: " + FREE_PLANS + " are free, then each costs a point.\n" +
+    "Hard rules: every number you write must be copied from a tool result or the player's words, dates exactly as given. Never estimate a number. Never dispatch a leg whose refly.result is FAIL. Never say a hold or storm will or won't happen; forecasts are odds.\n" +
+    "The sky clock runs 1 sky day per real second, so work promptly on long-haul hails. Dispatching starts the car on the map and locks the score. " +
+    "After dispatch returns ok, tell the player in under 80 words which car you sent, why, what happened on the way (its incidents), and the score. If it returns problems, fix them and dispatch again.";
+}
+var RUN_ID = { type: "string", description: "run_id from get_hail (optional here: this page has one hail at a time)" };
+var HTOOLS = [
+  { name: "get_hail", description: "The run's hail: rider, pickup place and time, destination, arrive_by, the fleet, plans used and the scoring rules.",
+    inputSchema: { type: "object", properties: { run_id: RUN_ID } },
+    execute: function(inp){ return Promise.resolve().then(function(){ runGuard(inp); var r = hailInfo(); TOOLOUT.push(r); return r; }); } },
+  { name: "plan_pickup", description: "Plan a car's flight from where it is parked to the rider, leaving when the rider is ready or the car is free, whichever is later (or wait_days after that), and re-fly it in the n-body checker. Returns the pickup leg with its leg_id.",
+    inputSchema: { type: "object", properties: { run_id: RUN_ID, car: { type: "string", description: "car id from the fleet, e.g. sf-01" }, objective: { type: "string", enum: ["energy", "time"] }, wait_days: { type: "number", minimum: 0, maximum: 400 } }, required: ["car"] },
+    execute: function(inp){ return Promise.resolve().then(function(){ runGuard(inp); return planPickup(inp); }).then(function(L){ var r = legOut(L); TOOLOUT.push(r); return r; }); } },
+  { name: "plan_ride", description: "Plan the rider's ride from the pickup to the destination, leaving after the given pickup leg and boarding (or wait_days later), and re-fly it in the n-body checker. Returns the ride leg with its fare_usd and arrive time.",
+    inputSchema: { type: "object", properties: { run_id: RUN_ID, after_leg: { type: "string", description: "leg_id of the pickup this ride follows" }, objective: { type: "string", enum: ["energy", "time"] }, wait_days: { type: "number", minimum: 0, maximum: 400 } }, required: ["after_leg"] },
+    execute: function(inp){ return Promise.resolve().then(function(){ runGuard(inp); return planRideLeg(inp); }).then(function(L){ var r = legOut(L); TOOLOUT.push(r); return r; }); } },
+  { name: "check_pad", description: "Forecast of booked berths per hour at one place, from the season's simulated traffic. Unscheduled traffic isn't shown. Free: doesn't count as a plan.",
+    inputSchema: { type: "object", properties: { run_id: RUN_ID, place: { type: "string", description: "place id or name, e.g. the hail's pickup_at or destination id" },
+      hours: { type: "number", minimum: 1, maximum: 72, description: "how many hours to show (default 24)" }, from: { type: "string", description: "first hour, YYYY-MM-DD HH:MM (default: rider_ready)" } }, required: ["place"] },
+    execute: function(inp){ return Promise.resolve().then(function(){ runGuard(inp); var r = padOut(inp); TOOLOUT.push(r); return r; }); } },
+  { name: "space_weather", description: "Forecast of solar flare odds per sky day, plus Mars dust storm or Titan haze odds at this hail's pickup and destination where they have any. Simulated. Free: doesn't count as a plan.",
+    inputSchema: { type: "object", properties: { run_id: RUN_ID, days: { type: "number", minimum: 1, maximum: 60, description: "how many days (default 10)" },
+      from: { type: "string", description: "first day, YYYY-MM-DD or YYYY-MM-DD HH:MM (default: rider_ready)" } } },
+    execute: function(inp){ return Promise.resolve().then(function(){ runGuard(inp); var r = wxOut(inp); TOOLOUT.push(r); return r; }); } },
+  { name: "dispatch", description: "Dispatch the car: the pickup leg, the ride leg, the fare (copy the ride leg's fare_usd) and the arrival you promise the rider. Locks the score, flies the dispatch through the season's hazards, and returns what happened and the score breakdown; the score goes on this page's scoreboard.",
+    inputSchema: { type: "object", properties: { run_id: RUN_ID, pickup_leg: { type: "string" }, ride_leg: { type: "string" },
+      quoted_fare_usd: { type: "number", description: "the fare you tell the rider, in US dollars" }, quoted_arrival: { type: "string", description: "the arrival time you promise the rider, YYYY-MM-DD HH:MM: the ride leg's arrive, plus any buffer you choose" } },
+      required: ["pickup_leg", "ride_leg", "quoted_fare_usd", "quoted_arrival"] },
+    execute: function(inp){ return Promise.resolve().then(function(){ runGuard(inp); var r = dispatchHail(inp, "Claude"); TOOLOUT.push(r); return r; }); } }
+];
+function step(t){ if (BUSY && BUSY.steps){ BUSY.steps.push(t); BUSY.el.querySelector(".steps").innerHTML = BUSY.steps.map(function(x){ return "<span>" + esc(x) + "…</span>"; }).join(""); } }
+function addMsg(kind, html){ var d = document.createElement("div"); d.className = "msg " + kind; d.innerHTML = html; $("chat").appendChild(d); $("chat").scrollTop = $("chat").scrollHeight; return d; }
+function ask(text, fresh){
+  text = String(text || "").trim(); if (!text || BUSY) return;
+  if (fresh) TURNS = []; // a suggestion is a new request, not a follow-up to stale answers
+  if (ME.ride){ addMsg("sys", hail() ? "Your car is on its way. Watch it on the map." : "You're already on a ride. Wait until you arrive."); return; }
+  addMsg("me", esc(text)); $("q").value = "";
+  if (!CAP.sample){ offlineAsk(text); return; }
+  TURNS.push({ role: "user", content: text }); if (TURNS.length > 8) TURNS = TURNS.slice(-8); if (TURNS[0].role !== "user") TURNS.shift();
+  var el = addMsg("bot", '<div class="who">Starfare dispatch · Claude</div><div class="body dim">Thinking…</div><div class="steps"></div>');
+  var ctl = new AbortController(); BUSY = { el: el, steps: [], ctl: ctl }; $("send").disabled = true;
+  var before = TOOLOUT.length;
+  var inHail = !!(hail() && !hail().started), sys = inHail ? hailRules() : rules();
+  setSugg(true);
+  CAP.sample([{ role: "user", content: sys }].concat(TURNS), { tools: inHail ? HTOOLS : TOOLS, modelTier: "quick", signal: ctl.signal,
+    onText: function(u){ el.querySelector(".body").classList.remove("dim"); el.querySelector(".body").textContent = u.text; } })
+  .then(function(r){
+    showOpts();
+    var g = gate(r.text, TOOLOUT, sys + " " + TURNS.filter(function(t){ return t.role === "user"; }).map(function(t){ return t.content; }).join(" "));
+    el.querySelector(".body").innerHTML = g.html; setTimeout(function(){ $("chat").scrollTop = $("chat").scrollHeight; }, 0); el.querySelector(".steps").innerHTML = g.bad.length ? '<span class="bad">Gate: struck ' + g.bad.length + ' number' + (g.bad.length > 1 ? "s" : "") + ' no tool made.</span>' : '<span class="ok">Gate: every number traced to a tool.</span>';
+    TURNS.push({ role: "assistant", content: r.text });
+  }, function(e){
+    var why = { not_granted: "Claude isn't allowed in this view.", sampling_disabled: "Claude isn't available for this account.", rate_limited: "Too many requests. Try again in a moment.", refused: "The dispatcher declined that one." }[e && e.code] || "The dispatcher couldn't answer. Try again.";
+    el.querySelector(".body").textContent = e && e.text ? e.text : why; el.querySelector(".steps").textContent = e && e.text ? why : "";
+    if (e && (e.code === "not_granted" || e.code === "sampling_disabled" || e.code === "tools_unavailable")){ CAP.sample = null; renderDeskMode(); }
+    TURNS.pop();
+  }).then(function(){ BUSY = null; $("send").disabled = false; setSugg(false); });
+}
+function setSugg(off){ document.querySelectorAll("#sugg button").forEach(function(b){ b.disabled = off; }); }
+function offlineAsk(text){ // no model: match a destination name and plan directly
+  var t = text.toLowerCase(), hit = PL.filter(function(p){ return t.indexOf(p.name.toLowerCase()) >= 0 || t.indexOf(p.id) >= 0 || (p.alias || []).some(function(a){ return t.indexOf(a) >= 0; }); })[0];
+  if (!hit){ addMsg("sys", "Pick a destination below. Without Claude the desk only understands place names."); return; }
+  direct(hit.id, /fast|quick|soon|hurry/.test(t) ? "time" : "energy");
+}
+function direct(to, obj){
+  if (BUSY) return;
+  var el = addMsg("bot", '<div class="who">Starfare planner</div><div class="body dim">Working…</div><div class="steps"></div>'); BUSY = { el: el, steps: [] };
+  planFor(to, obj, step).then(function(O){ el.querySelector(".body").textContent = "Here's the " + (obj === "time" ? "fastest" : "cheapest") + " ride I found. It's on the card."; el.querySelector(".body").classList.remove("dim"); showOpts(); },
+    function(e){ el.querySelector(".body").textContent = "No ride: " + e.message + "."; }).then(function(){ BUSY = null; });
+}
+function renderDeskMode(){
+  var on = !!CAP.sample; $("ask").hidden = false; $("offline").hidden = on;
+  if (!on){ $("q").placeholder = "Type a place, e.g. Mars Base"; }
+  showOpts();
+}
+function renderSugg(){
+  var here = ME && !ME.ride && ME.loc.kind === "place" ? ME.loc.id : null, s = [];
+  if (here !== "earth") s.push(["Cheapest ride to Earth", "Cheapest ride home to Earth, please."]);
+  if (here !== "iss") s.push(["Park at the ISS", "Take me to the ISS."]);
+  if (here !== "mars-base") s.push(["Fastest to Mars Base", "Fastest ride to Mars Base."]);
+  s.push(["Where am I?", "Where am I, and where can I go?"]);
+  $("sugg").innerHTML = s.slice(0, 3).map(function(x){ return '<button type="button" data-q="' + esc(x[1]) + '">' + esc(x[0]) + "</button>"; }).join("");
+}
+
+/* ---------- ride cards ---------- */
+var CAR = '<svg viewBox="0 0 160 84" aria-hidden="true"><defs><linearGradient id="cb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a5466"/><stop offset=".45" stop-color="#1a202b"/><stop offset="1" stop-color="#07090d"/></linearGradient><linearGradient id="cw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0b0f16"/><stop offset=".6" stop-color="#22324a"/><stop offset="1" stop-color="#0b0f16"/></linearGradient><radialGradient id="cf" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="rgba(156,195,255,.28)"/><stop offset="1" stop-color="rgba(156,195,255,0)"/></radialGradient><radialGradient id="ch" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="rgba(220,235,255,.95)"/><stop offset="1" stop-color="rgba(220,235,255,0)"/></radialGradient></defs>' +
+  '<ellipse cx="82" cy="70" rx="74" ry="7" fill="url(#cf)"/><path d="M10 58c0-6 5-9 14-11l26-13c10-5 22-7 36-7h14c16 0 27 5 38 12l9 5c6 2 9 6 9 11v3H10z" fill="url(#cb)" stroke="rgba(255,255,255,.18)" stroke-width=".8"/>' +
+  '<path d="M58 35c9-4 19-5 30-5h12c11 0 19 3 27 9H62z" fill="url(#cw)"/><path d="M24 47c22-3 60-5 122-1" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".8"/>' +
+  '<circle cx="40" cy="61" r="11" fill="#06080b" stroke="#2c333e" stroke-width="2"/><circle cx="40" cy="61" r="5.5" fill="none" stroke="#7d8794" stroke-width="1.2"/><circle cx="128" cy="61" r="11" fill="#06080b" stroke="#2c333e" stroke-width="2"/><circle cx="128" cy="61" r="5.5" fill="none" stroke="#7d8794" stroke-width="1.2"/>' +
+  '<ellipse cx="150" cy="50" rx="16" ry="6" fill="url(#ch)" opacity=".55"/><path d="M142 48.5l10 1.2" stroke="#eaf3ff" stroke-width="2.2" stroke-linecap="round"/><path d="M12 52.5h5" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" opacity=".8"/></svg>';
+function showOpts(){
+  if (hail()){ // keep the promised-arrival box focused through a re-render
+    var a = document.activeElement, keep = a && a.id === "h-quote" ? a.selectionStart : -1;
+    $("choose").innerHTML = hailHTML();
+    if (keep >= 0 && $("h-quote")){ $("h-quote").focus({ preventScroll: true }); try { $("h-quote").setSelectionRange(keep, keep); } catch (e) {} }
+    return; }
+  var list = Object.keys(OPTS).map(function(k){ return OPTS[k]; }).slice(-3).reverse(), s = sky();
+  if (ME.ride){ renderRideBar(); return; }
+  if (!list.length){ $("choose").innerHTML = ""; return; }
+  $("choose").innerHTML = '<h3>Choose your ride</h3>' + list.map(function(O){
+    var ok = O.refly.result === "PASS" || O.refly.result.indexOf("local") >= 0, stale = isoJD(s.jd) > O.depart || O.from !== locName(ME.loc);
+    return '<article class="card glass"><div class="car">' + CAR + '</div><div><span class="tag sim">Simulated</span></div><p class="t">' + esc(O.from) + " → " + esc(O.to) + '</p>' +
+      '<div class="meta num"><div><span class="k">Departs</span><span class="v">' + O.depart + '</span></div><div><span class="k">Arrives</span><span class="v">' + O.arrive + '</span></div>' +
+      '<div><span class="k">Ride time</span><span class="v">' + dur(O.tof_days) + '</span></div><div><span class="k">Burns</span><span class="v">' + O.burn_total_kms + ' km/s</span></div>' +
+      '<div><span class="k">Battery</span><span class="v">' + fmt(O.battery_kwh) + ' kWh · ' + O.battery_packs + ' packs</span></div><div><span class="k">Fare</span><span class="v big">$' + fmt(O.fare_usd, 2) + '</span></div></div>' +
+      '<p class="gate">' + (O.refly.result === "PASS" ? '<span class="tag real">Re-fly pass</span><span class="dim num">miss ' + O.refly.final_miss_km + ' km · correction ' + O.refly.retarget_ms + ' m/s</span>'
+        : O.refly.result === "FAIL" ? '<span class="tag" style="color:var(--bad)">Checker rejected</span><span class="dim num">miss ' + O.refly.final_miss_km + ' km · correction ' + O.refly.retarget_ms + ' m/s</span>'
+        : '<span class="tag sim">Local transfer</span><span class="dim">not re-flown</span>') + '</p>' +
+      '<div class="go"><button class="btn" data-book="' + O.option_id + '"' + (ok && !stale ? "" : " disabled") + '>' + (stale ? "Expired" : ok ? "Book ride →" : "Can't book") + '</button></div></article>';
+  }).join("");
+}
+function book(id){
+  var O = OPTS[id]; if (!O || ME.ride) return;
+  var b = O._raw, R = { from: ME.loc, to: O.to_id, dep: b.dep_jd, arr: b.arr_jd, arc: b.arc_au || [], dv: O.burn_total_kms, kwh: O.battery_kwh, fare: O.fare_usd, gate: O.refly.result };
+  ME.ride = R; store(KEY, ME); OPTS = {}; renderYou(); renderRideBar(); presence(); setZ("you");
+  publishRide(R).then(function(ok){ toast(ok ? "Booked. Everyone in the sky can see your ride." : "Booked. Only you can see this ride in this view."); });
+}
+function renderRideBar(){
+  if (!ME.ride || hail()){ showOpts(); return; }
+  var R = ME.ride;
+  $("choose").innerHTML = '<h3>Your ride</h3><div class="glass ridebar"><div class="car" style="width:100%;height:96px">' + CAR + '</div><div class="row" style="display:flex;justify-content:space-between;gap:8px"><span class="tag sim">Fleet car · simulated</span><span class="tag ' + (R.gate === "PASS" ? "real" : "sim") + '">' + (R.gate === "PASS" ? "Re-fly pass" : "Local") + '</span></div>' +
+    '<p class="t" style="font-size:20px">' + esc(locName(R.from)) + " → " + esc(PID[R.to].name) + '</p><div class="prog"><i id="ride-prog"></i></div>' +
+    '<p class="small dim num" id="ride-status"></p><p class="small dim num">Fare $' + fmt(R.fare, 2) + ' · burns ' + R.dv + ' km/s · ' + fmt(R.kwh) + ' kWh</p>' +
+    '<button class="lnk" id="cancel" type="button">Cancel ride</button></div>';
+}
+function tickRide(){
+  if (!ME || !ME.ride) return; var s = sky(), R = ME.ride, el = $("ride-status"), pr = $("ride-prog");
+  if (s.jd >= R.arr){ settle(); renderYou(); renderRideBar(); return; }
+  if (!el) return;
+  if (s.jd < R.dep){ el.textContent = "Departs in " + dur(R.dep - s.jd) + " (sky time)"; pr.style.width = "0%"; }
+  else { el.textContent = dur(R.arr - s.jd) + " to go · sky date " + isoJD(s.jd); pr.style.width = clamp((s.jd - R.dep) / (R.arr - R.dep) * 100, 0, 100).toFixed(1) + "%"; }
+  if (s.jd >= R.arr){ settle(); renderYou(); renderRideBar(); }
+}
+
+/* ---------- ride hails (rules and scoring: SOLE.R, the same engine the Grok connector uses) ---------- */
+var RR = E && E.R, LEGS = {}, BOARD = {}, HBUSY = false, FREE_PLANS = 6, BEST_KEY = "sol-sky-best-v2";
+var SEASON_END = SKY.jd0 + SKY.len_days - 1;
+var UNSCHED = RR ? RR.padForecast("iss", SKY.jd0, 1).unscheduled_share : 0; // share of pad traffic the forecasts never show
+function hail(){ return ME && ME.hail && ME.hail.t0 ? ME.hail : null; }
+function stopName(id){ return PID[id] ? PID[id].name : id; }
+function kwhs(x){ return fmt(Math.round(x)) + " kWh"; }
+function money(x){ return "$" + fmt(x, 2); }
+// "YYYY-MM-DD HH:MM" rounded to the nearest minute, exactly like the connector's isoJD and the engine's isoFromJd(jd, true).
+function isoM(jd){ var ms = Math.floor(((jd - 2440587.5) * 864e5 + 30000) / 60000) * 60000; return new Date(ms).toISOString().slice(0, 16).replace("T", " "); }
+function riderName(h){ return h.rider.split(",")[0]; }
+// A promised arrival typed as "YYYY-MM-DD HH:MM" (or with a T); null unless it is a real date and time.
+function quoteJd(s){ var m = /^\s*(\d{4}-\d{2}-\d{2})[ T](\d{2}):(\d{2})\s*$/.exec(String(s || "")); if (!m) return null;
+  var jd = E.jdFromIso(m[1] + "T" + m[2] + ":" + m[3]); return isFinite(jd) && isoM(jd) === m[1] + " " + m[2] + ":" + m[3] ? jd : null; }
+function nearIds(id){ return RR.nearCars(RR.BY[id]).map(function(c){ return c.id; }); }
+// Which fleet cars are still finishing another (simulated) job when this hail's rider is ready. {car: busy_until_jd}
+function busyMap(H){ var m = {}; RR.fleetState(H.id, H.t0, H.seed).forEach(function(c){ if (c.busy_until_jd) m[c.car] = c.busy_until_jd; }); return m; }
+function fleetPub(H){ var b = busyMap(H);
+  return RR.FLEET.map(function(c){ return { car: c.id, name: c.name, parked_at: { id: c.at, name: stopName(c.at) }, status: b[c.id] ? "on another ride" : "free", free_from: isoM(b[c.id] || H.t0) }; }); }
+function firstFar(legs){ return legs.filter(function(L){ return L.gate !== "local"; })[0] || null; }
+function newRunId(){ var a = new Uint8Array(10); try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < 10; i++) a[i] = Math.floor(Math.random() * 256); }
+  return "run_" + Array.prototype.map.call(a, function(b){ return (b < 16 ? "0" : "") + b.toString(16); }).join(""); }
+function renderHails(){
+  if (!RR){ $("h-grid").innerHTML = '<p class="dim">Ride hails need the planner engine, which didn\'t load.</p>'; return; }
+  var cur = hail();
+  $("h-grid").innerHTML = RR.HAILS.map(function(h){ var on = cur && cur.id === h.id, q = h.kind === "quick";
+    return '<div class="tile"><div class="row"><span class="t">' + esc(h.title) + '</span><span class="tag ' + (q ? "sim" : "fict") + '">' + (q ? "Quick" : "Long haul") + '</span></div>' +
+      '<p class="small"><b>' + esc(h.rider) + '</b> · <span class="dim">simulated rider</span></p><p class="small dim">' + esc(h.blurb) + '</p>' +
+      '<p class="small num">' + esc(stopName(h.from)) + ' → ' + esc(stopName(h.to)) + '<span class="faint"> · ' + (q ? "ready in about a sky day" : "booked " + RR.LEAD + " sky days ahead") + '</span></p>' +
+      '<div><button class="btn' + (on ? "" : " ghost") + '" data-hail="' + h.id + '" type="button"' + (on ? " disabled" : "") + '>' + (on ? (cur.started ? "Dispatched" : "Taken") : "Take hail") + "</button></div></div>";
+  }).join("");
+  renderFleet();
+}
+function renderFleet(){
+  if (!RR) return; var H = hail(), busy = H && H.started && !H.finished ? H.car : null, other = H && H.seed && !H.started ? busyMap(H) : {};
+  $("fleet").innerHTML = RR.FLEET.map(function(c){ var on = busy === c.id, b = other[c.id];
+    return '<div class="li"><span class="dot" style="background:' + (on ? "var(--me)" : "var(--sim)") + '"></span><span><b>' + esc(c.name) + '</b> <span class="dim">· ' + (on ? "on a ride for " + esc(riderName(RR.BY[H.id])) : "parked at " + esc(stopName(c.at))) +
+      (b ? '</span> <span class="small" style="color:var(--sun)">· on another ride until ' + isoM(b) : "") + '</span></span>' +
+      '<span class="tag' + (on || b ? "" : " sim") + '">' + (on ? "On a ride" : b ? "Busy" : "Simulated") + "</span></div>"; }).join("");
+}
+function takeHail(id){
+  if (!RR || HBUSY) return;
+  if (ME.ride){ toast("Finish or cancel your ride first."); return; }
+  var h = RR.BY[id], t0 = Math.floor(sky().jd + (h.kind === "quick" ? 1 : RR.LEAD)) + 0.5;
+  if (t0 + 30 > SEASON_END){ toast("The season ends too soon for a new hail. Wait for the reset."); return; }
+  HBUSY = true; toast("Taking the hail: " + h.title + "…");
+  var seed = String(sky().season); // hazards are seeded per season: the same traffic and weather for every player in it
+  call("R.terms", [id, t0, SEASON_END, seed]).then(function(T){
+    OPTS = {}; LEGS = {}; ME.trip = null;
+    var free = RR.fleetState(id, t0, seed).filter(function(c){ return !c.busy_until_jd; }).map(function(c){ return c.car; }), near = nearIds(id);
+    ME.hail = { run_id: newRunId(), id: id, title: h.title, t0: t0, seed: seed, arrive_by_jd: T.arrive_by_jd, par_kwh: T.par.kwh, par_car: T.par.car, par_arr_jd: T.par.planned_arr_jd, best_wait_days: T.par.best_wait_days,
+      calls: 0, lseq: 0, plan: null, car: near.filter(function(c){ return free.indexOf(c) >= 0; })[0] || near[0] || RR.FLEET[0].id, obj: "energy", agent: null, started: false, score: null, finished: false };
+    store(KEY, ME); showOpts(); renderHails();
+    addMsg("sys", "Hail taken: " + h.title + ". " + riderName(h) + " is waiting at " + stopName(h.from) + ".");
+    $(innerWidth <= 900 ? "choose" : "sky-stage").scrollIntoView({ block: "start", behavior: REDUCED ? "auto" : "smooth" });
+  }, function(e){ toast("Couldn't take that hail: " + e.message); }).then(function(){ HBUSY = false; });
+}
+function dropHail(why){ ME.hail = null; ME.trip = null; LEGS = {}; store(KEY, ME); renderHails(); showOpts(); if (why) toast(why); }
+function hailRulesText(){ return "Pick a car from the fleet; a car on another ride can't leave before its free_from. plan_pickup flies it from where it is parked to the rider (leaving at free_from, or wait_days later). " +
+  "plan_ride flies the rider from the pickup to the destination, after boarding. Then dispatch with the pickup leg, the ride leg, the ride leg's fare, and the arrival you promise the rider. " +
+  "Hazards are simulated and seeded per season, and you only see forecasts: check_pad shows booked berths per hour (about " + Math.round(UNSCHED * 100) + "% of traffic is unscheduled and not shown; with every berth taken the car holds in orbit at " + RR.HOLD_KWH + " kWh an hour), " +
+  "space_weather shows solar flare odds (a flare holds launches with a rider aboard) and Mars dust or Titan haze odds (they close the pad). A leg between planets that leaves late needs a correction burn. " +
+  "Score out of 100, from what actually happens: fast pickup 20 (versus the quickest nearby car), arrived on time 20 (falls to 0 at half the trip's allowed time late), energy flown including holds and corrections versus par 20, " +
+  "kept the promise 15 (falls to 0 at 6 h after the promised arrival on quick hails, 1 day on long hauls; arriving early costs a quarter as much), every leg checked 10, honest fare 10 (within $1 of the ride leg's fare_usd), " +
+  "planning economy 5 (" + FREE_PLANS + " plans free; forecasts are free). " +
+  "The sky clock runs 1 sky day per real second: if a leg flies between planets and its departure passes before dispatch, the hail goes cold."; }
+function hailInfo(){ // same fields as the connector's get_hail, plus which cars are busy
+  var H = hail(); if (!H) throw new Error("no hail is active. Take one on the page first.");
+  var h = RR.BY[H.id];
+  return { run_id: H.run_id, hail_id: H.id, title: h.title, rider: h.rider + " (simulated)", note: h.blurb,
+    pickup_at: { id: h.from, name: stopName(h.from) }, destination: { id: h.to, name: stopName(h.to) },
+    rider_ready: isoM(H.t0), arrive_by: isoM(H.arrive_by_jd), boarding_hours: RR.DWELL * 24,
+    fleet: fleetPub(H), sky_now: isoM(sky().jd), plans_used: H.calls, dispatched: H.started, rules: hailRulesText() };
+}
+// Forecast tools for Claude: the same numbers the card's forecast panel shows, as dates and whole percents so the gate can trace them.
+function placeOf(s){ var k = String(s || "").toLowerCase().trim(); if (PID[k]) return k;
+  var hit = PL.filter(function(p){ return p.name.toLowerCase() === k; })[0] || PL.filter(function(p){ return k && p.name.toLowerCase().indexOf(k) >= 0; })[0];
+  if (!hit) throw new Error("unknown place " + s + ". Use an id like the hail's pickup_at or destination id."); return hit.id; }
+function jdOf(s, dflt){ if (s == null || s === "") return dflt; var m = /^\s*(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?\s*$/.exec(String(s));
+  if (!m) throw new Error("from must be YYYY-MM-DD HH:MM"); return E.jdFromIso(m[1] + "T" + (m[2] || "00:00")); }
+function padOut(inp){
+  var H = hail(); if (!H) throw new Error("no hail is active. Take one on the page first.");
+  var id = placeOf(inp.place), f = RR.padForecast(id, jdOf(inp.from, H.t0), +inp.hours || 24, H.id, H.t0, H.seed);
+  return { place: { id: id, name: stopName(id) }, berths: f.berths, simulated: true,
+    hours: f.hours.map(function(x){ return { hour: isoM(x.hour_jd), booked: x.booked, full: x.booked >= f.berths }; }),
+    full_hours: f.hours.filter(function(x){ return x.booked >= f.berths; }).length, unscheduled_pct: Math.round(f.unscheduled_share * 100), hold_kwh_per_hour: RR.HOLD_KWH,
+    local_weather: f.local_weather === "dust" ? "Mars dust storms (see space_weather)" : f.local_weather === "haze" ? "Titan haze (see space_weather)" : null,
+    note: "Booked berths only: unscheduled traffic isn't shown, so a pad can be fuller than this." };
+}
+function wxOut(inp){
+  var H = hail(); if (!H) throw new Error("no hail is active. Take one on the page first.");
+  var h = RR.BY[H.id], from = jdOf(inp.from, H.t0), days = +inp.days || 10;
+  return { simulated: true, days_from: isoM(Math.floor(from)), day_note: "each sky day runs 12:00 to 12:00 UTC",
+    flares: RR.flareForecast(from, days, H.seed).map(function(x){ return { day: isoM(x.day_jd), odds_pct: Math.round(x.flare_odds * 100) }; }),
+    flare_rule: "the chance a solar radiation storm starts that day; it holds launches with a rider aboard until it passes, and an empty car can still fly",
+    local_weather: [h.from, h.to].map(function(p){ return RR.weatherForecast(p, from, days, H.seed); }).filter(function(w){ return w.kind; }).map(function(w){
+      return { place: { id: w.place, name: stopName(w.place) }, kind: w.kind, odds_are: w.odds_are, days: w.days.map(function(x){ return { day: isoM(x.day_jd), odds_pct: Math.round(x.odds * 100) }; }) }; }) };
+}
+function runGuard(inp){ var H = hail(); if (H && inp && inp.run_id && inp.run_id !== H.run_id) throw new Error("unknown run_id " + inp.run_id + ". This page's hail is " + H.run_id + "."); }
+function legPub(L){ var o = { leg_id: L.leg_id, kind: L.role }; if (L.car) o.car = L.car;
+  o.from = stopName(L.from); o.to = stopName(L.to); o.depart = isoM(L.dep_jd); o.arrive = isoM(L.arr_jd); o.tof_days = +L.tof_days.toFixed(2);
+  o.burn_total_kms = L.dv; o.battery_kwh = L.kwh; o.fare_usd = L.fare; o.refly = L.refly; return o; }
+function legOut(L){ var o = legPub(L); o.plans_used = hail() ? hail().calls : 0; o.cached = false; return o; }
+function waitOf(inp){ return Math.max(0, Math.min(400, +inp.wait_days || 0)); }
+function objOf(inp){ return inp.objective === "time" ? "time" : "energy"; }
+// One leg: plan it, then re-fly it (the connector's computeLeg, plus the arc for the map). A plan counts even if it then fails.
+function planHailLeg(H, role, car, from, to, t, obj){
+  H.calls++; store(KEY, ME); showOpts();
+  step("Planning " + stopName(from) + " → " + stopName(to) + " (" + obj + ")");
+  return call("R.planLeg", [from, to, t, obj, SEASON_END]).then(function(b){
+    step("Re-flying it in the n-body checker");
+    return call("refly", [b]).then(function(g){
+      var id = "leg" + (++H.lseq), loc = !!(g && g.local);
+      var L = { leg_id: id, role: role, from: from, to: to, dep_jd: b.dep_jd, arr_jd: b.arr_jd, tof_days: b.tof_days, dv: +b.dv_total_kms.toFixed(3), kwh: b.battery.energy_kwh, fare: b.fare.total_usd,
+        gate: loc ? "local" : g && g.pass ? "PASS" : "FAIL",
+        refly: loc ? { result: "not re-flown: local transfer" } : g && g.error ? { result: "FAIL", note: g.error } : { final_miss_km: +(+g.final_miss_km).toFixed(3), retarget_ms: +(+g.retarget_ms).toFixed(1), result: g.pass ? "PASS" : "FAIL" },
+        arc: (b.arc_au || []).map(function(p){ return [+p[0].toFixed(5), +p[1].toFixed(5), +p[2].toFixed(5)]; }) };
+      if (car) L.car = car;
+      LEGS[id] = L; store(KEY, ME); return L;
+    });
+  });
+}
+function openHail(){ var H = hail(); if (!H) throw new Error("no hail is active. Take one on the page first."); if (H.started) throw new Error("this hail has already been dispatched"); return H; }
+function planPickup(inp){ // connector planPickup
+  return Promise.resolve().then(function(){
+    var H = openHail(), h = RR.BY[H.id], key = String(inp.car || "").toLowerCase().trim();
+    var car = RR.CAR[key] || RR.FLEET.filter(function(c){ return c.name.toLowerCase() === key; })[0];
+    if (!car) throw new Error("unknown car " + inp.car + ". The fleet is in get_hail.");
+    if (car.at === h.from) throw new Error(car.name + " is already at the pickup");
+    // a car still on another (simulated) job can't leave before it's free
+    return planHailLeg(H, "pickup", car.id, car.at, h.from, RR.pickupStart(H.id, car.id, H.t0, H.seed) + waitOf(inp), objOf(inp));
+  });
+}
+function planRideLeg(inp){ // connector planRideLeg
+  return Promise.resolve().then(function(){
+    var H = openHail(), h = RR.BY[H.id], prev = LEGS[inp.after_leg];
+    if (!prev) throw new Error("unknown leg_id " + inp.after_leg + ": pass the pickup leg this ride follows");
+    if (prev.role !== "pickup") throw new Error(inp.after_leg + " is a ride leg; pass the pickup leg");
+    return planHailLeg(H, "ride", null, h.from, h.to, prev.arr_jd + RR.DWELL + waitOf(inp), objOf(inp));
+  });
+}
+// connector dispatch(): checks, the cold-hail rule, then the locked score. Starts the car on the map.
+function dispatchHail(inp, agent){
+  var H = hail(); if (!H) throw new Error("no hail is active. Take one on the page first.");
+  if (H.started) return Object.assign({ already_dispatched: true }, H.score);
+  var p = LEGS[inp.pickup_leg], r = LEGS[inp.ride_leg], probs = [];
+  if (!p) probs.push("unknown pickup_leg " + inp.pickup_leg);
+  if (!r) probs.push("unknown ride_leg " + inp.ride_leg);
+  if (!probs.length){
+    if (p.role !== "pickup") probs.push(inp.pickup_leg + " is not a pickup leg");
+    if (r.role !== "ride") probs.push(inp.ride_leg + " is not a ride leg");
+    if (!probs.length) RR.check(H.id, p.car, [p, r], H.t0, H.seed).forEach(function(x){ probs.push(x); });
+    [p, r].forEach(function(L){ if (L.gate === "FAIL") probs.push(L.leg_id + " was rejected by the checker"); });
+  }
+  if (!/^\s*\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}\s*$/.test(String(inp.quoted_arrival || ""))) probs.push("quoted_arrival must be a time, YYYY-MM-DD HH:MM");
+  if (probs.length) return { ok: false, problems: probs };
+  var ff = firstFar([p, r]), now = sky().jd;
+  if (ff && now > ff.dep_jd){
+    var why = "The hail went cold: " + ff.leg_id + " was due to depart " + isoM(ff.dep_jd) + " and sky time is now " + isoM(now) + ". Take the hail again.";
+    dropHail(why); throw new Error(why);
+  }
+  // Fly it through the season's hazards: this is what actually happens, and the score is of that, not the plan.
+  var F = RR.fly(H.id, p.car, [p, r], H.t0, H.seed), qa = String(inp.quoted_arrival).trim().replace("T", " ");
+  var sc = RR.score(H.id, [p, r], { t0: H.t0, arrive_by_jd: H.arrive_by_jd, par_kwh: H.par_kwh, best_wait_days: H.best_wait_days, plan_calls: H.calls,
+    quote: { fare_usd: inp.quoted_fare_usd, arrival: qa }, flown: F });
+  // Ground holds (storm at the pad, a flare with the rider aboard) delay a leg's launch; orbit holds come after it lands, until it can dock.
+  var pShift = F.incidents.filter(function(x){ return x.leg === "pickup" && x.where === p.from && x.kind !== "correction_burn"; }).reduce(function(a, x){ return a + x.hours / 24; }, 0);
+  H.flown = { p_dep: p.dep_jd + pShift, p_land: p.arr_jd + pShift, pickup: F.pickup_jd, r_dep: F.ride_depart_jd, r_land: r.arr_jd + (F.ride_depart_jd - r.dep_jd), arrive: F.arrive_jd };
+  H.started = true; H.agent = agent; H.car = p.car; H.wait_days = sc.wait_days; H.quote = { fare_usd: inp.quoted_fare_usd, arrival: qa };
+  H.route = [p, r].map(function(L){ var c = {}; for (var k in L) c[k] = L[k]; return c; });
+  H.times = { planned_pickup: p.arr_jd, pickup: sc.pickup_jd, planned_arrive: sc.planned_arrive_jd, arrive: sc.arrive_jd, promised: E.jdFromIso(qa.replace(" ", "T")) };
+  H.score = { total: sc.total, out_of: 100, parts: sc.parts, car: RR.CAR[p.car].name, pickup: isoM(sc.pickup_jd), planned_pickup: isoM(p.arr_jd), arrive: isoM(sc.arrive_jd), planned_arrive: isoM(sc.planned_arrive_jd),
+    promised_arrival: qa, arrive_by: isoM(H.arrive_by_jd), fare_usd: sc.fare_usd, used_kwh: sc.used_kwh, extra_kwh: sc.extra_kwh, par_kwh: H.par_kwh, par_car: RR.CAR[H.par_car].name, beat_par: sc.beat_par,
+    incidents: sc.incidents.map(function(x){ return { kind: x.kind, leg: x.leg, where: stopName(x.where), at: isoM(x.at_jd), hours: rnd(x.hours, 1), kwh: x.kwh, note: x.note }; }) };
+  startHailRide(H);
+  return Object.assign({ ok: true, run_id: H.run_id, hail_id: H.id, planned_by: agent === "Claude" ? "Claude (this page)" : "the player (this page)" }, H.score);
+}
+function toRide(L){ return { from: { kind: "place", id: L.from }, to: L.to, dep: L.dep_jd, arr: L.arr_jd, arc: L.arc || [], dv: L.dv, kwh: L.kwh, fare: L.fare, gate: L.gate === "PASS" ? "PASS" : "local" }; }
+function startHailRide(H){
+  var h = RR.BY[H.id], allLocal = H.route.every(function(L){ return L.gate === "local"; });
+  // Local hops cost the same whenever they leave (phasing isn't modelled), so a quick hail made only of local hops leaves now instead of waiting for the planned date.
+  var shift = h.kind === "quick" && allLocal ? sky().jd + 1 - H.route[0].dep_jd : 0; H.shift = shift;
+  var rides = H.route.map(function(L){ var r = toRide(L); r.dep += shift; r.arr += shift; return r; }), f = H.flown;
+  if (f){ // follow what actually happened: launch after any ground hold, fly the planned arc, then wait near the pad until it docks
+    rides[0].dep = f.p_dep + shift; rides[0].land = f.p_land + shift; rides[0].arr = f.pickup + shift;
+    rides[1].dep = f.r_dep + shift; rides[1].land = f.r_land + shift; rides[1].arr = f.arrive + shift; }
+  ME.loc = { kind: "place", id: H.route[0].from }; ME.ride = rides[0]; ME.trip = rides.slice(1); H.done = []; store(KEY, ME);
+  renderYou(); showOpts(); presence(); setZ("you"); publishRide(ME.ride); saveScore(H); renderHails();
+  toast("Dispatched. " + H.score.car + " is on its way to " + riderName(h) + ". The score is locked in.");
+}
+function manualPlan(){
+  var H = hail(); if (!H || H.started || BUSY) return;
+  var h = RR.BY[H.id], car = RR.CAR[H.car], obj = H.obj === "time" ? "time" : "energy";
+  // A long-haul hail, or a car from another planet's neighbourhood, needs a few sky days of slack so the plan is still flyable when you press Dispatch.
+  var far = RR.system(car.at) !== RR.system(h.from), st = RR.pickupStart(H.id, car.id, H.t0, H.seed), wait = h.kind === "quick" && !far ? 0 : Math.max(0, Math.ceil(sky().jd + 5 - st));
+  H.agent = "You"; H.plan = null; showOpts();
+  var el = addMsg("bot", '<div class="who">Starfare planner</div><div class="body dim">Planning ' + esc(car.name) + ' for ' + esc(riderName(h)) + '…</div><div class="steps"></div>'); BUSY = { el: el, steps: [] };
+  planPickup({ car: car.id, objective: obj, wait_days: wait }).then(function(P){ return planRideLeg({ after_leg: P.leg_id, objective: obj }).then(function(R){ return [P, R]; }); }).then(function(pr){
+    var P = pr[0], R = pr[1], used = P.kwh + R.kwh, late = R.arr_jd > H.arrive_by_jd;
+    if (hail() !== H) return;
+    H.plan = { pickup: P.leg_id, ride: R.leg_id, legs: [P, R], quote: isoM(R.arr_jd) }; store(KEY, ME);
+    el.querySelector(".body").classList.remove("dim");
+    el.querySelector(".body").textContent = car.name + " can pick " + riderName(h) + " up after " + dur(P.arr_jd - H.t0) + " and arrive " + (late ? "late" : "on time") + " if nothing gets in the way. " + kwhs(used) + " in all, fare " + money(R.fare) + ". Check the forecast, set the arrival you promise, then press Dispatch.";
+    $("chat").scrollTop = $("chat").scrollHeight;
+  }, function(e){ el.querySelector(".body").textContent = "Couldn't plan " + car.name + ": " + e.message + "."; }).then(function(){ BUSY = null; showOpts(); });
+}
+function manualDispatch(){
+  var H = hail(); if (!H || !H.plan || H.started || H.plan.stale) return;
+  var R = H.plan.legs[1], qa = quoteJd(H.plan.quote == null ? isoM(R.arr_jd) : H.plan.quote);
+  if (qa == null){ toast("Set the arrival you promise as YYYY-MM-DD HH:MM."); return; }
+  try { var out = dispatchHail({ pickup_leg: H.plan.pickup, ride_leg: H.plan.ride, quoted_fare_usd: R.fare, quoted_arrival: isoM(qa) }, "You");
+    if (!out.ok) toast("Can't dispatch: " + out.problems.join("; ") + ".");
+  } catch (e) { /* the hail went cold; dropHail already said so */ }
+}
+function claudeDispatch(){
+  var H = hail(); if (!H || BUSY || H.started) return; var h = RR.BY[H.id];
+  ask("Dispatch the " + h.title + " hail for " + riderName(h) + ". Try the cars worth trying, send the one that serves them best, quote honestly, and tell me what you chose.");
+}
+function scoreDoc(){ return CAP.db && CAP.uid ? CAP.db.doc("scores/" + CAP.uid) : null; }
+function saveScore(H){
+  var e = { points: H.score.total, kwh: Math.round(H.score.used_kwh), par: Math.round(H.par_kwh), car: H.score.car, wait_h: Math.round(H.wait_days * 240) / 10, agent: H.agent || "You", at: Date.now() };
+  var mine = store(BEST_KEY) || {}; if (!mine[H.id] || e.points > mine[H.id].points){ mine[H.id] = e; store(BEST_KEY, mine); }
+  renderBoard(); var d = scoreDoc(); if (!d) return;
+  d.get().then(function(sn){ var best = (sn.exists && sn.data().best) || {}; if (best[H.id] && best[H.id].points >= e.points) return;
+    var nb = {}; for (var k in best) if (RR.BY[k]) nb[k] = best[k]; nb[H.id] = e; return d.set({ best: nb, at: Date.now() }); }).catch(function(){});
+}
+function renderBoard(){
+  if (!RR) return; var rows = {}, mine = store(BEST_KEY) || {};
+  Object.keys(BOARD).forEach(function(uid){ var b = BOARD[uid] || {}; Object.keys(b).forEach(function(k){ if (b[k] && isFinite(b[k].points)) (rows[k] = rows[k] || []).push({ uid: uid, e: b[k] }); }); });
+  if (!CAP.uid || !BOARD[CAP.uid]) Object.keys(mine).forEach(function(k){ (rows[k] = rows[k] || []).push({ uid: CAP.uid || "me", e: mine[k], me: true }); });
+  $("board").innerHTML = RR.HAILS.map(function(h){ var r = (rows[h.id] || []).sort(function(a, b){ return b.e.points - a.e.points || a.e.at - b.e.at; }).slice(0, 5);
+    return '<div class="tile"><span class="t">' + esc(h.title) + '</span>' + (r.length ? "<ol>" + r.map(function(x){ var me = x.me || x.uid === CAP.uid, e = x.e;
+      return '<li><b class="num">' + e.points + '</b> · ' + (me ? "You" : esc(who(x.uid))) + ' <span class="dim">· dispatched by ' + esc(e.agent || "?") + (e.car ? " · " + esc(e.car) : "") +
+        (isFinite(e.wait_h) ? " · pickup " + dur(e.wait_h / 24) : "") + ' · ' + fmt(e.kwh) + ' kWh (par ' + fmt(e.par) + ')</span></li>'; }).join("") + "</ol>"
+      : '<p class="small faint">No scores yet.</p>') + "</div>"; }).join("");
+}
+function hailNext(){
+  var H = hail(), h = RR.BY[H.id], R = ME.ride, s = sky(), car = H.score.car;
+  if (!R) return "Ride complete. " + riderName(h) + " is at " + stopName(h.to) + ".";
+  var pk = !!(ME.trip && ME.trip.length);
+  if (R.land && s.jd >= R.land) return car + " is holding near " + stopName(R.to) + (pk ? "" : " with " + riderName(h) + " aboard") + " until it can dock, " + dur(R.arr - s.jd) + " to go.";
+  if (pk) return s.jd < R.dep ? car + " leaves " + stopName(R.from.id) + " in " + dur(R.dep - s.jd) + "." : car + " is on its way to " + riderName(h) + ", " + dur(R.arr - s.jd) + " to go.";
+  return s.jd < R.dep ? riderName(h) + " is boarding. " + car + " leaves in " + dur(R.dep - s.jd) + "." : "Riding to " + stopName(R.to) + ", " + dur(R.arr - s.jd) + " to go.";
+}
+function legRow(L, i, when){
+  return '<div class="leg num"><span>' + (L.role === "pickup" ? "Pickup · " + esc(RR.CAR[L.car].name) : "Ride") + " · " + esc(stopName(L.from)) + " → " + esc(stopName(L.to)) + '</span><span>' + kwhs(L.kwh) + '</span><span class="w">' + when(L.dep_jd) + " → " + when(L.arr_jd) + " · " +
+    (L.gate === "PASS" ? '<span class="ok">re-fly pass</span>' : L.gate === "local" ? "local hop" : '<span class="bad">rejected by the checker</span>') + "</span></div>";
+}
+// The forecast panel: booked berths at the pickup and the destination for 24 h around when the car is due, flare odds from the ride's
+// departure, and dust or haze odds where a place has weather. Forecasts only: unscheduled traffic isn't in them, and fly() never is.
+function fcHTML(H, pickupJd, arriveJd, departJd, planned, readyLabel){
+  var h = RR.BY[H.id];
+  function hm(jd){ return isoM(jd).slice(5); } // MM-DD HH:MM
+  function pad(place, at, role, due){
+    var f = RR.padForecast(place, at - 2 / 24, 24, H.id, H.t0, H.seed), n = Math.floor(at * 24), full = 0;
+    var cells = f.hours.map(function(x){ var m = Math.round(x.hour_jd * 24), isFull = x.booked >= f.berths; if (isFull) full++;
+      return '<i class="' + (isFull ? "full" : x.booked ? "some" : "") + (m === n ? " at" : "") + '" title="' + isoM(x.hour_jd) + " · " + x.booked + " of " + f.berths + ' berths booked"></i>'; }).join("");
+    return '<div class="fc-h"><span><b>' + role + " · " + esc(stopName(place)) + '</b><span class="faint"> · ' + f.berths + " berth" + (f.berths > 1 ? "s" : "") + '</span></span><span class="' + (full ? "bad" : "dim") + '">' + (full ? full + " of 24 h full" : "no full hours") + "</span></div>" +
+      '<div class="hrs" role="img" aria-label="' + esc(stopName(place)) + ": " + full + ' of 24 hours fully booked">' + cells + "</div>" +
+      '<div class="fc-ax num"><span>' + hm(f.hours[0].hour_jd) + "</span><span>" + due + " " + hm(at) + "</span><span>" + hm(f.hours[23].hour_jd + 1 / 24) + "</span></div>";
+  }
+  function days(list, key){ return '<div class="days num">' + list.map(function(x){ var o = x[key];
+    return '<span style="background:rgba(255,182,92,' + (0.07 + o * 0.5).toFixed(2) + ')">' + Math.round(o * 100) + "%<em>" + isoM(x.day_jd).slice(5, 10) + "</em></span>"; }).join("") + "</div>"; }
+  var wx = [[h.from, pickupJd], [h.to, arriveJd]].map(function(a){ return RR.weatherForecast(a[0], a[1], 7, H.seed); }).filter(function(w){ return w.kind; });
+  return '<div class="fc"><div class="fc-h"><span class="caps faint" style="font-size:10.5px">Forecast · simulated</span><span class="faint">' + (planned ? "for this plan" : "before you plan") + "</span></div>" +
+    pad(h.from, pickupJd, "Pickup", planned ? "car due" : readyLabel || "rider ready") + pad(h.to, arriveJd, "Destination", planned ? "car due" : "par arrival") +
+    '<div class="fc-h"><span><b>Solar flares</b><span class="faint"> · from the ride\'s departure</span></span><span class="faint">odds one starts each day</span></div>' + days(RR.flareForecast(departJd, 7, H.seed), "flare_odds") +
+    wx.map(function(w){ return '<div class="fc-h"><span><b>' + (w.kind === "dust_storm" ? "Dust storms" : "Titan haze") + " · " + esc(stopName(w.place)) + '</b></span><span class="faint">' + esc(w.odds_are) + "</span></div>" + days(w.days, "odds"); }).join("") +
+    '<p class="small faint">Red hours are full, blue have berths booked, the outlined hour is when the car is due. Booked berths only: about ' + Math.round(UNSCHED * 100) + "% of traffic is unscheduled and isn't shown. " +
+    "A full pad means holding in orbit at " + fmt(RR.HOLD_KWH) + " kWh an hour; a flare holds launches with a rider aboard.</p></div>";
+}
+var KIND = { pad_busy: "Pad busy", flare: "Solar flare", dust_storm: "Dust storm", titan_haze: "Titan haze", correction_burn: "Correction burn" };
+function hailHTML(){
+  var H = hail(); if (!H) return ""; var h = RR.BY[H.id], s = sky(), q = h.kind === "quick", done = H.done || [];
+  function when(jd){ return q ? "+" + dur(jd - H.t0) : isoM(jd); }
+  function vs(d, same, later, earlier){ return Math.abs(d) < 1 / 1440 ? same : d > 0 ? dur(d) + " " + later : dur(-d) + " " + earlier; }
+  var head = '<h3>Ride hail</h3><div class="glass mcard"><div class="row" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="tag ' + (q ? "sim" : "fict") + '">' + (q ? "Quick" : "Long haul") + '</span>' +
+      (H.finished ? "" : '<button class="lnk" type="button" id="h-drop">Abandon</button>') + '</div>' +
+    '<p class="t">' + esc(h.title) + '</p><p class="small">' + esc(h.rider) + ' · <span class="dim">simulated rider</span></p>' +
+    '<div class="mmeta num small"><div><span class="k">Pick up at</span><span>' + esc(stopName(h.from)) + '</span></div><div><span class="k">Rider ready</span><span>' + (q ? "in about a sky day" : isoM(H.t0)) + '</span></div>' +
+    '<div><span class="k">Going to</span><span>' + esc(stopName(h.to)) + '</span></div><div><span class="k">Arrive by</span><span>' + (q ? dur(H.arrive_by_jd - H.t0) + " after ready" : isoM(H.arrive_by_jd)) + '</span></div></div>';
+  if (H.started){
+    // What actually happened (the engine's fly), shown once the score is locked: actual times against the plan and the promise, and why.
+    var sc = H.score, t = H.times, inc = sc.incidents || [];
+    var res = !t ? "" : '<div class="legs">' +
+        '<div class="leg num"><span>Pickup</span><span>' + when(t.pickup) + '</span><span class="w">planned ' + when(t.planned_pickup) + " · " + vs(t.pickup - t.planned_pickup, "as planned", "later than planned", "early") + "</span></div>" +
+        '<div class="leg num"><span>Arrival</span><span>' + when(t.arrive) + '</span><span class="w">planned ' + when(t.planned_arrive) + " · promised " + (q ? when(t.promised) : esc(sc.promised_arrival)) + " · " +
+          '<span class="' + (t.arrive - t.promised > 1 / 1440 ? "bad" : "ok") + '">' + vs(t.arrive - t.promised, "when promised", "after the promise", "before the promise") + "</span></span></div></div>" +
+      '<span class="k caps faint" style="font-size:10.5px">What happened · simulated</span>' +
+      (inc.length ? '<ul class="inc">' + inc.map(function(x){ return '<li class="num"><b>' + esc(KIND[x.kind] || x.kind) + "</b> · " + esc(x.where) + " · " + (x.leg === "ride" ? "ride" : "pickup") +
+          (x.hours ? " · " + fmt(x.hours, 1) + " h" : "") + (x.kwh ? " · +" + kwhs(x.kwh) : "") + '<span class="w">' + esc(x.note) + ".</span></li>"; }).join("") + "</ul>"
+        : '<p class="small ok">Nothing got in the way: the car flew as planned.</p>') +
+      (sc.extra_kwh ? '<p class="small num">Extra energy: <b>' + kwhs(sc.extra_kwh) + "</b> from holds and correction burns, " + kwhs(sc.used_kwh) + " flown in all.</p>" : "");
+    return head + '<div class="stops"><span class="stop' + (done.indexOf(h.from) >= 0 ? " done" : "") + '">' + (done.indexOf(h.from) >= 0 ? "Picked up · " : "Pick up · ") + esc(stopName(h.from)) + '</span>' +
+        '<span class="stop' + (done.indexOf(h.to) >= 0 ? " done" : "") + '">' + (done.indexOf(h.to) >= 0 ? "Dropped off · " : "Drop off · ") + esc(stopName(h.to)) + '</span></div>' +
+      '<p class="small dim num" id="h-next">' + esc(hailNext()) + '</p>' + res +
+      '<div class="score"><span class="k caps faint" style="font-size:10.5px">Score · ' + esc(sc.car) + ' · dispatched by ' + esc(H.agent || "You") + '</span><span class="big num">' + sc.total + '<span class="dim" style="font-size:16px"> / 100</span></span>' +
+      (sc.beat_par ? '<span class="small ok">Beat par: less energy than the best nearby car, as flown.</span>' : "") +
+      sc.parts.map(function(p){ return '<div class="srow num"><span>' + esc(p.label) + '</span><span>' + p.got + " / " + p.max + '</span><span class="bar"><i style="width:' + (p.got / p.max * 100).toFixed(0) + '%"></i></span><span class="w">' + esc(p.note) + "</span></div>"; }).join("") +
+      '</div><p class="small faint num">Quoted ' + (H.quote && isFinite(+H.quote.fare_usd) ? money(+H.quote.fare_usd) : "no fare") + ", promised arrival " + esc((H.quote && H.quote.arrival) || "?") + ". Par: " + esc(sc.par_car) + ", " + kwhs(sc.par_kwh) + ".</p>" +
+      (H.finished ? '<div class="mrow"><button class="btn ghost" type="button" id="h-done">Close hail</button></div>' : "") + "</div>";
+  }
+  if (H.plan){
+    var P = H.plan.legs[0], R = H.plan.legs[1], used = P.kwh + R.kwh, late = R.arr_jd > H.arrive_by_jd, ff = firstFar(H.plan.legs), bad = H.plan.legs.some(function(L){ return L.gate === "FAIL"; });
+    var qv = H.plan.quote == null ? isoM(R.arr_jd) : H.plan.quote, bufs = q ? [[1, "+1 h"], [3, "+3 h"]] : [[6, "+6 h"], [24, "+1 day"]];
+    return head + '<div class="legs">' + H.plan.legs.map(function(L, i){ return legRow(L, i, when); }).join("") + '</div>' +
+      '<p class="small num ' + (late ? "bad" : "dim") + '">Total ' + kwhs(used) + ' · pickup after ' + dur(P.arr_jd - H.t0) + ' · arrives ' + when(R.arr_jd) + (late ? " (late)" : "") + ' if nothing gets in the way</p>' +
+      fcHTML(H, P.arr_jd, R.arr_jd, R.dep_jd, true) +
+      '<p class="small num">Fare to ' + esc(riderName(h)) + ': <b>' + money(R.fare) + '</b> <span class="faint">(the ride leg\'s fare)</span></p>' +
+      '<label class="small" for="h-quote">Arrival you promise ' + esc(riderName(h)) + '</label>' +
+      '<div class="qrow"><input id="h-quote" class="num' + (quoteJd(qv) == null ? " bad" : "") + '" value="' + esc(qv) + '" placeholder="YYYY-MM-DD HH:MM" maxlength="16" autocomplete="off" spellcheck="false" aria-describedby="h-qhelp">' +
+        bufs.map(function(b){ return '<button type="button" class="stop" data-qbuf="' + b[0] + '">' + b[1] + "</button>"; }).join("") + '<button type="button" class="stop" data-qbuf="0">Planned</button></div>' +
+      '<p class="small faint num" id="h-qhelp">Planned arrival ' + isoM(R.arr_jd) + ". Holds can make it later, so a buffer can help: the promise score falls to 0 at " + (q ? "6 h" : "1 day") + " late, and arriving early costs a quarter as much.</p>" +
+      (H.plan.stale ? '<p class="small bad">This plan has expired: the car had to leave by ' + isoM(ff.dep_jd) + '. Try again and Starfare will plan a later departure.</p>' : "") +
+      '<div class="mrow"><button class="btn" type="button" id="h-dispatch"' + (H.plan.stale || bad ? " disabled" : "") + '>Dispatch →</button><button class="btn ghost" type="button" id="h-replan">Try another car</button></div>' +
+      (ff ? '<p class="small faint num" id="h-cold">' + (H.plan.stale ? "" : "The car must leave in " + dur(Math.max(0, ff.dep_jd - s.jd)) + " (sky time), or the hail goes cold.") + '</p>'
+        : '<p class="small faint">Local hops cost the same whenever they leave, so the car sets off as soon as you dispatch.</p>') +
+      '<p class="small faint num">Plans used: ' + H.calls + " of " + FREE_PLANS + ' free.</p></div>';
+  }
+  var near = nearIds(H.id), busy = busyMap(H), st = RR.pickupStart(H.id, H.car, H.t0, H.seed);
+  function chips(list){ return list.map(function(c){ var here = c.at === h.from;
+    return '<button type="button" class="stop' + (H.car === c.id ? " on" : "") + '" data-car="' + c.id + '"' + (here ? " disabled" : "") + '>' + esc(c.name) + " · " + esc(stopName(c.at)) +
+      (busy[c.id] ? '<span class="busy">on another ride until ' + isoM(busy[c.id]) + "</span>" : "") + "</button>"; }).join(""); }
+  return head + '<p class="small dim">Pick a car and how it should fly, or let Claude dispatch. The fleet is simulated, and some cars are still finishing other rides.</p>' +
+    '<span class="k caps faint" style="font-size:10.5px">Nearby cars</span><div class="stops">' + chips(RR.FLEET.filter(function(c){ return near.indexOf(c.id) >= 0; })) + '</div>' +
+    '<span class="k caps faint" style="font-size:10.5px">Farther away</span><div class="stops">' + chips(RR.FLEET.filter(function(c){ return near.indexOf(c.id) < 0; })) + '</div>' +
+    (busy[H.car] ? '<p class="small num" style="color:var(--sun)">' + esc(RR.CAR[H.car].name) + " is on another ride until " + isoM(busy[H.car]) + ", so its pickup can't leave before then.</p>" : "") +
+    '<div class="stops" role="group" aria-label="How to fly"><button type="button" class="stop' + (H.obj !== "time" ? " on" : "") + '" data-hobj="energy">Least energy</button><button type="button" class="stop' + (H.obj === "time" ? " on" : "") + '" data-hobj="time">Fastest</button></div>' +
+    fcHTML(H, Math.max(H.t0, st), H.par_arr_jd || H.arrive_by_jd, Math.max(H.t0, st) + RR.DWELL, false, st > H.t0 ? "car free" : "rider ready") +
+    '<div class="mrow">' + (CAP.sample ? '<button class="btn" type="button" id="h-claude">Let Claude dispatch</button>' : "") + '<button class="btn' + (CAP.sample ? " ghost" : "") + '" type="button" id="h-manual"' + (BUSY ? " disabled" : "") + '>Plan ' + esc(RR.CAR[H.car].name) + '</button></div>' +
+    '<p class="small faint num">Plans used: ' + H.calls + " of " + FREE_PLANS + ' free. Forecasts are free.</p></div>';
+}
+function tickHail(){
+  var H = hail(); if (!H) return;
+  if (!H.started && H.plan && !H.plan.stale){ var ff = firstFar(H.plan.legs), el = $("h-cold");
+    if (ff && sky().jd > ff.dep_jd){ H.plan.stale = true; store(KEY, ME); showOpts(); }
+    else if (ff && el) el.textContent = "The car must leave in " + dur(Math.max(0, ff.dep_jd - sky().jd)) + " (sky time), or the hail goes cold."; }
+  var nx = $("h-next"); if (nx && H.started) nx.textContent = hailNext();
+}
+
+/* ---------- lists ---------- */
+function renderRiders(){
+  var s = sky(), rows = [];
+  if (ME) rows.push(['<span class="dot" style="background:var(--me)"></span>', "<b>You</b> · " + esc(ME.ride ? locName(ME.ride.from) + " → " + PID[ME.ride.to].name : locName(ME.loc)), ME.ride ? '<span class="tag">Riding</span>' : '<span class="tag sim">Parked</span>']);
+  Object.keys(OTHERS).forEach(function(id){ var R = OTHERS[id]; if (!R || !PID[R.to]) return; var live = s.jd < R.arr;
+    rows.push(['<span class="dot" style="background:var(--ride)"></span>', esc(who(id)) + " · " + esc(locName(R.from)) + " → " + esc(PID[R.to].name), '<span class="tag">' + (live ? (s.jd < R.dep ? "Boarding" : "Riding") : "Arrived") + "</span>"]); });
+  PEERS.forEach(function(p){ if (p.sameTab || !p.presence || !p.presence.where || p.presence.where.kind === "ride") return; var w = p.presence.where;
+    rows.push(['<span class="dot" style="background:#cfd6e0"></span>', esc(who(p.by || p.presence.uid)) + " · online at " + esc(w.kind === "ship" ? "a spaceship" : (PID[w.id] || {}).name || "?"), '<span class="tag sim">Online</span>']); });
+  simActive(s.jd).forEach(function(r){ rows.push(['<span class="dot" style="background:var(--sim)"></span>', '<span class="dim">' + esc(r.name) + " · " + esc(PID[r.from].name) + " → " + esc(PID[r.to].name) + "</span>", '<span class="tag sim">Simulated</span>']); });
+  $("riders").innerHTML = rows.map(function(r){ return '<div class="li">' + r.join("") + "</div>"; }).join("") || '<div class="li"><span></span><span class="dim">Nobody yet.</span><span></span></div>';
+}
+function renderStations(){
+  $("st-grid").innerHTML = PL.filter(function(p){ return p.kind === "station"; }).map(function(p){
+    return '<div class="tile"><div class="row"><span class="t">' + esc(p.name) + '</span><span class="tag ' + (p.real ? "real" : "fict") + '">' + (p.real ? "Real" : "Fictional") + '</span></div><p class="small dim">' + esc(p.sub) + '</p><p class="small faint">' + esc(p.note || "") + '</p><div><button class="btn ghost" data-go="' + p.id + '" type="button">Ride here</button></div></div>';
+  }).join("");
+  $("dest").innerHTML = PL.map(function(p){ return '<option value="' + p.id + '">' + esc(p.name) + (p.real ? "" : " (fictional)") + "</option>"; }).join("");
+}
+
+/* ---------- map ---------- */
+var cv = $("sky"), ctx = cv.getContext("2d"), W = 0, H = 0, DPR = 1;
+function resize(){ var r = cv.getBoundingClientRect(); DPR = Math.min(2, window.devicePixelRatio || 1); W = r.width; H = r.height; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); }
+window.addEventListener("resize", resize);
+var Z = { cur: 10.2, target: 10.2, auto: true, tilt: 1, tiltT: 1, mode: "sky", c: 0, cT: 0 };
+var TILT = 1.0; // radians from face-on
+function proj(p){ var t = TILT * Z.tilt; return [p[0], p[1] * Math.cos(t) + p[2] * Math.sin(t)]; }
+var V = { cx: 0, cy: 0, s: 1 };
+var OFF = 0; // desktop: centre the map in the open space between the desk and any ride cards
+function sx(x){ return (x - V.cx) * V.s + W / 2 + OFF; } function sy(y){ return H * 0.52 - (y - V.cy) * V.s; }
+var STARS = (function(){ var a = [], s = 7; function r(){ s = (s * 16807) % 2147483647; return s / 2147483647; } for (var i = 0; i < 420; i++) a.push([r(), r(), r() * r()]); return a; })();
+var ORB = {};
+function orbitPts(id, jd){ var k = id + Math.floor(jd / 200); if (ORB[id] && ORB[id].k === k) return ORB[id].p;
+  var st = E.placeState(id, jd), n = 160, P = E.periodDays(st), pts = [];
+  for (var i = 0; i <= n; i++) pts.push(E.propagate(st.r, st.v, P * DAY * i / n).r);
+  ORB[id] = { k: k, p: pts }; return pts; }
+function line(pts, close){ ctx.beginPath(); for (var i = 0; i < pts.length; i++){ var q = proj(pts[i]), x = sx(q[0]), y = sy(q[1]); if (Math.abs(x) > 4e4 || Math.abs(y) > 4e4) continue; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } if (close) ctx.closePath(); ctx.stroke(); }
+function ball(x, y, r, col, glow){
+  if (glow){ var g = ctx.createRadialGradient(x, y, 0, x, y, r * 4); g.addColorStop(0, glow); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 4, 0, 7); ctx.fill(); }
+  var gr = ctx.createRadialGradient(x - r * .35, y - r * .4, r * .1, x, y, r); gr.addColorStop(0, "#ffffff"); gr.addColorStop(.25, col); gr.addColorStop(1, "#05070a");
+  ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+}
+var LBL = [];
+function label(x, y, t, sub, col, pri){ if (x < -40 || x > W + 40 || y < -40 || y > H + 40) return; LBL.push([x, y, t, sub, col, pri || 0]); }
+function flushLabels(){
+  var used = []; ctx.textAlign = "center"; LBL.sort(function(a, b){ return b[5] - a[5]; });
+  LBL.forEach(function(L){ var x = clamp(L[0], 50, W - 50), y = L[1];
+    if (used.some(function(u){ return Math.abs(u[0] - x) < 70 && Math.abs(u[1] - y) < 26; })) return; used.push([x, y]);
+    ctx.font = "500 10.5px Inter, system-ui, sans-serif"; ctx.fillStyle = L[4] || "rgba(238,241,245,.85)"; ctx.fillText(L[2].toUpperCase().split("").join(String.fromCharCode(8202)), x, y);
+    if (L[3]){ ctx.font = "10px Inter, system-ui, sans-serif"; ctx.fillStyle = "rgba(163,171,182,.75)"; ctx.fillText(L[3], x, y + 13); } });
+  LBL = [];
+}
+var PICK = [];
+function draw(){
+  var s = sky(), jd = s.jd, me = myPos(jd);
+  var width = Math.pow(10, Z.cur), f = smooth((Z.cur - 8.2) / (9.6 - 8.2));
+  Z.cT = Z.mode === "sky" ? 0 : 1 - f; var mp = proj(me); V.cx = mp[0] * Z.c; V.cy = mp[1] * Z.c; V.s = W / width;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.fillStyle = "#06080c"; ctx.fillRect(0, 0, W, H);
+  STARS.forEach(function(st){ ctx.fillStyle = "rgba(255,255,255," + (0.15 + st[2] * 0.6) + ")"; ctx.fillRect(st[0] * W, st[1] * H, st[2] > .5 ? 1.5 : 1, st[2] > .5 ? 1.5 : 1); });
+  PICK = [];
+  // orbits of planets
+  ctx.lineWidth = 1;
+  WORLD.planets.forEach(function(id){ var a = E.placeState(id, jd), rpx = Math.hypot(a.r[0], a.r[1]) * V.s; if (rpx < 5 || rpx > 30 * W) return;
+    ctx.strokeStyle = "rgba(255,255,255,.13)"; line(orbitPts(id, jd), true); });
+  // sun
+  var sun = [sx(0), sy(0)], sr = Math.max(Math.min(clamp(W / 70, 10, 22), 0.45 * 5.79e7 * V.s), 4, 696000 * V.s);
+  if (sr < 3 * W){ var g = ctx.createRadialGradient(sun[0], sun[1], 0, sun[0], sun[1], sr * 6); g.addColorStop(0, "rgba(255,190,110,.55)"); g.addColorStop(.3, "rgba(255,150,60,.12)"); g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sun[0], sun[1], sr * 6, 0, 7); ctx.fill(); ball(sun[0], sun[1], sr, "#ffb65c"); if (V.s * AU > 40) label(sun[0], sun[1] + sr + 18, "Sun"); }
+  // rides: simulated, others, mine
+  function drawRide(R, col, mine, name){
+    if (!R.arc || R.arc.length < 2) return; var pts = R.arc.map(function(p){ return [p[0] * AU, p[1] * AU, p[2] * AU]; });
+    if (!mine && jd > R.dep){ var k = Math.floor((jd - R.dep) / (R.arr - R.dep) * (pts.length - 1)); pts = pts.slice(Math.max(0, k)); } // others: only the road ahead
+    ctx.setLineDash([4, 5]); ctx.strokeStyle = col; ctx.globalAlpha = mine ? .9 : name ? .5 : .22; if (pts.length > 1) line(pts); ctx.setLineDash([]); ctx.globalAlpha = 1;
+    if (jd < R.dep || jd > R.arr) return; var p = proj(ridePos(R, jd)), x = sx(p[0]), y = sy(p[1]);
+    ball(x, y, mine ? 4 : name ? 3 : 2.2, col, mine ? "rgba(255,207,122,.6)" : name ? "rgba(156,195,255,.35)" : null); if (!mine && name) label(x, y - 12, name, null, "rgba(156,195,255,.95)", 2);
+  }
+  simActive(jd).forEach(function(r){ drawRide(r, "#7f8a99", false, null); });
+  Object.keys(OTHERS).forEach(function(id){ var R = OTHERS[id]; if (R && R.arc) drawRide({ from: R.from, to: R.to, dep: R.dep, arr: R.arr, land: R.land, arc: R.arc }, "#9cc3ff", false, who(id)); });
+  if (ME.ride) drawRide(ME.ride, "#ffcf7a", true);
+  // bodies
+  PL.forEach(function(P){
+    if (P.kind === "station" && !P.show_far && V.s * 1e6 < 20) return;
+    var st = E.placeState(P.id, jd), q = proj(st.r), x = sx(q[0]), y = sy(q[1]);
+    if (x < -60 || x > W + 60 || y < -60 || y > H + 60) return;
+    var parentPx = P.parent ? Math.hypot.apply(null, E.sub(st.r, E.placeState(P.parent, jd).r)) * V.s : 1e9;
+    if (P.parent && parentPx < (PID[P.parent] && PID[P.parent].kind === "planet" ? dispR(PID[P.parent]) : 0) + 9) return; // too close to its parent at this zoom
+    var r = Math.max(P.kind === "planet" ? Math.max(2.5, Math.min(dispR(P), 0.3 * Math.hypot(st.r[0], st.r[1]) * V.s)) : P.kind === "station" ? 2.2 : 3, (P.radius_km || 0) * V.s);
+    if (P.kind === "station"){ ctx.fillStyle = P.real ? "#86d9a8" : "#ffb65c"; ctx.fillRect(x - 2.5, y - 2.5, 5, 5); }
+    else { if (P.id === "saturn" && r > 3){ ctx.strokeStyle = "rgba(227,207,154,.7)"; ctx.lineWidth = Math.max(1, r * .18); ctx.beginPath(); ctx.ellipse(x, y, r * 2.2, r * 2.2 * Math.max(.18, Math.cos(TILT * Z.tilt)), -.35, 0, 7); ctx.stroke(); ctx.lineWidth = 1; }
+      ball(x, y, r, P.color || "#9aa3ad", P.kind === "planet" ? "rgba(255,255,255,.06)" : null); }
+    PICK.push([x, y, Math.max(14, r + 6), P.id]);
+    if (P.kind === "planet" || parentPx > 40) label(x, y + r + 16, P.name, P.kind === "planet" || P.kind === "moon" ? away(st.r, me, P) : null, P.kind === "station" ? (P.real ? "rgba(134,217,168,.95)" : "rgba(255,182,92,.95)") : null, P.kind === "planet" ? 3 : 1);
+  });
+  // online peers who are parked somewhere
+  PEERS.forEach(function(p){ if (p.sameTab || !p.presence || !p.presence.where) return; var w = p.presence.where, pos = null;
+    if (w.kind === "place" && PID[w.id]) pos = E.placeState(w.id, jd).r; else if (w.kind === "ship" && w.r) pos = E.propagate(w.r, w.v, (jd - w.jd) * DAY).r; if (!pos) return;
+    var q = proj(pos), x = sx(q[0]) + 6, y = sy(q[1]) - 6; ctx.fillStyle = "#cfd6e0"; ctx.beginPath(); ctx.arc(x, y, 3, 0, 7); ctx.fill(); label(x, y - 10, who(p.by || p.presence.uid), null, "rgba(207,214,224,.9)"); });
+  // you
+  var mq = proj(me), mx = sx(mq[0]), my = sy(mq[1]), pulse = REDUCED ? 0 : (Date.now() % 1600) / 1600;
+  ctx.strokeStyle = "rgba(255,207,122," + (0.7 - pulse * 0.7) + ")"; ctx.beginPath(); ctx.arc(mx, my, 6 + pulse * 16, 0, 7); ctx.stroke();
+  ball(mx, my, 4.5, "#ffcf7a", "rgba(255,207,122,.5)"); label(mx, my - 14, hail() && hail().started && ME.ride ? hail().score.car : "You", null, "#ffcf7a", 9);
+  flushLabels();
+  // scale
+  var km = 120 / V.s, au = km > 3e7, v = au ? km / AU : km, p10 = Math.pow(10, Math.floor(Math.log10(v))), n = v / p10, m = (n >= 5 ? 5 : n >= 2 ? 2 : 1) * p10, px = (au ? m * AU : m) * V.s;
+  var bx = W > 900 ? 388 : 16;
+  ctx.strokeStyle = "rgba(238,241,245,.6)"; ctx.beginPath(); ctx.moveTo(bx, H - 18); ctx.lineTo(bx + px, H - 18); ctx.stroke();
+  ctx.textAlign = "left"; ctx.font = "10.5px Inter, system-ui, sans-serif"; ctx.fillStyle = "rgba(163,171,182,.9)"; ctx.fillText((au ? fmt(m, m < 1 ? 1 : 0) + " AU" : fmt(m) + " km") + (Z.tilt > .5 ? " · tilted view" : "") + " · sizes not to scale", bx, H - 26);
+}
+function dispR(P){ var b = clamp(W / 120, 6, 12); return P.id === "jupiter" || P.id === "saturn" ? b * 1.7 : P.big ? b * 1.3 : b; } // not to scale, like a poster
+function away(r, me, P){ if (!ME.ride && ME.loc.kind === "place" && ME.loc.id === P.id) return "you are here"; var d = Math.hypot.apply(null, E.sub(r, me));
+  return (d >= 1e9 ? fmt(d / 1e9, 1) + "B" : d >= 1e6 ? fmt(d / 1e6, 0) + "M" : d >= 1e3 ? fmt(d / 1e3, 0) + "K" : fmt(d, 0)) + " km"; }
+function skyZoom(){ var jd = sky().jd, far = Math.hypot.apply(null, myPos(jd)); if (ME.ride) far = Math.max(far, Math.hypot.apply(null, placePos(ME.ride.to, jd)));
+  return clamp(Math.log10(far * 2.9), 8.75, 10.15); }
+function youZoom(){
+  if (ME.ride) return Math.min(9.6, Math.max(8.4, Math.log10(Math.hypot.apply(null, E.sub(placePos(ME.ride.to, sky().jd), myPos(sky().jd))) * 2.6)));
+  if (ME.loc.kind === "ship") return 8.8;
+  var P = PID[ME.loc.id]; if (P.zoom) return P.zoom;
+  if (P.parent && P.kind === "moon"){ var jd = sky().jd; return clamp(Math.log10(Math.hypot.apply(null, E.sub(placePos(P.id, jd), placePos(P.parent, jd))) * 3.2), 4.4, 8.5); }
+  return P.kind === "planet" ? 6.6 : P.kind === "station" ? 4.6 : 5.9;
+}
+function setZ(mode){ Z.mode = mode; Z.auto = mode === "you" || mode === "sky"; Z.target = mode === "you" ? youZoom() : mode === "sky" ? skyZoom() : mode === "inner" ? 8.75 : 10.05;
+  document.querySelectorAll(".zoombar .chip").forEach(function(c){ var z = c.dataset.z; if (z === "tilt") return; c.setAttribute("aria-pressed", String(z === mode)); }); }
+document.querySelector(".zoombar").addEventListener("click", function(e){ var c = e.target.closest(".chip"); if (!c) return;
+  if (c.dataset.z === "tilt"){ Z.tiltT = Z.tiltT ? 0 : 1; c.setAttribute("aria-pressed", String(!!Z.tiltT)); } else setZ(c.dataset.z); });
+cv.addEventListener("wheel", function(e){ e.preventDefault(); Z.auto = false; Z.target = clamp(Z.target + e.deltaY * 0.002, 4.2, 10.3); setZ.call(null, "free"); Z.target = clamp(Z.cur + e.deltaY * 0.002, 4.2, 10.3); }, { passive: false });
+var pinch = null;
+cv.addEventListener("touchstart", function(e){ if (e.touches.length === 2) pinch = { d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), z: Z.cur }; }, { passive: true });
+cv.addEventListener("touchmove", function(e){ if (pinch && e.touches.length === 2){ e.preventDefault(); var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); setZ("free"); Z.target = Z.cur = clamp(pinch.z - Math.log10(d / pinch.d), 4.2, 10.3); } }, { passive: false });
+cv.addEventListener("touchend", function(){ pinch = null; });
+var popup = null;
+cv.addEventListener("click", function(e){
+  var r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, best = null;
+  PICK.forEach(function(p){ var d = Math.hypot(p[0] - x, p[1] - y); if (d < p[2] && (!best || d < best[0])) best = [d, p[3], p[0], p[1]]; });
+  if (popup){ popup.remove(); popup = null; } if (!best) return;
+  var P = PID[best[1]]; popup = document.createElement("div"); popup.className = "pick glass";
+  popup.style.left = clamp(best[2] + 14, 8, W - 270) + "px"; popup.style.top = clamp(best[3] - 20, 8, H - 140) + "px";
+  popup.innerHTML = '<span class="tag ' + (P.real ? "real" : "fict") + '" style="align-self:flex-start">' + (P.real ? "Real" : "Fictional") + "</span><b>" + esc(P.name) + '</b><span class="small dim">' + esc(P.sub) + "</span>" +
+    (ME.loc.kind === "place" && ME.loc.id === P.id && !ME.ride ? '<span class="small">You are here.</span>' : '<button class="btn" data-go="' + P.id + '" type="button">Ride here</button>');
+  cv.parentNode.appendChild(popup);
+});
+
+/* ---------- events ---------- */
+document.addEventListener("click", function(e){
+  var g = e.target.closest("[data-go]"); if (g){ var P = PID[g.dataset.go]; if (popup){ popup.remove(); popup = null; } $("q").focus({ preventScroll: true }); ask("Take me to " + P.name + "."); if (innerWidth <= 900) $("chat").scrollIntoView({ block: "center", behavior: REDUCED ? "auto" : "smooth" }); return; }
+  var b = e.target.closest("[data-book]"); if (b){ book(b.dataset.book); return; }
+  var hb = e.target.closest("[data-hail]"); if (hb){ takeHail(hb.dataset.hail); return; }
+  var cb = e.target.closest("[data-car]"); if (cb && hail() && !hail().started && !hail().plan){ hail().car = cb.dataset.car; store(KEY, ME); showOpts(); return; }
+  var ob = e.target.closest("[data-hobj]"); if (ob && hail() && !hail().started){ hail().obj = ob.dataset.hobj; store(KEY, ME); showOpts(); return; }
+  if (e.target.id === "h-claude"){ claudeDispatch(); return; }
+  if (e.target.id === "h-manual"){ manualPlan(); return; }
+  if (e.target.id === "h-dispatch"){ manualDispatch(); return; }
+  var qb = e.target.closest("[data-qbuf]"); if (qb && hail() && hail().plan && !hail().started){ var HP = hail().plan, R1 = HP.legs[1], n = +qb.dataset.qbuf, base = quoteJd(HP.quote);
+    HP.quote = isoM(n ? (base == null ? R1.arr_jd : base) + n / 24 : R1.arr_jd); store(KEY, ME); showOpts(); return; }
+  if (e.target.id === "h-replan" && hail()){ hail().plan = null; store(KEY, ME); showOpts(); return; }
+  if (e.target.id === "h-drop"){ if (ME.ride && !confirm("Abandon the hail? The car stops where it is.")) return; if (ME.ride && sky().jd > ME.ride.dep){ ME.loc = { kind: "ship", jd: sky().jd, r: myPos(sky().jd), v: [0, 0, 0] }; } ME.ride = null; clearMyRide(); dropHail("Hail abandoned."); renderYou(); presence(); return; }
+  if (e.target.id === "h-done"){ dropHail(); renderYou(); return; }
+  var q = e.target.closest("[data-q]"); if (q){ ask(q.dataset.q, true); return; }
+  var o = e.target.closest("[data-obj]"); if (o){ direct($("dest").value, o.dataset.obj); return; }
+  if (e.target.id === "respawn"){ if (ME.ride && !confirm("Leave your ride and respawn somewhere random?")) return; clearMyRide(); OPTS = {}; spawn(); ME.hail = null; ME.trip = null; store(KEY, ME); renderHails(); showOpts(); setZ("sky"); addMsg("sys", "You respawned: " + $("you-where").textContent + "."); return; }
+  if (e.target.id === "cancel"){ var R = ME.ride; if (sky().jd > R.dep){ ME.loc = { kind: "ship", jd: sky().jd, r: myPos(sky().jd), v: E.rideVelocity ? E.rideVelocity(R, sky().jd) : [0, 0, 0] }; } ME.ride = null; ME.trip = null; var wasH = !!hail(); ME.hail = null; store(KEY, ME); clearMyRide(); renderYou(); showOpts(); renderHails(); presence(); toast(wasH ? "Ride cancelled. The hail was abandoned." : "Ride cancelled."); }
+});
+$("ask").addEventListener("submit", function(e){ e.preventDefault(); ask($("q").value); });
+document.addEventListener("input", function(e){ // the arrival the player promises; checked on Dispatch
+  if (e.target.id !== "h-quote" || !hail() || !hail().plan) return; hail().plan.quote = e.target.value; store(KEY, ME); e.target.classList.toggle("bad", quoteJd(e.target.value) == null); });
+
+/* ---------- loop ---------- */
+var last = performance.now(), slow = 0;
+function frame(now){
+  var dt = Math.min(.1, (now - last) / 1000); last = now;
+  if (Z.auto) Z.target = Z.mode === "sky" ? skyZoom() : youZoom();
+  Z.c += (Z.cT - Z.c) * Math.min(1, REDUCED ? 1 : dt * 1.6);
+  Z.cur += (Z.target - Z.cur) * Math.min(1, REDUCED ? 1 : dt * 1.6); Z.tilt += (Z.tiltT - Z.tilt) * Math.min(1, dt * 3);
+  var offT = W > 900 ? (364 + ($("choose").childElementCount ? W - 424 : W)) / 2 - W / 2 : 0; OFF += (offT - OFF) * Math.min(1, REDUCED ? 1 : dt * 2.5);
+  draw();
+  if ((slow += dt) > .5){ slow = 0; var s = sky(); $("skydate").textContent = "Season " + s.season + " · " + isoJD(s.jd); tickRide(); tickHail(); }
+  requestAnimationFrame(frame);
+}
+resize(); renderStations(); loadMe(); renderDeskMode(); renderRiders(); showOpts(); renderHails(); renderBoard();
+if (!E){ $("eng-note").textContent = "The planner engine didn't load."; }
+addMsg("bot", '<div class="who">Starfare dispatch</div><div class="body">Welcome aboard. You spawned at <b>' + esc($("you-where").textContent) + "</b>. Tell me where you want to go, or tap a place on the map.</div>");
+setZ("sky");
+setInterval(renderRiders, 5000);
+requestAnimationFrame(frame);
+startShared();
+})();
+</script>

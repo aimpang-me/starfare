@@ -1,0 +1,335 @@
+[
+ {
+  "id": 1,
+  "calls": null,
+  "results": []
+ },
+ {
+  "id": 2,
+  "calls": [
+   {
+    "dest": "mars",
+    "dep_from": "2026-10-15",
+    "dep_to": "2026-12-24",
+    "objective": "c3"
+   }
+  ],
+  "results": [
+   {
+    "ok": true,
+    "dest": "mars",
+    "depart": "2026-11-01",
+    "arrive": "2027-08-18",
+    "tof_days": 290.0,
+    "c3_km2s2": 9.19,
+    "vinf_arrival_kms": 2.75,
+    "launchable": true,
+    "feasible_solves": 10542,
+    "model": "direct 0-rev Lambert, DE421, unchecked (no n-body yet)"
+   }
+  ]
+ },
+ {
+  "id": 3,
+  "calls": [
+   {
+    "dest": "mars",
+    "dep_from": "2026-10-15",
+    "dep_to": "2027-01-31",
+    "max_c3": 15,
+    "objective": "tof"
+   }
+  ],
+  "results": [
+   {
+    "ok": true,
+    "dest": "mars",
+    "depart": "2026-11-12",
+    "arrive": "2027-05-31",
+    "tof_days": 200.0,
+    "c3_km2s2": 14.97,
+    "vinf_arrival_kms": 5.95,
+    "launchable": true,
+    "feasible_solves": 1068,
+    "model": "direct 0-rev Lambert, DE421, unchecked (no n-body yet)"
+   }
+  ]
+ },
+ {
+  "id": 4,
+  "calls": [
+   {
+    "dest": "mars",
+    "dep_from": "2026-10-15",
+    "dep_to": "2027-01-31",
+    "objective": "vinf_arr",
+    "weekend": true
+   }
+  ],
+  "results": [
+   {
+    "ok": true,
+    "dest": "mars",
+    "depart": "2026-11-01",
+    "arrive": "2027-09-07",
+    "tof_days": 310.0,
+    "c3_km2s2": 9.27,
+    "vinf_arrival_kms": 2.57,
+    "launchable": true,
+    "feasible_solves": 4757,
+    "model": "direct 0-rev Lambert, DE421, unchecked (no n-body yet)"
+   }
+  ]
+ },
+ {
+  "id": 5,
+  "calls": [
+   {
+    "dest": "jupiter",
+    "dep_from": "2027-01-01",
+    "dep_to": "2027-12-31",
+    "objective": "c3"
+   }
+  ],
+  "results": [
+   {
+    "ok": true,
+    "dest": "jupiter",
+    "depart": "2027-12-06",
+    "arrive": "2031-07-28",
+    "tof_days": 1330.0,
+    "c3_km2s2": 79.06,
+    "vinf_arrival_kms": 6.15,
+    "launchable": true,
+    "feasible_solves": 18000,
+    "model": "direct 0-rev Lambert, DE421, unchecked (no n-body yet)"
+   }
+  ]
+ },
+ {
+  "id": 6,
+  "calls": null,
+  "results": []
+ },
+ {
+  "id": 7,
+  "calls": null,
+  "results": []
+ },
+ {
+  "id": 8,
+  "calls": [
+   {
+    "dest": "mars",
+    "dep_from": "2028-01-01",
+    "dep_to": "2028-12-31",
+    "max_c3": 17,
+    "objective": "c3"
+   }
+  ],
+  "results": [
+   {
+    "ok": true,
+    "dest": "mars",
+    "depart": "2028-12-09",
+    "arrive": "2029-11-04",
+    "tof_days": 330.0,
+    "c3_km2s2": 9.0,
+    "vinf_arrival_kms": 3.73,
+    "launchable": true,
+    "feasible_solves": 360,
+    "model": "direct 0-rev Lambert, DE421, unchecked (no n-body yet)"
+   }
+  ]
+ },
+ {
+  "id": 9,
+  "calls": null,
+  "results": []
+ },
+ {
+  "id": 10,
+  "calls": null,
+  "results": []
+ },
+ {
+  "id": 11,
+  "calls": [
+   {
+    "dest": "mars",
+    "dep_from": "2026-10-15",
+    "dep_to": "2027-01-31",
+    "objective": "c3"
+   }
+  ],
+  "results": [
+   {
+    "ok": true,
+    "dest": "mars",
+    "depart": "2026-11-01",
+    "arrive": "2027-08-18",
+    "tof_days": 290.0,
+    "c3_km2s2": 9.19,
+    "vinf_arrival_kms": 2.75,
+    "launchable": true,
+    "feasible_solves": 16204,
+    "model": "direct 0-rev Lambert, DE421, unchecked (no n-body yet)"
+   }
+  ]
+ },
+ {
+  "id": 12,
+  "calls": null,
+  "results": []
+ },
+ {
+  "id": 13,
+  "calls": [
+   {
+    "dest": "neptune",
+    "dep_from": "2026-10-15",
+    "dep_to": "2028-10-15",
+    "objective": "c3"
+   },
+   {
+    "dest": "uranus",
+    "dep_from": "2026-10-15",
+    "dep_to": "2028-10-15",
+    "objective": "c3"
+   }
+  ],
+  "results": [
+   {
+    "ok": true,
+    "dest": "neptune",
+    "depart": "2027-06-09",
+    "arrive": "2031-07-18",
+    "tof_days": 1500.0,
+    "c3_km2s2": 542.05,
+    "vinf_arrival_kms": 32.99,
+    "launchable": false,
+    "feasible_solves": 18029,
+    "model": "direct 0-rev Lambert, DE421, unchecked (no n-body yet)"
+   },
+   {
+    "ok": true,
+    "dest": "uranus",
+    "depart": "2028-08-08",
+    "arrive": "2032-09-16",
+    "tof_days": 1500.0,
+    "c3_km2s2": 243.16,
+    "vinf_arrival_kms": 19.74,
+    "launchable": false,
+    "feasible_solves": 17926,
+    "model": "direct 0-rev Lambert, DE421, unchecked (no n-body yet)"
+   }
+  ]
+ },
+ {
+  "id": 14,
+  "calls": null,
+  "results": []
+ },
+ {
+  "id": 15,
+  "calls": [
+   {
+    "dest": "mars",
+    "dep_from": "2026-10-15",
+    "dep_to": "2027-01-31",
+    "objective": "c3"
+   }
+  ],
+  "results": [
+   {
+    "ok": true,
+    "dest": "mars",
+    "depart": "2026-11-01",
+    "arrive": "2027-08-18",
+    "tof_days": 290.0,
+    "c3_km2s2": 9.19,
+    "vinf_arrival_kms": 2.75,
+    "launchable": true,
+    "feasible_solves": 16204,
+    "model": "direct 0-rev Lambert, DE421, unchecked (no n-body yet)"
+   }
+  ]
+ },
+ {
+  "id": 16,
+  "calls": null,
+  "results": []
+ },
+ {
+  "id": 17,
+  "calls": [
+   {
+    "dest": "jupiter",
+    "dep_from": "2026-10-15",
+    "dep_to": "2027-02-09",
+    "arr_by": "2027-02-10",
+    "objective": "tof"
+   }
+  ],
+  "results": [
+   {
+    "ok": true,
+    "dest": "jupiter",
+    "depart": "2026-10-15",
+    "arrive": "2026-11-04",
+    "tof_days": 20.0,
+    "c3_km2s2": 225830.37,
+    "vinf_arrival_kms": 496.84,
+    "launchable": false,
+    "feasible_solves": 540,
+    "model": "direct 0-rev Lambert, DE421, unchecked (no n-body yet)"
+   }
+  ]
+ },
+ {
+  "id": 18,
+  "calls": [
+   {
+    "dest": "mars",
+    "dep_from": "2026-10-15",
+    "dep_to": "2027-01-31",
+    "max_tof": 1,
+    "objective": "tof"
+   }
+  ],
+  "results": [
+   {
+    "ok": false,
+    "error": "no feasible direct transfer under these constraints",
+    "solves_feasible": 0,
+    "scanned": "2026-10-15..2027-01-31, TOF 20-1.0 d"
+   }
+  ]
+ },
+ {
+  "id": 19,
+  "calls": null,
+  "results": []
+ },
+ {
+  "id": 20,
+  "calls": [
+   {
+    "dest": "mercury",
+    "dep_from": "2026-10-15",
+    "dep_to": "2027-02-14",
+    "arr_from": "2027-01-01",
+    "arr_by": "2027-02-14",
+    "max_c3": 20
+   }
+  ],
+  "results": [
+   {
+    "ok": false,
+    "error": "no feasible direct transfer under these constraints",
+    "solves_feasible": 0,
+    "scanned": "2026-10-15..2027-02-14, TOF 20-1500 d"
+   }
+  ]
+ }
+]

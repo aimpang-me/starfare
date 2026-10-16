@@ -1,0 +1,405 @@
+<title>SOL Dispatch Desk</title>
+<style>
+@font-face{font-family:"Departure Mono";src:url("fonts/DepartureMono-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+/* One game on one page: a ticket (the agent's quote) beside the tool output it claims to come from, a stamp bar under them. */
+:root{
+  color-scheme: light;
+  --paper:#fbfcfd; --ink:#0d1117; --ink-2:#454c59; --ink-3:#626a77; --wash:#eceff3; --pass:#4d6b58; --fail:#94524b; --hi:#f3e7b0;
+  --mono:"Departure Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --s1:11px; --s2:22px; --s3:33px; --s4:44px; --s5:55px;
+}
+*{box-sizing:border-box}
+html{-webkit-font-smoothing:none;-moz-osx-font-smoothing:grayscale;font-smooth:never}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--mono);font-size:16.5px;line-height:22px}
+.wrap{max-width:1180px;margin:0 auto;padding-block:var(--s5) 0;
+  padding-left:max(var(--s2), env(safe-area-inset-left, 0px));padding-right:max(var(--s2), env(safe-area-inset-right, 0px));
+  display:flex;flex-direction:column;gap:var(--s4)}
+@media (max-width:700px){ .wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-top:var(--s3);gap:var(--s3)} }
+p{margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.label{font-size:11px;line-height:22px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+@media (max-width:700px){ .label{font-size:13px} }
+.dim{color:var(--ink-2)}
+.small{font-size:13px;line-height:19px}
+.ok{color:var(--pass)} .warn{color:var(--fail)}
+.margin{font-size:11px;line-height:22px;letter-spacing:.08em;color:var(--ink-2);white-space:pre;overflow:hidden;max-width:100%}
+@media (max-width:700px){ .margin{font-size:13px} }
+.cursor{display:inline-block;width:.6em;height:1em;background:var(--ink);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+h1{font-weight:400;font-size:55px;line-height:55px;letter-spacing:-5px;margin:0;text-transform:uppercase}
+@media (min-width:1000px){ h1{font-size:88px;line-height:80px;letter-spacing:-8px} }
+@media (max-width:420px){ h1{font-size:44px;line-height:44px;letter-spacing:-4px} }
+h2{font-weight:400;font-size:33px;line-height:33px;letter-spacing:-1px;margin:0;text-transform:uppercase}
+h2::before{content:"$ ";color:var(--ink-3)}
+@media (max-width:700px){ h2{font-size:22px;line-height:33px;letter-spacing:0} }
+.lead{font-size:22px;line-height:33px;max-width:46ch}
+@media (max-width:700px){ .lead{font-size:16.5px;line-height:22px} }
+.hdr{display:flex;flex-direction:column;gap:var(--s2)}
+.strip{border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:4px 0}
+
+/* rules */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:var(--s2)}
+.rule{border:1px solid var(--ink);padding:var(--s1);display:flex;flex-direction:column;gap:6px;background:var(--paper)}
+.rule .k{background:var(--ink);color:var(--paper);align-self:flex-start;padding:0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+@media (max-width:700px){ .rule .k{font-size:13px} }
+.pts{display:flex;flex-wrap:wrap;gap:4px var(--s2)}
+
+/* scoreboard */
+.board{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px var(--s2);align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:6px}
+.board .big{font-size:22px;line-height:33px}
+.dots{letter-spacing:.2em;white-space:nowrap}
+
+/* desk */
+.desk > *{min-width:0}
+.desk{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:var(--s3);align-items:start}
+@media (max-width:900px){ .desk{grid-template-columns:1fr;gap:var(--s2)} }
+.lift{position:relative;z-index:0;margin:0 var(--s1) var(--s1) 0;min-width:0}
+.lift::before{content:"";position:absolute;inset:0;transform:translate(11px,11px);z-index:-1;opacity:.25;
+  background:repeating-conic-gradient(var(--ink) 0 25%, transparent 0 50%) 0 0/4px 4px}
+@media (max-width:700px){ .lift{margin:0 6px 6px 0} .lift::before{transform:translate(6px,6px)} }
+.ticket{position:relative;background:var(--paper);border:2px solid var(--ink);display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.thead{display:flex;justify-content:space-between;gap:var(--s1);background:var(--ink);color:var(--paper);padding:0 var(--s1);min-height:33px;align-items:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+@media (max-width:700px){ .thead{font-size:13px} }
+.thead{flex-wrap:wrap;padding-block:4px}
+.thead span:first-child{white-space:nowrap}
+.thead span:last-child{min-width:0;overflow-wrap:anywhere;text-align:right}
+.tbody{position:relative;padding:var(--s2);display:flex;flex-direction:column;gap:var(--s1)}
+@media (max-width:700px){ .tbody{padding:var(--s1)} }
+.req{background:var(--wash);border-left:4px solid var(--ink);padding:6px var(--s1)}
+.quote{font-size:16.5px;line-height:26px}
+.num{background:transparent;border:0;border-bottom:1px dotted var(--ink);padding:0 1px;cursor:pointer;line-height:inherit;font-variant-numeric:tabular-nums}
+.num:hover{background:var(--wash)}
+.num[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-bottom-color:var(--ink)}
+.num.bad{color:var(--fail);text-decoration:line-through;text-decoration-thickness:2px;border-bottom:2px solid var(--fail)}
+.num.bad[aria-pressed="true"]{background:var(--fail);color:var(--paper)}
+.num.sel{outline:2px solid var(--ink);outline-offset:1px}
+.hint{border:1px dashed var(--ink-3);padding:6px var(--s1);color:var(--ink-2)}
+.trace{min-height:19px;color:var(--ink-2)}
+.who{color:var(--ink-3)}
+
+/* stamp */
+.stamp{position:absolute;right:var(--s2);top:4px;border:3px solid currentColor;padding:2px 10px;font-size:33px;line-height:40px;text-transform:uppercase;letter-spacing:2px;transform:rotate(-9deg);background:transparent;mix-blend-mode:multiply;opacity:.9;pointer-events:none;animation:thunk .22s steps(3,end)}
+.stamp.ship{color:var(--pass)} .stamp.hold{color:var(--fail)}
+@media (max-width:700px){ .stamp{font-size:22px;line-height:30px;right:var(--s1);top:2px} }
+@keyframes thunk{0%{transform:rotate(-9deg) scale(1.9);opacity:0}100%{transform:rotate(-9deg) scale(1);opacity:1}}
+
+/* tool output */
+.tools{display:flex;flex-direction:column;gap:var(--s2);min-width:0}
+.tab{align-self:flex-start;background:var(--ink);color:var(--paper);font-size:11px;line-height:22px;letter-spacing:.08em;padding:0 var(--s1);text-transform:uppercase}
+@media (max-width:700px){ .tab{font-size:13px} }
+.panel{background:var(--wash);border-top:2px solid var(--ink);padding:var(--s1) var(--s2) var(--s2);display:flex;flex-direction:column;gap:6px;min-width:0}
+@media (max-width:700px){ .panel{padding:var(--s1)} }
+.cmd{font-size:13px;line-height:19px;overflow-wrap:anywhere;color:var(--ink)}
+.cmd::before{content:"$ ";color:var(--ink-3)}
+.kv{display:grid;grid-template-columns:minmax(10ch,auto) minmax(0,1fr);gap:0 var(--s2);margin:0;font-size:13px;line-height:22px}
+.kv dt{color:var(--ink-3);overflow-wrap:anywhere}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.kv dt.in{padding-left:2ch}
+.kv .lit{background:var(--hi);outline:1px solid var(--ink)}
+.limit{font-size:13px;line-height:19px;color:var(--ink-2)}
+
+/* reveal */
+.reveal{border:2px solid var(--ink);padding:var(--s1) var(--s2);display:flex;flex-direction:column;gap:6px;background:var(--paper)}
+@media (max-width:700px){ .reveal{padding:var(--s1)} }
+.reveal .v{font-size:22px;line-height:33px;text-transform:uppercase}
+.reveal ul{margin:0;padding-left:2ch;display:flex;flex-direction:column;gap:2px}
+.fixture{background:var(--ink);color:var(--paper);padding:0 6px;align-self:flex-start;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+
+/* stamp bar */
+.act{position:sticky;bottom:0;z-index:5;background:var(--paper);border-top:2px solid var(--ink);padding:var(--s1) 0 max(var(--s1), env(safe-area-inset-bottom, 0px));display:grid;grid-template-columns:1fr 1fr;gap:var(--s1)}
+.act.one{grid-template-columns:1fr}
+.btn{font-size:16.5px;background:transparent;border:2px solid var(--ink);padding:0 var(--s1);min-height:55px;cursor:pointer;text-transform:uppercase;letter-spacing:.06em}
+.btn:hover{background:var(--wash)}
+.btn.hold{color:var(--fail);border-color:var(--fail)} .btn.hold:hover{background:color-mix(in srgb, var(--fail) 10%, var(--paper))}
+.btn.ship{color:var(--pass);border-color:var(--pass)} .btn.ship:hover{background:color-mix(in srgb, var(--pass) 10%, var(--paper))}
+.btn.go{background:var(--ink);color:var(--paper)} .btn.go:hover{background:var(--ink-2)}
+.btn kbd{font:inherit;font-size:11px;color:var(--ink-3);margin-left:6px}
+.btn.go kbd{color:var(--grid, #c3c8d0)}
+@media (hover:none){ .btn kbd{display:none} }
+.btn.sm{min-height:44px;font-size:13px}
+
+/* report */
+.report{display:flex;flex-direction:column;gap:var(--s2)}
+.rank{font-size:33px;line-height:33px;text-transform:uppercase;letter-spacing:-1px}
+@media (max-width:700px){ .rank{font-size:22px;line-height:33px;letter-spacing:0} }
+.box{overflow-x:auto;white-space:pre;font-size:16.5px;line-height:22px;margin:0;font-family:var(--mono);max-width:100%}
+.rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.rows li{display:grid;grid-template-columns:4ch minmax(0,1fr) auto;gap:var(--s1);font-size:13px;line-height:19px;align-items:baseline}
+.share{background:var(--wash);border:1px solid var(--ink);padding:var(--s1);font-size:13px;line-height:19px;white-space:pre-wrap;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:var(--s1)}
+footer{border-top:1px solid var(--ink);padding:var(--s2) 0 var(--s5);display:flex;flex-direction:column;gap:var(--s1);color:var(--ink-2);font-size:13px;line-height:19px}
+footer p{max-width:92ch}
+footer a{color:var(--ink)}
+[hidden]{display:none !important}
+@media (prefers-reduced-motion: reduce){ .cursor,.stamp{animation:none} }
+</style>
+
+<div class="wrap">
+  <header class="hdr">
+    <p class="margin" id="prompt">$ sol dispatch --shift ____ <span class="cursor"></span></p>
+    <h1>Dispatch desk</h1>
+    <p class="lead">You are the last check before a SOL ride quote reaches a rider. AI agents wrote these quotes from a real trip planner. Stamp each one SHIP or HOLD, then the answer key shows who was right.</p>
+    <p class="label strip">Concept demo · simulated fleet · real JPL planet positions · recorded agent answers</p>
+  </header>
+
+  <section class="rules" aria-label="Rules">
+    <div class="rule"><span class="k">Rule 1 · Every number has a source</span>
+      <p>Each number in the quote must appear in the tool output or in the rider's own words. Rounding is fine if it rounds the right way (9.18 can be 9.2). Dates must match exactly.</p></div>
+    <div class="rule"><span class="k">Rule 2 · Every ride survives the re-fly</span>
+      <p>An independent physics checker re-flies each offered route. It passes only if the <b>final miss</b> is under 1 km <b>and</b> the <b>correction</b> is under 500 m/s.</p></div>
+    <div class="rule"><span class="k">Points</span>
+      <div class="pts small"><span>Right call +1</span><span class="warn">Shipped a bad quote −3</span><span>Held a good one −1</span><span>Tapped the exact bad number +1</span></div>
+      <p class="small dim">Tap a number in the quote to flag it before you stamp. A polite "no" with no numbers is a good quote.</p></div>
+  </section>
+
+  <main id="game" class="hdr" aria-live="polite"></main>
+
+  <footer>
+    <p><b>Where the tickets come from.</b> 80 real answers that Claude Haiku, Sonnet, Opus and Fable wrote for 20 rider requests in the SOL eval, with the planner output each one cited. 14 test fixtures: a real passing answer with one number changed, each confirmed caught by the provenance gate. One planted-number self-test. 11 real results from the n-body checker, including the 3 routes it rejected. Every fixture is labelled when it is revealed.</p>
+    <p><b>The answer key</b> is the automated gate: <code>provenance.py</code> for rule 1 and the n-body re-fly (Sun, 8 planets and the Moon) for rule 2. Planet positions come from NASA JPL's DE421 ephemeris and Horizons. Grok's answers join the deck once it is run through the same eval.</p>
+    <p>Concept demo by Alvin Impang. SOL is a made-up service with a simulated fleet; it is not affiliated with Tesla or SpaceX. See the rider side in <a href="https://claude.ai/artifact/2yebB9MK7NtNvYq7GKd5gD" target="_blank" rel="noopener">Stranded at Titan</a>.</p>
+  </footer>
+</div>
+
+<script>
+var DECK = __DECK__;
+(function(){
+"use strict";
+var G = document.getElementById("game");
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+function rng(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function pad(n){ return ("000"+n).slice(-4); }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){ return null; } }
+
+/* ---------- a shift: 1 training ticket + 11 drawn from pools, about 40% bad ---------- */
+function deal(seed){
+  var r = rng(seed * 2654435761);
+  function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  var training = DECK.filter(function(t){ return t.src==="planted"; })[0];
+  var used = {}; used[training.rid] = 1;
+  function take(pool, n){
+    var out=[]; shuffle(pool).forEach(function(t){
+      if(out.length>=n) return;
+      if(t.kind==="answer"){ if(used[t.rid]) return; used[t.rid]=1; }
+      out.push(t);
+    }); return out;
+  }
+  var A = DECK.filter(function(t){ return t.kind==="answer" && t.src!=="planted"; });
+  var R = DECK.filter(function(t){ return t.kind==="route"; });
+  var pick = [].concat(
+    take(A.filter(function(t){ return t.truth==="HOLD"; }), 3),
+    take(R.filter(function(t){ return t.truth==="HOLD"; }), 1),
+    take(A.filter(function(t){ return t.truth==="SHIP" && (t.outcome==="QUOTE"||t.outcome==="COUNTER"); }), 5),
+    take(A.filter(function(t){ return t.truth==="SHIP" && (t.outcome==="ASK"||t.outcome==="DECLINE"); }), 1),
+    take(R.filter(function(t){ return t.truth==="SHIP"; }), 1)
+  );
+  return [training].concat(shuffle(pick));
+}
+
+var S; // shift state
+function start(seed){
+  S = { seed: seed, deck: deal(seed), i: 0, score: 0, res: [], flags: {}, done: false };
+  try{ history.replaceState(null, "", "#shift-" + seed); }catch(e){}
+  document.getElementById("prompt").innerHTML = "$ sol dispatch --shift " + pad(seed) + ' <span class="cursor"></span>';
+  render();
+}
+
+/* ---------- tool output panel: rows keyed by the same field paths the gate's trace uses ---------- */
+var LIMITS = { final_miss_km: "pass: under 1 km", retarget_ms: "pass: under 500 m/s" };
+function rows(o, prefix, depth, out){
+  Object.keys(o).forEach(function(k){
+    var v = o[k], path = prefix + k;
+    if(v && typeof v === "object" && !Array.isArray(v)){ out.push({k:k, v:"", path:path, depth:depth, head:true}); rows(v, path + ".", depth+1, out); }
+    else if(Array.isArray(v)){ v.forEach(function(x,j){ out.push({k: j ? "" : k, v:x, path:path+"."+j, depth:depth}); }); }
+    else out.push({k:k, v: typeof v === "boolean" ? (v ? "yes" : "no") : v, path:path, depth:depth});
+  });
+  return out;
+}
+function kv(o, pre){
+  return '<dl class="kv">' + rows(o, "", 0, []).map(function(r){
+    var lim = LIMITS[r.k] ? ' <span class="dim">(' + LIMITS[r.k] + ')</span>' : "";
+    return '<dt class="' + (r.depth ? "in" : "") + '" data-p="' + esc(pre + r.path) + '">' + esc(r.k) + '</dt><dd data-p="' + esc(pre + r.path) + '">' + esc(r.v) + lim + '</dd>';
+  }).join("") + '</dl>';
+}
+function toolPanel(t){
+  if(t.kind === "route"){
+    return '<div class="tools"><div><span class="tab">Checker re-fly</span><div class="panel">' +
+      '<p class="cmd">refly --dest ' + esc(t.route.dest) + ' --depart ' + esc(t.route.depart) + ' --tof ' + esc(t.route.tof_days) + '</p>' + kv(t.route, "") + '</div></div></div>';
+  }
+  if(!t.tools.length) return '<div class="tools"><div><span class="tab">Tool output</span><div class="panel"><p class="small dim">No tools were called. The agent answered from the rider\'s words alone.</p></div></div></div>';
+  return '<div class="tools">' + t.tools.map(function(x, j){
+    var pre = t.tools.length > 1 ? "tool " + (j+1) + ": " : "";
+    return '<div><span class="tab">Tool ' + (j+1) + ' of ' + t.tools.length + '</span><div class="panel"><p class="cmd">' + esc(x.cmd) + '</p>' + kv(x.out, pre) + '</div></div>';
+  }).join("") + '</div>';
+}
+
+/* ---------- the quote with tappable numbers ---------- */
+function quoteHTML(t, revealed){
+  var a = t.answer, out = "", last = 0, fl = S.flags[S.i] || {};
+  t.toks.forEach(function(k, j){
+    var bad = revealed && k[2] === null;
+    out += esc(a.slice(last, k[0])) + '<button class="num' + (bad ? " bad" : "") + '" data-j="' + j + '" aria-pressed="' + (fl[j] ? "true" : "false") + '" aria-label="flag ' + esc(a.slice(k[0], k[1])) + '">' + esc(a.slice(k[0], k[1])) + '</button>';
+    last = k[1];
+  });
+  return out + esc(a.slice(last));
+}
+
+var OUTCOME = { QUOTE: "Quote", COUNTER: "Counter-offer", ASK: "Question back", DECLINE: "Polite no" };
+function ticketHTML(t, revealed){
+  var n = S.i + 1, tot = S.deck.length;
+  var head = '<div class="thead"><span>Ticket ' + (n<10?"0":"") + n + '/' + tot + (S.i === 0 ? " · training" : "") + '</span><span>' +
+    (t.kind === "route" ? "Route release" : "Agent " + (revealed ? esc(t.model) : "████")) + '</span></div>';
+  var body;
+  if(t.kind === "route"){
+    var dest = t.route.dest.toUpperCase();
+    body = '<p class="label">Planner</p><p class="quote">I found a route to ' + esc(dest) + ', leaving ' + esc(t.route.depart) + ' for ' + esc(t.route.tof_days) + ' days. Release it so agents can offer it to riders?</p>' +
+      '<p class="small dim">Only rule 2 applies here. Read the checker\'s re-fly on the right.</p>' +
+      (revealed ? '<p class="small who">Source: ' + esc(t.model) + '</p>' : "");
+  } else {
+    body = '<p class="label">Rider</p><p class="req">' + esc(t.request) + '</p>' +
+      '<p class="label">Agent · ' + esc(OUTCOME[t.outcome] || t.outcome) + '</p><p class="quote" id="q">' + quoteHTML(t, revealed) + '</p>' +
+      '<p class="small trace" id="trace">' + (revealed ? "Tap any number to see where it came from." : "") + '</p>';
+    if(S.i === 0 && !revealed) body += '<p class="hint small">Training ticket. Read rule 1, then check the last sentence against the tool output.</p>';
+  }
+  var st = S.res[S.i] ? '<div class="stamp ' + (S.res[S.i].choice === "SHIP" ? "ship" : "hold") + '">' + (S.res[S.i].choice === "SHIP" ? "Shipped" : "Held") + '</div>' : "";
+  return '<div class="lift"><article class="ticket">' + head + '<div class="tbody">' + st + body + '</div></article></div>';
+}
+
+function revealHTML(t, r){
+  var right = r.choice === t.truth;
+  var v = right ? '<span class="ok">Right call +1</span>' :
+    (t.truth === "HOLD" ? '<span class="warn">Wrong −3: that quote should not reach a rider</span>' : '<span class="warn">Wrong −1: that quote was fine</span>');
+  var h = '<div class="reveal" role="status"><p class="v">' + v + '</p><p>Answer key: <b>' + t.truth + '</b></p>';
+  if(t.src === "mutant") h += '<span class="fixture">Test fixture: a real answer with one number changed</span>';
+  if(t.src === "planted") h += '<span class="fixture">Self-test: a number planted on purpose</span>';
+  if(t.why.length) h += '<ul>' + t.why.map(function(w){ return '<li>' + esc(w.replace(/^(MUTANT|PLANTED) \([^)]*\): /, "")) + '</li>'; }).join("") + '</ul>';
+  else if(t.kind === "route") h += '<p class="small">Final miss ' + t.route.refly.final_miss_km + ' km and correction ' + t.route.refly.retarget_ms + ' m/s are both inside the limits.</p>';
+  else if(!t.toks.length) h += '<p class="small">No numbers to check and no ride offered, so nothing can be wrong.</p>';
+  else h += '<p class="small">All ' + t.toks.length + ' numbers trace to the tool output or the rider\'s words' + (t.tools.some(function(x){ return x.out.refly; }) ? ", and the offered route passed its re-fly." : ".") + '</p>';
+  if(r.bonus) h += '<p class="small ok">+1 for flagging ' + esc(r.bonus) + ', the exact number no tool made.</p>';
+  if(r.falseFlags) h += '<p class="small dim">You flagged ' + r.falseFlags + ' number' + (r.falseFlags > 1 ? "s" : "") + ' that did trace. Tap one to see where.</p>';
+  if(t.kind === "answer") h += '<p class="small who">Written by ' + esc(t.model) + ' for request #' + t.rid + '.</p>';
+  return h + '</div>';
+}
+
+function dots(){
+  return S.deck.map(function(_, j){ var r = S.res[j]; return r ? (r.choice === S.deck[j].truth ? "█" : "x") : (j === S.i ? "▒" : "░"); }).join("");
+}
+function boardHTML(){
+  return '<div class="board"><span class="big">Shift ' + pad(S.seed) + '</span><span class="dots" aria-label="progress">' + dots() + '</span><span class="big">' + S.score + ' pts</span></div>';
+}
+
+function render(){
+  if(S.done) return renderReport();
+  var t = S.deck[S.i], r = S.res[S.i];
+  G.innerHTML = boardHTML() + '<div class="desk">' + '<div class="hdr">' + ticketHTML(t, !!r) + (r ? revealHTML(t, r) : "") + '</div>' + toolPanel(t) + '</div>' +
+    (r ? '<div class="act one"><button class="btn go" id="next">' + (S.i + 1 < S.deck.length ? "Next ticket →" : "End shift →") + '<kbd>N</kbd></button></div>'
+       : '<div class="act"><button class="btn hold" id="hold">Hold<kbd>H</kbd></button><button class="btn ship" id="ship">Ship<kbd>S</kbd></button></div>');
+  wire();
+}
+
+function wire(){
+  var t = S.deck[S.i];
+  G.querySelectorAll(".num").forEach(function(b){
+    b.addEventListener("click", function(){
+      var j = +b.dataset.j;
+      if(!S.res[S.i]){
+        var f = S.flags[S.i] = S.flags[S.i] || {}; f[j] = !f[j];
+        b.setAttribute("aria-pressed", f[j] ? "true" : "false");
+      } else showTrace(t, j, b);
+    });
+  });
+  var h = document.getElementById("hold"), s = document.getElementById("ship"), n = document.getElementById("next");
+  if(h) h.onclick = function(){ stamp("HOLD"); };
+  if(s) s.onclick = function(){ stamp("SHIP"); };
+  if(n) n.onclick = next;
+}
+
+function showTrace(t, j, b){
+  G.querySelectorAll(".num.sel").forEach(function(x){ x.classList.remove("sel"); });
+  G.querySelectorAll(".kv .lit").forEach(function(x){ x.classList.remove("lit"); });
+  b.classList.add("sel");
+  var k = t.toks[j], tok = t.answer.slice(k[0], k[1]), tr = document.getElementById("trace");
+  if(k[2] === null){ tr.innerHTML = '<span class="warn">' + esc(tok) + ': no tool printed this and the rider never said it.</span>'; return; }
+  if(k[2] === "the rider's request"){ tr.textContent = tok + ": the rider said it."; return; }
+  tr.textContent = tok + ": found at " + k[2] + ".";
+  G.querySelectorAll('.kv [data-p="' + k[2].replace(/"/g, '\\"') + '"]').forEach(function(x){ x.classList.add("lit"); if(x.tagName === "DD") x.scrollIntoView({block:"nearest"}); });
+}
+
+function stamp(choice){
+  if(S.res[S.i]) return;
+  var t = S.deck[S.i], f = S.flags[S.i] || {}, bonus = null, falseFlags = 0;
+  if(t.kind === "answer") Object.keys(f).forEach(function(j){
+    if(!f[j]) return; var k = t.toks[j];
+    if(k[2] === null){ if(choice === "HOLD") bonus = t.answer.slice(k[0], k[1]); } else falseFlags++;
+  });
+  var pts = choice === t.truth ? 1 : (t.truth === "HOLD" ? -3 : -1);
+  if(bonus) pts += 1;
+  S.score += pts;
+  S.res[S.i] = { choice: choice, pts: pts, bonus: bonus, falseFlags: falseFlags };
+  render();
+  var rv = G.querySelector(".reveal"); if(rv && rv.getBoundingClientRect().bottom > innerHeight - 90) rv.scrollIntoView({block:"center", behavior:"smooth"});
+}
+
+function next(){
+  if(S.i + 1 < S.deck.length){ S.i++; render(); G.scrollIntoView({block:"start"}); }
+  else { S.done = true; render(); G.scrollIntoView({block:"start"}); }
+}
+
+/* ---------- shift report ---------- */
+function renderReport(){
+  var c = { HH:0, HS:0, SH:0, SS:0 }, max = 0;
+  S.deck.forEach(function(t, j){
+    var r = S.res[j]; c[(r.choice === "HOLD" ? "H" : "S") + (t.truth === "HOLD" ? "H" : "S")]++;
+    max += 1 + (t.truth === "HOLD" && t.kind === "answer" ? 1 : 0);
+  });
+  var bad = c.HH + c.SH, good = c.HS + c.SS;
+  var rank = S.score >= max - 1 ? "Chief dispatcher" : S.score >= 0.7 * max ? "Flight dispatcher" : S.score >= 0.35 * max ? "Trainee dispatcher" : "Reassigned to pizza delivery";
+  var best = +(store("sol-dispatch-best") || 0);
+  if(S.score > best){ store("sol-dispatch-best", String(S.score)); }
+  function cell(n){ return (" " + n + "   ").slice(0, 5); }
+  var box =
+    "┌──────────┬───────┬───────┐\n" +
+    "│ YOU      │ BAD   │ GOOD  │\n" +
+    "├──────────┼───────┼───────┤\n" +
+    "│ HELD     │ " + cell(c.HH) + " │ " + cell(c.HS) + " │\n" +
+    "│ SHIPPED  │ " + cell(c.SH) + " │ " + cell(c.SS) + " │\n" +
+    "└──────────┴───────┴───────┘";
+  var share = "SOL DISPATCH DESK · shift " + pad(S.seed) + "\n" + dots() + "\n" + S.score + "/" + max + " pts · caught " + c.HH + "/" + bad + " bad quotes · held " + c.HS + " good one" + (c.HS === 1 ? "" : "s") + "\n" + rank;
+  var list = S.deck.map(function(t, j){
+    var r = S.res[j], ok = r.choice === t.truth;
+    var what = t.kind === "route" ? "Route to " + t.route.dest + " (" + t.route.depart + ")" : t.request;
+    var tag = t.src === "mutant" ? " · fixture" : t.src === "planted" ? " · self-test" : "";
+    return '<li><span class="' + (ok ? "ok" : "warn") + '">' + (ok ? "OK" : "MISS") + '</span><span>' + esc(what) + '<span class="dim"> · ' + t.truth + tag + '</span></span><span>' + (r.pts > 0 ? "+" : "") + r.pts + '</span></li>';
+  }).join("");
+  G.innerHTML = boardHTML() + '<section class="report"><h2>shift report</h2>' +
+    '<p class="rank">' + rank + '</p><p class="lead">' + S.score + ' of ' + max + ' points. You caught ' + c.HH + ' of ' + bad + ' bad quotes and held ' + c.HS + ' of ' + good + ' good ones.' + (best && S.score <= best ? ' Your best is ' + best + '.' : "") + '</p>' +
+    '<pre class="box" aria-label="Your calls against the answer key">' + box + '</pre>' +
+    '<p class="small dim lead">The automated gate wrote this answer key, so it scores ' + max + ' every time without getting bored. That is the point of it: the checks you just did by eye run on every quote before a rider sees it.</p>' +
+    '<ul class="rows">' + list + '</ul>' +
+    '<div><p class="label">Share</p><div class="share" id="share">' + esc(share) + '</div></div>' +
+    '<div class="btns"><button class="btn sm" id="copy">Copy result</button><button class="btn sm" id="again">Replay shift ' + pad(S.seed) + '</button><button class="btn sm go" id="newshift">New shift →</button></div>' +
+    '<p class="small dim" id="copied" aria-live="polite"></p></section>';
+  document.getElementById("copy").onclick = function(){
+    var m = document.getElementById("copied");
+    try{ navigator.clipboard.writeText(share).then(function(){ m.textContent = "Copied."; }, function(){ m.textContent = "Copy is blocked here; select the text above instead."; }); }
+    catch(e){ m.textContent = "Copy is blocked here; select the text above instead."; }
+  };
+  document.getElementById("again").onclick = function(){ start(S.seed); G.scrollIntoView({block:"start"}); };
+  document.getElementById("newshift").onclick = function(){ start(1 + Math.floor(Math.random() * 9999)); G.scrollIntoView({block:"start"}); };
+}
+
+document.addEventListener("keydown", function(e){
+  if(e.metaKey || e.ctrlKey || e.altKey || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+  var k = e.key.toLowerCase();
+  if(S.done) return;
+  if(!S.res[S.i] && k === "h") stamp("HOLD");
+  else if(!S.res[S.i] && k === "s") stamp("SHIP");
+  else if(S.res[S.i] && (k === "n" || k === "enter") && e.target.tagName !== "BUTTON") next();
+});
+
+var m = /shift-(\d{1,4})/.exec(location.hash || "");
+start(m ? +m[1] || 1 : 1 + Math.floor(Math.random() * 9999));
+})();
+</script>

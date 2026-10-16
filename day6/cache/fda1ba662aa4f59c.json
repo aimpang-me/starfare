@@ -1,0 +1,35 @@
+{
+ "cmd": "--dest ceres --dep-from 2027-01-01 --dep-to 2027-12-31 --arr-by 2029-12-31 --max-tof 1095 --objective c3 --verify",
+ "out": {
+  "ok": true,
+  "dest": "ceres",
+  "depart": "2027-12-30",
+  "arrive": "2028-10-30",
+  "tof_days": 304.7,
+  "c3_km2s2": 84.75,
+  "vinf_arrival_kms": 9.47,
+  "launchable": true,
+  "at_search_edge": true,
+  "feasible_solves": 19791,
+  "dep_jd": 2461770.499999985,
+  "revs": 0,
+  "lowpath": true,
+  "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+  "refly": {
+   "raw_miss_km": 115033.6,
+   "final_miss_km": 0.714,
+   "retarget_ms": 10.2,
+   "iterations": 2,
+   "c3_corrected_km2s2": 84.64,
+   "dv_dep_corrected_kms": 6.563,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+  },
+  "assumptions": [
+   "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+   "impulsive burns, no thrust limits or g-load model",
+   "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+   "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+  ]
+ }
+}

@@ -1,0 +1,64 @@
+{
+ "ok": true,
+ "trip": "Titan -> Earth",
+ "driver": "fleet",
+ "objective": "energy",
+ "request_date": "2026-10-16",
+ "arrive_home": "2032-03-13",
+ "door_to_door_days": 1975,
+ "door_to_door_years": 5.41,
+ "au_travelled": 12.45,
+ "battery": {
+  "dv_kms": 3.119,
+  "propellant_kg": 142.4,
+  "energy_kwh": 29673,
+  "battery_pct": 14837
+ },
+ "fare": {
+  "energy_usd": 4747.68,
+  "time_usd": 995400.0,
+  "total_usd": 1000147.68
+ },
+ "legs": [
+  {
+   "leg": "pickup",
+   "driver": "fleet car (SIMULATED: parked in your Titan orbit)",
+   "eta_hours": 4.8,
+   "note": "catches up within one orbit; phasing burn not modelled",
+   "au": 0.0,
+   "dv_kms": 0.0
+  },
+  {
+   "leg": "ride",
+   "depart_titan": "2026-10-21",
+   "arrive_earth": "2032-03-13",
+   "tof_days": 1970.0,
+   "wait_at_titan_days": 5,
+   "dv_kms": 3.119,
+   "vinf_saturn_kms": 5.602,
+   "vinf_earth_kms": 12.192,
+   "earth_entry_kms": 16.47,
+   "au": 12.45,
+   "revs": 0,
+   "refly": {
+    "raw_miss_km": 2884163.8,
+    "final_miss_km": 0.2831,
+    "retarget_ms": 9.6,
+    "iterations": 3,
+    "vinf_dep_corrected_kms": 5.598,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon; planet endpoints patched-conic (own gravity off)"
+   }
+  }
+ ],
+ "assumptions": [
+  "car 1300 kg dry with a 200 kWh pack",
+  "electric thruster: 30 km/s exhaust, 60% efficient, burns treated as instant",
+  "fare = $0.16/kWh energy + $0.35/min time fee",
+  "landing, aerobraking and life support are not priced",
+  "Titan parking orbit 1,500 km up; burns in the best direction",
+  "energy objective trades 0.1 km/s of burn per year of delay (so it will not wait years to save a little)",
+  "Sun-centred legs start/end at Saturn's and Earth's centres (patched conic)"
+ ],
+ "verified": true
+}

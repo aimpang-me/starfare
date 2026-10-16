@@ -1,0 +1,1906 @@
+{
+ "models": [
+  {
+   "tag": "fable",
+   "name": "Claude Fable",
+   "cases": 20,
+   "passed": 20,
+   "untraced": 0,
+   "no_refly": 0,
+   "never_ran": 0,
+   "outcomes": {
+    "COUNTER": 9,
+    "QUOTE": 6,
+    "DECLINE": 2,
+    "ASK": 3
+   },
+   "planner_calls": 20,
+   "checker_rejected": 1,
+   "rows": [
+    {
+     "id": 1,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 2,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 3,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 4,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 5,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 6,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 7,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 8,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 9,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 10,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 11,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 12,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 13,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 14,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 15,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 16,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 17,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 18,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 19,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 20,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    }
+   ],
+   "rides_offered": 15,
+   "asked_on_complete": 0
+  },
+  {
+   "tag": "opus",
+   "name": "Claude Opus",
+   "cases": 20,
+   "passed": 20,
+   "untraced": 0,
+   "no_refly": 0,
+   "never_ran": 0,
+   "outcomes": {
+    "COUNTER": 9,
+    "QUOTE": 6,
+    "DECLINE": 2,
+    "ASK": 3
+   },
+   "planner_calls": 21,
+   "checker_rejected": 0,
+   "rows": [
+    {
+     "id": 1,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 2,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 3,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 4,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 5,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 6,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 7,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 8,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 9,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 10,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 11,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 12,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 13,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 14,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 15,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 16,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 17,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 18,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 19,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 20,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    }
+   ],
+   "rides_offered": 15,
+   "asked_on_complete": 0
+  },
+  {
+   "tag": "sonnet",
+   "name": "Claude Sonnet",
+   "cases": 20,
+   "passed": 19,
+   "untraced": 1,
+   "no_refly": 0,
+   "never_ran": 0,
+   "outcomes": {
+    "COUNTER": 8,
+    "QUOTE": 6,
+    "DECLINE": 3,
+    "ASK": 3
+   },
+   "planner_calls": 23,
+   "checker_rejected": 1,
+   "rows": [
+    {
+     "id": 1,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 2,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 3,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 4,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 5,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 6,
+     "outcome": "QUOTE",
+     "pass": false,
+     "why": [
+      "numbers no tool made: 2028"
+     ],
+     "kinds": [
+      "untraced"
+     ]
+    },
+    {
+     "id": 7,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 8,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 9,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 10,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 11,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 12,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 13,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 14,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 15,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 16,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 17,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 18,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 19,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 20,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    }
+   ],
+   "rides_offered": 13,
+   "asked_on_complete": 0
+  },
+  {
+   "tag": "haiku",
+   "name": "Claude Haiku",
+   "cases": 20,
+   "passed": 20,
+   "untraced": 0,
+   "no_refly": 0,
+   "never_ran": 0,
+   "outcomes": {
+    "ASK": 8,
+    "QUOTE": 3,
+    "COUNTER": 3,
+    "DECLINE": 6
+   },
+   "planner_calls": 10,
+   "checker_rejected": 0,
+   "rows": [
+    {
+     "id": 1,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 2,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 3,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 4,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 5,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 6,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 7,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 8,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 9,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 10,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 11,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 12,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 13,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 14,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 15,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 16,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 17,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 18,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 19,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 20,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    }
+   ],
+   "rides_offered": 6,
+   "asked_on_complete": 2
+  },
+  {
+   "tag": "day3",
+   "name": "Recorded team (day 3)",
+   "cases": 20,
+   "passed": 20,
+   "untraced": 0,
+   "no_refly": 0,
+   "never_ran": 0,
+   "outcomes": {
+    "COUNTER": 7,
+    "QUOTE": 5,
+    "ASK": 4,
+    "DECLINE": 4
+   },
+   "planner_calls": 0,
+   "checker_rejected": 0,
+   "rows": [
+    {
+     "id": 1,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 2,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 3,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 4,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 5,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 6,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 7,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 8,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 9,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 10,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 11,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 12,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 13,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 14,
+     "outcome": "QUOTE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 15,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 16,
+     "outcome": "ASK",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 17,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 18,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 19,
+     "outcome": "DECLINE",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    },
+    {
+     "id": 20,
+     "outcome": "COUNTER",
+     "pass": true,
+     "why": [],
+     "kinds": []
+    }
+   ],
+   "rides_offered": 12,
+   "asked_on_complete": 1
+  }
+ ],
+ "wall": [
+  {
+   "model": "fable",
+   "kind": "checker",
+   "cmd": "q.py --dest roadster --dep-from 2026-10-16 --dep-to 2028-12-31 --objective c3 --verify",
+   "why": [
+    "the n-body checker rejected it. Roadster route, leave 2028-02-18, 792.5 days, one extra lap around the Sun, C3 0.84: the planner's route missed by 31,708,137 km; fixing it took a 537.2 m/s correction, over the 500 m/s limit"
+   ],
+   "refly": {
+    "raw_miss_km": 31708137.0,
+    "final_miss_km": 0.317,
+    "retarget_ms": 537.2,
+    "iterations": 8,
+    "c3_corrected_km2s2": 0.93,
+    "dv_dep_corrected_kms": 3.266,
+    "pass": false,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   }
+  },
+  {
+   "model": "sonnet",
+   "id": 6,
+   "request": "Earth to Ceres, cheapest launch in 2027, arrive before 2030.",
+   "outcome": "QUOTE",
+   "answer": "The cheapest 2027 launch to Ceres departs 2027-12-30 and arrives 2028-11-02 (308.0 days) at C3 84.7 km2/s2, n-body re-fly passed, but that is the very last day of the 2027 search window, so it is at the edge. If you can leave in 2028 instead, departing 2028-01-27 and arriving 2028-11-30 (308.0 days) needs only C3 55.83 km2/s2, also re-fly verified, and both arrive before 2030.",
+   "struck": "The cheapest 2027 launch to Ceres departs 2027-12-30 and arrives 2028-11-02 (308.0 days) at C3 84.7 km2/s2, n-body re-fly passed, but that is the very last day of the 2027 search window, so it is at the edge. If you can leave in ~~2028~~[no tool made this] instead, departing 2028-01-27 and arriving 2028-11-30 (308.0 days) needs only C3 55.83 km2/s2, also re-fly verified, and both arrive before 2030.",
+   "why": [
+    "numbers no tool made: 2028"
+   ],
+   "kinds": [
+    "untraced"
+   ]
+  },
+  {
+   "model": "sonnet",
+   "kind": "checker",
+   "cmd": "q.py --dest roadster --dep-from 2026-10-16 --dep-to 2028-10-16 --objective c3 --verify",
+   "why": [
+    "the n-body checker rejected it. Roadster route, leave 2028-02-21, 792.5 days, one extra lap around the Sun, C3 0.83: the planner's route missed by 30,589,281 km; fixing it took a 545.5 m/s correction, over the 500 m/s limit"
+   ],
+   "refly": {
+    "raw_miss_km": 30589281.4,
+    "final_miss_km": 0.014,
+    "retarget_ms": 545.5,
+    "iterations": 7,
+    "c3_corrected_km2s2": 0.94,
+    "dv_dep_corrected_kms": 3.267,
+    "pass": false,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   }
+  }
+ ],
+ "sweep": [
+  {
+   "dest": "bennu",
+   "dep_off": 128,
+   "tof": 643.0,
+   "M": 0,
+   "depart": "2027-02-21",
+   "raw_miss_km": 1791753.8,
+   "final_miss_km": 0.297,
+   "retarget_ms": 6.2,
+   "iterations": 2,
+   "c3_corrected_km2s2": 1629.47,
+   "dv_dep_corrected_kms": 34.057,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.6
+  },
+  {
+   "dest": "bennu",
+   "dep_off": 212,
+   "tof": 604.0,
+   "M": 0,
+   "depart": "2027-05-16",
+   "raw_miss_km": 326746.3,
+   "final_miss_km": 0.325,
+   "retarget_ms": 50.6,
+   "iterations": 2,
+   "c3_corrected_km2s2": 395.37,
+   "dv_dep_corrected_kms": 14.944,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 2.8
+  },
+  {
+   "dest": "bennu",
+   "dep_off": 450,
+   "tof": 184.0,
+   "M": 0,
+   "depart": "2028-01-09",
+   "raw_miss_km": 600411.9,
+   "final_miss_km": 0.106,
+   "retarget_ms": 13.4,
+   "iterations": 2,
+   "c3_corrected_km2s2": 33.62,
+   "dv_dep_corrected_kms": 4.658,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 4.2
+  },
+  {
+   "dest": "bennu",
+   "dep_off": 611,
+   "tof": 571.0,
+   "M": 0,
+   "depart": "2028-06-18",
+   "raw_miss_km": 3054973.2,
+   "final_miss_km": 0.427,
+   "retarget_ms": 10.1,
+   "iterations": 3,
+   "c3_corrected_km2s2": 50.32,
+   "dv_dep_corrected_kms": 5.312,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 5.0
+  },
+  {
+   "dest": "bennu",
+   "dep_off": 623,
+   "tof": 456.0,
+   "M": 0,
+   "depart": "2028-06-30",
+   "raw_miss_km": 46230.9,
+   "final_miss_km": 0.318,
+   "retarget_ms": 4.6,
+   "iterations": 2,
+   "c3_corrected_km2s2": 505.29,
+   "dv_dep_corrected_kms": 17.245,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.4
+  },
+  {
+   "dest": "bennu",
+   "dep_off": 663,
+   "tof": 146.0,
+   "M": 1,
+   "depart": "2028-08-09",
+   "result": "REJECTED",
+   "why": "no route: No feasible solution for M=1 (M_max=0)",
+   "seconds": 0.3
+  },
+  {
+   "dest": "ceres",
+   "dep_off": 65,
+   "tof": 1107.0,
+   "M": 0,
+   "depart": "2026-12-20",
+   "raw_miss_km": 1347230.3,
+   "final_miss_km": 0.876,
+   "retarget_ms": 9.4,
+   "iterations": 5,
+   "c3_corrected_km2s2": 180.83,
+   "dv_dep_corrected_kms": 9.594,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 4.4
+  },
+  {
+   "dest": "ceres",
+   "dep_off": 86,
+   "tof": 1278.0,
+   "M": 1,
+   "depart": "2027-01-10",
+   "raw_miss_km": 1076409.3,
+   "final_miss_km": 0.134,
+   "retarget_ms": 13.7,
+   "iterations": 2,
+   "c3_corrected_km2s2": 731.27,
+   "dv_dep_corrected_kms": 21.413,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 3.0
+  },
+  {
+   "dest": "ceres",
+   "dep_off": 442,
+   "tof": 382.0,
+   "M": 0,
+   "depart": "2028-01-01",
+   "raw_miss_km": 197523.7,
+   "final_miss_km": 0.007,
+   "retarget_ms": 2.2,
+   "iterations": 2,
+   "c3_corrected_km2s2": 2031.77,
+   "dv_dep_corrected_kms": 38.616,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.3
+  },
+  {
+   "dest": "ceres",
+   "dep_off": 461,
+   "tof": 1300.0,
+   "M": 0,
+   "depart": "2028-01-20",
+   "raw_miss_km": 930706.2,
+   "final_miss_km": 0.133,
+   "retarget_ms": 49.6,
+   "iterations": 2,
+   "c3_corrected_km2s2": 1778.83,
+   "dv_dep_corrected_kms": 35.805,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 3.3
+  },
+  {
+   "dest": "ceres",
+   "dep_off": 703,
+   "tof": 934.0,
+   "M": 0,
+   "depart": "2028-09-18",
+   "raw_miss_km": 762908.5,
+   "final_miss_km": 0.072,
+   "retarget_ms": 2.2,
+   "iterations": 2,
+   "c3_corrected_km2s2": 945.54,
+   "dv_dep_corrected_kms": 24.877,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 2.0
+  },
+  {
+   "dest": "ceres",
+   "dep_off": 707,
+   "tof": 1156.0,
+   "M": 0,
+   "depart": "2028-09-22",
+   "raw_miss_km": 718790.8,
+   "final_miss_km": 0.443,
+   "retarget_ms": 15.9,
+   "iterations": 2,
+   "c3_corrected_km2s2": 542.16,
+   "dv_dep_corrected_kms": 17.971,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 2.0
+  },
+  {
+   "dest": "jupiter",
+   "dep_off": 123,
+   "tof": 1382.0,
+   "M": 0,
+   "depart": "2027-02-16",
+   "raw_miss_km": 123561.3,
+   "final_miss_km": 0.08,
+   "retarget_ms": 0.9,
+   "iterations": 2,
+   "c3_corrected_km2s2": 607.85,
+   "dv_dep_corrected_kms": 19.216,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 2.7
+  },
+  {
+   "dest": "jupiter",
+   "dep_off": 237,
+   "tof": 1853.0,
+   "M": 0,
+   "depart": "2027-06-10",
+   "raw_miss_km": 648642.1,
+   "final_miss_km": 0.35,
+   "retarget_ms": 1.6,
+   "iterations": 2,
+   "c3_corrected_km2s2": 1658.28,
+   "dv_dep_corrected_kms": 34.399,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 3.2
+  },
+  {
+   "dest": "jupiter",
+   "dep_off": 355,
+   "tof": 623.0,
+   "M": 0,
+   "depart": "2027-10-06",
+   "raw_miss_km": 230993.9,
+   "final_miss_km": 0.225,
+   "retarget_ms": 5.7,
+   "iterations": 2,
+   "c3_corrected_km2s2": 221.04,
+   "dv_dep_corrected_kms": 10.715,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.3
+  },
+  {
+   "dest": "jupiter",
+   "dep_off": 512,
+   "tof": 1736.0,
+   "M": 0,
+   "depart": "2028-03-11",
+   "raw_miss_km": 3586522.3,
+   "final_miss_km": 0.443,
+   "retarget_ms": 6.4,
+   "iterations": 2,
+   "c3_corrected_km2s2": 315.37,
+   "dv_dep_corrected_kms": 13.11,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 3.0
+  },
+  {
+   "dest": "jupiter",
+   "dep_off": 651,
+   "tof": 1361.0,
+   "M": 0,
+   "depart": "2028-07-28",
+   "raw_miss_km": 487292.1,
+   "final_miss_km": 0.047,
+   "retarget_ms": 1.7,
+   "iterations": 2,
+   "c3_corrected_km2s2": 1844.69,
+   "dv_dep_corrected_kms": 36.554,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 3.3
+  },
+  {
+   "dest": "jupiter",
+   "dep_off": 722,
+   "tof": 557.0,
+   "M": 0,
+   "depart": "2028-10-07",
+   "raw_miss_km": 101201.4,
+   "final_miss_km": 0.405,
+   "retarget_ms": 2.6,
+   "iterations": 2,
+   "c3_corrected_km2s2": 412.78,
+   "dv_dep_corrected_kms": 15.324,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.5
+  },
+  {
+   "dest": "mars",
+   "dep_off": 366,
+   "tof": 408.0,
+   "M": 0,
+   "depart": "2027-10-17",
+   "raw_miss_km": 278652.1,
+   "final_miss_km": 0.045,
+   "retarget_ms": 2.2,
+   "iterations": 2,
+   "c3_corrected_km2s2": 432.99,
+   "dv_dep_corrected_kms": 15.757,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.4
+  },
+  {
+   "dest": "mars",
+   "dep_off": 368,
+   "tof": 423.0,
+   "M": 0,
+   "depart": "2027-10-19",
+   "raw_miss_km": 176577.3,
+   "final_miss_km": 0.389,
+   "retarget_ms": 1.5,
+   "iterations": 2,
+   "c3_corrected_km2s2": 402.89,
+   "dv_dep_corrected_kms": 15.108,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.3
+  },
+  {
+   "dest": "mars",
+   "dep_off": 403,
+   "tof": 358.0,
+   "M": 1,
+   "depart": "2027-11-23",
+   "result": "REJECTED",
+   "why": "no route: No feasible solution for M=1 (M_max=0)",
+   "seconds": 0.0
+  },
+  {
+   "dest": "mars",
+   "dep_off": 419,
+   "tof": 460.0,
+   "M": 0,
+   "depart": "2027-12-09",
+   "raw_miss_km": 187413.4,
+   "final_miss_km": 0.062,
+   "retarget_ms": 6.2,
+   "iterations": 2,
+   "c3_corrected_km2s2": 562.86,
+   "dv_dep_corrected_kms": 18.37,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.2
+  },
+  {
+   "dest": "mars",
+   "dep_off": 616,
+   "tof": 361.0,
+   "M": 0,
+   "depart": "2028-06-23",
+   "raw_miss_km": 1137335.0,
+   "final_miss_km": 0.076,
+   "retarget_ms": 49.4,
+   "iterations": 3,
+   "c3_corrected_km2s2": 236.23,
+   "dv_dep_corrected_kms": 11.121,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 3.0
+  },
+  {
+   "dest": "mars",
+   "dep_off": 656,
+   "tof": 444.0,
+   "M": 0,
+   "depart": "2028-08-02",
+   "raw_miss_km": 201409.7,
+   "final_miss_km": 0.327,
+   "retarget_ms": 14.9,
+   "iterations": 2,
+   "c3_corrected_km2s2": 587.09,
+   "dv_dep_corrected_kms": 18.829,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.7
+  },
+  {
+   "dest": "mercury",
+   "dep_off": 136,
+   "tof": 246.0,
+   "M": 0,
+   "depart": "2027-03-01",
+   "raw_miss_km": 19309.3,
+   "final_miss_km": 0.075,
+   "retarget_ms": 2.5,
+   "iterations": 2,
+   "c3_corrected_km2s2": 682.69,
+   "dv_dep_corrected_kms": 20.569,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.5
+  },
+  {
+   "dest": "mercury",
+   "dep_off": 178,
+   "tof": 85.0,
+   "M": 1,
+   "depart": "2027-04-12",
+   "result": "REJECTED",
+   "why": "no route: No feasible solution for M=1 (M_max=0)",
+   "seconds": 0.0
+  },
+  {
+   "dest": "mercury",
+   "dep_off": 303,
+   "tof": 173.0,
+   "M": 0,
+   "depart": "2027-08-15",
+   "raw_miss_km": 78214.3,
+   "final_miss_km": 0.007,
+   "retarget_ms": 7.7,
+   "iterations": 2,
+   "c3_corrected_km2s2": 1429.73,
+   "dv_dep_corrected_kms": 31.597,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.1
+  },
+  {
+   "dest": "mercury",
+   "dep_off": 420,
+   "tof": 200.0,
+   "M": 0,
+   "depart": "2027-12-10",
+   "raw_miss_km": 500485.5,
+   "final_miss_km": 0.029,
+   "retarget_ms": 7.4,
+   "iterations": 2,
+   "c3_corrected_km2s2": 229.67,
+   "dv_dep_corrected_kms": 10.947,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.3
+  },
+  {
+   "dest": "mercury",
+   "dep_off": 574,
+   "tof": 191.0,
+   "M": 0,
+   "depart": "2028-05-12",
+   "raw_miss_km": 63136.6,
+   "final_miss_km": 0.018,
+   "retarget_ms": 1.1,
+   "iterations": 2,
+   "c3_corrected_km2s2": 1383.57,
+   "dv_dep_corrected_kms": 31.007,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.1
+  },
+  {
+   "dest": "mercury",
+   "dep_off": 679,
+   "tof": 234.0,
+   "M": 0,
+   "depart": "2028-08-25",
+   "raw_miss_km": 57805.2,
+   "final_miss_km": 0.176,
+   "retarget_ms": 3.1,
+   "iterations": 2,
+   "c3_corrected_km2s2": 512.58,
+   "dv_dep_corrected_kms": 17.39,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.2
+  },
+  {
+   "dest": "neptune",
+   "dep_off": 64,
+   "tof": 7000.0,
+   "M": 0,
+   "depart": "2026-12-19",
+   "raw_miss_km": 25935443.9,
+   "final_miss_km": 0.921,
+   "retarget_ms": 72.3,
+   "iterations": 5,
+   "c3_corrected_km2s2": 1799.86,
+   "dv_dep_corrected_kms": 36.046,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 20.9
+  },
+  {
+   "dest": "neptune",
+   "dep_off": 67,
+   "tof": 5149.0,
+   "M": 0,
+   "depart": "2026-12-22",
+   "raw_miss_km": 7116865.3,
+   "final_miss_km": 0.828,
+   "retarget_ms": 28.1,
+   "iterations": 4,
+   "c3_corrected_km2s2": 1627.93,
+   "dv_dep_corrected_kms": 34.038,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 13.0
+  },
+  {
+   "dest": "neptune",
+   "dep_off": 67,
+   "tof": 5661.0,
+   "M": 0,
+   "depart": "2026-12-22",
+   "raw_miss_km": 8931804.0,
+   "final_miss_km": 0.248,
+   "retarget_ms": 32.0,
+   "iterations": 3,
+   "c3_corrected_km2s2": 1649.62,
+   "dv_dep_corrected_kms": 34.297,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 11.1
+  },
+  {
+   "dest": "neptune",
+   "dep_off": 93,
+   "tof": 5360.0,
+   "M": 0,
+   "depart": "2027-01-17",
+   "raw_miss_km": 5973020.2,
+   "final_miss_km": 0.159,
+   "retarget_ms": 26.6,
+   "iterations": 3,
+   "c3_corrected_km2s2": 1200.53,
+   "dv_dep_corrected_kms": 28.571,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 9.9
+  },
+  {
+   "dest": "neptune",
+   "dep_off": 476,
+   "tof": 5331.0,
+   "M": 0,
+   "depart": "2028-02-04",
+   "raw_miss_km": 4157920.8,
+   "final_miss_km": 0.483,
+   "retarget_ms": 20.2,
+   "iterations": 3,
+   "c3_corrected_km2s2": 965.99,
+   "dv_dep_corrected_kms": 25.188,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 10.7
+  },
+  {
+   "dest": "neptune",
+   "dep_off": 612,
+   "tof": 2940.0,
+   "M": 0,
+   "depart": "2028-06-19",
+   "raw_miss_km": 3404658.9,
+   "final_miss_km": 0.402,
+   "retarget_ms": 22.9,
+   "iterations": 2,
+   "c3_corrected_km2s2": 280.92,
+   "dv_dep_corrected_kms": 12.269,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 4.2
+  },
+  {
+   "dest": "roadster",
+   "dep_off": 130,
+   "tof": 985.0,
+   "M": 0,
+   "depart": "2027-02-23",
+   "raw_miss_km": 7438095.1,
+   "final_miss_km": 0.474,
+   "retarget_ms": 19.9,
+   "iterations": 3,
+   "c3_corrected_km2s2": 162.61,
+   "dv_dep_corrected_kms": 9.062,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 2.7
+  },
+  {
+   "dest": "roadster",
+   "dep_off": 317,
+   "tof": 658.0,
+   "M": 0,
+   "depart": "2027-08-29",
+   "raw_miss_km": 237257.5,
+   "final_miss_km": 0.011,
+   "retarget_ms": 18.2,
+   "iterations": 2,
+   "c3_corrected_km2s2": 458.59,
+   "dv_dep_corrected_kms": 16.294,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 2.0
+  },
+  {
+   "dest": "roadster",
+   "dep_off": 324,
+   "tof": 813.0,
+   "M": 1,
+   "depart": "2027-09-05",
+   "raw_miss_km": 105920.6,
+   "final_miss_km": 0.302,
+   "retarget_ms": 28.4,
+   "iterations": 2,
+   "c3_corrected_km2s2": 290.62,
+   "dv_dep_corrected_kms": 12.509,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.9
+  },
+  {
+   "dest": "roadster",
+   "dep_off": 519,
+   "tof": 386.0,
+   "M": 0,
+   "depart": "2028-03-18",
+   "raw_miss_km": 74713.9,
+   "final_miss_km": 0.037,
+   "retarget_ms": 3.0,
+   "iterations": 2,
+   "c3_corrected_km2s2": 517.27,
+   "dv_dep_corrected_kms": 17.484,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.5
+  },
+  {
+   "dest": "roadster",
+   "dep_off": 703,
+   "tof": 283.0,
+   "M": 0,
+   "depart": "2028-09-18",
+   "raw_miss_km": 66475.6,
+   "final_miss_km": 0.124,
+   "retarget_ms": 8.0,
+   "iterations": 2,
+   "c3_corrected_km2s2": 352.78,
+   "dv_dep_corrected_kms": 13.987,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.9
+  },
+  {
+   "dest": "roadster",
+   "dep_off": 727,
+   "tof": 528.0,
+   "M": 0,
+   "depart": "2028-10-12",
+   "raw_miss_km": 160200.8,
+   "final_miss_km": 0.098,
+   "retarget_ms": 2.3,
+   "iterations": 2,
+   "c3_corrected_km2s2": 970.21,
+   "dv_dep_corrected_kms": 25.252,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.5
+  },
+  {
+   "dest": "saturn",
+   "dep_off": 140,
+   "tof": 1932.0,
+   "M": 0,
+   "depart": "2027-03-05",
+   "raw_miss_km": 952344.7,
+   "final_miss_km": 0.233,
+   "retarget_ms": 16.6,
+   "iterations": 3,
+   "c3_corrected_km2s2": 914.97,
+   "dv_dep_corrected_kms": 24.405,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 5.0
+  },
+  {
+   "dest": "saturn",
+   "dep_off": 152,
+   "tof": 1283.0,
+   "M": 0,
+   "depart": "2027-03-17",
+   "raw_miss_km": 231855.3,
+   "final_miss_km": 0.424,
+   "retarget_ms": 3.3,
+   "iterations": 2,
+   "c3_corrected_km2s2": 633.0,
+   "dv_dep_corrected_kms": 19.678,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 2.2
+  },
+  {
+   "dest": "saturn",
+   "dep_off": 321,
+   "tof": 1504.0,
+   "M": 0,
+   "depart": "2027-09-02",
+   "raw_miss_km": 1186007.6,
+   "final_miss_km": 0.238,
+   "retarget_ms": 6.2,
+   "iterations": 2,
+   "c3_corrected_km2s2": 539.88,
+   "dv_dep_corrected_kms": 17.927,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 3.3
+  },
+  {
+   "dest": "saturn",
+   "dep_off": 486,
+   "tof": 1814.0,
+   "M": 0,
+   "depart": "2028-02-14",
+   "raw_miss_km": 816056.6,
+   "final_miss_km": 0.505,
+   "retarget_ms": 8.7,
+   "iterations": 2,
+   "c3_corrected_km2s2": 1425.97,
+   "dv_dep_corrected_kms": 31.55,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 3.2
+  },
+  {
+   "dest": "saturn",
+   "dep_off": 532,
+   "tof": 3109.0,
+   "M": 0,
+   "depart": "2028-03-31",
+   "raw_miss_km": 2755247.0,
+   "final_miss_km": 0.557,
+   "retarget_ms": 20.3,
+   "iterations": 2,
+   "c3_corrected_km2s2": 1395.72,
+   "dv_dep_corrected_kms": 31.163,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 5.2
+  },
+  {
+   "dest": "saturn",
+   "dep_off": 569,
+   "tof": 2987.0,
+   "M": 0,
+   "depart": "2028-05-07",
+   "raw_miss_km": 1708789.3,
+   "final_miss_km": 0.37,
+   "retarget_ms": 11.4,
+   "iterations": 2,
+   "c3_corrected_km2s2": 682.91,
+   "dv_dep_corrected_kms": 20.572,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 4.5
+  },
+  {
+   "dest": "uranus",
+   "dep_off": 124,
+   "tof": 3103.0,
+   "M": 0,
+   "depart": "2027-02-17",
+   "raw_miss_km": 2167893.4,
+   "final_miss_km": 0.686,
+   "retarget_ms": 14.0,
+   "iterations": 2,
+   "c3_corrected_km2s2": 1747.61,
+   "dv_dep_corrected_kms": 35.445,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 4.6
+  },
+  {
+   "dest": "uranus",
+   "dep_off": 291,
+   "tof": 2920.0,
+   "M": 0,
+   "depart": "2027-08-03",
+   "raw_miss_km": 3962692.6,
+   "final_miss_km": 0.308,
+   "retarget_ms": 16.8,
+   "iterations": 2,
+   "c3_corrected_km2s2": 152.7,
+   "dv_dep_corrected_kms": 8.765,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 3.6
+  },
+  {
+   "dest": "uranus",
+   "dep_off": 312,
+   "tof": 4600.0,
+   "M": 0,
+   "depart": "2027-08-24",
+   "raw_miss_km": 6235956.7,
+   "final_miss_km": 0.635,
+   "retarget_ms": 12.7,
+   "iterations": 2,
+   "c3_corrected_km2s2": 183.45,
+   "dv_dep_corrected_kms": 9.67,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 5.7
+  },
+  {
+   "dest": "uranus",
+   "dep_off": 412,
+   "tof": 5457.0,
+   "M": 0,
+   "depart": "2027-12-02",
+   "raw_miss_km": 7415989.4,
+   "final_miss_km": 0.36,
+   "retarget_ms": 6.5,
+   "iterations": 4,
+   "c3_corrected_km2s2": 1262.84,
+   "dv_dep_corrected_kms": 29.418,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 13.2
+  },
+  {
+   "dest": "uranus",
+   "dep_off": 485,
+   "tof": 2436.0,
+   "M": 0,
+   "depart": "2028-02-13",
+   "raw_miss_km": 1577497.3,
+   "final_miss_km": 0.502,
+   "retarget_ms": 8.7,
+   "iterations": 2,
+   "c3_corrected_km2s2": 1872.55,
+   "dv_dep_corrected_kms": 36.867,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 4.1
+  },
+  {
+   "dest": "uranus",
+   "dep_off": 643,
+   "tof": 2705.0,
+   "M": 0,
+   "depart": "2028-07-20",
+   "raw_miss_km": 2633626.0,
+   "final_miss_km": 0.359,
+   "retarget_ms": 20.5,
+   "iterations": 3,
+   "c3_corrected_km2s2": 151.74,
+   "dv_dep_corrected_kms": 8.736,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 5.2
+  },
+  {
+   "dest": "venus",
+   "dep_off": 54,
+   "tof": 165.0,
+   "M": 0,
+   "depart": "2026-12-09",
+   "raw_miss_km": 78964.1,
+   "final_miss_km": 0.054,
+   "retarget_ms": 14.5,
+   "iterations": 2,
+   "c3_corrected_km2s2": 37.74,
+   "dv_dep_corrected_kms": 4.822,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 3.9
+  },
+  {
+   "dest": "venus",
+   "dep_off": 538,
+   "tof": 198.0,
+   "M": 0,
+   "depart": "2028-04-06",
+   "raw_miss_km": 812052.3,
+   "final_miss_km": 0.18,
+   "retarget_ms": 18.9,
+   "iterations": 2,
+   "c3_corrected_km2s2": 24.77,
+   "dv_dep_corrected_kms": 4.297,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.2
+  },
+  {
+   "dest": "venus",
+   "dep_off": 542,
+   "tof": 217.0,
+   "M": 0,
+   "depart": "2028-04-10",
+   "raw_miss_km": 349432.2,
+   "final_miss_km": 0.048,
+   "retarget_ms": 12.1,
+   "iterations": 2,
+   "c3_corrected_km2s2": 92.57,
+   "dv_dep_corrected_kms": 6.836,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.9
+  },
+  {
+   "dest": "venus",
+   "dep_off": 642,
+   "tof": 111.0,
+   "M": 0,
+   "depart": "2028-07-19",
+   "raw_miss_km": 70399.0,
+   "final_miss_km": 0.063,
+   "retarget_ms": 4.3,
+   "iterations": 2,
+   "c3_corrected_km2s2": 122.82,
+   "dv_dep_corrected_kms": 7.837,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.1
+  },
+  {
+   "dest": "venus",
+   "dep_off": 703,
+   "tof": 81.0,
+   "M": 1,
+   "depart": "2028-09-18",
+   "result": "REJECTED",
+   "why": "no route: No feasible solution for M=1 (M_max=0)",
+   "seconds": 0.0
+  },
+  {
+   "dest": "venus",
+   "dep_off": 724,
+   "tof": 380.0,
+   "M": 0,
+   "depart": "2028-10-09",
+   "raw_miss_km": 218636.5,
+   "final_miss_km": 0.043,
+   "retarget_ms": 3.1,
+   "iterations": 2,
+   "c3_corrected_km2s2": 334.18,
+   "dv_dep_corrected_kms": 13.555,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "PASS",
+   "seconds": 1.5
+  }
+ ],
+ "audit": {
+  "uranus_day2": {
+   "depart": "2029-09-08",
+   "tof_days": 8345.0,
+   "before": {
+    "raw_miss_km": 751876.0,
+    "final_miss_km": 12.456,
+    "retarget_ms": 16.0,
+    "iterations": 8,
+    "c3_corrected_km2s2": 134.1,
+    "dv_dep_corrected_kms": 8.193,
+    "pass": false,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+   },
+   "after": {
+    "raw_miss_km": 751859.5,
+    "final_miss_km": 0.524,
+    "retarget_ms": 16.0,
+    "iterations": 7,
+    "c3_corrected_km2s2": 134.1,
+    "dv_dep_corrected_kms": 8.193,
+    "pass": true,
+    "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+    "seconds": 31.8,
+    "leg": "uranus (day 2)",
+    "rtol": 1e-12
+   }
+  },
+  "neptune_sweep_before": {
+   "dest": "neptune",
+   "dep_off": 64,
+   "tof": 7000.0,
+   "M": 0,
+   "depart": "2026-12-19",
+   "raw_miss_km": 25935396.6,
+   "final_miss_km": 13.246,
+   "retarget_ms": 72.3,
+   "iterations": 20,
+   "c3_corrected_km2s2": 1799.86,
+   "dv_dep_corrected_kms": 36.046,
+   "pass": false,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre",
+   "result": "REJECTED",
+   "why": "did not converge: still 13.2 km off after 20 tries",
+   "seconds": 101.9
+  }
+ }
+}

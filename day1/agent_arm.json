@@ -1,0 +1,22 @@
+[
+{"id":1,"outcome":"DECLINE","cmds":[],"nums":[]},
+{"id":2,"outcome":"QUOTE","cmds":["--dest mars --dep-from 2026-10-15 --dep-to 2026-12-24 --objective c3"],"nums":["2026-11-01","2027-08-18","290","9.19"]},
+{"id":3,"outcome":"QUOTE","cmds":["--dest mars --dep-from 2026-10-15 --dep-to 2027-03-31 --max-c3 15 --objective tof"],"nums":["2026-11-11","2027-05-30","200","14.99","5.96"]},
+{"id":4,"outcome":"QUOTE","cmds":["--dest mars --dep-from 2026-10-15 --dep-to 2027-03-31 --objective vinf_arr --weekend"],"nums":["2026-10-31","2027-09-06","310","2.57","9.26"]},
+{"id":5,"outcome":"QUOTE","cmds":["--dest jupiter --dep-from 2027-01-01 --dep-to 2027-12-31 --objective c3"],"nums":["2027-12-06","2031-07-28","1330","79.06","6.15"]},
+{"id":6,"outcome":"DECLINE","cmds":[],"nums":[]},
+{"id":7,"outcome":"COUNTER","cmds":["--dest venus --dep-from 2026-10-15 --dep-to 2027-05-31 --arr-by 2027-06-01 --objective c3"],"nums":["2026-10-15","2027-03-24","160","16.6"]},
+{"id":8,"outcome":"COUNTER","cmds":["--dest mars --dep-from 2028-01-01 --dep-to 2028-12-31 --objective c3"],"nums":["2028-12-09","2029-11-04","330","9.0"]},
+{"id":9,"outcome":"COUNTER","cmds":["--dest mars --dep-from 2028-01-01 --dep-to 2028-12-31 --objective c3"],"nums":["2028-12-09","2029-11-04","330","9.0"]},
+{"id":10,"outcome":"COUNTER","cmds":["--dest jupiter --dep-from 2026-10-15 --dep-to 2028-12-31 --objective c3"],"nums":["2028-12-24","2031-12-09","1080","75.83"]},
+{"id":11,"outcome":"COUNTER","cmds":["--dest mars --dep-from 2026-10-15 --dep-to 2027-12-31"],"nums":["2026-10-29","2027-08-25","300","9.21"]},
+{"id":12,"outcome":"DECLINE","cmds":[],"nums":[]},
+{"id":13,"outcome":"COUNTER","cmds":["--dest neptune --dep-from 2026-10-15 --dep-to 2027-12-31","--dest uranus --dep-from 2026-10-15 --dep-to 2027-12-31","--dest saturn --dep-from 2026-10-15 --dep-to 2032-12-31 --max-tof 3000","--dest jupiter --dep-from 2026-10-15 --dep-to 2028-12-31"],"nums":["541.34","244.12","107.35","2028-12-24","2031-12-09","1080","75.83"]},
+{"id":14,"outcome":"COUNTER","cmds":["--dest mars --dep-from 2026-10-15 --dep-to 2027-12-31"],"nums":["2026-10-29","2027-08-25","300","9.21"]},
+{"id":15,"outcome":"ASK","cmds":[],"nums":[]},
+{"id":16,"outcome":"ASK","cmds":[],"nums":[]},
+{"id":17,"outcome":"COUNTER","cmds":["--dest jupiter --dep-from 2026-10-15 --dep-to 2027-02-10 --arr-by 2027-02-28","--dest jupiter --dep-from 2026-10-15 --dep-to 2027-12-31"],"nums":["2027-02-28","3285.49","2027-12-05","2031-07-07","1310","79.07"]},
+{"id":18,"outcome":"COUNTER","cmds":["--dest mars --dep-from 2026-10-15 --dep-to 2026-12-31 --objective tof","--dest mars --dep-from 2026-10-15 --dep-to 2026-12-31 --objective tof --max-c3 100"],"nums":["20","15353.38","2026-12-13","2027-03-13","90","99.66"]},
+{"id":19,"outcome":"DECLINE","cmds":[],"nums":[]},
+{"id":20,"outcome":"COUNTER","cmds":["--dest mercury --dep-from 2027-01-01 --dep-to 2027-02-14 --max-c3 20","--dest mercury --dep-from 2027-01-01 --dep-to 2027-02-14 --objective c3"],"nums":["20","2027-01-01","2027-02-14","2027-01-04","2027-04-14","100","98.38"]}
+]

@@ -1,0 +1,59 @@
+{
+ "id": 10,
+ "request": "Cheapest way to Europa, but I get motion sick, so no gravity assists.",
+ "backend": "replay (recorded agent answer, tools re-run)",
+ "outcome": "COUNTER",
+ "roles": {
+  "broker": "We can't take you to Europa, because we don't fly to moons of other planets. The closest option is a direct ride to Jupiter with no gravity assists. The cheapest one we found departs 2027-12-05 and arrives 2031-07-17 (1320.0 days), with C3 79.07 km2/s2, checked by an n-body re-fly. It is aimed at Jupiter itself, and any onward leg to Europa or capture is not priced."
+ },
+ "tool_calls": [
+  {
+   "tool": "quote",
+   "args": "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-12-31 --verify",
+   "seconds": 13.7,
+   "output": {
+    "ok": true,
+    "dest": "jupiter",
+    "depart": "2027-12-05",
+    "arrive": "2031-07-17",
+    "tof_days": 1320.0,
+    "c3_km2s2": 79.07,
+    "vinf_arrival_kms": 6.11,
+    "launchable": true,
+    "at_search_edge": false,
+    "feasible_solves": 27690,
+    "dep_jd": 2461744.774999979,
+    "revs": 0,
+    "lowpath": true,
+    "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+    "refly": {
+     "raw_miss_km": 775829.6,
+     "final_miss_km": 0.514,
+     "retarget_ms": 9.2,
+     "iterations": 5,
+     "c3_corrected_km2s2": 79.04,
+     "dv_dep_corrected_kms": 6.366,
+     "pass": true,
+     "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+    },
+    "assumptions": [
+     "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+     "impulsive burns, no thrust limits or g-load model",
+     "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+     "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+    ]
+   }
+  }
+ ],
+ "provenance": {
+  "pass": true,
+  "untraced": []
+ },
+ "rider_sees": "We can't take you to Europa, because we don't fly to moons of other planets. The closest option is a direct ride to Jupiter with no gravity assists. The cheapest one we found departs 2027-12-05 and arrives 2031-07-17 (1320.0 days), with C3 79.07 km2/s2, checked by an n-body re-fly. It is aimed at Jupiter itself, and any onward leg to Europa or capture is not priced.",
+ "physics": [
+  {
+   "args": "--dest jupiter --dep-from 2026-10-16 --dep-to 2027-12-31 --verify",
+   "refly_pass": true
+  }
+ ]
+}

@@ -1,0 +1,732 @@
+<title>Stranded at Titan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+@font-face{font-family:"Departure Mono";src:url("fonts/DepartureMono-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+/* Layout: a phone (the one raised object) beside a "behind the screen" column; on phones the app is the page and the column follows it. */
+:root{
+  color-scheme: light;
+  --paper:#fbfcfd; --ink:#0d1117; --ink-2:#454c59; --ink-3:#626a77; --wash:#eceff3; --pass:#4d6b58; --fail:#94524b; --grid:#c3c8d0;
+  --mono:"Departure Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sym:"Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols 2", "DejaVu Sans", sans-serif;
+  --s1:11px; --s2:22px; --s3:33px; --s4:44px; --s5:55px;
+}
+*{box-sizing:border-box}
+html{-webkit-font-smoothing:none;-moz-osx-font-smoothing:grayscale;font-smooth:never}
+body{background:var(--paper);color:var(--ink);font-family:var(--mono);font-size:16.5px;line-height:22px}
+.wrap{max-width:1180px;margin:0 auto;padding-block:var(--s5);
+  padding-left:max(var(--s2), env(safe-area-inset-left, 0px));padding-right:max(var(--s2), env(safe-area-inset-right, 0px));
+  display:flex;flex-direction:column;gap:var(--s5)}
+@media (max-width:700px){ .wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:var(--s4);gap:var(--s4)} }
+p{margin:0}
+button{font:inherit;color:inherit}
+.label{font-size:11px;line-height:22px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+@media (max-width:700px){ .label{font-size:13px} }
+.dim{color:var(--ink-2)}
+.sym{font-family:var(--sym);display:inline-block;width:2ch;text-align:center}
+h1{font-weight:400;font-size:55px;line-height:55px;letter-spacing:-5px;margin:0;text-transform:uppercase;text-wrap:balance}
+@media (min-width:1000px){ h1{font-size:88px;line-height:80px;letter-spacing:-8px} }
+@media (max-width:420px){ h1{font-size:44px;line-height:44px;letter-spacing:-4px} }
+.lead{font-size:22px;line-height:33px;max-width:44ch}
+@media (max-width:700px){ .lead{font-size:16.5px;line-height:22px} }
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:end}
+@media (max-width:860px){ .top{grid-template-columns:1fr} }
+.hdr{display:flex;flex-direction:column;gap:var(--s2)}
+.margin{font-size:11px;line-height:22px;letter-spacing:.08em;color:var(--ink-2);white-space:pre;max-width:100%;overflow:hidden}
+@media (max-width:700px){ .margin{font-size:13px} }
+.cursor{display:inline-block;width:.6em;height:1em;background:var(--ink);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* stage */
+.stage{display:grid;grid-template-columns:412px minmax(0,1fr);gap:var(--s3);align-items:start}
+@media (max-width:960px){ .stage{grid-template-columns:1fr} }
+.lift{position:relative;z-index:0;margin:0 var(--s1) var(--s1) 0;min-width:0}
+.lift::before{content:"";position:absolute;inset:0;transform:translate(11px,11px);z-index:-1;opacity:.25;
+  background:repeating-conic-gradient(var(--ink) 0 25%, transparent 0 50%) 0 0/4px 4px}
+.phone{background:var(--paper);border:2px solid var(--ink);height:860px;display:flex;flex-direction:column;overflow:hidden;width:100%;max-width:400px}
+@media (max-width:960px){ .stagephone{justify-self:center;width:100%;max-width:412px} }
+@media (max-width:700px){
+  .lift.stagephone{margin:0;max-width:none}
+  .lift.stagephone::before{display:none}
+  .phone{height:auto;max-width:none;border:0;overflow:visible}
+}
+.bar{display:flex;justify-content:space-between;gap:var(--s1);align-items:center;background:var(--ink);color:var(--paper);padding:0 var(--s1);min-height:33px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+@media (max-width:700px){ .bar{font-size:13px;min-height:44px} }
+.bar b{font-weight:400;white-space:nowrap}
+.bar span{white-space:nowrap}
+.mapbox{position:relative;flex:0 0 auto;border-bottom:2px solid var(--ink);background:var(--paper)}
+#map{display:block;width:100%;height:290px;touch-action:none;cursor:grab}
+@media (max-width:700px){ #map{height:min(64vw, 320px)} }
+.zoom{display:flex;flex-wrap:wrap;gap:4px;padding:6px var(--s1);border-top:1px solid var(--ink);align-items:center;background:var(--paper)}
+.zoom input[type=range]{flex:1 1 90px;min-width:80px;accent-color:var(--ink)}
+.chip{font-size:11px;letter-spacing:.06em;text-transform:uppercase;background:transparent;border:1px solid var(--ink);padding:0 6px;min-height:26px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.chip:hover{background:var(--wash)} .chip[aria-pressed="true"]:hover{background:var(--ink)}
+@media (max-width:700px){ .chip{font-size:13px;min-height:44px;padding:0 10px} }
+.maplab{position:absolute;left:var(--s1);top:6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);pointer-events:none;background:var(--paper);padding:0 4px}
+.sheet{flex:1 1 auto;overflow-y:auto;padding:var(--s1) var(--s1) var(--s2);display:flex;flex-direction:column;gap:var(--s1);min-height:0}
+@media (max-width:700px){ .sheet{overflow:visible;padding-inline:0} }
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+/* chat */
+.me{align-self:flex-end;max-width:85%;background:var(--ink);color:var(--paper);padding:6px var(--s1)}
+.sys{font-size:11px;line-height:16px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+@media (max-width:700px){ .sys{font-size:13px;line-height:19px} }
+.bot{border:1px solid var(--ink);padding:var(--s1);display:flex;flex-direction:column;gap:6px;background:var(--paper)}
+.bot .who{font-size:11px;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase}
+@media (max-width:700px){ .bot .who{font-size:13px} }
+.num{background:transparent;border:0;border-bottom:1px dotted var(--ink);padding:0;cursor:pointer;line-height:inherit}
+.num:hover,.num[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.src{font-size:13px;line-height:19px;color:var(--ink-2);border-top:1px dashed var(--ink);padding-top:6px;overflow-wrap:anywhere}
+.thinking{font-size:13px;line-height:19px;color:var(--ink-2);white-space:pre-wrap}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px var(--s1);text-align:left;background:var(--wash);border:1px solid transparent;padding:var(--s1);cursor:pointer;width:100%}
+.opt:hover{border-color:var(--ink)}
+.opt[aria-pressed="true"]{border:2px solid var(--ink);padding:10px;background:var(--paper)}
+.opt .k{font-size:11px;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase;grid-column:1/-1}
+@media (max-width:700px){ .opt .k{font-size:13px} }
+.opt .n{text-transform:uppercase}
+.opt .p{text-align:right;font-variant-numeric:tabular-nums}
+.opt .l{grid-column:1/-1;color:var(--ink-2);font-size:13px;line-height:19px}
+.opt.no{background:transparent;border:1px dashed var(--ink-3);cursor:not-allowed}
+.opt.no .n,.opt.no .p{text-decoration:line-through;color:var(--ink-2)}
+.warn{color:var(--fail)} .ok{color:var(--pass)}
+.note{font-size:13px;line-height:19px;color:var(--ink-2)}
+.say{display:flex;flex-wrap:wrap;gap:6px}
+.btn{font-size:16.5px;color:var(--ink);background:transparent;border:1px solid var(--ink);padding:0 var(--s1);min-height:33px;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;text-align:left}
+.btn:hover{background:var(--wash)}
+.btn.primary{background:var(--ink);color:var(--paper);width:100%;min-height:44px;text-align:center}
+.btn.primary:hover{background:var(--ink-2)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+@media (max-width:700px){ .btn{min-height:44px} }
+.ask{border:1px solid var(--ink);background:var(--paper);padding:4px var(--s1);cursor:pointer;text-align:left;min-height:33px}
+.ask:hover{background:var(--wash)}
+@media (max-width:700px){ .ask{min-height:44px} }
+.out{color:var(--ink-2);font-size:13px;line-height:19px;min-height:19px}
+
+/* trip panel */
+.phase{display:flex;justify-content:space-between;gap:var(--s1);align-items:baseline;flex-wrap:wrap}
+.phase .h{background:var(--ink);color:var(--paper);padding:0 6px;text-transform:uppercase;letter-spacing:.04em}
+.meter{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 var(--s1);border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:6px 0}
+.meter dt{font-size:11px;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase;line-height:26px}
+@media (max-width:700px){ .meter dt{font-size:13px} }
+.meter dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;line-height:26px;min-width:0;overflow-wrap:anywhere}
+.meter dd.big{font-size:22px}
+.meter dd{white-space:nowrap}
+@media (max-width:420px){ .meter dd.big{font-size:18px} .meter dd small{font-size:11px} }
+.meter dd small{font-size:13px;color:var(--ink-2)}
+.prog{height:11px;border:1px solid var(--ink);position:relative;background:var(--paper)}
+.prog i{position:absolute;inset:0 auto 0 0;background:repeating-conic-gradient(var(--ink) 0 25%, transparent 0 50%) 0 0/4px 4px}
+.ctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ctl input[type=range]{flex:1 1 120px;min-width:100px;accent-color:var(--ink)}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:19px;color:var(--ink-2)}
+.log li b{font-weight:400;color:var(--ink)}
+.rate{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--ink-2)}
+.rate input{font:inherit;font-size:16.5px;width:7ch;border:1px solid var(--ink);background:var(--paper);color:var(--ink);padding:2px 4px;min-height:33px}
+.home{border:2px solid var(--ink);padding:var(--s1);display:flex;flex-direction:column;gap:6px}
+.home .t{font-size:33px;line-height:33px;letter-spacing:-1px;text-transform:uppercase}
+
+/* behind the screen */
+.behind{display:flex;flex-direction:column;gap:var(--s2);min-width:0}
+.mini{display:flex;flex-direction:column;min-width:0}
+.tab{align-self:flex-start;background:var(--ink);color:var(--paper);font-size:11px;line-height:22px;letter-spacing:.08em;padding:0 var(--s1);text-transform:uppercase}
+@media (max-width:700px){ .tab{font-size:13px} }
+.panel{background:var(--wash);border-top:2px solid var(--ink);padding:var(--s2);display:flex;flex-direction:column;gap:var(--s1);min-width:0}
+@media (max-width:700px){ .panel{padding:var(--s1)} }
+.role{display:grid;grid-template-columns:12ch minmax(0,1fr);gap:var(--s1)}
+@media (max-width:560px){ .role{grid-template-columns:1fr;gap:2px} }
+.role .r{font-size:11px;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase;line-height:22px}
+@media (max-width:700px){ .role .r{font-size:13px} }
+.role .v{min-width:0;overflow-wrap:anywhere;font-size:13px;line-height:19px;color:var(--ink-2)}
+.calls{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.calls li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s1);font-size:13px;line-height:19px}
+.calls code{font-family:var(--mono);color:var(--ink);overflow-wrap:anywhere}
+.rcpt{background:var(--paper);border:1px solid var(--ink);padding:var(--s2);display:flex;flex-direction:column;gap:var(--s1)}
+@media (max-width:700px){ .rcpt{padding:var(--s1)} }
+.rl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 var(--s2);margin:0}
+.rl dt{color:var(--ink-3);font-size:11px;letter-spacing:.08em;text-transform:uppercase;line-height:22px}
+@media (max-width:700px){ .rl dt{font-size:13px} }
+.rl dd{margin:0;min-width:0;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.rule{border:0;border-top:1px dashed var(--ink);margin:4px 0;width:100%}
+.fare{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s1);font-size:22px;line-height:33px;flex-wrap:wrap}
+.check{border:1px solid var(--pass);color:var(--pass);padding:var(--s1);display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:19px}
+.check .h{text-transform:uppercase;letter-spacing:.06em;font-size:16.5px;line-height:22px}
+.assume{margin:0;padding-left:2ch;font-size:13px;line-height:19px;color:var(--ink-2);display:flex;flex-direction:column;gap:2px}
+
+/* eval + rejected wall */
+.sec{display:flex;flex-direction:column;gap:var(--s2)}
+h2{font-weight:400;font-size:33px;line-height:33px;letter-spacing:-1px;margin:0;text-transform:uppercase}
+h2::before{content:"$ ";color:var(--ink-3)}
+@media (max-width:700px){ h2{font-size:22px;line-height:33px;letter-spacing:0} }
+.box{overflow-x:auto;white-space:pre;font-size:16.5px;line-height:22px;margin:0;font-family:var(--mono);max-width:100%}
+@media (max-width:700px){ .box{font-size:13px;line-height:19px} }
+.lead2{max-width:64ch}
+.chartbox svg{display:block;width:100%;height:auto}
+.chartbox .panel{overflow-x:auto}
+@media (max-width:700px){ #chk{min-width:620px} }
+.wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:var(--s2)}
+.wc{border:1px solid var(--ink);padding:var(--s1);display:flex;flex-direction:column;gap:6px;background:var(--paper);min-width:0}
+.wc .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+@media (max-width:700px){ .wc .k{font-size:13px} }
+.wc .why{color:var(--fail);font-size:13px;line-height:19px}
+.wc .q{font-size:13px;line-height:19px;color:var(--ink-2)}
+.wc .a{font-size:13px;line-height:19px;overflow-wrap:anywhere}
+.wc del{color:var(--fail)}
+.wc code{font-family:var(--mono);font-size:13px;overflow-wrap:anywhere}
+.empty{border:1px dashed var(--ink-3);padding:var(--s1);color:var(--ink-2)}
+footer{border-top:1px solid var(--ink);padding-top:var(--s2);display:flex;flex-direction:column;gap:var(--s1);color:var(--ink-2);font-size:13px;line-height:19px}
+footer p{max-width:92ch}
+@media (prefers-reduced-motion: reduce){ .cursor{animation:none} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="hdr">
+      <p class="label">SOL · A RIDE-HAIL FOR THE SOLAR SYSTEM · DAY 5</p>
+      <h1>Stranded at Titan</h1>
+      <p class="lead">You're in orbit around Saturn's biggest moon and you want to go home. Ask for a ride, pick a car, and watch the time, distance, battery and fare run from pickup to Earth.<span class="cursor" aria-hidden="true"></span></p>
+    </div>
+    <p class="margin" aria-label="Note">░  REPLAYS THE RECORDED
+░  DAY-4 AGENT RUN. EVERY
+░  ROUTE WAS RE-FLOWN.</p>
+  </header>
+
+  <main class="stage">
+    <div class="lift stagephone">
+      <section class="phone" aria-label="SOL app">
+        <div class="bar"><b>SOL &gt; TITAN ORBIT</b><span id="clock"></span></div>
+        <div class="mapbox">
+          <canvas id="map" aria-label="Map"></canvas>
+          <p class="maplab" id="maplab"></p>
+          <div class="zoom" role="group" aria-label="Zoom">
+            <button type="button" class="chip" data-z="auto">AUTO</button>
+            <button type="button" class="chip" data-z="you">YOU</button>
+            <button type="button" class="chip" data-z="saturn">SATURN</button>
+            <button type="button" class="chip" data-z="sun">SOLAR SYSTEM</button>
+            <label class="sr" for="zoom" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Zoom</label>
+            <input type="range" id="zoom" min="4" max="10" step="0.01" value="4.3">
+          </div>
+        </div>
+        <div class="sheet" id="sheet" aria-live="polite"></div>
+      </section>
+    </div>
+
+    <aside class="behind" aria-label="Behind the screen">
+      <div class="mini">
+        <span class="tab" id="ag-tab">BEHIND THE SCREEN · THE AGENTS</span>
+        <div class="panel" id="agents"></div>
+      </div>
+      <div class="mini">
+        <span class="tab" id="rc-tab">RIDE RECEIPT</span>
+        <div class="panel"><div class="rcpt" id="receipt"></div></div>
+      </div>
+    </aside>
+  </main>
+
+  <section class="sec" aria-labelledby="h-eval" id="eval">
+    <h2 id="h-eval">sol eval --models</h2>
+    <p class="lead2" id="eval-lead"></p>
+    <div class="mini"><span class="tab">SAME 20 REQUESTS · SAME PLANNER · SAME GATES</span>
+      <div class="panel"><pre class="box" id="eval-board"></pre><p class="note" id="eval-note"></p></div></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-checker">
+    <h2 id="h-checker">sol checker --stress</h2>
+    <p class="lead2" id="chk-lead"></p>
+    <div class="mini chartbox"><span class="tab">PLANNER'S RAW MISS → MISS AFTER THE CHECKER'S CORRECTION · KM, LOG SCALE</span>
+      <div class="panel"><svg id="chk" role="img" aria-labelledby="chk-t"><title id="chk-t">Every route's raw miss and its miss after correction</title></svg></div></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-wall">
+    <h2 id="h-wall">sol rejected --all</h2>
+    <p class="lead2">Every answer a gate failed and every route the checker threw out, with the reason. A struck number is one no tool produced.</p>
+    <div class="wall" id="wall"></div>
+  </section>
+
+  <footer>
+    <p>Trips: the day-4 agent run (a dispatcher reads the request, an engineer calls the trip planner, a broker writes the answer), replayed here. Each trip is a planner output that an independent n-body checker (Sun, eight planets and the Moon) re-flew before it was offered. Planet positions: JPL DE421. The Roadster: a JPL Horizons state, carried forward around the Sun.</p>
+    <p>Drawn, not computed: Titan's place in its orbit, the car's place around Titan, Saturn's rings, and the short hop from Titan onto the Sun-centred route. Light delays on this page are computed from those positions.</p>
+    <p id="assume-foot"></p>
+    <p>For scale: the fastest capsule ever to enter Earth's atmosphere, NASA's Stardust in 2006, came in at about 12.9 km/s. Every ride here arrives faster than that.</p>
+    <p>The fleet car is simulated. The Roadster's position is real, but nobody can book it. Not affiliated with Tesla or SpaceX. Built by Alvin Impang.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var D = __DATA__;
+var AU = 149597870.7, CKMS = 299792.458, T0 = Date.UTC(2026, 9, 16);
+var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+function fmt(n, d){ return Number(n).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
+function usd(n){ return "$" + fmt(n, 2); }
+function iso(t, hm){ var s = new Date(T0 + t * 864e5).toISOString(); return hm ? s.slice(0, 10) + " " + s.slice(11, 16) : s.slice(0, 10); }
+function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+function smooth(x){ x = clamp(x, 0, 1); return x * x * (3 - 2 * x); }
+function hms(sec){ sec = Math.max(0, Math.round(sec)); var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return ((h ? h + " h " : "") + (h || m ? m + " min " : "") + (h ? "" : s + " s")).trim(); }
+function light(km){ var s = km / CKMS; return s < 1 ? fmt(s, 2) + " s" : hms(s); }
+var SYM_OK = '<span class="sym" aria-hidden="true">✓</span>', SYM_NO = '<span class="sym" aria-hidden="true">✕</span>';
+
+/* ---------- trips ---------- */
+var META = {
+  fleet_low: { name: "Low burn", fleet: true },
+  roadster_low: { name: "Premium", fleet: false },
+  fleet_fastest: { name: "Fastest", fleet: true, refuse: "The broker won't book this: it reaches Earth at {entry} km/s, and money can't make that safe." },
+  roadster_fastest: { name: "Premium, fastest", fleet: false },
+  fleet_quicker: { name: "Quicker", fleet: true },
+  fleet_balanced: { name: "Balanced", fleet: true }
+};
+var TRIPS = D.trips;
+Object.keys(TRIPS).forEach(function(k){
+  var tr = TRIPS[k], o = tr.out, ride = o.legs[o.legs.length - 1], pick = o.legs[0];
+  tr.key = k; tr.meta = META[k]; tr.ride = ride; tr.pick = pick; tr.fleet = META[k].fleet;
+  tr.pathBy = {}; tr.paths.forEach(function(p){
+    var L = 0; p.cum = [0];
+    for (var i = 1; i < p.pts.length; i++){ var a = p.pts[i - 1], b = p.pts[i]; L += Math.hypot(b[1] - a[1], b[2] - a[2], b[3] - a[3]); p.cum.push(L); }
+    p.len = L; tr.pathBy[p.kind] = p; });
+  tr.rideStart = tr.pathBy.ride.pts[0][0];
+  tr.end = tr.end_t;
+  tr.arrTitan = tr.fleet ? 0.2 : tr.pathBy.pickup.pts[tr.pathBy.pickup.pts.length - 1][0];
+  tr.rdep = tr.fleet ? 0 : tr.pathBy.pickup.pts[0][0];
+  var ph = [];
+  if (tr.fleet){
+    ph.push({ name: "Pickup", sub: "The fleet car catches up with you in your orbit.", t0: 0, t1: 0.2, secs: 3, z: 4.25 });
+    if (tr.rideStart > 0.25) ph.push({ name: "Waiting at Titan", sub: "Aboard, waiting for the departure window.", t0: 0.2, t1: tr.rideStart, secs: 2.5, z: 6.55 });
+  } else {
+    ph.push({ name: "Roadster on its way", sub: "The Roadster coasts in its own orbit until its window opens.", t0: 0, t1: tr.rdep, secs: 3.5, z: 9.45 });
+    ph.push({ name: "Roadster flying to you", sub: "Real starting point, honest ETA.", t0: tr.rdep, t1: tr.arrTitan, secs: 9, z: 9.45 });
+    if (tr.rideStart - tr.arrTitan > 0.5) ph.push({ name: "Aboard at Titan", sub: "Waiting for the window home.", t0: tr.arrTitan, t1: tr.rideStart, secs: 2.5, z: 6.55 });
+  }
+  ph.push({ name: "Cruise to Earth", sub: "Coasting on the re-flown route.", t0: tr.rideStart, t1: tr.end, secs: 16, z: 9.45 });
+  var acc = 0; ph.forEach(function(p){ p.p0 = acc; acc += p.secs; p.p1 = acc; });
+  tr.phases = ph; tr.pbTotal = acc;
+});
+
+/* ---------- positions (km, Sun-centred ecliptic) ---------- */
+function planetAt(name, t){
+  var P = D.planets[name].pos, f = t / D.step_days, i = clamp(Math.floor(f), 0, P.length - 2), u = clamp(f - i, 0, 1), a = P[i], b = P[i + 1];
+  return [(a[0] + (b[0] - a[0]) * u) * AU, (a[1] + (b[1] - a[1]) * u) * AU, (a[2] + (b[2] - a[2]) * u) * AU];
+}
+function pathAt(p, t){
+  var P = p.pts, lo = 0, hi = P.length - 1;
+  if (t <= P[0][0]) return { r: [P[0][1] * AU, P[0][2] * AU, P[0][3] * AU], d: 0 };
+  if (t >= P[hi][0]) return { r: [P[hi][1] * AU, P[hi][2] * AU, P[hi][3] * AU], d: p.len };
+  while (hi - lo > 1){ var m = (lo + hi) >> 1; if (P[m][0] <= t) lo = m; else hi = m; }
+  var a = P[lo], b = P[hi], u = (t - a[0]) / (b[0] - a[0]);
+  return { r: [(a[1] + (b[1] - a[1]) * u) * AU, (a[2] + (b[2] - a[2]) * u) * AU, (a[3] + (b[3] - a[3]) * u) * AU], d: p.cum[lo] + (p.cum[hi] - p.cum[lo]) * u };
+}
+var TI = D.titan;
+function titanAt(t){ var s = planetAt("SATURN", t), th = 0.6 + 2 * Math.PI * t / TI.period_days; return [s[0] + TI.orbit_km * Math.cos(th), s[1] + TI.orbit_km * Math.sin(th), s[2]]; }
+var PARK = TI.radius_km + TI.park_alt_km, PARK_P = 0.2;
+function parkAt(t, lag){ var c = titanAt(t), ph = 2 * Math.PI * t / PARK_P - (lag || 0); return [c[0] + PARK * Math.cos(ph), c[1] + PARK * Math.sin(ph), c[2]]; }
+function lerp3(a, b, w){ return [a[0] + (b[0] - a[0]) * w, a[1] + (b[1] - a[1]) * w, a[2] + (b[2] - a[2]) * w]; }
+function riderAt(tr, t){
+  if (t < tr.rideStart) return parkAt(t);
+  var r = pathAt(tr.pathBy.ride, t).r, w = smooth((t - tr.rideStart) / 3);
+  return w < 1 ? lerp3(parkAt(t), r, w) : r;
+}
+function carAt(tr, t){
+  if (tr.fleet) return t < 0.2 ? parkAt(t, (1 - t / 0.2) * 2.6) : riderAt(tr, t);
+  if (t < tr.rdep) return pathAt(tr.pathBy.roadster_orbit, t).r;
+  if (t < tr.arrTitan){ var r = pathAt(tr.pathBy.pickup, t).r, w = smooth((t - (tr.arrTitan - 3)) / 3); return w > 0 ? lerp3(r, parkAt(t), w) : r; }
+  return riderAt(tr, t);
+}
+function auSoFar(tr, t){
+  var a = 0;
+  if (!tr.fleet && t > tr.rdep) a += tr.pick.au * pathAt(tr.pathBy.pickup, t).d / tr.pathBy.pickup.len;
+  if (t > tr.rideStart) a += tr.ride.au * pathAt(tr.pathBy.ride, t).d / tr.pathBy.ride.len;
+  return t >= tr.end ? tr.out.au_travelled : a;
+}
+function kwhSoFar(tr, t){ var k = 0; tr.burns.forEach(function(b){ if (t >= b.t) k = b.cum_kwh; }); return k; }
+function fareSoFar(tr, t){ if (t >= tr.end) return tr.out.fare.total_usd; return kwhSoFar(tr, t) * D.usd_per_kwh + t * 1440 * D.usd_per_min; }
+var G05 = 0.5 * 9.80665; // assumed 0.5 g push for burn times (page math, not a planner output)
+function burnMin(dv){ return dv * 1000 / G05 / 60; }
+function dist(a, b){ return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
+
+/* ---------- state ---------- */
+var S = { mode: "chat", turn: 0, thinking: false, sel: "fleet_low", t: 0, pb: 0, playing: false, cur: "usd", doge: 0.20, src: null, waitEnd: 0, msg: "" };
+try { var saved = localStorage.getItem("sol-doge"); if (saved && +saved > 0) S.doge = +saved; } catch (e) {}
+function trip(){ return TRIPS[S.sel]; }
+function phaseAt(tr, pb){ for (var i = 0; i < tr.phases.length; i++) if (pb < tr.phases[i].p1) return tr.phases[i]; return tr.phases[tr.phases.length - 1]; }
+function tFromPb(tr, pb){ var p = phaseAt(tr, pb), u = clamp((pb - p.p0) / p.secs, 0, 1); return p.t0 + (p.t1 - p.t0) * u; }
+function money(v){ return S.cur === "doge" ? fmt(v / S.doge, 0) + " DOGE" : usd(v); }
+
+/* ---------- chat ---------- */
+function brokerHTML(turn, ti){
+  var txt = turn.broker, out = "", last = 0;
+  turn.spans.forEach(function(sp, i){
+    out += esc(txt.slice(last, sp.s));
+    out += sp.tool ? '<button type="button" class="num" data-t="' + ti + '" data-i="' + i + '" aria-pressed="' + (S.src && S.src[0] === ti && S.src[1] === i) + '">' + esc(sp.tok) + "</button>" : esc(sp.tok);
+    last = sp.e; });
+  return out + esc(txt.slice(last));
+}
+function srcLine(ti){
+  if (!S.src || S.src[0] !== ti) return "TAP A NUMBER TO SEE WHICH TOOL MADE IT";
+  var sp = D.turns[ti].spans[S.src[1]];
+  return esc(sp.tok) + " came from <code>" + esc(sp.tool) + "</code>" + (sp.field ? " → " + esc(sp.field) : "");
+}
+function optHTML(k){
+  var tr = TRIPS[k], o = tr.out, m = tr.meta, pressed = S.sel === k;
+  var drv = tr.fleet ? "Fleet car · simulated" : "The real Roadster · premium";
+  var pk = tr.fleet ? "Pickup in " + tr.pick.eta_hours + " h" : "Pickup " + tr.pick.arrive_titan + " (" + fmt(tr.pick.eta_days_from_request) + " days)";
+  var entry = tr.ride.earth_entry_kms;
+  if (m.refuse) return '<div class="opt no" role="note"><span class="k">' + esc(drv) + '</span><span class="n">' + esc(m.name) + '</span><span class="p">' + usd(o.fare.total_usd) + '</span>' +
+    '<span class="l">Home ' + o.arrive_home + " · " + fmt(o.door_to_door_days) + ' days</span><span class="l warn">' + SYM_NO + esc(m.refuse.replace("{entry}", entry)) + "</span></div>";
+  return '<button type="button" class="opt" data-k="' + k + '" aria-pressed="' + pressed + '"><span class="k">' + esc(drv) + '</span><span class="n">' + esc(m.name) + '</span><span class="p">' + usd(o.fare.total_usd) + '</span>' +
+    '<span class="l">' + pk + " · home " + o.arrive_home + " · " + fmt(o.door_to_door_days) + " days (" + o.door_to_door_years + ' yr)</span>' +
+    '<span class="l">Earth arrival ' + entry + " km/s · " + o.au_travelled + " AU · " + SYM_OK + "re-flown</span></button>";
+}
+function renderChat(){
+  var h = "";
+  for (var ti = 0; ti <= S.turn; ti++){
+    var T = D.turns[ti], calls = T.calls.length;
+    h += '<p class="me">' + esc(T.request) + "</p>";
+    if (ti === S.turn && S.thinking){ h += '<p class="thinking" id="think"></p>'; break; }
+    h += '<p class="sys">Planned on the fleet car in your orbit (light delay under 0.03 s) · ' + calls + " trip tools · " + SYM_OK + "every route re-flown · " + SYM_OK + "every number traced</p>";
+    h += '<div class="bot"><span class="who">SOL broker</span><p>' + brokerHTML(T, ti) + '</p><p class="src">' + srcLine(ti) + "</p></div>";
+    h += '<div class="opts">' + T.trips.map(optHTML).join("") + "</div>";
+  }
+  if (!S.thinking){
+    h += '<p class="note">Landing at these speeds isn\'t modelled or priced. See the note on Stardust below the app.</p>';
+    if (S.turn + 1 < D.turns.length) h += '<div class="say"><button type="button" class="ask" id="next-turn">&gt; ' + esc(D.turns[S.turn + 1].request) + "</button></div>";
+    var tr = trip();
+    h += '<button type="button" class="btn primary" id="book">Book ' + esc(tr.meta.name) + " · " + usd(tr.out.fare.total_usd) + "</button>";
+    h += '<div class="say"><button type="button" class="btn" id="msg-earth">@ Tell Earth I\'m coming</button></div><p class="out" id="msg-out">' + S.msg + "</p>";
+  }
+  $("sheet").innerHTML = h;
+}
+function think(){
+  var calls = D.turns[S.turn].calls, secs = calls.reduce(function(a, c){ return a + c.seconds; }, 0);
+  var lines = ["DISPATCHER  reading your request...", "ENGINEER    running " + calls.length + " trip tools...", "CHECKER     re-flying " + calls.length + " routes in the n-body model...",
+    "BROKER      writing the answer...", "(the recorded run took " + fmt(secs, 0) + " s; this replay skips the wait)"];
+  var i = 0, el = $("think");
+  (function step(){ if (!el) return; el.textContent = lines.slice(0, ++i).join("\n"); if (i < lines.length) setTimeout(step, REDUCED ? 0 : 450); else setTimeout(function(){ S.thinking = false; S.sel = "fleet_balanced"; render(); }, REDUCED ? 0 : 700); })();
+}
+
+/* ---------- booking and the trip ---------- */
+function book(){
+  var tr = trip(); S.msg = "";
+  if (tr.fleet){ startTrip(); return; }
+  var oneWay = dist(parkAt(0), carAt(tr, 0)) / CKMS;
+  S.mode = "wait"; S.waitOneWay = oneWay; S.waitEnd = Date.now() + 2 * oneWay * 1000; render();
+}
+function startTrip(){ var bar = document.querySelector(".bar"); if (bar.getBoundingClientRect().top < 0 || bar.getBoundingClientRect().top > window.innerHeight) bar.scrollIntoView({ block: "start", behavior: REDUCED ? "auto" : "smooth" });
+  S.mode = "trip"; S.pb = 0; S.t = 0; S.playing = true; S.msg = ""; if (Z.auto) Z.target = trip().phases[0].z; render(); }
+function renderWait(){
+  var left = (S.waitEnd - Date.now()) / 1000, tr = trip();
+  $("sheet").innerHTML = '<div class="bot"><span class="who">Booking the real Roadster</span><p>Your request is on its way to the Roadster at the speed of light. It is ' + light(S.waitOneWay * CKMS) +
+    ' away, and its answer takes as long to come back.</p><p class="phase"><span class="h">Confirmation in</span><span id="wait-left">' + hms(left) + "</span></p>" +
+    '<p class="note">SOL can\'t make light go faster. The demo can skip ahead.</p></div><button type="button" class="btn primary" id="skip">Skip the wait</button><button type="button" class="btn" id="cancel">&lt; Back to options</button>';
+}
+function renderTrip(){
+  var tr = trip();
+  $("sheet").innerHTML =
+    '<div class="phase"><span class="h" id="ph-name"></span><span class="dim" id="ph-date"></span></div><p class="note" id="ph-sub"></p>' +
+    '<div class="prog" aria-hidden="true"><i id="prog"></i></div>' +
+    '<dl class="meter">' +
+      "<dt>Travel time</dt><dd class=\"big\" id=\"m-time\"></dd>" +
+      "<dt>AU travelled</dt><dd class=\"big\" id=\"m-au\"></dd>" +
+      "<dt>Battery used</dt><dd id=\"m-bat\"></dd>" +
+      "<dt>Fare</dt><dd class=\"big\" id=\"m-fare\"></dd>" +
+      "<dt>Light to Earth</dt><dd id=\"m-light\"></dd>" +
+    "</dl>" +
+    '<div class="ctl"><button type="button" class="chip" id="play"></button>' +
+      '<label for="scrub" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Trip position</label><input type="range" id="scrub" min="0" max="1000" step="1" value="0">' +
+      '<button type="button" class="chip" id="cur-usd" aria-pressed="' + (S.cur === "usd") + '">USD</button><button type="button" class="chip" id="cur-doge" aria-pressed="' + (S.cur === "doge") + '">DOGE</button></div>' +
+    (S.cur === "doge" ? '<div class="rate"><label for="doge">1 DOGE = $</label><input id="doge" type="number" min="0.001" step="0.01" value="' + S.doge + '"><span>your rate, not a live price</span></div>' : "") +
+    '<div class="say"><button type="button" class="btn" id="msg-earth">@ Message Earth</button><button type="button" class="btn" id="cancel">&lt; Options</button></div><p class="out" id="msg-out">' + S.msg + "</p>" +
+    '<p class="label">Trip log</p><ul class="log" id="log"></ul>' +
+    '<div class="home" id="home" hidden><span class="t">You\'re home</span><p id="home-line"></p><button type="button" class="btn" id="again">Ride again</button></div>';
+  $("sheet").scrollTop = 0; tick(true);
+}
+function events(tr){
+  var ev = [];
+  if (tr.fleet){ ev.push([0, "Ride booked. Your fleet car (simulated) is in your orbit."]); ev.push([0.2, "Car docked. You're aboard."]); }
+  else { ev.push([0, "Roadster confirmed after a light-speed round trip."]); ev.push([tr.rdep, "Roadster leaves its orbit, " + tr.pick.depart + "."]); ev.push([tr.arrTitan, "Roadster arrives in your Titan orbit. You're aboard."]); }
+  tr.burns.forEach(function(b){ ev.push([b.t, b.what + ": " + b.dv + " km/s, about " + fmt(burnMin(b.dv)) + " min at an assumed 0.5 g. Battery used so far " + fmt(b.cum_kwh) + " kWh, " + fmt(b.cum_kwh / D.pack_kwh, 1) + " full packs. Recharging isn't modelled."]); });
+  ev.push([tr.end, "Arrived at Earth " + tr.out.arrive_home + " at " + tr.ride.earth_entry_kms + " km/s. Landing isn't modelled."]);
+  return ev.sort(function(a, b){ return a[0] - b[0]; });
+}
+var lastLog = "";
+function tick(force){
+  if (S.mode !== "trip") return;
+  var tr = trip(), pb = S.pb, t = tFromPb(tr, pb), done = pb >= tr.pbTotal; S.t = done ? tr.end : t;
+  t = S.t;
+  var ph = done ? { name: "Arrived", sub: "You're at Earth." } : phaseAt(tr, pb);
+  $("ph-name").textContent = ph.name; $("ph-sub").textContent = ph.sub;
+  $("ph-date").textContent = iso(t, t < 2);
+  $("prog").style.width = (100 * t / tr.end).toFixed(2) + "%";
+  var days = t, rider = riderAt(tr, t), earth = planetAt("EARTH", t);
+  $("m-time").innerHTML = (done ? fmt(tr.out.door_to_door_days) : fmt(Math.floor(days))) + " days <small>(" + (done ? tr.out.door_to_door_years : fmt(days / 365.25, 2)) + " yr)</small>";
+  $("m-au").innerHTML = fmt(auSoFar(tr, t), 2) + " <small>of " + tr.out.au_travelled + "</small>";
+  var kwh = done ? tr.out.battery.energy_kwh : kwhSoFar(tr, t);
+  $("m-bat").innerHTML = fmt(kwh) + " kWh <small>" + fmt(kwh / D.pack_kwh, 1) + " PACKS</small>";
+  $("m-fare").textContent = money(fareSoFar(tr, t));
+  var d = dist(rider, earth);
+  $("m-light").innerHTML = light(d) + " <small>(" + fmt(d / AU, 2) + " AU)</small>";
+  $("play").textContent = done ? "REPLAY" : (S.playing ? "PAUSE" : "PLAY");
+  $("play").setAttribute("aria-pressed", S.playing && !done ? "true" : "false");
+  var sc = $("scrub"); if (document.activeElement !== sc || force) sc.value = Math.round(1000 * pb / tr.pbTotal);
+  var ev = events(tr).filter(function(e){ return e[0] <= t + 1e-6; }).reverse().slice(0, 4);
+  var lh = ev.map(function(e){ return "<li><b>" + iso(e[0], e[0] < 1) + "</b> " + esc(e[1]) + "</li>"; }).join("");
+  if (lh !== lastLog || force){ $("log").innerHTML = lh; lastLog = lh; }
+  $("home").hidden = !done;
+  if (done) $("home-line").textContent = "Door to door " + fmt(tr.out.door_to_door_days) + " days, " + tr.out.au_travelled + " AU, " + fmt(tr.out.battery.energy_kwh) + " kWh, " + money(tr.out.fare.total_usd) + ".";
+  $("clock").textContent = iso(t, t < 2);
+}
+
+/* ---------- behind the screen ---------- */
+function renderAgents(){
+  var ti = S.thinking ? S.turn - 1 : S.turn, T = D.turns[Math.max(0, ti)];
+  $("ag-tab").textContent = "BEHIND THE SCREEN · TURN " + (Math.max(0, ti) + 1) + " OF " + D.turns.length;
+  var ntr = T.spans.filter(function(s){ return s.tool; }).length;
+  $("agents").innerHTML =
+    '<div class="role"><span class="r">Dispatcher</span><span class="v">' + esc(T.dispatcher) + "</span></div>" +
+    '<div class="role"><span class="r">Engineer</span><ul class="calls">' + T.calls.map(function(c){
+      return "<li><code>$ trip " + esc(c.args) + "</code><span>" + fmt(c.seconds, 1) + " s " + (c.refly_pass ? '<span class="ok">' + SYM_OK + "</span>" : '<span class="warn">' + SYM_NO + "</span>") + "</span></li>"; }).join("") + "</ul></div>" +
+    '<div class="role"><span class="r">Broker</span><span class="v">' + (T.provenance.pass ? '<span class="ok">' + SYM_OK + "</span>" : '<span class="warn">' + SYM_NO + "</span>") +
+      "Provenance gate: " + ntr + " of " + T.spans.length + " numbers and dates traced to a tool output, " + T.provenance.untraced.length + " struck. Tap any underlined number in the app to see its source.</span></div>";
+}
+function renderReceipt(){
+  var tr = trip(), o = tr.out, legs = o.legs;
+  $("rc-tab").textContent = "RIDE RECEIPT · " + tr.meta.name.toUpperCase();
+  var rows = [["Requested", o.request_date + ", from Titan orbit"], ["Driver", tr.fleet ? "Fleet car (simulated)" : "The real Roadster (premium)"]];
+  if (tr.fleet) rows.push(["Pickup", "in " + tr.pick.eta_hours + " h, same orbit"]);
+  else rows.push(["Roadster leaves", tr.pick.depart], ["Pickup", tr.pick.arrive_titan + " (" + fmt(tr.pick.eta_days_from_request) + " days)"]);
+  rows.push(["Leave Titan", tr.ride.depart_titan], ["Arrive Earth", o.arrive_home + " at " + tr.ride.earth_entry_kms + " km/s"],
+    ["Door to door", fmt(o.door_to_door_days) + " days (" + o.door_to_door_years + " yr)"], ["Distance", o.au_travelled + " AU"],
+    ["Total burn", o.battery.dv_kms + " km/s"], ["Burn time", "about " + fmt(burnMin(o.battery.dv_kms)) + " min at 0.5 g*"], ["Propellant", fmt(o.battery.propellant_kg, 1) + " kg"],
+    ["Battery", fmt(o.battery.energy_kwh) + " kWh (" + fmt(o.battery.battery_pct) + "% of one pack)"],
+    ["Energy fee", usd(o.fare.energy_usd)], ["Time fee", usd(o.fare.time_usd)]);
+  var checks = legs.filter(function(l){ return l.refly; }).map(function(l){
+    var r = l.refly, nm = l.leg === "pickup" ? "Roadster to Titan" : "Titan to Earth";
+    return '<div class="check"><span class="h">' + (r.pass ? SYM_OK : SYM_NO) + "Re-flown: " + nm + "</span><span>The planner's route missed by " + fmt(r.raw_miss_km) + " km once every planet pulled on it. A " +
+      r.retarget_ms + " m/s nudge in " + r.iterations + " tries brought the miss to " + r.final_miss_km + " km.</span></div>"; }).join("");
+  $("receipt").innerHTML = '<p class="label">SOL ride receipt · ' + esc(tr.meta.name) + "</p>" +
+    '<dl class="rl">' + rows.map(function(r){ return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>"; }).join("") + "</dl>" +
+    '<hr class="rule"><div class="fare"><span>FARE</span><span>' + money(o.fare.total_usd) + "</span></div>" + checks +
+    '<p class="note">* Page math, not a planner output: total burn divided by an assumed 0.5 g push. At that push, treating burns as instant is close enough.</p>' +
+    '<p class="label">Stated assumptions, printed on every receipt</p><ul class="assume">' + o.assumptions.map(function(a){ return "<li>" + esc(a) + "</li>"; }).join("") + "</ul>" +
+    '<p class="note">Tool call: <code>$ trip ' + esc(tr.args) + "</code></p>";
+}
+function render(){
+  if (S.mode === "chat") renderChat(); else if (S.mode === "wait") renderWait(); else renderTrip();
+  renderAgents(); renderReceipt();
+  if (S.mode === "chat"){ $("clock").textContent = "REQUEST " + D.request_date; if (S.thinking) think(); }
+}
+
+/* ---------- events ---------- */
+$("sheet").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if (!b) return;
+  if (b.classList.contains("opt")){ S.sel = b.getAttribute("data-k"); render(); return; }
+  if (b.classList.contains("num")){ var ti = +b.getAttribute("data-t"), i = +b.getAttribute("data-i"); S.src = (S.src && S.src[0] === ti && S.src[1] === i) ? null : [ti, i]; render(); return; }
+  switch (b.id){
+    case "next-turn": S.turn++; S.thinking = true; S.src = null; render(); break;
+    case "book": book(); break;
+    case "skip": startTrip(); break;
+    case "cancel": S.mode = "chat"; S.playing = false; S.t = 0; S.msg = ""; if (Z.auto) Z.target = 9.45; render(); break;
+    case "again": startTrip(); break;
+    case "play": var tr = trip(); if (S.pb >= tr.pbTotal){ S.pb = 0; S.playing = true; } else S.playing = !S.playing; tick(true); break;
+    case "cur-usd": S.cur = "usd"; render(); break;
+    case "cur-doge": S.cur = "doge"; render(); break;
+    case "msg-earth":
+      var tr2 = trip(), t = S.mode === "trip" ? S.t : 0, d = dist(riderAt(tr2, t), planetAt("EARTH", t));
+      S.msg = "Sent " + iso(t, true) + ". Earth is " + fmt(d / AU, 2) + " AU away, so it lands " + light(d) + " later. Their reply takes as long again.";
+      $("msg-out").textContent = S.msg; break;
+  }
+});
+$("sheet").addEventListener("input", function(e){
+  if (e.target.id === "scrub"){ var tr = trip(); S.pb = tr.pbTotal * e.target.value / 1000; S.playing = false; tick(); }
+  if (e.target.id === "doge"){ var v = +e.target.value; if (v > 0){ S.doge = v; try { localStorage.setItem("sol-doge", String(v)); } catch (err) {} tick(); renderReceipt(); } }
+});
+
+/* ---------- map ---------- */
+var cv = $("map"), ctx = cv.getContext("2d"), W = 0, H = 0, DPR = 1;
+var Z = { cur: 4.25, target: 4.25, auto: true };
+var PRESET = { you: 4.25, saturn: 6.55, sun: 9.45 };
+function resize(){ var r = cv.getBoundingClientRect(); DPR = Math.min(2, window.devicePixelRatio || 1); W = r.width; H = r.height; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); }
+window.addEventListener("resize", resize); resize();
+var V = { cx: 0, cy: 0, s: 1 };
+function sx(x){ return (x - V.cx) * V.s + W / 2; } function sy(y){ return H / 2 - (y - V.cy) * V.s; }
+var dith = (function(){ var c = document.createElement("canvas"); c.width = c.height = 4; var g = c.getContext("2d"); g.fillStyle = "#0d1117"; g.fillRect(0, 0, 2, 2); g.fillRect(2, 2, 2, 2); return ctx.createPattern(c, "repeat"); })();
+var FONT = '11px "Departure Mono", ui-monospace, monospace';
+var RAD = { MERCURY: 2440, VENUS: 6052, EARTH: 6371, MARS: 3390, JUPITER: 69911, SATURN: 58232, URANUS: 25362, NEPTUNE: 24622 };
+function poly(pts, getXY){
+  ctx.beginPath(); var pen = false, LIM = 2e4;
+  for (var i = 0; i < pts.length; i++){
+    var q = getXY(pts[i]), x = sx(q[0]), y = sy(q[1]);
+    if (Math.abs(x) > LIM || Math.abs(y) > LIM){
+      if (pen && i > 0){ var p = getXY(pts[i - 1]), px = sx(p[0]), py = sy(p[1]), k = LIM / Math.max(Math.abs(x - px), Math.abs(y - py), 1); ctx.lineTo(px + (x - px) * Math.min(1, k), py + (y - py) * Math.min(1, k)); }
+      pen = false; continue; }
+    if (!pen){ if (i > 0){ var p2 = getXY(pts[i - 1]), qx = sx(p2[0]), qy = sy(p2[1]), k2 = LIM / Math.max(Math.abs(qx - x), Math.abs(qy - y), 1); ctx.moveTo(x + (qx - x) * Math.min(1, k2), y + (qy - y) * Math.min(1, k2)); ctx.lineTo(x, y); } else ctx.moveTo(x, y); pen = true; }
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+function disk(x, y, rpx, fill, stroke){ ctx.beginPath(); ctx.arc(x, y, rpx, 0, 2 * Math.PI); if (fill){ ctx.fillStyle = fill; ctx.fill(); } if (stroke){ ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); } }
+function label(x, y, text, color){ if (x < -30 || x > W + 30 || y < -30 || y > H + 30) return; ctx.font = FONT; ctx.fillStyle = color || "#0d1117"; var w = ctx.measureText(text).width; ctx.fillText(text, Math.max(4, Math.min(x, W - w - 4)), Math.max(12, Math.min(y, H - 22))); }
+function niceKm(px){ var km = px / V.s, unitAU = km > 2e7, v = unitAU ? km / AU : km, p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p, m = n >= 5 ? 5 : n >= 2 ? 2 : 1, val = m * p;
+  return { px: (unitAU ? val * AU : val) * V.s, text: unitAU ? fmt(val, val < 1 ? 1 : 0) + " AU" : fmt(val) + " km" }; }
+function draw(){
+  var tr = trip(), t = S.mode === "trip" ? S.t : 0;
+  var rider = riderAt(tr, t), sat = planetAt("SATURN", t);
+  var near = clamp(1 - (dist(rider, sat) - 4e6) / 4e6, 0, 1);
+  var g = smooth((Z.cur - 4.9) / (6.2 - 4.9)) * near;
+  var focus = [rider[0] + (sat[0] - rider[0]) * g, rider[1] + (sat[1] - rider[1]) * g];
+  var f = smooth((Z.cur - 7.0) / (9.2 - 7.0));
+  var home = [sat[0] * 0.45, sat[1] * 0.45];
+  V.cx = focus[0] + (home[0] - focus[0]) * f; V.cy = focus[1] + (home[1] - focus[1]) * f; V.s = W / Math.pow(10, Z.cur);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.fillStyle = "#fbfcfd"; ctx.fillRect(0, 0, W, H);
+  ctx.lineWidth = 1;
+  // planet orbits
+  Object.keys(D.planets).forEach(function(n){ var o = D.planets[n].orbit, rpx = Math.hypot(o[0][0], o[0][1]) * AU * V.s;
+    if (rpx < 6 || rpx > 40 * W) return; ctx.strokeStyle = "#c3c8d0"; ctx.setLineDash([]); poly(o, function(p){ return [p[0] * AU, p[1] * AU]; }); });
+  // roadster's own orbit
+  if (!tr.fleet || S.mode === "chat"){ ctx.strokeStyle = "#626a77"; ctx.setLineDash([3, 3]); poly(D.roadster_orbit, function(p){ return [p[0] * AU, p[1] * AU]; }); ctx.setLineDash([]); }
+  // trip paths: the part flown solid, the rest dashed
+  tr.paths.forEach(function(p){
+    if (p.kind === "roadster_orbit") return;
+    var pts = p.pts.slice(), fix = p.kind === "ride" ? 0 : pts.length - 1, tt = pts[fix][0], tp = parkAt(tt);
+    pts[fix] = [tt, tp[0] / AU, tp[1] / AU, tp[2] / AU];
+    var xy = function(q){ return [q[1] * AU, q[2] * AU]; };
+    ctx.strokeStyle = "#454c59"; ctx.setLineDash([5, 4]); ctx.lineWidth = 1; poly(pts, xy); ctx.setLineDash([]);
+    if (S.mode === "trip" && t > pts[0][0]){ var done = pts.filter(function(q){ return q[0] <= t; }); var here = p.kind === "ride" ? riderAt(tr, t) : carAt(tr, t); done.push([t, here[0] / AU, here[1] / AU]);
+      ctx.strokeStyle = "#0d1117"; ctx.lineWidth = 2; poly(done, xy); ctx.lineWidth = 1; }
+  });
+  // sun
+  var sunX = sx(0), sunY = sy(0), sunR = Math.max(4, 696000 * V.s);
+  if (sunR < 4 * W){ disk(sunX, sunY, sunR * 2.2, dith); disk(sunX, sunY, sunR, "#0d1117"); if (AU * V.s > 60) label(sunX + 8, sunY - 8, "SUN"); }
+  // saturn system
+  var satX = sx(sat[0]), satY = sy(sat[1]), ringPx = 136775 * V.s;
+  if (ringPx > 2.5){ ctx.save(); ctx.beginPath(); ctx.arc(satX, satY, ringPx, 0, 2 * Math.PI); ctx.arc(satX, satY, 74658 * V.s, 0, 2 * Math.PI, true); ctx.globalAlpha = .45; ctx.fillStyle = dith; ctx.fill("evenodd"); ctx.restore(); }
+  var tiOrbPx = TI.orbit_km * V.s;
+  if (tiOrbPx > 8 && tiOrbPx < 40 * W){ ctx.strokeStyle = "#c3c8d0"; disk(satX, satY, tiOrbPx, null, "#c3c8d0"); }
+  // planets
+  Object.keys(D.planets).forEach(function(n){ var p = planetAt(n, t), x = sx(p[0]), y = sy(p[1]); if (x < -50 || x > W + 50 || y < -50 || y > H + 50) return;
+    var r = Math.max(n === "SATURN" || n === "JUPITER" ? 3.5 : 2.5, RAD[n] * V.s);
+    disk(x, y, r, n === "EARTH" ? "#fbfcfd" : "#0d1117", "#0d1117");
+    var orbPx = Math.hypot(D.planets[n].orbit[0][0], D.planets[n].orbit[0][1]) * AU * V.s;
+    if (n === "EARTH" || n === "SATURN" || orbPx > 40 || r > 6) label(x + r + 5, n === "SATURN" ? y - 6 : y + 4, n); });
+  // titan and your parking orbit
+  var ti = titanAt(t), tx = sx(ti[0]), ty = sy(ti[1]), tR = TI.radius_km * V.s;
+  if (tx > -W && tx < 2 * W && ty > -H && ty < 2 * H && (tiOrbPx > 8 || tR > 1)){
+    if (tR > 3){ disk(tx, ty, tR, "#eceff3", "#0d1117"); ctx.save(); ctx.beginPath(); ctx.arc(tx, ty, tR, 0, 2 * Math.PI); ctx.clip(); ctx.globalAlpha = .18; ctx.fillStyle = dith; ctx.fillRect(tx - tR, ty - tR, 2 * tR, 2 * tR); ctx.restore();
+      ctx.setLineDash([2, 3]); disk(tx, ty, PARK * V.s, null, "#454c59"); ctx.setLineDash([]); label(tx - 18, ty + 4, "TITAN"); }
+    else { disk(tx, ty, 2.5, "#454c59"); label(tx + 6, ty + 4, "TITAN", "#454c59"); }
+  }
+  // car and rider
+  var car = carAt(tr, t), cx = sx(car[0]), cy = sy(car[1]), rx = sx(rider[0]), ry = sy(rider[1]);
+  var aboard = S.mode === "trip" && (tr.fleet ? t >= 0.2 : t >= tr.arrTitan);
+  var carNear = Math.hypot(cx - rx, cy - ry) < 16;
+  if (!aboard && !carNear){ ctx.strokeStyle = "#0d1117"; ctx.lineWidth = 1.5; ctx.strokeRect(cx - 5, cy - 5, 10, 10); ctx.lineWidth = 1; label(cx + 8, cy - 6, tr.fleet ? "FLEET CAR (SIM)" : "ROADSTER"); }
+  ctx.fillStyle = "#0d1117"; ctx.fillRect(rx - 4, ry - 4, 8, 8);
+  label(rx + 8, ry + 14, aboard || carNear ? (aboard ? "YOU, ABOARD" : "YOU + " + (tr.fleet ? "FLEET CAR" : "ROADSTER")) : "YOU");
+  // scale bar
+  var sb = niceKm(90); ctx.strokeStyle = "#0d1117"; ctx.beginPath(); var bx = 11, by = H - 12; ctx.moveTo(bx, by - 4); ctx.lineTo(bx, by); ctx.lineTo(bx + sb.px, by); ctx.lineTo(bx + sb.px, by - 4); ctx.stroke();
+  ctx.fillStyle = "#fbfcfd"; ctx.fillRect(bx + 2, by - 17, ctx.measureText(sb.text).width + 6, 13); label(bx + 4, by - 6, sb.text);
+  $("maplab").textContent = (Z.auto ? "AUTO · " : "") + "VIEW " + (Math.pow(10, Z.cur) > 2e7 ? fmt(Math.pow(10, Z.cur) / AU, 1) + " AU" : fmt(Math.pow(10, Z.cur)) + " KM") + " WIDE";
+}
+function setZoomUI(){ document.querySelectorAll(".zoom .chip").forEach(function(c){ var z = c.getAttribute("data-z"); c.setAttribute("aria-pressed", z === "auto" ? String(Z.auto) : String(!Z.auto && Math.abs(Z.target - PRESET[z]) < .01)); }); $("zoom").value = Z.target; }
+document.querySelector(".zoom").addEventListener("click", function(e){ var c = e.target.closest(".chip"); if (!c) return; var z = c.getAttribute("data-z");
+  if (z === "auto"){ Z.auto = true; autoZoom(); } else { Z.auto = false; Z.target = PRESET[z]; } setZoomUI(); });
+$("zoom").addEventListener("input", function(e){ Z.auto = false; Z.target = +e.target.value; Z.cur = Z.target; setZoomUI(); });
+cv.addEventListener("wheel", function(e){ e.preventDefault(); Z.auto = false; Z.target = clamp(Z.target + e.deltaY * 0.0025, 4, 10); setZoomUI(); }, { passive: false });
+var pinch = null;
+cv.addEventListener("touchstart", function(e){ if (e.touches.length === 2) pinch = { d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), z: Z.target }; }, { passive: true });
+cv.addEventListener("touchmove", function(e){ if (pinch && e.touches.length === 2){ e.preventDefault(); var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  Z.auto = false; Z.target = clamp(pinch.z - Math.log10(d / pinch.d), 4, 10); Z.cur = Z.target; setZoomUI(); } }, { passive: false });
+cv.addEventListener("touchend", function(){ pinch = null; });
+function autoZoom(){
+  if (!Z.auto) return;
+  if (S.mode !== "trip"){ Z.target = introDone ? 9.45 : Z.target; return; }
+  var tr = trip(), pb = S.pb;
+  if (pb >= tr.pbTotal){ Z.target = 5.3; return; }
+  var ph = phaseAt(tr, pb), u = (pb - ph.p0) / ph.secs;
+  if (ph.name === "Cruise to Earth"){ Z.target = u < 0.05 ? 6.55 : u > 0.985 ? 5.3 : 9.45; } else Z.target = ph.z;
+}
+
+/* ---------- loop ---------- */
+var introDone = false, lastT = performance.now();
+setTimeout(function(){ introDone = true; if (Z.auto) Z.target = 9.45; }, REDUCED ? 0 : 900);
+if (REDUCED){ Z.cur = Z.target = 9.45; introDone = true; }
+function frame(now){
+  var dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
+  if (S.mode === "trip" && S.playing){ var tr = trip(); S.pb = Math.min(tr.pbTotal, S.pb + dt); if (S.pb >= tr.pbTotal) S.playing = false; }
+  if (S.mode === "wait"){ var el = $("wait-left"); if (el){ var left = (S.waitEnd - Date.now()) / 1000; el.textContent = hms(left); if (left <= 0) startTrip(); } }
+  autoZoom();
+  Z.cur = REDUCED ? Z.target : Z.cur + (Z.target - Z.cur) * Math.min(1, dt * (Z.auto && S.mode !== "trip" ? 1.3 : 3.2));
+  if (Math.abs(Z.target - Z.cur) < 1e-3) Z.cur = Z.target;
+  if (document.activeElement !== $("zoom")) $("zoom").value = Z.cur.toFixed(2);
+  if (S.mode === "trip") tick();
+  draw();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- eval, checker stress, rejected wall ---------- */
+var E = __EVAL__;
+(function(){
+  var M = E.models, pad = function(x, n){ x = String(x); while (x.length < n) x += " "; return x; }, padl = function(x, n){ x = String(x); while (x.length < n) x = " " + x; return x; };
+  var cols = [["MODEL", 22], ["GATES", 7], ["RIDES", 6], ["ASKED*", 7], ["STRUCK", 7], ["NO RE-FLY", 10], ["PHANTOM", 8], ["REJECTED", 9], ["CALLS", 6]];
+  function line(l, m, r){ return l + cols.map(function(c){ return "─".repeat(c[1] + 2); }).join(m) + r; }
+  var out = line("┌", "┬", "┐") + "\n│" + cols.map(function(c){ return " " + pad(c[0], c[1]) + " "; }).join("│") + "│\n" + line("├", "┼", "┤") + "\n";
+  M.forEach(function(m){
+    var v = [m.name, m.passed + "/" + m.cases, m.rides_offered, m.asked_on_complete, m.untraced, m.no_refly, m.never_ran, m.planner_calls ? m.checker_rejected : "-", m.planner_calls || "-"];
+    out += "│" + v.map(function(x, i){ return " " + (i ? padl(x, cols[i][1]) : pad(x, cols[i][1])) + " "; }).join("│") + "│\n"; });
+  out += "│ " + pad("Grok (xAI)", 22) + " │ " + pad("not run: needs an xAI key in the cloud environment", cols.slice(1).reduce(function(a, c){ return a + c[1] + 3; }, -3)) + " │\n";
+  out += "└" + "─".repeat(cols[0][1] + 2) + "┴" + "─".repeat(cols.slice(1).reduce(function(a, c){ return a + c[1] + 3; }, -1)) + "┘";
+  $("eval-board").textContent = out;
+  $("eval-note").textContent = "GATES = answers that passed provenance and the physics gate. RIDES = rides offered that passed both. ASKED* = clarifying questions on the five requests a plain form could serve. STRUCK = answers with a number no tool made. NO RE-FLY = a ride offered without a passing re-fly. PHANTOM = a cited planner call that was never run. REJECTED = routes the model asked for that the checker threw out (it then has to find another). CALLS = planner calls made. The recorded team was tuned against these gates on day 3, so it is a reference, not a rival.";
+  $("eval-lead").textContent = E.lead || "";
+  // rejected wall
+  var W = E.wall.slice().sort(function(a, b){ return (a.kind === "checker") - (b.kind === "checker"); });
+  var name = {}; M.forEach(function(m){ name[m.tag] = m.name; }); name.planner = "Planner";
+  function strike(t){ return esc(t).replace(/~~([^~]+)~~\[no tool made this\]/g, '<del>$1</del><span class="warn">[no tool made this]</span>'); }
+  $("wall").innerHTML = W.length ? W.map(function(w){
+    if (w.kind === "checker") return '<div class="wc"><span class="k">' + esc(name[w.model] || w.model) + ' · route rejected by the checker</span><code>' + esc(w.cmd) + '</code><span class="why">' + SYM_NO + esc(w.why.join("; ")) + "</span></div>";
+    return '<div class="wc"><span class="k">' + esc(name[w.model] || w.model) + " · request " + w.id + " · " + esc(w.outcome) + '</span><p class="q">"' + esc(w.request) + '"</p><p class="a">' + strike(w.struck) + '</p><span class="why">' + SYM_NO + esc(w.why.join("; ")) + "</span></div>";
+  }).join("") : '<p class="empty">Nothing rejected.</p>';
+  // checker stress chart
+  var S2 = E.sweep.filter(function(r){ return r.raw_miss_km != null; }), noRoute = E.sweep.filter(function(r){ return r.raw_miss_km == null && r.result !== "skipped"; });
+  var A = E.audit || {}, u = A.uranus_day2, nb = A.neptune_sweep_before;
+  var dests = []; S2.forEach(function(r){ if (dests.indexOf(r.dest) < 0) dests.push(r.dest); });
+  var rows = dests.map(function(d){ return { label: d.toUpperCase(), pts: S2.filter(function(r){ return r.dest === d; }) }; });
+  if (u) rows.push({ label: "URANUS, DAY 2", pts: [{ raw_miss_km: u.after.raw_miss_km, final_miss_km: u.after.final_miss_km, pass: u.after.pass }] });
+  var svg = $("chk"), NS2 = "http://www.w3.org/2000/svg", L = 118, R = 742, top0 = 34, rh = 26, H2 = top0 + rows.length * rh + 40, lo = -4, hi = 9;
+  svg.setAttribute("viewBox", "0 0 760 " + H2);
+  function X(km){ return L + (Math.log10(Math.max(km, 1e-4)) - lo) / (hi - lo) * (R - L); }
+  function e(tag, a, txt){ var n = document.createElementNS(NS2, tag); for (var k in a) n.setAttribute(k, a[k]); if (txt != null) n.textContent = txt; svg.appendChild(n); return n; }
+  var F = { "font-family": "Departure Mono, monospace", "font-size": 11 };
+  for (var p = lo; p <= hi; p++){ e("line", { x1: X(Math.pow(10, p)), x2: X(Math.pow(10, p)), y1: top0 - 6, y2: H2 - 30, stroke: "#c3c8d0", "stroke-width": 1 });
+    if (p % 2 === 0 || p === -1) e("text", Object.assign({ x: X(Math.pow(10, p)), y: H2 - 12, "text-anchor": "middle", fill: "#454c59" }, F), p === 0 ? "1 km" : p === 3 ? "1,000" : p === 6 ? "1M" : p === 9 ? "1B" : p === -2 ? "10 m" : p === -4 ? "10 cm" : p === 2 ? "100" : p === 4 ? "10,000" : p === 8 ? "100M" : ""); }
+  e("rect", { x: X(1e-4), y: top0 - 6, width: X(1) - X(1e-4), height: H2 - 24 - top0, fill: "#4d6b58", opacity: .08 });
+  e("line", { x1: X(1), x2: X(1), y1: top0 - 10, y2: H2 - 30, stroke: "#4d6b58", "stroke-width": 2 });
+  e("text", Object.assign({ x: X(1) - 6, y: top0 - 14, "text-anchor": "end", fill: "#4d6b58" }, F), "PASS: UNDER 1 KM");
+  rows.forEach(function(row, i){
+    var y = top0 + i * rh + rh / 2;
+    e("text", Object.assign({ x: L - 10, y: y + 4, "text-anchor": "end", fill: "#0d1117" }, F), row.label);
+    row.pts.forEach(function(r, j){
+      var yy = y + (j - (row.pts.length - 1) / 2) * 3, ok = r.pass !== false;
+      e("line", { x1: X(r.raw_miss_km), x2: X(r.final_miss_km), y1: yy, y2: yy, stroke: ok ? "#626a77" : "#94524b", "stroke-width": 1 });
+      e("circle", { cx: X(r.raw_miss_km), cy: yy, r: 3, fill: "#fbfcfd", stroke: "#0d1117", "stroke-width": 1 });
+      if (ok) e("rect", { x: X(r.final_miss_km) - 3, y: yy - 3, width: 6, height: 6, fill: "#0d1117" });
+      else e("text", Object.assign({ x: X(r.final_miss_km), y: yy + 4, "text-anchor": "middle", fill: "#94524b" }, F), "X");
+    });
+  });
+  var passN = S2.filter(function(r){ return r.pass; }).length, raws = S2.map(function(r){ return r.raw_miss_km; }).sort(function(a, b){ return a - b; });
+  var med = raws.length ? raws[Math.floor(raws.length / 2)] : 0, rets = S2.map(function(r){ return r.retarget_ms; }).sort(function(a, b){ return a - b; });
+  $("chk-lead").textContent = "The checker re-flew " + S2.length + " planner routes to " + dests.length + " destinations, chosen at random. Every raw route missed: by " + fmt(raws[0]) + " km at best and " + fmt(raws[raws.length - 1]) + " km at worst (median " + fmt(med) + " km). A departure correction of " + fmt(rets[0], 1) + " to " + fmt(rets[rets.length - 1], 1) + " m/s closed " + passN + " of them to under 1 km. " +
+    S2.filter(function(r){ return !r.pass; }).map(function(r){ return "It rejected a " + fmt(r.tof) + "-day " + r.dest[0].toUpperCase() + r.dest.slice(1) + " route that was still " + r.final_miss_km + " km off after " + r.iterations + " tries. "; }).join("") +
+    (u ? "Our own audit caught the checker once: its integrator was too loose for 20-year trips, so it had rejected the 23-year Uranus quote from day 2 (" + u.before.final_miss_km + " km off)" +
+      (nb ? " and a " + fmt(nb.tof) + "-day Neptune route (" + nb.final_miss_km + " km off)" : "") + ". Flown again at tighter precision, the Uranus quote ends " + u.after.final_miss_km + " km off and passes" +
+      (nb ? ", and so does the Neptune route" : "") + ". " : "") +
+    (noRoute.length ? noRoute.length + " more asked for a one-lap route that doesn't exist, so the planner never offered them." : "");
+})();
+
+$("assume-foot").textContent = "Made-up models, stated on every receipt: " + D.assumptions.slice(0, 4).join("; ") + ".";
+render(); setZoomUI();
+if (document.fonts && document.fonts.load) document.fonts.load(FONT).then(draw, draw);
+requestAnimationFrame(frame);
+})();
+</script>

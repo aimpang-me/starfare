@@ -1,0 +1,36 @@
+# 1 COUNTER  FAIL
+      planner drift on: --dest bennu --dep-from 2026-10-16 --dep-to 2027-01-16 --objective tof --max-c3 100 --verify
+# 2 QUOTE    FAIL
+      planner drift on: --dest mars --dep-from 2026-10-16 --dep-to 2026-12-24 --verify
+# 3 QUOTE    FAIL
+      planner drift on: --dest mars --dep-from 2026-10-16 --dep-to 2027-03-31 --objective tof --max-c3 15 --verify
+# 4 ASK      PASS
+# 5 QUOTE    FAIL
+      planner drift on: --dest jupiter --dep-from 2027-01-01 --dep-to 2027-12-31 --verify
+# 6 QUOTE    FAIL
+      planner drift on: --dest ceres --dep-from 2027-01-01 --dep-to 2027-12-31 --arr-by 2029-12-31 --verify
+# 7 DECLINE  PASS
+# 8 COUNTER  FAIL
+      planner drift on: --dest mars --dep-from 2028-01-01 --dep-to 2028-12-31 --verify
+# 9 DECLINE  PASS
+#10 COUNTER  FAIL
+      planner drift on: --dest jupiter --dep-from 2026-10-16 --dep-to 2027-12-31 --verify
+#11 COUNTER  FAIL
+      planner drift on: --dest mars --dep-from 2026-10-16 --dep-to 2027-10-16 --verify
+#12 DECLINE  PASS
+#13 ASK      PASS
+#14 QUOTE    FAIL
+      planner drift on: --dest roadster --dep-from 2026-10-16 --dep-to 2027-10-16 --verify
+#15 ASK      PASS
+#16 ASK      PASS
+#17 COUNTER  FAIL
+      planner drift on: --dest jupiter --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --max-c3 100 --verify
+#18 COUNTER  FAIL
+      planner drift on: --dest mars --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --verify
+      planner drift on: --dest mars --dep-from 2026-10-16 --dep-to 2027-10-16 --objective tof --max-c3 100 --verify
+#19 DECLINE  PASS
+#20 COUNTER  FAIL
+      planner drift on: --dest mercury --dep-from 2027-01-01 --dep-to 2027-02-14 --verify
+      planner drift on: --dest mercury --dep-from 2026-10-16 --dep-to 2027-02-14 --arr-from 2027-01-01 --arr-by 2027-02-14 --verify
+8/20 cases pass
+exit 1

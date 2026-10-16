@@ -1,0 +1,35 @@
+{
+ "cmd": "--dest venus --dep-from 2026-10-16 --dep-to 2027-06-01 --arr-by 2027-06-01 --objective c3 --verify",
+ "out": {
+  "ok": true,
+  "dest": "venus",
+  "depart": "2026-10-16",
+  "arrive": "2027-03-25",
+  "tof_days": 160.0,
+  "c3_km2s2": 16.82,
+  "vinf_arrival_kms": 8.53,
+  "launchable": true,
+  "at_search_edge": true,
+  "feasible_solves": 5837,
+  "dep_jd": 2461329.5,
+  "revs": 0,
+  "lowpath": true,
+  "model": "Lambert 0-1 rev, DE421, n-body re-flown",
+  "refly": {
+   "raw_miss_km": 879703.2,
+   "final_miss_km": 0.284,
+   "retarget_ms": 36.4,
+   "iterations": 3,
+   "c3_corrected_km2s2": 16.71,
+   "dv_dep_corrected_kms": 3.959,
+   "pass": true,
+   "model": "n-body Sun+8 planets+Moon, 200 km LEO departure, aimed at target centre"
+  },
+  "assumptions": [
+   "starts from a 200 km circular parking orbit (launch to LEO not priced)",
+   "impulsive burns, no thrust limits or g-load model",
+   "launchable means C3 <= 100 km2/s2: a placeholder, not a specific rocket",
+   "arrives at the target's centre: no capture burn, landing or orbit insertion priced"
+  ]
+ }
+}

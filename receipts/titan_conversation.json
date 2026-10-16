@@ -1,0 +1,504 @@
+{
+ "id": "titan",
+ "backend": "agent team run by Claude subagent (no API key in sandbox); tools re-run here",
+ "turns": [
+  {
+   "request": "I'm stuck on Titan. Get me home to Earth. What are my options? ",
+   "roles": {
+    "dispatcher": "Intent: {trip: Titan -> Earth, request_date: 2026-10-16, request: list options, objective: unspecified (default energy/cost-efficient), driver: unspecified (compare fleet [SIMULATED] and roadster [real, premium]), budget: unspecified, deadline: unspecified}. Ambiguities: no time or budget preference stated; 'home' taken to mean arrival at Earth (landing and surface transfer are outside the tool's scope); payment currency not stated (no DOGE price given, so fares are in USD only).",
+    "broker": "You have two verified ways home, and both take a long time. Option 1 is a simulated fleet car (a demo vehicle, not a real one) parked in your Titan orbit: pickup in about 4.8 hours, you leave Titan 2026-10-21 and reach Earth 2032-03-13, 1975 days door to door (5.41 years), fare 1000147.68 USD. Option 2 is the real Roadster, a premium pickup that reaches Titan 2033-08-15 and gets you home 2039-07-15, 4655 days door to door (12.74 years), fare 2376608.64 USD. Both routes passed an n-body re-fly check, with an Earth entry speed of 16.47 km/s on the fleet trip and 15.34 km/s on the Roadster trip. The fares cover energy and time only: landing, aerobraking and life support are not priced, the fleet car's phasing burn is not modelled, and the fleet trip needs a battery_pct of 14837 on a 200 kWh pack with no recharging modelled."
+   },
+   "tool_calls": [
+    {
+     "tool": "trip",
+     "args": "--driver fleet --verify",
+     "seconds": 56.7,
+     "output": {
+      "ok": true,
+      "trip": "Titan -> Earth",
+      "driver": "fleet",
+      "objective": "energy",
+      "request_date": "2026-10-16",
+      "arrive_home": "2032-03-13",
+      "door_to_door_days": 1975,
+      "door_to_door_years": 5.41,
+      "au_travelled": 12.45,
+      "battery": {
+       "dv_kms": 3.119,
+       "propellant_kg": 142.4,
+       "energy_kwh": 29673,
+       "battery_pct": 14837
+      },
+      "fare": {
+       "energy_usd": 4747.68,
+       "time_usd": 995400.0,
+       "total_usd": 1000147.68
+      },
+      "legs": [
+       {
+        "leg": "pickup",
+        "driver": "fleet car (SIMULATED: parked in your Titan orbit)",
+        "eta_hours": 4.8,
+        "note": "catches up within one orbit; phasing burn not modelled",
+        "au": 0.0,
+        "dv_kms": 0.0
+       },
+       {
+        "leg": "ride",
+        "depart_titan": "2026-10-21",
+        "arrive_earth": "2032-03-13",
+        "tof_days": 1970.0,
+        "wait_at_titan_days": 5,
+        "dv_kms": 3.119,
+        "vinf_saturn_kms": 5.602,
+        "vinf_earth_kms": 12.192,
+        "earth_entry_kms": 16.47,
+        "au": 12.45,
+        "revs": 0,
+        "refly": {
+         "raw_miss_km": 2884163.8,
+         "final_miss_km": 0.2831,
+         "retarget_ms": 9.6,
+         "iterations": 3,
+         "vinf_dep_corrected_kms": 5.598,
+         "pass": true,
+         "model": "n-body Sun+8 planets+Moon; planet endpoints patched-conic (own gravity off)"
+        }
+       }
+      ],
+      "assumptions": [
+       "car 1300 kg dry with a 200 kWh pack",
+       "electric thruster: 30 km/s exhaust, 60% efficient, burns treated as instant",
+       "fare = $0.16/kWh energy + $0.35/min time fee",
+       "landing, aerobraking and life support are not priced",
+       "Titan parking orbit 1,500 km up; burns in the best direction",
+       "energy objective trades 0.1 km/s of burn per year of delay (so it will not wait years to save a little)",
+       "Sun-centred legs start/end at Saturn's and Earth's centres (patched conic)"
+      ],
+      "verified": true
+     }
+    },
+    {
+     "tool": "trip",
+     "args": "--driver roadster --verify",
+     "seconds": 80.9,
+     "output": {
+      "ok": true,
+      "trip": "Titan -> Earth",
+      "driver": "roadster",
+      "objective": "energy",
+      "request_date": "2026-10-16",
+      "arrive_home": "2039-07-15",
+      "door_to_door_days": 4655,
+      "door_to_door_years": 12.74,
+      "au_travelled": 26.64,
+      "battery": {
+       "dv_kms": 15.982,
+       "propellant_kg": 914.7,
+       "energy_kwh": 190554,
+       "battery_pct": 95277
+      },
+      "fare": {
+       "energy_usd": 30488.64,
+       "time_usd": 2346120.0,
+       "total_usd": 2376608.64
+      },
+      "legs": [
+       {
+        "leg": "pickup",
+        "driver": "the real Roadster (JPL Horizons -143205)",
+        "depart": "2027-11-25",
+        "arrive_titan": "2033-08-15",
+        "tof_days": 2090.0,
+        "eta_days_from_request": 2495,
+        "dv_kms": 12.802,
+        "dv_roadster_kms": 10.103,
+        "dv_titan_capture_kms": 2.699,
+        "au": 13.67,
+        "revs": 0,
+        "refly": {
+         "raw_miss_km": 2365949.3,
+         "final_miss_km": 0.0029,
+         "retarget_ms": 5.1,
+         "iterations": 2,
+         "vinf_dep_corrected_kms": 10.1,
+         "pass": true,
+         "model": "n-body Sun+8 planets+Moon; planet endpoints patched-conic (own gravity off)"
+        }
+       },
+       {
+        "leg": "ride",
+        "depart_titan": "2033-11-13",
+        "arrive_earth": "2039-07-15",
+        "tof_days": 2070.0,
+        "wait_at_titan_days": 90,
+        "dv_kms": 3.18,
+        "vinf_saturn_kms": 5.72,
+        "vinf_earth_kms": 10.617,
+        "earth_entry_kms": 15.34,
+        "au": 12.97,
+        "revs": 0,
+        "refly": {
+         "raw_miss_km": 419010.9,
+         "final_miss_km": 0.0023,
+         "retarget_ms": 5.0,
+         "iterations": 2,
+         "vinf_dep_corrected_kms": 5.716,
+         "pass": true,
+         "model": "n-body Sun+8 planets+Moon; planet endpoints patched-conic (own gravity off)"
+        }
+       }
+      ],
+      "assumptions": [
+       "car 1300 kg dry with a 200 kWh pack",
+       "electric thruster: 30 km/s exhaust, 60% efficient, burns treated as instant",
+       "fare = $0.16/kWh energy + $0.35/min time fee",
+       "landing, aerobraking and life support are not priced",
+       "Titan parking orbit 1,500 km up; burns in the best direction",
+       "energy objective trades 0.1 km/s of burn per year of delay (so it will not wait years to save a little)",
+       "Sun-centred legs start/end at Saturn's and Earth's centres (patched conic)"
+      ],
+      "verified": true
+     }
+    }
+   ],
+   "provenance": {
+    "pass": true,
+    "untraced": []
+   },
+   "rider_sees": "You have two verified ways home, and both take a long time. Option 1 is a simulated fleet car (a demo vehicle, not a real one) parked in your Titan orbit: pickup in about 4.8 hours, you leave Titan 2026-10-21 and reach Earth 2032-03-13, 1975 days door to door (5.41 years), fare 1000147.68 USD. Option 2 is the real Roadster, a premium pickup that reaches Titan 2033-08-15 and gets you home 2039-07-15, 4655 days door to door (12.74 years), fare 2376608.64 USD. Both routes passed an n-body re-fly check, with an Earth entry speed of 16.47 km/s on the fleet trip and 15.34 km/s on the Roadster trip. The fares cover energy and time only: landing, aerobraking and life support are not priced, the fleet car's phasing burn is not modelled, and the fleet trip needs a battery_pct of 14837 on a 200 kWh pack with no recharging modelled.",
+   "physics": [
+    {
+     "args": "--driver fleet --verify",
+     "refly_pass": true
+    },
+    {
+     "args": "--driver roadster --verify",
+     "refly_pass": true
+    }
+   ]
+  },
+  {
+   "request": "I'm stuck on Titan. Get me home to Earth. What are my options? Too slow. Faster please, money is no object. ",
+   "roles": {
+    "dispatcher": "Intent: {trip: Titan -> Earth, request_date: 2026-10-16, objective: time (earliest arrival), budget: unlimited ('money is no object'), driver: any}. Ambiguities: 'faster' has no target date; unlimited money does not mean unlimited risk, so safety limits such as Earth entry speed still apply and should be shown; the rider has not said they accept a dangerous entry. Plan: fastest option with the default burn cap, Roadster fastest for comparison, plus lower burn caps as safer trade-offs.",
+    "broker": "The fastest verified option is the simulated fleet car at full burn: you leave Titan 2026-10-16 and reach Earth 2028-08-26, 680 days door to door (1.86 years), fare 370472.48 USD. Paying for the real Roadster does not help, because its fastest trip still arrives 2035-06-26 (3175 days). There is a serious catch: the fastest trip hits Earth at 48.96 km/s, compared with 16.47 km/s on the slow trip, and nothing about surviving that entry (aerobraking, heat shield, landing) is modelled or priced, so money cannot make that speed safe. A better trade-off uses a smaller Titan departure burn of 4.997 km/s: you still leave 2026-10-16, arrive 2030-03-09 (1240 days, 3.39 years), enter at 15.97 km/s, and pay 632813.76 USD. A middle option with a 7.926 km/s burn gets you home 2029-07-02 (990 days), but its entry is still 34.64 km/s. All of these passed the n-body check; life support is not priced, and the fleet car's phasing burn and battery recharging are not modelled."
+   },
+   "tool_calls": [
+    {
+     "tool": "trip",
+     "args": "--driver fleet --objective time --verify",
+     "seconds": 66.4,
+     "output": {
+      "ok": true,
+      "trip": "Titan -> Earth",
+      "driver": "fleet",
+      "objective": "time",
+      "request_date": "2026-10-16",
+      "arrive_home": "2028-08-26",
+      "door_to_door_days": 680,
+      "door_to_door_years": 1.86,
+      "au_travelled": 10.64,
+      "battery": {
+       "dv_kms": 14.849,
+       "propellant_kg": 832.6,
+       "energy_kwh": 173453,
+       "battery_pct": 86727
+      },
+      "fare": {
+       "energy_usd": 27752.48,
+       "time_usd": 342720.0,
+       "total_usd": 370472.48
+      },
+      "legs": [
+       {
+        "leg": "pickup",
+        "driver": "fleet car (SIMULATED: parked in your Titan orbit)",
+        "eta_hours": 4.8,
+        "note": "catches up within one orbit; phasing burn not modelled",
+        "au": 0.0,
+        "dv_kms": 0.0
+       },
+       {
+        "leg": "ride",
+        "depart_titan": "2026-10-16",
+        "arrive_earth": "2028-08-26",
+        "tof_days": 680.0,
+        "wait_at_titan_days": 0,
+        "dv_kms": 14.849,
+        "vinf_saturn_kms": 20.294,
+        "vinf_earth_kms": 47.689,
+        "earth_entry_kms": 48.96,
+        "au": 10.64,
+        "revs": 0,
+        "refly": {
+         "raw_miss_km": 399675.7,
+         "final_miss_km": 0.0013,
+         "retarget_ms": 4.7,
+         "iterations": 2,
+         "vinf_dep_corrected_kms": 20.294,
+         "pass": true,
+         "model": "n-body Sun+8 planets+Moon; planet endpoints patched-conic (own gravity off)"
+        }
+       }
+      ],
+      "assumptions": [
+       "car 1300 kg dry with a 200 kWh pack",
+       "electric thruster: 30 km/s exhaust, 60% efficient, burns treated as instant",
+       "fare = $0.16/kWh energy + $0.35/min time fee",
+       "landing, aerobraking and life support are not priced",
+       "Titan parking orbit 1,500 km up; burns in the best direction",
+       "energy objective trades 0.1 km/s of burn per year of delay (so it will not wait years to save a little)",
+       "Sun-centred legs start/end at Saturn's and Earth's centres (patched conic)"
+      ],
+      "verified": true
+     }
+    },
+    {
+     "tool": "trip",
+     "args": "--driver roadster --objective time --verify",
+     "seconds": 87.8,
+     "output": {
+      "ok": true,
+      "trip": "Titan -> Earth",
+      "driver": "roadster",
+      "objective": "time",
+      "request_date": "2026-10-16",
+      "arrive_home": "2035-06-26",
+      "door_to_door_days": 3175,
+      "door_to_door_years": 8.69,
+      "au_travelled": 24.2,
+      "battery": {
+       "dv_kms": 27.659,
+       "propellant_kg": 1968.5,
+       "energy_kwh": 410104,
+       "battery_pct": 205052
+      },
+      "fare": {
+       "energy_usd": 65616.64,
+       "time_usd": 1600200.0,
+       "total_usd": 1665816.64
+      },
+      "legs": [
+       {
+        "leg": "pickup",
+        "driver": "the real Roadster (JPL Horizons -143205)",
+        "depart": "2027-11-25",
+        "arrive_titan": "2033-08-15",
+        "tof_days": 2090.0,
+        "eta_days_from_request": 2495,
+        "dv_kms": 12.802,
+        "dv_roadster_kms": 10.103,
+        "dv_titan_capture_kms": 2.699,
+        "au": 13.67,
+        "revs": 0,
+        "refly": {
+         "raw_miss_km": 2365949.3,
+         "final_miss_km": 0.0029,
+         "retarget_ms": 5.1,
+         "iterations": 2,
+         "vinf_dep_corrected_kms": 10.1,
+         "pass": true,
+         "model": "n-body Sun+8 planets+Moon; planet endpoints patched-conic (own gravity off)"
+        }
+       },
+       {
+        "leg": "ride",
+        "depart_titan": "2033-08-15",
+        "arrive_earth": "2035-06-26",
+        "tof_days": 680.0,
+        "wait_at_titan_days": 0,
+        "dv_kms": 14.857,
+        "vinf_saturn_kms": 20.302,
+        "vinf_earth_kms": 20.42,
+        "earth_entry_kms": 23.23,
+        "au": 10.53,
+        "revs": 0,
+        "refly": {
+         "raw_miss_km": 695257.1,
+         "final_miss_km": 0.0111,
+         "retarget_ms": 5.2,
+         "iterations": 2,
+         "vinf_dep_corrected_kms": 20.304,
+         "pass": true,
+         "model": "n-body Sun+8 planets+Moon; planet endpoints patched-conic (own gravity off)"
+        }
+       }
+      ],
+      "assumptions": [
+       "car 1300 kg dry with a 200 kWh pack",
+       "electric thruster: 30 km/s exhaust, 60% efficient, burns treated as instant",
+       "fare = $0.16/kWh energy + $0.35/min time fee",
+       "landing, aerobraking and life support are not priced",
+       "Titan parking orbit 1,500 km up; burns in the best direction",
+       "energy objective trades 0.1 km/s of burn per year of delay (so it will not wait years to save a little)",
+       "Sun-centred legs start/end at Saturn's and Earth's centres (patched conic)"
+      ],
+      "verified": true
+     }
+    },
+    {
+     "tool": "trip",
+     "args": "--driver fleet --objective time --max-burn 8 --verify",
+     "seconds": 65.9,
+     "output": {
+      "ok": true,
+      "trip": "Titan -> Earth",
+      "driver": "fleet",
+      "objective": "time",
+      "request_date": "2026-10-16",
+      "arrive_home": "2029-07-02",
+      "door_to_door_days": 990,
+      "door_to_door_years": 2.71,
+      "au_travelled": 11.4,
+      "battery": {
+       "dv_kms": 7.926,
+       "propellant_kg": 393.1,
+       "energy_kwh": 81897,
+       "battery_pct": 40948
+      },
+      "fare": {
+       "energy_usd": 13103.52,
+       "time_usd": 498960.0,
+       "total_usd": 512063.52
+      },
+      "legs": [
+       {
+        "leg": "pickup",
+        "driver": "fleet car (SIMULATED: parked in your Titan orbit)",
+        "eta_hours": 4.8,
+        "note": "catches up within one orbit; phasing burn not modelled",
+        "au": 0.0,
+        "dv_kms": 0.0
+       },
+       {
+        "leg": "ride",
+        "depart_titan": "2026-10-16",
+        "arrive_earth": "2029-07-02",
+        "tof_days": 990.0,
+        "wait_at_titan_days": 0,
+        "dv_kms": 7.926,
+        "vinf_saturn_kms": 12.462,
+        "vinf_earth_kms": 32.819,
+        "earth_entry_kms": 34.64,
+        "au": 11.4,
+        "revs": 0,
+        "refly": {
+         "raw_miss_km": 575460.5,
+         "final_miss_km": 0.1009,
+         "retarget_ms": 7.3,
+         "iterations": 4,
+         "vinf_dep_corrected_kms": 12.463,
+         "pass": true,
+         "model": "n-body Sun+8 planets+Moon; planet endpoints patched-conic (own gravity off)"
+        }
+       }
+      ],
+      "assumptions": [
+       "car 1300 kg dry with a 200 kWh pack",
+       "electric thruster: 30 km/s exhaust, 60% efficient, burns treated as instant",
+       "fare = $0.16/kWh energy + $0.35/min time fee",
+       "landing, aerobraking and life support are not priced",
+       "Titan parking orbit 1,500 km up; burns in the best direction",
+       "energy objective trades 0.1 km/s of burn per year of delay (so it will not wait years to save a little)",
+       "Sun-centred legs start/end at Saturn's and Earth's centres (patched conic)"
+      ],
+      "verified": true
+     }
+    },
+    {
+     "tool": "trip",
+     "args": "--driver fleet --objective time --max-burn 5 --verify",
+     "seconds": 65.6,
+     "output": {
+      "ok": true,
+      "trip": "Titan -> Earth",
+      "driver": "fleet",
+      "objective": "time",
+      "request_date": "2026-10-16",
+      "arrive_home": "2030-03-09",
+      "door_to_door_days": 1240,
+      "door_to_door_years": 3.39,
+      "au_travelled": 11.28,
+      "battery": {
+       "dv_kms": 4.997,
+       "propellant_kg": 235.6,
+       "energy_kwh": 49086,
+       "battery_pct": 24543
+      },
+      "fare": {
+       "energy_usd": 7853.76,
+       "time_usd": 624960.0,
+       "total_usd": 632813.76
+      },
+      "legs": [
+       {
+        "leg": "pickup",
+        "driver": "fleet car (SIMULATED: parked in your Titan orbit)",
+        "eta_hours": 4.8,
+        "note": "catches up within one orbit; phasing burn not modelled",
+        "au": 0.0,
+        "dv_kms": 0.0
+       },
+       {
+        "leg": "ride",
+        "depart_titan": "2026-10-16",
+        "arrive_earth": "2030-03-09",
+        "tof_days": 1240.0,
+        "wait_at_titan_days": 0,
+        "dv_kms": 4.997,
+        "vinf_saturn_kms": 8.653,
+        "vinf_earth_kms": 11.51,
+        "earth_entry_kms": 15.97,
+        "au": 11.28,
+        "revs": 0,
+        "refly": {
+         "raw_miss_km": 454676.1,
+         "final_miss_km": 0.7117,
+         "retarget_ms": 8.6,
+         "iterations": 2,
+         "vinf_dep_corrected_kms": 8.654,
+         "pass": true,
+         "model": "n-body Sun+8 planets+Moon; planet endpoints patched-conic (own gravity off)"
+        }
+       }
+      ],
+      "assumptions": [
+       "car 1300 kg dry with a 200 kWh pack",
+       "electric thruster: 30 km/s exhaust, 60% efficient, burns treated as instant",
+       "fare = $0.16/kWh energy + $0.35/min time fee",
+       "landing, aerobraking and life support are not priced",
+       "Titan parking orbit 1,500 km up; burns in the best direction",
+       "energy objective trades 0.1 km/s of burn per year of delay (so it will not wait years to save a little)",
+       "Sun-centred legs start/end at Saturn's and Earth's centres (patched conic)"
+      ],
+      "verified": true
+     }
+    }
+   ],
+   "provenance": {
+    "pass": true,
+    "untraced": []
+   },
+   "rider_sees": "The fastest verified option is the simulated fleet car at full burn: you leave Titan 2026-10-16 and reach Earth 2028-08-26, 680 days door to door (1.86 years), fare 370472.48 USD. Paying for the real Roadster does not help, because its fastest trip still arrives 2035-06-26 (3175 days). There is a serious catch: the fastest trip hits Earth at 48.96 km/s, compared with 16.47 km/s on the slow trip, and nothing about surviving that entry (aerobraking, heat shield, landing) is modelled or priced, so money cannot make that speed safe. A better trade-off uses a smaller Titan departure burn of 4.997 km/s: you still leave 2026-10-16, arrive 2030-03-09 (1240 days, 3.39 years), enter at 15.97 km/s, and pay 632813.76 USD. A middle option with a 7.926 km/s burn gets you home 2029-07-02 (990 days), but its entry is still 34.64 km/s. All of these passed the n-body check; life support is not priced, and the fleet car's phasing burn and battery recharging are not modelled.",
+   "physics": [
+    {
+     "args": "--driver fleet --objective time --verify",
+     "refly_pass": true
+    },
+    {
+     "args": "--driver roadster --objective time --verify",
+     "refly_pass": true
+    },
+    {
+     "args": "--driver fleet --objective time --max-burn 8 --verify",
+     "refly_pass": true
+    },
+    {
+     "args": "--driver fleet --objective time --max-burn 5 --verify",
+     "refly_pass": true
+    }
+   ]
+  }
+ ]
+}

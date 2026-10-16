@@ -1,0 +1,16 @@
+{
+ "id": 7,
+ "request": "Send my cat to Venus and back in time for her birthday, 1 June 2027.",
+ "backend": "replay (recorded agent answer, tools re-run)",
+ "outcome": "DECLINE",
+ "roles": {
+  "broker": "Sorry, we can't do this. We only fly one-way rides from Earth with no return legs, so we can't get your cat to Venus and back in time for 1 June 2027. Our planner also covers only the trajectory, not keeping a passenger alive."
+ },
+ "tool_calls": [],
+ "provenance": {
+  "pass": true,
+  "untraced": []
+ },
+ "rider_sees": "Sorry, we can't do this. We only fly one-way rides from Earth with no return legs, so we can't get your cat to Venus and back in time for 1 June 2027. Our planner also covers only the trajectory, not keeping a passenger alive.",
+ "physics": []
+}
