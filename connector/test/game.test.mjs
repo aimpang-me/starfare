@@ -364,7 +364,7 @@ test("a flare at launch: replan is a plan and beats waiting; a leg the checker r
   await assert.rejects(decide(E, run, { checkpoint: 1, action: "replan", depart_after: "2028-01-09 20:00" }), /depart at or after 2028-01-09 21:34/);
   assert.equal(run.calls, 2);
   const rejecting = (from, to, t, obj, end) => ({ leg: Object.assign(computeLeg(E, from, to, t, obj, end), { gate: "FAIL" }), cached: false });
-  await assert.rejects(decide(E, run, { checkpoint: 1, action: "replan" }, rejecting), (e) => e instanceof GameError && e.counted && /rejected by the checker; checkpoint 1 is still open/.test(e.message));
+  await assert.rejects(decide(E, run, { checkpoint: 1, action: "replan" }, rejecting), (e) => e instanceof GameError && /rejected by the checker; checkpoint 1 is still open/.test(e.message));
   assert.deepEqual([run.calls, run.ride.pending, phaseOf(run)], [3, 1, "in_flight"]);
   let out = await decide(E, run, { checkpoint: 1, action: "replan", depart_after: "2028-01-10 22:57" });
   assert.equal(run.calls, 4);

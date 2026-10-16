@@ -1,6 +1,6 @@
 // Durable Objects that hold the connector's state.
-//   StarfareRun: one per run_id. Holds the run and does the planning, so one run's tool calls are serialized
-//           and different players plan in parallel.
+//   StarfareRun: one per run_id. Holds the run and answers its tool calls through applyTool, so one run's calls are
+//           serialized and different players plan in parallel.
 //   StarfareHub: one global instance. Plan+re-fly cache, hail-terms cache (keyed by hail, t0, season end, hazard seed and engine),
 //           best score per hail, per-IP rate limit, and each signed-in player's ride history (an index row and summary per run;
 //           the full log stays in the run's StarfareRun) plus 24-hour export tokens.
@@ -10,11 +10,10 @@ import { DurableObject } from "cloudflare:workers";
 import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
 import {
-  GameError, checkPad, computeLeg, decide, dispatch, hailInfo, leaveRun, legKey, legPub, openRun, phaseOf, planPickup, planRideLeg, rideCursor,
-  rideCursorOf, rideRecord, rideStats, rideSummary, seasonInstance, spaceWeather,
+  GameError, applyTool, computeLeg, hailInfo, leaveRun, legKey, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord, rideStats, rideSummary,
+  seasonInstance,
 } from "./game.js";
 
-export const RUN_ID = /^run_[0-9a-f]{20}$/;
 export const hub = (env) => env.STARFARE_HUB.get(env.STARFARE_HUB.idFromName("hub"));
 export const runStub = (env, runId) => env.STARFARE_RUN.get(env.STARFARE_RUN.idFromName(runId));
 
@@ -23,6 +22,8 @@ const termsKey = (id, t0, end, seed) => `${id}|${t0}|${end}|s${seed}|e${META.sha
 const RIDES_MAX = 1000; // index rows kept per player, newest first
 const EXPORT_MAX = 500; // newest arrived rides in one export file (each is one RPC to its run)
 const EXPORT_MS = 24 * 3600 * 1000;
+/** Where a ride stands for its history row: its phase and the checkpoints answered. Plans and forecasts leave it where it was. */
+const rideMark = (run) => phaseOf(run) + "/" + (run.decisions ? run.decisions.length : 0);
 
 export class StarfareRun extends DurableObject {
   async #run() { return (await this.ctx.storage.get("run")) ?? null; }
@@ -39,12 +40,19 @@ export class StarfareRun extends DurableObject {
     };
   }
   /** The board holds arrived runs only. */
-  async #record(run, r) {
-    await hub(this.env).record({ hail_id: run.id, title: run.title, run_tag: run.run_id.slice(4, 10), points: r.total, car: r.car,
-      wait_h: Math.round((run.pickup_jd - run.t0) * 240) / 10, kwh: Math.round(r.used_kwh), par: Math.round(r.par_kwh), plans: run.calls, at: Date.now(),
+  async #record(run) {
+    const s = run.score;
+    await hub(this.env).record({ hail_id: run.id, title: run.title, run_tag: run.run_id.slice(4, 10), points: s.total, car: s.car,
+      wait_h: Math.round((run.pickup_jd - run.t0) * 240) / 10, kwh: Math.round(s.used_kwh), par: Math.round(s.par_kwh), plans: run.calls, at: Date.now(),
       ...(run.player_id ? { player_tag: run.player_id.slice(2, 8) } : {}) });
   }
-  /** A signed-in player's history row: written on every phase change (taken, in flight, arrived, abandoned). */
+  /** Save a changed run; put it on the board when it just arrived and in the player's history when its ride moved. */
+  async #commit(E, before, run) {
+    await this.#save(run);
+    if (phaseOf(before) !== "arrived" && phaseOf(run) === "arrived") await this.#record(run);
+    if (rideMark(before) !== rideMark(run)) await this.#index(E, run);
+  }
+  /** A signed-in player's history row: written when the ride is taken and whenever its rideMark moves. */
   async #index(E, run) {
     if (!run.player_id) return;
     await hub(this.env).ridePut({ run_id: run.run_id, player_id: run.player_id, created_ms: run.created_ms, hail_id: run.id, phase: phaseOf(run),
@@ -75,86 +83,24 @@ export class StarfareRun extends DurableObject {
     });
   }
 
-  async info() {
-    return this.#guard(async () => {
-      const run = await this.#run();
-      if (!run) return { error: "unknown run_id. Call take_hail to get one." };
-      return hailInfo(await engine(), run, Date.now());
-    });
-  }
-
-  async plan(role, inp) {
-    return this.#guard(async () => {
-      const run = await this.#run();
-      if (!run) return { error: "unknown run_id. Call take_hail to get one." };
-      const E = await engine();
-      try {
-        const { leg, cached } = await (role === "pickup" ? planPickup : planRideLeg)(E, run, inp, this.#legFn(E));
-        await this.#save(run);
-        return Object.assign(legPub(E, leg), { plans_used: run.calls, cached });
-      } catch (e) {
-        if (e && e.counted) await this.#save(run); // the page counts a plan even when planning fails
-        throw e;
-      }
-    });
-  }
-
-  /** check_pad and space_weather: read-only forecasts, not plans. The call is noted in the run's log. */
-  async forecast(kind, inp) {
-    return this.#guard(async () => {
-      const run = await this.#run();
-      if (!run) return { error: "unknown run_id. Call take_hail to get one." };
-      const n = (run.forecasts || []).length;
-      const r = (kind === "pad" ? checkPad : spaceWeather)(await engine(), run, inp, Date.now());
-      if ((run.forecasts || []).length !== n) await this.#save(run);
-      return r;
-    });
-  }
-
-  async dispatch(inp) {
-    return this.#guard(async () => {
-      const run = await this.#run();
-      if (!run) return { error: "unknown run_id. Call take_hail to get one." };
-      const E = await engine(), before = phaseOf(run);
-      let r;
-      try { r = dispatch(E, run, inp, Date.now()); }
-      catch (e) { if (phaseOf(run) !== before) { await this.#save(run); await this.#index(E, run); } throw e; } // a cold hail is abandoned
-      if (r.ok && !r.already_dispatched) {
-        await this.#save(run);
-        if (phaseOf(run) === "arrived") await this.#record(run, r);
-        await this.#index(E, run);
-      }
-      return r;
-    });
-  }
-
-  /** An answer at a checkpoint. A replan is a plan, so it is saved even when the checker rejects the new leg. */
-  async decide(inp) {
-    return this.#guard(async () => {
-      const run = await this.#run();
-      if (!run) return { error: "unknown run_id. Call take_hail to get one." };
-      const E = await engine(), before = phaseOf(run);
-      let r;
-      try { r = await decide(E, run, inp, this.#legFn(E)); }
-      catch (e) { if (e && e.counted) await this.#save(run); throw e; }
-      if (!r.already_decided) {
-        await this.#save(run);
-        if (before === "in_flight" && phaseOf(run) === "arrived") await this.#record(run, r);
-        await this.#index(E, run);
-      }
-      return r;
-    });
+  /** Every run-scoped tool call (get_hail, plan_pickup, plan_ride, check_pad, space_weather, dispatch, decide). */
+  async act(tool, input) {
+    const before = await this.#run();
+    if (!before) return { error: "unknown run_id. Call take_hail to get one." };
+    const E = await engine();
+    const { run, result } = await applyTool(E, before, tool, input, { nowMs: Date.now(), legFn: this.#legFn(E) });
+    if (run) await this.#commit(E, before, run);
+    return result;
   }
 
   /** One bot holds one run at a time. Taking a new hail in the same MCP session abandons the open run if it is still planning,
    *  or flies it on the defaults to arrive if it is at a checkpoint, scored and on the board. */
   async leave() {
-    const run = await this.#run();
-    const E = await engine(), r = run ? leaveRun(E, run) : null;
+    const before = await this.#run();
+    if (!before) return null;
+    const E = await engine(), run = structuredClone(before), r = leaveRun(E, run);
     if (!r) return null;
-    await this.#save(run);
-    if (r.status === "arrived") await this.#record(run, r);
-    await this.#index(E, run);
+    await this.#commit(E, before, run);
     return { run_id: r.run_id, status: r.status, ...(r.status === "arrived" ? { total: r.total, note: r.note } : {}) };
   }
 

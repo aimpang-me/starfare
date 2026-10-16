@@ -96,7 +96,7 @@ export async function openRun(E, inst, runId, nowMs, termsFn) {
   return {
     run_id: runId, id: hailId, title: R.BY[hailId].title, t0, seed, arrive_by_jd: T.arrive_by_jd, par_kwh: T.par.kwh, par_car: T.par.car,
     best_wait_days: T.par.best_wait_days, calls: 0, lseq: 0, legs: {}, forecasts: [], phase: "planning", score: null, created_ms: nowMs,
-    end_jd, clock: inst.clock, tag: inst.tag, budget: inst.budget,
+    end_jd, clock: inst.clock, tag: inst.tag, budget: inst.budget, ...(inst.budget == null ? {} : { tool_calls: 0 }),
   };
 }
 /** Sky time for a run: the only reader of the clock. Runs stored before clocks existed read the wall. */
@@ -212,7 +212,7 @@ async function addLeg(run, role, car, from, to, t, obj, legFn, extra) {
   run.calls++;
   let got;
   try { got = await legFn(from, to, t, obj, SEASON_END); }
-  catch (e) { const err = new GameError(String((e && e.message) || e)); err.counted = true; throw err; }
+  catch (e) { throw new GameError(String((e && e.message) || e)); }
   const id = "leg" + (++run.lseq);
   const L = Object.assign({ leg_id: id, role, ...(car ? { car } : {}) }, got.leg, extra);
   run.legs[id] = L;
@@ -414,7 +414,6 @@ function decisionOf(E, cp, inp) {
   if (a === "replan") return { action: "replan", depart_after: given(inp.depart_after) ? String(inp.depart_after).trim() : isoJD(cp.sky_at), objective: inp.objective === "time" ? "time" : "energy" };
   fail(ACTIONS);
 }
-const counted = (msg) => { const e = new GameError(msg); e.counted = true; return e; };
 
 /** Answer the open checkpoint. The same answer again returns where the ride stands now; a different one is refused.
  *  A replan plans a fresh leg (it counts as a plan); a leg the checker rejects leaves the checkpoint open. */
@@ -442,15 +441,48 @@ export async function decide(E, run, inp, legFn) {
     const S = ride.segs[ride.at.seg];
     const { leg: L } = await addLeg(run, S.role, S.role === "pickup" ? run.car : null, S.from, S.to, Math.max(jd, cp.sky_at), input.objective, legFn || defaultLegFn(E),
       { objective: input.objective, wait_days: 0, replan_of: n });
-    if (L.gate === "FAIL") throw counted(L.leg_id + " was rejected by the checker; checkpoint " + n + " is still open (wait, or replan from another time)");
+    if (L.gate === "FAIL") fail(L.leg_id + " was rejected by the checker; checkpoint " + n + " is still open (wait, or replan from another time)");
     decision = { action: "replan", leg: slimLeg(L) };
   }
   let st;
   try { st = R.step(ride, decision); }
-  catch (e) { const err = new GameError(String((e && e.message) || e)); err.counted = input.action === "replan"; throw err; }
+  catch (e) { throw new GameError(String((e && e.message) || e)); }
   run.decisions = run.decisions || [];
   run.decisions[n - 1] = input;
   return next(E, run, st);
+}
+
+// ---- applyTool: every run-scoped tool call, the one way a run changes in the live game and in a bench run. ----
+const planned = (E, run, { leg, cached }) => Object.assign(legPub(E, leg), { plans_used: run.calls, cached });
+const RUN_TOOLS = {
+  get_hail: (E, run, inp, ctx) => hailInfo(E, run, ctx.nowMs),
+  plan_pickup: async (E, run, inp, ctx) => planned(E, run, await planPickup(E, run, inp, ctx.legFn)),
+  plan_ride: async (E, run, inp, ctx) => planned(E, run, await planRideLeg(E, run, inp, ctx.legFn)),
+  check_pad: (E, run, inp, ctx) => checkPad(E, run, inp, ctx.nowMs),
+  space_weather: (E, run, inp, ctx) => spaceWeather(E, run, inp, ctx.nowMs),
+  dispatch: (E, run, inp, ctx) => dispatch(E, run, inp, ctx.nowMs),
+  decide: (E, run, inp, ctx) => decide(E, run, inp, ctx.legFn),
+};
+/** One tool call: { run, result }. The run passed in is never changed. run is the run after the call, or null when the call
+ *  left it as it was, so a caller saves exactly when it is not null (a failed plan still counts, a cold hail is abandoned).
+ *  result is the tool's answer, or { error } for a game error. ctx: { nowMs, legFn? }.
+ *  A bench run (budget set) counts every call in tool_calls and refuses calls once the budget is used; a season run counts none. */
+export async function applyTool(E, run, tool, input, ctx) {
+  const apply = own(RUN_TOOLS, tool);
+  if (!apply) throw new Error("not a run tool: " + tool);
+  const next = structuredClone(run);
+  let result;
+  try {
+    if (next.budget != null) {
+      if (next.tool_calls >= next.budget) fail("this task has used its budget of " + next.budget + " tool calls; no more calls are answered");
+      next.tool_calls++;
+    }
+    result = await apply(E, next, input, ctx);
+  } catch (e) {
+    if (!(e instanceof GameError)) throw e;
+    result = { error: e.message };
+  }
+  return { run: JSON.stringify(next) === JSON.stringify(run) ? null : next, result };
 }
 
 /** The run log a bot can learn from: what it was asked, what it planned and checked, what happened, how it scored. */

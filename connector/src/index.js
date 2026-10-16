@@ -9,7 +9,8 @@ import { fleet, listHails } from "./game.js";
 import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
 import siteHtml from "./site.html";
-import { RUN_ID, hub, runStub } from "./store.js";
+import { hub, runStub } from "./store.js";
+import { RUN_ID } from "./tools.js";
 
 export { StarfareMcp } from "./mcp.js";
 export { StarfareAuth } from "./oauth.js";
