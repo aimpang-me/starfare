@@ -27,9 +27,9 @@ test("pass^k is tau-bench's C(c,k)/C(n,k) per task, averaged, not 'the first k a
   assert.equal(passK(NAIVE, 2, landed), null);
 });
 
-test("the success rule is a labelled placeholder, and naive must cover every task it judges", () => {
-  assert.deepEqual([successRule(NAIVE).placeholder, successRule(NAIVE).text], [true, "the flight landed and scored at least naive's score on that task"]);
-  assert.equal(successRule(null).text, "the flight landed");
+test("the success rule compares with naive, falls back to landing without naive, and naive must cover every task it judges", () => {
+  assert.deepEqual([successRule(NAIVE).fallback, successRule(NAIVE).text], [false, "the flight landed and scored at least naive's score on that task"]);
+  assert.deepEqual([successRule(null).fallback, successRule(null).text], [true, "the flight landed"]);
   assert.throws(() => successRule([row("t1", 0, 85)]).test(row("t2", 0, 90)), { message: "the naive results have no row for task t2" });
 });
 
@@ -60,7 +60,7 @@ test("the paired bootstrap differences two agents on the tasks both played", () 
 
 test("rankTable ranks complete rows by mean with the gap to the next, and lists rows missing tasks apart", () => {
   const t = rankTable([file("alpha", 3, ALPHA), file("naive", 1, NAIVE), file("beta", 3, BETA)], { naive: file("naive", 1, NAIVE) });
-  assert.deepEqual([t.suite, t.split, t.k, t.draws, t.seed, t.rule], ["fixture", "dev", 3, 2000, 1, { placeholder: true, text: "the flight landed and scored at least naive's score on that task" }]);
+  assert.deepEqual([t.suite, t.split, t.k, t.draws, t.seed, t.rule], ["fixture", "dev", 3, 2000, 1, { fallback: false, text: "the flight landed and scored at least naive's score on that task" }]);
   assert.deepEqual(t.ranked.map((r) => [r.rank, r.agent, r.model, r.tasks_played, r.tasks_total, r.mean, r.lo, r.hi, r.pass.map(r4), r.gap_to_next]), [
     [1, "naive", "none", 2, 2, 72.5, 60, 85, [1], { tasks: 2, diff: 7.5, lo: -5, hi: 20 }],
     [2, "alpha", "m-alpha", 2, 2, 65, 40, 90, [0.5, 0.1667, 0], null],
@@ -99,7 +99,7 @@ test("stats.mjs prints the ranked table and writes the Markdown table", () => {
       "Scores are simulated. Agent and model labels are self-reported.",
       "mean: the mean over tasks of each task's mean score. 95% interval: cluster bootstrap over tasks (repeats kept together), 2000 draws, seed 1.",
       "pass^k: the chance that k fresh attempts at a task all succeed (tau-bench's unbiased estimator), averaged over tasks.",
-      "Success (placeholder rule, waiting on Alvin): the flight landed and scored at least naive's score on that task.",
+      "Success: the flight landed and scored at least naive's score on that task.",
       "gap to next: this row minus the next ranked row, paired bootstrap over the tasks both played. An interval that spans 0 does not separate them.",
       "Unranked rows are missing tasks or attempts and are not ranked:",
       "  beta / m-beta lacks 3 attempts at 1 of 2 tasks: t2",
@@ -122,7 +122,7 @@ test("stats.mjs prints the ranked table and writes the Markdown table", () => {
       "",
       "pass^k: the chance that k fresh attempts at a task all succeed (tau-bench's unbiased estimator), averaged over tasks.",
       "",
-      "Success (placeholder rule, waiting on Alvin): the flight landed and scored at least naive's score on that task.",
+      "Success: the flight landed and scored at least naive's score on that task.",
       "",
       "gap to next: this row minus the next ranked row, paired bootstrap over the tasks both played. An interval that spans 0 does not separate them.",
       "",

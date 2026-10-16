@@ -30,7 +30,7 @@ function notes(t) {
     "Scores are simulated. Agent and model labels are self-reported.",
     "mean: the mean over tasks of each task's mean score. 95% interval: cluster bootstrap over tasks (repeats kept together), " + t.draws + " draws, seed " + t.seed + ".",
     "pass^k: the chance that k fresh attempts at a task all succeed (tau-bench's unbiased estimator), averaged over tasks.",
-    "Success " + (t.rule.placeholder ? "(placeholder rule, waiting on Alvin)" : "rule") + ": " + t.rule.text + ".",
+    "Success" + (t.rule.fallback ? " (fallback: no naive results given)" : "") + ": " + t.rule.text + ".",
     "gap to next: this row minus the next ranked row, paired bootstrap over the tasks both played. An interval that spans 0 does not separate them.",
   ];
   if (t.unranked.length) out.push("Unranked rows are missing tasks or attempts and are not ranked:");

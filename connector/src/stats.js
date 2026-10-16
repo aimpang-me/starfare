@@ -78,14 +78,14 @@ export function passK(rows, k, succeeded) {
   return mean(tasks.map((rs) => choose(rs.filter(succeeded).length, k) / choose(rs.length, k)));
 }
 
-/** The pass^k success rule. A placeholder until Alvin picks one: the flight landed and scored at least naive's mean score on
- *  that task when naive rows are given, otherwise it landed. */
+/** The pass^k success rule (Alvin, 2026-10-16): the flight landed and scored at least naive's mean score on that task.
+ *  Without naive rows it falls back to "the flight landed", labelled as a fallback. */
 export function successRule(naiveRows) {
   const landed = (r) => r.score.phase === "arrived";
-  if (!naiveRows) return { placeholder: true, text: "the flight landed", test: landed };
+  if (!naiveRows) return { fallback: true, text: "the flight landed", test: landed };
   const bar = taskMeans(naiveRows);
   return {
-    placeholder: true,
+    fallback: false,
     text: "the flight landed and scored at least naive's score on that task",
     test: (r) => {
       if (!bar.has(r.task_id)) throw new Error("the naive results have no row for task " + r.task_id);
@@ -124,7 +124,7 @@ export function rankTable(files, { naive = null, tasks = null, draws = DRAWS, se
   const strip = ({ rows: _, ...r }) => r;
   return {
     suite: files[0].suite, split: files[0].split, engine_sha256: files[0].engine_sha256, score_version: files[0].score_version,
-    draws, seed, rule: { placeholder: rule.placeholder, text: rule.text },
+    draws, seed, rule: { fallback: rule.fallback, text: rule.text },
     k: Math.max(...files.map((f) => f.repeats)),
     ranked: ranked.map((r, i) => ({ ...strip(r), rank: i + 1, gap_to_next: gaps[i] })),
     unranked: rows.filter((r) => r.missing.length).map(strip),
