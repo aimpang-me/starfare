@@ -18,8 +18,8 @@ Dark space UI over a live solar-system map: glass panels, thin hairlines, one sa
 ## Alvin's portfolio design system ("Alvin Impang Terminal")
 https://claude.ai/artifact/SehVRJjqmPB1CRkyzXKtGe: near-white terminal printout, Departure Mono only, graphite ink, square corners, box-drawing tables, 2px dither shadow, shell-command headings, single light theme. The font file is published there at `project/fonts/DepartureMono-Regular.woff2`. Departure Mono lacks the glyphs ✓ ✕ ▶ ●: put them in fixed 2ch spans with a fallback font. The Roadster teaser uses this system.
 
-## Open decision
-Which look Starfare ships with: keep "Dark SOL" (above) or move Open Sky to the Terminal system to match the rest of the portfolio. Not decided; ask Alvin.
+## Decision (2026-10-16)
+Dark SOL for the game and the landing page. Alvin compared a mock of the landing page in each look and chose Dark SOL, so the whole site keeps Open Sky's style: the tokens and Inter above, glass panels, caps labels and Real / Fictional / Simulated chips. No Terminal variant or style toggle. Terminal stays the portfolio's system (the Roadster teaser).
 
 ## Rules
 No Tesla/SpaceX/xAI logos or claims; "Works with Grok" as text only. Label everything simulated. Keep the honesty gate visible.

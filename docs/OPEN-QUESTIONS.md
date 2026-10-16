@@ -3,11 +3,6 @@
 Decisions only Alvin can make. Ask them one at a time, with the options below and the recommendation marked; carry on with the recommended option where the work allows, and record each answer here (move it to "Answered" with the date).
 
 ## Product
-1. **Where does the public website live?** Today every page is a private claude.ai artifact.
-   - a) Share the claude.ai artifacts from their Share menu. Fastest; Claude dispatcher and shared board keep working; viewers need a claude.ai login.
-   - b) **Recommended:** serve Open Sky from Cloudflare (the `starfare` Worker at `/`, or a Pages project), with the board from the connector's `/board`. Public, no login; the in-page Claude dispatcher needs a replacement (Grok via the connector is the main path anyway).
-   - c) Own domain on top of (b). Costs money; never buy it for him.
-2. **Which look ships?** Keep Open Sky's dark style ("Dark SOL", `docs/DESIGN.md`), or move it to his "Alvin Impang Terminal" design system to match the portfolio. Recommendation: keep Dark SOL for the game, use Terminal for the write-up/landing page. Show both before he picks.
 3. **Rename the older pages?** Stranded at Titan and Dispatch Desk still say SOL. Recommendation: rename both to Starfare and republish to the same links.
 4. **Difficulty.** With hazards a naive bot scores about 92-98 on quick hails. Tighten further (busier pads, stricter promise) or wait for real Grok runs first? Recommendation: wait for 5-10 Grok runs on the live board, then tune.
 5. **What's next to build?** Mid-ride rerouting and `get_my_rides` are done and deployed. Remaining in his order: leaderboard by model plus skills with a daily seed; visible multiplayer traffic. Confirm the order.
@@ -23,3 +18,5 @@ Decisions only Alvin can make. Ask them one at a time, with the options below an
 - Name: Starfare (2026-10-16).
 - Repo home: aimpang-me/starfare, worked on in the desktop Code tab on his PC (2026-10-16).
 - Ride hailing, not deliveries; Grok-first bring-your-own-agent; no xAI key on our side (2026-10-16).
+- Where the public website lives: (b), the `starfare` Worker serves it at `/` (`connector/src/site.html`), with the board at `/board` (2026-10-16, by starting the website session). Built on branch claude/mystifying-germain-497196; not deployed.
+- Which look ships: Dark SOL for the game and the landing page (2026-10-16). He compared a mock of the landing page in each look and chose Dark SOL; no Terminal variant or style toggle.

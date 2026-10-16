@@ -146,7 +146,7 @@ footer p{max-width:100ch}
 
 <section class="sec" id="hails" aria-labelledby="h-hails">
   <h2 id="h-hails">Open ride hails</h2>
-  <p class="lead">These are the hails a dispatcher can take right now. The riders are simulated. The places are real, or made up for the game where the card says so, and the distances below are computed live from where those places are in the sky today.</p>
+  <p class="lead">These are the hails a dispatcher can take right now. The riders are simulated. Each place is marked Real or Fictional (made up for the game), and the distances below are computed live from where those places are in the sky today.</p>
   <div class="grid" id="hail-grid"></div>
   <h3 class="k" style="margin:12px 0 0">The fleet (simulated)</h3>
   <div class="list" id="fleet-list"></div>
@@ -174,15 +174,22 @@ footer p{max-width:100ch}
 </section>
 
 <section class="sec" id="benchmark" aria-labelledby="h-bench">
-  <h2 id="h-bench">An agent benchmark</h2>
-  <p class="lead">Each hail is a small, checkable planning task. The agent can't make up a route: only the planner's numbers count, and every leg is re-flown in an n-body simulation (Sun, planets and Moon). The game's own hindsight plan sets par for energy, and the season's simulated hazards are the same for every agent, so scores compare.</p>
+  <h2 id="h-bench">An agent benchmark that checks its agents</h2>
+  <p class="lead">Each hail is a small planning task with a checkable answer. Starfare is built like a test harness: the agent's job is to dispatch, and the game's job is to verify every number the agent hands it before anything counts.</p>
+  <div class="flow checks">
+    <div class="tile"><p class="t">The planner makes the numbers</p><p class="small dim">The agent can't type in a route. <code>plan_pickup</code> and <code>plan_ride</code> return legs with times, energy and fare, and <code>dispatch</code> takes those legs by id.</p></div>
+    <div class="tile"><p class="t">Every leg is re-flown</p><p class="small dim">An independent n-body simulation (Sun, planets, Earth and Moon) flies each leg between bodies again. It passes only if the final miss is under 1 km with a correction under 500 m/s. A rejected leg can't be dispatched.</p></div>
+    <div class="tile"><p class="t">The quote is checked</p><p class="small dim">The fare the agent tells the rider earns its points only if it is within $1 of the planned fare. The arrival it promises is scored against when the ride actually lands, after the season's hazards.</p></div>
+    <div class="tile"><p class="t">Same sky for every agent</p><p class="small dim">Par for energy is the game's own hindsight plan, and the season's simulated hazards are the same for every agent, so scores compare.</p></div>
+  </div>
+  <h3 class="k" style="margin:12px 0 0">What one ride scores</h3>
   <div class="parts" id="parts"></div>
   <p class="small faint" id="parts-note">The parts and their maximum points are read from the game engine that scores every ride.</p>
 </section>
 </main>
 
 <footer>
-  <p>Starfare is a concept demo by Alvin Impang. It's a made-up robotaxi service with simulated riders, a simulated fleet and simulated hazards, and it isn't affiliated with any real company. Burns, battery and fare come from stated, made-up car and thruster models.</p>
+  <p>Starfare is a concept demo by Alvin Impang, an SDET and AI-quality engineer. It's a made-up robotaxi service with simulated riders, a simulated fleet and simulated hazards, and it isn't affiliated with any real company. Burns, battery and fare come from stated, made-up car and thruster models.</p>
   <p>Planet positions: NASA JPL DE421. ISS and Tiangong orbits: JPL Horizons. Sky time runs fast: one real second is one sky day, and the sky resets at the end of each season. Grok connects through the Model Context Protocol. <span id="eng-note"></span></p>
 </footer>
 
@@ -203,10 +210,12 @@ function isoJD(jd){ return new Date((jd - 2440587.5) * 864e5).toISOString().slic
 var CARS = {}; SITE.fleet.forEach(function(c){ CARS[c.car] = c; });
 
 /* ---------- static sections: hails, fleet ---------- */
+function placeTag(id){ var p = E && E.PLACES.filter(function(x){ return x.id === id; })[0];
+  return p ? '<span class="tag ' + (p.real ? "real" : "fict") + '">' + (p.real ? "Real" : "Fictional") + "</span>" : ""; }
 $("hail-grid").innerHTML = SITE.hails.map(function(h){
   return '<div class="tile"><div class="row"><p class="t">' + esc(h.title) + '</p><span class="tag sim">Simulated</span></div>' +
     '<p class="small">' + esc(h.rider) + '</p><p class="small dim">' + esc(h.blurb) + '</p>' +
-    '<div class="mmeta"><div><span class="k">Pickup</span><span class="small">' + esc(h.from.name) + '</span></div><div><span class="k">Destination</span><span class="small">' + esc(h.to.name) + '</span></div>' +
+    '<div class="mmeta"><div><span class="k">Pickup</span><span class="small">' + esc(h.from.name) + "</span>" + placeTag(h.from.id) + '</div><div><span class="k">Destination</span><span class="small">' + esc(h.to.name) + "</span>" + placeTag(h.to.id) + "</div>" +
     '<div><span class="k">Kind</span><span class="small">' + esc(h.kind) + '</span></div><div><span class="k">Apart today</span><span class="small num" data-apart="' + esc(h.hail_id) + '">…</span></div>' +
     '<div style="grid-column:1/-1"><span class="k">Rider ready</span><span class="small">' + esc(h.ready) + '</span></div></div></div>';
 }).join("");
@@ -364,7 +373,7 @@ cv.addEventListener("click", function(e){
   PICK.forEach(function(p){ var d = Math.hypot(p[0] - x, p[1] - y); if (d < p[2] && (!best || d < best.d)) best = { d: d, x: p[0], y: p[1], kind: p[3], it: p[4] }; });
   if (popup){ popup.remove(); popup = null; } if (!best) return;
   var it = best.it, html;
-  if (best.kind === "place") html = '<span class="tag ' + (it.real ? "real" : "fict") + '" style="align-self:flex-start">' + (it.real ? "Real" : "Made up for the game") + "</span><b>" + esc(it.name) + '</b><span class="small dim">' + esc(it.sub || "") + "</span>";
+  if (best.kind === "place") html = '<span class="tag ' + (it.real ? "real" : "fict") + '" style="align-self:flex-start">' + (it.real ? "Real" : "Fictional") + "</span><b>" + esc(it.name) + '</b><span class="small dim">' + esc(it.sub || "") + "</span>";
   else if (best.kind === "hail") html = '<span class="tag sim" style="align-self:flex-start">Simulated rider</span><b>' + esc(it.title) + '</b><span class="small dim">' + esc(it.from.name) + " → " + esc(it.to.name) + '</span><span class="small">' + esc(it.blurb) + "</span>";
   else html = '<span class="tag sim" style="align-self:flex-start">Simulated car</span><b>' + esc(it.name) + '</b><span class="small dim">Parked at ' + esc(it.parked_at.name) + "</span>";
   popup = document.createElement("div"); popup.className = "pick glass";
