@@ -158,10 +158,20 @@ test("the page states the passenger catalog, the season, and the held out seeds"
 test("the page states the ride record and not an RL episode format", () => {
   const sim = readFileSync(new URL("sim.mjs", root), "utf8");
   const index = readFileSync(new URL("src/index.js", root), "utf8");
+  const store = readFileSync(new URL("src/store.js", root), "utf8");
+  const run = readFileSync(new URL("bench/run.mjs", root), "utf8");
+  const bench = readFileSync(new URL("src/bench-host.js", root), "utf8");
+  const exportMax = store.match(/const EXPORT_MAX = (\d+)/)[1];
   assert.match(sim, /stranded counts as 0 in this mean only/);
   assert.match(html, /stranded counts as 0 in this mean only/);
   assert.match(index, /for 24 hours/);
-  assert.match(html, /kept for 24 hours/);
+  assert.match(html, /lasts 24 hours/);
+  assert.match(store, /newest EXPORT_MAX arrived rides/);
+  assert.match(html, new RegExp("the newest " + exportMax + " arrived flights"));
+  assert.match(run, /one ride record per attempt/);
+  assert.match(html, /one of those records per attempt, including a flight that did not arrive/);
+  assert.match(bench, /Bench mode: no ride history/);
+  assert.match(html, /A bench session does not add those attempts to the player download/);
   assert.ok(html.includes(RIDE_FORMAT));
   assert.match(html, /The repository does not define an RL episode format\./);
   const rides = readFileSync(new URL("world/engine/sol-rides.js", repo), "utf8");

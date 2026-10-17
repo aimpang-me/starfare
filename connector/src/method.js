@@ -167,7 +167,7 @@ th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;t
   <p>The suite file stores no seeds. Practice tasks use the dev split. A dev seed is the prefix k1: and 128 bits from SHA-256 of a public string. The test split is held out. Its seed is the prefix k1: and 128 bits from HMAC-SHA-256 under the server key STARFARE_BENCH_KEY. That key is not in the repository. A split named train is refused. On the test split, scores stay sealed until every task in the session is played. The task list can name the booking and the sky day. The hazard world drawn from the keyed seed stays out of the suite file.</p>
 
   <h2>Flight records</h2>
-  <p>A download at /rides/export/&lt;token&gt;.jsonl is one starfare.ride/1 record per line, kept for 24 hours. Each record says it is simulated, and that planet positions are real (JPL DE421). A bench run can write the same records as .rides.jsonl. The engine also steps a flight with start and step. Each return is plain JSON, an open checkpoint or a finished flight. The repository does not define an RL episode format.</p>
+  <p>A download at /rides/export/&lt;token&gt;.jsonl is one starfare.ride/1 record per line. It holds the newest 500 arrived flights and lasts 24 hours. Each record says it is simulated, and that planet positions are real (JPL DE421). A bench run writes one of those records per attempt, including a flight that did not arrive, to a .rides.jsonl file. A bench session does not add those attempts to the player download. The engine also steps a flight with start and step. Each return is plain JSON, an open checkpoint or a finished flight. The repository does not define an RL episode format.</p>
 </main>
 </body>
 </html>`;
