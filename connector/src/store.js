@@ -11,10 +11,11 @@ import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
 import { episodeText } from "./episode.js";
 import {
-  GameError, applyTool, computeLeg, flyLive, hailInfo, keepsBest, leaveRun, legKey, legPub, liveRecord, liveRow, openRun, phaseOf, poolCap, rideCursor, rideCursorOf, rideRecord,
-  rideStats, rideSummary, resolveHail, seasonInstance, seasonSpan, sky,
+  GameError, applyTool, computeLeg, flyLive, hailInfo, leaveRun, legKey, legPub, liveRecord, liveRow, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord,
+  rideStats, rideSummary, resolveHail, seasonInstance, sky,
 } from "./game.js";
 import { liveIdsToDrop } from "./live.js";
+import { distinctPlayers as playersIn, ensurePool as freezePool, poolSize as storedPool, recordBest } from "./hub-pool.js";
 
 export const hub = (env) => env.STARFARE_HUB.get(env.STARFARE_HUB.idFromName("hub"));
 export const runStub = (env, runId) => env.STARFARE_RUN.get(env.STARFARE_RUN.idFromName(runId));
@@ -183,12 +184,7 @@ export class StarfareHub extends DurableObject {
   }
 
   record(e) {
-    this.#bump("runs_scored");
-    const row = this.sql.exec("SELECT v FROM best WHERE mission_id = ?", e.hail_id).toArray()[0];
-    const cur = row ? JSON.parse(row.v) : null;
-    const win = keepsBest(cur, e);
-    if (win) this.sql.exec("INSERT OR REPLACE INTO best (mission_id, v) VALUES (?, ?)", e.hail_id, JSON.stringify(e));
-    return { best: win };
+    return recordBest(this.sql, e);
   }
 
   /** Insert or update a player's history row, then keep only their newest RIDES_MAX. */
@@ -248,23 +244,9 @@ export class StarfareHub extends DurableObject {
     return { now_ms: now, flights: this.sql.exec("SELECT v FROM live ORDER BY updated_ms DESC LIMIT 50").toArray().map((x) => JSON.parse(x.v)) };
   }
 
-  #kvGet(k) {
-    const row = this.sql.exec("SELECT v FROM hubkv WHERE k = ?", k).toArray()[0];
-    return row ? JSON.parse(row.v) : null;
-  }
-  poolSize(season) { return this.#kvGet("pool:" + season); }
-  distinctPlayers(season) {
-    const span = seasonSpan(season);
-    return this.sql.exec("SELECT COUNT(DISTINCT player_id) AS n FROM rides WHERE created_ms >= ? AND created_ms < ?", span.start, span.end).one().n;
-  }
-  ensurePool(season) {
-    const key = "pool:" + season, cur = this.#kvGet(key);
-    if (cur != null) return cur;
-    const n = Number(season);
-    const cap = poolCap(n <= 1 ? 0 : this.distinctPlayers(n - 1));
-    this.sql.exec("INSERT OR IGNORE INTO hubkv (k, v) VALUES (?, ?)", key, JSON.stringify(cap));
-    return this.#kvGet(key);
-  }
+  poolSize(season) { return storedPool(this.sql, season); }
+  distinctPlayers(season) { return playersIn(this.sql, season); }
+  ensurePool(season) { return freezePool(this.sql, season); }
 
   board() {
     const best = {};

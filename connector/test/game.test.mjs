@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { SKY, SEASON_END, MAX_PLANS_PER_RUN, sky, isoJD, jdOfIso, openRun, seasonInstance, suiteInstance, applyTool, hailInfo, legPub, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, seedOf, phaseOf, leaveRun, computeLeg, GameError,
   RIDE_FORMAT, rideSummary, rideRecord, rideStats, rideCursor, rideCursorOf, liveRecord, liveRow,
-  POOL_TIERS, poolCap, seasonHails, resolveHail, keepsBest } from "../src/game.js";
+  POOL_TIERS, poolCap, seasonHails, resolveHail, keepsBest, fleet } from "../src/game.js";
 
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
@@ -709,6 +709,40 @@ test("live: the public record of a flight in the air has the legs flown so far, 
   await f.call("decide", { checkpoint: 1, action: "hold" }, NOW + 200000);
   const landed = liveRecord(E, f.run(), NOW + 300000);
   assert.deepEqual([landed.phase, landed.live.lands_at_ms, landed.live.hold, landed.score.total === f.run().score.total, landed.log.flown.length], ["arrived", NOW + 208889, null, true, 2]);
+});
+
+test("a pool hail plans, dispatches and scores like the engine", async () => {
+  const season = sky(NOW).season;
+  let id = null;
+  for (let i = 0; i < 30 && !id; i++) {
+    const row = resolveHail(E, "s" + season + "-" + i, season, 200);
+    if (row.kind === "quick") id = row.id;
+  }
+  assert.ok(id);
+  const { run, p, r, out } = await play(id);
+  assert.equal(out.ok, true, JSON.stringify(out));
+  const { F, s } = engineScore(run, p, r, { fare_usd: r.fare, arrival: isoJD(r.arr_jd) });
+  assert.equal(out.total, s.total);
+  assert.equal(out.out_of, 100000);
+  assert.deepEqual(out.parts.map((x) => [x.key, x.got, x.max]), s.parts.map((x) => [x.key, x.got, x.max]));
+  assert.equal(out.used_kwh, s.used_kwh);
+  assert.equal(out.incidents.length, F.incidents.length);
+  assert.equal(out.log.hail, id);
+});
+
+test("list_hails JSON byte size at 200, 500 and 1000 rows", () => {
+  const seasons = [String(sky(NOW).season), "19"];
+  for (const season of seasons) {
+    const sizes = {};
+    for (const cap of [200, 500, 1000]) {
+      const body = JSON.stringify({ hails: seasonHails(E, season, cap), fleet: fleet(E), board: "/board" });
+      sizes[cap] = Buffer.byteLength(body);
+      assert.equal(JSON.parse(body).hails.length, cap);
+    }
+    console.log("list_hails bytes season " + season + " " + JSON.stringify(sizes));
+    assert.ok(sizes[200] < sizes[500] && sizes[500] < sizes[1000]);
+    assert.ok(sizes[1000] < 400000);
+  }
 });
 
 test("pool tiers are the placeholder table", () => {

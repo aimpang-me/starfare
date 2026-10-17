@@ -228,6 +228,23 @@ async function phaseOff() {
     }
     return p;
   };
+  await check("a pool hail plans, dispatches and scores, and a worse finish does not replace the best", async () => {
+    const listed = await ok(client, "list_hails");
+    const quick = listed.hails.find((h) => h.kind === "quick");
+    const m = /^s(\d+)-(\d+)$/.exec(quick.hail_id);
+    R.admit(R.hailRow(m[1], Number(m[2])));
+    const exact = noteBest(await playHail(client, quick.hail_id));
+    assert.equal(exact.score.ok, true);
+    assertMatchesNode(exact, 2);
+    const worse = noteBest(await playHail(client, quick.hail_id, exact.car, { quote: { quoted_fare_usd: 1, quoted_arrival: "2020-01-01 00:00" } }));
+    assert.equal(worse.score.ok, true);
+    assert.ok(worse.score.total < exact.score.total, `worse ${worse.score.total} vs exact ${exact.score.total}`);
+    assertMatchesNode(worse, 2, { fare_usd: 1, arrival: "2020-01-01 00:00" });
+    const board = await (await fetch(`${w.base}/board.json`)).json();
+    assert.equal(board.best[quick.hail_id].points, exact.score.total);
+    assert.equal(board.best[quick.hail_id].hail_id, quick.hail_id);
+    report.pool = { hail_id: quick.hail_id, exact: exact.score.total, worse: worse.score.total };
+  });
   await check("iss-crew: take_hail, plan_pickup (par car), plan_ride, dispatch with the leg's fare and arrival; the result says what actually happened", async () => {
     good = noteBest(await playHail(client, "iss-crew"));
     const { hail, pickup, ride, score } = good;
