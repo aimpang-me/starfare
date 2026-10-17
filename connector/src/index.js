@@ -8,7 +8,7 @@ import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
 import engineSrc from "./engine/sol-page.txt";
 import { EPISODE_PATH } from "./episode.js";
-import { fleet, listHails } from "./game.js";
+import { fleet, listHails, seasonHail, sky } from "./game.js";
 import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
 import flightHtml from "./flight.html";
@@ -106,8 +106,12 @@ export default {
     if (isBenchPath(url.pathname)) return bench(req, url, env);
     if (req.method !== "GET") return new Response("Method not allowed", { status: 405 });
     if (url.pathname === "/board" || url.pathname === "/board.json") {
-      const raw = await hub(env).board(), hails = listHails(await engine());
-      // Only current hails: best rows from the old delivery missions stay in storage but are not shown.
+      const E = await engine(), season = sky(Date.now()).season, cap = await hub(env).ensurePool(season);
+      const raw = await hub(env).board(), hails = listHails(E);
+      for (const id of Object.keys(raw.best)) {
+        const m = /^s(\d+)-(\d+)$/.exec(id);
+        if (m && m[1] === String(season) && Number(m[2]) < cap) hails.push(seasonHail(E, season, Number(m[2])));
+      }
       const data = { ...raw, best: Object.fromEntries(hails.filter((h) => raw.best[h.hail_id]).map((h) => [h.hail_id, raw.best[h.hail_id]])) };
       if (url.pathname === "/board.json") return Response.json({ label: "planned by Grok bot", ...data }, { headers: { "cache-control": "no-store" } });
       return new Response(boardHtml(hails, data), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });

@@ -12,9 +12,10 @@ import META from "./engine/meta.json" with { type: "json" };
 import { episodeText } from "./episode.js";
 import {
   GameError, applyTool, computeLeg, flyLive, hailInfo, leaveRun, legKey, legPub, liveRecord, liveRow, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord,
-  rideStats, rideSummary, seasonInstance,
+  rideStats, rideSummary, resolveHail, seasonInstance, sky,
 } from "./game.js";
 import { liveIdsToDrop } from "./live.js";
+import { distinctPlayers as playersIn, ensurePool as freezePool, poolSize as storedPool, recordBest } from "./hub-pool.js";
 
 export const hub = (env) => env.STARFARE_HUB.get(env.STARFARE_HUB.idFromName("hub"));
 export const runStub = (env, runId) => env.STARFARE_RUN.get(env.STARFARE_RUN.idFromName(runId));
@@ -80,7 +81,9 @@ export class StarfareRun extends DurableObject {
         await h.termsPut(id, t0, end, seed, slim);
         return slim;
       };
-      const now = Date.now(), run = await openRun(E, seasonInstance(E, hailId, now), runId, now, termsFn);
+      const now = Date.now(), season = sky(now).season, cap = await h.ensurePool(season);
+      resolveHail(E, hailId, season, cap);
+      const run = await openRun(E, seasonInstance(E, hailId, now), runId, now, termsFn);
       if (playerId) run.player_id = playerId; // STARFARE_OAUTH on only; a label, the run_id rules do not change
       await this.#save(run);
       await this.#index(E, run);
@@ -153,6 +156,7 @@ export class StarfareHub extends DurableObject {
     this.sql.exec("CREATE INDEX IF NOT EXISTS rides_by_player ON rides (player_id, created_ms DESC, run_id DESC)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS exports (token TEXT PRIMARY KEY, player_id TEXT NOT NULL, expires_ms INTEGER NOT NULL)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS live (run_id TEXT PRIMARY KEY, v TEXT NOT NULL, land_ms INTEGER, updated_ms INTEGER NOT NULL)");
+    this.sql.exec("CREATE TABLE IF NOT EXISTS hubkv (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
     this.hits = new Map(); // ip -> {win, n}; in memory on purpose: losing it on eviction only resets a minute's count
   }
   #get(table, k) { const row = this.sql.exec(`SELECT v FROM ${table} WHERE k = ?`, k).toArray()[0]; return row ? JSON.parse(row.v) : null; }
@@ -180,11 +184,7 @@ export class StarfareHub extends DurableObject {
   }
 
   record(e) {
-    this.#bump("runs_scored");
-    const row = this.sql.exec("SELECT v FROM best WHERE mission_id = ?", e.hail_id).toArray()[0];
-    const cur = row ? JSON.parse(row.v) : null;
-    if (!cur || e.points > cur.points) this.sql.exec("INSERT OR REPLACE INTO best (mission_id, v) VALUES (?, ?)", e.hail_id, JSON.stringify(e));
-    return { best: !cur || e.points > cur.points };
+    return recordBest(this.sql, e);
   }
 
   /** Insert or update a player's history row, then keep only their newest RIDES_MAX. */
@@ -243,6 +243,10 @@ export class StarfareHub extends DurableObject {
     for (const id of liveIdsToDrop(rows, now, LIVE_AFTER_MS, LIVE_HELD_MS)) this.sql.exec("DELETE FROM live WHERE run_id = ?", id);
     return { now_ms: now, flights: this.sql.exec("SELECT v FROM live ORDER BY updated_ms DESC LIMIT 50").toArray().map((x) => JSON.parse(x.v)) };
   }
+
+  poolSize(season) { return storedPool(this.sql, season); }
+  distinctPlayers(season) { return playersIn(this.sql, season); }
+  ensurePool(season) { return freezePool(this.sql, season); }
 
   board() {
     const best = {};

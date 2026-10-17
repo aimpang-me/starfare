@@ -471,7 +471,16 @@ function chip(id) { return SF.tag(id) === "real" ? '<span class="tag real">Real<
 function placeH(id) { return esc(SF.name(id)) + " " + chip(id); }
 function money(n) { return "$" + SF.fmt(n, 2); }
 function kwh(n) { return SF.fmt(n) + " kWh"; }
-function hailOf(id) { return SF.SITE.hails.filter(function (h) { return h.hail_id === id; })[0]; }
+function hailOf(id) {
+  var h = SF.SITE.hails.filter(function (x) { return x.hail_id === id; })[0];
+  if (h || !SF.R.hailRow) return h;
+  var m = /^s(\d+)-(\d+)$/.exec(id || "");
+  if (!m) return h;
+  var row = SF.R.hailRow(m[1], +m[2]);
+  if (SF.R.admit) SF.R.admit(row);
+  return { hail_id: row.id, title: row.title, kind: row.kind === "quick" ? "quick" : "long haul", party: row.party,
+    rider: row.rider + " (simulated)", blurb: row.blurb, from: { id: row.from, name: SF.name(row.from) }, to: { id: row.to, name: SF.name(row.to) } };
+}
 
 var GL = null, RS = null;
 function fmt(n, d) { return SF.fmt(n, d); }

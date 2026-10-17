@@ -51,13 +51,56 @@ export function jdOfIso(s) {
 }
 const kindOf = (h) => (h.kind === "quick" ? "quick" : "long haul");
 
-export function listHails(E) {
-  const R = E.R, { placeName } = names(E);
-  return R.HAILS.map((h) => ({
-    hail_id: h.id, title: h.title, kind: kindOf(h), rider: h.rider + " (simulated)", blurb: h.blurb,
+function hailView(E, h) {
+  const { placeName } = names(E);
+  return {
+    hail_id: h.id, title: h.title, kind: kindOf(h), party: h.party, rider: h.rider + " (simulated)", blurb: h.blurb,
     from: { id: h.from, name: placeName(h.from) }, to: { id: h.to, name: placeName(h.to) },
-    ready: h.kind === "quick" ? "1 sky day after take_hail" : R.LEAD + " sky days after take_hail (a booked ride)",
-  }));
+    ready: h.kind === "quick" ? "1 sky day after take_hail" : E.R.LEAD + " sky days after take_hail (a booked ride)",
+  };
+}
+export function listHails(E) {
+  return E.R.HAILS.map((h) => hailView(E, h));
+}
+export function seasonHail(E, season, index) {
+  return hailView(E, E.R.hailRow(String(season), index));
+}
+export function seasonHails(E, season, cap) {
+  const out = [];
+  for (let i = 0; i < cap; i++) out.push(seasonHail(E, season, i));
+  return out;
+}
+export const POOL_TIERS = Object.freeze({
+  placeholder: true,
+  rows: Object.freeze([
+    Object.freeze({ min_players: 0, hails: 200 }),
+    Object.freeze({ min_players: 20, hails: 500 }),
+    Object.freeze({ min_players: 100, hails: 1000 }),
+  ]),
+});
+export function poolCap(distinctPlayers) {
+  const rows = POOL_TIERS.rows;
+  let cap = rows[0].hails;
+  for (const row of rows) if (distinctPlayers >= row.min_players) cap = row.hails;
+  return cap;
+}
+export function seasonSpan(season) {
+  const start = SKY.t0_ms + (Number(season) - 1) * SKY.len_days * 1000;
+  return { start, end: start + SKY.len_days * 1000 };
+}
+export function keepsBest(cur, next) {
+  return !cur || next.points > cur.points;
+}
+const SEASON_HAIL = /^s(\d+)-(\d+)$/;
+export function resolveHail(E, hailId, season, cap) {
+  const cat = E.R.HAILS.find((h) => h.id === hailId);
+  if (cat) return cat;
+  const m = SEASON_HAIL.exec(String(hailId ?? ""));
+  if (!m || String(Number(m[2])) !== m[2]) fail("unknown hail_id " + hailId + ". Call list_hails for the ids.");
+  if (m[1] !== String(season)) fail("That hail is from season " + m[1] + ". This season is " + season + ". Call list_hails.");
+  const index = Number(m[2]);
+  if (!(cap > 0) || index >= cap) fail("That hail is outside this season's pool. Call list_hails.");
+  return E.R.admit(E.R.hailRow(m[1], index));
 }
 export function fleet(E) {
   const { placeName } = names(E);
