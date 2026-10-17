@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recorded flight</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #050a14;
+    --ink: #e8f0fa;
+    --ink-2: #9fb0c6;
+    --cy: #5cc8ff;
+    --glass: rgba(12, 22, 40, .72);
+    --line: rgba(120, 180, 255, .14);
+  }
+  html, body { margin: 0; height: 100%; background: #050a14; color: var(--ink); }
+  body {
+    font: 14px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: radial-gradient(1200px 700px at 50% -10%, #0c1a33 0%, var(--bg) 60%) fixed, var(--bg);
+  }
+  h1 { margin: 0; font-family: Rajdhani, Inter, sans-serif; font-weight: 600; letter-spacing: .04em; font-size: 28px; }
+  button, select, input { font: inherit; color: var(--ink); }
+  button {
+    background: transparent; border: 1px solid var(--line); border-radius: 6px;
+    padding: 6px 12px; min-height: 32px; cursor: pointer;
+  }
+  button:hover, button:focus-visible { border-color: var(--cy); outline: none; }
+  select, input[type="range"] { accent-color: var(--cy); }
+  select { background: #0a1222; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; }
+  canvas { display: block; width: 100%; height: 100%; }
+  #view { position: fixed; inset: 0; }
+  .panel {
+    position: fixed; top: 16px; left: 16px; width: min(380px, calc(100% - 32px));
+    max-height: calc(100% - 32px); overflow: auto;
+    background: var(--glass); border: 1px solid var(--line); border-radius: 6px;
+    backdrop-filter: blur(10px); padding: 14px 16px 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-2); }
+  .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .sim { color: #7f8a99; font-size: 12px; margin: 8px 0 0; }
+  #status { min-height: 1.2em; color: var(--cy); }
+  #minute { margin: 8px 0 0; }
+  section { margin-top: 12px; }
+  section h2 { margin: 0 0 6px; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+  #score, #log { white-space: pre-wrap; }
+  #log ul { margin: 0; padding-left: 18px; }
+  #log li { margin: 4px 0; }
+  #places { margin: 8px 0 0; padding-left: 18px; color: var(--ink-2); }
+  @media (max-width: 720px) {
+    .panel { top: auto; bottom: 12px; max-height: 46%; }
+  }
+</style>
+</head>
+<body>
+<div id="view"><canvas id="sky"></canvas></div>
+<div class="panel">
+  <h1>Recorded flight</h1>
+  <p class="sim" id="note">Simulated</p>
+  <p class="mono" id="status">Paused</p>
+  <p class="mono" id="ship"></p>
+  <p class="mono" id="minute"></p>
+  <div class="row">
+    <button type="button" id="play">Play</button>
+    <button type="button" id="pause">Pause</button>
+    <label for="speed">Speed
+      <select id="speed" aria-label="Speed">
+        <option value="0.5">0.5</option>
+        <option value="1" selected>1</option>
+        <option value="2">2</option>
+        <option value="4">4</option>
+      </select>
+    </label>
+  </div>
+  <div class="row">
+    <label for="skytime">Sky time
+      <input id="skytime" type="range" min="0" max="1000" value="0" step="1" aria-label="Sky time">
+    </label>
+  </div>
+  <div class="row">
+    <label for="episode">Episode file
+      <input id="episode" type="file" aria-label="Episode file">
+    </label>
+    <label for="arcs">Arc file
+      <input id="arcs" type="file" aria-label="Arc file">
+    </label>
+  </div>
+  <section id="score" role="region" aria-label="Score" aria-live="polite"></section>
+  <section id="log" role="region" aria-label="Log" aria-live="polite"></section>
+  <ul id="places"></ul>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../world/engine/sol-page.js"></script>
+<script src="tape.js"></script>
+<script>
+(function () {
+  "use strict";
+  var clock = null;
+  var drawn = null;
+  var lastMs = 0;
+  var files = { episode: "", arcs: "" };
+  var renderer = null;
+  var scene = null;
+  var camera = null;
+  var shipMesh = null;
+  var trailLine = null;
+  var bodyMeshes = {};
+  var markerTex = null;
+
+  var noteEl = document.getElementById("note");
+  var statusEl = document.getElementById("status");
+  var shipEl = document.getElementById("ship");
+  var minuteEl = document.getElementById("minute");
+  var scoreEl = document.getElementById("score");
+  var logEl = document.getElementById("log");
+  var placesEl = document.getElementById("places");
+  var skyInput = document.getElementById("skytime");
+  var canvas = document.getElementById("sky");
+
+  // The file's note says riders. The page says passengers.
+  function shown(s) {
+    return String(s == null ? "" : s).replace(/rider/ig, "passenger");
+  }
+
+  function colorFor(body) {
+    if (body.id === "sun") return 0xffb65c;
+    if (body.id === "mars") return 0xa85a3a;
+    if (body.id === "phobos") return 0xc2b280;
+    if (!body.real) return 0x8ec5ff;
+    return 0x9fb0c6;
+  }
+
+  function marker() {
+    if (markerTex) return markerTex;
+    var c = document.createElement("canvas");
+    c.width = 64;
+    c.height = 64;
+    var g = c.getContext("2d");
+    g.fillStyle = "#5cc8ff";
+    g.beginPath();
+    g.arc(32, 32, 10, 0, Math.PI * 2);
+    g.fill();
+    markerTex = new THREE.CanvasTexture(c);
+    return markerTex;
+  }
+
+  function bootGL() {
+    if (!window.THREE) {
+      statusEl.textContent = "The sky view did not load. Playback still reads the files.";
+      return;
+    }
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x050a14, 1);
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100000);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+    var lamp = new THREE.DirectionalLight(0xffffff, 0.7);
+    lamp.position.set(40, 60, 20);
+    scene.add(lamp);
+    var stars = new THREE.BufferGeometry();
+    var pos = new Float32Array(600);
+    for (var i = 0; i < pos.length; i++) pos[i] = (Math.random() - 0.5) * 400;
+    stars.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    scene.add(new THREE.Points(stars, new THREE.PointsMaterial({ color: 0x9fb6d0, size: 0.6, sizeAttenuation: false })));
+    shipMesh = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: marker(), color: 0xffcf7a, transparent: true, depthTest: false, depthWrite: false
+    }));
+    shipMesh.scale.set(1.8, 1.8, 1);
+    shipMesh.renderOrder = 3;
+    scene.add(shipMesh);
+    sizeGL();
+  }
+
+  function sizeGL() {
+    if (!renderer) return;
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / Math.max(1, h);
+    camera.updateProjectionMatrix();
+  }
+
+  function clearBodies() {
+    Object.keys(bodyMeshes).forEach(function (id) {
+      var mesh = bodyMeshes[id];
+      if (mesh.sphere) {
+        scene.remove(mesh.sphere);
+        mesh.sphere.geometry.dispose();
+        mesh.sphere.material.dispose();
+      }
+      if (mesh.sprite) scene.remove(mesh.sprite);
+    });
+    bodyMeshes = {};
+  }
+
+  function syncKnob() {
+    if (!clock) return;
+    var span = clock.span.end - clock.span.start;
+    var frac = span ? (clock.jd - clock.span.start) / span : 0;
+    skyInput.value = String(Math.round(Math.min(1, Math.max(0, frac)) * 1000));
+  }
+
+  function paintScore(score) {
+    if (!score) {
+      scoreEl.textContent = "";
+      return;
+    }
+    var lines = ["Score " + score.total + " out of " + score.outOf];
+    for (var i = 0; i < score.parts.length; i++) {
+      var p = score.parts[i];
+      lines.push(shown(p.label) + " " + p.got + " of " + p.max);
+    }
+    scoreEl.textContent = lines.join("\n");
+  }
+
+  function paintLog(frame) {
+    logEl.textContent = "";
+    var ul = document.createElement("ul");
+    var marks = frame.recorded.concat(frame.arrived);
+    for (var i = 0; i < marks.length; i++) {
+      var li = document.createElement("li");
+      li.textContent = shown(marks[i].text);
+      ul.appendChild(li);
+    }
+    logEl.appendChild(ul);
+  }
+
+  function paintBodies(view) {
+    var seen = {};
+    for (var i = 0; i < view.bodies.length; i++) {
+      var b = view.bodies[i];
+      seen[b.id] = true;
+      var mesh = bodyMeshes[b.id];
+      if (!mesh) {
+        var sphere = null;
+        var sprite = null;
+        // Station rows reuse the parent radius. A second planet would hide the ship.
+        if (b.real && b.radius >= 0.4) {
+          sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(1, 24, 16),
+            new THREE.MeshStandardMaterial({ color: colorFor(b), roughness: 0.85, metalness: 0.05 })
+          );
+          scene.add(sphere);
+        } else {
+          sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: marker(), color: colorFor(b), transparent: true, depthWrite: false }));
+          sprite.scale.set(1.4, 1.4, 1);
+          scene.add(sprite);
+        }
+        mesh = { sphere: sphere, sprite: sprite };
+        bodyMeshes[b.id] = mesh;
+      }
+      if (mesh.sphere) {
+        var radius = b.radius > 0 ? b.radius : 0.15;
+        mesh.sphere.scale.set(radius, radius, radius);
+        mesh.sphere.position.set(b.position[0], b.position[1], b.position[2]);
+      }
+      if (mesh.sprite) mesh.sprite.position.set(b.position[0], b.position[1], b.position[2]);
+    }
+    Object.keys(bodyMeshes).forEach(function (id) {
+      if (seen[id]) return;
+      if (bodyMeshes[id].sphere) scene.remove(bodyMeshes[id].sphere);
+      if (bodyMeshes[id].sprite) scene.remove(bodyMeshes[id].sprite);
+      delete bodyMeshes[id];
+    });
+  }
+
+  function paintTrail(points) {
+    if (trailLine) {
+      scene.remove(trailLine);
+      trailLine.geometry.dispose();
+      trailLine.material.dispose();
+      trailLine = null;
+    }
+    if (!points.length) return;
+    var geom = new THREE.BufferGeometry();
+    var arr = new Float32Array(points.length * 3);
+    for (var i = 0; i < points.length; i++) {
+      arr[i * 3] = points[i][0];
+      arr[i * 3 + 1] = points[i][1];
+      arr[i * 3 + 2] = points[i][2];
+    }
+    geom.setAttribute("position", new THREE.BufferAttribute(arr, 3));
+    trailLine = new THREE.Line(geom, new THREE.LineBasicMaterial({ color: 0x5cc8ff, depthTest: false }));
+    trailLine.renderOrder = 1;
+    scene.add(trailLine);
+  }
+
+  function paintPlaces(bodies) {
+    placesEl.textContent = "";
+    for (var i = 0; i < bodies.length; i++) {
+      var li = document.createElement("li");
+      li.textContent = bodies[i].name + (bodies[i].real ? " Real" : " Fictional");
+      placesEl.appendChild(li);
+    }
+  }
+
+  function frameCamera(view) {
+    var pts = view.trail.length ? view.trail : [view.ship];
+    var min = [Infinity, Infinity, Infinity];
+    var max = [-Infinity, -Infinity, -Infinity];
+    for (var i = 0; i < pts.length; i++) {
+      for (var k = 0; k < 3; k++) {
+        if (pts[i][k] < min[k]) min[k] = pts[i][k];
+        if (pts[i][k] > max[k]) max[k] = pts[i][k];
+      }
+    }
+    var cx = (min[0] + max[0]) / 2;
+    var cy = (min[1] + max[1]) / 2;
+    var cz = (min[2] + max[2]) / 2;
+    var span = Math.max(max[0] - min[0], max[1] - min[1], max[2] - min[2], 4);
+    var dist = span * 1.35;
+    camera.position.set(cx + dist * 0.45, cy + dist * 0.55, cz + dist * 0.85);
+    camera.near = Math.max(0.05, dist / 80);
+    camera.far = dist * 30;
+    camera.lookAt(cx, cy, cz);
+    camera.updateProjectionMatrix();
+  }
+
+  function phaseWords(phase) {
+    switch (phase) {
+      case "before": return "Before departure";
+      case "transfer": return "In flight";
+      case "hold": return "Holding";
+      case "dwell": return "Between hops";
+      case "arrived": return "Arrived";
+      default: return phase;
+    }
+  }
+
+  function draw() {
+    if (!clock) return;
+    var frame = StarfareTape.frameAt(clock, window.SOLE);
+    if (!frame.ok) {
+      statusEl.textContent = frame.text;
+      return;
+    }
+    noteEl.textContent = shown(frame.note);
+    shipEl.textContent = frame.shipText;
+    minuteEl.textContent = frame.minute + " " + phaseWords(frame.phase);
+    statusEl.textContent = clock.playing ? "Playing" : "Paused";
+    paintScore(frame.score);
+    paintLog(frame);
+    paintPlaces(frame.view.bodies);
+    if (!renderer) return;
+    shipMesh.position.set(frame.view.ship[0], frame.view.ship[1], frame.view.ship[2]);
+    paintBodies(frame.view);
+    paintTrail(frame.view.trail);
+    frameCamera(frame.view);
+    renderer.render(scene, camera);
+  }
+
+  function apply(action) {
+    if (!clock) return;
+    clock = StarfareTape.reduce(clock, action);
+    draw();
+    syncKnob();
+    drawn = clock;
+  }
+
+  function tryLoad() {
+    if (!files.episode || !files.arcs) return;
+    if (!window.SOLE) {
+      statusEl.textContent = "The planet table did not load.";
+      return;
+    }
+    var loaded = StarfareTape.loadReplay(files.episode, files.arcs, window.SOLE);
+    if (!loaded.ok) {
+      clock = null;
+      drawn = null;
+      statusEl.textContent = loaded.text;
+      scoreEl.textContent = "";
+      logEl.textContent = "";
+      shipEl.textContent = "";
+      minuteEl.textContent = "";
+      noteEl.textContent = "Simulated";
+      return;
+    }
+    clock = loaded.clock;
+    if (scene) clearBodies();
+    draw();
+    syncKnob();
+    drawn = clock;
+  }
+
+  function readInto(input, key) {
+    input.addEventListener("change", function () {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        files[key] = String(reader.result);
+        tryLoad();
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  document.getElementById("play").addEventListener("click", function () {
+    apply({ type: "play" });
+  });
+  document.getElementById("pause").addEventListener("click", function () {
+    apply({ type: "pause" });
+  });
+  document.getElementById("speed").addEventListener("change", function (ev) {
+    apply({ type: "speed", speed: Number(ev.target.value) });
+  });
+  skyInput.addEventListener("input", function () {
+    if (!clock) return;
+    var span = clock.span.end - clock.span.start;
+    var jd = clock.span.start + (Number(skyInput.value) / 1000) * span;
+    clock = StarfareTape.reduce(clock, { type: "scrub", jd: jd });
+    syncKnob();
+    draw();
+    drawn = clock;
+  });
+  readInto(document.getElementById("episode"), "episode");
+  readInto(document.getElementById("arcs"), "arcs");
+  window.addEventListener("resize", function () {
+    sizeGL();
+    if (clock) draw();
+  });
+
+  bootGL();
+
+  function loop(ms) {
+    var seconds = lastMs ? (ms - lastMs) / 1000 : 0;
+    lastMs = ms;
+    if (clock) {
+      var next = StarfareTape.reduce(clock, { type: "tick", seconds: seconds });
+      if (next !== clock || drawn !== clock) {
+        clock = next;
+        draw();
+        syncKnob();
+        drawn = clock;
+      }
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
