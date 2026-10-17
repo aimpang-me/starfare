@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { assertProjected, exciseEphemerisText, keepIds, projectEphemeris } from "./ship-ephem.mjs";
+import { assertProjected, keepIds } from "./ship-ephem.mjs";
 import { placesTable } from "./sol-engine.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -15,6 +15,7 @@ const places = placesTable();
 
 const BENNU_DATA = "5ef73c6b71a2d686f1cc21020a67cc02ae9264bb97b69fec242351a7b55a4f1e";
 const CERES_DATA = "297deae073e36c23d38fd498266dc0bfb73d4fcfa316eae42543d7b87c0ff419";
+const SERIES_SHA = "5f591dec3f75ceec2db1688a4ffe0629a2b773ff98d7dd83c33cfb681a815128";
 
 let failed = 0;
 function check(name, fn) {
@@ -62,23 +63,21 @@ check("shipped ephemeris keys are keepIds(places)", () => {
   assertProjected(ephem, places);
   const keep = [...keepIds(places)].sort();
   assert.deepEqual(Object.keys(ephem.bodies).sort(), keep);
-  const projected = projectEphemeris(ephem, places);
-  assert.deepEqual(Object.keys(projected.bodies).sort(), keep);
-  for (const id of keep) assert.equal(projected.bodies[id].data, ephem.bodies[id].data);
+  const lines = keep.map((id) => {
+    const b = ephem.bodies[id];
+    return [id, b.q_km, b.seg_days, b.deg, b.nseg].join(" ");
+  });
+  assert.equal(createHash("sha256").update(lines.join("\n")).digest("hex"), SERIES_SHA);
 });
 
-check("excise keeps sibling spellings and is idempotent", () => {
-  const places = [
+check("assertProjected rejects a kept body whose q_km is not a number", () => {
+  const sample = [
     { id: "mars", kind: "planet" },
     { id: "bennu", kind: "small" },
   ];
-  const json = '{"earth_k":1.0,"bodies":{"emb":{"q_km":1.0,"data":"E"},"moon_geo":{"q_km":1.0,"data":"M"},"mars":{"q_km":1.0,"data":"AA"},"bennu":{"q_km":1.0,"data":"BB"},"roadster":{"q_km":1.0,"data":"ZZ"}}}';
-  const once = exciseEphemerisText(json, places);
-  assert.equal(once.includes("1.0"), true);
-  assert.equal(once.includes("roadster"), false);
-  assert.equal(once.includes('"data":"AA"'), true);
-  assert.equal(once.includes('"data":"BB"'), true);
-  assert.equal(exciseEphemerisText(once, places), once);
+  const body = (q) => ({ q_km: q, seg_days: 1, deg: 1, nseg: 1, data: "A" });
+  const baked = { bodies: { emb: body(1), moon_geo: body(1), mars: body(1), bennu: body("1") } };
+  assert.throws(() => assertProjected(baked, sample), /bennu q_km/);
 });
 
 check("shipped files have no roadster or tesla", () => {
@@ -96,6 +95,7 @@ check("shipped files have no roadster or tesla", () => {
     "world/engine/crosscheck_py.py",
     "world/engine/ship-ephem.mjs",
     "world/engine/bake_ephem.py",
+    "world/engine/CHECK.md",
     "world/engine/crosscheck.mjs",
     "world/build.py",
     "world/template.html",
