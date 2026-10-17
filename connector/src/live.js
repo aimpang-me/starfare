@@ -14,6 +14,22 @@ export function msPerUnit(legs) {
   return (s * 1000) / (legs.length + P.wait_units * waits);
 }
 
+export function liveIdsToDrop(rows, now, afterMs, heldMs) {
+  let keeper = null;
+  for (const r of rows) {
+    if (r.land_ms == null) continue;
+    if (!keeper || r.land_ms > keeper.land_ms || (r.land_ms === keeper.land_ms && r.run_id > keeper.run_id)) keeper = r;
+  }
+  const keepId = keeper ? keeper.run_id : null;
+  const drop = [];
+  for (const r of rows) {
+    if (r.land_ms == null) {
+      if (r.updated_ms < now - heldMs) drop.push(r.run_id);
+    } else if (r.land_ms < now - afterMs && r.run_id !== keepId) drop.push(r.run_id);
+  }
+  return drop;
+}
+
 /** The ride's sky timeline up to endJd as pieces [from_jd, to_jd, units]: each flight 1 unit, each wait wait_units. */
 export function pieces(ride, endJd) {
   const out = [], W = PLAYBACK.wait_units;

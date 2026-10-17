@@ -108,7 +108,7 @@ export default {
       const raw = await hub(env).board(), hails = listHails(await engine());
       // Only current hails: best rows from the old delivery missions stay in storage but are not shown.
       const data = { ...raw, best: Object.fromEntries(hails.filter((h) => raw.best[h.hail_id]).map((h) => [h.hail_id, raw.best[h.hail_id]])) };
-      if (url.pathname === "/board.json") return Response.json({ label: "planned by Grok bot", ...data });
+      if (url.pathname === "/board.json") return Response.json({ label: "planned by Grok bot", ...data }, { headers: { "cache-control": "no-store" } });
       return new Response(boardHtml(hails, data), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
     }
     if (url.pathname.startsWith("/rides/")) return rides(req, url.pathname, env);
@@ -123,7 +123,7 @@ export default {
         .replace("__SITE__", () => JSON.stringify(site).replace(/</g, "\\u003c"));
       return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } });
     }
-    // Season flights in the air now, for the home map's moving Starseekers (simulated).
+    // Home map flights (simulated), including the newest landed one.
     if (url.pathname === "/live.json") return Response.json({ simulated: true, ...(await hub(env).live()) }, { headers: { "cache-control": "no-store" } });
     // The flight page: live playback of a season flight in the air, then its replay and receipt. The page polls
     // /rides/<run_id>.json itself; the drawn arcs ride in the page so the download stays the starfare.ride/1 record.

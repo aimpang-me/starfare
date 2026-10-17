@@ -1,6 +1,12 @@
 // GET /board: best connector score per ride hail. The Starfare page is a sandboxed artifact with no network,
 // so this page is the only place Grok-bot scores can be seen.
+import { RUN_ID } from "./tools.js";
+
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const tagHtml = (b) => {
+  const tag = `tag ${esc(b.run_tag)}`;
+  return typeof b.run_id === "string" && RUN_ID.test(b.run_id) ? `<a href="${esc("/flight/" + b.run_id)}">${tag}</a>` : tag;
+};
 const num = (n) => Math.round(n).toLocaleString("en-US");
 
 export function boardHtml(hails, data) {
@@ -8,7 +14,7 @@ export function boardHtml(hails, data) {
     const b = data.best[h.hail_id];
     return `<tr><td>${esc(h.title)}<div class="dim">${esc(h.from.name)} to ${esc(h.to.name)} · ${esc(h.kind)}</div></td>` +
       (b ? `<td class="n"><b>${b.points}</b></td><td>${esc(b.car || "")}<div class="dim">pickup wait ${b.wait_h != null ? esc(b.wait_h) + " h" : ""}</div></td><td class="n">${num(b.kwh)} kWh<div class="dim">par ${num(b.par)}</div></td><td class="n">${b.plans}</td>` +
-        `<td>planned by Grok bot${b.player_tag ? ` · player ${esc(b.player_tag)}` : ""}<div class="dim">tag ${esc(b.run_tag)} · ${esc(new Date(b.at).toISOString().slice(0, 16).replace("T", " "))} UTC</div></td>`
+        `<td>planned by Grok bot${b.player_tag ? ` · player ${esc(b.player_tag)}` : ""}<div class="dim">${tagHtml(b)} · ${esc(new Date(b.at).toISOString().slice(0, 16).replace("T", " "))} UTC</div></td>`
         : `<td class="dim" colspan="5">no connector runs yet</td>`) + "</tr>";
   }).join("");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
