@@ -70,6 +70,10 @@ export function seasonHails(E, season, cap) {
   for (let i = 0; i < cap; i++) out.push(seasonHail(E, season, i));
   return out;
 }
+/** The same seasonal booking desk for MCP and public viewers. */
+export function poolView(E, season, cap) {
+  return { simulated: true, season, pool_size: cap, hails: seasonHails(E, season, cap), fleet: fleet(E), board: "/board" };
+}
 export const POOL_TIERS = Object.freeze({
   placeholder: true,
   rows: Object.freeze([
@@ -535,6 +539,7 @@ const incidentsPub = (E, list) => {
 
 function next(E, run, st) {
   run.ride = st.ride;
+  run.flight_manifest ||= { ...flightManifest(E, run), source: "recorded" };
   if (st.done) return land(E, run, st.done);
   setPhase(run, "in_flight");
   return atCheckpoint(E, run);
@@ -732,7 +737,8 @@ function trailOf(E, run, tool, inp, r) {
   if (tool === "space_weather") return { place: r.place.name, max_flare_odds: maxOf(r.days.map((d) => d.flare_odds)) };
   if (tool === "dispatch") {
     if (r.problems) return { problems: r.problems.slice(0, 3).map((p) => String(p).slice(0, 120)) };
-    return { route: run.route.slice(), car: E.R.CAR[run.car].name, fare_usd: run.quote.fare_usd, arrival: run.quote.arrival, status: r.status };
+    return { route: run.route.slice(), car: E.R.CAR[run.car].name, fare_usd: run.quote.fare_usd, arrival: run.quote.arrival, status: r.status,
+      ...(run.quotes ? { quotes: run.quotes } : {}) };
   }
   if (tool === "decide") {
     const d = run.decisions[inp.checkpoint - 1], cp = run.ride.checkpoints[inp.checkpoint - 1];
@@ -810,16 +816,22 @@ export function rideRecord(E, run) {
   });
 }
 /** The public record of a season flight with live playback, arrived or still flying: rideRecord plus live (the track and the
- *  ride flown so far, no hindsight) and trail (the dispatcher log). A bench run, or one never dispatched, is rideRecord alone. */
+ *  ride flown so far, no hindsight) and trail (the dispatcher log). Dispatched runs also carry a public manifest.
+ *  Bench runs have no live track or dispatcher trail. */
 export function liveRecord(E, run, nowMs) {
   const rec = rideRecord(E, run);
+  if (run.ride) rec.manifest = { ...flightManifest(E, run),
+    flown_stops: run.ride.segs.filter((S) => S.flew).map((S) => S.flew.land_jd != null && S.to === S.target ? segmentStop(S) : null),
+  };
   if (run.tag != null || !run.live || !run.ride) return rec;
   const ride = run.ride, cp = openCheckpoint(run), { placeName } = names(E), iso = (jd) => (jd == null ? null : isoJD(jd)), tr = run.live.track;
   const flown = ride.segs.filter((S) => S.flew).map((S) => {
     const f = S.flew, done = f.land_jd ?? f.left_jd, end = done ?? (cp ? cp.sky_at : null);
-    return { kind: S.kind, leg: S.role, from: S.from, to: S.to, depart: iso(f.dep_jd), orbit: iso(f.orbit_jd), arrive: iso(end), kwh: S.kwh, gate: S.gate, ...(done == null ? { open: true } : {}) };
+    return { kind: S.kind, leg: S.role, leg_id: segmentLeg(run, S), stop: f.land_jd != null && S.to === S.target ? segmentStop(S) : null,
+      from: S.from, to: S.to, depart: iso(f.dep_jd), orbit: iso(f.orbit_jd), arrive: iso(end), kwh: S.kwh, gate: S.gate, ...(done == null ? { open: true } : {}) };
   });
-  const planned = ride.segs.filter((S) => !S.flew).map((S) => ({ kind: S.kind, leg: S.role, from: S.from, to: S.to, depart: isoJD(S.dep_jd), arrive: isoJD(S.arr_jd), kwh: S.kwh, gate: S.gate }));
+  const planned = ride.segs.filter((S) => !S.flew).map((S) => ({ kind: S.kind, leg: S.role, leg_id: segmentLeg(run, S), stop: S.to === S.target ? segmentStop(S) : null,
+    from: S.from, to: S.to, depart: iso(S.dep_jd), arrive: iso(S.arr_jd), kwh: S.kwh, gate: S.gate }));
   const h = E.R.BY[run.id];
   return {
     ...rec,
@@ -834,13 +846,37 @@ export function liveRecord(E, run, nowMs) {
     trail: run.trail || [],
   };
 }
+/** New dispatches retain a manifest snapshot. Older runs explicitly label reconstruction from the current engine. */
+export function flightManifest(E, run) {
+  if (run.flight_manifest) return run.flight_manifest;
+  const R = E.R, legs = run.route.map((id) => run.legs[id]);
+  const plan = run.ride.stops ? run.ride : R.planOf(run.id, run.car, legs);
+  return { source: "reconstructed", car: run.car, seats: R.CAR[run.car].seats,
+    bookings: (run.hails || [run.id]).map((id) => {
+      const h = (run.booking_rows || []).find((b) => b.id === id) || R.BY[id];
+      return { hail_id: id, title: h.title, rider: h.rider, party: h.party, from: h.from, to: h.to };
+    }),
+    stops: plan.stops.map((s) => ({ at: s.at, board: s.board || [], alight: s.alight || [] })),
+  };
+}
+/** A segment keeps its original stop number through diversions. Replans have their own stored leg and arc. */
+const segmentStop = (S) => S.stop ?? (S.role === "pickup" ? 1 : 2);
+function segmentLeg(run, S) {
+  if (S.kind === "planned") return run.route[segmentStop(S) - 1] || null;
+  if (S.kind === "replan") return Object.values(run.legs).find((L) => L.replan_of && L.from === S.from && L.to === S.to && L.dep_jd === S.dep_jd && L.arr_jd === S.arr_jd && L.kwh === S.kwh && L.gate === S.gate)?.leg_id || null;
+  return null;
+}
 /** The home map's row for a season flight in playback: what it flew so far and its track; land_ms once it has landed. */
 export function liveRow(E, run) {
-  const tr = run.live.track, ride = run.ride;
+  const tr = run.live.track, ride = run.ride, cp = openCheckpoint(run);
   return {
     run_id: run.run_id, land_ms: phaseOf(run) === "arrived" ? tr[tr.length - 1][0] : null,
-    v: { run_id: run.run_id, title: run.title, ship: E.R.CAR[run.car].name, home: ride.segs[0].from,
-      legs: ride.segs.filter((S) => S.flew).map((S) => ({ from: S.from, to: S.to, dep_jd: S.flew.dep_jd, arr_jd: S.flew.orbit_jd ?? S.flew.land_jd ?? S.flew.left_jd ?? null })),
+    v: { run_id: run.run_id, hail_id: run.id, title: run.title, ship: E.R.CAR[run.car].name, home: ride.segs[0].from,
+      hold: cp ? { kind: cp.kind, cause: cp.cause, place: cp.place } : null,
+      manifest: flightManifest(E, run),
+      legs: ride.segs.filter((S) => S.flew).map((S) => ({ kind: S.role, car: run.car, leg_id: segmentLeg(run, S),
+        stop: S.flew.land_jd != null && S.to === S.target ? segmentStop(S) : null, from: S.from, to: S.to,
+        dep_jd: S.flew.dep_jd, orbit_jd: S.flew.orbit_jd ?? null, arr_jd: S.flew.land_jd ?? S.flew.left_jd ?? openCheckpoint(run)?.sky_at ?? null })),
       track: tr },
   };
 }

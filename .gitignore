@@ -3,3 +3,5 @@ node_modules/
 .dev.vars
 *.zip
 __pycache__/
+output/playwright/
+.playwright-cli/

@@ -189,7 +189,15 @@ async function phaseOff() {
     for (const s of ["Starfare", "Works with Grok", `${w.base}/mcp`, "grok.com/connectors", "/board.json", "/rides/&lt;run_id&gt;.json"]) assert.ok(html.includes(s), s);
     assert.doesNotMatch(html, /__(SITE|ORIGIN|ENGINE_URL)__/);
     const site = JSON.parse(/window\.SITE = (.*);<\/script>/.exec(html)[1]);
-    assert.deepEqual(site.hails.map((h) => h.hail_id), R.HAILS.map((h) => h.id));
+    assertSeasonPool(site.hails);
+    assert.equal(site.pool_size, site.hails.length);
+    assert.equal(r.headers.get("cache-control"), "no-store");
+    const desk = await fetch(`${w.base}/hails.json`), pool = await desk.json();
+    assert.equal(desk.headers.get("cache-control"), "no-store");
+    assert.deepEqual(pool.hails, site.hails);
+    const view = await fetch(`${w.base}/assets/flight-view.js`);
+    assert.equal(view.status, 200);
+    assert.match(await view.text(), /root.StarfareView = api/);
     assert.deepEqual(site.fleet.map((c) => [c.car, c.parked_at.id]), R.FLEET.map((c) => [c.id, c.at]));
     const src = /<script src="(\/engine\.js\?v=[0-9a-f]{16})"/.exec(html)[1];
     const js = await fetch(`${w.base}${src}`);
@@ -205,6 +213,9 @@ async function phaseOff() {
   await check("list_hails returns this season's pool, hides the catalog, and still lets two players take one hail", async () => {
     const r = await ok(client, "list_hails");
     assertSeasonPool(r.hails);
+    const pool = await (await fetch(`${w.base}/hails.json`)).json();
+    assert.deepEqual(pool.hails, r.hails);
+    assert.equal(pool.season, r.season);
     assert.deepEqual(r.fleet.map((c) => [c.car, c.parked_at.id]), R.FLEET.map((c) => [c.id, c.at]));
     assert.equal(r.board, "/board");
     const season = /^s(\d+)-\d+$/.exec(r.hails[0].hail_id)[1];
@@ -391,7 +402,10 @@ async function phaseOff() {
     assert.equal(live.simulated, true); assert.ok(Number.isInteger(live.now_ms));
     const row = live.flights.find((f) => f.run_id === id);
     assert.ok(row, "the held flight is on /live.json");
-    assert.deepEqual(Object.keys(row).sort(), ["home", "legs", "run_id", "ship", "title", "track"]);
+    assert.deepEqual(Object.keys(row).sort(), ["hail_id", "hold", "home", "legs", "manifest", "run_id", "ship", "title", "track"]);
+    assert.equal(row.hold.kind, rec.live.hold.kind);
+    assert.equal(row.hail_id, held.hail.hail_id);
+    assert.equal(row.manifest.bookings[0].hail_id, held.hail.hail_id);
     assert.equal(row.ship, rec.live.car); assert.deepEqual(row.track, rec.live.track);
 
     let out = held.d, n = 0;
@@ -616,8 +630,10 @@ async function phaseOff() {
     const r = await fetch(`${w.base}/board`);
     assert.match(r.headers.get("content-type"), /text\/html/);
     const html = await r.text();
-    for (const h of R.HAILS) assert.ok(html.includes(h.title), `board is missing ${h.title}`);
-    assert.match(html, /planned by Grok bot/); assert.match(html, /Claude and human runs are on the in-page board/); assert.match(html, /Scores are out of 100000/); assert.match(html, /kept the promised arrival 14000/);
+    assertSeasonPool(j.hails);
+    assert.deepEqual(j.hails, (await (await fetch(`${w.base}/hails.json`)).json()).hails);
+    for (const h of [...j.hails, ...j.legacy_hails]) assert.ok(html.includes(h.title), `board is missing ${h.title}`);
+    assert.match(html, /planned by Grok bot/); assert.match(html, /Catalog reference booking/); assert.match(html, /Scores are out of 100000/); assert.match(html, /kept the promised arrival 14000/);
     assert.match(html, /no connector runs yet/); // titan-home etc. have no runs
     assert.ok(html.includes(`href="/flight/${row.run_id}"`));
     const flight = await fetch(`${w.base}/flight/${row.run_id}`);
@@ -795,7 +811,7 @@ async function phaseOn() {
   let asMeta, a, b;
   try {
     await check("on: /, /engine.js, /board and /board.json stay public; /mcp without a token is 401", async () => {
-      for (const path of ["/", "/engine.js", "/board", "/board.json"]) { const r = await fetch(`${base}${path}`); assert.equal(r.status, 200, path); await r.body?.cancel(); }
+      for (const path of ["/", "/engine.js", "/board", "/board.json", "/hails.json", "/assets/flight-view.js"]) { const r = await fetch(`${base}${path}`); assert.equal(r.status, 200, path); await r.body?.cancel(); }
       await assert.rejects(connect(base), (e) => { assert.equal(e.code, 401, e.message); return true; });
       await assert.rejects(connect(base, "sse"), (e) => { assert.equal(e.code, 401, e.message); return true; });
       await assert.rejects(connect(base, "streamable-http", { requestInit: { headers: { Authorization: "Bearer not-a-token" } } }), (e) => { assert.equal(e.code, 401, e.message); return true; });
@@ -960,8 +976,11 @@ async function phaseOn() {
       const r = await fetch(`${base}/rides/${good.hail.run_id}.json`);
       assert.equal(r.status, 200); assert.match(r.headers.get("content-type"), /application\/json/);
       assert.match(r.headers.get("content-disposition"), /attachment; filename="run_[0-9a-f]{20}\.json"/);
-      const { live, trail, ...plain } = await r.json();
+      const { live, trail, manifest, ...plain } = await r.json();
       assert.deepEqual(plain, detail); assert.equal(live.lands_at_ms, live.track.at(-1)[0]); assert.deepEqual(trail.at(-1).tool, "dispatch");
+      assert.equal(manifest.bookings[0].hail_id, good.hail.hail_id);
+      assert.equal(manifest.seats, R.CAR[manifest.car].seats);
+      assert.deepEqual(live.flown.filter((f) => f.kind === "planned").map((f) => f.leg_id), good.score.log.dispatched);
       const planning = (await ok(a.client, "get_my_rides", { include: "all" })).rides.find((x) => x.phase === "planning");
       for (const path of [`/rides/${planning.run_id}.json`, `/rides/run_${"0".repeat(20)}.json`, "/rides/nope.json", `/rides/export/${"0".repeat(32)}.jsonl`, "/rides/"]) {
         const g = await fetch(`${base}${path}`); assert.equal(g.status, 404, path); await g.body?.cancel();
@@ -977,7 +996,7 @@ async function phaseOn() {
       assert.match(ex.headers.get("content-disposition"), /starfare-rides\.jsonl/);
       const lines = (await ex.text()).trim().split("\n").map((l) => JSON.parse(l));
       assert.deepEqual(lines.map((l) => l.run_id), [second.hail.run_id, good.hail.run_id]);
-      const { live: _l, trail: _t, ...line1 } = lines[1];
+      const { live: _l, trail: _t, manifest: _m, ...line1 } = lines[1];
       assert.deepEqual(line1, detail); assert.ok(lines.every((l) => l.format === "starfare.ride/1" && l.simulated === true));
     });
     await check("on: start_bench opens the practice split and refuses the test split when the server has no bench key", async () => {

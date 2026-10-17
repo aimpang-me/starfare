@@ -49,4 +49,5 @@ const ART = join(HERE, "..", "design", "assets"), PUB = join(HERE, "public");
 if (!readFileSync(join(ART, "sol-art.js"), "utf8").includes("root.SolArt = {")) throw new Error("design/assets/sol-art.js has no SolArt");
 rmSync(join(PUB, "assets"), { recursive: true, force: true });
 cpSync(ART, join(PUB, "assets"), { recursive: true });
+cpSync(join(HERE, "src", "flight-view.cjs"), join(PUB, "assets", "flight-view.js"));
 console.log("art copied: design/assets -> public/assets");

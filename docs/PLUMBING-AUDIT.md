@@ -48,6 +48,8 @@ This is a model inconsistency requiring finite-thrust planning or a consistently
 
 ## Remaining integration work
 
+Booking/replay follow-up: see `BOOKING-REPLAY.md` for the repairs to items 1 and 2, their verification, and an additional engine timing defect exposed while checking shared flights. The entries below retain the original investigation findings.
+
 These are source-traced findings, not claims that the full workflows have been independently exercised in a browser.
 
 1. **Public booking views differ from the agent's booking pool.** `mcp.js` lists the seeded seasonal pool, while the homepage injects the five catalog bookings. Its scoreboard also iterates that catalog and can omit seasonal winners returned by `/board.json`. The desk, map and score table need the same seasonal data contract and a usable presentation for the larger pool.

@@ -268,6 +268,7 @@ footer p{margin:0;max-width:100ch}
 </header>
 <div id="loading" role="status"><div class="box"><b class="caps" style="color:var(--ride)">Starfare flight</b>Loading the engine and the run log<div class="bar"><i></i></div></div></div>
 <main id="v-ride" aria-label="Flight replay and receipt">
+  <p class="note wrap" id="timingWarning" role="status" hidden>Recorded timing conflict: a leg departs before the preceding segment ends. The stored times are shown unchanged; this itinerary needs an engine correction.</p>
   <div class="fdeck wrap">
     <div class="stage" id="rstage">
       <div class="gl-host" id="rhost" aria-hidden="true"></div>
@@ -299,7 +300,7 @@ footer p{margin:0;max-width:100ch}
         <p class="sub">Who boards and who gets off at each stop, from the run log. It follows the replay.</p>
         <div class="seats" id="plSeats"></div>
         <ol class="pstops" id="plStops"></ol>
-        <div class="caps" style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">Cabin <span class="tag sim">Simulated &#xB7; placeholder, not set yet</span></div>
+        <div class="caps" style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">Cabin <span class="tag sim">Simulated</span></div>
         <dl class="kv" id="plKv"></dl>
       </div>
     </aside>
@@ -314,12 +315,13 @@ footer p{margin:0;max-width:100ch}
 
 <footer>
   <span class="works">Works with Grok</span>
-  <p>Starfare is a concept demo by Alvin Impang. It's a made-up robotaxi service with simulated passengers, a simulated fleet and simulated hazards, and it isn't affiliated with any real company. This flight was flown in the simulation through the Starfare connector; every number on this page comes from its run log or from the engine.</p>
+  <p>Starfare is a passenger-flight game and agent platform by Alvin Impang. Its passengers, fleet and hazards are simulated, and it isn't affiliated with any real company. Flight numbers come from the run log or engine. Transfer planning uses an impulsive approximation; propulsion feasibility is not yet validated. Paths are interpolated for playback; older records may need reconstructed paths. <a href="/method">Models and assumptions</a>.</p>
   <p>Planet positions: NASA JPL DE421. Sky time runs fast: one real second is one sky day, and the sky resets at the end of each season.</p>
 </footer>
 
 <script>window.SITE = __SITE__; window.FLIGHT = __RUN__;</script>
 <script src="__ENGINE_URL__" defer></script>
+<script src="/assets/flight-view.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () { // after the deferred engine script
 "use strict";
@@ -333,7 +335,7 @@ var SF = (function () {
     var e = ((ms == null ? Date.now() : ms) - SKY.t0_ms) / 1000, n = Math.floor(e / SKY.len_days);
     return { season: n + 1, jd: SKY.jd0 + (e - n * SKY.len_days), day: Math.floor(e - n * SKY.len_days) };
   }
-  function iso(jd) { return new Date((jd - 2440587.5) * 864e5).toISOString().slice(0, 16).replace("T", " "); }
+  function iso(jd) { return new Date(Math.floor(((jd - 2440587.5) * 864e5 + 30000) / 60000) * 60000).toISOString().slice(0, 16).replace("T", " "); }
   function jdOf(s) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/.exec(s || ""); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 864e5 + 2440587.5 : null; }
   function fmt(n, d) { return Number(n).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
@@ -349,6 +351,7 @@ var SF = (function () {
   // The leg's stored arc: the one between the same places whose planned departure is nearest the flown one (a
   // checkpoint can re-plan a leg). Runs stored before arcs were kept get the engine's energy-mode plan instead.
   function arcFor(ride, f, dep) {
+    if (f.leg_id && ride.arcs[f.leg_id]) return ride.arcs[f.leg_id];
     var best = null;
     Object.keys(ride.arcs).forEach(function (k) {
       var a = ride.arcs[k];
@@ -363,7 +366,7 @@ var SF = (function () {
   // time it reached orbit at its destination (orb); the last one is open while a checkpoint holds it.
   function replay(ride, live) {
     var log = ride.record.log, hold = live && live.hold ? live.track[live.track.length - 1][1] : null;
-    var legs = (live ? live.flown : log.flown).map(function (f) {
+    var legs = (live ? live.flown : ride.record.live ? ride.record.live.flown : log.flown).map(function (f) {
       var dep = jdOf(f.depart), arr = jdOf(f.arrive);
       return { kind: f.leg, from: f.from, to: f.to, dep: dep, orb: jdOf(f.orbit) || arr, arr: arr, open: !!f.open, kwh: f.kwh, gate: f.gate, arc: arcFor(ride, f, dep),
         sys: system(f.from) === system(f.to) ? system(f.from) : null };
@@ -373,7 +376,7 @@ var SF = (function () {
       var home = live.planned.length ? live.planned[0].from : live.from, j0 = hold != null ? hold : live.track[0][1];
       legs.push({ kind: "pickup", from: home, to: home, dep: j0, orb: j0, arr: j0, idle: true, arc: null, sys: null });
     }
-    var lastArr = legs[legs.length - 1].arr, plan = live ? live.planned.map(function (p) { return { kind: p.leg, from: p.from, to: p.to, dep: jdOf(p.depart), arr: jdOf(p.arrive) }; }) : [];
+    var lastArr = legs[legs.length - 1].arr, plan = live ? live.planned.filter(function (p) { return jdOf(p.depart) != null && jdOf(p.arrive) != null; }).map(function (p) { return { kind: p.leg, from: p.from, to: p.to, dep: jdOf(p.depart), arr: jdOf(p.arrive) }; }) : [];
     var end = Math.max(lastArr, hold || 0, plan.length ? plan[plan.length - 1].arr : 0);
     var start = legs[0].dep - 0.25 * (lastArr - legs[0].dep) / Math.max(1, legs.length);
     start = Math.min(start, legs[0].dep - 1 / 24);
@@ -386,6 +389,8 @@ var SF = (function () {
     // Phases: parked, flight, orbit (at the destination, before landing), dwell (between legs), holding (a checkpoint
     // waits on the bot), arrived. f >= 1 means the Starseeker is at the leg's destination.
     function at(jd) {
+      var final = legs[legs.length - 1];
+      if (!final.idle && !final.open && jd >= final.arr) return { p: pos(final.to, jd), leg: final, i: legs.length - 1, f: 1, phase: hold != null ? "holding" : "arrived" };
       for (var i = 0; i < legs.length; i++) {
         var L = legs[i];
         if (L.idle) return { p: pos(L.from, jd), leg: L, i: i, f: 0, phase: "holding" };
@@ -798,53 +803,29 @@ function glFrame(t) {
 function glStart() { if (!glRaf && !document.hidden) { glLast = performance.now(); glRaf = requestAnimationFrame(glFrame); } }
 function glStop() { if (glRaf) cancelAnimationFrame(glRaf); glRaf = 0; }
 
-/* ---------- passenger list ----------
-   The shared-flight shape: stop 0 is where the Starseeker is parked; each later stop is
-   { at, board: [bookings], alight: [bookings] }. Each booking boards once and gets off once, at its own from and to.
-   A leg is a pickup while the cabin is empty and a passenger leg once anyone is aboard. Each flight carries one
-   booking for now. Seats, party size and bookings per flight are placeholders, not in the data. */
-var SEAT_N = 4, PARTY_MAX = 3;
+/* ---------- passenger list: recorded bookings, stops, parties and cabin ---------- */
 function passengerList(i) {
-  var lg = RIDE.lg, fl = lg.flown || [], h = hailOf(lg.hail) || {};
-  var bk = { id: lg.hail, lead: (h.rider || "").split(",")[0], from: lg.from, to: lg.to, b: -1, a: -1 };
-  var stops = fl.length ? [{ at: fl[0].from, arrive: null, leave: fl[0].depart, board: [], alight: [] }] : [];
-  fl.forEach(function (f, k) { stops.push({ at: f.to, arrive: f.open ? null : f.arrive, leave: fl[k + 1] ? fl[k + 1].depart : null, board: [], alight: [] }); });
-  stops.forEach(function (s, k) {
-    if (bk.b < 0 && s.at === bk.from) bk.b = k;
-    else if (bk.b >= 0 && bk.a < 0 && s.at === bk.to) bk.a = k;
-  });
-  if (bk.b >= 0) stops[bk.b].board.push(bk);
-  if (bk.a >= 0) stops[bk.a].alight.push(bk);
-  return { stops: stops, bookings: [bk], legs: fl };
+  return window.StarfareView.passengerList(RIDE.record, RIDE.lg, hailOf);
 }
 // Bookings in the cabin once the Starseeker has reached stop r (and while it flies the leg after it).
-function aboardAt(P, r) { return P.bookings.filter(function (b) { return b.b >= 0 && b.b <= r && (b.a < 0 || r < b.a); }); }
-function seatsHtml(on) {
-  var cls = [];
-  on.forEach(function () { cls.push("on"); for (var k = 1; k < PARTY_MAX; k++) cls.push("maybe"); });
-  var cells = "";
-  for (var k = 0; k < SEAT_N; k++) cells += '<span class="seat' + (cls[k] ? " " + cls[k] : "") + '"></span>';
-  var txt = on.length
-    ? "Seats in use <b>" + on.length + " lead passenger" + (on.length > 1 ? "s" : "") + "</b> + party not set yet / <b>4</b> (placeholder)"
-    : "Seats in use <b>0</b>, cabin empty / <b>4</b> (placeholder)";
-  return cells + '<span class="st">' + txt + "</span>";
-}
+function aboardAt(P, r) { return window.StarfareView.aboardAt(P, r); }
+function seatsHtml(on) { return window.StarfareView.seatsHtml(on, RS.pl.seats); }
 function renderPlist() {
   var P = RS.pl, n = P.stops.length - 1;
   $("#plStops").innerHTML = P.stops.map(function (s, k) {
     var ev = [];
-    s.board.forEach(function (b) { ev.push('<li><span class="bd">Boards</span>booking <b class="mono">' + esc(b.id) + "</b> \u00B7 lead " + esc(b.lead || "not in the data") + " \u00B7 party not set yet (1\u20133, placeholder)</li>"); });
+    s.board.forEach(function (b) { ev.push('<li><span class="bd">Boards</span>booking <b class="mono">' + esc(b.id) + "</b> \u00B7 lead " + esc(b.lead || "not recorded") + " \u00B7 party " + esc(b.party == null ? "not recorded" : b.party) + "</li>"); });
     s.alight.forEach(function (b) { ev.push('<li><span class="al">Gets off</span>booking <b class="mono">' + esc(b.id) + "</b></li>"); });
     if (!ev.length) ev.push('<li class="dim">' + (k === 0 ? "Parked here, cabin empty" : "No one boards or gets off") + "</li>");
-    var tm = k === 0 ? "leaves " + s.leave : !s.arrive ? "not landed yet" : "arrives " + s.arrive + (s.leave ? " \u00B7 leaves " + s.leave : RS.live ? "" : " \u00B7 end of flight");
+    var tm = k === 0 ? "leaves " + s.leave : s.planned ? "planned arrival " + (s.arrive || "pending checkpoint") : !s.arrive ? "not landed yet" : "arrives " + s.arrive + (s.leave ? " \u00B7 leaves " + s.leave : RS.live ? "" : " \u00B7 end of flight");
     var out = '<li class="pst" data-k="' + k + '"><span class="wp">' + k + '</span><div class="nm">' + placeH(s.at) + '</div><div class="m">Stop ' + k + (k === 0 ? ", parked" : "") + " \u00B7 " + esc(tm) + "</div><ul>" + ev.join("") + "</ul></li>";
     if (k < n) {
       var on = aboardAt(P, k), f = P.legs[k];
-      out += '<li class="pleg" data-l="' + k + '"><span class="r">Leg ' + (k + 1) + " \u00B7 " + (on.length ? "passenger leg" : "pickup") + "</span><br>" + (on.length ? on.length + " booking aboard" : "cabin empty") + " \u00B7 " + fmt(f.kwh) + " kWh flown</li>";
+      out += '<li class="pleg" data-l="' + k + '"><span class="r">Leg ' + (k + 1) + " \u00B7 " + (on.length ? "passenger leg" : "pickup") + "</span><br>" + (on.length ? on.length + " booking(s) aboard" : "cabin empty") + " \u00B7 " + fmt(f.kwh) + (f.planned ? " kWh planned" : " kWh flown") + "</li>";
     }
     return out;
   }).join("");
-  $("#plKv").innerHTML = "<dt>Bookings on this flight</dt><dd>" + P.bookings.length + " (run log)</dd><dt>Bookings per flight</dt><dd>up to 3 (placeholder)</dd><dt>Seats on the " + esc(SF.SHIP) + "</dt><dd>4 (placeholder)</dd><dt>Party per booking</dt><dd>1\u20133 (placeholder)</dd>";
+  $("#plKv").innerHTML = "<dt>Bookings on this flight</dt><dd>" + P.bookings.length + "</dd><dt>Seats on the " + esc(SF.SHIP) + "</dt><dd>" + esc(P.seats == null ? "not recorded" : P.seats) + "</dd><dt>Manifest</dt><dd>" + (P.legacy ? "Legacy metadata reconstructed with the current engine; missing details stay unknown" : "Recorded simulated bookings") + "</dd>";
   RS.plKey = null;
 }
 // The stop the Starseeker is at (or the leg it flies, after stop r) for a replay state.
@@ -928,15 +909,16 @@ function loadRide(keep) {
   }
   if (RS.live && RS.follow) RS.cur = Math.max(rp.start, liveJd());
   RS.pl = passengerList();
+  $("#timingWarning").hidden = !window.StarfareView.timingConflicts(RIDE.record, RIDE.lg).length;
   $("#cammode").setAttribute("aria-pressed", String(RS.over));
   $("#golive").setAttribute("aria-pressed", String(RS.follow));
   $("#rmode").textContent = live ? "Live flight" : "Flight replay";
   $("#rlive").hidden = $("#liveseg").hidden = $("#sahead").hidden = !live;
   $("#rwho").textContent = rec.player_tag ? "Player run" : "Connector run";
   $("#rwho").className = "tag " + (rec.player_tag ? "me" : "sim");
-  $("#rtitle").textContent = shipWords(h.title || rec.hail_id) + " \u00B7 " + SF.name(RIDE.lg.from) + " \u2192 " + SF.name(RIDE.lg.to);
+  $("#rtitle").textContent = (RIDE.record.manifest ? RIDE.record.manifest.bookings.map(function (b) { return b.title; }).join(" + ") : shipWords(h.title || rec.hail_id));
   $("#rnote").textContent = local ? "Centred on " + SF.name(rp.focus) + ", distances in km. Not to scale: the " + SF.SHIP + " and small moons are enlarged. The flight is simulated."
-    : "Not to scale: distances compressed, sizes exaggerated. Planet positions are real; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet." : "");
+    : "Distances compressed; sizes exaggerated. Positions from JPL ephemerides at simulated sky dates; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet." : "");
   if (GL && window.SolArt) $("#rnote").insertAdjacentHTML("beforeend", '<span class="cred cred-l">' + esc(SolArt.CREDIT) + ' <a href="/assets/CREDITS.md">Credits</a></span><span class="cred cred-s">Maps: NASA, JPL, USGS; Solar System Scope (CC BY 4.0). <a href="/assets/CREDITS.md">Credits</a></span>');
   $("#sticks").innerHTML = rp.events.map(function (e) { return '<span class="tick ' + e.kind + '" style="left:' + ((e.jd - rp.start) / span * 100).toFixed(2) + '%" title="' + W(e.title) + '"></span>'; }).join("");
   $("#callouts").innerHTML = ""; RS.ckey = null; RS.lvst = null;
@@ -1060,7 +1042,7 @@ function rideFrame(dt, t) {
     $("#rtele").innerHTML = '<div class="hudbox"><div class="caps">Sky time \u00B7 UTC \u00B7 simulated</div><div class="big">' + iso(jd) + "</div>" + rateTx + "<br>" +
       esc(SF.SHIP) + " <b>" + esc(rp.car) + "</b><br>Leg <b>" + (st.i + 1) + "/" + (rp.legs.length + rp.plan.length) + "</b> \u00B7 " + esc(on.length || fl && L.kind !== "pickup" ? "passenger" : legKind(L.kind)) + " \u00B7 <b>" + esc(st.phase) + "</b><br>" +
       esc(SF.name(L.from)) + " \u2192 " + esc(SF.name(L.to)) + "<br>To " + esc(SF.name(L.to)) + " <b>" + where + "</b><br>" +
-      (on.length ? "Aboard <b>" + esc(RS.pax) + "</b> \u00B7 party not set yet" : "Cabin empty \u00B7 " + (L.kind === "pickup" || L.idle ? "picking up" : "dropped off") + " <b>" + esc(RS.pax) + "</b>") + "<br>Seats <b>4</b> (placeholder)</div>";
+      (on.length ? "Aboard <b>" + on.map(function (b) { return esc(b.lead || b.id); }).join(", ") + "</b>" : "Cabin empty") + "<br>Passengers <b>" + esc(window.StarfareView.seatCount(on) ?? "unknown") + "</b> / <b>" + esc(P.seats ?? "not recorded") + "</b> seats (simulated)</div>";
     var win = er * 6, vis = rp.events.filter(function (e) { return e.jd <= jd + 1 / 1440 && jd - e.jd <= Math.max(win, span * 0.02); }).slice(held ? -2 : -3);
     var key = (held ? "H" : "") + vis.map(function (e) { return e.jd + e.kind; }).join();
     if (key !== RS.ckey) {
@@ -1140,7 +1122,7 @@ function rideFrame(dt, t) {
 }
 
 /* ---------- receipt ---------- */
-function partOf(sc, k) { return sc.parts.filter(function (p) { return p.key === k; })[0]; }
+function partOf(sc, k) { return ((sc && sc.parts) || []).filter(function (p) { return p.key === k; })[0]; }
 function partCell(p) {
   if (!p) return '<span class="dim">not scored</span>';
   var f = p.got / p.max, c = f >= 0.999 ? "pass" : f >= 0.5 ? "best" : "fail";
@@ -1172,7 +1154,7 @@ function liveSheet() {
   return '<div class="sheet2">' +
     '<div class="dh"><div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="caps">Flight receipt</span><span class="tag sim">Simulated</span><span class="tag live">Live</span>' + (rec.player_tag ? '<span class="tag me">Player run</span>' : '<span class="tag sim">Connector run</span>') + "</div>" +
       "<h2>" + esc(SF.name(lv.from)) + " → " + esc(SF.name(lv.to)) + "</h2>" +
-      '<div class="who">' + esc(h.rider || "") + " · " + chip(lv.from) + " → " + chip(lv.to) + "</div>" +
+      '<div class="who">' + RS.pl.bookings.map(function (b) { return esc(b.lead || b.id); }).join(" · ") + "</div>" +
       '<div class="meta"><span>' + SF.SHIP + " <b>" + esc(lv.car) + "</b></span><span>Season <b>" + esc(rec.season) + "</b></span><span>Run <b>" + esc(rec.run_id) + "</b></span><span>Booking <b>" + esc(rec.hail_id) + "</b></span></div>" +
       '<div class="note" style="margin-top:8px">The receipt and score appear when the ' + SF.SHIP + " lands. " + esc(shipWords(rec.note)) + "</div>" +
       '<div class="lv-st" id="lvst"></div></div>' +
@@ -1185,7 +1167,7 @@ function liveSheet() {
 function dlogText(t) {
   if (t.tool === "check_pad") return "Pad at <b>" + esc(t.place) + "</b>: " + esc(t.berths) + " berths, up to " + esc(t.max_booked) + " booked an hour" + (t.weather ? "; " + esc(t.weather) + ", odds up to " + esc(t.max_odds) : "") + ".";
   if (t.tool === "space_weather") return "Space weather at <b>" + esc(t.place) + "</b>: flare odds up to " + esc(t.max_flare_odds) + ".";
-  if (t.tool === "dispatch") return t.problems ? "Dispatch refused: " + esc(t.problems.join("; ")) : "Dispatched <b>" + esc(t.car) + "</b> on " + t.route.map(function (r) { return "<code>" + esc(r) + "</code>"; }).join(" + ") + " · fare " + money(t.fare_usd) + " · arrival quoted " + esc(t.arrival) + " · " + esc(t.status) + ".";
+  if (t.tool === "dispatch") return t.problems ? "Dispatch refused: " + esc(t.problems.join("; ")) : "Dispatched <b>" + esc(t.car) + "</b> on " + t.route.map(function (r) { return "<code>" + esc(r) + "</code>"; }).join(" + ") + " · " + (t.quotes ? Object.keys(t.quotes).map(function (id) { var q = t.quotes[id]; return "booking <code>" + esc(id) + "</code>: fare " + money(q.fare_usd) + ", arrival quoted " + esc(q.arrival); }).join("; ") : "fare " + money(t.fare_usd) + " · arrival quoted " + esc(t.arrival)) + " · " + esc(t.status) + ".";
   if (t.tool === "decide") return "Checkpoint " + esc(t.checkpoint) + " (" + esc(String(t.kind).replace("_", " ")) + ", " + esc(t.checkpoint_at) + "): chose <b>" + esc(SF.decText(t.decision)) + "</b> · " + esc(t.status) + ".";
   if (t.leg_id) return "Leg <code>" + esc(t.leg_id) + "</code> " + esc(legKind(t.kind)) + ", " + esc(SF.name(t.from)) + " → " + esc(SF.name(t.to)) + ", departs " + esc(t.depart) + ", arrives " + esc(t.arrive) + " · " + kwh(t.kwh) + " · " + money(t.fare_usd) + " · re-fly " + esc(t.gate) + ".";
   return "";
@@ -1226,8 +1208,8 @@ function debrief() {
   }).join("") + "</tbody></table></div>" : '<p class="dim" style="margin:0">No incidents.</p>';
   // Passenger list per booking (the booking half of the score) and the ship block (the flight half).
   var paxRows = P.bookings.map(function (b) {
-    return '<tr><td class="mono">' + esc(b.id) + '</td><td style="font-family:Inter">' + esc(b.lead || "not in the data") + '</td><td class="dim">not set yet (1\u20133, placeholder)</td><td style="font-family:Inter">' + (b.b >= 0 ? placeH(P.stops[b.b].at) + ' <span class="dim">stop ' + b.b + "</span>" : '<span class="dim">not in the log</span>') + '</td><td style="font-family:Inter">' + (b.a >= 0 ? placeH(P.stops[b.a].at) + ' <span class="dim">stop ' + b.a + "</span>" : '<span class="dim">not in the log</span>') +
-      '</td><td class="r">' + partCell(partOf(sc, "pickup")) + '</td><td class="r">' + partCell(partOf(sc, "on_time")) + '</td><td class="r">' + partCell(partOf(sc, "promise")) + '</td><td class="r">' + partCell(partOf(sc, "fare")) + "</td></tr>";
+    return '<tr><td class="mono">' + esc(b.id) + '</td><td style="font-family:Inter">' + esc(b.lead || "not recorded") + '</td><td>' + esc(b.party == null ? "not recorded" : b.party) + '</td><td style="font-family:Inter">' + (b.b >= 0 ? placeH(P.stops[b.b].at) + ' <span class="dim">stop ' + b.b + "</span>" : '<span class="dim">not in the log</span>') + '</td><td style="font-family:Inter">' + (b.a >= 0 ? placeH(P.stops[b.a].at) + ' <span class="dim">stop ' + b.a + "</span>" : '<span class="dim">not in the log</span>') +
+      '</td><td>' + esc(b.score ? b.score.promised_arrival : "not recorded") + '</td><td>' + esc(b.score ? b.score.arrive : "not recorded") + '</td><td class="r">' + (b.score && b.score.fare_usd != null ? money(b.score.fare_usd) : "not recorded") + '</td><td class="r">' + partCell(partOf(b.score, "pickup")) + '</td><td class="r">' + partCell(partOf(b.score, "on_time")) + '</td><td class="r">' + partCell(partOf(b.score, "promise")) + '</td><td class="r">' + partCell(partOf(b.score, "fare")) + "</td></tr>";
   }).join("");
   var pe = partOf(sc, "energy"), pc = partOf(sc, "checker"), pn = partOf(sc, "economy");
   var nPass = r.legs.filter(function (L) { return (L.refly || {}).result === "PASS"; }).length, nLocal = r.legs.filter(function (L) { return /local/.test((L.refly || {}).result || ""); }).length;
@@ -1241,13 +1223,13 @@ function debrief() {
   return '<div class="sheet2">' +
     '<div class="dh"><div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="caps">Flight receipt</span><span class="tag sim">Simulated</span>' + (rec.player_tag ? '<span class="tag me">Player run</span>' : '<span class="tag sim">Connector run</span>') + '</div>' +
       "<h2>" + esc(SF.name(lg.from)) + " \u2192 " + esc(SF.name(lg.to)) + "</h2>" +
-      '<div class="who">' + esc(h.rider || "") + " \u00B7 " + chip(lg.from) + " \u2192 " + chip(lg.to) + '</div><div class="who" style="margin-top:4px">' + (rec.player_tag ? "Flown by a player's agent through the connector \u00B7 player tag <b class=\"mono\">" + esc(rec.player_tag) + "</b>" : "Flown through the connector without signing in, so no player tag") + '.</div>' +
+      '<div class="who">' + P.bookings.map(function (b) { return esc(b.lead || b.id); }).join(" · ") + '</div><div class="who" style="margin-top:4px">' + (rec.player_tag ? "Flown by a player's agent through the connector \u00B7 player tag <b class=\"mono\">" + esc(rec.player_tag) + "</b>" : "Flown through the connector without signing in, so no player tag") + '.</div>' +
       '<div class="meta"><span>' + SF.SHIP + " <b>" + esc(sc.car) + "</b></span><span>Season <b>" + rec.season + "</b></span><span>Run <b>" + esc(rec.run_id) + "</b></span><span>Booking <b>" + esc(lg.hail) + "</b></span></div>" +
       '<div class="note" style="margin-top:8px">' + esc(shipWords(rec.note)) + "</div></div>" +
       '<div class="tot"><div><div class="caps">Total</div><span class="n">' + fmt(sc.total) + '</span><span class="d"> /' + sc.out_of + '</span></div><div class="art">' + SF.SHIP_SVG + "</div></div></div>" +
-    '<div class="sec"><h3>Passenger list <span class="tag sim">Simulated</span><span class="tag sim">Simulated \u00B7 placeholder, not set yet</span></h3>' +
-      '<p class="note" style="margin:0 0 8px">Each booking is scored on its own: fast pickup, on time, kept promise, honest fare. Hover a score for its note. Party size is a placeholder; bookings per flight: up to 3 (placeholder). This flight carries ' + P.bookings.length + " booking.</p>" +
-      '<div class="tw"><table class="t pt"><thead><tr><th>Booking</th><th>Lead passenger</th><th>Party</th><th>Boards at</th><th>Gets off at</th><th class="r">Fast pickup</th><th class="r">On time</th><th class="r">Kept promise</th><th class="r">Honest fare</th></tr></thead><tbody>' + paxRows + "</tbody></table></div>" +
+    '<div class="sec"><h3>Passenger list <span class="tag sim">Simulated</span></h3>' +
+      '<p class="note" style="margin:0 0 8px">Each booking has its own pickup, on-time, promise and fare scores. Hover a score for its note. This flight carries ' + P.bookings.length + " booking(s). Missing legacy details are marked as not recorded.</p>" +
+      '<div class="tw"><table class="t pt"><thead><tr><th>Booking</th><th>Lead passenger</th><th>Party</th><th>Boards at</th><th>Gets off at</th><th>Quoted arrival</th><th>Actual arrival</th><th class="r">Fare</th><th class="r">Fast pickup</th><th class="r">On time</th><th class="r">Kept promise</th><th class="r">Honest fare</th></tr></thead><tbody>' + paxRows + "</tbody></table></div>" +
       '<div class="cmp" style="margin-top:12px">' +
         '<div class="c"><div class="caps">Ship \u00B7 energy vs par</div><div class="mono" style="font-size:12px;margin:6px 0 2px">' + esc(pe ? pe.label : "Energy") + " " + partCell(pe) + '</div><div class="mono" style="font-size:12px">Used ' + kwh(sc.used_kwh) + '</div><div class="ebar"><i style="width:' + (sc.used_kwh / mx * 100).toFixed(1) + '%;background:var(--sun)"></i></div><div class="mono" style="font-size:12px">Par ' + kwh(sc.par_kwh) + '</div><div class="ebar"><i style="width:' + (sc.par_kwh / mx * 100).toFixed(1) + '%;background:var(--ride)"></i></div><div class="mono dim" style="font-size:11.5px">' + (sc.beat_par ? "beat par" : "over par by " + kwh(over)) + "</div></div>" +
         '<div class="c"><div class="caps">Ship \u00B7 every leg checked</div><div class="mono" style="font-size:12px;margin:6px 0 2px">' + esc(pc ? pc.label : "Checker") + " " + partCell(pc) + '</div><dl class="kv"><dt>Re-fly PASS</dt><dd>' + nPass + " of " + r.legs.length + " legs</dd><dt>Local hops, not re-flown</dt><dd>" + nLocal + '</dd></dl><div class="note" style="margin-top:6px">' + esc(shipWords(pc ? pc.note : "")) + "</div></div>" +
@@ -1260,7 +1242,7 @@ function debrief() {
     '<div class="sec"><h3>Checkpoints</h3>' + cps + "</div>" +
     '<div class="sec"><h3>Incidents</h3>' + inc + "</div>" +
     '<div class="sec"><h3>Score <span class="mono" style="color:var(--me);letter-spacing:0">' + fmt(sc.total) + " / " + sc.out_of + '</span></h3><div class="sparts">' + parts + "</div></div>" +
-    '<div class="sec"><h3>Promise vs actual</h3><div class="cmp">' +
+    '<div class="sec"><h3>' + (P.bookings.length > 1 ? "Lead booking: promise vs actual" : "Promise vs actual") + '</h3><div class="cmp">' +
       '<div class="c"><div class="caps">Pickup</div><dl class="kv"><dt>Planned</dt><dd>' + esc(sc.planned_pickup) + "</dd><dt>Actual</dt><dd>" + esc(sc.pickup) + "</dd></dl></div>" +
       '<div class="c"><div class="caps">Arrival</div><dl class="kv"><dt>Quoted</dt><dd>' + esc(sc.promised_arrival) + "</dd><dt>Actual</dt><dd>" + esc(sc.arrive) + "</dd><dt>Slip</dt><dd" + (sc.promise_slip_hours > 0 ? ' class="fail"' : "") + ">" + fmt(sc.promise_slip_hours, 1) + " h</dd><dt>Arrive by</dt><dd>" + esc(sc.arrive_by) + (onTime ? ' <span class="pass">met</span>' : ' <span class="fail">missed</span>') + "</dd></dl></div>" +
       '<div class="c"><div class="caps">Fare</div><dl class="kv"><dt>Quoted</dt><dd>' + money(lg.quote.fare_usd) + "</dd><dt>Charged</dt><dd>" + money(sc.fare_usd) + "</dd></dl></div>" +

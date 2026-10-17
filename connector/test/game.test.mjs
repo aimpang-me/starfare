@@ -632,6 +632,10 @@ test("shared flight: dispatch with legs, stops and quotes scores each booking an
   assert.equal(logged.pickup, phobos.parts.find((x) => x.key === "pickup").got);
   assert.equal(logged.on_time, phobos.parts.find((x) => x.key === "on_time").got);
   assert.deepEqual((await s.call("get_hail", {})).passengers.map((p) => p.aboard), [0, 1, 0, 1, 0]);
+  const rec = liveRecord(E, s.run, 0);
+  assert.deepEqual(rec.manifest.bookings.map((b) => [b.hail_id, b.rider, b.party]), [["ceres-shift", "Ana, a miner", 1], ["phobos-commute", "Ravi, a survey pilot", 1]]);
+  assert.deepEqual(rec.manifest.stops.map((p) => p.at), ["ceres", "ceres-port", "mars-base", "phobos", "mars-base"]);
+  assert.equal(rec.manifest.seats, 4);
 });
 
 test("shared flight: dispatch refuses the two-leg form, a booking left off the plan, a missing quote and a stranger", async () => {
@@ -703,7 +707,13 @@ test("live: the public record of a flight in the air has the legs flown so far, 
     ["ride", "iss", "lunar-data-center", "2030-01-29 02:12", "2030-02-03 01:46", "2030-02-03 02:46", true]]);
   assert.deepEqual(rec.live.checkpoints.map((c) => [c.n, c.kind, c.at, c.decision]), [[1, "pad_closed", "2030-02-03 02:46", null]]);
   assert.deepEqual(rec.trail.map((e) => e.tool), ["check_pad", "plan_pickup", "plan_ride", "dispatch"]);
-  assert.deepEqual(liveRow(E, run), { run_id: "run_" + "1".repeat(20), land_ms: null, v: { run_id: "run_" + "1".repeat(20), title: "ISS crew change", ship: "SF-01", home: "orbital-depot",
+  const row = liveRow(E, run), { hail_id, manifest, hold, ...v } = row.v;
+  assert.deepEqual(hold, { kind: "pad_closed", cause: "pad_full", place: "lunar-data-center" });
+  assert.equal(hail_id, run.id); assert.deepEqual(manifest, run.flight_manifest);
+  assert.deepEqual(v.legs.map((L) => [L.car, L.leg_id, L.stop]), [["sf-01", "leg1", 1], ["sf-01", "leg2", null]]);
+  assert.deepEqual(v.legs.map((L) => L.arr_jd), [run.ride.segs[0].flew.land_jd, run.ride.checkpoints[0].sky_at]);
+  v.legs = v.legs.map((L) => ({ from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.orbit_jd }));
+  assert.deepEqual({ ...row, v }, { run_id: "run_" + "1".repeat(20), land_ms: null, v: { run_id: "run_" + "1".repeat(20), title: "ISS crew change", ship: "SF-01", home: "orbital-depot",
     legs: [{ from: "orbital-depot", to: "iss", dep_jd: 2462530.5, arr_jd: 2462530.532566714 }, { from: "iss", to: "lunar-data-center", dep_jd: 2462530.5916666663, arr_jd: 2462535.573823781 }],
     track: TRACK_TO_HOLD } });
   await f.call("decide", { checkpoint: 1, action: "hold" }, NOW + 200000);
