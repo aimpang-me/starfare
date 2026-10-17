@@ -3,11 +3,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { isoJD, openRun, seasonInstance, suiteInstance, hailInfo, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, leaveRun, rideSummary, rideRecord } from "../src/game.js";
+import { SKY, sky, isoJD, openRun, seasonInstance, suiteInstance, hailInfo, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, leaveRun, rideSummary, rideRecord } from "../src/game.js";
 
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const NOW = Date.UTC(2026, 9, 16, 12, 0, 0);
 const YEAR_MS = 365 * 86400 * 1000;
+const SKY_CERES = SKY.t0_ms + Math.round((2463049.6 - SKY.jd0) * 1000) + 16 * SKY.len_days * 1000;
 const CLOCK = 2462529.5; // sky(NOW).jd, so a bench take and a live take at NOW get the same t0
 const SEED = "k1:7f3c9a2e5b10d84f00"; // stops iss-crew on the par car at a pad_closed checkpoint
 const TAG = "iss-crew/pad-closed-01";
@@ -21,18 +22,20 @@ async function legs(run, car = run.par_car) {
 }
 
 test("a frozen clock never goes cold: a long haul dispatched 400 sky days or a year later still flies", async () => {
-  const live = await seasonRun("ceres-shift", "run_live");
+  const ceresNow = SKY_CERES, clock = sky(ceresNow).jd;
+  const live = await openRun(E, seasonInstance(E, "ceres-shift", ceresNow), "run_live", ceresNow);
   const [lp, lr] = await legs(live, "sf-04");
-  assert.throws(() => dispatch(E, live, quoteOf(lp, lr), NOW + 400 * 1000), { message: "The hail went cold: leg2 was due to depart 2030-12-02 07:30 and sky time is now 2031-03-04 00:00. Take the hail again." });
+  const late = ceresNow + (lr.dep_jd - clock + 2) * 1000;
+  assert.throws(() => dispatch(E, live, quoteOf(lp, lr), late), { message: "The hail went cold: leg2 was due to depart 2032-03-28 03:33 and sky time is now 2032-03-30 03:33. Take the hail again." });
 
   for (const later of [400 * 1000, YEAR_MS]) {
-    const run = await benchRun("ceres-shift", "run_frozen", "ceres-shift/frozen-01");
+    const run = await openRun(E, suiteInstance(E, { hail_id: "ceres-shift" }, { seed: SEED, clockJd: clock, tag: "ceres-shift/frozen-01", budget: 12 }), "run_frozen", ceresNow);
     assert.equal(run.t0, live.t0);
     const [p, r] = await legs(run, "sf-04");
-    const out = dispatch(E, run, quoteOf(p, r, { ask_after_hours: "never" }), NOW + later);
+    const out = dispatch(E, run, quoteOf(p, r, { ask_after_hours: "never" }), ceresNow + later);
     assert.equal(out.status, "arrived");
     assert.equal(out.task_id, "ceres-shift/frozen-01");
-    assert.equal(hailInfo(E, run, NOW + later).sky_now, "2030-01-28 00:00");
+    assert.equal(hailInfo(E, run, ceresNow + later).sky_now, isoJD(clock));
   }
 });
 

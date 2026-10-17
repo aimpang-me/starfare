@@ -327,11 +327,11 @@ button.lbl:hover{color:var(--ink)}
 .trio{display:grid;gap:8px;margin:4px 0 10px}
 .trio div{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:start}
 .parts{list-style:none;margin:6px 0 12px;padding:0;display:grid;gap:5px}
-.parts li{display:grid;grid-template-columns:150px 1fr 34px;gap:10px;align-items:center;font-size:12.5px}
+.parts li{display:grid;grid-template-columns:minmax(140px,220px) minmax(0,1fr) auto;gap:10px;align-items:center;font-size:12.5px}
 .parts .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
 .parts .bar i{display:block;height:100%;background:var(--cy)}
 .parts .v{font:500 12px var(--mono);text-align:right;color:var(--ink)}
-@media (max-width:520px){.parts li{grid-template-columns:110px 1fr 28px}}
+@media (max-width:520px){.parts li{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto}}
 .sheet>footer{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 18px 16px;border-top:1px solid var(--line)}
 
 /* receipt drawer */
@@ -603,7 +603,7 @@ p{text-wrap:pretty}
         <div class="chk-b" id="ck3" hidden>
           <p style="margin-top:0">Every flight scores out of <b class="mono" id="partsTotal"></b>:</p>
           <ul class="parts" id="parts"></ul>
-          <p><b style="color:var(--ink)">Re-fly check.</b> The server re-flies every leg in an n-body sim. A miss fails the leg.</p>
+          <p><b style="color:var(--ink)">Checker.</b> The server flies every leg again in an n body sim. A miss fails the leg.</p>
           <p><b style="color:var(--ink)">Checkpoints.</b> Mid-flight the sky can close a pad or hold a launch. Your agent decides what to do with the <code class="mono" style="color:var(--me)">decide</code> tool.</p>
           <button class="btn small" type="button" data-next="3">Got it</button>
         </div>
@@ -756,7 +756,7 @@ p{text-wrap:pretty}
     });
     (log.checkpoints || []).forEach(function (c) {
       ev.push({ jd: jdOf(c.at), kind: "checkpoint", title: "Checkpoint " + c.n + ": " + c.kind.replace("_", " ") + " at " + name(c.place),
-        text: "Cause: " + c.cause.replace("_", " ") + ". Agent chose: " + c.decision.action + ". Best in hindsight: " + c.best + ".", cp: c });
+        text: "Cause: " + c.cause.replace("_", " ") + ". Agent chose: " + c.decision.action + ".", cp: c });
     });
     ride.record.score.incidents.forEach(function (x) {
       ev.push({ jd: jdOf(x.at), kind: "incident", title: x.kind.replace("_", " ") + " at " + x.place, text: x.note + (x.hours ? " (" + fmt(x.hours, 1) + " h" : "") + (x.kwh ? (x.hours ? ", " : " (") + fmt(x.kwh) + " kWh)" : x.hours ? ")" : "") });
@@ -782,7 +782,7 @@ p{text-wrap:pretty}
     // Display word for the vehicle. Tool fields and run-log JSON keep "car" (car, par_car); pages show "Starseeker".
     SHIP: "Starseeker", SHIPS: "Starseekers",
     MCP_URL: "__ORIGIN__/mcp",
-    SCORE_PARTS: [["pickup", "Fast pickup", 20], ["on_time", "Arrived on time", 20], ["energy", "Energy vs par", 20], ["promise", "Kept the promise", 15], ["checker", "Every leg checked", 10], ["fare", "Honest fare", 10], ["economy", "Planning economy", 5]],
+    SCORE_PARTS: [["pickup", "Fast pickup", 2000], ["on_time", "Arrived on time", 2000], ["energy", "Energy versus par", 3000], ["promise", "Kept the promise", 2000], ["checker", "Every leg checked", 2000], ["fare", "Honest fare", 2000], ["economy", "Planning economy", 2000], ["tank", "Xenon tank", 25000], ["throttle", "Distance throttle", 25000], ["window", "Departure window", 20000], ["recovery", "Checkpoint recovery", 15000], ["dose", "Cruise dose", 0]],
   };
   root.SF = api;
 })(typeof window !== "undefined" ? window : globalThis);

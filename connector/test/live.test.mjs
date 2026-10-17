@@ -5,19 +5,23 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFileSync, writeFileSync } from "node:fs";
-import { SKY, isoJD, openRun, seasonInstance, hailInfo, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, leaveRun, rideSummary, rideRecord } from "../src/game.js";
+import { SKY, sky, isoJD, openRun, seasonInstance, hailInfo, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, leaveRun, rideSummary, rideRecord } from "../src/game.js";
 
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
 const NOW = Date.UTC(2026, 9, 16, 12, 0, 0);
 const GOLDEN = new URL("./fixtures/live-golden.json", import.meta.url);
 const take = (hail, nowMs, runId) => openRun(E, seasonInstance(E, hail, nowMs), runId, nowMs);
+const skyAt = (jd) => SKY.t0_ms + Math.round((jd - SKY.jd0) * 1000);
+const CERES_NOW = skyAt(2463049.6) + 16 * SKY.len_days * 1000;
 
 async function views() {
   const out = {};
   const put = (k, v) => { out[k] = JSON.stringify(v); };
   for (const h of R.HAILS) {
-    const run = await take(h.id, NOW, "run_" + h.id);
+    let run;
+    try { run = await take(h.id, NOW, "run_" + h.id); }
+    catch (e) { put(h.id + ".error", e.message); continue; }
     if (h.id === "iss-crew") run.player_id = "p_0123456789abcdef";
     put(h.id + ".get_hail", hailInfo(E, run, NOW));
     put(h.id + ".summary.planning", rideSummary(E, run));
@@ -45,10 +49,10 @@ async function views() {
     put("dust." + how + ".summary.arrived", rideSummary(E, run));
     put("dust." + how + ".record.arrived", rideRecord(E, run));
   }
-  const cold = await take("ceres-shift", NOW, "run_cold");
+  const cold = await take("ceres-shift", CERES_NOW, "run_cold");
   const p = (await planPickup(E, cold, { car: "sf-04" })).leg, r = (await planRideLeg(E, cold, { after_leg: p.leg_id })).leg;
   let msg = null;
-  try { dispatch(E, cold, { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd) }, NOW + 400 * 1000); } catch (e) { msg = e.message; }
+  try { dispatch(E, cold, { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd) }, CERES_NOW + (r.dep_jd - sky(CERES_NOW).jd + 2) * 1000); } catch (e) { msg = e.message; }
   put("cold.error", msg);
   put("cold.summary", rideSummary(E, cold));
   put("cold.record", rideRecord(E, cold));

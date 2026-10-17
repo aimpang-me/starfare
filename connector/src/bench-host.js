@@ -117,7 +117,7 @@ function after(s, row, ended) {
   return {
     ended: { why: ended, phase: row.phase, ...(sealed(s) ? {} : { total: row.total }) },
     ...(s.done
-      ? { done: true, results: s.results.map((r) => ({ task_id: r.task_id, phase: r.phase, total: r.total })), total: totalOf(s), out_of: 100 * n,
+      ? { done: true, results: s.results.map((r) => ({ task_id: r.task_id, phase: r.phase, total: r.total })), total: totalOf(s), out_of: 100000 * n,
           note: "Bench over (simulated, " + kind(s) + "). Tell the player their total and the watch link. Later calls play the normal game." }
       : { next: "Task " + (s.i + 1) + " of " + n + " is next. Call list_hails to open it; it has its own run_id." }),
   };
@@ -166,7 +166,7 @@ export function benchView(s) {
     bench_id: s.bench_id, simulated: true, practice: practice(s), sealed: shut, suite: s.suite, split: s.split, budget: s.budget, started_ms: s.started_ms, done: s.done,
     tasks: s.tasks.map((t, k) => ({ task_id: t.id, hails: t.hails || [t.hail_id], status: k < s.i ? "done" : k === s.i && !s.done ? "current" : "waiting", ...(s.results[k] && !shut ? { result: s.results[k] } : {}) })),
     current: s.done ? null : { task: s.i + 1, task_id: s.tasks[s.i].id, title: s.run ? s.run.title : null, phase: s.run ? phaseOf(s.run) : "not opened", calls_used: s.run ? s.run.tool_calls : 0 },
-    total: shut ? null : totalOf(s), out_of: 100 * s.tasks.length, verified: s.verified ?? null,
+    total: shut ? null : totalOf(s), out_of: 100000 * s.tasks.length, verified: s.verified ?? null,
   };
 }
 
@@ -178,7 +178,7 @@ export function traceOf(suite, s, calls) {
   const { bench_id, split, budget, tasks, run_ids, started_ms } = s;
   return {
     format: TRACE_FORMAT, simulated: true, bench_id, suite: suite.id, engine_sha256: suite.engine_sha256, score_version: suite.score_version, split,
-    start: { bench_id, suite: s.suite, split, budget, tasks, run_ids, started_ms }, results: s.results, total: totalOf(s), out_of: 100 * s.tasks.length,
+    start: { bench_id, suite: s.suite, split, budget, tasks, run_ids, started_ms }, results: s.results, total: totalOf(s), out_of: 100000 * s.tasks.length,
     verified: s.verified ?? null, calls,
   };
 }

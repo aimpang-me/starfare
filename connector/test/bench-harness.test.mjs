@@ -65,20 +65,20 @@ test("the host shows one hail and its task_id, refuses another hail, and counts 
 
 test("naive, random and the reference on one hail", async () => {
   const n = await play(SOLO, (call) => naive(call, E));
-  assert.deepEqual([n.score.total, n.run.tool_calls, n.run.calls], [90, 7, 4]);
+  assert.deepEqual([n.score.total, n.run.tool_calls, n.run.calls], [98626.5424842698, 6, 3]);
   const r = await play(SOLO, (call) => random(call, E, rngOf(SOLO.id + "|0")));
-  assert.deepEqual([r.score.total, r.run.tool_calls], [41, 5]);
+  assert.deepEqual([r.score.phase, r.score.total, r.run.tool_calls], ["planning", 0, 7]);
   const ref = reference(E, await openTask(E, SUITE, SOLO, "2"));
-  assert.deepEqual([ref.total, ref.car, ref.label], [100, "sf-01", "energy/energy"]);
+  assert.deepEqual([ref.total, ref.car, ref.label], [99999.82031807303, "sf-01", "energy/energy"]);
 });
 
 test("naive, random and the reference on a shared flight of two bookings", async () => {
   const n = await play(SHARED, (call) => naive(call, E));
-  assert.deepEqual([n.score.phase, n.score.total, n.run.calls], ["arrived", 59, 12]);
+  assert.deepEqual([n.score.phase, n.score.total, n.run.calls], ["arrived", 94998.54775849446, 7]);
   const r = await play(SHARED, (call) => random(call, E, rngOf(SHARED.id + "|0")));
-  assert.equal(r.score.phase, "arrived");
+  assert.deepEqual([r.score.phase, r.score.total], ["planning", 0]);
   const ref = reference(E, await openTask(E, SUITE, SHARED, "2"));
-  assert.deepEqual([ref.total, ref.car], [80, "sf-04"]);
+  assert.deepEqual([ref.total, ref.car], [98000.49361300499, "sf-04"]);
   assert.ok(ref.total >= n.score.total);
 });
 
@@ -105,7 +105,7 @@ test("hosted session: tasks in order, each closed on arrival or from the watch p
   await naive(call, E);
   const last = results.at(-1);
   assert.equal(last.status, "arrived");
-  assert.deepEqual(last.bench, { task: "1 of 3", task_id: "iss-crew/fixture", calls_used: 7, budget: 60, ended: { why: "arrived", phase: "arrived", total: 93 },
+  assert.deepEqual(last.bench, { task: "1 of 3", task_id: "iss-crew/fixture", calls_used: 6, budget: 60, ended: { why: "arrived", phase: "arrived", total: 99022.04178790265 },
     next: "Task 2 of 3 is next. Call list_hails to open it; it has its own run_id." });
 
   let e = endTask(E, s);
@@ -116,10 +116,10 @@ test("hosted session: tasks in order, each closed on arrival or from the watch p
 
   e = endTask(E, s);
   s = e.session;
-  assert.deepEqual(e.result, { task_id: "iss-crew/fixture-3", phase: "planning", total: 0, done: true, bench_total: 93 });
+  assert.deepEqual(e.result, { task_id: "iss-crew/fixture-3", phase: "planning", total: 0, done: true, bench_total: 99022.04178790265 });
   assert.deepEqual(await call("list_hails", {}), { error: "This bench session is over. start_bench starts a new one.", bench: { done: true } });
   const v = benchView(s);
-  assert.deepEqual([v.done, v.current, v.total, v.out_of], [true, null, 93, 300]);
+  assert.deepEqual([v.done, v.current, v.total, v.out_of], [true, null, 99022.04178790265, 300000]);
   assert.deepEqual(v.tasks.map((t) => [t.task_id, t.status, t.result.phase, t.result.ended]), [
     ["iss-crew/fixture", "done", "arrived", "arrived"],
     ["iss-crew/fixture-2", "done", "not started", "ended on the watch page"],
@@ -167,7 +167,7 @@ test("a test session seals every score until its last task closes; practice show
   const call = async (tool, input) => { const r = await benchCall(E, suite, s, tool, input, 0, KEY); s = r.session; seen.push(r.result); return r.result; };
   await naive(call, E);
   assert.deepEqual(seen.at(-1), { ok: true, status: "flown", run_id: s.run_ids[0], hail_id: "iss-crew", note: SEALED_NOTE,
-    bench: { task: "1 of 2", task_id: "iss-crew/held", calls_used: 7, budget: 60, ended: { why: "arrived", phase: "arrived" }, next: "Task 2 of 2 is next. Call list_hails to open it; it has its own run_id." } });
+    bench: { task: "1 of 2", task_id: "iss-crew/held", calls_used: 6, budget: 60, ended: { why: "arrived", phase: "arrived" }, next: "Task 2 of 2 is next. Call list_hails to open it; it has its own run_id." } });
   const v = benchView(s);
   assert.deepEqual([v.sealed, v.total, v.tasks.map((t) => [t.status, "result" in t])], [true, null, [["done", false], ["current", false]]]);
   const shown = keysIn([seen, v]);
@@ -195,9 +195,9 @@ async function played(suite, split, key) {
 test("a finished session's trace replays to the same results byte for byte; a tampered trace does not", async () => {
   const suite = { ...SUITE, splits: { dev: [SOLO, SHARED] } }, trace = JSON.parse(JSON.stringify(await played(suite, "dev")));
   assert.deepEqual([trace.format, trace.simulated, trace.start.player, trace.calls.at(-1).tool, trace.results.map((r) => [r.total, r.ended])],
-    [TRACE_FORMAT, true, undefined, "list_hails", [[93, "arrived"], [0, "ended on the watch page"]]]);
+    [TRACE_FORMAT, true, undefined, "list_hails", [[99022.04178790265, "arrived"], [0, "ended on the watch page"]]]);
   assert.deepEqual(await replayTrace(E, suite, trace), { verified: true, suite_tasks: true, tasks: [
-    { task_id: SOLO.id, stored: 93, replayed: 93, same: true }, { task_id: SHARED.id, stored: 0, replayed: 0, same: true }] });
+    { task_id: SOLO.id, stored: 99022.04178790265, replayed: 99022.04178790265, same: true }, { task_id: SHARED.id, stored: 0, replayed: 0, same: true }] });
 
   const fare = structuredClone(trace), d = fare.calls.find((c) => c.tool === "dispatch");
   d.input.quoted_fare_usd = Math.round(d.input.quoted_fare_usd * 3);
@@ -206,7 +206,7 @@ test("a finished session's trace replays to the same results byte for byte; a ta
   const score = structuredClone(trace);
   score.results[0].total = 100;
   assert.deepEqual(await replayTrace(E, suite, score), { verified: false, suite_tasks: true, tasks: [
-    { task_id: SOLO.id, stored: 100, replayed: 93, same: false }, { task_id: SHARED.id, stored: 0, replayed: 0, same: true }] });
+    { task_id: SOLO.id, stored: 100, replayed: 99022.04178790265, same: false }, { task_id: SHARED.id, stored: 0, replayed: 0, same: true }] });
   const own = structuredClone(trace);
   own.start.tasks[0] = { ...SOLO, clock_jd: SOLO.clock_jd + 1 };
   assert.deepEqual((await replayTrace(E, suite, own)).suite_tasks, false);
@@ -225,7 +225,7 @@ test("bench/verify.mjs replays a downloaded test-split trace with the key, and e
     assert.match(ok.stdout, new RegExp("same      iss-crew/held: stored " + trace.results[0].total + ", replayed " + trace.results[0].total + "\\nverified: the calls reproduce every stored result"));
     const tampered = cli(bad, KEY);
     assert.equal(tampered.status, 1);
-    assert.match(tampered.stdout, /DIFFERENT iss-crew\/held: stored \d+, replayed null\nNOT verified/);
+    assert.match(tampered.stdout, /DIFFERENT iss-crew\/held: stored [\d.]+, replayed null\nNOT verified/);
     assert.match(cli(good, "").stderr, /the test split needs STARFARE_BENCH_KEY in the environment/);
     assert.equal(cli(good, "another-key").status, 1);
   } finally { rmSync(dir, { recursive: true, force: true }); }

@@ -224,7 +224,7 @@ table.t td.wrapc{white-space:normal;min-width:220px;font-family:Inter;font-size:
 .cp .h{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-bottom:8px}
 .cp .h b{font-size:14px}
 .sparts{display:grid;gap:10px}
-.sp{display:grid;grid-template-columns:160px minmax(0,1fr) 70px;gap:4px 14px;align-items:center}
+.sp{display:grid;grid-template-columns:minmax(140px,200px) minmax(0,1fr) auto;gap:4px 14px;align-items:center}
 .sp .lb{font-weight:600;font-size:13px}
 .sp .bar{height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
 .sp .bar i{display:block;height:100%;border-radius:4px}
@@ -412,7 +412,7 @@ var SF = (function () {
     (live ? live.checkpoints : log.checkpoints || []).forEach(function (c) {
       var d = c.decision;
       ev.push({ jd: jdOf(c.at), kind: "checkpoint", title: "Checkpoint " + c.n + ": " + c.kind.replace("_", " ") + " at " + name(c.place),
-        text: "Cause: " + c.cause.replace("_", " ") + ". " + (live ? (d ? "The Grok bot chose: " + decText(d) + "." : "Waiting for the Grok bot's decision.") : "Agent chose: " + d.action + ". Best in hindsight: " + c.best + "."), cp: c });
+        text: "Cause: " + c.cause.replace("_", " ") + ". " + (live ? (d ? "The Grok bot chose: " + decText(d) + "." : "Waiting for the Grok bot's decision.") : "Agent chose: " + (d ? d.action : "") + "."), cp: c });
     });
     (live ? live.incidents : ride.record.score.incidents).forEach(function (x) {
       ev.push({ jd: jdOf(x.at), kind: "incident", title: x.kind.replace("_", " ") + " at " + name(x.place), text: x.note + (x.hours ? " (" + fmt(x.hours, 1) + " h" : "") + (x.kwh ? (x.hours ? ", " : " (") + fmt(x.kwh) + " kWh)" : x.hours ? ")" : "") });
@@ -1190,7 +1190,7 @@ function renderDlog() {
 function debrief() {
   var r = RIDE, rec = r.record, sc = rec.score, lg = rec.log, h = hailOf(lg.hail) || {}, P = RS.pl;
   var parts = sc.parts.map(function (p) {
-    var f = p.got / p.max, col = f >= 0.999 ? "var(--ok)" : f >= 0.5 ? "var(--sun)" : "var(--bad)";
+    var f = p.max ? p.got / p.max : 0, col = !p.max ? "var(--ink-3)" : f >= 0.999 ? "var(--ok)" : f >= 0.5 ? "var(--sun)" : "var(--bad)";
     return '<div class="sp"><span class="lb">' + esc(p.label) + '</span><span class="bar"><i style="width:' + (f * 100).toFixed(1) + "%;background:" + col + '"></i></span><span class="v">' + fmt(p.got, p.got % 1 ? 1 : 0) + " / " + p.max + '</span><span class="nt">' + esc(shipWords(p.note)) + "</span></div>";
   }).join("");
   var legRows = r.legs.map(function (L, j) {
@@ -1202,12 +1202,12 @@ function debrief() {
     return "<tr><td>" + esc(legKind(f.leg)) + '</td><td style="font-family:Inter">' + placeH(f.from) + " \u2192 " + placeH(f.to) + "</td><td>" + esc(f.depart) + "</td><td>" + esc(f.arrive) + '</td><td class="r">' + fmt(f.kwh) + "</td><td>" + (f.gate === "PASS" ? '<span class="pass">PASS</span>' : f.gate === "local" ? '<span class="dim">Local hop</span>' : esc(f.gate)) + "</td></tr>";
   }).join("");
   var cps = (lg.checkpoints || []).map(function (cp) {
-    var rows = cp.options_hindsight.map(function (o) {
-      var chosen = o.option.indexOf(cp.decision.action) === 0, best = o.option === cp.best;
-      return "<tr><td" + (best ? ' class="best"' : "") + ">" + (best ? "\u2605 " : "") + esc(shipWords(o.option)) + "</td><td>" + (chosen ? '<span class="tag ride">Agent chose</span>' : "") + (best ? ' <span class="tag me">Best</span>' : "") + '</td><td class="r">' + fmt(o.used_kwh) + "</td><td>" + esc(o.arrive) + "</td></tr>";
+    var rows = (cp.options_hindsight || []).map(function (o) {
+      var chosen = cp.decision && o.option.indexOf(cp.decision.action) === 0;
+      return "<tr><td>" + esc(shipWords(o.option)) + "</td><td>" + (chosen ? '<span class="tag ride">Agent chose</span>' : "") + '</td><td class="r">' + fmt(o.used_kwh) + "</td><td>" + esc(o.arrive) + "</td></tr>";
     }).join("");
     return '<div class="cp"><div class="h"><span class="tag me">Checkpoint ' + cp.n + "</span><b>" + esc(cp.kind.replace("_", " ")) + " at " + esc(SF.name(cp.place)) + '</b><span class="mono dim">' + esc(cp.at) + " \u00B7 " + esc(legKind(cp.leg)) + " leg \u00B7 cause " + esc(cp.cause.replace("_", " ")) + "</span></div>" +
-      '<p style="margin:0 0 8px">The agent called <code class="mono" style="color:var(--me)">decide</code> and chose <b>' + esc(cp.decision.action) + "</b>. Best in hindsight: <b class=\"best\">" + esc(cp.best) + "</b>.</p>" +
+      '<p style="margin:0 0 8px">The agent called <code class="mono" style="color:var(--me)">decide</code> and chose <b>' + esc(cp.decision ? cp.decision.action : "") + "</b>. Each row is one hindsight option and the energy it would have used.</p>" +
       '<div class="tw"><table class="t"><thead><tr><th>Option (hindsight)</th><th></th><th class="r">Energy used, kWh</th><th>Arrival</th></tr></thead><tbody>' + rows + "</tbody></table></div></div>";
   }).join("") || '<p class="dim" style="margin:0">No checkpoints on this flight.</p>';
   var inc = sc.incidents.length ? '<div class="tw"><table class="t"><thead><tr><th>Incident</th><th>Leg</th><th>Place</th><th>At</th><th class="r">Hours</th><th class="r">kWh</th><th>Note</th></tr></thead><tbody>' + sc.incidents.map(function (x) {
