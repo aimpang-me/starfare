@@ -18,7 +18,7 @@ const PLAYER = "p_0123456789abcdef";
 const skyAt = (jd) => SKY.t0_ms + Math.round((jd - SKY.jd0) * 1000);
 const DUST_NOW = skyAt(2462172.6);
 const LINE_KEYS = ["schema", "simulated", "run_id", "index", "steps", "kind", "observation", "action", "events", "checkpoint", "options", "reward", "outcome"];
-const PART_KEYS = ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy"];
+const PART_KEYS = ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy", "tank", "throttle", "window", "recovery", "dose"];
 const slang = ["c", "ar"].join("");
 const removed = ["Road", "ster"].join("");
 const banned = new RegExp("\\b" + slang + "\\b|" + removed, "i");
@@ -49,7 +49,7 @@ async function dustArrived() {
   return run;
 }
 
-test("an arrived ride exports one JSONL episode with the schema fields and the seven score parts", async () => {
+test("an arrived ride exports one JSONL episode with the schema fields and the stored score parts", async () => {
   const run = await dustArrived();
   const text = await episodeText(E, run, null);
   const rows = linesOf(text);
@@ -70,12 +70,17 @@ test("an arrived ride exports one JSONL episode with the schema fields and the s
   assert.match(last.outcome.note, /Simulated/);
   assert.equal(last.reward.total, run.score.total);
   assert.equal(last.reward.out_of, run.score.out_of);
+  assert.equal(last.reward.score_version, run.score.score_version);
   assert.deepEqual(last.reward.parts.map((p) => p.key), PART_KEYS);
+  assert.deepEqual(last.reward.parts.map((p) => p.key), run.score.parts.map((p) => p.key));
   for (const part of last.reward.parts) {
     const src = run.score.parts.find((p) => p.key === part.key);
     assert.equal(part.got, src.got);
     assert.equal(part.max, src.max);
     assert.equal(part.label, src.label);
+    assert.equal(part.unit, src.unit);
+    assert.equal(part.measure, src.measure);
+    assert.equal(part.note, src.note);
   }
   for (const row of last.reward.measures) assert.equal(row.value, run.score[row.key]);
   assert.deepEqual(last.reward.measures.map((row) => row.unit), ["hours", "hours", "usd", "kwh", "kwh", "kwh", "kwh", "kwh", "msv"]);

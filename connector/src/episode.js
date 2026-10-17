@@ -5,7 +5,6 @@ export const EPISODE_SCHEMA = "starfare.episode/1";
 export const EPISODE_PATH = /^\/flight\/(run_[0-9a-f]{20})\/episode\.jsonl$/;
 
 const NOTE = "Simulated riders, fleet and hazards; planet positions are real (JPL DE421).";
-const PART_KEYS = ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy"];
 const MEASURES = [
   ["delay_hours", "hours"], ["promise_slip_hours", "hours"], ["fare_usd", "usd"],
   ["planned_kwh", "kwh"], ["extra_kwh", "kwh"], ["divert_kwh", "kwh"], ["used_kwh", "kwh"], ["par_kwh", "kwh"],
@@ -139,12 +138,10 @@ function checkpointView(run, cp) {
 
 function rewardOf(score) {
   return {
-    total: score.total, out_of: score.out_of,
-    parts: PART_KEYS.map((key) => {
-      const p = score.parts.find((x) => x.key === key);
-      if (!p) throw new Error("score is missing a part");
-      return { key: p.key, label: p.label, got: p.got, max: p.max, note: p.note };
-    }),
+    total: score.total, out_of: score.out_of, score_version: score.score_version,
+    parts: score.parts.map((p) => ({
+      key: p.key, label: p.label, got: p.got, max: p.max, unit: p.unit, measure: p.measure, note: p.note,
+    })),
     measures: MEASURES.map(([key, unit]) => ({ key, value: score[key], unit })),
   };
 }

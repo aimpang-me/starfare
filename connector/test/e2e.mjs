@@ -360,7 +360,8 @@ async function phaseOff() {
     assert.equal(epRows.at(-1).schema, "starfare.episode/1");
     assert.equal(epRows.at(-1).outcome.status, "arrived");
     assert.equal(epRows.at(-1).reward.total, out.total);
-    assert.deepEqual(epRows.at(-1).reward.parts.map((p) => p.key), ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy"]);
+    assert.equal(epRows.at(-1).reward.score_version, out.score_version);
+    assert.deepEqual(epRows.at(-1).reward.parts.map((p) => p.key), out.parts.map((p) => p.key));
     assert.equal(epRows.some((row) => JSON.stringify(row).includes('"best"')), false);
     assert.doesNotMatch(epText, /\bcar\b|roadster/i);
     assert.doesNotMatch(epText, /player_id|player_tag/);
