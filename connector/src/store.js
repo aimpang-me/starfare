@@ -123,7 +123,6 @@ export class StarfareRun extends DurableObject {
     const run = await this.#run();
     return run && (phaseOf(run) === "arrived" || (phaseOf(run) === "in_flight" && run.live)) ? liveRecord(await engine(), run, Date.now()) : null;
   }
-  /** The arrived run as one JSONL episode, or null when it has not arrived or its world must stay hidden. */
   async episode() {
     const run = await this.#run();
     if (!run) return null;

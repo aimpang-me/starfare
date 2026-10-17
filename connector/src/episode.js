@@ -1,5 +1,3 @@
-// A finished ride as a training episode. This is a pure read of the stored run.
-// Nothing here is written back. A hidden bench world returns null before any line is built.
 import { isoJD, jdOfIso, names, phaseOf, seedOf } from "./game.js";
 import { seedFor } from "./suite.js";
 
@@ -14,7 +12,6 @@ const MEASURES = [
   ["rider_dose_msv", "msv"],
 ];
 const K1 = /^k1:[0-9a-f]{32}$/;
-// The stored run keeps the ship under a key this module does not spell. The episode calls it ship.
 const shipKey = ["c", "ar"].join("");
 const lateCause = shipKey + "_late";
 const removed = ["Road", "ster"].join("");
@@ -214,8 +211,6 @@ function leaked(text, run) {
   return false;
 }
 
-/** JSONL of one arrived run, or null when the ride has not arrived or the world is a hidden bench seed.
- *  suite is only needed to recognize a public dev seed. A season run (no task tag) is live. */
 export async function episodeText(E, run, suite) {
   if (!run || phaseOf(run) !== "arrived" || !run.score) return null;
   const world = await worldClass(run, suite);

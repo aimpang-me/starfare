@@ -126,8 +126,6 @@ export default {
     }
     // Home map flights (simulated), including the newest landed one.
     if (url.pathname === "/live.json") return Response.json({ simulated: true, ...(await hub(env).live()) }, { headers: { "cache-control": "no-store" } });
-    // Same run id gate and per address limit as the flight page. Only an arrived ride has an episode.
-    // A ride still in the air, or a hidden bench world, answers with the same 404 as an unknown run.
     const episode = EPISODE_PATH.exec(url.pathname);
     if (episode) {
       const limit = Number(env.RATE_PER_MIN) || 120;
