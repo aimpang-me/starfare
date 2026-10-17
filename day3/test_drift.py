@@ -1,5 +1,3 @@
-"""The regression treats two quotes as the same ride when the route and the re-fly verdict match.
-CPU SIMD kernels move the re-fly residual and the Newton count. A different departure is drift."""
 import os
 import sys
 
