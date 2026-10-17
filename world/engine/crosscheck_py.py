@@ -194,8 +194,8 @@ class ChebTable:
         from ephem import HermiteTable
         self.bisect = bisect.bisect_right
         self.eph, self.naifs = eph, list(naifs)
-        # the JS table starts 2026-10-01; refly.py integrates small bodies from their Horizons epochs (Roadster
-        # 2026-01-01), so before the table start fall back to refly.py's own DE421 Hermite table
+        # the JS table starts 2026-10-01; Horizons epochs in data/targets.json can be earlier,
+        # so before the table start fall back to refly.py's own DE421 Hermite table
         self.t_start = (eph.jd0 - J2000) * DAY
         self.pre = HermiteTable(EPH, self.naifs, jd_start, eph.jd0 + 1) if jd_start < eph.jd0 else None
         self.k = eph.k

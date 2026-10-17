@@ -133,7 +133,7 @@ curl -si -X POST $URL/mcp \
 curl -s $URL/board | head -20
 ```
 
-Expected: the first prints the landing page's HTML (`<title>Starfare</title>`, the `/mcp` URL under "Works with Grok"); open `$URL/` in a browser to see the sky map move; the second returns `200` with an `event: message` body naming `serverInfo.name` `sol` and carrying the dispatcher instructions ("Starfare is a concept robotaxi service for flying roadsters ..."); the third is the board's HTML ("Starfare dispatcher board", one row per hail).
+Expected: the first prints the landing page's HTML (`<title>Starfare</title>`, the `/mcp` URL under "Works with Grok"); open `$URL/` in a browser to see the sky map move; the second returns `200` with an `event: message` body naming `serverInfo.name` `sol` and carrying the dispatcher instructions ("Starfare is a concept robotaxi service for Starseeker ships ..."); the third is the board's HTML ("Starfare dispatcher board", one row per hail).
 
 ### 4. Play one run from your terminal (optional) [verified locally]
 

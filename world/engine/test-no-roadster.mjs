@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { assertProjected, keepIds, projectEphemeris } from "./ship-ephem.mjs";
+import { assertProjected, exciseEphemerisText, keepIds, projectEphemeris } from "./ship-ephem.mjs";
 import { placesTable } from "./sol-engine.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -67,6 +67,20 @@ check("shipped ephemeris keys are keepIds(places)", () => {
   for (const id of keep) assert.equal(projected.bodies[id].data, ephem.bodies[id].data);
 });
 
+check("excise keeps sibling spellings and is idempotent", () => {
+  const places = [
+    { id: "mars", kind: "planet" },
+    { id: "bennu", kind: "small" },
+  ];
+  const json = '{"earth_k":1.0,"bodies":{"emb":{"q_km":1.0,"data":"E"},"moon_geo":{"q_km":1.0,"data":"M"},"mars":{"q_km":1.0,"data":"AA"},"bennu":{"q_km":1.0,"data":"BB"},"roadster":{"q_km":1.0,"data":"ZZ"}}}';
+  const once = exciseEphemerisText(json, places);
+  assert.equal(once.includes("1.0"), true);
+  assert.equal(once.includes("roadster"), false);
+  assert.equal(once.includes('"data":"AA"'), true);
+  assert.equal(once.includes('"data":"BB"'), true);
+  assert.equal(exciseEphemerisText(once, places), once);
+});
+
 check("shipped files have no roadster or tesla", () => {
   const root = join(here, "..", "..");
   const files = [
@@ -76,7 +90,10 @@ check("shipped files have no roadster or tesla", () => {
     "world/engine/sol-page.js",
     "world/engine/ephem.js",
     "world/engine/ephem.json",
+    "world/engine/ephem_errors.json",
+    "world/engine/ephem_testvectors.json",
     "world/engine/places.json",
+    "world/engine/crosscheck_py.py",
     "world/engine/ship-ephem.mjs",
     "world/engine/bake_ephem.py",
     "world/engine/crosscheck.mjs",

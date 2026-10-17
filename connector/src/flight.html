@@ -972,7 +972,7 @@ function buildRideScene() {
     var used = {}; rp.legs.concat(rp.plan).forEach(function (L) { used[L.from] = used[L.to] = 1; });
     SF.E.PLACES.forEach(function (Q) {
       var id = Q.id, m, minPx = 2;
-      if (Q.kind === "planet" || Q.kind === "small") {
+      if (Q.kind === "planet" || (Q.kind === "small" && Q.mu)) {
         m = planetMesh(id); minPx = 2.6;
         var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 180).map(function (q) { return S([q[0] / AU, q[1] / AU, q[2] / AU]); });
         if (ring.length) sc.add(lineOf(ring, 0xffffff, 0.12));

@@ -18,7 +18,7 @@ const args = process.argv.slice(2);
 const ONLY = args.includes("--only") ? args[args.indexOf("--only") + 1].split(",") : null;
 const FRESH = args.includes("--fresh");
 const PYVER = "py-3";  // bump when crosscheck_py.py changes (cache key)
-const loadedBodies = new Set(S.init(JSON.parse(fs.readFileSync(path.join(HERE, "ephem.json")))).bodies);
+S.init(JSON.parse(fs.readFileSync(path.join(HERE, "ephem.json"))));
 const jd = S.jdFromIso;
 const EPH_END_QUOTE = 2471000.0;  // quote.py EPH_END
 const TOFMAX = { mercury: 300, venus: 400, bennu: 1000, ceres: 1800, mars: 700, jupiter: 2600, saturn: 4800, uranus: 9000, neptune: 13000 };
@@ -369,7 +369,6 @@ function writeReport(R, unit) {
     "| body | segment d (base) | degree | segments | KiB | bake max \\|dr\\| m | bake rms m | bake max \\|dv\\| mm/s | JS max \\|dr\\| m | JS max \\|dv\\| mm/s |", "|---|---|---|---|---|---|---|---|---|---|");
   for (const [b, e] of Object.entries(er)) {
     if (b.startsWith("_")) continue;
-    if (b !== "earth" && b !== "moon" && !loadedBodies.has(b)) continue;
     let mp = null, mv = null;
     const vec = tv.bodies[b];
     if (vec) {

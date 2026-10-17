@@ -80,15 +80,6 @@
   "rms_pos_err_km": 0.005026461796014424,
   "max_vel_err_kms": 3.0894370171008273e-06
  },
- "roadster": {
-  "seg_days": 77,
-  "deg": 16,
-  "nseg": 133,
-  "chars": 23255,
-  "max_pos_err_km": 0.004320029922943638,
-  "rms_pos_err_km": 0.0010694956984805804,
-  "max_vel_err_kms": 3.210311609947996e-07
- },
  "bennu": {
   "seg_days": 77,
   "deg": 15,
@@ -119,7 +110,7 @@
   "rms_pos_err_km": 0.0052468870458970565,
   "max_vel_err_kms": 2.506848512489521e-06
  },
- "_total_json_bytes": 402060,
+ "_total_json_bytes": 378723,
  "_coverage": [
   2461314.5,
   2471170.5
