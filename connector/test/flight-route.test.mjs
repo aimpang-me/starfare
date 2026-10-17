@@ -19,9 +19,12 @@ test("a scoreboard tag is not a flight path", () => {
 test("the scoreboard does not tell you to open the tag as a flight", () => {
   const site = readFileSync(new URL("src/site.html", root), "utf8");
   const board = readFileSync(new URL("src/board.js", root), "utf8");
-  assert.equal(site.includes("/rides/&lt;run_id&gt;.json"), false);
+  assert.equal(site.includes("/rides/&lt;run_id&gt;.json"), true);
+  assert.equal(site.includes("It is not a flight address."), true);
   assert.equal(site.includes(">Run</th>"), false);
+  assert.equal(site.includes(">Tag</th>"), true);
   assert.equal(board.includes("run ${esc(b.run_tag)}"), false);
+  assert.equal(board.includes("tag ${esc(b.run_tag)}"), true);
 });
 
 test("the credits line does not name Tesla or SpaceX", () => {
