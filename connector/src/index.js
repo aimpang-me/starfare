@@ -7,6 +7,7 @@ import { boardHtml } from "./board.js";
 import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
 import engineSrc from "./engine/sol-page.txt";
+import { EPISODE_PATH } from "./episode.js";
 import { fleet, listHails } from "./game.js";
 import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
@@ -125,6 +126,14 @@ export default {
     }
     // Home map flights (simulated), including the newest landed one.
     if (url.pathname === "/live.json") return Response.json({ simulated: true, ...(await hub(env).live()) }, { headers: { "cache-control": "no-store" } });
+    const episode = EPISODE_PATH.exec(url.pathname);
+    if (episode) {
+      const limit = Number(env.RATE_PER_MIN) || 120;
+      if (!(await hub(env).hit("rides:" + (req.headers.get("cf-connecting-ip") || "unknown"), limit)).ok) return new Response("Too many requests. Try again in a minute.", { status: 429, headers: { "retry-after": "60" } });
+      const body = await runStub(env, episode[1]).episode();
+      if (!body) return new Response("Not found: no arrived flight with that run_id", { status: 404 });
+      return new Response(body, { headers: { "content-type": "application/x-ndjson; charset=utf-8", "content-disposition": `attachment; filename="${episode[1]}.episode.jsonl"`, "cache-control": "public, max-age=60" } });
+    }
     // The flight page: live playback of a season flight in the air, then its replay and receipt. The page polls
     // /rides/<run_id>.json itself; the drawn arcs ride in the page so the download stays the starfare.ride/1 record.
     const flight = FLIGHT_PATH.exec(url.pathname);

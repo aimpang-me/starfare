@@ -309,6 +309,10 @@ async function phaseOff() {
     const id = held.hail.run_id, s = held.d.situation;
     assert.ok(Number.isInteger(held.d.checkpoint_in_s) && held.d.checkpoint_in_s <= held.d.lands_in_s, `${held.d.checkpoint_in_s} vs ${held.d.lands_in_s}`);
 
+    const earlyEp = await fetch(`${w.base}/flight/${id}/episode.jsonl`);
+    assert.equal(earlyEp.status, 404);
+    assert.equal(await earlyEp.text(), "Not found: no arrived flight with that run_id");
+
     const r = await fetch(`${w.base}/rides/${id}.json`), text = await r.text(), rec = JSON.parse(text);
     assert.equal(r.status, 200); assert.equal(r.headers.get("cache-control"), "no-store");
     assert.equal(rec.phase, "in_flight"); assert.equal(rec.score, null); assert.equal(rec.log, null);
@@ -349,6 +353,20 @@ async function phaseOff() {
     assert.deepEqual(done.trail.filter((t) => t.tool === "decide").map((t) => t.note), Array.from({ length: n }, (_, k) => `e2e: default at ${k + 1}`));
     const after = await fetch(`${w.base}/flight/${id}.json`);
     assert.equal(after.headers.get("cache-control"), "public, max-age=60"); assert.equal((await after.json()).in_flight, false);
+    const ep = await fetch(`${w.base}/flight/${id}/episode.jsonl`), epText = await ep.text();
+    assert.equal(ep.status, 200);
+    assert.equal(ep.headers.get("content-type"), "application/x-ndjson; charset=utf-8");
+    const epRows = epText.trim().split("\n").map((s) => JSON.parse(s));
+    assert.equal(epRows.at(-1).schema, "starfare.episode/1");
+    assert.equal(epRows.at(-1).outcome.status, "arrived");
+    assert.equal(epRows.at(-1).reward.total, out.total);
+    assert.equal(epRows.at(-1).reward.score_version, out.score_version);
+    assert.deepEqual(epRows.at(-1).reward.parts.map((p) => p.key), out.parts.map((p) => p.key));
+    assert.equal(epRows.some((row) => JSON.stringify(row).includes('"best"')), false);
+    assert.doesNotMatch(epText, /\bcar\b|roadster/i);
+    assert.doesNotMatch(epText, /player_id|player_tag/);
+    const missingEp = await fetch(`${w.base}/flight/run_${"0".repeat(20)}/episode.jsonl`);
+    assert.equal(missingEp.status, 404);
     report.live = { tried, run_id: id, checkpoint_in_s: held.d.checkpoint_in_s, lands_in_s: held.d.lands_in_s, decides: n, landed_in_s: out.lands_in_s };
   });
 
