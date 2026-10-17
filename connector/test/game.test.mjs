@@ -142,6 +142,22 @@ test("with nothing in the way, the par car's plan with an exact quote stays unde
   assert.equal(clean.promise_slip_hours, 0); assert.equal(clean.extra_kwh, 0);
 });
 
+test("a ride leg with more kWh than the published set point loses throttle points", async () => {
+  const run = await seasonRun(E, "iss-crew", NOW, "run_throttle");
+  const p = (await planPickup(E, run, { car: run.par_car })).leg;
+  const r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
+  const setPoint = p.kwh + r.kwh;
+  r.kwh += r.kwh;
+  const out = dispatch(E, run, {
+    pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd), ask_after_hours: "never",
+  }, NOW);
+  assert.equal(out.status, "arrived");
+  const row = out.parts.find((x) => x.key === "throttle");
+  assert.equal(row.measure, (p.kwh + r.kwh) - setPoint);
+  assert.ok(row.got < row.max * R.SCORE_HEADROOM, row.got);
+  assert.ok(row.got > 0, row.got);
+});
+
 test("a far car with the smaller tank is refused", async () => {
   await assert.rejects(play("iss-crew", "sf-02"), /Deep Space 1 class xenon tank holds 82 kg and this leg needs 84\.3 kg/);
 });
