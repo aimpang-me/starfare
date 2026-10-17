@@ -541,7 +541,9 @@ function localTransfer(o, d, mo, md, opt) {
   let best = null;
   for (const a of side(mo)) for (const b of side(md)) if (a.around === b.around && !best) best = [a, b];
   if (!best) return null;
-  const [a, b] = best, mu = a.mu, prim = a.around;
+  const [a, b] = best, prim = a.around;
+  // A moon chain stores the planet-body GM. A planet chain stores the system GM. One Hohmann uses the planet-body GM.
+  const mu = a.mu === b.mu ? a.mu : PLANET_MU[prim];
   if (prim !== "earth" && prim !== "moon" && !opt.allLocal)
     return { error: `local transfer around ${P[prim].name} is not supported (only the Earth-Moon system is)` };
   const r1 = a.r, r2 = b.r;

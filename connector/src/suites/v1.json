@@ -1,7 +1,7 @@
 {
   "format": "starfare.suite/1",
   "id": "v1",
-  "engine_sha256": "44a1f7fe999b25f4ffb67147c97ee46646fff0b7df2df275a50abc9c552b8a8e",
+  "engine_sha256": "65b725c8d154f39a4abf8967285949224d72e15b13f0263e7b465e5b336568ec",
   "score_version": 1,
   "budget": 60,
   "world": "per_task",
