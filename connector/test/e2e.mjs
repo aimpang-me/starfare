@@ -107,7 +107,7 @@ function nodeScore(hailId, riderReady, season, carId, planCalls, quote, objectiv
     hindsight_kwh = low;
   }
   const s = R.score(hailId, [p, r], { t0, arrive_by_jd: T.arrive_by_jd, par_kwh: T.par.kwh, best_wait_days: T.par.best_wait_days, plan_calls: planCalls, ship: carId,
-    window_kwh: (p.window_kwh ?? p.kwh) + (r.window_kwh ?? r.kwh), hindsight_kwh, quote: q, flown: F });
+    window_kwh: (p.window_kwh ?? p.kwh) + (r.window_kwh ?? r.kwh), throttled_kwh: (p.throttled_kwh ?? p.kwh) + (r.throttled_kwh ?? r.kwh), hindsight_kwh, quote: q, flown: F });
   return { T, p, r, F, s };
 }
 

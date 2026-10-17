@@ -249,7 +249,8 @@ export function computeLeg(E, from, to, t, obj, endJd, ship) {
   }));
   return {
     from, to, dep_jd: b.dep_jd, arr_jd: b.arr_jd, tof_days: b.tof_days, dv: +b.dv_total_kms.toFixed(3), kwh: b.battery.energy_kwh, fare: b.fare.total_usd,
-    xenon_kg: b.battery.propellant_kg, set_point: b.battery.set_point || null, r_au: b.r_au, window_kwh: b.window_kwh, departures,
+    xenon_kg: b.battery.propellant_kg, set_point: b.battery.set_point || null, r_au: b.r_au, window_kwh: b.window_kwh,
+    throttled_kwh: b.battery.energy_kwh, departures,
     gate: loc ? "local" : g && g.pass ? "PASS" : "FAIL",
     refly: loc ? { result: "not re-flown: local transfer" } : g && g.error ? { result: "FAIL", note: g.error }
       : { final_miss_km: +(+g.final_miss_km).toFixed(3), retarget_ms: +(+g.retarget_ms).toFixed(1), result: g.pass ? "PASS" : "FAIL" },
@@ -526,8 +527,9 @@ function land(E, run, F) {
   const R = E.R, legs = run.route.map((id) => run.legs[id]), quote = run.quote;
   const plan = run.plan ? { stops: run.plan.stops, legs } : legs, M = R.manifest(R.planOf(run.id, run.car, plan));
   const windowKwh = legs.reduce((a, l) => a + (l.window_kwh != null ? l.window_kwh : l.kwh), 0);
+  const throttledKwh = legs.reduce((a, l) => a + (l.throttled_kwh != null ? l.throttled_kwh : l.kwh), 0);
   const sc = R.score(run.id, plan, { t0: run.t0, arrive_by_jd: run.arrive_by_jd, par_kwh: run.par_kwh, best_wait_days: run.best_wait_days, plan_calls: run.calls,
-    kind: R.BY[run.id].kind, ship: run.car, window_kwh: windowKwh, hindsight_kwh: hindsightKwh(E, run), quote, flown: F,
+    kind: R.BY[run.id].kind, ship: run.car, window_kwh: windowKwh, throttled_kwh: throttledKwh, hindsight_kwh: hindsightKwh(E, run), quote, flown: F,
     ...(run.plan ? { bookings: Object.fromEntries(run.hails.map((id) => [id, { ...run.bookings[id], quote: run.quotes[id] }])) } : {}) });
   const qj = promisedJd(E, quote.arrival);
   const incidents = incidentsPub(E, sc.incidents);

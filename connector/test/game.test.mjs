@@ -24,7 +24,7 @@ async function play(hail, car, objective = "energy", nowMs = NOW, quote = "exact
 /** The engine's own verdict on the same legs: R.fly with the run's seed, then R.score with ctx.flown. */
 function engineScore(run, p, r, quote) {
   const F = R.fly(run.id, p.car, [p, r], run.t0, run.seed);
-  const s = R.score(run.id, [p, r], { t0: run.t0, arrive_by_jd: run.arrive_by_jd, par_kwh: run.par_kwh, best_wait_days: run.best_wait_days, plan_calls: run.calls, ship: p.car, window_kwh: (p.window_kwh ?? p.kwh) + (r.window_kwh ?? r.kwh), quote, flown: F });
+  const s = R.score(run.id, [p, r], { t0: run.t0, arrive_by_jd: run.arrive_by_jd, par_kwh: run.par_kwh, best_wait_days: run.best_wait_days, plan_calls: run.calls, ship: p.car, window_kwh: (p.window_kwh ?? p.kwh) + (r.window_kwh ?? r.kwh), throttled_kwh: (p.throttled_kwh ?? p.kwh) + (r.throttled_kwh ?? r.kwh), quote, flown: F });
   return { F, s };
 }
 /** First sky day (NOW + k days, k < n) for which pred returns something truthy. */
