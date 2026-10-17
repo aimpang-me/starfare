@@ -12,7 +12,7 @@ const DUST = { seed: "1", t0: 2462173.5, legs: [
   { from: "phobos", to: "mars-base", dep_jd: 2462175.529253031, arr_jd: 2462175.6220957525, kwh: 11027, fare: 1811.11, gate: "local" }] };
 const dust = (opts) => R.start("phobos-commute", "sf-03", DUST.legs, DUST.t0, DUST.seed, Object.assign({ end_jd: END }, opts));
 
-ok("fly() with no checkpoints is exactly what it was for 298 fixture rides", () => {
+ok("fly() with no checkpoints matches the fixture rides", () => {
   for (const r of FX.rides) assert.deepStrictEqual(R.fly(r.hail, r.car, r.legs, r.t0, r.seed), r.flown, r.hail + " seed " + r.seed + " " + r.car);
 });
 
@@ -30,18 +30,18 @@ ok("ask_after_hours \"never\" is fly(); answering with defaults flies the same r
     assert.strictEqual(asked.used_kwh, r.flown.used_kwh, r.hail + " seed " + r.seed);
     assert.strictEqual(asked.arrive_jd, r.flown.arrive_jd);
   }
-  assert.deepStrictEqual(waited, [["titan-home", "10", 134731, "2035-05-02 05:29"], ["ceres-shift", "17", 115209, "2034-02-04 16:12"]]);
+  assert.deepStrictEqual(waited, [["ceres-shift", "17", 72596, "2034-02-04 16:12"]]);
 });
 
 ok("pad_closed at Mars Base: diverting to Phobos beats holding through the storm", () => {
   const st = dust({ ask_after_hours: 1 }), cp = st.checkpoint;
   assert.deepStrictEqual([cp.n, cp.kind, cp.cause, cp.place, cp.leg, cp.rider_aboard, cp.car], [1, "pad_closed", "dust_storm", "mars-base", "ride", true, "holding in orbit at Mars Base"]);
   assert.deepStrictEqual([R.iso(cp.sky_at), cp.signal_delay_minutes, R.iso(cp.reply_jd)], ["2029-02-08 03:56", 7.3, "2029-02-08 04:10"]);
-  assert.deepStrictEqual(cp.options.find((o) => o.action === "divert").alternates, [{ place: "phobos", name: "Phobos", hop_kwh: 11027, hop_hours: 2.2, berths: 3, booked_now: 1 }]);
+  assert.deepStrictEqual(cp.options.find((o) => o.action === "divert").alternates, [{ place: "phobos", name: "Phobos", hop_kwh: 3221, hop_hours: 2.2, berths: 3, booked_now: 1 }]);
   const hold = finish(R.step(st.ride, { action: "hold" }));
   const div = finish(R.step(st.ride, { action: "divert", place: "phobos", wait_hours: 88.4 }));
   assert.deepStrictEqual([hold.used_kwh, R.iso(hold.arrive_jd)], [45505, "2029-02-12 00:44"]);
-  assert.deepStrictEqual([div.used_kwh, div.divert_kwh, R.iso(div.arrive_jd)], [44419, 22054, "2029-02-12 01:02"]);
+  assert.deepStrictEqual([div.used_kwh, div.divert_kwh, R.iso(div.arrive_jd)], [28807, 6442, "2029-02-12 01:02"]);
   assert.strictEqual(div.incidents.find((x) => x.kind === "divert").at_jd, cp.reply_jd);
   assert.deepStrictEqual(div.segments.map((s) => s.kind + " " + s.from + ">" + s.to), ["planned mars-base>phobos", "planned phobos>mars-base", "divert mars-base>phobos", "return phobos>mars-base"]);
   assert.throws(() => R.step(st.ride, { action: "divert", place: "mars-base" }), /divert to one of: phobos/);
@@ -51,13 +51,13 @@ ok("launch_hold for a solar flare at Ceres Port: a replan beats waiting out the 
   const r = FX.rides.find((x) => x.hail === "ceres-shift" && x.seed === "17" && x.kind === "par");
   const st = R.start(r.hail, r.car, r.legs, r.t0, r.seed, { ask_after_hours: 1, end_jd: END }), cp = st.checkpoint;
   assert.deepStrictEqual([cp.n, cp.kind, cp.cause, cp.place, cp.leg, R.iso(cp.sky_at)], [1, "launch_hold", "solar_flare", "ceres-port", "ride", "2032-03-28 04:12"]);
-  assert.deepStrictEqual([cp.signal_delay_minutes, R.iso(cp.reply_jd), cp.options[0].correction_kwh_if_it_left_on_reply], [14.3, "2032-03-28 04:41", 839]);
+  assert.deepStrictEqual([cp.signal_delay_minutes, R.iso(cp.reply_jd), cp.options[0].correction_kwh_if_it_left_on_reply], [14.3, "2032-03-28 04:41", 529]);
   const wait = finish(R.step(st.ride, { action: "wait" }));
-  assert.deepStrictEqual([wait.used_kwh, wait.incidents.find((x) => x.kind === "correction_burn").kwh], [115209, 26472]);
+  assert.deepStrictEqual([wait.used_kwh, wait.incidents.find((x) => x.kind === "correction_burn").kwh], [72596, 16671]);
   const b = R.planLeg("ceres-port", "mars-base", 2463322.571546903, "energy", END);
   const leg = { from: "ceres-port", to: "mars-base", dep_jd: b.dep_jd, arr_jd: b.arr_jd, kwh: b.battery.energy_kwh, fare: b.fare.total_usd, gate: "PASS" };
   const rp = finish(R.step(st.ride, { action: "replan", leg }));
-  assert.deepStrictEqual([leg.kwh, rp.used_kwh, R.iso(rp.arrive_jd)], [82168, 82666, "2034-03-09 06:56"]);
+  assert.deepStrictEqual([leg.kwh, rp.used_kwh, R.iso(rp.arrive_jd)], [51466, 51822, "2034-03-09 06:56"]);
   assert.throws(() => R.step(st.ride, { action: "replan", leg: Object.assign({}, leg, { dep_jd: cp.sky_at }) }), /depart at or after 2032-03-28 04:41, when the answer reaches the ship/);
   assert.throws(() => R.step(st.ride, { action: "hold" }), /takes wait or replan/);
 });
@@ -82,18 +82,20 @@ ok("regret: each decided checkpoint lists what every choice would have used", ()
   const st = dust({ ask_after_hours: 1 }), done = R.step(st.ride, { action: "hold" });
   const rows = R.regret(done.ride);
   assert.deepStrictEqual(rows.map((x) => [x.n, x.best, x.options.map((o) => [o.option, o.used_kwh])]),
-    [[1, "divert to Phobos, wait 88.2 h", [["hold until open", 45505], ["divert to Phobos, wait 88.2 h", 44419]]]]);
+    [[1, "divert to Phobos, wait 88.2 h", [["hold until open", 45505], ["divert to Phobos, wait 88.2 h", 28807]]]]);
 });
 
-ok("par is what the fixture says, and hindsight never needs more energy than flying its legs on defaults (100 fixture hails)", () => {
-  let lower = 0;
+ok("par is what the fixture says, and hindsight never needs more energy than flying its legs on defaults", () => {
+  let lower = 0, served = 0;
   for (const T of FX.terms) {
+    if (T.error) { assert.throws(() => R.terms(T.hail, T.t0, END, T.seed), (e) => e instanceof Error && e.message === T.error); continue; }
+    served++;
     const p = R.terms(T.hail, T.t0, END, T.seed).par, plain = R.fly(T.hail, p.car, p.legs, T.t0, T.seed).used_kwh;
     assert.strictEqual(p.kwh, T.par.kwh, T.hail + " seed " + T.seed);
     assert(p.kwh <= plain, T.hail + " seed " + T.seed + ": " + p.kwh + " > " + plain);
     if (p.kwh < plain) lower++;
   }
-  console.log("   hindsight lowered par on", lower, "of", FX.terms.length, "hails");
-  assert.strictEqual(R.terms("ceres-shift", 2461647.5, END, "1").par.kwh, 84884);
+  console.log("   hindsight lowered par on", lower, "of", served, "hails;", FX.terms.length - served, "could not thrust");
+  assert.strictEqual(R.terms("ceres-shift", 2461647.5, END, "1").par.kwh, 53264);
 });
 console.log(n, "passed");

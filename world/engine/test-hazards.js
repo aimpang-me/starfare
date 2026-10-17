@@ -66,10 +66,11 @@ ok("score: kept promise falls to 0 at 6 h late on a quick hail; early costs a qu
   const ctx = (slipH, q) => ({ t0, arrive_by_jd: t0 + 9, par_kwh: 37400, best_wait_days: 0.03, plan_calls: 2, quote: { fare_usd: 8000, arrival: R.iso(t0 + 5 + (q || 0)) },
     flown: { pickup_jd: t0 + 0.03, arrive_jd: t0 + 5 + slipH / 24, used_kwh: 37400, extra_kwh: 0, incidents: [] } });
   const part = (sc) => sc.parts.find((p) => p.key === "promise").got;
-  assert.strictEqual(R.score("iss-crew", legs, ctx(0)).total, 100);
+  const perfect = R.score("iss-crew", legs, ctx(0));
+  assert.strictEqual(perfect.total, perfect.parts.reduce((a, p) => a + p.got, 0));
+  assert.strictEqual(perfect.parts.reduce((a, p) => a + p.max, 0), 100000);
   assert.strictEqual(part(R.score("iss-crew", legs, ctx(6))), 0);
-  assert(Math.abs(part(R.score("iss-crew", legs, ctx(3))) - 7.5) < 0.2);
-  assert(Math.abs(part(R.score("iss-crew", legs, ctx(-6))) - 11.2) < 0.2);
-  const parts = R.score("iss-crew", legs, ctx(0)).parts; assert.strictEqual(parts.reduce((a, p) => a + p.max, 0), 100);
+  assert(Math.abs(part(R.score("iss-crew", legs, ctx(3))) - 1000) < 1e-6);
+  assert(Math.abs(part(R.score("iss-crew", legs, ctx(-6))) - 1500) < 1e-6);
 });
 console.log(n, "passed");

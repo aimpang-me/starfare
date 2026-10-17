@@ -13,7 +13,13 @@ for (let s = 1; s <= SEEDS; s++) {
   const seed = String(s);
   for (const h of R.HAILS) {
     const t0 = t0Of(h, s), a = process.hrtime.bigint();
-    const T = R.terms(h.id, t0, END, seed);
+    let T;
+    try { T = R.terms(h.id, t0, END, seed); }
+    catch (e) {
+      termsMs += Number(process.hrtime.bigint() - a) / 1e6;
+      terms.push({ hail: h.id, seed, t0, error: String(e && e.message || e) });
+      continue;
+    }
     termsMs += Number(process.hrtime.bigint() - a) / 1e6;
     terms.push({ hail: h.id, seed, t0, arrive_by_jd: T.arrive_by_jd, par: T.par });
     rides.push({ hail: h.id, seed, t0, car: T.par.car, kind: "par", legs: T.par.legs, flown: R.fly(h.id, T.par.car, T.par.legs, t0, seed) });
