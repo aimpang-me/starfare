@@ -227,8 +227,33 @@
     logEl.appendChild(ul);
   }
 
+  function trailSpan(points) {
+    var min = [Infinity, Infinity, Infinity];
+    var max = [-Infinity, -Infinity, -Infinity];
+    var pts = points.length ? points : [[0, 0, 0]];
+    for (var i = 0; i < pts.length; i++) {
+      for (var k = 0; k < 3; k++) {
+        if (pts[i][k] < min[k]) min[k] = pts[i][k];
+        if (pts[i][k] > max[k]) max[k] = pts[i][k];
+      }
+    }
+    return Math.max(max[0] - min[0], max[1] - min[1], max[2] - min[2], 4);
+  }
+
   function paintBodies(view) {
     var seen = {};
+    var span = trailSpan(view.trail);
+    var helio = view.mode === "helio";
+    var biggest = 0;
+    if (helio) {
+      for (var j = 0; j < view.bodies.length; j++) {
+        if (view.bodies[j].radius > biggest) biggest = view.bodies[j].radius;
+      }
+    }
+    var cap = span * 0.045;
+    var factor = helio && biggest > cap ? cap / biggest : 1;
+    var markSize = helio ? Math.max(1.8, span * 0.028) : 1.8;
+    if (shipMesh) shipMesh.scale.set(markSize, markSize, 1);
     for (var i = 0; i < view.bodies.length; i++) {
       var b = view.bodies[i];
       seen[b.id] = true;
@@ -251,11 +276,15 @@
         bodyMeshes[b.id] = mesh;
       }
       if (mesh.sphere) {
-        var radius = b.radius > 0 ? b.radius : 0.15;
+        var radius = (b.radius > 0 ? b.radius : 0.15) * factor;
         mesh.sphere.scale.set(radius, radius, radius);
         mesh.sphere.position.set(b.position[0], b.position[1], b.position[2]);
       }
-      if (mesh.sprite) mesh.sprite.position.set(b.position[0], b.position[1], b.position[2]);
+      if (mesh.sprite) {
+        var spriteScale = b.kind === "sun" && helio ? markSize : (helio ? Math.max(1.4, span * 0.012) : 1.4);
+        mesh.sprite.scale.set(spriteScale, spriteScale, 1);
+        mesh.sprite.position.set(b.position[0], b.position[1], b.position[2]);
+      }
     }
     Object.keys(bodyMeshes).forEach(function (id) {
       if (seen[id]) return;
@@ -421,7 +450,29 @@
     if (clock) draw();
   });
 
+  function loadSample() {
+    Promise.all([
+      fetch("sample/phobos.episode.jsonl").then(function (res) {
+        if (!res.ok) throw new Error("episode");
+        return res.text();
+      }),
+      fetch("sample/phobos.arcs.json").then(function (res) {
+        if (!res.ok) throw new Error("arcs");
+        return res.text();
+      })
+    ]).then(function (pair) {
+      if (files.episode || files.arcs) return;
+      files.episode = pair[0];
+      files.arcs = pair[1];
+      tryLoad();
+    }).catch(function () {
+      if (files.episode && files.arcs) return;
+      statusEl.textContent = "The sample flight did not load. Pick an episode file and an arc file.";
+    });
+  }
+
   bootGL();
+  loadSample();
 
   function loop(ms) {
     var seconds = lastMs ? (ms - lastMs) / 1000 : 0;

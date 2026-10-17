@@ -6,6 +6,7 @@ import {
   SKY, checkPad, dispatch, isoJD, jdOfIso, leaveRun, openRun, phaseOf, planPickup, planRideLeg, seasonInstance,
 } from "../connector/src/game.js";
 import { episodeText } from "../connector/src/episode.js";
+import { phobosExport } from "./mint-sample.mjs";
 
 const require = createRequire(import.meta.url);
 const E = require("../connector/src/engine/sol-page.cjs");
@@ -292,7 +293,7 @@ test("the page sources omit the banned words and the dashes", () => {
   const tapeSrc = readFileSync(new URL("./tape.js", import.meta.url), "utf8");
   const htmlSrc = readFileSync(new URL("./index.html", import.meta.url), "utf8");
   const testSrc = readFileSync(new URL("./tape.test.mjs", import.meta.url), "utf8");
-  for (const src of [tapeSrc, htmlSrc, testSrc]) {
+  for (const src of [tapeSrc, htmlSrc, testSrc, readFileSync(new URL("./mint-sample.mjs", import.meta.url), "utf8")]) {
     assert.equal(banned.test(src), false);
     assert.equal(src.includes(taxi), false);
     assert.equal(src.includes(em), false);
@@ -310,6 +311,8 @@ test("the page sources omit the banned words and the dashes", () => {
   assert.ok(htmlSrc.includes("Sky time"));
   assert.ok(htmlSrc.includes("Episode file"));
   assert.ok(htmlSrc.includes("Arc file"));
+  assert.ok(htmlSrc.includes("sample/phobos.episode.jsonl"));
+  assert.ok(htmlSrc.includes("sample/phobos.arcs.json"));
   assert.ok(htmlSrc.includes('aria-label="Score"'));
   assert.ok(htmlSrc.includes('aria-label="Log"'));
   assert.ok(htmlSrc.includes("requestAnimationFrame"));
@@ -319,4 +322,56 @@ test("the page sources omit the banned words and the dashes", () => {
   const sole = htmlSrc.indexOf("sol-page.js");
   const page = htmlSrc.indexOf("tape.js");
   assert.ok(three >= 0 && three < sole && sole < page);
+});
+
+test("the checked-in Phobos sample matches a fresh export and loads", async () => {
+  const { text, arcsText } = await fixture();
+  const minted = await phobosExport();
+  const episode = readFileSync(new URL("./sample/phobos.episode.jsonl", import.meta.url), "utf8");
+  const arcs = readFileSync(new URL("./sample/phobos.arcs.json", import.meta.url), "utf8");
+  assert.equal(episode, text);
+  assert.equal(arcs, arcsText);
+  assert.equal(minted.text, text);
+  assert.equal(minted.arcsText, arcsText);
+  const loaded = load(episode, arcs);
+  assert.equal(loaded.ok, true);
+  assert.equal(loaded.clock.playing, false);
+  assert.equal(JSON.parse(episode.trim().split("\n")[0]).simulated, true);
+  assert.equal(JSON.parse(arcs).simulated, true);
+  const held = tape.frameAt(loaded.clock, soleOf());
+  assert.equal(held.ok, true);
+  assert.equal(held.view.mode, "local");
+  assert.equal(held.score, null);
+});
+
+test("an outer hail replays in the heliocentric view and hides the score until arrival", async () => {
+  const runId = "run_0a11e7a11e7a11e7a11e";
+  const run = await openRun(E, seasonInstance(E, "titan-home", DUST_NOW), runId, DUST_NOW);
+  const ship = run.par_car;
+  const p = (await planPickup(E, run, { [shipWord]: ship })).leg;
+  const r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
+  const out = dispatch(E, run, {
+    pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd),
+  }, DUST_NOW);
+  assert.equal(out.status, "checkpoint");
+  leaveRun(E, run);
+  assert.equal(phaseOf(run), "arrived");
+  const text = await episodeText(E, run, null);
+  const arcsText = tape.projectArcs(run);
+  assert.equal(typeof text, "string");
+  const loaded = load(text, arcsText);
+  assert.equal(loaded.ok, true);
+  const midJd = (loaded.clock.span.start + loaded.clock.span.end) / 2;
+  const mid = tape.frameAt(tape.reduce(loaded.clock, { type: "scrub", jd: midJd }), soleOf());
+  assert.equal(mid.ok, true);
+  assert.equal(mid.view.mode, "helio");
+  assert.equal(mid.phase, "transfer");
+  assert.equal(mid.score, null);
+  assert.equal(mid.view.bodies.some((b) => b.id === "sun"), true);
+  const end = tape.frameAt(tape.reduce(loaded.clock, { type: "scrub", jd: loaded.clock.span.end }), soleOf());
+  const reward = JSON.parse(text.trim().split("\n").at(-1)).reward;
+  assert.equal(end.phase, "arrived");
+  assert.equal(end.score.total, reward.total);
+  assert.equal(end.score.parts.length, 7);
+  assert.equal(end.view.mode, "helio");
 });
