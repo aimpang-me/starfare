@@ -9,6 +9,7 @@
 import { DurableObject } from "cloudflare:workers";
 import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
+import { episodeText } from "./episode.js";
 import {
   GameError, applyTool, computeLeg, flyLive, hailInfo, leaveRun, legKey, legPub, liveRecord, liveRow, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord,
   rideStats, rideSummary, seasonInstance,
@@ -121,6 +122,12 @@ export class StarfareRun extends DurableObject {
   async record() {
     const run = await this.#run();
     return run && (phaseOf(run) === "arrived" || (phaseOf(run) === "in_flight" && run.live)) ? liveRecord(await engine(), run, Date.now()) : null;
+  }
+  /** The arrived run as one JSONL episode, or null when it has not arrived or its world must stay hidden. */
+  async episode() {
+    const run = await this.#run();
+    if (!run) return null;
+    return episodeText(await engine(), run, null);
   }
   /** What the /flight/<run_id> page draws beside the record: the planned legs and their stored arcs, or null when record() is. */
   async flight() {
