@@ -116,7 +116,7 @@ const TAB = { mercury: "mercury", venus: "venus", mars: "mars", jupiter: "jupite
   uranus: "uranus", neptune: "neptune" };
 const _p1 = new Float64Array(3), _v1 = new Float64Array(3), _p2 = new Float64Array(3), _v2 = new Float64Array(3);
 // heliocentric state of an ephemeris body ("earth", "moon", planets, "emb", and the n-body small bodies
-// "roadster@nbody" etc.)
+// "bennu@nbody" etc.)
 export function ephState(name, jd) {
   need(); checkJd(jd);
   const ts = (jd - J2000) * DAY;
@@ -356,9 +356,7 @@ export const PLACES = [
   { id: "titan", name: "Titan", kind: "moon", parent: "saturn", real: true, mu: 8978.14, radius_km: 2574.7, park_alt_km: 1500, orbit_km: 1221870, period_days: 15.945, atmosphere: true },
   { id: "triton", name: "Triton", kind: "moon", parent: "neptune", real: true, mu: 1427.6, radius_km: 1353.4, park_alt_km: 100, orbit_km: 354759, period_days: 5.876854, retrograde: true },
   // small bodies: the planner and the re-fly both use the baked n-body orbit (refly.py's), not quote.py/trip.py's
-  // 2-body Kepler, which is 11 million km off for Ceres by 2041.  Ceres has a gravity well; Bennu's (GM 4.9e-9)
-  // and the Roadster's are ignored.
-  { id: "roadster", name: "Tesla Roadster", kind: "small", parent: "sun", real: true, mu: 0, radius_km: 0.002, park_alt_km: 0 },
+  // 2-body Kepler, which is 11 million km off for Ceres by 2041. Ceres has a gravity well. Bennu's GM (4.9e-9) is ignored.
   { id: "bennu", name: "Bennu", kind: "small", parent: "sun", real: true, mu: 0, radius_km: 0.245, park_alt_km: 0 },
   { id: "ceres", name: "Ceres", kind: "small", parent: "sun", real: true, mu: 62.6284, radius_km: 469.7, park_alt_km: 200 },
   // stations: named circular parking orbits around a parent (plane matching is NOT priced)
@@ -376,7 +374,7 @@ for (const p of PLACES) {
   if (p.kind === "station") { p.mu = P[p.parent].mu; }
   p.sub = p.kind === "planet" ? `Planet · ${fmt(p.park_alt_km)} km parking orbit`
     : p.kind === "moon" ? `Moon of ${P[p.parent].name} · ${fmt(p.park_alt_km)} km orbit`
-    : p.kind === "small" ? (p.mu ? `Dwarf planet · ${fmt(p.park_alt_km)} km orbit` : (p.id === "roadster" ? "Car in a solar orbit · no gravity well" : "Asteroid · gravity ignored"))
+    : p.kind === "small" ? (p.mu ? `Dwarf planet · ${fmt(p.park_alt_km)} km orbit` : "Asteroid · gravity ignored")
     : `${p.real ? "Station" : "Fictional station"} · ${fmt(p.park_alt_km)} km orbit of ${P[p.parent].name}${p.incl_deg ? `, ${p.incl_deg}°` : ""}`;
 }
 export function placesTable() {

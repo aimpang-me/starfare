@@ -957,7 +957,7 @@ function buildRideScene() {
     RS.bodies.push({ id: focus, m: pm, r: R });
     labels.add({ html: esc(SF.name(focus)), cls: "k-planet", pri: 50, pos: function () { return V(); } });
     SF.E.PLACES.forEach(function (Q) {
-      if (Q.id === focus || Q.id === "roadster" || SF.system(Q.id) !== focus) return;
+      if (Q.id === focus || SF.system(Q.id) !== focus) return;
       var id = Q.id, m, r;
       if (Q.kind === "moon") { r = Math.max(0.05, Q.radius_km / 1000); m = planetMesh(id); m.scale.setScalar(r); }
       else { r = 0.03; m = new THREE.Mesh(GEO.oct || (GEO.oct = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: Q.real ? 0xdfe6ee : 0xffb65c, wireframe: true })); m.scale.setScalar(r); }
@@ -972,8 +972,7 @@ function buildRideScene() {
     var used = {}; rp.legs.concat(rp.plan).forEach(function (L) { used[L.from] = used[L.to] = 1; });
     SF.E.PLACES.forEach(function (Q) {
       var id = Q.id, m, minPx = 2;
-      if (id === "roadster") return;
-      if (Q.kind === "planet" || id === "ceres") {
+      if (Q.kind === "planet" || (Q.kind === "small" && Q.mu)) {
         m = planetMesh(id); minPx = 2.6;
         var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 180).map(function (q) { return S([q[0] / AU, q[1] / AU, q[2] / AU]); });
         if (ring.length) sc.add(lineOf(ring, 0xffffff, 0.12));

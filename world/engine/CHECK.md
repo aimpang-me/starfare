@@ -71,15 +71,15 @@ differences come from the ephemeris table, not from the code.
 
 ## Ephemeris table (deliverable 1)
 
-`bake_ephem.py` writes `ephem.json` (392.6 KiB, plus `ephem.js`, the same object as an ES module for inlining).
+`bake_ephem.py` writes `ephem.json` (378723 bytes, plus `ephem.js`, the same object as an ES module for inlining).
 Format: piecewise Chebyshev, interpolated at Gauss-Lobatto nodes, so segment ends are continuous. Coefficients are
 quantised and packed as zigzag varints in base64url strings. The segment length and degree are tuned per body to
 the smallest size meeting a 10 m tolerance (Mercury 20 m, geocentric Moon 50 m); segments that miss it are halved
-(adaptive splits for the Roadster's 2035 Mars and 2047 Earth passes, and around Bennu's 2035-36 Earth approach). Earth is not stored. It is rebuilt as
+(adaptive splits around Bennu's 2035-36 Earth approach). Earth is not stored. It is rebuilt as
 EMB minus k times the geocentric Moon, with k = 1/(1+EMRAT) read from DE421, so the 27-day wobble costs nothing extra.
 **Coverage: 2026-10-01 to 2053-09-25**, which is more than the 2026-10-01 to 2046-12-31 asked for. The longer span
 lets the day-2 Uranus and Neptune legs (arrivals in 2050 to 2052) be planned and re-flown. Cut to 2046-12-31, the table
-would be about 300 KiB. Small bodies (Roadster, Bennu, Ceres) are their n-body orbits, integrated in the bake with the
+would be about 300 KiB. Small bodies (Bennu, Ceres) are their n-body orbits, integrated in the bake with the
 same `nbody.Model` + DOP853 rtol 1e-12 as refly.py, from `data/targets.json`. The planner flies the same
 table orbits (quote.py and trip.py still use 2-body Kepler from those states, 11 million km off for Ceres by 2041). Errors vs DE421 are in table G. The worst
 position errors are the Moon at 25 m and Mercury at 11 m; all others are at most 5.5 m. The worst velocity error is
@@ -92,7 +92,7 @@ position errors are the Moon at 25 m and Mercury at 11 m; all others are at most
   Ganymede, Callisto, Enceladus, Titan and Triton as **approximate** circular orbits about the parent: radius and
   period from the JPL SSD mean elements as listed in the source, the plane is the parent's IAU equator, and the
   phase is arbitrary. Triton is retrograde in Neptune's equator, which is about 23 degrees off its real plane. Titan uses trip.py's 1,221,870 km and 15.945 d.
-- `PLACES` / `places.json` lists 27 places: 8 planets, 9 moons, Roadster, Bennu and Ceres, and stations. The stations are
+- `PLACES` / `places.json` lists 26 places: 8 planets, 9 moons, Bennu and Ceres, and stations. The stations are
   ISS (real, 420 km, 51.6 deg), Tiangong (real, 390 km, 41.5 deg), Orbital Depot (fictional, 500 km LEO), Lunar Data Center
   (fictional, 100 km lunar), Mars Base (fictional, 300 km), Ceres Port (fictional, 400 km) and Titan Dock (fictional,
   Titan 1,500 km). Plane matching to the ISS or Tiangong is **not priced**, and each ride says so in `not_priced`.

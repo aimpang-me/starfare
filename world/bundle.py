@@ -1,7 +1,10 @@
 """Bundle engine/ephem.js + engine/sol-engine.js into one classic script (engine/sol-page.js) that defines SOLE,
 for inlining into the page and for the page's Web Worker. Mirrors engine/sol-facade.js."""
-import os, re
+import os, re, subprocess, sys
 H = os.path.dirname(os.path.abspath(__file__)); E = os.path.join(H, "engine")
+check = subprocess.run(["node", os.path.join(E, "ship-ephem.mjs"), "--check"])
+if check.returncode:
+    sys.exit(check.returncode)
 eph = open(os.path.join(E, "ephem.js"), encoding="utf-8").read().replace("export default ", "var __EPHEM = ", 1)
 eng = open(os.path.join(E, "sol-engine.js"), encoding="utf-8").read()
 assert "import " not in eng and "export {" not in eng and "export default" not in eng

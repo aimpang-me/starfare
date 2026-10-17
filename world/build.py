@@ -8,7 +8,7 @@ EXTRA = {  # page-side look and feel only: colours, spawn pool, default zoom, al
  "uranus": dict(color="#9fe3e0", big=True), "neptune": dict(color="#6f8cff", big=True),
  "moon": dict(color="#cfd3d8", spawn=True, zoom=5.6), "phobos": dict(color="#a08f80"), "io": dict(color="#e6d36a"), "europa": dict(color="#d8c9b0", spawn=True),
  "ganymede": dict(color="#a9a29a", spawn=True), "callisto": dict(color="#7d746b"), "titan": dict(color="#e0a659", spawn=True), "enceladus": dict(color="#f2f6fa", spawn=True), "triton": dict(color="#c9b8c4"),
- "ceres": dict(color="#9a948c"), "bennu": dict(color="#6e6a66"), "roadster": dict(color="#ff6b6b", name="Roadster"),
+ "ceres": dict(color="#9a948c"), "bennu": dict(color="#6e6a66"),
  "iss": dict(spawn=True, zoom=4.45, alias=["space station"], note="Orbit from JPL Horizons, 2026-10-16. Plane matching isn't priced."),
  "tiangong": dict(spawn=True, zoom=4.45, alias=["chinese space station", "css"], note="Orbit from JPL Horizons, 2026-10-16. Plane matching isn't priced."),
  "orbital-depot": dict(spawn=True, zoom=4.5, alias=["depot"], note="Made up for the game."),
