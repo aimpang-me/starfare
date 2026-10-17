@@ -184,8 +184,9 @@ test("hold at the closed pad is the place, and the transfer stays on the recorde
   const rel = [held.au[0] - mars[0], held.au[1] - mars[1], held.au[2] - mars[2]];
   const ship = axes(rel, AU / 1000);
   assert.ok(dist(held.view.ship, ship) < 1e-6);
-  assert.ok(held.view.bodies.some((b) => b.id === "mars"));
-  assert.ok(held.view.bodies.some((b) => b.id === "phobos"));
+  assert.equal(held.view.bodies.find((b) => b.id === "mars").kind, "planet");
+  assert.equal(held.view.bodies.find((b) => b.id === "phobos").kind, "moon");
+  assert.equal(held.view.bodies.find((b) => b.id === "mars-base").kind, "station");
   assert.ok(held.arrived.some((m) => m.text.includes("Passengers aboard")));
   assert.ok(held.arrived.some((m) => m.text.includes("Used " + cp.observation.used_kwh + " kWh at this checkpoint.")));
   assert.equal(held.arrived.some((m) => m.tool === "decide"), false);

@@ -119,7 +119,6 @@
   var skyInput = document.getElementById("skytime");
   var canvas = document.getElementById("sky");
 
-  // The file's note says riders. The page says passengers.
   function shown(s) {
     return String(s == null ? "" : s).replace(/rider/ig, "passenger");
   }
@@ -237,8 +236,7 @@
       if (!mesh) {
         var sphere = null;
         var sprite = null;
-        // Station rows reuse the parent radius. A second planet would hide the ship.
-        if (b.real && b.radius >= 0.4) {
+        if (b.kind === "planet" || b.kind === "small" || (b.kind === "moon" && b.radius >= 0.4)) {
           sphere = new THREE.Mesh(
             new THREE.SphereGeometry(1, 24, 16),
             new THREE.MeshStandardMaterial({ color: colorFor(b), roughness: 0.85, metalness: 0.05 })

@@ -11,7 +11,6 @@
   var ARC_SCHEMA = "starfare.arcs/1";
   var RUN_ID = /^run_[0-9a-f]{20}$/;
   var MINUTE = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/;
-  // The seal is on the clock object. A copy cannot reveal the reward.
   var secret = new WeakMap();
 
   var shipWord = ["c", "ar"].join("");
@@ -213,7 +212,6 @@
     return jd >= range[0] && jd <= range[1];
   }
 
-  // The hop role is pickup or ride. The stored id is legN. Join on places and departure.
   function nearestArc(legs, hop, route) {
     var depart = jdOfMinute(hop.depart);
     var cands = [];
@@ -496,8 +494,6 @@
         var span = hop.orbit - hop.depart;
         var f = span > 0 ? (jd - hop.depart) / span : 0;
         var p = sample(hop.arc.arc_au, f);
-        // Stored samples already include the parent at the planned time.
-        // Subtract that parent and add it at the playback date so the ellipse stays with the body.
         if (hop.system) {
           var tp = hop.arc.dep_jd + f * (hop.arc.arr_jd - hop.arc.dep_jd);
           var s0 = placeAu(sole, hop.system, tp);
@@ -506,7 +502,6 @@
         }
         return { phase: "transfer", p: p };
       }
-      // The arc end is not blended onto the pad. The gap stays visible.
       if (jd < hop.land) return { phase: "hold", p: placeAu(sole, hop.to, jd) };
     }
     var last = hops[hops.length - 1];
@@ -574,7 +569,7 @@
     var places = sole.PLACES || [];
     var list = [];
     if (scene.mode === "helio") {
-      list.push({ id: "sun", name: "Sun", real: true, position: [0, 0, 0], radius: 0 });
+      list.push({ id: "sun", name: "Sun", kind: "sun", real: true, position: [0, 0, 0], radius: 0 });
     }
     for (var i = 0; i < places.length; i++) {
       var p = places[i];
@@ -587,6 +582,7 @@
       list.push({
         id: p.id,
         name: p.name,
+        kind: p.kind,
         real: !!p.real,
         position: toView(au, jd, scene, sole),
         radius: p.radius_km / 1000
