@@ -34,10 +34,10 @@ export class StarfareRun extends DurableObject {
   /** Plans go through the hub's leg cache; plan_pickup, plan_ride_leg and a replan at a checkpoint share it. */
   #legFn(E) {
     const h = hub(this.env);
-    return async (from, to, t, obj, end) => {
-      const key = legKey(from, to, t, obj, end), hit = await h.legGet(key);
+    return async (from, to, t, obj, end, ship) => {
+      const key = legKey(from, to, t, obj, end, ship), hit = await h.legGet(key);
       if (hit && hit.arc_au) return { leg: hit, cached: true }; // rows cached before arcs were kept are planned again
-      const leg = computeLeg(E, from, to, t, obj, end);
+      const leg = computeLeg(E, from, to, t, obj, end, ship);
       await h.legPut(key, leg);
       return { leg, cached: false };
     };

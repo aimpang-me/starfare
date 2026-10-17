@@ -60,7 +60,7 @@ export const TOOLS = {
     },
   },
   plan_ride: {
-    description: "Plan the rider's ride from the pickup to the destination, leaving after the given pickup leg and boarding (or wait_days later), and re-fly it in the n-body checker. Returns the ride leg with its fare_usd and arrive time.",
+    description: "Plan the rider's ride from the pickup to the destination, leaving after the given pickup leg and boarding (or wait_days later), and re-fly it in the n-body checker. Returns the ride leg with its fare_usd and arrive time, plus departures: other legal departure times in the search, with no ranking and no mark on a single one.",
     inputSchema: {
       run_id: runId,
       after_leg: z.string().describe("leg_id of the pickup this ride follows"),

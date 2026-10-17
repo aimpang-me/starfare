@@ -148,9 +148,9 @@ export async function random(call, E, rng) {
  *  (R.oracle), quoted the true arrival and the honest fare, and scored with the run's own terms. Returns the best { total, ... }. */
 export function reference(E, run) {
   const R = E.R, seed = run.seed, t0 = run.t0, end = run.end_jd, memo = new Map();
-  const leg = (from, to, t, obj) => {
-    const k = legKey(from, to, t, obj, end);
-    if (!memo.has(k)) { try { memo.set(k, computeLeg(E, from, to, t, obj, end)); } catch { memo.set(k, null); } }
+  const leg = (from, to, t, obj, ship) => {
+    const k = legKey(from, to, t, obj, end, ship);
+    if (!memo.has(k)) { try { memo.set(k, computeLeg(E, from, to, t, obj, end, ship)); } catch { memo.set(k, null); } }
     return memo.get(k);
   };
   const slim = (L) => ({ from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate });
@@ -171,7 +171,8 @@ export function reference(E, run) {
       };
       const quoteOf = (id) => ({ fare_usd: fareOf(id), arrival: isoJD(stops ? F.bookings[id].arrive_jd : F.arrive_jd) });
       const sc = R.score(run.id, stops ? { stops, legs } : legs, {
-        ...ctx, plan_calls: legs.length + replans, quote: quoteOf(run.id), flown: F,
+        ...ctx, ship: car, window_kwh: legs.reduce((a, L) => a + (L && L.window_kwh != null ? L.window_kwh : L ? L.kwh : 0), 0),
+        plan_calls: legs.length + replans, quote: quoteOf(run.id), flown: F,
         ...(stops ? { bookings: Object.fromEntries(run.hails.map((id) => [id, { ...run.bookings[id], quote: quoteOf(id) }])) } : {}),
       });
       if (!best || sc.total > best.total) best = { total: sc.total, parts: Object.fromEntries(sc.parts.map((p) => [p.key, p.got])), car, label, choices: path, used_kwh: sc.used_kwh };
@@ -183,9 +184,9 @@ export function reference(E, run) {
     for (const c of R.nearCars(h)) {
       const start = R.pickupStart(run.id, c.id, t0, seed);
       for (const op of OBJ) {
-        const p = leg(c.at, h.from, start, op);
+        const p = leg(c.at, h.from, start, op, c.id);
         if (!p || p.gate === "FAIL") continue;
-        for (const or of OBJ) consider(c.id, [p, leg(h.from, h.to, p.arr_jd + R.DWELL, or)], null, op + "/" + or);
+        for (const or of OBJ) consider(c.id, [p, leg(h.from, h.to, p.arr_jd + R.DWELL, or, c.id)], null, op + "/" + or);
       }
     }
     return best;
@@ -199,7 +200,7 @@ export function reference(E, run) {
       for (const o of OBJ) {
         const legs = [];
         for (let i = 0, from = c.at, t = start; i < order.length; i++) {
-          const L = leg(from, order[i].at, t, o);
+          const L = leg(from, order[i].at, t, o, c.id);
           legs.push(L);
           if (!L || L.gate === "FAIL") break;
           from = L.to; t = L.arr_jd + (boards.has(from) ? R.DWELL : 0);

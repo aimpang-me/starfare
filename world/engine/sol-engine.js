@@ -475,9 +475,35 @@ export const titanBurn = (vinf) => wellBurn(endpointModel({ place: "titan" }).ch
 // ------------------------------------------------------------------ models.py (stated, made-up-on-purpose)
 export const MODELS = { CAR_DRY_KG: 1300.0, PACK_KWH: 200.0, EXHAUST_KMS: 30.0, THRUSTER_EFF: 0.60,
   USD_PER_KWH: 0.16, USD_PER_MIN: 0.35 };
-export const ASSUMPTIONS = ["ship 1300 kg dry with a 200 kWh pack",
-  "electric thruster: 30 km/s exhaust, 60% efficient, burns treated as instant",
-  "fare = $0.16/kWh energy + $0.35/min time fee", "landing, aerobraking and life support are not priced"];
+// NIST standard gravity, m/s^2. NSTAR published set points (power, specific impulse, efficiency).
+export const G0 = 9.80665;
+export const NSTAR_POINTS = [
+  { power_w: 2310, isp_s: 3280, eff: 0.64, label: "2.31 kW" },
+  { power_w: 490, isp_s: 1950, eff: 0.38, label: "0.49 kW" },
+];
+// Sourced hulls. Dawn and Deep Space 1 seat counts are a simulated cabin (those probes flew with no passengers).
+// Shuttle seats are the orbiter crew of 7. Dawn array power is the published lower bound (over 10000 W at 1 AU).
+// Shuttle dry mass is the published orbiter figure of about 68000 kg.
+// RTG class is not a flown spacecraft. The combination is simulated, from three published numbers:
+// Dawn dry mass 747.1 kg, Psyche's xenon load of up to 1085 kg (NASA JPL Psyche quick facts),
+// and Cassini's 633 W at the end of the mission (NASA Cassini quick facts). power_mode "constant" holds those watts
+// at every distance. Housekeeping is not charged, and the dry mass does not grow a heavier tank structure.
+// The fleet assignment lives in sol-rides.js. The Shuttle class stays in the catalog and is not parked.
+export const SHIP_CLASSES = {
+  dawn: { id: "dawn", name: "Dawn class", dry_kg: 747.1, xenon_kg: 425, hydrazine_kg: 45.6, seats: 4, power_w_1au: 10000, housekeeping_w: 0, ion: true },
+  ds1: { id: "ds1", name: "Deep Space 1 class", dry_kg: 373, xenon_kg: 82, hydrazine_kg: 31, seats: 4, power_w_1au: 2500, housekeeping_w: 400, ion: true },
+  rtg: { id: "rtg", name: "RTG class", dry_kg: 747.1, xenon_kg: 1085, hydrazine_kg: 0, seats: 4, power_w_1au: 633, housekeeping_w: 0, ion: true, power_mode: "constant" },
+  shuttle: { id: "shuttle", name: "Shuttle class", dry_kg: 68000, xenon_kg: 0, hydrazine_kg: 0, seats: 7, power_w_1au: 0, housekeeping_w: 0, ion: false },
+};
+export const ASSUMPTIONS = [
+  "Dawn class dry mass 747.1 kg, xenon tank 425 kg, arrays over 10000 W at 1 AU (that power figure is a lower bound)",
+  "Deep Space 1 class dry mass 373 kg, xenon tank 82 kg, arrays 2500 W at 1 AU, housekeeping near 400 W",
+  "RTG class is a simulated hull, not a flown ship: dry mass 747.1 kg (Dawn), xenon tank 1085 kg (Psyche, up to 1085 kg), generator 633 W held constant (Cassini end of mission). The 633 W is treated as spare for the thruster. Housekeeping is not charged, and the dry mass does not add tank structure for the larger xenon load",
+  "Shuttle class dry mass 68000 kg, 7 seats, no xenon ion thruster. It is not parked",
+  "NSTAR set points: 2.31 kW, 3280 s, 64 percent; or 0.49 kW, 1950 s, 38 percent. No set point is published below 0.49 kW",
+  "Solar array power falls as 1/r^2. The RTG class generator does not. Standard gravity is 9.80665 m/s^2",
+  "fare = $0.16/kWh energy + $0.35/min time fee",
+  "landing, aerobraking and life support are not priced"];
 function pyRound(x, nd = 0) {  // Python round(): half to even, on the decimal repr like CPython's
   if (!isFinite(x)) return x;
   const m = 10 ** nd, y = x * m, f = Math.floor(y), d = y - f;
@@ -486,12 +512,57 @@ function pyRound(x, nd = 0) {  // Python round(): half to even, on the decimal r
   else r = Math.round(y);
   return r / m;
 }
-export function battery(dv_kms) {
-  const { CAR_DRY_KG, EXHAUST_KMS, THRUSTER_EFF, PACK_KWH } = MODELS;
-  const m_prop = CAR_DRY_KG * (Math.exp(dv_kms / EXHAUST_KMS) - 1);
-  const kwh = 0.5 * m_prop * (EXHAUST_KMS * 1000) ** 2 / THRUSTER_EFF / 3.6e6;
-  return { dv_kms: pyRound(dv_kms, 3), propellant_kg: pyRound(m_prop, 1), energy_kwh: pyRound(kwh),
-           battery_pct: pyRound(100 * kwh / PACK_KWH), packs: pyRound(kwh / PACK_KWH, 2), energy_kwh_exact: kwh };
+export function arraySpareW(cls, r_au) {
+  if (cls && cls.power_mode === "constant") return cls.power_w_1au - (cls.housekeeping_w || 0);
+  const r = Math.max(+r_au || 0, 1e-9);
+  return cls.power_w_1au / (r * r) - (cls.housekeeping_w || 0);
+}
+// The highest published NSTAR set point the arrays can feed at this heliocentric distance, or null.
+export function thrustPoint(cls, r_au) {
+  if (!cls || !cls.ion) return null;
+  const spare = arraySpareW(cls, r_au);
+  for (const p of NSTAR_POINTS) if (spare + 1e-9 >= p.power_w) return { ...p, spare_w: spare };
+  return null;
+}
+function classOf(ship) {
+  if (ship == null) return null;
+  if (typeof ship === "string") return SHIP_CLASSES[ship] || null;
+  return ship;
+}
+// battery(dv) is the retired single hull (direct calls only). A ship class uses that hull's dry mass,
+// the NSTAR set point its arrays can feed at r_au, and refuses when the xenon tank cannot hold the burn.
+export function battery(dv_kms, ship, r_au) {
+  const cls = classOf(ship);
+  if (!cls) {
+    const { CAR_DRY_KG, EXHAUST_KMS, THRUSTER_EFF, PACK_KWH } = MODELS;
+    const m_prop = CAR_DRY_KG * (Math.exp(dv_kms / EXHAUST_KMS) - 1);
+    const kwh = 0.5 * m_prop * (EXHAUST_KMS * 1000) ** 2 / THRUSTER_EFF / 3.6e6;
+    return { dv_kms: pyRound(dv_kms, 3), propellant_kg: pyRound(m_prop, 1), energy_kwh: pyRound(kwh),
+             battery_pct: pyRound(100 * kwh / PACK_KWH), packs: pyRound(kwh / PACK_KWH, 2), energy_kwh_exact: kwh };
+  }
+  const r = r_au == null ? 1 : r_au;
+  if (!(dv_kms > 1e-9)) {
+    return { dv_kms: pyRound(dv_kms, 3), propellant_kg: 0, propellant_kg_exact: 0, energy_kwh: 0, energy_kwh_exact: 0,
+      class_id: cls.id, set_point_w: 0, set_point: null, r_au: r, xenon_cap_kg: cls.xenon_kg };
+  }
+  const point = thrustPoint(cls, r);
+  if (!point) {
+    const spare = cls.ion ? Math.round(arraySpareW(cls, r)) : 0;
+    const why = cls.ion
+      ? cls.name + " cannot thrust at " + (+r).toFixed(2) + " AU: array power is " + spare + " W, below the lowest published set point of 490 W"
+      : cls.name + " has no xenon ion thruster";
+    return { dv_kms: pyRound(dv_kms, 3), propellant_kg: null, energy_kwh: null, class_id: cls.id, r_au: r, refused: why };
+  }
+  const ve = point.isp_s * G0 / 1000; // km/s
+  const m_prop = cls.dry_kg * (Math.exp(dv_kms / ve) - 1);
+  const kwh = 0.5 * m_prop * (ve * 1000) ** 2 / point.eff / 3.6e6;
+  const over = m_prop > cls.xenon_kg + 1e-6;
+  return {
+    dv_kms: pyRound(dv_kms, 3), propellant_kg: pyRound(m_prop, 1), propellant_kg_exact: m_prop,
+    energy_kwh: pyRound(kwh), energy_kwh_exact: kwh, class_id: cls.id, set_point_w: point.power_w, set_point: point.label,
+    isp_s: point.isp_s, eff: point.eff, r_au: r, xenon_cap_kg: cls.xenon_kg,
+    ...(over ? { refused: cls.name + " xenon tank holds " + cls.xenon_kg + " kg and this leg needs " + pyRound(m_prop, 1) + " kg" } : {}),
+  };
 }
 export function fare(kwh, days) {
   const { USD_PER_KWH, USD_PER_MIN } = MODELS;
@@ -577,6 +648,7 @@ function localTransfer(o, d, mo, md, opt) {
     pts.push(scl(add(prS(jd).r, loc), 1 / AU_KM));
   }
   return { local: true, primary: prim, r1_km: r1, r2_km: r2, dep_jd, arr_jd, tof_days: tof / DAY, dv_dep_kms: dv_dep, dv_arr_kms: dv_arr, arc_au: pts,
+           r_au: norm(prS(dep_jd).r) / AU_KM,
            method: `local Hohmann transfer around ${P[prim].name} (${fmt(r1)} km -> ${fmt(r2)} km radius); phasing wait and plane change not modelled; not re-flown: local transfer` };
 }
 
@@ -631,7 +703,7 @@ function planRideInner(origin, dest, opts) {
   const objective = opts.objective || "energy";
   const capture = (opts.arrive || "capture") === "capture";
   const req = opts.requestJd ?? depFrom;
-  const notPriced = [...ASSUMPTIONS.slice(3), "launch from the surface to the parking orbit is not priced",
+  const notPriced = [...ASSUMPTIONS.slice(4), "launch from the surface to the parking orbit is not priced",
     "burns are impulsive and in the best direction"];
   for (const ep of [o, d]) {
     const p = ep.place && P[ep.place];
@@ -646,7 +718,7 @@ function planRideInner(origin, dest, opts) {
     if (lt) {
       if (lt.error) return lt;
       notPriced.push("phasing (waiting for the target to line up) is not modelled: departs at the window start");
-      return finish(lt, { o, d, mo, md, req, notPriced, objective, t0, capture, origin, dest });
+      return finish(lt, { o, d, mo, md, req, notPriced, objective, t0, capture, origin, dest, ship: opts.ship || null });
     }
   }
   if (!mo.anchor && !md.anchor && d.ship) { /* ship to ship is fine */ }
@@ -667,7 +739,7 @@ function planRideInner(origin, dest, opts) {
   const feasibleArr = (d0, tof) => d0 + tof <= arriveBy + 1e-9;
   const ev = (d0, tof, M, low) => { evals++; return feasibleArr(d0, tof) ? legEval(ctx, d0, tof, M, low) : null; };
 
-  let best = null;
+  let best = null, refined = null;
   const cands = [];
   if (g) {
     // exhaustive grid exactly like the Python scans (np.arange semantics)
@@ -710,7 +782,7 @@ function planRideInner(origin, dest, opts) {
     }
     cands.sort((x, y) => x.k - y.k);
     ctx.penal = true;
-    const refined = [];
+    refined = [];
     for (const c of cands.slice(0, opts.refineCount ?? 10)) {
       const [M, low] = branches[c.b];
       let x = c.d0, y = c.tof, fx = legCost(ctx, ev(x, y, M, low));
@@ -747,24 +819,47 @@ function planRideInner(origin, dest, opts) {
     const why = objective === "time" && isFinite(ctx.maxBurn) ? ` with a total burn <= ${ctx.maxBurn} km/s` : "";
     return { error: `no ride found${why}: departures ${isoFromJd(depFrom)}..${isoFromJd(depTo)}, arriving by ${isoFromJd(arriveBy)}${arriveBy >= EPH.jd1 - 1e-9 ? " (ephemeris end)" : ""}, TOF ${tmin.toFixed(0)}-${tmax.toFixed(0)} d` };
   }
-  const e = best.e;
+  const ship = opts.ship || SHIP_CLASSES.dawn;
+  const pool = (refined && refined.length ? refined : [best]).slice().sort((a, b) => a.k - b.k);
+  const departures = [];
+  let chosen = null, refusal = null;
+  for (const item of pool) {
+    const rAu = norm(item.e.r1) / AU_KM;
+    const bat = battery(item.e.dv, ship, rAu);
+    if (bat.refused || bat.energy_kwh == null) { refusal = { error: bat.refused || ship.name + " cannot fly this leg" }; continue; }
+    departures.push({
+      dep_jd: item.e.d0, arr_jd: item.e.d0 + item.e.tof, depart: isoFromJd(item.e.d0, true), arrive: isoFromJd(item.e.d0 + item.e.tof, true),
+      tof_days: pyRound(item.e.tof, 2), dv_total_kms: pyRound(item.e.dv, 3), battery_kwh: bat.energy_kwh, xenon_kg: bat.propellant_kg,
+      set_point_w: bat.set_point_w, set_point: bat.set_point, r_au: pyRound(rAu, 3),
+    });
+    if (!chosen) chosen = item;
+  }
+  if (!chosen) return refusal || { error: "no ride found" };
+  const e = chosen.e;
   const N = 48, tofS = e.tof * DAY, pts = [];
   for (let i = 0; i <= N; i++) { const s = i === 0 ? { r: e.r1 } : kepler(MU_SUN, e.r1, e.v1, tofS * i / N); pts.push(scl(s.r, 1 / AU_KM)); }
   if (!capture) notPriced.push("no arrival burn priced: arrives at the destination's centre (flyby, aerobraking or entry)");
   if (md.kind === "planet" && P[md.anchor].atmosphere && !capture)
     notPriced.push(`entry speed at ${P[md.anchor].name} ${Math.sqrt(e.va ** 2 + 2 * P[md.anchor].mu / (P[md.anchor].radius_km + 120)).toFixed(2)} km/s (not a burn)`);
   const opt = { local: false, delay_penalty_kms_per_year: ctx.delay, dep_jd: e.d0, arr_jd: e.d0 + e.tof, tof_days: e.tof, revs: e.M, lowpath: e.low,
+    r_au: norm(e.r1) / AU_KM,
     vinf_dep_kms: e.vd, vinf_arr_kms: e.va, c3_dep_km2s2: e.vd * e.vd, dv_dep_kms: e.dvd, dv_arr_kms: e.dva,
-    transfer_angle_deg: e.L.angle_deg, arc_au: pts, cost: best.k, lambert_evals: evals,
+    transfer_angle_deg: e.L.angle_deg, arc_au: pts, cost: chosen.k, lambert_evals: evals,
     method: `Sun-centred Lambert (Izzo, ${e.M} rev${e.M ? (e.low ? ", low branch" : ", high branch") : ""}) between ${mo.label}${mo.anchor && mo.anchor !== o.place ? ` (via ${P[mo.anchor].name})` : ""} and ${md.label}${md.anchor && md.anchor !== d.place ? ` (via ${P[md.anchor].name})` : ""}; patched-conic burns; DE421 table` };
-  if (best.alts) opt.alternatives = best.alts.map(({ k, e: a }) => ({ dep_jd: a.d0, arr_jd: a.d0 + a.tof, tof_days: a.tof, revs: a.M, lowpath: a.low,
-    dv_dep_kms: a.dvd, dv_arr_kms: a.dva, dv_total_kms: a.dv, cost: k }));
-  return finish(opt, { o, d, mo, md, req, notPriced, objective, t0, capture, origin, dest });
+  const done = finish(opt, { o, d, mo, md, req, notPriced, objective, t0, capture, origin, dest, ship });
+  if (done.error) return done;
+  departures.sort((a, b) => a.dep_jd - b.dep_jd);
+  done.departures = departures;
+  done.window_kwh = departures.reduce((m, d) => Math.min(m, d.battery_kwh), Infinity);
+  return done;
 }
-function finish(opt, { o, d, req, notPriced, objective, t0, capture }) {
+function finish(opt, { o, d, req, notPriced, objective, t0, capture, ship }) {
+  const cls = ship || SHIP_CLASSES.dawn;
   opt.dv_total_kms = opt.dv_dep_kms + opt.dv_arr_kms;
-  opt.battery = battery(opt.dv_total_kms);
-  opt.battery.packs = pyRound(opt.battery.energy_kwh_exact / MODELS.PACK_KWH, 2);
+  if (opt.r_au == null) opt.r_au = 1;
+  const bat = battery(opt.dv_total_kms, cls, opt.r_au);
+  if (bat.refused || bat.energy_kwh == null) return { error: bat.refused || cls.name + " cannot fly this leg" };
+  opt.battery = bat;
   const days = opt.arr_jd - req;
   opt.fare = fare(opt.battery.energy_kwh, days);
   opt.door_to_door_days = days;
@@ -776,13 +871,22 @@ function finish(opt, { o, d, req, notPriced, objective, t0, capture }) {
   opt.objective = objective;
   opt.arrive_mode = capture ? "capture" : "none";
   opt.not_priced = notPriced;
-  opt.assumptions = [...ASSUMPTIONS.slice(0, 3),
+  opt.assumptions = [...ASSUMPTIONS.slice(0, 4),
     "patched conics: Sun-centred leg between the centres of the endpoints' Sun-orbiting bodies (a moon or station uses its planet)",
     "burns from/into circular parking orbits (PLACES park_alt_km); moon endpoints escape/capture through the parent's well at the moon's orbit radius, burning along the moon's motion (trip.py titan_burn, generalised)",
     "moon and station orbits are circular with approximate radii/periods and arbitrary phase",
     ...(objective === "energy" && !opt.local ? [`energy objective trades ${opt.delay_penalty_kms_per_year ?? 0.1} km/s of burn per year from the window start to arrival (trip.py)`] : []),
     "fare time = window start (request) to arrival"];
   opt.search_ms = nowMs() - t0;
+  if (!opt.departures) {
+    opt.departures = [{
+      dep_jd: opt.dep_jd, arr_jd: opt.arr_jd, depart: opt.depart, arrive: opt.arrive,
+      tof_days: pyRound(opt.tof_days, 2), dv_total_kms: pyRound(opt.dv_total_kms, 3),
+      battery_kwh: bat.energy_kwh, xenon_kg: bat.propellant_kg, set_point_w: bat.set_point_w, set_point: bat.set_point,
+      r_au: pyRound(opt.r_au, 3),
+    }];
+    opt.window_kwh = bat.energy_kwh;
+  }
   return opt;
 }
 const nowMs = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
