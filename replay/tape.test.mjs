@@ -132,7 +132,7 @@ test("projectArcs copies the stored samples and repeats the same string", async 
   }), null);
 });
 
-test("a loaded flight hides the score until arrival and then copies the seven parts", async () => {
+test("a loaded flight hides the score until arrival and then copies every recorded part", async () => {
   const { text, arcsText, rows } = await fixture();
   const loaded = load(text, arcsText);
   assert.equal(loaded.ok, true);
@@ -173,11 +173,11 @@ test("a loaded flight hides the score until arrival and then copies the seven pa
   assert.equal(first.score.total, null);
   assert.equal(first.score.parts[0].got, reward.parts[0].got);
   assert.equal(first.score.parts[0].max, reward.parts[0].max);
-  showing = tape.reduce(showing, { type: "tick", seconds: 12 });
+  showing = tape.reduce(showing, { type: "tick", seconds: (reward.parts.length - 1) * 2 });
   const frame = tape.frameAt(showing, soleOf());
   assert.equal(frame.score.total, reward.total);
   assert.equal(frame.score.outOf, reward.out_of);
-  assert.deepEqual(frame.score.parts.map((p) => ({ key: p.key, label: p.label, got: p.got, max: p.max, note: p.note })), reward.parts);
+  assert.deepEqual(frame.score.parts.map((p) => ({ key: p.key, label: p.label, got: p.got, max: p.max, note: p.note })), reward.parts.map((p) => ({ key: p.key, label: p.label, got: p.got, max: p.max, note: p.note })));
   assert.deepEqual(frame.score.measures, reward.measures);
   assert.equal(frame.score.parShip, "SF-03");
   assert.ok(frame.arrived.some((m) => m.text.includes("Booking phobos-commute")));
@@ -423,10 +423,10 @@ test("an outer hail replays in the heliocentric view and hides the score until a
   assert.equal(end.view.mode, "helio");
   let shown = tape.reduce(loaded.clock, { type: "scrub", jd: loaded.clock.span.end });
   shown = tape.reduce(shown, { type: "play" });
-  shown = tape.reduce(shown, { type: "tick", seconds: 20 });
+  shown = tape.reduce(shown, { type: "tick", seconds: 4 + reward.parts.length * 2 });
   const scored = tape.frameAt(shown, soleOf());
   assert.equal(scored.score.total, reward.total);
-  assert.equal(scored.score.parts.length, 7);
+  assert.equal(scored.score.parts.length, reward.parts.length);
   assert.equal(scored.view.mode, "helio");
 });
 

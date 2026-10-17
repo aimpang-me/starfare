@@ -182,7 +182,7 @@
   function rewardOk(reward) {
     if (!reward || typeof reward !== "object") return false;
     if (!finite(reward.total) || !finite(reward.out_of)) return false;
-    if (!Array.isArray(reward.parts) || reward.parts.length !== 7) return false;
+    if (!Array.isArray(reward.parts) || reward.parts.length < 1) return false;
     for (var i = 0; i < reward.parts.length; i++) {
       var p = reward.parts[i];
       if (!p || typeof p !== "object") return false;
@@ -406,7 +406,7 @@
     pushTimed(bag.marks, end, { tool: null, hailId: hailId, ship: shipName });
     var names = nameMap(sole);
     var beats = captionBeats(rows, hops, names);
-    var schedule = buildSchedule(start, end, beats);
+    var schedule = buildSchedule(start, end, beats, last.reward.parts.length);
 
     var clock = {
       jd: start,
@@ -494,7 +494,7 @@
     if (reply != null && act) beats.push({ jd: reply, caption: "Decision. " + lead(act).replace(/\.+$/, "") + "." });
   }
 
-  function buildSchedule(start, end, beats) {
+  function buildSchedule(start, end, beats, partCount) {
     var events = [];
     for (var i = 0; i < beats.length; i++) {
       if (beats[i].jd > start && beats[i].jd < end) events.push(beats[i]);
@@ -517,7 +517,7 @@
       t += DWELL;
       points.push({ t: t, jd: jd, caption: caption, parts: 0 });
     }
-    for (var p = 1; p <= 7; p++) {
+    for (var p = 1; p <= partCount; p++) {
       t += PART;
       points.push({ t: t, jd: end, caption: "Arrived.", parts: p });
     }
@@ -644,7 +644,7 @@
     });
     if (!extra.length) return clock;
     var beats = seal.beats.concat(extra);
-    var schedule = buildSchedule(clock.span.start, clock.span.end, beats);
+    var schedule = buildSchedule(clock.span.start, clock.span.end, beats, seal.reward.parts.length);
     var cursor = cursorForJd(schedule.points, clock.jd);
     return retarget(clock, seal, clock.jd, clock.playing, clock.speed, cursor, schedule, beats);
   }
