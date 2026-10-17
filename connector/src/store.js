@@ -11,8 +11,8 @@ import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
 import { episodeText } from "./episode.js";
 import {
-  GameError, applyTool, computeLeg, flyLive, hailInfo, leaveRun, legKey, legPub, liveRecord, liveRow, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord,
-  rideStats, rideSummary, seasonInstance,
+  GameError, applyTool, computeLeg, flyLive, hailInfo, keepsBest, leaveRun, legKey, legPub, liveRecord, liveRow, openRun, phaseOf, poolCap, rideCursor, rideCursorOf, rideRecord,
+  rideStats, rideSummary, resolveHail, seasonInstance, seasonSpan, sky,
 } from "./game.js";
 import { liveIdsToDrop } from "./live.js";
 
@@ -80,7 +80,9 @@ export class StarfareRun extends DurableObject {
         await h.termsPut(id, t0, end, seed, slim);
         return slim;
       };
-      const now = Date.now(), run = await openRun(E, seasonInstance(E, hailId, now), runId, now, termsFn);
+      const now = Date.now(), season = sky(now).season, cap = await h.ensurePool(season);
+      resolveHail(E, hailId, season, cap);
+      const run = await openRun(E, seasonInstance(E, hailId, now), runId, now, termsFn);
       if (playerId) run.player_id = playerId; // STARFARE_OAUTH on only; a label, the run_id rules do not change
       await this.#save(run);
       await this.#index(E, run);
@@ -153,6 +155,7 @@ export class StarfareHub extends DurableObject {
     this.sql.exec("CREATE INDEX IF NOT EXISTS rides_by_player ON rides (player_id, created_ms DESC, run_id DESC)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS exports (token TEXT PRIMARY KEY, player_id TEXT NOT NULL, expires_ms INTEGER NOT NULL)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS live (run_id TEXT PRIMARY KEY, v TEXT NOT NULL, land_ms INTEGER, updated_ms INTEGER NOT NULL)");
+    this.sql.exec("CREATE TABLE IF NOT EXISTS hubkv (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
     this.hits = new Map(); // ip -> {win, n}; in memory on purpose: losing it on eviction only resets a minute's count
   }
   #get(table, k) { const row = this.sql.exec(`SELECT v FROM ${table} WHERE k = ?`, k).toArray()[0]; return row ? JSON.parse(row.v) : null; }
@@ -183,8 +186,9 @@ export class StarfareHub extends DurableObject {
     this.#bump("runs_scored");
     const row = this.sql.exec("SELECT v FROM best WHERE mission_id = ?", e.hail_id).toArray()[0];
     const cur = row ? JSON.parse(row.v) : null;
-    if (!cur || e.points > cur.points) this.sql.exec("INSERT OR REPLACE INTO best (mission_id, v) VALUES (?, ?)", e.hail_id, JSON.stringify(e));
-    return { best: !cur || e.points > cur.points };
+    const win = keepsBest(cur, e);
+    if (win) this.sql.exec("INSERT OR REPLACE INTO best (mission_id, v) VALUES (?, ?)", e.hail_id, JSON.stringify(e));
+    return { best: win };
   }
 
   /** Insert or update a player's history row, then keep only their newest RIDES_MAX. */
@@ -242,6 +246,24 @@ export class StarfareHub extends DurableObject {
     const rows = this.sql.exec("SELECT run_id, land_ms, updated_ms FROM live").toArray();
     for (const id of liveIdsToDrop(rows, now, LIVE_AFTER_MS, LIVE_HELD_MS)) this.sql.exec("DELETE FROM live WHERE run_id = ?", id);
     return { now_ms: now, flights: this.sql.exec("SELECT v FROM live ORDER BY updated_ms DESC LIMIT 50").toArray().map((x) => JSON.parse(x.v)) };
+  }
+
+  #kvGet(k) {
+    const row = this.sql.exec("SELECT v FROM hubkv WHERE k = ?", k).toArray()[0];
+    return row ? JSON.parse(row.v) : null;
+  }
+  poolSize(season) { return this.#kvGet("pool:" + season); }
+  distinctPlayers(season) {
+    const span = seasonSpan(season);
+    return this.sql.exec("SELECT COUNT(DISTINCT player_id) AS n FROM rides WHERE created_ms >= ? AND created_ms < ?", span.start, span.end).one().n;
+  }
+  ensurePool(season) {
+    const key = "pool:" + season, cur = this.#kvGet(key);
+    if (cur != null) return cur;
+    const n = Number(season);
+    const cap = poolCap(n <= 1 ? 0 : this.distinctPlayers(n - 1));
+    this.sql.exec("INSERT OR IGNORE INTO hubkv (k, v) VALUES (?, ?)", key, JSON.stringify(cap));
+    return this.#kvGet(key);
   }
 
   board() {

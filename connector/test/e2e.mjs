@@ -148,6 +148,25 @@ function assertMatchesNode(play, planCalls, quote = "exact", opts = {}) {
   return s;
 }
 const partsStr = (score) => score.parts.map((p) => `${p.key} ${p.got}/${p.max}`);
+function assertSeasonPool(hails) {
+  const catalog = new Set(R.HAILS.map((h) => h.id));
+  assert.equal(hails.length, 200);
+  for (const h of hails) {
+    const m = /^s(\d+)-(\d+)$/.exec(h.hail_id);
+    assert.ok(m, h.hail_id);
+    assert.equal(catalog.has(h.hail_id), false);
+    const row = R.hailRow(m[1], Number(m[2]));
+    assert.equal(h.from.id, row.from);
+    assert.equal(h.to.id, row.to);
+    assert.equal(h.title, row.title);
+    assert.equal(h.party, row.party);
+    assert.ok(h.party >= 1 && h.party <= 3);
+    assert.match(h.rider, /\(simulated\)$/);
+    assert.match(h.blurb, /simulated/);
+    assert.doesNotMatch(`${h.title} ${h.blurb} ${h.rider}`, /\bcar\b|roadster/i);
+    assert.doesNotMatch(`${h.title}${h.blurb}`, /[-–—]/);
+  }
+}
 
 async function phaseOff() {
   console.log("\n== STARFARE_OAUTH=off (default) ==");
@@ -177,13 +196,25 @@ async function phaseOff() {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     assert.deepEqual(names, TOOLS);
   });
-  await check("list_hails returns the engine's hails (SOLE.R.HAILS) and the fleet", async () => {
+  await check("list_hails returns this season's pool, hides the catalog, and still lets two players take one hail", async () => {
     const r = await ok(client, "list_hails");
-    assert.deepEqual(r.hails.map((h) => h.hail_id), R.HAILS.map((h) => h.id));
-    for (const h of r.hails) { const e = R.BY[h.hail_id]; assert.equal(h.from.id, e.from); assert.equal(h.to.id, e.to); assert.equal(h.title, e.title); assert.match(h.rider, /\(simulated\)$/); }
+    assertSeasonPool(r.hails);
     assert.deepEqual(r.fleet.map((c) => [c.car, c.parked_at.id]), R.FLEET.map((c) => [c.id, c.at]));
     assert.equal(r.board, "/board");
-    report.list = r.hails.map((h) => `${h.hail_id} ${h.kind}: ${h.from.name} to ${h.to.name}`);
+    const season = /^s(\d+)-\d+$/.exec(r.hails[0].hail_id)[1];
+    const outside = await call(client, "take_hail", { hail_id: "s" + season + "-" + r.hails.length });
+    assert.equal(outside.isError, true); assert.match(outside.value, /outside this season's pool/);
+    const other = await call(client, "take_hail", { hail_id: "s" + (Number(season) + 1) + "-0" });
+    assert.equal(other.isError, true); assert.match(other.value, /from season/);
+    const quick = r.hails.find((h) => h.kind === "quick");
+    const a = await connect(w.base), b = await connect(w.base);
+    try {
+      const t1 = await ok(a, "take_hail", { hail_id: quick.hail_id });
+      const t2 = await ok(b, "take_hail", { hail_id: quick.hail_id });
+      assert.notEqual(t1.run_id, t2.run_id);
+      assert.equal(t1.hail_id, quick.hail_id); assert.equal(t2.hail_id, quick.hail_id);
+    } finally { await a.close(); await b.close(); }
+    report.list = r.hails.slice(0, 5).map((h) => `${h.hail_id} ${h.kind} party ${h.party}: ${h.from.name} to ${h.to.name}`);
   });
 
   let good;
@@ -541,7 +572,7 @@ async function phaseOff() {
   await check("SSE transport also works (list_hails, take_hail, get_hail)", async () => {
     const sse = await connect(w.base, "sse");
     try {
-      assert.equal((await ok(sse, "list_hails")).hails.length, R.HAILS.length);
+      assertSeasonPool((await ok(sse, "list_hails")).hails);
       const h = await ok(sse, "take_hail", { hail_id: "iss-crew" });
       assert.equal((await ok(sse, "get_hail", { run_id: h.run_id })).hail_id, "iss-crew");
     } finally { await sse.close(); }
@@ -782,7 +813,7 @@ async function phaseOn() {
     });
     await check("on: SSE transport with the access token works (list_hails)", async () => {
       const sse = await connect(base, "sse", { requestInit: { headers: { Authorization: `Bearer ${a.auth.saved.access_token}` } } });
-      try { assert.equal((await ok(sse, "list_hails")).hails.length, R.HAILS.length); } finally { await sse.close(); }
+      try { assertSeasonPool((await ok(sse, "list_hails")).hails); } finally { await sse.close(); }
     });
     await check("on: a refreshed access token works and keeps the same player id", async () => {
       const r = await fetch(asMeta.token_endpoint, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },

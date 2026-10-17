@@ -4,7 +4,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { SKY, SEASON_END, MAX_PLANS_PER_RUN, sky, isoJD, jdOfIso, openRun, seasonInstance, suiteInstance, applyTool, hailInfo, legPub, planPickup, planRideLeg, dispatch, decide, checkPad, spaceWeather, seedOf, phaseOf, leaveRun, computeLeg, GameError,
-  RIDE_FORMAT, rideSummary, rideRecord, rideStats, rideCursor, rideCursorOf, liveRecord, liveRow } from "../src/game.js";
+  RIDE_FORMAT, rideSummary, rideRecord, rideStats, rideCursor, rideCursorOf, liveRecord, liveRow,
+  POOL_TIERS, poolCap, seasonHails, resolveHail, keepsBest } from "../src/game.js";
 
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
@@ -708,6 +709,45 @@ test("live: the public record of a flight in the air has the legs flown so far, 
   await f.call("decide", { checkpoint: 1, action: "hold" }, NOW + 200000);
   const landed = liveRecord(E, f.run(), NOW + 300000);
   assert.deepEqual([landed.phase, landed.live.lands_at_ms, landed.live.hold, landed.score.total === f.run().score.total, landed.log.flown.length], ["arrived", NOW + 208889, null, true, 2]);
+});
+
+test("pool tiers are the placeholder table", () => {
+  assert.equal(POOL_TIERS.placeholder, true);
+  assert.deepEqual(POOL_TIERS.rows.map((r) => [r.min_players, r.hails]), [[0, 200], [20, 500], [100, 1000]]);
+  assert.equal(poolCap(0), 200);
+  assert.equal(poolCap(19), 200);
+  assert.equal(poolCap(20), 500);
+  assert.equal(poolCap(99), 500);
+  assert.equal(poolCap(100), 1000);
+  assert.equal(poolCap(1000), 1000);
+});
+
+test("resolveHail takes a catalog id first, then this season's pool, and refuses the rest", () => {
+  const season = sky(NOW).season, cap = poolCap(0);
+  assert.equal(resolveHail(E, "iss-crew", season, 0).id, "iss-crew");
+  const row = resolveHail(E, "s" + season + "-0", season, cap);
+  assert.equal(row.id, "s" + season + "-0");
+  assert.ok(row.party >= 1 && row.party <= 3);
+  assert.notEqual(row.from, row.to);
+  assert.ok(R.nearCars(row).length > 0);
+  const listed = seasonHails(E, season, cap);
+  assert.equal(listed.length, cap);
+  assert.equal(listed.some((h) => R.HAILS.some((c) => c.id === h.hail_id)), false);
+  assert.equal(listed[0].hail_id, row.id);
+  assert.equal(listed[0].party, row.party);
+  assert.match(listed[0].rider, /\(simulated\)$/);
+  assert.throws(() => resolveHail(E, "s" + season + "-" + cap, season, cap), (e) => e instanceof GameError && /outside this season's pool/.test(e.message));
+  assert.throws(() => resolveHail(E, "s" + (season + 1) + "-0", season, cap), (e) => e instanceof GameError && /from season/.test(e.message));
+  assert.throws(() => resolveHail(E, "s" + season + "-01", season, cap), (e) => e instanceof GameError && /unknown hail_id/.test(e.message));
+  assert.throws(() => resolveHail(E, "nope", season, cap), (e) => e instanceof GameError && /unknown hail_id/.test(e.message));
+});
+
+test("the board keeps the higher score for one hail", () => {
+  const low = { points: 10 }, high = { points: 40 };
+  assert.equal(keepsBest(null, low), true);
+  assert.equal(keepsBest(low, high), true);
+  assert.equal(keepsBest(high, low), false);
+  assert.equal(keepsBest(high, { points: 40 }), false);
 });
 
 test("live: a bench task stays instant, with the same results less the playback fields, and keeps no track or log", async () => {

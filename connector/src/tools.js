@@ -39,7 +39,7 @@ const from = skyTime.describe("sky time YYYY-MM-DD HH:MM to start from (default:
 /** Every tool, in the order tools/list shows them. */
 export const TOOLS = {
   list_hails: {
-    description: "Riders waiting for a Starfare robotaxi (simulated riders): hail id, pickup place, destination, quick or long haul. Also the fleet of Starseekers. Take one with take_hail.",
+    description: "Simulated passengers waiting this season: hail id, party size, pickup place, destination, quick or long haul. The five catalog hails stay takeable and are not in this list. Also the fleet of Starseekers. Take one with take_hail.",
     inputSchema: {},
   },
   take_hail: {

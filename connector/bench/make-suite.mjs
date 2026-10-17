@@ -20,7 +20,7 @@ import { naive, random, reference, rngOf } from "./agents.mjs";
 export const SELECTION_FORMAT = "starfare.selection/1";
 const LAST_DAY = SEASON_END - 400 - SKY.jd0; // a long ride still lands inside the season
 
-function candidates(E, rng, n) {
+export function candidates(E, rng, n) {
   const ids = E.R.HAILS.map((h) => h.id), out = new Map();
   while (out.size < n) {
     // Three bookings cost about 6 minutes per candidate (pooled par and the reference each plan 90 stop orders), so v1 stops at two.

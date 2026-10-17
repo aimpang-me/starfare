@@ -102,6 +102,11 @@ function lightDays(place, jd){ var a = helioAt(place, jd), b = helioAt("earth", 
 function flareReach(place, jd){ var r = sunKm(place, Math.floor(jd));
   return { sun_au: r / AU_KM, travel_days: r / CME_KMS / 86400, share: Math.min(1, Math.pow(AU_KM / r, 2)) }; }
 function fmix(h){ h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; return h >>> 0; }
+function fnvUnit(seed, label){
+  var s = String(seed) + "|" + label, h = 2166136261;
+  for (var i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return fmix(h) / 4294967296;
+}
 // Bench seeds look like "k1:<32 hex chars>": a 128-bit key, and every draw is SipHash-2-4(key, label) in full, so no
 // 32-bit state can be recovered from forecasts. Any other seed keeps the FNV-1a draw, so live seasons never change.
 var K1 = /^k1:([0-9a-fA-F]{32})$/;
@@ -154,7 +159,7 @@ function hazards(seed){
   var K = keyOf(seed);
   // Each draw is a number in [0, 1) from the seed and a label; the top 53 bits of SipHash, or the mixed FNV-1a state.
   var u = K ? function(key){ var r = sip24(K, key); return (r[0] * 2097152 + (r[1] >>> 11)) / 9007199254740992; }
-    : function(key){ var s = seed + "|" + key, h = 2166136261; for (var i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return fmix(h) / 4294967296; };
+    : function(key){ return fnvUnit(seed, key); };
   // Solar flares (radiation storms): odds per sky day come from a 27-day spell (one solar rotation); a storm lasts 4-48 h, mostly short.
   // flareOn is the eruption at the Sun. Its storm reaches a place flareReach().travel_days later, if strong enough there.
   function flareOdds(day){ var a = u("spell|" + Math.floor(day / 27)); return a < 0.55 ? 0.05 : 0.25 + (a - 0.55) / 0.45 * 0.35; }
@@ -807,7 +812,50 @@ function score(id, legs, ctx){
   if (!one){ out.bookings = {}; M.hails.forEach(function(b){ out.bookings[b] = bookings[b]; }); }
   return out;
 }
+function fleetSystemPlaces(){
+  var sys = {}, out = [];
+  FLEET.forEach(function(c){ sys[system(c.at)] = 1; });
+  E.PLACES.forEach(function(p){ if (sys[system(p.id)]) out.push(p.id); });
+  return out;
+}
+function legalRoutes(){
+  var places = fleetSystemPlaces(), out = [];
+  for (var i = 0; i < places.length; i++) for (var j = 0; j < places.length; j++){
+    if (i === j) continue;
+    if (nearCars({ from: places[i], to: places[j] }).length) out.push([places[i], places[j]]);
+  }
+  if (!out.length) throw new Error("no route has a ship nearby");
+  return out;
+}
+var ROUTES = legalRoutes();
+var GIVEN = ["Jules", "Noor", "Sasha", "Ren", "Quinn", "Mateo", "Imani", "Hana"];
+var JOBS = ["geologist", "pilot", "medic", "miner", "surveyor", "technician"];
+function hailRow(season, index){
+  season = String(season); index = index | 0;
+  var pair = ROUTES[Math.floor(fnvUnit(season, "hail|pair|" + index) * ROUTES.length)];
+  var from = pair[0], to = pair[1];
+  var party = 1 + Math.floor(fnvUnit(season, "hail|party|" + index) * 3);
+  var kind = system(from) === system(to) ? "quick" : "long";
+  var roll = fnvUnit(season, "hail|rush|" + index), rush = null;
+  if (roll >= 1 / 3){
+    var at = fnvUnit(season, "hail|rushat|" + index) < 0.5 ? from : to;
+    var x = fnvUnit(season, "hail|rushx|" + index) < 0.5 ? 2 : 3;
+    rush = roll >= 2 / 3 ? { at: at, x: x, after: 2 } : { at: at, x: x };
+  }
+  var who = GIVEN[Math.floor(fnvUnit(season, "hail|name|" + index) * GIVEN.length)];
+  var job = JOBS[Math.floor(fnvUnit(season, "hail|job|" + index) * JOBS.length)];
+  var row = { id: "s" + season + "-" + index, title: nameOf(from) + " to " + nameOf(to), rider: who + ", a " + job, party: party, from: from, to: to, kind: kind,
+    blurb: "A simulated party of " + party + " is waiting at " + nameOf(from) + " for a flight to " + nameOf(to) + "." };
+  if (rush) row.rush = rush;
+  return row;
+}
+function admit(h){
+  if (!h || !h.id || BY[h.id]) return BY[h.id] || null;
+  BY[h.id] = h;
+  return h;
+}
 return { DWELL: DWELL, WINDOW: WINDOW, LEAD: LEAD, FLEET: FLEET, CAR: CAR, HAILS: HAILS, BY: BY, system: system, nearCars: nearCars,
+  hailRow: hailRow, admit: admit,
   planLeg: planLeg, par: par, terms: terms, check: check, score: score, planOf: planOf, manifest: manifest, iso: iso,
   MAX_BOOKINGS: MAX_BOOKINGS, stopOrders: stopOrders, parSet: parSet, termsSet: termsSet,
   HOLD_KWH: HOLD_KWH, BERTHS: BERTHS, hazards: hazards, siphash24: siphash24, fly: fly, pickupStart: pickupStart, fleetState: fleetState,
