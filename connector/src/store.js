@@ -13,6 +13,7 @@ import {
   GameError, applyTool, computeLeg, flyLive, hailInfo, leaveRun, legKey, legPub, liveRecord, liveRow, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord,
   rideStats, rideSummary, seasonInstance,
 } from "./game.js";
+import { liveIdsToDrop } from "./live.js";
 
 export const hub = (env) => env.STARFARE_HUB.get(env.STARFARE_HUB.idFromName("hub"));
 export const runStub = (env, runId) => env.STARFARE_RUN.get(env.STARFARE_RUN.idFromName(runId));
@@ -25,7 +26,7 @@ const EXPORT_MS = 24 * 3600 * 1000;
 /** Where a ride stands for its history row: its phase and the checkpoints answered. Plans and forecasts leave it where it was. */
 const rideMark = (run) => phaseOf(run) + "/" + (run.decisions ? run.decisions.length : 0);
 const LIVE_HELD_MS = 6 * 3600 * 1000; // a flight held at a checkpoint leaves the home map after this long without an answer
-const LIVE_AFTER_MS = 60 * 1000; // a landed flight stays on the home map this long after it lands
+const LIVE_AFTER_MS = 60 * 1000; // landed rows older than this leave, except the newest
 
 export class StarfareRun extends DurableObject {
   async #run() { return (await this.ctx.storage.get("run")) ?? null; }
@@ -230,10 +231,10 @@ export class StarfareHub extends DurableObject {
   livePut(e) {
     this.sql.exec("INSERT OR REPLACE INTO live (run_id, v, land_ms, updated_ms) VALUES (?, ?, ?, ?)", e.run_id, JSON.stringify(e.v), e.land_ms, Date.now());
   }
-  /** The flights on the home map now: still flying their playback, or held at a checkpoint for under LIVE_HELD_MS. */
   live() {
     const now = Date.now();
-    this.sql.exec("DELETE FROM live WHERE land_ms < ? OR (land_ms IS NULL AND updated_ms < ?)", now - LIVE_AFTER_MS, now - LIVE_HELD_MS);
+    const rows = this.sql.exec("SELECT run_id, land_ms, updated_ms FROM live").toArray();
+    for (const id of liveIdsToDrop(rows, now, LIVE_AFTER_MS, LIVE_HELD_MS)) this.sql.exec("DELETE FROM live WHERE run_id = ?", id);
     return { now_ms: now, flights: this.sql.exec("SELECT v FROM live ORDER BY updated_ms DESC LIMIT 50").toArray().map((x) => JSON.parse(x.v)) };
   }
 

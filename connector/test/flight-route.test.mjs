@@ -43,6 +43,8 @@ test("the home scoreboard publishes the flight address and keeps the six-charact
   assert.equal(site.includes(">Run</th>"), false);
   assert.equal(site.includes(">Tag</th>"), true);
   assert.equal(site.includes('\'<a href="/flight/\' + esc(b.run_id)'), true);
+  assert.equal(site.includes("Flight logs</div>"), true);
+  assert.equal(site.includes("in the air now"), false);
 });
 
 test("the credits line does not name Tesla or SpaceX", () => {

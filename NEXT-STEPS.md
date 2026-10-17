@@ -11,7 +11,7 @@ Read `CLAUDE.md` first. Its "Rules from Alvin" section applies to everything bel
 
 ## Open follow-ups
 - Suite v1 is re-cut. Do not write `engine_sha256` into `src/suites/v1.json` by hand on a later cut. At deploy time, from `connector/`, run `node node_modules/wrangler/bin/wrangler.js secret put STARFARE_BENCH_KEY` and paste the key that cut this test split, then deploy. That deploy needs Alvin's go. The key stays out of the repo. Traces played under the previous key no longer verify.
-- A scored row on the public board links to `/flight/<run_id>`, and that page shows the receipt. The board table itself still does not inline the seven parts.
+- A scored row on the public board links to `/flight/<run_id>`, and that page shows the receipt. The board table itself still does not inline the seven parts. The home map keeps the newest landed flight after the 60 second window.
 
 ## Leave alone unless Alvin says
 - Branch `claude/nice-albattani-90f2cb` (2fbc7e7) is an engine change that would also need a suite re-cut.

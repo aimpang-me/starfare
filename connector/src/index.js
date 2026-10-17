@@ -123,7 +123,7 @@ export default {
         .replace("__SITE__", () => JSON.stringify(site).replace(/</g, "\\u003c"));
       return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } });
     }
-    // Season flights in the air now, for the home map's moving Starseekers (simulated).
+    // Home map flights (simulated), including the newest landed one.
     if (url.pathname === "/live.json") return Response.json({ simulated: true, ...(await hub(env).live()) }, { headers: { "cache-control": "no-store" } });
     // The flight page: live playback of a season flight in the air, then its replay and receipt. The page polls
     // /rides/<run_id>.json itself; the drawn arcs ride in the page so the download stays the starfare.ride/1 record.
