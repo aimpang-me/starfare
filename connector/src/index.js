@@ -8,7 +8,7 @@ import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
 import engineSrc from "./engine/sol-page.txt";
 import { EPISODE_PATH } from "./episode.js";
-import { fleet, listHails, seasonHail, sky } from "./game.js";
+import { listHails, poolView, sky } from "./game.js";
 import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
 import flightHtml from "./flight.html";
@@ -26,7 +26,7 @@ const isMcpPath = (p) => p === "/mcp" || p.startsWith("/mcp/");
 // The landing page runs the engine in the browser. ?v= changes with every engine build, so that URL can be cached for good.
 const ENGINE_PATH = "/engine.js", ENGINE_V = META.sha256.slice(0, 16);
 const isBenchPath = (p) => p === "/bench" || p.startsWith("/bench/");
-const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/board" || p === "/board.json" || p === "/live.json" || p.startsWith("/rides/") || p.startsWith("/flight/") || isBenchPath(p);
+const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p.startsWith("/rides/") || p.startsWith("/flight/") || isBenchPath(p);
 const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), FLIGHT_PATH = new RegExp("^/flight/(" + RUN_ID.source.slice(1, -1) + ")(\\.json)?$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
 
 function tooMany(limit) {
@@ -108,12 +108,11 @@ export default {
     if (req.method !== "GET") return new Response("Method not allowed", { status: 405 });
     if (url.pathname === "/board" || url.pathname === "/board.json") {
       const E = await engine(), season = sky(Date.now()).season, cap = await hub(env).ensurePool(season);
-      const raw = await hub(env).board(), hails = listHails(E);
-      for (const id of Object.keys(raw.best)) {
-        const m = /^s(\d+)-(\d+)$/.exec(id);
-        if (m && m[1] === String(season) && Number(m[2]) < cap) hails.push(seasonHail(E, season, Number(m[2])));
-      }
-      const data = { ...raw, best: Object.fromEntries(hails.filter((h) => raw.best[h.hail_id]).map((h) => [h.hail_id, raw.best[h.hail_id]])) };
+      const raw = await hub(env).board(), pool = poolView(E, season, cap);
+      const legacy_hails = listHails(E).filter((h) => raw.best[h.hail_id]);
+      const hails = [...pool.hails, ...legacy_hails];
+      const data = { ...raw, season, pool_size: cap, hails: pool.hails, legacy_hails,
+        best: Object.fromEntries(hails.filter((h) => raw.best[h.hail_id]).map((h) => [h.hail_id, raw.best[h.hail_id]])) };
       if (url.pathname === "/board.json") return Response.json({ label: "planned by Grok bot", ...data }, { headers: { "cache-control": "no-store" } });
       return new Response(boardHtml(hails, data), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
     }
@@ -125,12 +124,14 @@ export default {
     if (url.pathname === "/method") {
       return new Response(methodPage(await engine(), META.sky), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } });
     }
-    if (url.pathname === "/") {
-      const E = await engine();
-      const site = { sky: META.sky, look: META.look, hails: listHails(E), fleet: fleet(E) };
+    if (url.pathname === "/" || url.pathname === "/hails.json") {
+      const E = await engine(), season = sky(Date.now()).season, cap = await hub(env).ensurePool(season);
+      const pool = poolView(E, season, cap);
+      if (url.pathname === "/hails.json") return Response.json(pool, { headers: { "cache-control": "no-store" } });
+      const site = { sky: META.sky, look: META.look, ...pool };
       const html = siteHtml.replaceAll("__ORIGIN__", url.origin).replace("__ENGINE_URL__", `${ENGINE_PATH}?v=${ENGINE_V}`)
         .replace("__SITE__", () => JSON.stringify(site).replace(/</g, "\\u003c"));
-      return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } });
+      return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
     }
     // Home map flights (simulated), including the newest landed one.
     if (url.pathname === "/live.json") return Response.json({ simulated: true, ...(await hub(env).live()) }, { headers: { "cache-control": "no-store" } });

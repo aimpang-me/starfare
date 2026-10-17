@@ -437,7 +437,9 @@ p{text-wrap:pretty}
     <div class="scroll">
       <ul class="cards" id="flList" role="tabpanel" aria-labelledby="tabF"></ul>
       <div id="bkWrap" role="tabpanel" aria-labelledby="tabB" hidden>
-        <p class="note" style="margin:10px 13px 0">The desk right now, from the engine. Quick bookings are planned when the page opens; a long haul is planned when you pick it.</p>
+        <p class="note" style="margin:10px 13px 0">The same seasonal bookings your agent sees. Pick one to calculate its route preview.</p>
+        <label class="note" style="display:block;margin:10px 13px">Find a booking<input id="bkSearch" type="search" placeholder="Booking ID, passenger or place" style="width:100%;margin-top:4px"></label>
+        <div style="display:flex;align-items:center;gap:8px;margin:10px 13px"><button class="btn small" id="bkPrev" type="button">Previous</button><span class="note" id="bkPage" role="status"></span><button class="btn small" id="bkNext" type="button">Next</button></div>
         <ul class="cards" id="bkList"></ul>
       </div>
     </div>
@@ -481,7 +483,7 @@ p{text-wrap:pretty}
           <li><span class="sh" id="lgShip"></span>Starseeker on a flight</li>
           <li><span class="dt"></span>Ready <span class="dt b" style="margin-left:6px"></span>Busy</li>
         </ul>
-        <p class="lgn">Real bearings and dates; distances log-compressed; sizes exaggerated.</p>
+        <p class="lgn">JPL positions at simulated sky dates. Stored paths where available; straight route guides otherwise. Distances compressed; sizes exaggerated.</p>
         <p class="lgn cred" id="artCred" hidden></p>
       </div>
       <div class="ov scale" id="scale">
@@ -603,7 +605,7 @@ p{text-wrap:pretty}
         <div class="chk-b" id="ck3" hidden>
           <p style="margin-top:0">Every flight scores out of <b class="mono" id="partsTotal"></b>. The weights are placeholders. A ride on the stated reference earns 0.35 of each part except cruise dose. That cap, and the falloff steepness of 6, are simulated assumptions.</p>
           <ul class="parts" id="parts"></ul>
-          <p><b style="color:var(--ink)">Checker.</b> The server flies every leg again in an n body sim. A miss fails the leg.</p>
+          <p><b style="color:var(--ink)">Checker.</b> Interplanetary legs are checked in an n-body simulation; local hops use a separate transfer model. Transfer planning assumes impulsive burns. Propulsion feasibility is not yet validated. Map paths are interpolated for playback. <a href="/method">Models and assumptions</a>.</p>
           <p><b style="color:var(--ink)">Checkpoints.</b> Mid-flight the sky can close a pad or hold a launch. Your agent decides what to do with the <code class="mono" style="color:var(--me)">decide</code> tool.</p>
           <button class="btn small" type="button" data-next="3">Got it</button>
         </div>
@@ -615,6 +617,7 @@ p{text-wrap:pretty}
 
 <script>window.SITE = __SITE__;</script><script src="__ENGINE_URL__" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js" integrity="sha384-nhO9toQuMo5osCuA0l+YFpSqscZWxDu251Bnho2gD3kSPv1neEwHg0LyEmrA+mPj" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js" integrity="sha384-mY+ii969jnDCI2HjRHftH2NZVkIO5ZGUkcnGCg3oVJ3kVstWQXwerYWBg+nbUG4R" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js" integrity="sha384-GkidzTYmQg24v13sa3xhBBbvOLbVLO1QxfyKLdOWweQqNqS/iWwUst2T1fER2Xrg" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js" integrity="sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js" integrity="sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js" integrity="sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa" crossorigin="anonymous"></script><script src="/assets/sol-art.js"></script>
+<script src="/assets/flight-view.js"></script>
 <script>
 // Shared data layer: everything comes from the engine (/engine.js, window.SOLE) or window.SITE.
 (function (root) {
@@ -634,7 +637,19 @@ p{text-wrap:pretty}
   function init(sole) {
     E = sole; R = E.R;
     E.PLACES.forEach(function (p) { PID[p.id] = p; });
+    admitPool();
     return api;
+  }
+  function admitPool() {
+    SITE.hails.forEach(function (h) {
+      if (R.BY[h.hail_id]) return;
+      var m = /^s(\d+)-(\d+)$/.exec(h.hail_id);
+      if (m && R.hailRow && R.admit) R.admit(R.hailRow(m[1], +m[2]));
+    });
+  }
+  function setPool(pool) {
+    SITE.season = pool.season; SITE.pool_size = pool.pool_size; SITE.hails = pool.hails; SITE.fleet = pool.fleet;
+    PLANS = {}; admitPool();
   }
 
   // Sky clock: one real second is one sky day; the season loops every len_days.
@@ -642,7 +657,7 @@ p{text-wrap:pretty}
     var e = ((ms == null ? Date.now() : ms) - SKY.t0_ms) / 1000, n = Math.floor(e / SKY.len_days);
     return { season: n + 1, jd: SKY.jd0 + (e - n * SKY.len_days), day: Math.floor(e - n * SKY.len_days) };
   }
-  function iso(jd) { return new Date((jd - 2440587.5) * 864e5).toISOString().slice(0, 16).replace("T", " "); }
+  function iso(jd) { return new Date(Math.floor(((jd - 2440587.5) * 864e5 + 30000) / 60000) * 60000).toISOString().slice(0, 16).replace("T", " "); }
   function jdOf(s) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/.exec(s || ""); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 864e5 + 2440587.5 : null; }
   function fmt(n, d) { return Number(n).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
@@ -684,9 +699,10 @@ p{text-wrap:pretty}
   // The request desk: the open hails with the times a take_hail made now would get (game.js newRun).
   function desk(ms) {
     var s = sky(ms);
+    if (SITE.season != null && s.season !== SITE.season) return [];
     return SITE.hails.map(function (h) {
       var b = R.BY[h.hail_id], t0 = Math.floor(s.jd + (b.kind === "quick" ? 1 : R.LEAD)) + 0.5;
-      return { id: h.hail_id, title: h.title, kind: h.kind, rider: h.rider, blurb: h.blurb, from: b.from, to: b.to,
+      return { id: h.hail_id, title: h.title, kind: h.kind, rider: h.rider, party: h.party, blurb: h.blurb, from: b.from, to: b.to,
         ready_jd: t0, open: t0 + 30 <= SEASON_END, season: s.season };
     });
   }
@@ -695,7 +711,9 @@ p{text-wrap:pretty}
   // show a "planning" state first. Cached per hail and ready time.
   var PLANS = {};
   function plan(hailId, ms) {
-    var d = desk(ms).filter(function (x) { return x.id === hailId; })[0], key = hailId + "@" + d.ready_jd + "@" + d.season;
+    var d = desk(ms).filter(function (x) { return x.id === hailId; })[0];
+    if (!d) return { closed: "This booking belongs to an earlier season. Refresh the booking desk." };
+    var key = hailId + "@" + d.ready_jd + "@" + d.season;
     if (PLANS[key]) return PLANS[key];
     if (!d.open) return (PLANS[key] = { hail: d, closed: "The season ends before this ride could finish. It opens again after the reset (season " + (d.season + 1) + ")." });
     var seed = String(d.season), T, fs = {};
@@ -720,7 +738,8 @@ p{text-wrap:pretty}
     var log = ride.record.log, arcs = Object.keys(ride.arcs).map(function (k) { return ride.arcs[k]; });
     var legs = log.flown.map(function (f) {
       var a = f.arc !== undefined ? f.arc : arcs.filter(function (x) { return x.from === f.from && x.to === f.to; })[0];
-      return { kind: f.leg, from: f.from, to: f.to, dep: f.dep_jd != null ? f.dep_jd : jdOf(f.depart), arr: f.arr_jd != null ? f.arr_jd : jdOf(f.arrive), kwh: f.kwh, gate: f.gate, arc: a,
+      var arr = f.arr_jd != null ? f.arr_jd : jdOf(f.arrive);
+      return { kind: f.leg, idle: !!f.idle, from: f.from, to: f.to, dep: f.dep_jd != null ? f.dep_jd : jdOf(f.depart), orb: f.orbit_jd != null ? f.orbit_jd : arr, arr: arr, kwh: f.kwh, gate: f.gate, arc: a,
         sys: system(f.from) === system(f.to) ? system(f.from) : null };
     });
     var start = legs[0].dep - 0.25 * (legs[legs.length - 1].arr - legs[0].dep) / Math.max(1, legs.length), end = legs[legs.length - 1].arr;
@@ -728,16 +747,20 @@ p{text-wrap:pretty}
     function ends(L) { // the arc's start and end offsets from the real places at the flown departure and arrival
       if (L.err) return L.err;
       var A = L.arc.arc_au, a0 = A[0], a1 = A[A.length - 1];
-      if (L.sys) { var d0 = sub(pos(L.sys, L.dep), pos(L.sys, L.arc.dep_jd)), d1 = sub(pos(L.sys, L.arr), pos(L.sys, L.arc.arr_jd)); a0 = add(a0, d0); a1 = add(a1, d1); }
-      return (L.err = [sub(pos(L.from, L.dep), a0), sub(pos(L.to, L.arr), a1)]);
+      if (L.sys) { var d0 = sub(pos(L.sys, L.dep), pos(L.sys, L.arc.dep_jd)), d1 = sub(pos(L.sys, L.orb), pos(L.sys, L.arc.arr_jd)); a0 = add(a0, d0); a1 = add(a1, d1); }
+      return (L.err = [sub(pos(L.from, L.dep), a0), sub(pos(L.to, L.orb), a1)]);
     }
     function at(jd) {
+      var final = legs[legs.length - 1];
+      if (!final.idle && jd >= final.arr) return { p: pos(final.to, jd), leg: final, i: legs.length - 1, f: 1, phase: "arrived" };
       for (var i = 0; i < legs.length; i++) {
         var L = legs[i];
+        if (L.idle) return { p: pos(L.from, jd), leg: L, i: i, f: 0, phase: "holding" };
         if (jd < L.dep) return { p: pos(L.from, jd), leg: L, i: i, f: 0, phase: i ? "dwell" : "parked" };
+        if (jd <= L.arr && jd > L.orb) return { p: pos(L.to, jd), leg: L, i: i, f: 1, phase: "orbit" };
         if (jd <= L.arr) {
-          var f = (jd - L.dep) / Math.max(1e-9, L.arr - L.dep);
-          if (!L.arc || !L.arc.arc_au || !L.arc.arc_au.length) { var a0 = pos(L.from, L.dep), a1 = pos(L.to, L.arr); return { p: lerp(a0, a1, f), leg: L, i: i, f: f, phase: "flight" }; }
+          var f = (jd - L.dep) / Math.max(1e-9, L.orb - L.dep);
+          if (!L.arc || !L.arc.arc_au || !L.arc.arc_au.length) { var a0 = pos(L.from, L.dep), a1 = pos(L.to, L.orb); return { p: lerp(a0, a1, f), leg: L, i: i, f: f, phase: "flight" }; }
           var A = L.arc.arc_au, k = f * (A.length - 1), j = Math.min(A.length - 2, Math.floor(k)), p = lerp(A[j], A[j + 1], k - j);
           if (L.sys) { var tp = L.arc.dep_jd + f * (L.arc.arr_jd - L.arc.dep_jd), s0 = pos(L.sys, tp), s1 = pos(L.sys, jd); p = [p[0] - s0[0] + s1[0], p[1] - s0[1] + s1[1], p[2] - s0[2] + s1[2]]; }
           // Blend out the end errors so the car leaves exactly from, and lands exactly on, the place at the flown times.
@@ -751,6 +774,7 @@ p{text-wrap:pretty}
     }
     var ev = [];
     legs.forEach(function (L) {
+      if (L.idle) return;
       ev.push({ jd: L.dep, kind: "depart", title: (L.kind === "pickup" ? "Pickup leg departs " : "Ride departs ") + name(L.from), text: name(L.from) + " to " + name(L.to) });
       ev.push({ jd: L.arr, kind: "arrive", title: (L.kind === "pickup" ? "Rider aboard at " : "Arrived at ") + name(L.to), text: L.gate === "PASS" ? "Re-fly check: PASS" : L.gate === "local" ? "Local hop (not re-flown)" : name(L.from) + " to " + name(L.to) + " (simulated)" });
     });
@@ -773,7 +797,7 @@ p{text-wrap:pretty}
     AU: AU, SITE: SITE, RIDES: RIDES, SKY: SKY, SEASON_END: SEASON_END,
     loadEngine: loadEngine, sky: sky, iso: iso, jdOf: jdOf, fmt: fmt, esc: esc, dur: dur,
     place: place, system: system, name: name, tag: tag, color: color, pos: pos, orbit: orbit,
-    desk: desk, plan: plan, replay: replay, lerp: lerp,
+    desk: desk, setPool: setPool, plan: plan, replay: replay, lerp: lerp,
     get E() { return E; }, get R() { return R; },
     // The Starseeker: an original short-hop passenger ship (lifting body, window band, swept stub wings, one aft thruster).
     // Not modelled on any real or game vehicle. SHIP_SVG is a side view, SHIP_TOP_SVG a top view; both nose to the right.
@@ -811,7 +835,7 @@ function shipWords(s) {
   return s;
 }
 function W(t) { return esc(shipWords(t)); }
-var SEATS = "Seats: 4 (placeholder, not set yet)";
+var SEATS = "Cabin sizes are simulated ship specifications";
 function legKind(k) { return k === "ride" ? "passenger" : k; }
 function chip(id) { return SF.tag(id) === "real" ? '<span class="tag real">Real</span>' : '<span class="tag fict">Fictional</span>'; }
 function placeH(id) { return esc(SF.name(id)) + " " + chip(id); }
@@ -837,61 +861,44 @@ function sgn(n, d) { return (n < 0 ? "\u2212" : "+") + Math.abs(n).toFixed(d); }
    Each track maps wall-clock ms to sky time. The engine re-plans one leg arc per tick in the browser, so a new flight
    draws as straight legs for a moment and then follows its planned path.
    ========================================================= */
-var FL = [], LIVEF = { arcs: {}, budget: 0, timer: 0, first: true }, RUN_ID = /^run_[0-9a-f]{20}$/;
+var FL = [], LIVEF = { details: {}, timer: 0, first: true }, RUN_ID = /^run_[0-9a-f]{20}$/;
 function liveJd(f, ms) {
   var tr = f.track;
   if (ms <= tr[0][0]) return tr[0][1];
   for (var i = 1; i < tr.length; i++) if (ms <= tr[i][0]) { var a = tr[i - 1], b = tr[i]; return a[1] + (b[1] - a[1]) * (ms - a[0]) / Math.max(1, b[0] - a[0]); }
   return tr[tr.length - 1][1];
 }
-function liveArc(L) {
-  var key = L.from + "|" + L.to + "|" + L.dep_jd + "|" + L.arr_jd, A = LIVEF.arcs[key];
-  if (A === undefined && LIVEF.budget > 0) {
-    LIVEF.budget--;
-    try {
-      var b = SF.E.planRide({ place: L.from }, L.to, { depFrom: L.dep_jd, depTo: L.dep_jd, arriveBy: L.arr_jd, objective: "energy", allLocal: true });
-      A = b && b.arc_au && b.arc_au.length > 1 ? { from: L.from, to: L.to, arc_au: b.arc_au, dep_jd: b.dep_jd != null ? b.dep_jd : L.dep_jd, arr_jd: b.arr_jd != null ? b.arr_jd : L.arr_jd } : null;
-    } catch (e) { A = null; }
-    LIVEF.arcs[key] = A;
-  }
-  return A;
+function liveArc(L, f) {
+  var arcs = f.arcs || {};
+  if (L.leg_id && arcs[L.leg_id]) return arcs[L.leg_id];
+  var same = Object.keys(arcs).map(function (id) { return arcs[id]; }).filter(function (a) { return a.from === L.from && a.to === L.to; });
+  same.sort(function (a, b) { return Math.abs(a.dep_jd - L.dep_jd) - Math.abs(b.dep_jd - L.dep_jd); });
+  return same[0] || null;
 }
 function liveClean(f) {
   if (!f || typeof f.run_id !== "string" || !Array.isArray(f.legs) || !Array.isArray(f.track)) return null;
   var track = f.track.filter(function (p) { return Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]); });
   var legs = f.legs.filter(function (L) { return L && SF.place(L.from) && SF.place(L.to) && Number.isFinite(L.dep_jd) && Number.isFinite(L.arr_jd); });
+  if (!legs.length && track.length && f.hold && SF.place(f.home)) legs = [{ from: f.home, to: f.home, kind: "pickup", idle: true, dep_jd: track[0][1], arr_jd: track[track.length - 1][1] }];
   if (!track.length || !legs.length) return null;
   return Object.assign({}, f, { title: String(f.title || "Flight"), ship: String(f.ship || "Starseeker"), legs: legs, track: track });
 }
-// A live flight in the shape SF.replay reads. Legs before the first one leaving the booking's pickup are the pickup.
+// A live flight in the shape SF.replay reads, using its identity and recorded arcs rather than replanning it.
 function liveRide(f) {
-  var h = SF.SITE.hails.filter(function (x) { return x.title === f.title; })[0], legs = f.legs, last = legs[legs.length - 1];
-  var k0 = h ? legs.map(function (L) { return L.from; }).indexOf(h.from.id) : 0, miss = false;
-  if (k0 < 0) k0 = 0;
-  var flown = legs.map(function (L, k) {
-    var A = liveArc(L); if (A === undefined) miss = true;
-    return { leg: k < k0 ? "pickup" : "ride", from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, depart: iso(L.dep_jd), arrive: iso(L.arr_jd), gate: "", arc: A || null };
+  var legs = f.legs, last = legs[legs.length - 1], meta = f.manifest, bookings = meta && meta.bookings || [];
+  var flown = legs.map(function (L) {
+    return { leg: L.kind || "flight", idle: !!L.idle, stop: L.stop, from: L.from, to: L.to, dep_jd: L.dep_jd, orbit_jd: L.orbit_jd, arr_jd: L.arr_jd,
+      depart: iso(L.dep_jd), arrive: iso(L.arr_jd), gate: "", arc: liveArc(L, f) };
   });
-  return { miss: miss, ride: { arcs: {}, label: f.title, legs: [], record: { run_id: f.run_id,
-    log: { hail: h && h.hail_id, from: h ? h.from.id : legs[0].from, to: h ? h.to.id : last.to, flown: flown, checkpoints: [] },
+  return { ride: { arcs: {}, label: f.title, legs: [], record: { run_id: f.run_id, manifest: meta,
+    log: { hail: f.hail_id, from: bookings.length ? bookings[0].from : legs[0].from, to: meta ? meta.stops[meta.stops.length - 1].at : last.to, flown: flown, checkpoints: [] },
     score: { incidents: [], car: f.ship } } } };
 }
-function flightKey(f) { return f.run_id + ":" + f.legs.map(function (L) { return L.from + ">" + L.to + "@" + L.dep_jd; }).join(","); }
+function flightKey(f) { return f.run_id + ":" + f.legs.map(function (L) { return L.from + ">" + L.to + "@" + L.dep_jd + ":" + L.arr_jd + ":" + L.leg_id; }).join(","); }
 function makeFlight(f) {
-  var r = liveRide(f), F = { f: f, key: flightKey(f), run_id: f.run_id, call: f.ship.toUpperCase(), rp: SF.replay(r.ride), miss: r.miss, prev: null };
+  var r = liveRide(f), F = { f: f, key: flightKey(f), run_id: f.run_id, call: f.ship.toUpperCase(), rp: SF.replay(r.ride), prev: null };
   F.pl = passengerList(F.rp.record); F.jd = liveJd(f, Date.now()); F.st = statusOf(F, F.jd);
   return F;
-}
-// Re-plans missing arcs within the tick's budget and rebuilds the replay when one lands.
-function refreshArcs() {
-  LIVEF.budget = 1;
-  FL.forEach(function (F) {
-    if (!F.miss || LIVEF.budget <= 0) return;
-    var r = liveRide(F.f), had = F.rp.legs.filter(function (L) { return L.arc; }).length;
-    F.miss = r.miss;
-    var rp = SF.replay(r.ride);
-    if (rp.legs.filter(function (L) { return L.arc; }).length !== had) { F.rp = rp; routesDirty = true; }
-  });
 }
 function addFlightObjs(F) {
   if (!GL) return;
@@ -911,7 +918,7 @@ function removeFlightObjs(F) {
 function setFlights(list) {
   var old = {}, sel = SEL.t === "f" && FL[SEL.i] ? FL[SEL.i].run_id : null;
   FL.forEach(function (F) { old[F.key] = F; });
-  var next = list.map(function (f) { var k = flightKey(f), F = old[k]; if (F) { delete old[k]; F.f = f; return F; } F = makeFlight(f); addFlightObjs(F); return F; });
+  var next = list.map(function (f) { var k = flightKey(f), F = old[k]; if (F) { delete old[k]; if (F.f.arcs !== f.arcs) { F.rp = SF.replay(liveRide(f).ride); F.pl = passengerList(F.rp.record); } F.f = f; return F; } F = makeFlight(f); addFlightObjs(F); return F; });
   Object.keys(old).forEach(function (k) { removeFlightObjs(old[k]); });
   FL = next;
   if (SEL.t === "f") {
@@ -930,7 +937,16 @@ function setFlights(list) {
 function loadLive() {
   clearTimeout(LIVEF.timer);
   fetch("/live.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
-    setFlights((j && Array.isArray(j.flights) ? j.flights : []).map(liveClean).filter(Boolean));
+    var list = (j && Array.isArray(j.flights) ? j.flights : []).map(liveClean).filter(Boolean);
+    return Promise.all(list.map(function (f) {
+      var key = flightKey(f), saved = LIVEF.details[f.run_id];
+      if (saved && saved.key === key) return Object.assign(f, { arcs: saved.arcs });
+      if (!RUN_ID.test(f.run_id)) return f;
+      return fetch("/flight/" + encodeURIComponent(f.run_id) + ".json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (fl) {
+        LIVEF.details[f.run_id] = { key: key, arcs: fl.arcs || {} };
+        return Object.assign(f, { arcs: fl.arcs || {} });
+      }).catch(function () { return f; });
+    })).then(setFlights);
   }).catch(function () { setFlights([]); }).then(function () {
     LIVEF.timer = setTimeout(function again() { if (document.hidden) LIVEF.timer = setTimeout(again, 30000); else loadLive(); }, 30000);
   });
@@ -942,6 +958,7 @@ function setSt(el, k) { el.className = "st st-" + k + (window.SolArt ? " ico" : 
 var STL = { pick: "Pickup", fly: "In flight", hold: "Launch hold", closed: "Pad closed", arr: "Arrived" };
 function statusOf(F, jd) {
   var rp = F.rp, s = rp.at(jd), inc = rp.record.score.incidents;
+  if (F.f.hold && jd >= F.f.track[F.f.track.length - 1][1]) return { k: F.f.hold.kind === "launch_hold" ? "hold" : "closed", s: s };
   for (var k = 0; k < inc.length; k++) {
     var x = inc[k]; if (x.kind === "correction_burn" || !x.hours) continue;
     var a = SF.jdOf(x.at), b = a + x.hours / 24;
@@ -955,39 +972,17 @@ function statusOf(F, jd) {
   return { k: "pick", s: s };
 }
 function progOf(F, jd) { var L0 = F.rp.legs[0], Ln = F.rp.legs[F.rp.legs.length - 1]; return clamp((jd - L0.dep) / ((Ln.arr - L0.dep) || 1), 0, 1); }
-function etaOf(F, jd) { var a = F.rp.legs[F.rp.legs.length - 1].arr; return jd >= a ? "arrived" : SF.dur(a - jd); }
-function arrOf(F) { return iso(F.rp.legs[F.rp.legs.length - 1].arr); }
+function etaOf(F, jd) { var a = F.rp.legs[F.rp.legs.length - 1].arr; return F.f.hold ? jd >= a ? "awaiting agent" : SF.dur(a - jd) + " to checkpoint" : jd >= a ? "arrived" : SF.dur(a - jd); }
+function arrOf(F) { return F.f.hold ? "Pending agent decision" : iso(F.rp.legs[F.rp.legs.length - 1].arr); }
 function whereOf(F) {
   var s = F.st.s, L = s.leg;
   if (s.phase === "flight") return "between " + esc(SF.name(L.from)) + " and " + esc(SF.name(L.to));
-  return "at " + esc(SF.name(s.phase === "arrived" ? L.to : L.from));
+  return "at " + esc(SF.name(s.phase === "arrived" || s.f >= 1 ? L.to : L.from));
 }
 
-/* ---------- passenger list (the shared-flight shape; one booking per flight for now) ---------- */
-var SEAT_N = 4, PARTY_MAX = 3;
+/* ---------- passenger list shared with the flight page ---------- */
 function passengerList(rec) {
-  var lg = rec.log, fl = lg.flown || [], h = hailOf(lg.hail) || {};
-  var bk = { id: lg.hail, lead: (h.rider || "").split(",")[0], from: lg.from, to: lg.to, b: -1, a: -1 };
-  var stops = fl.length ? [{ at: fl[0].from, arrive: null, leave: fl[0].depart, board: [], alight: [] }] : [];
-  fl.forEach(function (f, k) { stops.push({ at: f.to, arrive: f.arrive, leave: fl[k + 1] ? fl[k + 1].depart : null, board: [], alight: [] }); });
-  stops.forEach(function (s, k) {
-    if (bk.b < 0 && s.at === bk.from) bk.b = k;
-    else if (bk.b >= 0 && bk.a < 0 && s.at === bk.to) bk.a = k;
-  });
-  if (bk.b >= 0) stops[bk.b].board.push(bk);
-  if (bk.a >= 0) stops[bk.a].alight.push(bk);
-  return { stops: stops, bookings: [bk], legs: fl };
-}
-function aboardAt(P, r) { return P.bookings.filter(function (b) { return b.b >= 0 && b.b <= r && (b.a < 0 || r < b.a); }); }
-function seatsHtml(on) {
-  var cls = [];
-  on.forEach(function () { cls.push("on"); for (var k = 1; k < PARTY_MAX; k++) cls.push("maybe"); });
-  var cells = "";
-  for (var k = 0; k < SEAT_N; k++) cells += '<span class="seat' + (cls[k] ? " " + cls[k] : "") + '"></span>';
-  var txt = on.length
-    ? "Seats in use <b>" + on.length + " lead passenger" + (on.length > 1 ? "s" : "") + "</b> + party not set yet / <b>4</b> (placeholder)"
-    : "Seats in use <b>0</b>, cabin empty / <b>4</b> (placeholder)";
-  return cells + '<span class="st3">' + txt + "</span>";
+  return window.StarfareView.passengerList(rec, rec.log, hailOf);
 }
 
 /* =========================================================
@@ -996,10 +991,10 @@ function seatsHtml(on) {
 var LIVE = [], LIVE_T = 0;
 function liveFleet(ms) {
   var s = SF.sky(ms), by = {};
-  SF.desk(ms).forEach(function (h) {
+  SF.desk(ms).filter(function (h, i) { return SEL.t === "b" ? h.id === SEL.id : i === 0; }).forEach(function (h) {
     try {
       SF.R.fleetState(h.id, h.ready_jd, String(s.season)).forEach(function (c) {
-        var o = by[c.car] || (by[c.car] = { car: c.car, name: c.name, at: c.at, busy: null });
+        var o = by[c.car] || (by[c.car] = { car: c.car, name: c.name, at: c.at, seats: SF.R.CAR[c.car].seats, busy: null });
         if (c.busy_until_jd && (!o.busy || c.busy_until_jd > o.busy)) o.busy = c.busy_until_jd;
       });
     } catch (e) { /* a booking the engine can't price leaves the fleet as it was */ }
@@ -1023,7 +1018,7 @@ function alertsNow(jd, season) {
 }
 // Open bookings: SF.plan is cached per ready time, which moves every real second, so each booking is planned once at a
 // fixed moment and labelled with that sky time. Replan plans it again now.
-var BK = {}, DESK = [];
+var BK = {}, DESK = [], BOOKING_PAGE = 0, BOOKING_PAGE_SIZE = 20, POOL_LOADING = false, POOL_RETRY = 0;
 function bookingRide(P, hail) {
   var legs = P.par.legs, first = -1, flown = [], arcs = {};
   legs.forEach(function (L, k) { if (first < 0 && L.from === hail.from) first = k; });
@@ -1472,11 +1467,9 @@ function labels() {
       pos: function () { var L = LIVE.filter(function (x) { return x.car === c.car; })[0]; return L ? marker(L.at, MAPJD) : null; },
       hide: function () { return !FILT.pk || FOLLOW; } });
   });
-  SF.SITE.hails.forEach(function (h) {
-    LBL.add({ html: esc(h.title), cls: "k-hail", pri: 40, click: function () { select({ t: "b", id: h.hail_id }); },
-      pos: function () { return marker(h.from.id, MAPJD); },
-      hide: function () { var B = BK[h.hail_id]; return !FILT.bk || FOLLOW || !B || !B.rp || !(SEL.t === "b" && SEL.id === h.hail_id); } });
-  });
+  LBL.add({ html: "Selected booking", cls: "k-hail", pri: 40,
+    pos: function () { var h = SEL.t === "b" && hailOf(SEL.id); return h ? marker(h.from.id, MAPJD) : null; },
+    hide: function () { var B = SEL.t === "b" && BK[SEL.id]; return !FILT.bk || FOLLOW || !B || !B.rp; } });
 }
 function rebuildRoutes() {
   routesDirty = false;
@@ -1629,6 +1622,7 @@ function select(s) {
   if (s.t === "f" && !FL[s.i]) return;
   var same = s.t === SEL.t && (s.t === "f" ? s.i === SEL.i : s.id === SEL.id);
   SEL = s;
+  LIVE_T = 0;
   if (s.t === "b") { FOLLOW = false; showTab("b"); var B = BK[s.id]; if (!B || (!B.rp && !B.err && !B.busy)) startPlan(s.id); }
   else { showTab("f"); if (FOLLOW && !same) FOLLOW = true; }
   routesDirty = true;
@@ -1678,19 +1672,29 @@ function updateCards() {
 }
 function renderBookings() {
   $("#bkN").textContent = DESK.length;
-  var html = DESK.map(function (d) {
+  var query = $("#bkSearch").value.trim().toLowerCase();
+  var matches = DESK.filter(function (d) { return !query || [d.id, d.title, d.rider, SF.name(d.from), SF.name(d.to)].join(" ").toLowerCase().indexOf(query) >= 0; });
+  BOOKING_PAGE = Math.min(BOOKING_PAGE, Math.max(0, Math.ceil(matches.length / BOOKING_PAGE_SIZE) - 1));
+  var first = BOOKING_PAGE * BOOKING_PAGE_SIZE;
+  $("#bkPage").textContent = !matches.length ? (DESK.length ? "No matching bookings" : "Refreshing seasonal bookings…") : (first + 1) + "–" + Math.min(first + BOOKING_PAGE_SIZE, matches.length) + " of " + matches.length;
+  $("#bkPrev").disabled = BOOKING_PAGE === 0; $("#bkNext").disabled = first + BOOKING_PAGE_SIZE >= matches.length;
+  var html = matches.slice(first, first + BOOKING_PAGE_SIZE).map(function (d) {
     var B = BK[d.id] || {}, P = B.plan, st;
     if (B.busy) st = '<div class="planning" style="margin-top:6px"><i></i>Planning with the engine</div>';
     else if (B.err) st = '<div class="pl">' + W(B.err) + "</div>";
     else if (B.rp) st = '<div class="pl">Planned at sky time ' + iso(SF.sky(B.ms).jd) + " &middot; par <b>" + esc(parName(P.par.car)) + "</b></div>";
-    else st = '<div class="pl">' + (d.kind === "quick" ? "Not planned yet" : "Long haul: planned when you pick it (takes a moment)") + "</div>";
+    else st = '<div class="pl">Pick this booking to calculate a preview</div>';
     return '<li><button type="button" class="fc" data-b="' + esc(d.id) + '" aria-pressed="' + (SEL.t === "b" && SEL.id === d.id) + '">' +
       '<div class="r1"><span style="font-weight:600;font-size:13.5px">' + esc(d.title) + '</span><span class="tag sim" style="margin-left:auto">' + ic("booking") + esc(d.kind) + "</span></div>" +
       '<div class="rt">' + placeH(d.from) + ' <span class="ar">&rarr;</span> ' + placeH(d.to) + "</div>" +
-      '<div class="lb">' + W(d.rider) + "</div>" +
-      '<div class="rdy">' + (d.open ? "Ready " + iso(d.ready_jd) + " if taken now" : "Closed until the season resets") + "</div>" + st + "</button></li>";
+      '<div class="lb">' + W(d.rider) + " · party " + esc(d.party) + ' · <span class="mono">' + esc(d.id) + "</span></div>" +
+      '<div class="rdy" data-ready="' + esc(d.id) + '"></div>' + st + "</button></li>";
   }).join("");
   if (html !== renderBookings.last) { renderBookings.last = html; $("#bkList").innerHTML = html; }
+  $$("#bkList [data-ready]").forEach(function (el) {
+    var d = DESK.find(function (h) { return h.id === el.dataset.ready; });
+    if (d) el.textContent = d.open ? "Ready " + iso(d.ready_jd) + " if taken now" : "Closed until the season resets";
+  });
 }
 function startPlan(id) {
   var B = BK[id] || (BK[id] = { id: id });
@@ -1705,11 +1709,11 @@ function renderInfo() {
   }
   if (SEL.t === "f") {
     var F = FL[SEL.i], lg = F.rp.record.log, legs = F.f.legs;
-    el.innerHTML = '<div class="caps" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">Selected flight <span class="tag live">Live</span><span class="tag sim">Simulated</span></div>' +
+    el.innerHTML = '<div class="caps" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">Selected flight <span class="tag live">' + (F.st && F.st.k === "arr" ? "Arrived" : "Live") + '</span><span class="tag sim">Simulated</span></div>' +
       '<div class="ihd"><div class="art">' + SF.SHIP_SVG + '</div><div class="who"><div class="nm">' + esc(F.call) + '</div><div class="dim" style="font-size:11px">' + esc(SF.SHIP) + ' <span class="tag fict">Fictional</span></div><span class="st" id="iSt"></span></div></div>' +
       '<div class="irt">' + placeH(lg.from) + ' <span class="dim">&rarr;</span> ' + placeH(lg.to) + "</div>" +
-      '<div class="note" style="margin-top:3px">' + W(F.f.title) + '</div><div class="note" id="iW" style="margin-top:3px"></div><div class="ipb"><i id="iBar"></i></div>' +
-      '<dl class="kv"><dt>Progress</dt><dd id="iP"></dd><dt>ETA</dt><dd id="iEta"></dd><dt>Arrival</dt><dd>' + esc(arrOf(F)) + "</dd><dt>Legs</dt><dd>" + legs.length + "</dd><dt>Departed</dt><dd>" + iso(legs[0].dep_jd) + "</dd></dl>" +
+      '<div class="note" style="margin-top:3px">' + W(F.f.title) + (F.f.hold ? " · awaiting agent decision" : "") + '</div><div class="note" id="iW" style="margin-top:3px"></div><div class="ipb"><i id="iBar"></i></div>' +
+      '<dl class="kv"><dt>Progress</dt><dd id="iP"></dd><dt>ETA</dt><dd id="iEta"></dd><dt>Arrival</dt><dd>' + esc(arrOf(F)) + "</dd><dt>Legs flown</dt><dd>" + legs.filter(function (L) { return !L.idle; }).length + "</dd><dt>Bookings</dt><dd>" + F.pl.bookings.length + '</dd><dt>Passengers / seats</dt><dd id="iSeats"></dd><dt>Departed</dt><dd>' + (legs[0].idle ? "Awaiting launch" : iso(legs[0].dep_jd)) + "</dd></dl>" +
       '<div class="irow">' + (RUN_ID.test(F.run_id) ? '<a class="btn small primary" href="/flight/' + esc(F.run_id) + '">View flight</a>' : "") + '<button class="btn small" type="button" data-act="follow" aria-pressed="' + FOLLOW + '">' + (FOLLOW ? "Following" : "Follow") + "</button></div>";
     updateInfo();
   } else {
@@ -1737,6 +1741,8 @@ function updateInfo() {
   $("#iP").textContent = Math.round(progOf(F, F.jd) * 100) + "%";
   $("#iEta").textContent = etaOf(F, F.jd);
   $("#iW").innerHTML = "Now " + whereOf(F);
+  var st = F.st.s, stop = st.phase === "arrived" ? F.pl.stops.length - 1 : st.f >= 1 && st.phase !== "orbit" ? st.i + 1 : st.i;
+  $("#iSeats").textContent = (window.StarfareView.seatCount(window.StarfareView.aboardAt(F.pl, stop)) ?? "unknown") + " / " + (F.pl.seats ?? "not recorded") + " (simulated)";
 }
 
 /* ---------- Starseekers column ---------- */
@@ -1747,15 +1753,15 @@ function renderSk() {
   function item(attr, name, lines, dot) { return '<li><button type="button" class="ski" ' + attr + '><span class="ic">' + TOPSVG + "</span><b>" + esc(name) + "</b>" + lines.map(function (l) { return '<span class="m">' + l + "</span>"; }).join("") + '<span class="dot ' + dot + '"></span></button></li>'; }
   var html = '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px"><span class="tag sim">' + esc(SEATS) + "</span></div>" +
     '<div class="skg"><div class="caps">' + ic("ready") + 'Ready <span class="mono">' + ready.length + "</span></div><ul>" + (ready.map(function (c) {
-      return item('data-park="' + esc(c.at) + '"', c.name, ["Parked at " + placeH(c.at), "Free now"], "ready");
+      return item('data-park="' + esc(c.at) + '"', c.name, ["Parked at " + placeH(c.at), "Free now · " + c.seats + " seats"], "ready");
     }).join("") || '<li class="skn">None free right now.</li>') + "</ul></div>" +
     '<div class="skg"><div class="caps">' + ic("flying") + 'On a flight <span class="mono">' + FL.length + "</span></div><ul>" + (FL.map(function (F, i) {
       return item('data-sf="' + i + '"', F.call, [(F.st ? esc(STL[F.st.k]) + ", " + whereOf(F) : ""), "Frees at " + esc(arrOf(F))], "fly");
     }).join("") || '<li class="skn">None in the air right now.</li>') + "</ul></div>" +
     '<div class="skg"><div class="caps">' + ic("busy") + 'Docked / busy &middot; simulated fleet competition <span class="mono">' + busy.length + "</span></div><ul>" + (busy.map(function (c) {
-      return item('data-park="' + esc(c.at) + '"', c.name, ["Docked at " + placeH(c.at), "Frees at " + iso(c.busy)], "busy");
+      return item('data-park="' + esc(c.at) + '"', c.name, ["Docked at " + placeH(c.at), "Frees at " + iso(c.busy) + " · " + c.seats + " seats"], "busy");
     }).join("") || '<li class="skn">None busy right now.</li>') + "</ul></div>" +
-    '<p class="skn">Ready and busy come from the engine\'s fleet for the open desk (simulated). ' + esc(SF.SHIPS) + " on a live flight are shown on their flight instead.</p>";
+    '<p class="skn">Availability is simulated for ' + esc(SEL.t === "b" ? SEL.id : DESK.length ? DESK[0].id : "the refreshing desk") + '. Select a booking to see its fleet conditions. ' + esc(SF.SHIPS) + " on a live flight are shown on their flight instead.</p>";
   if (html !== renderSk.last) { renderSk.last = html; $("#skList").innerHTML = html; }
 }
 
@@ -1863,15 +1869,16 @@ function openBoard() {
   $("#boardRows").innerHTML = '<tr><td colspan="7" class="dim">Loading the scoreboard&hellip;</td></tr>';
   fetch("/board.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
     var best = j && j.best || {}, n = j && j.stats && j.stats.runs_scored, total = SF.SCORE_PARTS.reduce(function (a, p) { return a + p[2]; }, 0);
-    $("#boardRows").innerHTML = SF.SITE.hails.map(function (h) {
+    $("#boardRows").innerHTML = (j.hails || []).concat(j.legacy_hails || []).sort(function (a, b) { return Number(!!best[b.hail_id]) - Number(!!best[a.hail_id]); }).map(function (h) {
       var b = best[h.hail_id];
-      if (!b) return '<tr><td style="font-family:Inter;white-space:normal">' + esc(h.title) + '</td><td colspan="6" class="dim">No arrived flight yet</td></tr>';
+      var label = esc(h.title) + '<div class="dim mono">' + esc(h.hail_id) + (/^s\d+-\d+$/.test(h.hail_id) ? "" : " · Catalog reference booking") + "</div>";
+      if (!b) return '<tr><td style="font-family:Inter;white-space:normal">' + label + '</td><td colspan="6" class="dim">No arrived flight yet</td></tr>';
       var car = SF.SITE.fleet.filter(function (c) { return c.car === b.car; })[0];
-      return '<tr><td style="font-family:Inter;white-space:normal">' + esc(h.title) + '</td><td class="r" style="color:var(--me)">' + fmt(b.points) + " / " + total + "</td><td>" + esc(car ? car.name : String(b.car || "")) +
+      return '<tr><td style="font-family:Inter;white-space:normal">' + label + '</td><td class="r" style="color:var(--me)">' + fmt(b.points) + " / " + total + "</td><td>" + esc(car ? car.name : String(b.car || "")) +
         '</td><td class="r">' + (b.kwh != null ? fmt(b.kwh) : "") + (b.par != null ? " / " + fmt(b.par) : "") + '</td><td class="r">' + (b.wait_h != null ? fmt(b.wait_h, 1) : "") + '</td><td class="r">' + (b.plans != null ? fmt(b.plans) : "") +
         "</td><td>" + (b.run_id && RUN_ID.test(b.run_id) ? '<a href="/flight/' + esc(b.run_id) + '">' + esc(b.run_tag || "") + "</a>" : esc(b.run_tag || "")) + (b.player_tag ? ' <span class="dim">' + esc(b.player_tag) + "</span>" : "") + "</td></tr>";
     }).join("");
-    $("#boardLead").insertAdjacentHTML("beforeend", n != null ? ' <span class="dim" id="boardN">Flights scored so far: ' + fmt(n) + ".</span>" : "");
+    $("#boardLead").insertAdjacentHTML("beforeend", ' <span class="dim" id="boardN">Season ' + esc(j.season) + " · " + esc(j.pool_size) + " seasonal bookings. Scored catalog reference bookings are labelled separately." + (n != null ? " Flights scored across all seasons: " + fmt(n) + "." : "") + "</span>");
     var old = $$("#boardN"); if (old.length > 1) old[0].remove();
   }).catch(function () {
     $("#boardRows").innerHTML = '<tr><td colspan="7">The scoreboard didn\'t load. Try <a href="/board">/board</a>.</td></tr>';
@@ -1944,7 +1951,6 @@ var lastSlow = 0;
 function uiTick() {
   var now = Date.now();
   if (!raf) { LIVEJD = SF.sky(now).jd; }
-  refreshArcs();
   FL.forEach(function (F) { F.jd = liveJd(F.f, now); F.st = statusOf(F, F.jd); });
   feedTick(); updateCards(); updateInfo(); waveTick(now);
   if (now - lastSlow >= 1000) { lastSlow = now; slowTick(now); }
@@ -1954,8 +1960,19 @@ function slowTick(now) {
   $("#clk").textContent = iso(s.jd) + " UTC";
   $("#clkS").textContent = "Season " + s.season + " \u00B7 day " + fmt(s.day) + " of " + fmt(SF.SKY.len_days);
   DESK = SF.desk(now); renderBookings();
+  if (SF.SITE.season !== s.season && !POOL_LOADING && now >= POOL_RETRY) refreshPool();
   if (now - LIVE_T > 4000) { LIVE_T = now; LIVE = liveFleet(now); }
   renderAlerts(); renderSk();
+}
+function refreshPool() {
+  POOL_LOADING = true;
+  fetch("/hails.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (pool) {
+    SF.setPool(pool);
+    Object.keys(BK).forEach(function (id) { if (BK[id].line && GL) { scene.remove(BK[id].line); BK[id].line.geometry.dispose(); BK[id].line.material.dispose(); } });
+    BK = {}; BOOKING_PAGE = 0;
+    if (SEL.t === "b") SEL = { t: "n" };
+    DESK = SF.desk(); routesDirty = true; LIVE_T = 0; renderBookings(); renderInfo();
+  }).catch(function () { $("#bkPage").textContent = "Booking refresh failed; retrying shortly"; }).finally(function () { POOL_LOADING = false; POOL_RETRY = Date.now() + 5000; });
 }
 
 /* ---------- start ---------- */
@@ -1982,15 +1999,16 @@ function start() {
     glStart();
   }
   loadLive();
-  // Quick bookings are planned while the page is idle, one at a time.
-  var q = DESK.filter(function (d) { return d.kind === "quick" && d.open; }).map(function (d) { return d.id; });
-  (function nextPlan() { var id = q.shift(); if (!id) return; setTimeout(function () { if (!BK[id] || (!BK[id].rp && !BK[id].busy)) planBooking(id, Date.now()); nextPlan(); }, 120); })();
+  // Route previews are calculated only for the selected booking.
   setInterval(uiTick, 250);
   // events
   $("#tabF").addEventListener("click", function () { showTab("f"); });
   $("#tabB").addEventListener("click", function () { showTab("b"); });
   $("#flList").addEventListener("click", function (e) { var b = e.target.closest("[data-f]"); if (b) select({ t: "f", i: +b.dataset.f }); });
   $("#bkList").addEventListener("click", function (e) { var b = e.target.closest("[data-b]"); if (b) select({ t: "b", id: b.dataset.b }); });
+  $("#bkSearch").addEventListener("input", function () { BOOKING_PAGE = 0; renderBookings(); });
+  $("#bkPrev").addEventListener("click", function () { BOOKING_PAGE = Math.max(0, BOOKING_PAGE - 1); renderBookings(); });
+  $("#bkNext").addEventListener("click", function () { BOOKING_PAGE++; renderBookings(); });
   $("#focus").addEventListener("click", function (e) {
     var b = e.target.closest("[data-f]"); if (!b || !GL) return;
     if (FOLLOW) { FOLLOW = false; routesDirty = true; renderInfo(); }
@@ -2002,7 +2020,7 @@ function start() {
     var a = b.dataset.act;
     if (a === "follow") setFollow(!FOLLOW);
     else if (a === "replan") startPlan(SEL.id);
-    else if (a === "take") { var h = hailOf(SEL.id); ask("Take the " + h.title + " booking and show me the terms.", 0); $("#ask").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" }); }
+    else if (a === "take") { var h = hailOf(SEL.id); ask("Take booking " + h.hail_id + " (" + h.title + ") and show me the terms.", 0); $("#ask").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" }); }
   });
   $("#skList").addEventListener("click", function (e) {
     var b = e.target.closest("[data-sf],[data-park]"); if (!b) return;

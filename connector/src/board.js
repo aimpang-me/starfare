@@ -1,5 +1,4 @@
-// GET /board: best connector score per ride hail. The Starfare page is a sandboxed artifact with no network,
-// so this page is the only place Grok-bot scores can be seen.
+// GET /board: the current seasonal desk and scored legacy catalog references, also shown on the home scoreboard.
 import { RUN_ID } from "./tools.js";
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -10,9 +9,10 @@ const tagHtml = (b) => {
 const num = (n) => Math.round(n).toLocaleString("en-US");
 
 export function boardHtml(hails, data) {
+  const catalog = new Set((data.legacy_hails || []).map((h) => h.hail_id));
   const rows = hails.map((h) => {
     const b = data.best[h.hail_id];
-    return `<tr><td>${esc(h.title)}<div class="dim">${esc(h.from.name)} to ${esc(h.to.name)} · ${esc(h.kind)}</div></td>` +
+    return `<tr><td>${esc(h.title)}<div class="dim">${esc(h.hail_id)}${catalog.has(h.hail_id) ? " · Catalog reference booking" : ""}</div><div class="dim">${esc(h.from.name)} to ${esc(h.to.name)} · ${esc(h.kind)}</div></td>` +
       (b ? `<td class="n"><b>${b.points}</b></td><td>${esc(b.car || "")}<div class="dim">pickup wait ${b.wait_h != null ? esc(b.wait_h) + " h" : ""}</div></td><td class="n">${num(b.kwh)} kWh<div class="dim">par ${num(b.par)}</div></td><td class="n">${b.plans}</td>` +
         `<td>planned by Grok bot${b.player_tag ? ` · player ${esc(b.player_tag)}` : ""}<div class="dim">${tagHtml(b)} · ${esc(new Date(b.at).toISOString().slice(0, 16).replace("T", " "))} UTC</div></td>`
         : `<td class="dim" colspan="5">no connector runs yet</td>`) + "</tr>";
@@ -31,7 +31,7 @@ th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-
 <p class="dim">Starfare is a concept robotaxi service for Starseeker ships. Riders and the fleet are simulated. Each row is the highest score for one ride hail, dispatched by a bot through the Starfare MCP connector. Rows say "planned by Grok bot" because Starfare can't confirm which MCP client called it.</p>
 <div class="wrap"><table><thead><tr><th>Hail</th><th class="n">Score</th><th>Ship</th><th class="n">Battery</th><th class="n">Plans</th><th>By</th></tr></thead><tbody>${rows}</tbody></table></div>
 <p class="dim">Scores are out of 100000. The weights are placeholders. They come from what actually happened once the season's simulated hazards (busy pads, solar flares, Mars dust, Titan haze, busy ships) were flown. Each part except cruise dose earns at most 0.35 of its weight on the stated reference. That cap and the falloff steepness of 6 are simulated assumptions. fast pickup 22000, on time 16000, energy versus par 24000, kept the promised arrival 14000, every leg checked 4000, honest fare 4000, planning economy 3000, xenon tank 4000, distance throttle 3000, departure window 3000, checkpoint recovery 3000, cruise dose 0. Battery is kWh actually flown, including holds and correction burns.</p>
-<p class="dim">Claude and human runs are on the in-page board of the Starfare page itself. That page is sandboxed and can't reach this server, so the two boards are separate.</p>
-<p class="dim">${data.stats.runs_scored || 0} connector runs scored. Machine-readable: <a href="/board.json">/board.json</a>.</p>
+<p class="dim">Season ${esc(data.season ?? "not recorded")}: ${esc(data.pool_size ?? hails.length)} seasonal bookings, the same pool returned by list_hails and shown on the home desk. Scored catalog reference bookings are labelled separately. The home scoreboard reads this same data.</p>
+<p class="dim">${data.stats.runs_scored || 0} connector runs scored across all seasons. Machine-readable: <a href="/board.json">/board.json</a>.</p>
 </main></body></html>`;
 }

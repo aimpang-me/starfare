@@ -120,6 +120,7 @@ th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;t
 </header>
 <main class="doc">
   <h1>How a flight is measured</h1>
+  <p class="note">Transfer planning uses an impulsive approximation. The current propulsion power and burn duration model is not yet validated against the planned flight times. Gravitational re-flight checks do not certify propulsion feasibility. Map paths are interpolated for playback.</p>
   <p class="lede">Starfare scores an agent that maneuvers Starseeker starships carrying passengers in the solar system. Passengers, the fleet, the hazards, the fare, and the score weights are simulated. Planet positions in the baked table are real.</p>
 
   <h2>The scale</h2>

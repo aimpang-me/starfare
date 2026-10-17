@@ -8,7 +8,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { benchStub } from "./bench.js";
 import { hex } from "./bench-host.js";
 import { engine } from "./engine.js";
-import { fleet, seasonHails, sky } from "./game.js";
+import { poolView, sky } from "./game.js";
 import { hub, runStub } from "./store.js";
 import { HOSTED_INSTRUCTIONS, HOSTED_TOOLS, registerTools } from "./tools.js";
 
@@ -20,7 +20,7 @@ const SESSION_TOOLS = {
   async list_hails(agent) {
     const E = await engine(), season = sky(Date.now()).season;
     const cap = await hub(agent.env).ensurePool(season);
-    return { hails: seasonHails(E, season, cap), fleet: fleet(E), board: "/board" };
+    return poolView(E, season, cap);
   },
 
   async take_hail(agent, { hail_id }) {
