@@ -187,8 +187,16 @@ async function phaseOff() {
   });
 
   let good;
-  const bestOf = {}; // best total per hail, for the board check
-  const noteBest = (p) => { if (p.score.ok) bestOf[p.hail.hail_id] = Math.max(bestOf[p.hail.hail_id] ?? -1, p.score.total); return p; };
+  const bestOf = {}, bestPlay = {}; // best total per hail, for the board check. A tie keeps the first row, as the board does.
+  const noteBest = (p) => {
+    if (!p.score || !p.score.ok) return p;
+    const prev = bestOf[p.hail.hail_id];
+    if (prev == null || p.score.total > prev) {
+      bestOf[p.hail.hail_id] = p.score.total;
+      bestPlay[p.hail.hail_id] = p;
+    }
+    return p;
+  };
   await check("iss-crew: take_hail, plan_pickup (par car), plan_ride, dispatch with the leg's fare and arrival; the result says what actually happened", async () => {
     good = noteBest(await playHail(client, "iss-crew"));
     const { hail, pickup, ride, score } = good;
@@ -527,11 +535,11 @@ async function phaseOff() {
     assert.equal(j.label, "planned by Grok bot");
     assert.equal(j.best["iss-crew"].points, bestOf["iss-crew"]); assert.equal(j.best["iss-crew"].hail_id, "iss-crew");
     assert.equal(j.best["ceres-shift"], undefined);
-    const row = j.best["iss-crew"];
-    assert.equal(row.run_id, good.hail.run_id);
-    assert.equal(row.run_tag, good.hail.run_id.slice(4, 10));
+    const row = j.best["iss-crew"], best = bestPlay["iss-crew"];
+    assert.equal(row.run_id, best.hail.run_id);
+    assert.equal(row.run_tag, best.hail.run_id.slice(4, 10));
     assert.equal(Object.hasOwn(row, "player_id"), false);
-    assert.equal(row.kwh, Math.round(good.score.used_kwh)); assert.ok(Math.abs(row.wait_h - (jdOf(good.score.pickup) - jdOf(good.hail.rider_ready)) * 24) <= 0.06, `${row.wait_h} h vs actual pickup ${good.score.pickup}`);
+    assert.equal(row.kwh, Math.round(best.score.used_kwh)); assert.ok(Math.abs(row.wait_h - (jdOf(best.score.pickup) - jdOf(best.hail.rider_ready)) * 24) <= 0.06, `${row.wait_h} h vs actual pickup ${best.score.pickup}`);
     assert.equal(j.stats.runs_scored, scored);
     const r = await fetch(`${w.base}/board`);
     assert.match(r.headers.get("content-type"), /text\/html/);
@@ -539,11 +547,11 @@ async function phaseOff() {
     for (const h of R.HAILS) assert.ok(html.includes(h.title), `board is missing ${h.title}`);
     assert.match(html, /planned by Grok bot/); assert.match(html, /Claude and human runs are on the in-page board/); assert.match(html, /Scores are out of 100000/); assert.match(html, /kept the promised arrival 14000/);
     assert.match(html, /no connector runs yet/); // titan-home etc. have no runs
-    assert.ok(html.includes(`href="/flight/${good.hail.run_id}"`));
-    const flight = await fetch(`${w.base}/flight/${good.hail.run_id}`);
+    assert.ok(html.includes(`href="/flight/${row.run_id}"`));
+    const flight = await fetch(`${w.base}/flight/${row.run_id}`);
     assert.equal(flight.status, 200);
     await flight.body?.cancel();
-    const rec = await (await fetch(`${w.base}/rides/${good.hail.run_id}.json`)).json();
+    const rec = await (await fetch(`${w.base}/rides/${row.run_id}.json`)).json();
     assert.deepEqual(rec.score.parts.map((p) => p.key).sort(), ["checker", "dose", "economy", "energy", "fare", "on_time", "pickup", "promise", "recovery", "tank", "throttle", "window"]);
     report.board = j;
   });
