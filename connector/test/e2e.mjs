@@ -501,11 +501,16 @@ async function phaseOff() {
     } finally { await sse.close(); }
   });
   await check("GET /board and /board.json: best per hail with hail titles, labelled planned by Grok bot", async () => {
-    const j = await (await fetch(`${w.base}/board.json`)).json();
+    const br = await fetch(`${w.base}/board.json`);
+    assert.equal(br.headers.get("cache-control"), "no-store");
+    const j = await br.json();
     assert.equal(j.label, "planned by Grok bot");
     assert.equal(j.best["iss-crew"].points, bestOf["iss-crew"]); assert.equal(j.best["iss-crew"].hail_id, "iss-crew");
     assert.equal(j.best["ceres-shift"].points, long.score.total);
     const row = j.best["ceres-shift"];
+    assert.equal(row.run_id, long.hail.run_id);
+    assert.equal(row.run_tag, long.hail.run_id.slice(4, 10));
+    assert.equal(Object.hasOwn(row, "player_id"), false);
     assert.equal(row.kwh, Math.round(long.score.used_kwh)); assert.ok(Math.abs(row.wait_h - (jdOf(long.score.pickup) - jdOf(long.hail.rider_ready)) * 24) <= 0.06, `${row.wait_h} h vs actual pickup ${long.score.pickup}`);
     assert.equal(j.stats.runs_scored, scored);
     const r = await fetch(`${w.base}/board`);
@@ -514,6 +519,12 @@ async function phaseOff() {
     for (const h of R.HAILS) assert.ok(html.includes(h.title), `board is missing ${h.title}`);
     assert.match(html, /planned by Grok bot/); assert.match(html, /Claude and human runs are on the in-page board/); assert.match(html, /kept the promised arrival 15/);
     assert.match(html, /no connector runs yet/); // titan-home etc. have no runs
+    assert.ok(html.includes(`href="/flight/${long.hail.run_id}"`));
+    const flight = await fetch(`${w.base}/flight/${long.hail.run_id}`);
+    assert.equal(flight.status, 200);
+    await flight.body?.cancel();
+    const rec = await (await fetch(`${w.base}/rides/${long.hail.run_id}.json`)).json();
+    assert.deepEqual(rec.score.parts.map((p) => p.key).sort(), ["checker", "economy", "energy", "fare", "on_time", "pickup", "promise"]);
     report.board = j;
   });
   await check("off: no OAuth: /mcp needs no token, OAuth endpoints are 404, runs carry no player_id, get_my_rides asks for the sign-in", async () => {
@@ -760,9 +771,14 @@ async function phaseOn() {
     await check("on: /board shows the best run with its player tag", async () => {
       const j = await (await fetch(`${base}/board.json`)).json();
       assert.equal(j.best["iss-crew"].player_tag, good.hail.player_id.slice(2, 8));
+      assert.equal(j.best["iss-crew"].run_id, good.hail.run_id);
+      assert.equal(Object.hasOwn(j.best["iss-crew"], "player_id"), false);
       const html = await (await fetch(`${base}/board`)).text();
       assert.ok(html.includes(`planned by Grok bot · player ${good.hail.player_id.slice(2, 8)}`));
+      assert.ok(html.includes(`href="/flight/${good.hail.run_id}"`));
       assert.ok(html.includes(R.BY["iss-crew"].title));
+      const rec = await (await fetch(`${base}/rides/${good.hail.run_id}.json`)).json();
+      assert.deepEqual(rec.score.parts.map((p) => p.key).sort(), ["checker", "economy", "energy", "fare", "on_time", "pickup", "promise"]);
       report.board_row = j.best["iss-crew"];
     });
     await check("on: SSE transport with the access token works (list_hails)", async () => {

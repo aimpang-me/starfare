@@ -32,4 +32,4 @@ Still to do:
 - Shared flights. The page was built before shared flights reached main: it shows the lead booking only and placeholder seats. A shared flight's record carries `bookings` and `passengers` (real seats) to show instead.
 - Live traffic in the replay (other Starseekers in the sky at the same time).
 - The home desk swap: put the flight view on the landing page in place of the current desk.
-- Board links. `/board.json` rows carry only a 6-hex `run_tag`, not the full run id, and a full run id works as a capability. Linking the board to `/flight/<run_id>` needs a decision (a public flight id, or opt-in sharing) before the board can carry it.
+- Board links. A winning row stores `run_id` and links to `/flight/<run_id>`. The page replays the simulated flight and shows the receipt. `player_id` stays off the public row. The visible label stays the 6-character `run_tag`. Rows written before this field existed stay as text until a higher score replaces them.

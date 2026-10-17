@@ -44,7 +44,7 @@ export class StarfareRun extends DurableObject {
   /** The board holds arrived runs only. */
   async #record(run) {
     const s = run.score;
-    await hub(this.env).record({ hail_id: run.id, title: run.title, run_tag: run.run_id.slice(4, 10), points: s.total, car: s.car,
+    await hub(this.env).record({ hail_id: run.id, title: run.title, run_tag: run.run_id.slice(4, 10), run_id: run.run_id, points: s.total, car: s.car,
       wait_h: Math.round((run.pickup_jd - run.t0) * 240) / 10, kwh: Math.round(s.used_kwh), par: Math.round(s.par_kwh), plans: run.calls, at: Date.now(),
       ...(run.player_id ? { player_tag: run.player_id.slice(2, 8) } : {}) });
   }

@@ -108,7 +108,7 @@ export default {
       const raw = await hub(env).board(), hails = listHails(await engine());
       // Only current hails: best rows from the old delivery missions stay in storage but are not shown.
       const data = { ...raw, best: Object.fromEntries(hails.filter((h) => raw.best[h.hail_id]).map((h) => [h.hail_id, raw.best[h.hail_id]])) };
-      if (url.pathname === "/board.json") return Response.json({ label: "planned by Grok bot", ...data });
+      if (url.pathname === "/board.json") return Response.json({ label: "planned by Grok bot", ...data }, { headers: { "cache-control": "no-store" } });
       return new Response(boardHtml(hails, data), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
     }
     if (url.pathname.startsWith("/rides/")) return rides(req, url.pathname, env);

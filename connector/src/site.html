@@ -544,7 +544,7 @@ p{text-wrap:pretty}
   <div class="sheet">
     <header><div class="ttl"><div class="caps">Log &amp; reports</div><h2 id="logH" tabindex="-1">Scoreboard</h2></div><button class="btn small" type="button" id="logClose">Close</button></header>
     <div class="bd">
-      <p class="note" id="boardLead" style="margin-top:0">The best arrived flight for each booking this season (simulated). Full table at <a href="/board">/board</a>, data at <code>/board.json</code>. The Tag column is a 6-character label. It is not a flight address. A flight page is <code>/flight/</code> plus the full run id, and this board does not publish that id. Every arrived flight also has a public log at <code>/rides/&lt;run_id&gt;.json</code>.</p>
+      <p class="note" id="boardLead" style="margin-top:0">The best arrived flight for each booking this season (simulated). A scored row with a flight address opens that flight. The page replays the simulated flight and shows the receipt. Full table at <a href="/board">/board</a>, data at <code>/board.json</code>. The public log for a flight is <code>/rides/&lt;run_id&gt;.json</code>.</p>
       <div class="tw"><table class="t" style="min-width:560px"><thead><tr><th>Booking</th><th class="r">Points</th><th>Starseeker</th><th class="r">kWh vs par</th><th class="r">Wait h</th><th class="r">Plans</th><th>Tag</th></tr></thead><tbody id="boardRows"></tbody></table></div>
       <div class="caps" style="margin-top:14px">You</div>
       <p id="youRow" style="margin:4px 0 0;font-size:13px"></p>
@@ -1860,7 +1860,7 @@ function openBoard() {
       var car = SF.SITE.fleet.filter(function (c) { return c.car === b.car; })[0];
       return '<tr><td style="font-family:Inter;white-space:normal">' + esc(h.title) + '</td><td class="r" style="color:var(--me)">' + fmt(b.points) + " / " + total + "</td><td>" + esc(car ? car.name : String(b.car || "")) +
         '</td><td class="r">' + (b.kwh != null ? fmt(b.kwh) : "") + (b.par != null ? " / " + fmt(b.par) : "") + '</td><td class="r">' + (b.wait_h != null ? fmt(b.wait_h, 1) : "") + '</td><td class="r">' + (b.plans != null ? fmt(b.plans) : "") +
-        "</td><td>" + esc(b.run_tag || "") + (b.player_tag ? ' <span class="dim">' + esc(b.player_tag) + "</span>" : "") + "</td></tr>";
+        "</td><td>" + (b.run_id && RUN_ID.test(b.run_id) ? '<a href="/flight/' + esc(b.run_id) + '">' + esc(b.run_tag || "") + "</a>" : esc(b.run_tag || "")) + (b.player_tag ? ' <span class="dim">' + esc(b.player_tag) + "</span>" : "") + "</td></tr>";
     }).join("");
     $("#boardLead").insertAdjacentHTML("beforeend", n != null ? ' <span class="dim" id="boardN">Flights scored so far: ' + fmt(n) + ".</span>" : "");
     var old = $$("#boardN"); if (old.length > 1) old[0].remove();
