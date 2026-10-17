@@ -49,7 +49,6 @@ def test_a_different_departure_is_drift():
 def test_a_failed_refly_is_drift():
     other = noisy_copy()
     other["refly"]["pass"] = False
-    other["ok"] = False
     assert not same(ROUTE, other)
 
 
