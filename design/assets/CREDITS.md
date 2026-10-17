@@ -1,6 +1,6 @@
 # Art credits
 
-The design mockups (`design/mockups/d-hybrid.html`, `design/mockups/f-ops-3d.html`) load these files through `design/assets/sol-art.js`. Every map was resized and re-encoded for the web. Any other changes are noted below.
+The design mockups (`design/mockups/d-hybrid.html`, `design/mockups/f-ops-3d.html`) load these files through `design/assets/sol-art.js`. The live site and flight pages (`connector/src/site.html`, `connector/src/flight.html`) load the same files from `/assets/`. Every map was resized and re-encoded for the web. Any other changes are noted below.
 
 ## Planet and Sun maps (`tex/`)
 
@@ -16,6 +16,18 @@ The design mockups (`design/mockups/d-hybrid.html`, `design/mockups/f-ops-3d.htm
 | `saturn_1k.jpg` | Solar System Scope, 2k Saturn. https://www.solarsystemscope.com/textures/ | CC BY 4.0, https://creativecommons.org/licenses/by/4.0/ | Resized |
 | `saturn_ring_1k.webp` | Solar System Scope, 2k Saturn ring alpha. https://www.solarsystemscope.com/textures/ | CC BY 4.0 | Resized; converted from PNG to WebP |
 | `sun_1k.jpg` | Solar System Scope, 2k Sun. https://www.solarsystemscope.com/textures/ | CC BY 4.0 | Resized |
+| `mercury_1k.jpg` | Solar System Scope, 2k Mercury (based on NASA MESSENGER data). https://www.solarsystemscope.com/textures/ | CC BY 4.0 | Resized |
+| `venus_1k.jpg` | Solar System Scope, 2k Venus atmosphere. https://www.solarsystemscope.com/textures/ | CC BY 4.0 | Resized |
+| `uranus_1k.jpg` | Solar System Scope, 2k Uranus. https://www.solarsystemscope.com/textures/ | CC BY 4.0 | Resized |
+| `neptune_1k.jpg` | Solar System Scope, 2k Neptune. https://www.solarsystemscope.com/textures/ | CC BY 4.0 | Resized |
+| `ceres_1k.jpg` | NASA/JPL-Caltech/UCLA/MPS/DLR/IDA, Dawn colorized map of Ceres, PIA20354. https://photojournal.jpl.nasa.gov/catalog/PIA20354 | NASA, public domain | Resized; turned to warm grey because the colour layer is incomplete near the poles; rows with no data take the nearest row |
+| `io_1k.jpg` | NASA/JPL Solar System Simulator map `jup1vss2.jpg` (Voyager and Galileo SSI). https://maps.jpl.nasa.gov/tmaps/pix/jup1vss2.jpg | NASA, public domain | Resized |
+| `europa_1k.jpg` | NASA/JPL Solar System Simulator map `jup2vss2.jpg` (Voyager and Galileo SSI). https://maps.jpl.nasa.gov/tmaps/pix/jup2vss2.jpg | NASA, public domain | Resized |
+| `ganymede_1k.jpg` | NASA/JPL Solar System Simulator map `jup3vss2.jpg` (Voyager and Galileo SSI). https://maps.jpl.nasa.gov/tmaps/pix/jup3vss2.jpg | NASA, public domain | Resized |
+| `callisto_1k.jpg` | USGS Astrogeology, Callisto Voyager/Galileo SSI global mosaic 1 km. https://astrogeology.usgs.gov/search/map/callisto_galileo_voyager_global_mosaic_1km | USGS, public domain | Unimaged areas filled with the mosaic's mean grey |
+| `enceladus_1k.jpg` | USGS Astrogeology, Enceladus Cassini global mosaic 100 m (Schenk, 2024). https://astrogeology.usgs.gov/search/map/enceladus-cassini-global-mosaic-100m-schenk | NASA/JPL-Caltech/Space Science Institute, processed by USGS; public domain | None beyond the 1024 px preview USGS publishes |
+| `triton_1k.jpg` | NASA/JPL Solar System Simulator map `nep1vuu2.jpg` (Voyager 2, USGS). https://maps.jpl.nasa.gov/tmaps/pix/nep1vuu2.jpg | NASA/USGS, public domain | Resized. Voyager 2 imaged under half of Triton; the rest is filled with the imaged part's mean colour |
+| `bennu_1k.jpg` | USGS Astrogeology, Bennu OSIRIS-REx OCAMS global PAN mosaic (data NASA/Goddard/University of Arizona). https://astrogeology.usgs.gov/search/map/bennu_osiris_rex_ocams_global_pan_mosaic_5cm | USGS product; mission data NASA, public domain | None beyond the 1024 px preview USGS publishes |
 
 ## Stars (`stars-bsc5.json`)
 
