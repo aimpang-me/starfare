@@ -12,6 +12,7 @@ import { fleet, listHails, seasonHail, sky } from "./game.js";
 import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
 import flightHtml from "./flight.html";
+import { methodPage } from "./method.js";
 import siteHtml from "./site.html";
 import { hub, runStub } from "./store.js";
 import { RUN_ID } from "./tools.js";
@@ -25,7 +26,7 @@ const isMcpPath = (p) => p === "/mcp" || p.startsWith("/mcp/");
 // The landing page runs the engine in the browser. ?v= changes with every engine build, so that URL can be cached for good.
 const ENGINE_PATH = "/engine.js", ENGINE_V = META.sha256.slice(0, 16);
 const isBenchPath = (p) => p === "/bench" || p.startsWith("/bench/");
-const isPublicPage = (p) => p === "/" || p === ENGINE_PATH || p === "/board" || p === "/board.json" || p === "/live.json" || p.startsWith("/rides/") || p.startsWith("/flight/") || isBenchPath(p);
+const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/board" || p === "/board.json" || p === "/live.json" || p.startsWith("/rides/") || p.startsWith("/flight/") || isBenchPath(p);
 const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), FLIGHT_PATH = new RegExp("^/flight/(" + RUN_ID.source.slice(1, -1) + ")(\\.json)?$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
 
 function tooMany(limit) {
@@ -120,6 +121,9 @@ export default {
     if (url.pathname === ENGINE_PATH) {
       const cache = url.searchParams.get("v") === ENGINE_V ? "public, max-age=31536000, immutable" : "no-cache";
       return new Response(engineSrc, { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": cache } });
+    }
+    if (url.pathname === "/method") {
+      return new Response(methodPage(await engine(), META.sky), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } });
     }
     if (url.pathname === "/") {
       const E = await engine();
