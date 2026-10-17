@@ -1959,14 +1959,18 @@ function check(id, car, legs, t0, seed){
 function quotedJd(s){ var m = /^\s*(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec(String(s || "")); return m ? E.jdFromIso(m[1] + "T" + m[2]) : null; }
 function k(x){ return Math.round(x).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 function iso(jd){ return E.isoFromJd(jd, true).replace("T", " ").slice(0, 16); }
-// Score version 2. Placeholder weights, they sum to 100000, until Alvin sets them. got is not rounded.
+// Score version 3. Placeholder weights, they sum to 100000, until Alvin sets them. got is not rounded.
 // total is the sum of the part got values. legs: today's [pickup, ride] or a plan.
 // ctx: { t0, arrive_by_jd, par_kwh, best_wait_days, plan_calls, ship, window_kwh, throttled_kwh, hindsight_kwh,
 //   quote: { fare_usd, arrival }, flown: fly(...) }
 // A shared flight adds ctx.bookings. Passenger parts are the party weighted mean. Ship parts are once per flight.
 // The weights and that mean are a placeholder (docs/SHARED-FLIGHTS.md, open number 5).
-var SCORE_MAX = { pickup: 2000, on_time: 2000, promise: 2000, checker: 2000, fare: 2000, economy: 2000, energy: 3000, tank: 25000, throttle: 25000, window: 20000, recovery: 15000, dose: 0 };
+// SCORE_HEADROOM and SCORE_STEEPNESS are simulated assumptions. At the stated reference, excess is 0 and a part
+// earns headroom of its weight. It falls as excess grows and never reaches the weight.
+var SCORE_HEADROOM = 0.35, SCORE_STEEPNESS = 6;
+var SCORE_MAX = { pickup: 22000, on_time: 16000, energy: 24000, promise: 14000, checker: 4000, fare: 4000, economy: 3000, tank: 4000, throttle: 3000, window: 3000, recovery: 3000, dose: 0 };
 var SCORE_TOTAL = Object.keys(SCORE_MAX).reduce(function(a, key){ return a + SCORE_MAX[key]; }, 0);
+function scoreRatio(excess){ return SCORE_HEADROOM / (1 + SCORE_STEEPNESS * Math.max(0, excess)); }
 function score(id, legs, ctx){
   var plan = planOf(id, null, legs), L = plan.legs, M = manifest(plan), one = M.hails.length === 1;
   function ridden(b){ var s = M.stop[b]; return L.slice(s.board[0], s.alight[0]); }
@@ -1981,15 +1985,18 @@ function score(id, legs, ctx){
   function booking(b){
     var B = ctx.bookings && ctx.bookings[b] || ctx, Fb = F.bookings && F.bookings[b] || F, mine = ridden(b), last = mine[mine.length - 1];
     var fare = mine.map(function(l){ return l.fare; }).reduce(function(a, f){ return a + f; });
-    var wait = Math.max(1e-6, Fb.pickup_jd - B.t0), late = Math.max(0, Fb.arrive_jd - B.arrive_by_jd), span = Math.max(1, B.arrive_by_jd - B.t0);
+    var wait = Math.max(1e-6, Fb.pickup_jd - B.t0), late = Math.max(0, Fb.arrive_jd - B.arrive_by_jd);
     var q = B.quote || {}, fareGap = isFinite(+q.fare_usd) ? Math.abs(+q.fare_usd - fare) : fare, fareOk = isFinite(+q.fare_usd) && fareGap <= 1, qj = quotedJd(q.arrival);
-    var tol = (BY[b].kind === "quick" ? 0.25 : 1), slip = qj == null ? null : Fb.arrive_jd - qj;
-    var kept = slip == null ? 0 : Math.max(0, 1 - Math.max(0, slip) / tol - Math.max(0, -slip) / (4 * tol));
+    var slip = qj == null ? null : Fb.arrive_jd - qj;
+    var slipMin = slip == null ? null : slip * 1440, lateMin = late * 1440, waitMin = wait * 1440, bestMin = Math.max(B.best_wait_days, 1 / 1440) * 1440;
+    var pickupExcess = Math.max(0, waitMin - bestMin) / bestMin;
+    var promiseExcess = slipMin == null ? Infinity : Math.max(0, slipMin) / 60 + Math.max(0, -slipMin) / 240;
+    var fareExcess = isFinite(+q.fare_usd) ? fareGap / Math.max(fare, 1) : Infinity;
     return { party: BY[b].party, wait_days: wait, late_days: late, pickup_jd: Fb.pickup_jd, arrive_jd: Fb.arrive_jd, planned_arrive_jd: last.arr_jd, fare_usd: fare, parts: [
-      row("pickup", "Fast pickup", SCORE_MAX.pickup * Math.min(1, B.best_wait_days / wait), "min", wait * 1440, "rider waited " + dur(wait) + ", quickest nearby ship " + dur(B.best_wait_days)),
-      row("on_time", "Arrived on time", SCORE_MAX.on_time * Math.max(0, 1 - late / (0.5 * span)), "min", late * 1440, late > 0 ? "arrived " + dur(late) + " late, score falls to 0 at " + (0.5 * span).toFixed(0) + " days late" : "arrived by " + iso(B.arrive_by_jd)),
-      row("promise", "Kept the promise", SCORE_MAX.promise * kept, "min", slip == null ? null : slip * 1440, qj == null ? "no arrival time was quoted" : slip > 1 / 1440 ? "arrived " + dur(slip) + " after the quoted " + iso(qj) + "; 0 at " + dur(tol) + " late" : slip < -1 / 1440 ? "arrived " + dur(-slip) + " before the quoted " + iso(qj) : "arrived when promised, " + iso(qj)),
-      row("fare", "Honest fare", fareOk ? SCORE_MAX.fare : 0, "USD", fareGap, "fare " + (fareOk ? "matches" : "does not match") + " the ride leg's $" + k(fare))
+      row("pickup", "Fast pickup", SCORE_MAX.pickup * scoreRatio(pickupExcess), "min", waitMin, "rider waited " + dur(wait) + " (" + waitMin.toFixed(1) + " min), quickest nearby ship " + dur(B.best_wait_days) + ". " + Math.max(0, waitMin - bestMin).toFixed(1) + " min over that ship"),
+      row("on_time", "Arrived on time", SCORE_MAX.on_time * scoreRatio(lateMin / 60), "min", lateMin, late > 0 ? "arrived " + dur(late) + " late (" + lateMin.toFixed(1) + " min). The reference is 0 min late" : "arrived by " + iso(B.arrive_by_jd) + ", 0 min late"),
+      row("promise", "Kept the promise", SCORE_MAX.promise * scoreRatio(promiseExcess), "min", slipMin, qj == null ? "no arrival time was quoted" : slip > 1 / 1440 ? "arrived " + dur(slip) + " (" + slipMin.toFixed(1) + " min) after the quoted " + iso(qj) + ". The reference is 0 min late" : slip < -1 / 1440 ? "arrived " + dur(-slip) + " (" + (-slipMin).toFixed(1) + " min) before the quoted " + iso(qj) : "arrived when promised, " + iso(qj)),
+      row("fare", "Honest fare", SCORE_MAX.fare * scoreRatio(fareExcess), "USD", fareGap, "fare " + (fareOk ? "matches" : "does not match") + " the ride leg's $" + k(fare) + (isFinite(+q.fare_usd) ? ". $" + fareGap.toFixed(2) + " off that fare" : ""))
     ] };
   }
   var bookings = {}; M.hails.forEach(function(b){ bookings[b] = booking(b); });
@@ -2008,22 +2015,24 @@ function score(id, legs, ctx){
   var cheap = ctx.window_kwh == null ? ion : +ctx.window_kwh;
   var hind = ctx.hindsight_kwh == null ? null : +ctx.hindsight_kwh;
   var lead = bookings[id], msv = dose(lead.pickup_jd, lead.arrive_jd);
+  var overKwh = Math.max(0, used - ctx.par_kwh), throttleOver = Math.max(0, ion - legal), windowOver = Math.max(0, ion - cheap);
+  var recoveryOver = hind == null ? 0 : Math.max(0, used - hind);
   var parts = [
     mean("pickup"),
     mean("on_time"),
-    row("energy", "Energy versus par", SCORE_MAX.energy * Math.pow(Math.min(1, ctx.par_kwh / used), 2), "kWh", Math.max(0, used - ctx.par_kwh), k(used) + " kWh flown" + (F.extra_kwh || F.divert_kwh ? " (" + [F.extra_kwh ? k(F.extra_kwh) + " from holds and corrections" : "", F.divert_kwh ? k(F.divert_kwh) + " on divert hops" : ""].filter(Boolean).join(", ") + ")" : "") + ", par " + k(ctx.par_kwh) + " kWh"),
+    row("energy", "Energy versus par", SCORE_MAX.energy * scoreRatio(overKwh / Math.max(ctx.par_kwh, 1e-9)), "kWh", overKwh, k(used) + " kWh flown" + (F.extra_kwh || F.divert_kwh ? " (" + [F.extra_kwh ? k(F.extra_kwh) + " from holds and corrections" : "", F.divert_kwh ? k(F.divert_kwh) + " on divert hops" : ""].filter(Boolean).join(", ") + ")" : "") + ", par " + k(ctx.par_kwh) + " kWh. " + overKwh.toFixed(1) + " kWh over par"),
     mean("promise"),
-    row("checker", "Every leg checked", SCORE_MAX.checker * gated / flown.length, "legs", flown.length - gated, gated + " of " + flown.length + " legs passed the checker or were local hops"),
+    row("checker", "Every leg checked", SCORE_MAX.checker * scoreRatio((flown.length - gated) / Math.max(flown.length, 1)), "legs", flown.length - gated, gated + " of " + flown.length + " legs passed the checker or were local hops"),
     mean("fare"),
-    row("economy", "Planning economy", SCORE_MAX.economy * Math.max(0, 5 - extra) / 5, "plans", extra, (ctx.plan_calls || 0) + " plans, 6 free"),
-    row("tank", "Xenon tank", tankOver > 1e-9 ? 0 : SCORE_MAX.tank, "kg", tankOver, cap == null ? "no ship class on this score" : (tankOver > 1e-9 ? xe + " kg of xenon, tank holds " + cap + " kg" : xe + " kg of xenon, tank holds " + cap + " kg")),
-    row("throttle", "Distance throttle", SCORE_MAX.throttle * Math.min(1, legal / Math.max(ion, 1e-9)), "kWh", Math.max(0, ion - legal), legal + " kWh at the published set point, " + ion + " kWh on the plan"),
-    row("window", "Departure window", SCORE_MAX.window * Math.min(1, cheap / Math.max(ion, 1e-9)), "kWh", Math.max(0, ion - cheap), cheap + " kWh on the lowest departure in the search, " + ion + " kWh on the plan"),
-    row("recovery", "Checkpoint recovery", hind == null ? SCORE_MAX.recovery : SCORE_MAX.recovery * Math.min(1, hind / Math.max(used, 1e-9)), "kWh", hind == null ? 0 : Math.max(0, used - hind), hind == null ? "no checkpoint to grade" : used + " kWh flown, " + hind + " kWh on a hindsight option"),
+    row("economy", "Planning economy", SCORE_MAX.economy * scoreRatio(extra / 6), "plans", extra, (ctx.plan_calls || 0) + " plans, 6 free. " + extra + " plans past that"),
+    row("tank", "Xenon tank", tankOver > 1e-9 ? 0 : SCORE_MAX.tank * scoreRatio(0), "kg", tankOver, cap == null ? "no ship class on this score" : xe + " kg of xenon, tank holds " + cap + " kg"),
+    row("throttle", "Distance throttle", SCORE_MAX.throttle * scoreRatio(throttleOver / Math.max(legal, 1e-9)), "kWh", throttleOver, legal + " kWh at the published set point, " + ion + " kWh on the plan. " + throttleOver + " kWh over that set point"),
+    row("window", "Departure window", SCORE_MAX.window * scoreRatio(windowOver / Math.max(cheap, 1e-9)), "kWh", windowOver, cheap + " kWh on the lowest departure in the search, " + ion + " kWh on the plan. " + windowOver + " kWh over that departure"),
+    row("recovery", "Checkpoint recovery", SCORE_MAX.recovery * scoreRatio(hind == null ? 0 : recoveryOver / Math.max(hind, 1e-9)), "kWh", recoveryOver, hind == null ? "no checkpoint to grade. 0 kWh over a hindsight option" : used + " kWh flown, " + hind + " kWh on a hindsight option. " + recoveryOver + " kWh over that option"),
     row("dose", "Cruise dose", 0, "mSv", msv, msv + " mSv on the cruise. This part is a placeholder and scores 0")
   ];
   var total = parts.reduce(function(a, p){ return a + p.got; }, 0);
-  var out = { total: total, out_of: SCORE_TOTAL, score_version: 2, parts: parts, used_kwh: used, extra_kwh: F.extra_kwh || 0, wait_days: lead.wait_days, late_days: lead.late_days,
+  var out = { total: total, out_of: SCORE_TOTAL, score_version: 3, parts: parts, used_kwh: used, extra_kwh: F.extra_kwh || 0, wait_days: lead.wait_days, late_days: lead.late_days,
     pickup_jd: lead.pickup_jd, arrive_jd: lead.arrive_jd, planned_arrive_jd: lead.planned_arrive_jd, rider_dose_msv: msv, fare_usd: lead.fare_usd, beat_par: used < ctx.par_kwh * 0.995, incidents: F.incidents || [] };
   if (!one){ out.bookings = {}; M.hails.forEach(function(b){ out.bookings[b] = bookings[b]; }); }
   return out;
@@ -2035,7 +2044,7 @@ return { DWELL: DWELL, WINDOW: WINDOW, LEAD: LEAD, FLEET: FLEET, CAR: CAR, HAILS
   padForecast: padForecast, flareForecast: flareForecast, flareReach: flareReach, lightDays: lightDays, weatherForecast: weatherForecast,
   C_KMS: C_KMS, AU_KM: AU_KM, CME_KMS: CME_KMS, CRUISE_MSV_DAY: CRUISE_MSV_DAY,
   start: start, step: step, regret: regret, oracle: oracle, hindsight: hindsight, ORACLE_DEPTH: ORACLE_DEPTH, EVENTS: EVENTS, MAX_CHECKPOINTS: MAX_CHECKPOINTS,
-  SCORE_MAX: SCORE_MAX, SCORE_TOTAL: SCORE_TOTAL };
+  SCORE_MAX: SCORE_MAX, SCORE_TOTAL: SCORE_TOTAL, SCORE_HEADROOM: SCORE_HEADROOM, SCORE_STEEPNESS: SCORE_STEEPNESS };
 })(SOLE);
 
 if (typeof module !== 'undefined') module.exports = SOLE;

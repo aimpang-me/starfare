@@ -601,7 +601,7 @@ p{text-wrap:pretty}
       <li class="chk" data-i="3">
         <button class="chk-h" type="button" aria-expanded="false" aria-controls="ck3"><span class="bx">&#x2713;</span><span class="n">04</span><span class="tt">Know how a flight is scored</span><span class="st2">Open</span></button>
         <div class="chk-b" id="ck3" hidden>
-          <p style="margin-top:0">Every flight scores out of <b class="mono" id="partsTotal"></b>:</p>
+          <p style="margin-top:0">Every flight scores out of <b class="mono" id="partsTotal"></b>. The weights are placeholders. A ride on the stated reference earns 0.35 of each part except cruise dose. That cap, and the falloff steepness of 6, are simulated assumptions.</p>
           <ul class="parts" id="parts"></ul>
           <p><b style="color:var(--ink)">Checker.</b> The server flies every leg again in an n body sim. A miss fails the leg.</p>
           <p><b style="color:var(--ink)">Checkpoints.</b> Mid-flight the sky can close a pad or hold a launch. Your agent decides what to do with the <code class="mono" style="color:var(--me)">decide</code> tool.</p>
@@ -782,7 +782,7 @@ p{text-wrap:pretty}
     // Display word for the vehicle. Tool fields and run-log JSON keep "car" (car, par_car); pages show "Starseeker".
     SHIP: "Starseeker", SHIPS: "Starseekers",
     MCP_URL: "__ORIGIN__/mcp",
-    SCORE_PARTS: [["pickup", "Fast pickup", 2000], ["on_time", "Arrived on time", 2000], ["energy", "Energy versus par", 3000], ["promise", "Kept the promise", 2000], ["checker", "Every leg checked", 2000], ["fare", "Honest fare", 2000], ["economy", "Planning economy", 2000], ["tank", "Xenon tank", 25000], ["throttle", "Distance throttle", 25000], ["window", "Departure window", 20000], ["recovery", "Checkpoint recovery", 15000], ["dose", "Cruise dose", 0]],
+    SCORE_PARTS: [["pickup", "Fast pickup", 22000], ["on_time", "Arrived on time", 16000], ["energy", "Energy versus par", 24000], ["promise", "Kept the promise", 14000], ["checker", "Every leg checked", 4000], ["fare", "Honest fare", 4000], ["economy", "Planning economy", 3000], ["tank", "Xenon tank", 4000], ["throttle", "Distance throttle", 3000], ["window", "Departure window", 3000], ["recovery", "Checkpoint recovery", 3000], ["dose", "Cruise dose", 0]],
   };
   root.SF = api;
 })(typeof window !== "undefined" ? window : globalThis);

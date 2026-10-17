@@ -352,14 +352,17 @@ async function phaseOff() {
     report.far = { refused: p.value };
   });
 
-  await check("a wrong quote (fare and an arrival years early) loses the fare and the promise; a fare $5 off loses the fare; both match Node", async () => {
+  await check("a wrong quote (fare and an arrival years early) drops the fare and the promise; a fare $5 off drops the fare a little; both match Node", async () => {
     const wrong = noteBest(await playHail(client, "iss-crew", undefined, { quote: { quoted_fare_usd: 1, quoted_arrival: "2020-01-01 00:00" } }));
     const got = (sc, k) => sc.parts.find((p) => p.key === k).got;
-    assert.equal(got(wrong.score, "fare"), 0); assert.equal(got(wrong.score, "promise"), 0);
+    assert.ok(got(wrong.score, "fare") < 250, got(wrong.score, "fare"));
+    assert.ok(got(wrong.score, "promise") < 1, got(wrong.score, "promise"));
     assert.equal(wrong.score.promised_arrival, "2020-01-01 00:00"); assert.ok(wrong.score.promise_slip_hours > 24 * 365);
     assertMatchesNode(wrong, 2, { fare_usd: 1, arrival: "2020-01-01 00:00" });
     const half = noteBest(await playHail(client, "iss-crew", undefined, { quote: (ride) => ({ quoted_fare_usd: ride.fare_usd + 5, quoted_arrival: ride.arrive }) }));
-    assert.equal(got(half.score, "fare"), 0);
+    const fareMax = half.score.parts.find((p) => p.key === "fare").max;
+    assert.ok(got(half.score, "fare") < fareMax * R.SCORE_HEADROOM, got(half.score, "fare"));
+    assert.ok(got(half.score, "fare") > fareMax * R.SCORE_HEADROOM * 0.9, got(half.score, "fare"));
     assertMatchesNode(half, 2, { fare_usd: half.ride.fare_usd + 5, arrival: half.ride.arrive });
     report.wrong_quote = { total: wrong.score.total, promise_note: wrong.score.parts.find((p) => p.key === "promise").note, fare_off_by_5_total: half.score.total };
   });
@@ -430,7 +433,7 @@ async function phaseOff() {
     const p = await ok(client, "plan_pickup", { run_id: h.run_id, car: nodeParCar(h) }), r = await ok(client, "plan_ride", { run_id: h.run_id, after_leg: p.leg_id });
     const d = await ok(client, "dispatch", { run_id: h.run_id, pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare_usd, quoted_arrival: r.arrive, ask_after_hours: "never" });
     scored++; noteBest({ hail: h, score: d });
-    assert.equal(d.parts.find((x) => x.key === "economy").note, "2 plans, 6 free");
+    assert.equal(d.parts.find((x) => x.key === "economy").note, "2 plans, 6 free. 0 plans past that");
     assert.deepEqual(d.log.forecasts.map((x) => x.tool), ["check_pad", "check_pad", "check_pad", "space_weather", "space_weather"]);
     assert.deepEqual(d.log.planned.map((x) => x.leg), [p.leg_id, r.leg_id]);
     report.forecasts = { pad_iss_first_hours: pad.hours.slice(0, 4), ldc_hidden_ship_hours: hidden, mars_weather: mars.local_weather.days.slice(0, 2), flare_odds: sw.days.slice(0, 3).map((x) => x.flare_odds), log_forecasts: d.log.forecasts };
@@ -534,7 +537,7 @@ async function phaseOff() {
     assert.match(r.headers.get("content-type"), /text\/html/);
     const html = await r.text();
     for (const h of R.HAILS) assert.ok(html.includes(h.title), `board is missing ${h.title}`);
-    assert.match(html, /planned by Grok bot/); assert.match(html, /Claude and human runs are on the in-page board/); assert.match(html, /Scores are out of 100000/); assert.match(html, /kept the promised arrival 2000/);
+    assert.match(html, /planned by Grok bot/); assert.match(html, /Claude and human runs are on the in-page board/); assert.match(html, /Scores are out of 100000/); assert.match(html, /kept the promised arrival 14000/);
     assert.match(html, /no connector runs yet/); // titan-home etc. have no runs
     assert.ok(html.includes(`href="/flight/${good.hail.run_id}"`));
     const flight = await fetch(`${w.base}/flight/${good.hail.run_id}`);

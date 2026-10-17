@@ -207,14 +207,15 @@ const rules = (E) =>
   "You dispatch from HQ on Earth, which controls every station and Starseeker: at a checkpoint the ship acts on your answer only when it arrives, after the light-time there and back (minutes at Mars, over two hours at Saturn). " +
   "Mars dust storms (Mars, Mars Base) and Titan haze (Titan, Titan Dock) close those pads: the ship waits on the ground, or holds in orbit if it is arriving. check_pad gives their odds. " +
   "A leg between planets that leaves late needs a correction burn (2% of its energy per hour late, up to 30%). " +
-  "Score out of 100000, from what actually happened. The weights are placeholders. Parts are not rounded and the total is their sum: " +
-  "fast pickup 2000 (versus the quickest nearby ship), arrived on time 2000 (falls to 0 at half the trip's allowed time late), " +
-  "energy 3000 (kWh actually flown, including holds and correction burns, versus par), " +
-  "kept the promise 2000 (full marks for arriving when promised, 0 at 6 hours late on a quick hail or 1 day late on a long haul, arriving early costs a quarter as much), " +
-  "every leg checked 2000, honest fare 2000 (within $1 of the ride leg's fare_usd), planning economy 2000 (6 plans free, then the part falls, and it is 0 at 5 plans past that; check_pad and space_weather are free), " +
-  "xenon tank 25000 (0 if the plan needs more xenon than the ship holds), distance throttle 25000 (kWh above the published set point the power on hand can feed), " +
-  "departure window 20000 (kWh above the lowest energy departure in the search; the tool list does not mark that departure), " +
-  "checkpoint recovery 15000 (kWh above a hindsight option at a checkpoint), cruise dose 0 (reported, not scored). " +
+  "Score out of 100000, from what actually happened. The weights are placeholders. Parts are not rounded and the total is their sum. " +
+  "Each part except cruise dose earns at most 0.35 of its weight on the stated reference, and less as the ride moves off it. The 0.35 cap and the falloff steepness of 6 are simulated assumptions. " +
+  "fast pickup 22000 (minutes over the quickest nearby ship), arrived on time 16000 (minutes late, reference 0), " +
+  "energy 24000 (kWh over par, including holds and correction burns), " +
+  "kept the promise 14000 (minutes after the quoted arrival, reference 0; minutes early cost a quarter as much), " +
+  "every leg checked 4000, honest fare 4000 (dollars off the ride fare), planning economy 3000 (plans past the 6 free ones; check_pad and space_weather are free), " +
+  "xenon tank 4000 (0 if the plan needs more xenon than the ship holds), distance throttle 3000 (kWh above the published set point the power on hand can feed), " +
+  "departure window 3000 (kWh above the lowest energy departure in the search; the tool list does not mark that departure), " +
+  "checkpoint recovery 3000 (kWh above a hindsight option at a checkpoint), cruise dose 0 (reported, not scored). " +
   "Ships are Dawn class, Deep Space 1 class, RTG class, or Shuttle class. A leg is refused when the power on hand cannot feed a published NSTAR set point or the xenon tank cannot hold the burn. " +
   "The RTG class is a simulated hull, not a flown ship: Dawn dry mass 747.1 kg, a 1085 kg xenon tank (Psyche's published load), and 633 W held constant (Cassini at the end of the mission). The Shuttle class has no xenon ion thruster and is not parked. " +
   "The sky clock runs 1 sky day per real second: if a leg flies between planets and its departure passes before dispatch, the hail goes cold. " +
@@ -486,7 +487,7 @@ const arrived = (run) => Object.assign(project(run, "arrived", { ok: true, run_i
 
 const FREE_PLANS = 6; // R.score's planning economy: 6 plans free, then a point each
 /** What a ride scores beyond the engine (whose sha256 is in meta.json): bump it when land() changes what it hands R.score. */
-export const SCORE_VERSION = 2;
+export const SCORE_VERSION = 3;
 /** The open checkpoint as a bot sees it: what stopped the car, where it stands, and what each answer costs so far. */
 function situation(E, run) {
   const R = E.R, ride = run.ride, cp = openCheckpoint(run);

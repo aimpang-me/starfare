@@ -120,7 +120,7 @@ test("dispatch scores from what actually happened: R.fly on the same legs, then 
   assert.ok(hit > 0, "no hazard hit any of 12 dispatches");
 });
 
-test("with nothing in the way, the par car's plan with an exact quote sums to a total near the cap", async () => {
+test("with nothing in the way, the par car's plan with an exact quote stays under half and fills no part", async () => {
   const clean = await findDay(200, async (nowMs) => {
     const { out } = await play("iss-crew", undefined, "energy", nowMs);
     return out.incidents.length === 0 && out.extra_kwh === 0 ? out : null;
@@ -129,10 +129,16 @@ test("with nothing in the way, the par car's plan with an exact quote sums to a 
   assert.equal(clean.out_of, 100000);
   assert.equal(clean.total, clean.parts.reduce((a, x) => a + x.got, 0));
   assert.equal(clean.parts.reduce((a, x) => a + x.max, 0), 100000);
-  for (const k of ["pickup", "on_time", "energy", "checker", "fare", "economy", "tank", "throttle", "window", "recovery"]) assert.equal(part(clean, k), clean.parts.find((x) => x.key === k).max, k);
+  for (const k of ["pickup", "on_time", "energy", "checker", "fare", "economy", "tank", "throttle", "window", "recovery"]) {
+    const row = clean.parts.find((x) => x.key === k);
+    assert.ok(Math.abs(part(clean, k) - row.max * R.SCORE_HEADROOM) <= 1e-6, k + " " + part(clean, k));
+    assert.ok(part(clean, k) < row.max, k);
+  }
+  const promise = clean.parts.find((x) => x.key === "promise");
+  assert.ok(part(clean, "promise") < promise.max);
+  assert.ok(part(clean, "promise") > promise.max * R.SCORE_HEADROOM * 0.99, part(clean, "promise"));
   assert.equal(part(clean, "dose"), 0);
-  assert.ok(part(clean, "promise") > 1999, part(clean, "promise"));
-  assert.ok(clean.total > 99900, clean.total);
+  assert.ok(clean.total < clean.out_of / 2, clean.total);
   assert.equal(clean.promise_slip_hours, 0); assert.equal(clean.extra_kwh, 0);
 });
 
@@ -162,20 +168,28 @@ test("the quoted arrival is a promise scored against the actual arrival; a wrong
   const slipH = hit.out.promise_slip_hours;
   assert.ok(slipH > 0);
   const prom = hit.out.parts.find((x) => x.key === "promise");
-  assert.ok(Math.abs(prom.got - 2000 * (1 - prom.measure / 360)) <= 1e-6, `${prom.got} for ${slipH} h late`);
+  const curve = (max, excess) => max * R.SCORE_HEADROOM / (1 + R.SCORE_STEEPNESS * excess);
+  assert.ok(Math.abs(prom.got - curve(prom.max, prom.measure / 60)) <= 1e-6, `${prom.got} for ${slipH} h late`);
+  assert.ok(prom.got < prom.max);
   assert.match(prom.note, /after the quoted/);
-  // the same hail and car, quoting what actually happened, keeps the promise
+  // the same hail and car, quoting what actually happened, sits on the reference and still under the weight
   const kept = await play("iss-crew", undefined, "energy", hit.nowMs, (r) => ({ quoted_fare_usd: r.fare, quoted_arrival: hit.out.arrive }), "run_kept");
-  assert.equal(part(kept.out, "promise"), 2000); assert.equal(kept.out.arrive, hit.out.arrive);
-  // early costs a quarter as much: quote 4 h after the actual arrival
+  const keptPromise = part(kept.out, "promise");
+  assert.ok(Math.abs(keptPromise - curve(R.SCORE_MAX.promise, 0)) <= 1e-6, String(keptPromise));
+  assert.ok(keptPromise < R.SCORE_MAX.promise);
+  assert.equal(kept.out.arrive, hit.out.arrive);
+  // 4 h early costs a quarter as much as 4 h late: the early scale is 240 min, the late scale is 60 min
   const early = await play("iss-crew", undefined, "energy", hit.nowMs, (r) => ({ quoted_fare_usd: r.fare, quoted_arrival: isoJD(jdOfIso(hit.out.arrive) + 4 / 24) }), "run_early");
-  assert.ok(Math.abs(part(early.out, "promise") - 2000 * (1 - 4 / 24)) <= 1e-4, String(part(early.out, "promise")));
-  // wrong fare and an arrival years off: no fare points, no promise points, everything else unchanged
+  assert.ok(Math.abs(part(early.out, "promise") - curve(R.SCORE_MAX.promise, 240 / 240)) <= 1e-4, String(part(early.out, "promise")));
+  assert.ok(part(early.out, "promise") > curve(R.SCORE_MAX.promise, 240 / 60));
+  // a $1 fare and an arrival years off lose almost all of those parts. The other parts stay put.
   const wrong = await play("iss-crew", undefined, "energy", hit.nowMs, { quoted_fare_usd: 1, quoted_arrival: "2020-01-01 00:00" }, "run_wrong");
-  assert.equal(part(wrong.out, "fare"), 0); assert.equal(part(wrong.out, "promise"), 0);
+  assert.ok(part(wrong.out, "fare") < part(kept.out, "fare") * 0.2);
+  assert.ok(part(wrong.out, "promise") < keptPromise * 0.01);
   for (const k of ["pickup", "on_time", "energy", "checker", "economy"]) assert.equal(part(wrong.out, k), part(kept.out, k), k);
   const off5 = await play("iss-crew", undefined, "energy", hit.nowMs, (r) => ({ quoted_fare_usd: r.fare + 5, quoted_arrival: hit.out.arrive }), "run_off5");
-  assert.equal(part(off5.out, "fare"), 0); assert.equal(part(off5.out, "promise"), 2000);
+  assert.ok(part(off5.out, "fare") < part(kept.out, "fare") && part(off5.out, "fare") > 0);
+  assert.equal(part(off5.out, "promise"), keptPromise);
 });
 
 test("arriving late costs points on a sliding scale", async () => {
@@ -184,7 +198,7 @@ test("arriving late costs points on a sliding scale", async () => {
   const r = (await planRideLeg(E, run, { after_leg: p.leg_id, wait_days: 6 })).leg;
   const out = dispatch(E, run, { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd), ask_after_hours: "never" }, NOW);
   const ot = out.parts.find((x) => x.key === "on_time");
-  assert.ok(ot.max === 2000 && ot.got < 2000 && ot.got >= 0, JSON.stringify(ot));
+  assert.ok(ot.max === R.SCORE_MAX.on_time && ot.got < ot.max && ot.got > 0, JSON.stringify(ot));
 });
 
 test("busy cars: plan_pickup leaves no earlier than R.pickupStart + wait_days and says so; dispatch refuses an earlier pickup", async () => {
@@ -286,7 +300,7 @@ test("forecast tools validate input, are free (not plans) and are noted in the d
   assert.equal(run.calls, 0);
   const p = (await planPickup(E, run, { car: run.par_car })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
   const out = dispatch(E, run, { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd), ask_after_hours: "never" }, NOW);
-  assert.equal(out.parts.find((x) => x.key === "economy").note, "2 plans, 6 free");
+  assert.equal(out.parts.find((x) => x.key === "economy").note, "2 plans, 6 free. 0 plans past that");
   assert.deepEqual(out.log.forecasts.map((x) => x.tool), ["check_pad", "check_pad", "space_weather"]);
   assert.equal(out.log.forecasts[0].place, "iss");
   // after dispatch, forecasts still answer, but the log is locked
@@ -435,7 +449,7 @@ test("a flare at launch: replan is a plan and beats waiting; a leg the checker r
     out = await decide(E, run, { checkpoint: out.situation.checkpoint, action: out.situation.default.action });
   }
   assert.deepEqual(seen, []);
-  assert.deepEqual([out.used_kwh, out.arrive, out.parts.find((x) => x.key === "economy").note], [51822, "2034-03-09 06:56", "4 plans, 6 free"]);
+  assert.deepEqual([out.used_kwh, out.arrive, out.parts.find((x) => x.key === "economy").note], [51822, "2034-03-09 06:56", "4 plans, 6 free. 0 plans past that"]);
   assert.deepEqual(out.log.checkpoints[0].decision, { action: "replan", depart: "2032-06-24 08:22", kwh: 51466 });
   assert.deepEqual(out.log.planned.filter((L) => L.replan_of).map((L) => [L.leg, L.replan_of, L.gate]), [["leg3", 1, "FAIL"], ["leg4", 1, "PASS"]]);
   const capped = await ceresRide("run_cap");
@@ -583,16 +597,23 @@ test("shared flight: dispatch with legs, stops and quotes scores each booking an
     stops: [{ board: ["ceres-shift"] }, { alight: ["ceres-shift"] }, { board: ["phobos-commute"] }, { alight: ["phobos-commute"] }],
     quotes: { "ceres-shift": { fare_usd: l2.fare_usd, arrival: l2.arrive }, "phobos-commute": { fare_usd: l4.fare_usd, arrival: l4.arrive } },
   });
-  assert.deepEqual([out.status, out.total, out.car, out.used_kwh, out.par_kwh, out.planned_pickup, out.promised_arrival], ["arrived", 97974.10472429202, "SF-04", 61412, 61412, "2027-10-22 02:21", "2030-07-23 00:22"]);
+  assert.deepEqual([out.status, out.car, out.used_kwh, out.par_kwh, out.planned_pickup, out.promised_arrival], ["arrived", "SF-04", 61412, 61412, "2027-10-22 02:21", "2030-07-23 00:22"]);
   assert.equal(out.total, out.parts.reduce((a, x) => a + x.got, 0));
-  assert.deepEqual(out.bookings.map((b) => [b.hail_id, b.pickup, b.arrive, b.promise_slip_hours, b.fare_usd, b.parts.map((x) => x.got)]), [
-    ["ceres-shift", "2027-10-22 02:21", "2030-07-23 01:00", 0.6, 514158.13, [2000, 2000, 1947.2222225740552, 2000]],
-    ["phobos-commute", "2030-07-23 02:36", "2030-07-23 06:02", 0, 1079.11, [1.376568206269864, 0, 1999.6106578037143, 2000]]]);
+  assert.ok(out.total < out.out_of / 2, out.total);
+  for (const p of out.parts) assert.ok(p.got < p.max || p.max === 0, p.key);
+  assert.deepEqual(out.bookings.map((b) => [b.hail_id, b.pickup, b.arrive, b.promise_slip_hours, b.fare_usd]), [
+    ["ceres-shift", "2027-10-22 02:21", "2030-07-23 01:00", 0.6, 514158.13],
+    ["phobos-commute", "2030-07-23 02:36", "2030-07-23 06:02", 0, 1079.11]]);
+  const phobos = out.bookings.find((b) => b.hail_id === "phobos-commute");
+  assert.ok(phobos.parts.find((x) => x.key === "on_time").got < phobos.parts.find((x) => x.key === "pickup").got);
   assert.deepEqual(out.passengers.map((p) => [p.place.id, p.board, p.alight, p.aboard, p.seats]), [
     ["ceres", [], [], 0, 4], ["ceres-port", ["ceres-shift"], [], 1, 4], ["mars-base", [], ["ceres-shift"], 0, 4],
     ["phobos", ["phobos-commute"], [], 1, 4], ["mars-base", [], ["phobos-commute"], 0, 4]]);
   assert.deepEqual([out.log.hails, out.log.dispatched, Object.keys(out.log.bookings)], [SHARED, ["leg1", "leg2", "leg3", "leg4"], SHARED]);
-  assert.deepEqual(out.log.bookings["phobos-commute"].parts, { pickup: 1.376568206269864, on_time: 0, promise: 1999.6106578037143, fare: 2000 });
+  const logged = out.log.bookings["phobos-commute"].parts;
+  assert.deepEqual(Object.keys(logged).sort(), ["fare", "on_time", "pickup", "promise"]);
+  assert.equal(logged.pickup, phobos.parts.find((x) => x.key === "pickup").got);
+  assert.equal(logged.on_time, phobos.parts.find((x) => x.key === "on_time").got);
   assert.deepEqual((await s.call("get_hail", {})).passengers.map((p) => p.aboard), [0, 1, 0, 1, 0]);
 });
 

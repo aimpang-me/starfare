@@ -1,5 +1,5 @@
 // node world/engine/test-score-v2.js
-// Ship classes, tank cap, distance throttle, unranked departures, score version 2.
+// Ship classes, tank cap, distance throttle, unranked departures, score version 3.
 const assert = require("assert"), E = require("./sol-page.js"), R = E.R;
 const END = 2461329.5 + 7000 - 1, t0 = 2461700.5;
 let n = 0; const ok = (name, f) => { f(); n++; console.log("ok", name); };
@@ -57,13 +57,60 @@ ok("score parts sum to the total, and a second call matches", () => {
   const a = R.score("iss-crew", legs, ctx), b = R.score("iss-crew", legs, ctx);
   assert.deepStrictEqual(a, b);
   assert.strictEqual(a.out_of, 100000);
-  assert.strictEqual(a.score_version, 2);
+  assert.strictEqual(a.score_version, 3);
   assert.strictEqual(a.total, a.parts.reduce((s, p) => s + p.got, 0));
   assert.strictEqual(a.parts.reduce((s, p) => s + p.max, 0), 100000);
   for (const p of a.parts) {
     assert.strictEqual(typeof p.unit, "string");
     assert.strictEqual(BAD.test(p.label + " " + p.note + " " + p.unit), false, p.note);
   }
+});
+
+function partGot(sc, key){ return sc.parts.find((p) => p.key === key).got; }
+
+ok("a ride at every stated reference stays under half and fills no part", () => {
+  const legs = [
+    { from: "orbital-depot", to: "iss", arr_jd: t0 + 0.03, kwh: 400, fare: 80, gate: "PASS", xenon_kg: 1 },
+    { from: "iss", to: "lunar-data-center", arr_jd: t0 + 5, kwh: 37000, fare: 8000, gate: "PASS", xenon_kg: 90 },
+  ];
+  const flown = (over) => ({ pickup_jd: t0 + 0.03, arrive_jd: t0 + 5, used_kwh: 37400 * over, extra_kwh: 0, incidents: [] });
+  const ctx = {
+    t0, arrive_by_jd: t0 + 9, par_kwh: 37400, best_wait_days: 0.03, plan_calls: 2, ship: "sf-01",
+    window_kwh: 37400, throttled_kwh: 37400, hindsight_kwh: 37400,
+    quote: { fare_usd: 8000, arrival: R.iso(t0 + 5) }, flown: flown(1),
+  };
+  const at = R.score("iss-crew", legs, ctx);
+  assert.strictEqual(at.out_of, 100000);
+  assert.strictEqual(at.total, at.parts.reduce((s, p) => s + p.got, 0));
+  assert.ok(at.total < at.out_of / 2, at.total);
+  assert.strictEqual(at.score_version, 3);
+  for (const p of at.parts) {
+    assert.ok(p.got < p.max || p.max === 0, p.key + " " + p.got + " of " + p.max);
+    assert.strictEqual(p.got, p.got, p.key);
+  }
+  const overEnergy = R.score("iss-crew", legs, Object.assign({}, ctx, { flown: flown(1.1) }));
+  assert.ok(partGot(overEnergy, "energy") <= partGot(at, "energy") * 0.7, partGot(overEnergy, "energy"));
+  const underEnergy = R.score("iss-crew", legs, Object.assign({}, ctx, { flown: flown(0.5) }));
+  assert.ok(partGot(underEnergy, "energy") <= partGot(at, "energy"));
+  const late = R.score("iss-crew", legs, Object.assign({}, ctx, {
+    flown: { pickup_jd: t0 + 0.03, arrive_jd: t0 + 9 + 60 / 1440, used_kwh: 37400, extra_kwh: 0, incidents: [] },
+  }));
+  assert.ok(partGot(late, "on_time") < partGot(at, "on_time") * 0.5, partGot(late, "on_time"));
+  assert.ok(partGot(late, "on_time") > 0);
+  const slow = R.score("iss-crew", legs, Object.assign({}, ctx, {
+    flown: { pickup_jd: t0 + 0.06, arrive_jd: t0 + 5, used_kwh: 37400, extra_kwh: 0, incidents: [] },
+  }));
+  assert.ok(partGot(slow, "pickup") < partGot(at, "pickup") * 0.25, partGot(slow, "pickup"));
+  const slipped = R.score("iss-crew", legs, Object.assign({}, ctx, {
+    quote: { fare_usd: 8000, arrival: R.iso(t0 + 5 - 30 / 1440) },
+  }));
+  assert.ok(partGot(slipped, "promise") < partGot(at, "promise") * 0.5, partGot(slipped, "promise"));
+  assert.ok(partGot(slipped, "promise") > 0);
+  const minute = R.score("iss-crew", legs, Object.assign({}, ctx, {
+    flown: { pickup_jd: t0 + 0.03, arrive_jd: t0 + 9 + 1 / 1440, used_kwh: 37400, extra_kwh: 0, incidents: [] },
+  }));
+  const onTime = partGot(minute, "on_time");
+  assert.notStrictEqual(onTime, Math.round(onTime * 10) / 10);
 });
 
 ok("a copied leg that ignores the tank, the throttle and the window scores far under the max", () => {
