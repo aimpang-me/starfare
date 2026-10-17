@@ -728,26 +728,6 @@
     return axes(au, scale);
   }
 
-  function trailTimes(hops) {
-    var times = [];
-    for (var i = 0; i < hops.length; i++) {
-      var hop = hops[i];
-      var n = hop.arc.arc_au.length;
-      var span = hop.orbit - hop.depart;
-      for (var k = 0; k < n; k++) {
-        var f = n === 1 ? 0 : k / (n - 1);
-        times.push({ t: hop.depart + f * span, hold: false });
-      }
-      var hold = hop.land - hop.orbit;
-      if (hold > 0) {
-        var step = Math.max(hold / 32, 1 / 1440);
-        for (var t = hop.orbit + step; t < hop.land; t += step) times.push({ t: t, hold: true, place: hop.to });
-        times.push({ t: hop.land, hold: true, place: hop.to });
-      }
-    }
-    return times;
-  }
-
   function bodiesOf(scene, jd, sole) {
     var places = sole.PLACES || [];
     var list = [];
@@ -774,20 +754,33 @@
     return list;
   }
 
+  function hopLine(seal, hop, scene, sole) {
+    var n = hop.arc.arc_au.length;
+    var span = hop.orbit - hop.depart;
+    var pts = [];
+    for (var k = 0; k < n; k++) {
+      var f = n === 1 ? 0 : k / (n - 1);
+      var t = hop.depart + f * span;
+      pts.push(toView(poseAu(seal, t, sole).p, t, scene, sole));
+    }
+    return pts;
+  }
+
   function toScene(pose, seal, jd, sole) {
     var scene = sceneOf(seal.hops);
-    var times = trailTimes(seal.hops);
-    var trail = [];
-    for (var i = 0; i < times.length; i++) {
-      var item = times[i];
-      var au = item.hold ? placeAu(sole, item.place, item.t) : poseAu(seal, item.t, sole).p;
-      trail.push(toView(au, item.t, scene, sole));
+    var trails = [];
+    var flat = [];
+    for (var i = 0; i < seal.hops.length; i++) {
+      var line = hopLine(seal, seal.hops[i], scene, sole);
+      trails.push(line);
+      for (var k = 0; k < line.length; k++) flat.push(line[k]);
     }
     return {
       mode: scene.mode,
       primary: scene.primary,
       ship: toView(pose.p, jd, scene, sole),
-      trail: trail,
+      trail: flat,
+      trails: trails,
       bodies: bodiesOf(scene, jd, sole)
     };
   }

@@ -7,102 +7,179 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap">
 <style>
   :root {
+    color-scheme: dark;
     --bg: #050a14;
-    --ink: #e8f0fa;
-    --ink-2: #9fb0c6;
-    --cy: #5cc8ff;
+    --bg-2: #0a1222;
     --glass: rgba(12, 22, 40, .72);
     --line: rgba(120, 180, 255, .14);
+    --line-2: rgba(120, 190, 255, .28);
+    --ink: #e8f0fa;
+    --ink-2: #9fb0c6;
+    --ink-3: #66788f;
+    --cy: #5cc8ff;
+    --ride: #8ec5ff;
+    --sun: #ffb65c;
+    --me: #ffcf7a;
+    --ok: #6fe0a8;
+    --bad: #ff8f80;
+    --sim: #7f8a99;
+    --r: 6px;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --cond: Rajdhani, "Arial Narrow", Inter, sans-serif;
   }
-  html, body { margin: 0; height: 100%; background: #050a14; color: var(--ink); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); }
   body {
     font: 14px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
     background: radial-gradient(1200px 700px at 50% -10%, #0c1a33 0%, var(--bg) 60%) fixed, var(--bg);
   }
-  h1 { margin: 0; font-family: Rajdhani, Inter, sans-serif; font-weight: 600; letter-spacing: .04em; font-size: 28px; }
-  button, select, input { font: inherit; color: var(--ink); }
-  button {
-    background: transparent; border: 1px solid var(--line); border-radius: 6px;
-    padding: 6px 12px; min-height: 32px; cursor: pointer;
+  h1, h2 { margin: 0; font-weight: 600; }
+  button, select, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--me); outline-offset: 2px; border-radius: 4px; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .note { margin: 0; font-size: 12px; color: var(--ink-3); }
+  .tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font: 600 9.5px/1 Inter, sans-serif; letter-spacing: .1em; text-transform: uppercase;
+    padding: 3px 6px; border-radius: 999px; border: 1px solid; white-space: nowrap;
   }
-  button:hover, button:focus-visible { border-color: var(--cy); outline: none; }
-  select, input[type="range"] { accent-color: var(--cy); }
-  select { background: #0a1222; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; }
+  .tag.real { color: var(--ok); border-color: rgba(111, 224, 168, .4); background: rgba(111, 224, 168, .08); }
+  .tag.fict { color: var(--sun); border-color: rgba(255, 182, 92, .4); background: rgba(255, 182, 92, .08); }
+  .tag.sim { color: #b9c2ce; border-color: rgba(127, 138, 153, .5); background: rgba(127, 138, 153, .12); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 34px; padding: 6px 13px; border-radius: 4px;
+    border: 1px solid var(--line-2); background: rgba(92, 200, 255, .05);
+    cursor: pointer; color: var(--ink);
+    font: 600 12px/1 Inter, sans-serif; letter-spacing: .06em; text-transform: uppercase;
+  }
+  .btn:hover { background: rgba(92, 200, 255, .12); border-color: rgba(92, 200, 255, .5); }
+  .btn.primary { background: var(--cy); border-color: var(--cy); color: #04121f; }
+  .btn.primary:hover { background: #86d8ff; }
+  .top {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center; gap: 12px;
+    padding: 9px 16px;
+    background: rgba(5, 10, 20, .88);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(12px);
+  }
+  .top::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(92, 200, 255, .6) 30%, rgba(255, 182, 92, .5) 70%, transparent);
+  }
+  .brand { display: flex; flex-direction: column; min-width: 0; }
+  .brand b { font: 700 18px/1 var(--cond); letter-spacing: .34em; }
+  .brand span { font: 600 10px/1.2 var(--mono); letter-spacing: .14em; color: var(--cy); text-transform: uppercase; margin-top: 3px; }
+  .ctr { text-align: center; }
+  .ctr b { display: block; font: 600 40px/1 var(--cond); letter-spacing: .04em; }
+  .ctr span { font: 500 12px/1.3 var(--mono); color: var(--ink-2); }
+  .topr { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
   canvas { display: block; width: 100%; height: 100%; }
-  #view { position: fixed; inset: 0; }
+  #view { position: fixed; inset: 0; background: radial-gradient(110% 90% at 50% 45%, #0b1730 0%, #050a14 70%); }
   .panel {
-    position: fixed; top: 16px; left: 16px; width: min(380px, calc(100% - 32px));
-    max-height: calc(100% - 32px); overflow: auto;
-    background: var(--glass); border: 1px solid var(--line); border-radius: 6px;
-    backdrop-filter: blur(10px); padding: 14px 16px 16px;
+    position: fixed; top: 68px; left: 16px; z-index: 10;
+    width: min(360px, calc(100% - 32px));
+    max-height: calc(100% - 84px); overflow: auto;
+    background: var(--glass); border: 1px solid var(--line); border-radius: var(--r);
+    backdrop-filter: blur(10px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
   }
-  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
-  label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-2); }
-  .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .sim { color: #7f8a99; font-size: 12px; margin: 8px 0 0; }
-  .clock {
-    font-family: Rajdhani, Inter, sans-serif;
-    font-size: 44px;
-    font-weight: 600;
-    letter-spacing: .04em;
-    line-height: 1;
-    margin: 4px 0 0;
+  .panel::before, .panel::after { content: ""; position: absolute; width: 12px; height: 12px; pointer-events: none; }
+  .panel::before { left: -1px; top: -1px; border-left: 2px solid var(--cy); border-top: 2px solid var(--cy); border-top-left-radius: var(--r); }
+  .panel::after { right: -1px; bottom: -1px; border-right: 2px solid var(--sun); border-bottom: 2px solid var(--sun); border-bottom-right-radius: var(--r); }
+  .ph {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 11px 13px 8px; border-bottom: 1px solid var(--line);
   }
+  .ph h1 { font: 700 14px/1.1 var(--cond); letter-spacing: .2em; text-transform: uppercase; }
+  .pb { padding: 10px 13px 13px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-top: 10px; }
+  .field { display: flex; flex-direction: column; gap: 4px; font: 600 10.5px/1.2 Inter, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+  .field.grow { flex: 1; }
+  select, input[type="range"] { accent-color: var(--cy); }
+  select {
+    background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 4px;
+    padding: 6px 8px; min-height: 34px; text-transform: none; letter-spacing: 0; color: var(--ink);
+  }
+  input[type="file"] { font: 500 11px var(--mono); text-transform: none; letter-spacing: 0; color: var(--ink-2); max-width: 160px; }
+  input[type="range"] { width: 100%; }
+  #ship { margin: 8px 0 0; font: 600 13px var(--mono); letter-spacing: .05em; }
   #caption { min-height: 2.6em; margin: 8px 0 0; color: var(--cy); font-size: 16px; }
-  #status { min-height: 1.2em; color: var(--cy); }
-  #minute { margin: 8px 0 0; }
-  section { margin-top: 12px; }
-  section h2 { margin: 0 0 6px; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
-  #score, #log { white-space: pre-wrap; }
+  #status { margin: 8px 0 0; min-height: 1.2em; color: var(--cy); font: 600 11px/1.3 Inter, sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+  section { margin-top: 14px; }
+  section h2 { margin: 0 0 6px; font: 700 14px/1.1 var(--cond); letter-spacing: .2em; text-transform: uppercase; }
+  #score, #log { white-space: pre-wrap; font: 500 12px/1.45 var(--mono); color: var(--ink-2); }
   #log ul { margin: 0; padding-left: 18px; }
-  #log li { margin: 4px 0; }
-  #places { margin: 8px 0 0; padding-left: 18px; color: var(--ink-2); }
+  #log li { margin: 4px 0; color: var(--ink); }
+  #places { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  #places li { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; }
   @media (max-width: 720px) {
+    .brand b { letter-spacing: .2em; font-size: 15px; }
+    .ctr b { font-size: 28px; }
     .panel { top: auto; bottom: 12px; max-height: 46%; }
   }
 </style>
 </head>
 <body>
+<header class="top">
+  <div class="brand"><b>STARFARE</b><span>Recorded flight</span></div>
+  <div class="ctr">
+    <b id="skytime"></b>
+    <span id="minute"></span>
+  </div>
+  <div class="topr"><span class="tag sim">Simulated</span></div>
+</header>
 <div id="view"><canvas id="sky"></canvas></div>
-<div class="panel">
-  <h1>Recorded flight</h1>
-  <p class="sim" id="note">Simulated</p>
-  <p class="mono" id="status">Paused</p>
-  <p class="mono" id="ship"></p>
-  <p class="sim">Sky time</p>
-  <p class="clock" id="skytime"></p>
-  <p class="mono" id="minute"></p>
-  <p id="caption"></p>
-  <div class="row">
-    <button type="button" id="play">Play</button>
-    <button type="button" id="pause">Pause</button>
-    <label for="speed">Speed
-      <select id="speed" aria-label="Speed">
-        <option value="0.5">0.5</option>
-        <option value="1" selected>1</option>
-        <option value="2">2</option>
-        <option value="4">4</option>
-      </select>
-    </label>
+<aside class="panel">
+  <div class="ph">
+    <h1>Recorded flight</h1>
+    <span class="tag sim">Simulated</span>
   </div>
-  <div class="row">
-    <label for="skytime">Sky time
-      <input id="skytime" type="range" min="0" max="1000" value="0" step="1" aria-label="Sky time">
-    </label>
+  <div class="pb">
+    <p class="note" id="note">Simulated</p>
+    <p class="mono" id="status">Paused</p>
+    <p class="mono" id="ship"></p>
+    <p id="caption"></p>
+    <div class="row">
+      <button class="btn primary" type="button" id="play">Play</button>
+      <button class="btn" type="button" id="pause">Pause</button>
+      <label class="field" for="speed">Speed
+        <select id="speed" aria-label="Speed">
+          <option value="0.5">0.5</option>
+          <option value="1" selected>1</option>
+          <option value="2">2</option>
+          <option value="4">4</option>
+        </select>
+      </label>
+    </div>
+    <div class="row">
+      <label class="field grow" for="scrub">Sky time
+        <input id="scrub" type="range" min="0" max="1000" value="0" step="1" aria-label="Sky time">
+      </label>
+    </div>
+    <div class="row">
+      <label class="field" for="episode">Episode file
+        <input id="episode" type="file" aria-label="Episode file">
+      </label>
+      <label class="field" for="arcs">Arc file
+        <input id="arcs" type="file" aria-label="Arc file">
+      </label>
+    </div>
+    <section>
+      <h2>Score</h2>
+      <div id="score" role="region" aria-label="Score" aria-live="polite"></div>
+    </section>
+    <section>
+      <h2>Log</h2>
+      <div id="log" role="region" aria-label="Log" aria-live="polite"></div>
+    </section>
+    <ul id="places"></ul>
   </div>
-  <div class="row">
-    <label for="episode">Episode file
-      <input id="episode" type="file" aria-label="Episode file">
-    </label>
-    <label for="arcs">Arc file
-      <input id="arcs" type="file" aria-label="Arc file">
-    </label>
-  </div>
-  <section id="score" role="region" aria-label="Score" aria-live="polite"></section>
-  <section id="log" role="region" aria-label="Log" aria-live="polite"></section>
-  <ul id="places"></ul>
-</div>
+</aside>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="../world/engine/sol-page.js"></script>
 <script src="tape.js"></script>
@@ -117,7 +194,7 @@
   var scene = null;
   var camera = null;
   var shipMesh = null;
-  var trailLine = null;
+  var trailLines = [];
   var bodyMeshes = {};
   var markerTex = null;
 
@@ -130,7 +207,7 @@
   var scoreEl = document.getElementById("score");
   var logEl = document.getElementById("log");
   var placesEl = document.getElementById("places");
-  var skyInput = document.getElementById("skytime");
+  var skyInput = document.getElementById("scrub");
   var canvas = document.getElementById("sky");
 
   function shown(s) {
@@ -312,32 +389,43 @@
     });
   }
 
-  function paintTrail(points) {
-    if (trailLine) {
-      scene.remove(trailLine);
-      trailLine.geometry.dispose();
-      trailLine.material.dispose();
-      trailLine = null;
+  function paintTrail(lines) {
+    for (var i = 0; i < trailLines.length; i++) {
+      scene.remove(trailLines[i]);
+      trailLines[i].geometry.dispose();
+      trailLines[i].material.dispose();
     }
-    if (!points.length) return;
-    var geom = new THREE.BufferGeometry();
-    var arr = new Float32Array(points.length * 3);
-    for (var i = 0; i < points.length; i++) {
-      arr[i * 3] = points[i][0];
-      arr[i * 3 + 1] = points[i][1];
-      arr[i * 3 + 2] = points[i][2];
+    trailLines = [];
+    if (!lines) return;
+    for (var n = 0; n < lines.length; n++) {
+      var points = lines[n];
+      if (!points || points.length < 2) continue;
+      var geom = new THREE.BufferGeometry();
+      var arr = new Float32Array(points.length * 3);
+      for (var k = 0; k < points.length; k++) {
+        arr[k * 3] = points[k][0];
+        arr[k * 3 + 1] = points[k][1];
+        arr[k * 3 + 2] = points[k][2];
+      }
+      geom.setAttribute("position", new THREE.BufferAttribute(arr, 3));
+      var line = new THREE.Line(geom, new THREE.LineBasicMaterial({ color: 0x5cc8ff, depthTest: false }));
+      line.renderOrder = 1;
+      scene.add(line);
+      trailLines.push(line);
     }
-    geom.setAttribute("position", new THREE.BufferAttribute(arr, 3));
-    trailLine = new THREE.Line(geom, new THREE.LineBasicMaterial({ color: 0x5cc8ff, depthTest: false }));
-    trailLine.renderOrder = 1;
-    scene.add(trailLine);
   }
 
   function paintPlaces(bodies) {
     placesEl.textContent = "";
     for (var i = 0; i < bodies.length; i++) {
       var li = document.createElement("li");
-      li.textContent = bodies[i].name + (bodies[i].real ? " Real" : " Fictional");
+      var name = document.createElement("span");
+      name.textContent = bodies[i].name;
+      var tag = document.createElement("span");
+      tag.className = "tag " + (bodies[i].real ? "real" : "fict");
+      tag.textContent = bodies[i].real ? "Real" : "Fictional";
+      li.appendChild(name);
+      li.appendChild(tag);
       placesEl.appendChild(li);
     }
   }
@@ -395,7 +483,7 @@
     if (!renderer) return;
     shipMesh.position.set(frame.view.ship[0], frame.view.ship[1], frame.view.ship[2]);
     paintBodies(frame.view);
-    paintTrail(frame.view.trail);
+    paintTrail(frame.view.trails);
     frameCamera(frame.view);
     renderer.render(scene, camera);
   }
