@@ -4,8 +4,8 @@ Audit of the browser port (`sol-engine.js`, `sol-facade.js`, `ephem.json`) again
 `sol/code` (DE421 via skyfield-data, `lambert_izzo.py`, `kepler.py`, `nbody.py`, `refly.py`, `quote.py`, `trip.py`).
 Everything below is reproducible: `python3 bake_ephem.py` (about 5 min), then `node crosscheck.mjs` (about 15 min
 with an empty cache; Python jobs run 4 at a time in separate processes and are cached in `$SOL_CACHE`).
-40 routes (36 re-flown legs, 35 with a Python re-fly to compare): 14 `quote.py` cases (Earth to every planet, Bennu 1-rev, Ceres), 2 `trip.py` cases
-(Titan ride home energy and time), 17 general rides (Mars to Earth, Saturn to Earth, stations, moons,
+43 routes (39 re-flown legs, 38 with a Python re-fly to compare): 15 `quote.py` cases (Earth to every planet, Roadster, Bennu 1-rev, Ceres), 3 `trip.py` cases
+(Titan ride home energy/time, Roadster pickup), 18 general rides (Mars to Earth, Saturn to Earth, stations, moons,
 a free ship, Uranus to Earth), 4 exact recorded legs (the day-2 Uranus leg Python rejects, the day-2 Neptune and
 Saturn legs, the Titan ride home), and 3 local transfers.
 
@@ -20,8 +20,8 @@ Saturn legs, the Titan ride home), and 3 local transfers.
 | Kepler, 2,000 random cases | 9.3e-13 relative | - | |
 | titan_burn | 0 | - | JS `wellBurn(Titan)` is trip.py's formula |
 | re-fly retarget, same leg | 0.05 m/s | D3 Saturn | below Python's 0.1 m/s print rounding |
-| re-fly raw miss, same leg | 70 km of 6.5 million | Q12 | the ephemeris table, amplified by a slow near-Earth departure (see 3) |
-| re-fly PASS/REJECT at refly.py's rtol 1e-10 | 3 of 35 legs differ | Q10, Q11, D2 | integrator noise at rtol 1e-10; at 1e-12 all 35 agree, all PASS (see 1) |
+| re-fly raw miss, same leg | 70 km of 6.5 million | Q12 Roadster | the ephemeris table, amplified by a slow near-Earth departure (see 3) |
+| re-fly PASS/REJECT at refly.py's rtol 1e-10 | 3 of 38 legs differ | Q10, Q11, D2 | integrator noise at rtol 1e-10; at 1e-12 all 38 agree, all PASS (see 1) |
 | re-fly PASS/REJECT on the page's refined legs, rtol 1e-12 | 1 of 34 differs | Q12 refined | both stop at the 20-iteration cap at the same 376.1 m/s retarget (see 2) |
 
 **Port correctness.** Where the two codes get the same inputs they agree to rounding: Lambert and Kepler to
@@ -47,13 +47,13 @@ differences come from the ephemeris table, not from the code.
    because Newton converges in 4 to 7 iterations instead of hitting the 20-iteration cap: 0.7 s vs 3.1 s on the Uranus
    leg. `refly(leg, {rtol: 1e-10})` gives refly.py parity. **Recommendation, not done, outside my folder:**
    change refly.py's `rtol=1e-10` to `1e-12` too, and re-run the day-2/day-3 goldens.
-2. **Q12 refined leg (2027-02-12, 607 d, 1-rev high branch, 376 m/s retarget).** Python stops
+2. **Q12 refined leg (Earth to Roadster, 2027-02-12, 607 d, 1-rev high branch, 376 m/s retarget).** Python stops
    at 2.66 km and JS at 0.88 km, both after exactly 20 Newton iterations. The miss histories bounce
    (185,000, 177,000, 16,900, 8,400 km...) because a 376 m/s correction on a slow (C3 3.4) departure is strongly
    nonlinear. Both codes reach the same retarget, 376.1 m/s. JS passes at 1e-13 in 21 iterations. This is the
    iteration cap meeting a hard leg, not a port difference. The grid leg of the same route passes in both
    (244.7 m/s, 6 to 7 iterations).
-3. **Raw-miss differences up to 70 km (Q12), 15 km (Q13 Bennu), 13 km (day-2 Uranus).** These are the
+3. **Raw-miss differences up to 70 km (Q12 Roadster), 15 km (Q13 Bennu), 13 km (day-2 Uranus).** These are the
    ephemeris table: Python with the JS table reproduces JS to 3.7 km on Q12 (6,545,312.7 vs 6,545,316.4 km), and
    both are 70 km from Python on DE421. Low-C3 departures linger near Earth, and Earth's 5 m table error is amplified. The
    retarget, final miss and verdict are unaffected (retarget equal to 0.1 m/s).
@@ -156,11 +156,13 @@ Python reference: quote.py / trip.py themselves for Q/T rows; crosscheck_py.py g
 | Q09 earth-saturn | 2028-07-13 16:00 | 2180.0 | 2028-07-13 16:00 | 2180.0 | 0 | yes | 106.610 / 106.615 | -1.5e-9 | 0 | - |
 | Q10 earth-uranus | 2029-09-09 18:24 | 8435.0 | 2029-09-09 18:24 | 8435.0 | 0 | yes | 134.000 / 134.001 | -3.7e-9 | 0 | - |
 | Q11 earth-neptune | 2033-06-04 16:48 | 6130.0 | 2033-06-04 16:48 | 6130.0 | 0 | yes | 157.120 / 157.120 | -6.2e-10 | 0 | - |
+| Q12 earth-roadster | 2027-02-14 16:00 | 605.0 | 2027-02-14 16:00 | 605.0 | 1H | yes | 3.600 / 3.596 | 4.0e-10 | 0 | - |
 | Q13 earth-bennu 1-rev | 2028-10-24 18:00 | 730.0 | 2028-10-24 18:00 | 730.0 | 1H | yes | 0.260 / 0.259 | -4.6e-10 | 0 | - |
 | Q14 earth-bennu tof c3<=100 | 2026-10-28 00:00 | 160.0 | 2026-10-28 00:00 | 160.0 | 0 | yes | 99.690 / 99.688 | -1.9e-10 | 0 | - |
 | Q15 earth-ceres | 2027-12-31 00:00 | 308.0 | 2027-12-31 00:00 | 308.0 | 0 | yes | 84.700 / 84.699 | -6.6e-9 | 0 | - |
 | T1 titan-earth energy (trip fleet) | 2026-10-21 00:00 | 1970.0 | 2026-10-21 00:00 | 1970.0 | 0 | yes | 31.384 / 31.384 | -2.8e-9 | 0 | -2.8e-9 |
 | T2 titan-earth time (trip fleet fast) | 2026-10-16 00:00 | 680.0 | 2026-10-16 00:00 | 680.0 | 0 | yes | 411.837 / 411.837 | 7.1e-9 | 0 | 0 |
+| T3 roadster-titan pickup (trip roadster) | 2027-11-25 00:00 | 2090.0 | 2027-11-25 00:00 | 2090.0 | 0 | yes | 102.066 / 102.066 | -3.9e-12 | -6.3e-10 | -6.3e-10 |
 | G01 mars-earth | 2028-08-07 00:00 | 343.0 | 2028-08-07 00:00 | 343.0 | 0 | yes | 6.710 / 6.710 | -5.7e-10 | -9.8e-10 | -1.6e-9 |
 | G02 saturn-earth (5,000 km Saturn orbit) | 2026-10-25 03:12 | 1600.0 | 2026-10-25 03:12 | 1600.0 | 0 | yes | 39.399 / 39.399 | -5.6e-10 | -7.5e-9 | -8.1e-9 |
 | G03 earth-saturn capture | 2028-07-13 16:00 | 2159.0 | 2028-07-13 16:00 | 2159.0 | 0 | yes | 106.623 / 106.623 | -1.6e-9 | 2.1e-10 | -1.3e-9 |
@@ -169,6 +171,7 @@ Python reference: quote.py / trip.py themselves for Q/T rows; crosscheck_py.py g
 | G06 mars-jupiter | 2028-09-30 18:00 | 978.5 | 2028-09-30 18:00 | 978.5 | 0 | yes | 42.323 / 42.323 | 4.9e-9 | 1.4e-10 | 5.0e-9 |
 | G07 ceres-mars | 2028-09-06 10:00 | 702.0 | 2028-09-06 10:00 | 702.0 | 0 | yes | 8.343 / 8.343 | -7.7e-12 | -7.7e-9 | -7.7e-9 |
 | G08 bennu-earth | 2028-07-25 20:00 | 788.5 | 2028-07-25 20:00 | 788.5 | 1H | yes | 0.160 / 0.160 | 4.7e-11 | 2.2e-9 | 2.1e-9 |
+| G09 roadster-earth | 2027-04-10 15:48 | 1032.0 | 2027-04-10 15:48 | 1032.0 | 1H | yes | 0.227 / 0.227 | 3.5e-11 | 2.8e-9 | 2.8e-9 |
 | G10 mercury-venus | 2027-07-20 04:48 | 74.4 | 2027-07-20 04:48 | 74.4 | 0 | yes | 33.317 / 33.317 | -2.1e-8 | -1.9e-9 | -2.3e-8 |
 | G11 iss-mars | 2026-11-01 02:24 | 309.0 | 2026-11-01 02:24 | 309.0 | 0 | yes | 9.262 / 9.262 | -4.5e-10 | 1.5e-10 | -3.0e-10 |
 | G12 lunar-data-center-mars | 2026-10-31 12:36 | 309.0 | 2026-10-31 12:36 | 309.0 | 0 | yes | 9.253 / 9.253 | 8.3e-10 | 1.1e-10 | 9.5e-10 |
@@ -196,11 +199,13 @@ Negative 'cost JS-Py' = the refined search found a cheaper (or earlier/shorter) 
 | Q09 earth-saturn | 2028-07-14 07:04 | 2168.71 | 0 | 7.305 / 0.000 | 7.305 | 7.3054 | 7.3089 | -0.0036 | 6.0e-10 | 621 |
 | Q10 earth-uranus | 2029-09-12 00:53 | 8608.46 | 0 | 8.186 / 0.000 | 8.186 | 8.1859 | 8.1904 | -0.0045 | -5.8e-9 | 467 |
 | Q11 earth-neptune | 2033-06-04 14:25 | 6145.80 | 0 | 8.898 / 0.000 | 8.898 | 8.8982 | 8.8983 | -0.0001 | -2.5e-10 | 505 |
+| Q12 earth-roadster | 2027-02-12 09:11 | 607.14 | 1H | 3.386 / 0.000 | 3.386 | 3.3863 | 3.3865 | -0.0002 | -6.6e-10 | 593 |
 | Q13 earth-bennu 1-rev | 2028-11-11 04:53 | 711.81 | 1H | 3.236 / 0.000 | 3.236 | 3.2361 | 3.2361 | -0.0000 | -1.3e-10 | 622 |
 | Q14 earth-bennu tof c3<=100 | 2026-11-13 02:40 | 155.51 | 0 | 7.088 / 0.000 | 7.088 | 155.5102 | 160.0000 | -4.4898 | -6.4e-10 | 190 |
 | Q15 earth-ceres | 2027-12-31 00:00 | 306.76 | 0 | 6.563 / 0.000 | 6.563 | 6.5633 | 6.5645 | -0.0012 | 6.6e-9 | 766 |
 | T1 titan-earth energy (trip fleet) | 2026-10-16 00:00 | 1973.20 | 0 | 3.117 / 0.000 | 3.117 | 3.6573 | 3.6593 | -0.0020 | -2.3e-9 | 686 |
 | T2 titan-earth time (trip fleet fast) | 2026-10-16 00:00 | 675.82 | 0 | 15.000 / 0.000 | 15.000 | 2462005.3211 | 2462009.5000 | -4.1789 | -7.1e-9 | 508 |
+| T3 roadster-titan pickup (trip roadster) | 2027-11-25 03:39 | 2092.54 | 0 | 10.103 / 2.698 | 12.801 | 13.4847 | 13.4848 | -0.0000 | -2.9e-10 | 884 |
 | G01 mars-earth | 2028-08-05 10:19 | 343.23 | 0 | 2.080 / 3.770 | 5.850 | 6.1034 | 6.1042 | -0.0009 | 4.7e-9 | 364 |
 | G02 saturn-earth (5,000 km Saturn orbit) | 2026-10-22 18:03 | 1601.74 | 0 | 10.558 / 8.238 | 18.796 | 19.2363 | 19.2383 | -0.0020 | 6.8e-9 | 558 |
 | G03 earth-saturn capture | 2028-07-14 00:34 | 2165.15 | 0 | 7.306 / 10.469 | 17.775 | 18.4210 | 18.4223 | -0.0013 | 5.2e-10 | 519 |
@@ -209,6 +214,7 @@ Negative 'cost JS-Py' = the refined search found a cheaper (or earlier/shorter) 
 | G06 mars-jupiter | 2028-10-02 18:06 | 986.32 | 0 | 4.682 / 17.048 | 21.730 | 22.1755 | 22.1773 | -0.0018 | -4.8e-9 | 592 |
 | G07 ceres-mars | 2028-09-09 10:19 | 700.81 | 0 | 2.644 / 2.887 | 5.531 | 5.8921 | 5.8942 | -0.0021 | -3.6e-9 | 781 |
 | G08 bennu-earth | 2028-07-17 22:33 | 796.35 | 1H | 0.395 / 4.567 | 4.962 | 5.3346 | 5.3424 | -0.0078 | -2.5e-9 | 665 |
+| G09 roadster-earth | 2027-04-08 08:35 | 1034.59 | 1H | 0.474 / 3.622 | 4.096 | 4.4269 | 4.4283 | -0.0013 | -2.5e-9 | 601 |
 | G10 mercury-venus | 2027-07-19 15:02 | 73.89 | 0 | 4.137 / 5.456 | 9.593 | 9.6675 | 9.6910 | -0.0234 | 2.5e-8 | 140 |
 | G11 iss-mars | 2026-11-01 03:48 | 309.48 | 0 | 3.591 / 2.064 | 5.656 | 5.7449 | 5.7449 | -0.0001 | 3.3e-10 | 78 |
 | G12 lunar-data-center-mars | 2026-10-31 15:57 | 308.73 | 0 | 1.660 / 2.066 | 3.725 | 3.8142 | 3.8142 | -0.0000 | -4.6e-10 | 75 |
@@ -235,11 +241,13 @@ Py = refly.refly (mode leo, Earth 200 km) or refly.refly_leg (mode centre), unmo
 | Q09 earth-saturn | leo | 3169337.7 / 3169337.8 / 3169337.7 | 0.562 / 0.922 | 32.5 / 32.5 | 3 / 5 | PASS / PASS | 0.657 / 0.674, 32.5 / 32.5, PASS / PASS | 3.7 / 0.20, 0.31 |
 | Q10 earth-uranus | leo | 730359.4 / 730349.1 / 730309.8 | 2.592 / 0.337 | 16.1 / 16.1 | 20 / 6 | REJECT / PASS **DIFF** | 0.180 / 0.573, 16.1 / 16.1, PASS / PASS | 93.3 / 0.83, 0.74 |
 | Q11 earth-neptune | leo | 60998052.5 / 60998034.1 / 60998066.1 | 0.783 / 3.592 | 248.2 / 248.2 | 11 / 20 | PASS / REJECT **DIFF** | 0.951 / 0.577, 248.2 / 248.2, PASS / PASS | 36.2 / 2.47, 0.47 |
+| Q12 earth-roadster | leo | 6545386.0 / 6545316.4 / 6545312.7 | 0.357 / 0.823 | 244.7 / 244.7 | 6 / 6 | PASS / PASS | 0.809 / 0.415, 244.7 / 244.7, PASS / PASS | 2.9 / 0.11, 0.21 |
 | Q13 earth-bennu 1-rev | leo | 44331920.4 / 44331905.3 / 44331905.8 | 0.161 / 0.613 | 380.8 / 380.8 | 5 / 6 | PASS / PASS | 0.228 / 0.046, 380.8 / 380.8, PASS / PASS | 2.8 / 0.11, 0.27 |
 | Q14 earth-bennu tof c3<=100 | leo | 56291.8 / 56291.8 / 56291.7 | 0.048 / 0.027 | 3.1 / 3.1 | 2 / 2 | PASS / PASS | 0.025 / 0.087, 3.1 / 3.1, PASS / PASS | 0.9 / 0.03, 0.06 |
 | Q15 earth-ceres | leo | 117050.7 / 117050.3 / 117050.3 | 0.662 / 0.884 | 11.8 / 11.8 | 2 / 2 | PASS / PASS | 0.146 / 0.201, 11.8 / 11.8, PASS / PASS | 0.7 / 0.03, 0.04 |
 | T1 titan-earth energy (trip fleet) | centre | 2884163.8 / 2884160.8 / 2884160.8 | 0.283 / 0.171 | 9.6 / 9.6 | 3 / 4 | PASS / PASS | 0.000 / 0.003, 9.6 / 9.6, PASS / PASS | 2.5 / 0.12, 0.12 |
 | T2 titan-earth time (trip fleet fast) | centre | 399675.7 / 399675.7 / 399675.7 | 0.001 / 0.001 | 4.7 / 4.7 | 2 / 2 | PASS / PASS | 0.002 / 0.003, 4.7 / 4.7, PASS / PASS | 1.4 / 0.05, 0.06 |
+| T3 roadster-titan pickup (trip roadster) | centre | 2365949.3 / 2365949.3 / 2365949.3 | 0.003 / 0.003 | 5.1 / 5.1 | 2 / 2 | PASS / PASS | 0.251 / 0.024, 5.1 / 5.1, PASS / PASS | 1.9 / 0.06, 0.08 |
 | G01 mars-earth | centre | 18381.8 / 18381.8 / 18381.8 | 0.000 / 0.000 | 1.7 / 1.7 | 2 / 2 | PASS / PASS | 0.002 / 0.002, 1.7 / 1.7, PASS / PASS | 0.4 / 0.03, 0.03 |
 | G02 saturn-earth (5,000 km Saturn orbit) | centre | 1077758.5 / 1077758.5 / 1077758.5 | 0.378 / 0.376 | 9.8 / 9.8 | 2 / 2 | PASS / PASS | 0.032 / 0.032, 9.8 / 9.8, PASS / PASS | 1.4 / 0.05, 0.07 |
 | G03 earth-saturn capture | centre | 887790.0 / 887789.9 / 887789.8 | 0.827 / 0.022 | 32.3 / 32.3 | 3 / 3 | PASS / PASS | 0.052 / 0.008, 32.3 / 32.3, PASS / PASS | 3.1 / 0.11, 0.13 |
@@ -248,6 +256,7 @@ Py = refly.refly (mode leo, Earth 200 km) or refly.refly_leg (mode centre), unmo
 | G06 mars-jupiter | centre | 30955.2 / 30955.2 / 30955.2 | 0.004 / 0.001 | 0.5 / 0.5 | 2 / 2 | PASS / PASS | 0.983 / 0.951, 0.5 / 0.5, PASS / PASS | 0.6 / 0.02, 0.02 |
 | G07 ceres-mars | centre | 103278.9 / 103278.9 / 103278.9 | 0.000 / 0.000 | 4.1 / 4.1 | 2 / 2 | PASS / PASS | 0.001 / 0.000, 4.1 / 4.1, PASS / PASS | 0.5 / 0.02, 0.02 |
 | G08 bennu-earth | centre | 48580.8 / 48580.8 / 48580.8 | 0.000 / 0.000 | 1.4 / 1.4 | 2 / 2 | PASS / PASS | 0.000 / 0.000, 1.4 / 1.4, PASS / PASS | 0.7 / 0.02, 0.04 |
+| G09 roadster-earth | centre | 56539.9 / 56539.9 / 56539.9 | 0.308 / 0.308 | 40.1 / 40.1 | 2 / 2 | PASS / PASS | 0.308 / 0.306, 40.1 / 40.1, PASS / PASS | 0.9 / 0.03, 0.05 |
 | G10 mercury-venus | centre | 767.8 / 767.8 / 767.8 | 0.001 / 0.001 | 0.1 / 0.1 | 1 / 1 | PASS / PASS | 0.001 / 0.001, 0.1 / 0.1, PASS / PASS | 0.2 / 0.00, 0.01 |
 | G11 iss-mars | centre | 637900.6 / 637900.6 / 637900.6 | 0.006 / 0.007 | 29.6 / 29.6 | 2 / 2 | PASS / PASS | 0.003 / 0.004, 29.6 / 29.6, PASS / PASS | 0.5 / 0.02, 0.02 |
 | G11 iss-mars (JS default mode) | leo | - / 2433401.1 / - | - / 0.443 | - / 23.7 | - / 5 | - / PASS | | - / 0.19 |
@@ -278,11 +287,13 @@ Re-fly of the refined (page-mode) option at rtol 1e-12, JS vs Python on the same
 | Q09 earth-saturn | 2028-07-14 07:04 | 2168.71 | 0.317 / 0.407 | 68.7 / 68.7 | 3 / 3 | PASS / PASS | 5.0 / 0.20 |
 | Q10 earth-uranus | 2029-09-12 00:53 | 8608.46 | 0.178 / 0.197 | 15.7 / 15.7 | 3 / 5 | PASS / PASS | 15.4 / 0.90 |
 | Q11 earth-neptune | 2033-06-04 14:25 | 6145.80 | 0.604 / 0.399 | 250.2 / 250.2 | 4 / 7 | PASS / PASS | 14.2 / 0.89 |
+| Q12 earth-roadster | 2027-02-12 09:11 | 607.14 | 2.658 / 0.880 | 376.1 / 376.1 | 20 / 20 | REJECT / PASS **DIFF** | 26.3 / 1.01 |
 | Q13 earth-bennu 1-rev | 2028-11-11 04:53 | 711.81 | 0.265 / 0.516 | 302.6 / 302.6 | 5 / 5 | PASS / PASS | 7.9 / 0.26 |
 | Q14 earth-bennu tof c3<=100 | 2026-11-13 02:40 | 155.51 | 0.023 / 0.013 | 7.2 / 7.2 | 2 / 2 | PASS / PASS | 1.6 / 0.06 |
 | Q15 earth-ceres | 2027-12-31 00:00 | 306.76 | 0.119 / 0.446 | 11.2 / 11.2 | 2 / 2 | PASS / PASS | 1.1 / 0.04 |
 | T1 titan-earth energy (trip fleet) | 2026-10-16 00:00 | 1973.20 | 0.013 / 0.015 | 9.6 / 9.6 | 3 / 3 | PASS / PASS | 3.2 / 0.14 |
 | T2 titan-earth time (trip fleet fast) | 2026-10-16 00:00 | 675.82 | 0.001 / 0.001 | 4.7 / 4.7 | 2 / 2 | PASS / PASS | 1.7 / 0.06 |
+| T3 roadster-titan pickup (trip roadster) | 2027-11-25 03:39 | 2092.54 | 0.020 / 0.202 | 5.1 / 5.1 | 2 / 2 | PASS / PASS | 2.3 / 0.08 |
 | G01 mars-earth | 2028-08-05 10:19 | 343.23 | 0.000 / 0.002 | 1.7 / 1.7 | 2 / 2 | PASS / PASS | 0.6 / 0.03 |
 | G02 saturn-earth (5,000 km Saturn orbit) | 2026-10-22 18:03 | 1601.74 | 0.032 / 0.032 | 9.8 / 9.8 | 2 / 2 | PASS / PASS | 2.1 / 0.06 |
 | G03 earth-saturn capture | 2028-07-14 00:34 | 2165.15 | 0.035 / 0.048 | 35.0 / 35.0 | 3 / 3 | PASS / PASS | 4.2 / 0.14 |
@@ -291,6 +302,7 @@ Re-fly of the refined (page-mode) option at rtol 1e-12, JS vs Python on the same
 | G06 mars-jupiter | 2028-10-02 18:06 | 986.32 | 0.002 / 0.022 | 0.5 / 0.5 | 2 / 2 | PASS / PASS | 0.9 / 0.03 |
 | G07 ceres-mars | 2028-09-09 10:19 | 700.81 | 0.000 / 0.000 | 4.1 / 4.1 | 2 / 2 | PASS / PASS | 0.7 / 0.02 |
 | G08 bennu-earth | 2028-07-17 22:33 | 796.35 | 0.000 / 0.000 | 1.6 / 1.6 | 2 / 2 | PASS / PASS | 1.1 / 0.04 |
+| G09 roadster-earth | 2027-04-08 08:35 | 1034.59 | 0.000 / 0.003 | 59.1 / 59.1 | 3 / 3 | PASS / PASS | 2.0 / 0.07 |
 | G10 mercury-venus | 2027-07-19 15:02 | 73.89 | 0.001 / 0.001 | 0.1 / 0.1 | 1 / 1 | PASS / PASS | 0.2 / 0.01 |
 | G11 iss-mars | 2026-11-01 03:48 | 309.48 | 0.001 / 0.001 | 28.3 / 28.3 | 2 / 2 | PASS / PASS | 0.7 / 0.02 |
 | G12 lunar-data-center-mars | 2026-10-31 15:57 | 308.73 | 0.018 / 0.018 | 39.8 / 39.8 | 2 / 2 | PASS / PASS | 0.8 / 0.03 |
@@ -330,6 +342,7 @@ ephem.json: 392.6 KiB (402060 bytes), JD 2461314.5 (2026-10-01) .. 2471170.5 (20
 | uranus | 64 | 13 | 154 | 17.9 | 4.2 | 1.1 | 0.06 | 3.9 | 0.03 |
 | neptune | 64 | 13 | 154 | 17.8 | 3.9 | 1.1 | 0.06 | 3.8 | 0.03 |
 | moon_geo | 704 | 21 | 448 | 89.7 | 23.2 | 5.0 | 3.09 | - | - |
+| roadster | 77 | 16 | 133 | 22.7 | 4.3 | 1.1 | 0.32 | 3.0 | 0.10 |
 | bennu | 77 | 15 | 130 | 23.7 | 5.5 | 1.4 | 0.08 | 5.3 | 0.02 |
 | ceres | 64 | 13 | 154 | 20.8 | 4.1 | 1.1 | 0.07 | 3.8 | 0.03 |
 | earth (derived) | - | - | - | - | 5.2 | 1.7 | 0.06 | 4.6 | 0.04 |
@@ -345,10 +358,10 @@ ephem.json: 392.6 KiB (402060 bytes), JD 2461314.5 (2026-10-01) .. 2471170.5 (20
 | dv dep (km/s) | -2.13e-8 | G10 mercury-venus |
 | dv arr (km/s) | -7.70e-9 | G07 ceres-mars |
 | dv total at refined point (km/s) | -2.46e-8 | G10 mercury-venus |
-| re-fly raw miss, rtol 1e-10 (km) | -6.96e+1 | Q12 |
+| re-fly raw miss, rtol 1e-10 (km) | -6.96e+1 | Q12 earth-roadster |
 | re-fly retarget, rtol 1e-10 (m/s) | -4.91e-2 | D3 day-2 saturn leg |
 | re-fly raw miss JS vs Py/cheb (km) | 3.93e+1 | Q10 earth-uranus |
-| re-fly raw miss, rtol 1e-12 (km) | -6.96e+1 | Q12 |
+| re-fly raw miss, rtol 1e-12 (km) | -6.96e+1 | Q12 earth-roadster |
 | re-fly retarget, rtol 1e-12 (m/s) | -4.91e-2 | D3 day-2 saturn leg |
 | re-fly retarget, refined legs, rtol 1e-12 (m/s) | 4.98e-2 | G11 iss-mars |
 | ephemeris mercury |dr| (km) | 8.96e-3 | JS vs DE421 |
@@ -359,6 +372,7 @@ ephem.json: 392.6 KiB (402060 bytes), JD 2461314.5 (2026-10-01) .. 2471170.5 (20
 | ephemeris saturn |dr| (km) | 4.10e-3 | JS vs DE421 |
 | ephemeris uranus |dr| (km) | 3.92e-3 | JS vs DE421 |
 | ephemeris neptune |dr| (km) | 3.81e-3 | JS vs DE421 |
+| ephemeris roadster |dr| (km) | 2.99e-3 | JS vs DE421 |
 | ephemeris bennu |dr| (km) | 5.28e-3 | JS vs DE421 |
 | ephemeris ceres |dr| (km) | 3.80e-3 | JS vs DE421 |
 | ephemeris earth |dr| (km) | 4.64e-3 | JS vs DE421 |
