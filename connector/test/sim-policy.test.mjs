@@ -21,6 +21,24 @@ test("careful does not score below naive on phobos-commute seeds 2 and 7", async
   }
 });
 
+test("careful does not score below naive on ceres-shift seeds 2 and 7", async () => {
+  const report = await simulate({
+    policies: ["naive", "careful"],
+    seeds: ["2", "7"],
+    hails: ["ceres-shift"],
+  });
+  for (const seed of ["2", "7"]) {
+    const naive = report.rows.find((row) => row.policy === "naive" && row.seed === seed);
+    const careful = report.rows.find((row) => row.policy === "careful" && row.seed === seed);
+    assert.equal(naive.terminal, "landed");
+    assert.equal(careful.terminal, "landed");
+    assert.ok(
+      careful.total >= naive.total,
+      `seed ${seed} careful ${careful.total} naive ${naive.total}`,
+    );
+  }
+});
+
 test("score v2 parts sum to the total and keep their units", async () => {
   const report = await simulate({
     policies: ["naive"],
