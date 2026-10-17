@@ -560,20 +560,27 @@ async function phaseOff() {
     const h = await call(client, "get_my_rides", {});
     assert.equal(h.isError, true); assert.match(h.value, /sign-in \(OAuth\)/);
   });
-  await check("start_bench refuses suite v1 until it is re-cut for this engine and score version", async () => {
+  await check("start_bench opens suite v1 on the practice split", async () => {
     const bot = await connect(w.base);
     try {
       const start = await call(bot, "start_bench");
-      assert.equal(start.isError, true);
-      assert.match(String(start.value), /suite v1 was cut for engine /);
+      assert.equal(start.isError, false);
+      assert.equal(start.value.practice, true);
+      assert.equal(start.value.simulated, true);
+      assert.equal(start.value.tasks, 5);
+      assert.match(start.value.bench_id, /^b_[0-9a-f]{20}$/);
     } finally { await bot.close(); }
   });
-  await check("start_bench split test: with STARFARE_BENCH_KEY set, a held-out task that arrives says only that it flew, and the page shows no score", async () => {
+  await check("start_bench split test opens a held-out session and the start result has no score", async () => {
     const bot = await connect(w.base);
     try {
       const start = await call(bot, "start_bench", { split: "test" });
-      assert.equal(start.isError, true);
-      assert.match(String(start.value), /suite v1 was cut for engine /);
+      assert.equal(start.isError, false);
+      assert.equal(start.value.practice, false);
+      assert.match(start.value.suite, /held-out test split/);
+      assert.equal(start.value.tasks, 5);
+      assert.equal(start.value.score, undefined);
+      assert.equal(start.value.total, undefined);
     } finally { await bot.close(); }
   });
   await client.close();
@@ -861,11 +868,13 @@ async function phaseOn() {
       const { live: _l, trail: _t, ...line1 } = lines[1];
       assert.deepEqual(line1, detail); assert.ok(lines.every((l) => l.format === "starfare.ride/1" && l.simulated === true));
     });
-    await check("on: start_bench refuses suite v1 on both splits until the suite is re-cut", async () => {
+    await check("on: start_bench opens the practice split and refuses the test split when the server has no bench key", async () => {
       const t = await call(b.client, "start_bench", { split: "test" });
       const d = await call(b.client, "start_bench", { split: "dev" });
-      assert.equal(t.isError, true); assert.match(String(t.value), /suite v1 was cut for engine /);
-      assert.equal(d.isError, true); assert.match(String(d.value), /suite v1 was cut for engine /);
+      assert.equal(t.isError, true); assert.match(String(t.value), /STARFARE_BENCH_KEY/);
+      assert.equal(d.isError, false);
+      assert.equal(d.value.practice, true);
+      assert.equal(d.value.tasks, 5);
     });
     await a.client.close(); await b?.client.close();
   } finally { await w.stop(); }

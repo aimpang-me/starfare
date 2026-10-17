@@ -1,8 +1,8 @@
 {
   "format": "starfare.suite/1",
   "id": "v1",
-  "engine_sha256": "65b725c8d154f39a4abf8967285949224d72e15b13f0263e7b465e5b336568ec",
-  "score_version": 1,
+  "engine_sha256": "f68b371cce1d068f02f0869aa7f7e53afee34e5ce2c737b8b8ae74c5716a1df0",
+  "score_version": 3,
   "budget": 60,
   "world": "per_task",
   "margin": 5,
