@@ -6,7 +6,8 @@ import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { SKY, RIDE_FORMAT } from "../src/game.js";
+import { EPISODE_SCHEMA } from "../src/episode.js";
+import { SKY, RIDE_FORMAT, POOL_TIERS } from "../src/game.js";
 import { methodPage } from "../src/method.js";
 
 const require = createRequire(import.meta.url);
@@ -131,17 +132,20 @@ test("the page quotes the ephemeris and does not treat 1361 as an engine constan
   for (const name of simulated) assert.ok(html.includes(name), name);
 });
 
-test("the page states the passenger catalog, the season, and the held out seeds", () => {
-  const passengers = R.HAILS.reduce((n, h) => n + h.party, 0);
+test("the page states the seeded season pool, the season, and the held out seeds", () => {
+  assert.equal(POOL_TIERS.placeholder, true);
   assert.match(html, new RegExp("A season is " + SKY.len_days + " sky days"));
   assert.match(html, /One real second is one sky day/);
-  assert.match(html, new RegExp("The catalog has " + R.HAILS.length + " bookings and " + passengers + " passengers"));
-  assert.match(html, /The passenger list is not redrawn/);
-  for (const h of R.HAILS) {
-    const line = row("data-booking", h.id);
-    assert.match(line, new RegExp(">" + h.title + "<"));
-    assert.match(line, new RegExp(">" + h.party + "<"));
+  assert.match(html, /The tier sizes are placeholders/);
+  assert.match(html, /simulated passengers/);
+  for (const tier of POOL_TIERS.rows) {
+    const line = row("data-tier", String(tier.min_players));
+    assert.match(line, new RegExp(">" + tier.hails + "<"));
   }
+  assert.match(html, /frozen from the previous season's distinct signed-in players/);
+  const hub = readFileSync(new URL("src/hub-pool.js", root), "utf8");
+  assert.match(hub, /if \(cur != null\) return cur/);
+  assert.match(hub, /distinctPlayers\(sql, n - 1\)/);
   const suite = readFileSync(new URL("src/suite.js", root), "utf8");
   assert.match(suite, /The file holds no seeds/);
   assert.match(suite, /SHA-256/);
@@ -155,15 +159,18 @@ test("the page states the passenger catalog, the season, and the held out seeds"
   assert.equal(html.includes("k1:" + "a".repeat(32)), false);
 });
 
-test("the page states the ride record and not an RL episode format", () => {
+test("the page states the ride record and the episode export", () => {
   const sim = readFileSync(new URL("sim.mjs", root), "utf8");
   const index = readFileSync(new URL("src/index.js", root), "utf8");
   const store = readFileSync(new URL("src/store.js", root), "utf8");
   const run = readFileSync(new URL("bench/run.mjs", root), "utf8");
   const bench = readFileSync(new URL("src/bench-host.js", root), "utf8");
   const exportMax = store.match(/const EXPORT_MAX = (\d+)/)[1];
-  assert.match(sim, /stranded counts as 0 in this mean only/);
-  assert.match(html, /stranded counts as 0 in this mean only/);
+  const simDoc = readFileSync(new URL("SIM.md", root), "utf8");
+  assert.match(sim, /landedRows/);
+  assert.match(simDoc, /are not folded in as 0/);
+  assert.match(html, /are not folded in as 0/);
+  assert.equal(html.includes("counts as 0 in this mean only"), false);
   assert.match(index, /for 24 hours/);
   assert.match(html, /lasts 24 hours/);
   assert.match(store, /newest EXPORT_MAX arrived rides/);
@@ -173,7 +180,12 @@ test("the page states the ride record and not an RL episode format", () => {
   assert.match(bench, /Bench mode: no ride history/);
   assert.match(html, /A bench session does not add those attempts to the player download/);
   assert.ok(html.includes(RIDE_FORMAT));
-  assert.match(html, /The repository does not define an RL episode format\./);
+  assert.ok(html.includes(EPISODE_SCHEMA));
+  assert.match(html, /\/flight\/&lt;run_id&gt;\/episode\.jsonl/);
+  assert.match(html, /one full episode per arrived flight/);
+  assert.match(html, /Hidden test seeds stay out of training data/);
+  const episodeSrc = readFileSync(new URL("src/episode.js", root), "utf8");
+  assert.match(episodeSrc, /if \(!world\) return null/);
   const rides = readFileSync(new URL("world/engine/sol-rides.js", repo), "utf8");
   const free = rides.match(/\(ctx\.plan_calls \|\| 0\) - (\d+)/);
   assert.ok(free);
