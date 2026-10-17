@@ -400,19 +400,10 @@ async function playTrial(env, cell) {
   const plan = applyNoise(policy.plan(hail, forecasts, rng), hail, rng, env.noise);
   if (!askHoursOk(plan.askAfterHours)) throw new SimCheckError("askAfterHours must be a number from 0 to 24");
 
-  const pickupLeg = plan.comparePickups
+  const pair = plan.comparePickups
     ? await bestPickup(session, hail, plan, rng, env.noise)
-    : await onePickup(session, hail, plan);
-  if (pickupLeg && pickupLeg.gate !== "FAIL") {
-    const ride = await callTool(session, "plan_ride", {
-      afterLeg: pickupLeg.legId,
-      objective: plan.rideObjective,
-    });
-    knownKind(ride, ["leg", "error"]);
-    if (ride.kind === "leg" && ride.leg.gate !== "FAIL") {
-      score = await flyPlan(session, policy, rng, plan, pickupLeg, ride.leg, env.noise);
-    }
-  }
+    : await onePair(session, hail, plan);
+  if (pair) score = await flyPlan(session, policy, rng, plan, pair.pickup, pair.ride, env.noise);
   return finishTrial(session, score);
 }
 
@@ -594,12 +585,16 @@ async function callTool(session, name, input) {
         to: info.destination.id,
         riderReady: info.rider_ready,
         arriveBy: info.arrive_by,
-        fleet: info.fleet.map((row) => ({
-          id: row.car,
-          name: row.name,
-          parkedAt: row.parked_at.id,
-          busyUntil: row.busy_until,
-        })),
+        fleet: info.fleet.map((row) => {
+          const ship = {
+            id: row.car,
+            name: row.name,
+            parkedAt: row.parked_at.id,
+            busyUntil: row.busy_until,
+          };
+          if (typeof row.xenon_kg === "number") ship.xenonKg = row.xenon_kg;
+          return ship;
+        }),
       },
       ...snapshot(session),
     };
@@ -708,6 +703,7 @@ function dayCovers(day, at) {
 function legOf(result) {
   const refly = result.refly || {};
   const gate = refly.result === "PASS" ? "PASS" : refly.result === "FAIL" ? "FAIL" : "local";
+  const xenonKg = typeof result.xenon_kg === "number" ? result.xenon_kg : null;
   return {
     legId: result.leg_id,
     role: result.kind === "ride" ? "ride" : "pickup",
@@ -715,6 +711,7 @@ function legOf(result) {
     arrive: result.arrive,
     gate,
     plansUsed: result.plans_used,
+    xenonKg,
   };
 }
 
@@ -879,6 +876,13 @@ function badPad(cp) {
   return { action: "divert", place: last.place, waitHours: BAD_DIVERT_WAIT_HOURS };
 }
 
+async function onePair(session, hail, plan) {
+  const pickup = await onePickup(session, hail, plan);
+  if (!pickup || pickup.gate === "FAIL") return null;
+  const ride = await planRide(session, pickup, plan);
+  return ride ? { pickup, ride } : null;
+}
+
 async function onePickup(session, hail, plan) {
   const legal = legalShips(hail);
   const index = legal.findIndex((ship) => ship.id === plan.ship);
@@ -900,8 +904,23 @@ async function onePickup(session, hail, plan) {
   return pickup.kind === "leg" ? pickup.leg : null;
 }
 
+async function planRide(session, pickup, plan) {
+  const ride = await callTool(session, "plan_ride", {
+    afterLeg: pickup.legId,
+    objective: plan.rideObjective,
+  });
+  knownKind(ride, ["leg", "error"]);
+  return ride.kind === "leg" && ride.leg.gate !== "FAIL" ? ride.leg : null;
+}
+
+function tankHolds(ship, pickup, ride) {
+  if (typeof ship.xenonKg !== "number") return true;
+  const used = (pickup.xenonKg || 0) + (ride.xenonKg || 0);
+  return used <= ship.xenonKg + 1e-6;
+}
+
 async function bestPickup(session, hail, plan, rng, noise) {
-  const ranked = [];
+  const pickups = [];
   for (const ship of legalShips(hail)) {
     const pickup = await callTool(session, "plan_pickup", {
       ship: ship.id,
@@ -909,13 +928,21 @@ async function bestPickup(session, hail, plan, rng, noise) {
       waitDays: plan.waitDays,
     });
     knownKind(pickup, ["leg", "error"]);
-    if (pickup.kind === "leg" && pickup.leg.gate !== "FAIL") ranked.push(pickup.leg);
+    if (pickup.kind === "leg" && pickup.leg.gate !== "FAIL") pickups.push({ ship, leg: pickup.leg });
   }
-  ranked.sort((a, b) => waitMinutes(a) - waitMinutes(b));
-  if (ranked.length === 0) return null;
+  pickups.sort((a, b) => waitMinutes(a.leg) - waitMinutes(b.leg));
+  const flyable = [];
+  const need = noise > 0 ? 2 : 1;
+  for (const item of pickups) {
+    const ride = await planRide(session, item.leg, plan);
+    if (!ride || !tankHolds(item.ship, item.leg, ride)) continue;
+    flyable.push({ pickup: item.leg, ride });
+    if (flyable.length >= need) break;
+  }
+  if (flyable.length === 0) return null;
   let index = 0;
-  if (noise > 0 && ranked.length > 1 && rng() < noise) index = 1;
-  return ranked[index];
+  if (noise > 0 && flyable.length > 1 && rng() < noise) index = 1;
+  return flyable[index];
 }
 
 function waitMinutes(leg) {
