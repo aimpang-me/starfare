@@ -3,7 +3,7 @@
 Context for a new Claude Code session picking up Starfare. `CLAUDE.md` has the layout, tests and rules; this file has the why, the decisions and what's next.
 
 ## What Starfare is
-A robotaxi game for Starseeker ships across the solar system, built as Alvin's portfolio piece (AI quality / agent evaluation angle). It doubles as an **agent benchmark**: anyone's agent can play by connecting over MCP.
+A passenger-flight game and agent platform for Starseeker ships across the solar system. It began as Alvin's portfolio piece, and the goal is now a larger, ongoing product. It also provides an **agent benchmark**: anyone's agent can play by connecting over MCP. Fictional assets and simulated gameplay remain; calculations should follow established scientific knowledge, with approximations stated explicitly. The current reliability investigation is in `docs/PLUMBING-AUDIT.md`.
 
 Alvin's game loop, in his words (2026-10-16):
 - Robotaxi ride hails. Simulated riders (NPCs) in different places request rides.

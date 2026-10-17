@@ -10,7 +10,8 @@
 // The hazard seed is the season, so a run that straddles a season reset (the last ~minute of a 7000 s season) can fail; rerun.
 import { spawn } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -22,6 +23,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
 import { SEASON_END, computeLeg, isoJD } from "../src/game.js";
+import { stopWorkerProcess } from "./worker-process.mjs";
 
 const DIR = fileURLToPath(new URL("..", import.meta.url));
 const MODE = (process.argv.find((a) => a.startsWith("--mode=")) || "--mode=both").slice(7);
@@ -47,11 +49,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const running = new Set();
 process.on("exit", () => { for (const c of running) try { process.kill(-c.pid, "SIGKILL"); } catch {} });
 
-async function startWorker(vars = {}) {
-  const port = await freePort(), persist = mkdtempSync(join(tmpdir(), "sol-e2e-")), log = workerLog = [];
+async function startWorker(vars = {}, persistTo = null) {
+  const port = await freePort(), persist = persistTo || mkdtempSync(join(tmpdir(), "sol-e2e-")), log = workerLog = [];
   const args = [join(DIR, "node_modules", "wrangler", "bin", "wrangler.js"), "dev", "--port", String(port), "--ip", "127.0.0.1", "--persist-to", persist];
   for (const [k, v] of Object.entries(vars)) args.push("--var", `${k}:${v}`);
-  const child = spawn(process.execPath, args, { cwd: DIR, detached: true, env: { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "1" } });
+  const child = spawn(process.execPath, args, { cwd: DIR, detached: true, windowsHide: true, env: { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "1" } });
   running.add(child);
   child.stdout.on("data", (c) => log.push(String(c))); child.stderr.on("data", (c) => log.push(String(c)));
   let exited = false; child.on("exit", () => { exited = true; });
@@ -61,7 +63,11 @@ async function startWorker(vars = {}) {
     if (Date.now() > deadline) throw new Error(`wrangler dev not ready:\n${log.join("").slice(-2000)}`);
     try { await fetch(`${base}/`); break; } catch { await sleep(250); }
   }
-  return { base, log, stop: async () => { try { process.kill(-child.pid, "SIGKILL"); } catch { try { child.kill("SIGKILL"); } catch {} } running.delete(child); await sleep(300); try { rmSync(persist, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch {} } };
+  return { base, log, stop: async ({ keepStorage = false } = {}) => {
+    await stopWorkerProcess(child);
+    running.delete(child);
+    if (!keepStorage) try { await rm(persist, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch {}
+  } };
 }
 
 async function connect(base, kind = "streamable-http", opts) {
@@ -659,6 +665,38 @@ async function phaseOff() {
   });
   await client.close();
   await w.stop();
+
+  await check("a stored seasonal booking survives a complete local Worker restart", async () => {
+    const persist = mkdtempSync(join(tmpdir(), "starfare-restart-"));
+    const vars = { STARFARE_OAUTH: "off", RATE_PER_MIN: "1000" };
+    let worker, bot;
+    try {
+      worker = await startWorker(vars, persist);
+      bot = await connect(worker.base);
+      const listed = await ok(bot, "list_hails");
+      let taken = null;
+      for (const hail of listed.hails.filter((h) => h.kind === "quick")) {
+        const reply = await call(bot, "take_hail", { hail_id: hail.hail_id });
+        if (!reply.isError) { taken = reply.value; break; }
+      }
+      assert.ok(taken, "this season needs at least one takeable quick booking");
+      await bot.close(); bot = null;
+      await worker.stop({ keepStorage: true });
+      worker = await startWorker(vars, persist);
+      bot = await connect(worker.base);
+      const restored = await ok(bot, "get_hail", { run_id: taken.run_id });
+      assert.equal(restored.hail_id, taken.hail_id);
+      assert.equal(restored.title, taken.title);
+      assert.deepEqual(restored.pickup_at, taken.pickup_at);
+      assert.deepEqual(restored.destination, taken.destination);
+      const pad = await ok(bot, "check_pad", { run_id: taken.run_id, place: taken.pickup_at.id, hours: 1 });
+      assert.equal(pad.place.id, taken.pickup_at.id);
+    } finally {
+      await bot?.close();
+      if (worker) await worker.stop();
+      else await rm(persist, { recursive: true, force: true });
+    }
+  });
 
   await check("per-IP rate limit answers 429 past RATE_PER_MIN", async () => {
     const w2 = await startWorker({ STARFARE_OAUTH: "off", RATE_PER_MIN: "5" });

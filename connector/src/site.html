@@ -702,12 +702,12 @@ p{text-wrap:pretty}
     try { T = R.terms(hailId, d.ready_jd, SEASON_END, seed); } catch (e) { return (PLANS[key] = { hail: d, closed: "No car can serve this hail before the season ends." }); }
     R.fleetState(hailId, d.ready_jd, seed).forEach(function (c) { fs[c.car] = c.busy_until_jd; });
     var legs = T.par.legs.map(function (L) {
-      var b = R.planLeg(L.from, L.to, L.dep_jd, "energy", SEASON_END);
+      var b = R.planLeg(L.from, L.to, L.dep_jd, "energy", SEASON_END, T.par.car);
       return { from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, local: !!b.local, arc: b.arc_au || [] };
     });
     var cars = R.nearCars(R.BY[hailId]).map(function (c) {
       var free = fs[c.id] ? Math.max(fs[c.id], d.ready_jd) : d.ready_jd, leg = null;
-      try { var p = R.planLeg(c.at, R.BY[hailId].from, free, "energy", SEASON_END); leg = { dep_jd: p.dep_jd, arr_jd: p.arr_jd, kwh: p.battery.energy_kwh, fare: p.fare.total_usd, local: !!p.local }; } catch (e) { leg = null; }
+      try { var p = R.planLeg(c.at, R.BY[hailId].from, free, "energy", SEASON_END, c.id); leg = { dep_jd: p.dep_jd, arr_jd: p.arr_jd, kwh: p.battery.energy_kwh, fare: p.fare.total_usd, local: !!p.local }; } catch (e) { leg = null; }
       return { car: c.id, name: c.name, at: c.at, busy_until_jd: fs[c.id] || null, pickup: leg, par: c.id === T.par.car };
     });
     return (PLANS[key] = { hail: d, arrive_by_jd: T.arrive_by_jd, par: { car: T.par.car, kwh: T.par.kwh, arr_jd: T.par.arr_jd, legs: legs }, cars: cars });

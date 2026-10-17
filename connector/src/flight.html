@@ -355,7 +355,9 @@ var SF = (function () {
       if (a.from === f.from && a.to === f.to && a.arc_au && a.arc_au.length && (!best || Math.abs(a.dep_jd - dep) < Math.abs(best.dep_jd - dep))) best = a;
     });
     if (best) return best;
-    try { var b = R.planLeg(f.from, f.to, dep, "energy", SEASON_END); return { dep_jd: b.dep_jd, arr_jd: b.arr_jd, arc_au: b.arc_au || [] }; } catch (e) { return null; }
+    var ship = ride.legs && ride.legs.length ? ride.legs[0].car : null;
+    if (!ship) ship = String((ride.record.score || ride.record.log || {}).car || "").toLowerCase();
+    try { var b = R.planLeg(f.from, f.to, dep, "energy", SEASON_END, ship); return { dep_jd: b.dep_jd, arr_jd: b.arr_jd, arc_au: b.arc_au || [] }; } catch (e) { return null; }
   }
   // live: the record's live block while the flight is still in the air. Its legs are the ones flown so far, each with the
   // time it reached orbit at its destination (orb); the last one is open while a checkpoint holds it.

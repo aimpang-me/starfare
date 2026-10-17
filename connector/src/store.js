@@ -12,7 +12,7 @@ import META from "./engine/meta.json" with { type: "json" };
 import { episodeText } from "./episode.js";
 import {
   GameError, applyTool, computeLeg, flyLive, hailInfo, leaveRun, legKey, legPub, liveRecord, liveRow, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord,
-  rideStats, rideSummary, resolveHail, seasonInstance, sky,
+  rideStats, rideSummary, resolveHail, restoreRunBookings, seasonInstance, sky,
 } from "./game.js";
 import { liveIdsToDrop } from "./live.js";
 import { distinctPlayers as playersIn, ensurePool as freezePool, poolSize as storedPool, recordBest } from "./hub-pool.js";
@@ -31,13 +31,22 @@ const LIVE_HELD_MS = 6 * 3600 * 1000; // a flight held at a checkpoint leaves th
 const LIVE_AFTER_MS = 60 * 1000; // landed rows older than this leave, except the newest
 
 export class StarfareRun extends DurableObject {
-  async #run() { return (await this.ctx.storage.get("run")) ?? null; }
+  #queue = Promise.resolve();
+  #serial(fn) {
+    const pending = this.#queue.then(fn);
+    this.#queue = pending.catch(() => {});
+    return pending;
+  }
+  async #run() {
+    const run = (await this.ctx.storage.get("run")) ?? null;
+    return run ? restoreRunBookings(await engine(), run) : null;
+  }
   async #save(run) { await this.ctx.storage.put("run", run); }
   /** Plans go through the hub's leg cache; plan_pickup, plan_ride_leg and a replan at a checkpoint share it. */
   #legFn(E) {
     const h = hub(this.env);
     return async (from, to, t, obj, end, ship) => {
-      const key = legKey(from, to, t, obj, end, ship), hit = await h.legGet(key);
+      const key = META.sha256 + "|" + legKey(from, to, t, obj, end, ship), hit = await h.legGet(key);
       if (hit && hit.arc_au) return { leg: hit, cached: true }; // rows cached before arcs were kept are planned again
       const leg = computeLeg(E, from, to, t, obj, end, ship);
       await h.legPut(key, leg);
@@ -70,7 +79,7 @@ export class StarfareRun extends DurableObject {
   }
 
   async create(runId, hailId, playerId = null) {
-    return this.#guard(async () => {
+    return this.#serial(() => this.#guard(async () => {
       if (await this.#run()) return { error: "run already exists" };
       const E = await engine(), h = hub(this.env);
       const termsFn = async (id, t0, end, seed) => {
@@ -88,30 +97,34 @@ export class StarfareRun extends DurableObject {
       await this.#save(run);
       await this.#index(E, run);
       return hailInfo(E, run, Date.now());
-    });
+    }));
   }
 
   /** Every run-scoped tool call (get_hail, plan_pickup, plan_ride, check_pad, space_weather, dispatch, decide). */
   async act(tool, input, playerId = null) {
-    const before = await this.#run();
-    // A signed-in player's run answers only them: its run_id is public on the watch page and the home map.
-    if (!before || (before.player_id && before.player_id !== playerId)) return { error: "unknown run_id. Call take_hail to get one." };
-    const E = await engine();
-    const { run, result } = await applyTool(E, before, tool, input, { nowMs: Date.now(), legFn: this.#legFn(E) });
-    if (run) await this.#commit(E, before, run);
-    return result;
+    return this.#serial(async () => {
+      const before = await this.#run();
+      // A signed-in player's run answers only them: its run_id is public on the watch page and the home map.
+      if (!before || (before.player_id && before.player_id !== playerId)) return { error: "unknown run_id. Call take_hail to get one." };
+      const E = await engine();
+      const { run, result } = await applyTool(E, before, tool, input, { nowMs: Date.now(), legFn: this.#legFn(E) });
+      if (run) await this.#commit(E, before, run);
+      return result;
+    });
   }
 
   /** One bot holds one run at a time. Taking a new hail in the same MCP session abandons the open run if it is still planning,
    *  or flies it on the defaults to arrive if it is at a checkpoint, scored and on the board. */
   async leave() {
-    const before = await this.#run();
-    if (!before) return null;
-    const E = await engine(), run = structuredClone(before), r = leaveRun(E, run);
-    if (!r) return null;
-    if (run.live && phaseOf(run) === "arrived") flyLive(run, Date.now());
-    await this.#commit(E, before, run);
-    return { run_id: r.run_id, status: r.status, ...(r.status === "arrived" ? { total: r.total, note: r.note } : {}) };
+    return this.#serial(async () => {
+      const before = await this.#run();
+      if (!before) return null;
+      const E = await engine(), run = structuredClone(before), r = leaveRun(E, run);
+      if (!r) return null;
+      if (run.live && phaseOf(run) === "arrived") flyLive(run, Date.now());
+      await this.#commit(E, before, run);
+      return { run_id: r.run_id, status: r.status, ...(r.status === "arrived" ? { total: r.total, note: r.note } : {}) };
+    });
   }
 
   /** The full ride record, for its owner only (get_my_rides detail mode). Another player's run reads as not found. */

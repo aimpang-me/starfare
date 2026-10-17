@@ -102,6 +102,17 @@ export function resolveHail(E, hailId, season, cap) {
   if (!(cap > 0) || index >= cap) fail("That hail is outside this season's pool. Call list_hails.");
   return E.R.admit(E.R.hailRow(m[1], index));
 }
+/** Rebuild dynamic booking data when a stored run is loaded into a fresh engine isolate.
+ * New runs retain their booking rows; older runs can regenerate them from their original season and index. */
+export function restoreRunBookings(E, run) {
+  const rows = new Map((run.booking_rows || []).map((h) => [h.id, h]));
+  for (const id of run.hails || [run.id]) {
+    if (own(E.R.BY, id)) continue;
+    const m = SEASON_HAIL.exec(id);
+    if (m) E.R.admit(rows.get(id) || E.R.hailRow(m[1], Number(m[2])));
+  }
+  return run;
+}
 export function fleet(E) {
   const { placeName } = names(E);
   return E.R.FLEET.map((c) => {
@@ -159,6 +170,8 @@ export async function openRun(E, inst, runId, nowMs, termsFn) {
   return {
     run_id: runId, id: hailId, title: R.BY[hailId].title, t0, seed, ...terms, calls: 0, lseq: 0, legs: {}, forecasts: [], phase: "planning", score: null, created_ms: nowMs,
     end_jd, clock: inst.clock, tag: inst.tag, budget: inst.budget, ...(inst.budget == null ? {} : { tool_calls: 0 }),
+    ...((inst.hails || [hailId]).some((id) => SEASON_HAIL.test(id))
+      ? { booking_rows: (inst.hails || [hailId]).map((id) => structuredClone(R.BY[id])) } : {}),
     ...(set ? { hails: inst.hails, bookings: set.bookings } : {}),
   };
 }
@@ -171,7 +184,7 @@ export const worldOf = (run) => (run.tag == null ? { season: +seedOf(run) } : { 
 const VIEWS = Object.fromEntries(Object.entries({
   hail: "run_id hail_id title rider note pickup_at destination rider_ready arrive_by boarding_hours bookings season task_id fleet sky_now plans_used phase dispatched passengers situation player_id rules",
   arrived: "ok run_id hail_id planned_by player_id",
-  score: "status total out_of parts car pickup arrive planned_pickup planned_arrive promised_arrival arrive_by delay_hours promise_slip_hours fare_usd planned_kwh extra_kwh divert_kwh used_kwh par_kwh par_car beat_par checkpoints rider_dose_msv incidents bookings passengers season task_id",
+  score: "status total out_of score_version parts car pickup arrive planned_pickup planned_arrive promised_arrival arrive_by delay_hours promise_slip_hours fare_usd planned_kwh extra_kwh divert_kwh used_kwh par_kwh par_car beat_par checkpoints rider_dose_msv incidents bookings passengers season task_id",
   log: "hail kind season task_id from to rider_ready arrive_by car par_car par_kwh fleet planned dispatched quote hails stops quotes forecasts checkpoints flown happened bookings incidents parts total",
   summary: "run_id hail_id hails title kind season task_id phase taken_at rider_ready arrive_by plans_used reason open_checkpoint car par_car total out_of parts used_kwh par_kwh beat_par promised_arrival arrive promise_slip_hours delay_hours incidents checkpoints",
   record: "format simulated note run_id player_tag hail_id season task_id phase taken_at reason open_checkpoint score log",

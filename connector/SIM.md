@@ -8,7 +8,7 @@ npm run sim -- --policies naive,careful --seeds 1,2,3,4 --hails iss-crew,titan-h
 npm run sim -- --skill mid --noise 0 --policies naive --seeds 1 --hails iss-crew
 ```
 
-`package.json` defines `"sim": "node sim.mjs"`. That script is not part of `npm test`. `node --test test/sim-policy.test.mjs` checks the Ceres wait, the skill flags, and that a 100 point total need not equal the rounded parts. That file is not part of `npm test` either.
+`package.json` defines `"sim": "node sim.mjs"`. That command prints a report. `npm test` runs all unit tests, including `test/sim-policy.test.mjs`, followed by the local MCP integration checks. Use `npm run test:unit` or `npm run test:e2e` to run either group. The simulator tests cover policy behavior, the skill flags, and the score parts.
 
 The command prints one report and exits 0. A hard check exits 1. When the careful landed mean is below the naive landed mean, the report includes a finding, and the process still exits 0. Stdout is the whole shipped text.
 
