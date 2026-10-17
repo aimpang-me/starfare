@@ -102,12 +102,13 @@ function nodeScore(hailId, riderReady, season, carId, planCalls, quote, objectiv
   const p = computeLeg(E, R.CAR[carId].at, h.from, R.pickupStart(hailId, carId, t0, seed), objective, SEASON_END, carId);
   const r = computeLeg(E, h.from, h.to, p.arr_jd + R.DWELL, objective, SEASON_END, carId);
   const q = quote === "exact" ? { fare_usd: r.fare, arrival: isoJD(r.arr_jd) } : quote;
-  const F = R.fly(hailId, carId, [p, r], t0, seed);
+  let F = R.fly(hailId, carId, [p, r], t0, seed);
   // A ride that stopped and was answered has a recovery grade. fly() does not: it never asks.
   let hindsight_kwh = null;
   if (opts.hindsight) {
     let st = R.start(hailId, carId, [p, r], t0, seed, { ask_after_hours: 0, end_jd: SEASON_END });
     while (st.checkpoint) st = R.step(st.ride, st.checkpoint.default);
+    F = st.done;
     let low = null;
     for (const row of R.regret(st.ride)) for (const o of row.options || []) if (low == null || o.used_kwh < low) low = o.used_kwh;
     hindsight_kwh = low;
@@ -119,9 +120,9 @@ function nodeScore(hailId, riderReady, season, carId, planCalls, quote, objectiv
 
 /** take_hail, plan_pickup with one car, plan_ride after it, dispatch with the ride leg's own fare and arrival (or a given quote).
  *  ask "never" flies the default answer at every checkpoint, which is what R.fly does in Node. */
-async function playHail(client, hailId, car, { quote = "exact", objective, ask = "never" } = {}) {
+async function playHail(client, hailId, car, { quote = "exact", objective, ask = "never", openedHail } = {}) {
   timings.push({ tool: `--- ${hailId} ${car ?? "par car"}` });
-  const hail = await ok(client, "take_hail", { hail_id: hailId });
+  const hail = openedHail || await ok(client, "take_hail", { hail_id: hailId });
   car ??= nodeParCar(hail);
   const pickup = await ok(client, "plan_pickup", { run_id: hail.run_id, car, ...(objective ? { objective } : {}) });
   const ride = await ok(client, "plan_ride", { run_id: hail.run_id, after_leg: pickup.leg_id, ...(objective ? { objective } : {}) });
@@ -154,6 +155,15 @@ function assertMatchesNode(play, planCalls, quote = "exact", opts = {}) {
   return s;
 }
 const partsStr = (score) => score.parts.map((p) => `${p.key} ${p.got}/${p.max}`);
+async function takeBookableQuick(client, hails) {
+  for (const booking of hails.filter((h) => h.kind === "quick")) {
+    const result = await call(client, "take_hail", { hail_id: booking.hail_id });
+    if (!result.isError) return { booking, hail: result.value };
+    assert.match(String(result.value), /xenon tank holds.*this leg needs|season ends too soon/i,
+      "Unexpected take_hail error must fail the check");
+  }
+  assert.fail("This season has no bookable quick hail for the integration check");
+}
 function assertSeasonPool(hails) {
   const catalog = new Set(R.HAILS.map((h) => h.id));
   assert.equal(hails.length, 200);
@@ -223,10 +233,9 @@ async function phaseOff() {
     assert.equal(outside.isError, true); assert.match(outside.value, /outside this season's pool/);
     const other = await call(client, "take_hail", { hail_id: "s" + (Number(season) + 1) + "-0" });
     assert.equal(other.isError, true); assert.match(other.value, /from season/);
-    const quick = r.hails.find((h) => h.kind === "quick");
     const a = await connect(w.base), b = await connect(w.base);
     try {
-      const t1 = await ok(a, "take_hail", { hail_id: quick.hail_id });
+      const { booking: quick, hail: t1 } = await takeBookableQuick(a, r.hails);
       const t2 = await ok(b, "take_hail", { hail_id: quick.hail_id });
       assert.notEqual(t1.run_id, t2.run_id);
       assert.equal(t1.hail_id, quick.hail_id); assert.equal(t2.hail_id, quick.hail_id);
@@ -247,10 +256,10 @@ async function phaseOff() {
   };
   await check("a pool hail plans, dispatches and scores, and a worse finish does not replace the best", async () => {
     const listed = await ok(client, "list_hails");
-    const quick = listed.hails.find((h) => h.kind === "quick");
+    const { booking: quick, hail: openedHail } = await takeBookableQuick(client, listed.hails);
     const m = /^s(\d+)-(\d+)$/.exec(quick.hail_id);
     R.admit(R.hailRow(m[1], Number(m[2])));
-    const exact = noteBest(await playHail(client, quick.hail_id));
+    const exact = noteBest(await playHail(client, quick.hail_id, undefined, { openedHail }));
     assert.equal(exact.score.ok, true);
     assertMatchesNode(exact, 2);
     const worse = noteBest(await playHail(client, quick.hail_id, exact.car, { quote: { quoted_fare_usd: 1, quoted_arrival: "2020-01-01 00:00" } }));
@@ -303,7 +312,7 @@ async function phaseOff() {
     assert.equal(early.isError, true); assert.match(early.value, /dispatch first/);
   });
 
-  await check("a ride that stops at checkpoints (ask_after_hours 0), answered with decide's defaults, lands where R.fly does in Node; get_hail shows the open checkpoint", async () => {
+  await check("a ride that stops at checkpoints (ask_after_hours 0), answered with decide's defaults, matches R.start and R.step in Node; get_hail shows the open checkpoint", async () => {
     const tried = [];
     let stop = null;
     for (let day = 0; day < 25 && !stop; day++) {
