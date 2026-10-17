@@ -29,5 +29,5 @@ Read first: `docs/HANDOFF.md` (state, decisions, next steps), `docs/OPEN-QUESTIO
 - Old Worker `sol-connector` still running; delete only when Alvin says.
 - Done and deployed: mid-ride checkpoints (launch_hold, pad_closed) with the `decide` tool, on the connector and the Open Sky page; get_my_rides with ride history and run logs.
 - Done and deployed: the public website at https://starfare.aimpang.workers.dev/ (`connector/src/site.html`, Dark SOL).
-- On main, not deployed: the website rebuilt from mockup D (Sky desk) with live flights from `/live.json`; the flight page plays runs in real time.
+- Done and deployed (Worker ff7f8356, main 4537087): the website rebuilt from Design F (`design/mockups/f-ops-3d.html`): three.js map with textured planets served from `connector/public/assets`, live flights from `/live.json`, no Roadster, non-overlapping labels; the flight page plays runs in real time. Follow-ups in `NEXT-STEPS.md`.
 - Later ideas: leaderboard by model + skills, daily seed, dispatch bidding, comfort max-g, charging stops, pooling.
