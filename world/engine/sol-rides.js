@@ -9,7 +9,7 @@ var WINDOW = 120;        // a leg may depart up to this many days after it is al
 var LEAD = 150;          // long-haul hails are booked this many sky days ahead (quick hails: 1 day)
 // Seats per car: a placeholder until Alvin sets it (docs/SHARED-FLIGHTS.md, open number 1).
 var SEATS = 4;
-// The simulated robotaxi fleet: flying roadsters parked at stations and moons. Same in every season.
+// The simulated robotaxi fleet: Starseekers parked at stations and moons. Same in every season.
 var FLEET = [
   { id: "sf-01", name: "SF-01", at: "orbital-depot", seats: SEATS },
   { id: "sf-02", name: "SF-02", at: "lunar-data-center", seats: SEATS },

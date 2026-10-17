@@ -1,7 +1,7 @@
 {
   "source": "sol/world/engine/sol-page.js",
-  "sha256": "c5fdd816d464827c7879256f69dd084e66c5928522b4e5ee642b9564cdd69732",
-  "bytes": 533482,
+  "sha256": "44a1f7fe999b25f4ffb67147c97ee46646fff0b7df2df275a50abc9c552b8a8e",
+  "bytes": 509914,
   "sky": {
     "t0_ms": 1792108800000,
     "jd0": 2461329.5,
@@ -70,9 +70,6 @@
     },
     "bennu": {
       "color": "#6e6a66"
-    },
-    "roadster": {
-      "color": "#ff6b6b"
     }
   }
 }

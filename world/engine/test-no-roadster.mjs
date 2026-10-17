@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { assertProjected, keepIds, projectEphemeris } from "./ship-ephem.mjs";
 import { placesTable } from "./sol-engine.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -55,6 +56,44 @@ check("bennu.data and ceres.data hashes", () => {
 
 check("ephem.js still prints earth_k 0.01215058427057155", () => {
   assert.equal(ephemText.includes('earth_k":0.01215058427057155'), true);
+});
+
+check("shipped ephemeris keys are keepIds(places)", () => {
+  assertProjected(ephem, places);
+  const keep = [...keepIds(places)].sort();
+  assert.deepEqual(Object.keys(ephem.bodies).sort(), keep);
+  const projected = projectEphemeris(ephem, places);
+  assert.deepEqual(Object.keys(projected.bodies).sort(), keep);
+  for (const id of keep) assert.equal(projected.bodies[id].data, ephem.bodies[id].data);
+});
+
+check("shipped files have no roadster or tesla", () => {
+  const root = join(here, "..", "..");
+  const files = [
+    "world/engine/sol-engine.js",
+    "world/engine/sol-rides.js",
+    "world/engine/sol-missions.js",
+    "world/engine/sol-page.js",
+    "world/engine/ephem.js",
+    "world/engine/ephem.json",
+    "world/engine/places.json",
+    "world/engine/ship-ephem.mjs",
+    "world/engine/bake_ephem.py",
+    "world/engine/crosscheck.mjs",
+    "world/build.py",
+    "world/template.html",
+    "world/open-sky.html",
+    "world/sim_rides.json",
+    "connector/src/site.html",
+    "connector/src/flight.html",
+    "connector/src/engine/sol-page.cjs",
+    "connector/src/engine/meta.json",
+  ];
+  const hits = [];
+  for (const rel of files) {
+    if (/roadster|tesla/i.test(readFileSync(join(root, rel), "utf8"))) hits.push(rel);
+  }
+  assert.deepEqual(hits, []);
 });
 
 if (failed) {

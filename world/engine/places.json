@@ -216,17 +216,6 @@
    "sub": "Moon of Neptune · 100 km orbit"
   },
   {
-   "id": "roadster",
-   "name": "Tesla Roadster",
-   "kind": "small",
-   "parent": "sun",
-   "real": true,
-   "mu": 0,
-   "radius_km": 0.002,
-   "park_alt_km": 0,
-   "sub": "Car in a solar orbit · no gravity well"
-  },
-  {
    "id": "bennu",
    "name": "Bennu",
    "kind": "small",

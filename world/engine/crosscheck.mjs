@@ -18,10 +18,10 @@ const args = process.argv.slice(2);
 const ONLY = args.includes("--only") ? args[args.indexOf("--only") + 1].split(",") : null;
 const FRESH = args.includes("--fresh");
 const PYVER = "py-3";  // bump when crosscheck_py.py changes (cache key)
-S.init(JSON.parse(fs.readFileSync(path.join(HERE, "ephem.json"))));
+const loadedBodies = new Set(S.init(JSON.parse(fs.readFileSync(path.join(HERE, "ephem.json")))).bodies);
 const jd = S.jdFromIso;
 const EPH_END_QUOTE = 2471000.0;  // quote.py EPH_END
-const TOFMAX = { mercury: 300, venus: 400, roadster: 1500, bennu: 1000, ceres: 1800, mars: 700, jupiter: 2600, saturn: 4800, uranus: 9000, neptune: 13000 };
+const TOFMAX = { mercury: 300, venus: 400, bennu: 1000, ceres: 1800, mars: 700, jupiter: 2600, saturn: 4800, uranus: 9000, neptune: 13000 };
 
 // ------------------------------------------------------------------ routes
 // quote: Earth -> body exactly as quote.py (its grid, objective, filters); Python reference = quote.py itself
@@ -41,13 +41,11 @@ const ROUTES = [
   Q("Q09 earth-saturn", "saturn", "2028-01-01", "2028-12-31"),
   Q("Q10 earth-uranus", "uranus", "2029-01-01", "2029-12-31"),
   Q("Q11 earth-neptune", "neptune", "2033-01-01", "2033-12-31"),
-  Q("Q12 earth-roadster", "roadster", "2026-10-16", "2027-10-16"),
   Q("Q13 earth-bennu 1-rev", "bennu", "2026-10-16", "2028-12-31"),
   Q("Q14 earth-bennu tof c3<=100", "bennu", "2026-10-16", "2027-01-16", { objective: "tof", maxC3: 100 }),
   Q("Q15 earth-ceres", "ceres", "2027-01-01", "2027-12-31", { arrBy: "2029-12-31" }),
   { id: "T1 titan-earth energy (trip fleet)", type: "trip", origin: "titan", dest: "earth", argv: ["trip.py", "--driver", "fleet", "--objective", "energy"], objective: "energy", tofMin: 1200 },
   { id: "T2 titan-earth time (trip fleet fast)", type: "trip", origin: "titan", dest: "earth", argv: ["trip.py", "--driver", "fleet", "--objective", "time"], objective: "time", tofMin: 300 },
-  { id: "T3 roadster-titan pickup (trip roadster)", type: "trip", origin: "roadster", dest: "titan", argv: ["trip.py", "--driver", "roadster", "--objective", "energy"], objective: "energy", tofMin: 1200, capture: true },
   G("G01 mars-earth", "mars", "earth", "2027-01-01", "2028-12-31"),
   G("G02 saturn-earth (5,000 km Saturn orbit)", "saturn", "earth", "2026-10-16", "2029-10-16", { tof: [1200, 4400] }),
   G("G03 earth-saturn capture", "earth", "saturn", "2028-01-01", "2028-12-31", { tof: [1000, 4800] }),
@@ -56,7 +54,6 @@ const ROUTES = [
   G("G06 mars-jupiter", "mars", "jupiter", "2027-01-01", "2028-12-31", { tof: [300, 2600] }),
   G("G07 ceres-mars", "ceres", "mars", "2027-01-01", "2028-12-31", { tof: [100, 1500] }),
   G("G08 bennu-earth", "bennu", "earth", "2027-01-01", "2028-12-31", { tof: [60, 1000] }),
-  G("G09 roadster-earth", "roadster", "earth", "2026-10-16", "2028-10-16", { tof: [60, 1500] }),
   G("G10 mercury-venus", "mercury", "venus", "2027-01-01", "2027-12-31", { tof: [30, 400] }),
   G("G11 iss-mars", "iss", "mars", "2026-10-16", "2026-12-24", { tof: [20, 700] }),
   G("G12 lunar-data-center-mars", "lunar-data-center", "mars", "2026-10-16", "2026-12-24", { tof: [20, 700] }),
@@ -195,7 +192,6 @@ for (const out of results) {
     if (typeof r.origin !== "string") return null;  // ships: no Python re-fly exists
     return { kind: "refly", mode: "centre", src: pyName(r.origin), dst: pyName(r.dest), ...leg, ephem, ...x };
   };
-  const small = (x) => typeof x === "string" && ["roadster", "bennu", "ceres", "ceres-port"].includes(x);
   if (r.type === "leg") {
     const L = { dep_jd: r.dep_jd, tof_days: r.tof_days, revs: r.revs, lowpath: r.lowpath };
     pend.push(pyJob(reflyJob(L, "de421")).then((p) => { out.py_refly = p; }));
@@ -373,12 +369,14 @@ function writeReport(R, unit) {
     "| body | segment d (base) | degree | segments | KiB | bake max \\|dr\\| m | bake rms m | bake max \\|dv\\| mm/s | JS max \\|dr\\| m | JS max \\|dv\\| mm/s |", "|---|---|---|---|---|---|---|---|---|---|");
   for (const [b, e] of Object.entries(er)) {
     if (b.startsWith("_")) continue;
+    if (b !== "earth" && b !== "moon" && !loadedBodies.has(b)) continue;
     let mp = null, mv = null;
     const vec = tv.bodies[b];
     if (vec) {
       mp = 0; mv = 0;
+      const alias = S.PLACES.some((p) => p.id === b && p.kind === "small") ? b + "@nbody" : b;
       tv.jd.forEach((t, i) => {
-        const s = S.ephState(["roadster", "bennu", "ceres"].includes(b) ? b + "@nbody" : b, t);
+        const s = S.ephState(alias, t);
         mp = Math.max(mp, Math.hypot(...s.r.map((x, k) => x - vec.r[i][k]))); mv = Math.max(mv, Math.hypot(...s.v.map((x, k) => x - vec.v[i][k])));
       });
       W(`ephemeris ${b} |dr| (km)`, mp, "JS vs DE421");

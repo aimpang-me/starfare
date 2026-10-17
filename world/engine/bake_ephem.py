@@ -7,7 +7,7 @@ Contents (all heliocentric J2000 ECLIPTIC, km, TDB Julian dates, the same frame 
   moon_geo  = Moon minus Earth (geocentric Moon, 301-399)
   Earth is rebuilt in JS as  emb - k * moon_geo  with k = 1/(1+EMRAT) read from DE421 (stored as earth_k);
   Moon heliocentric = Earth + moon_geo.  (DE421 has zero offsets 1->199, 2->299, 4->499, so barycentre = body.)
-  roadster, bennu, ceres: n-body orbits integrated here with the SAME code the Python re-fly uses
+  Places with kind small get n-body orbits integrated here with the SAME code the Python re-fly uses
   (code/nbody.py Model + DOP853, rtol 1e-12, Sun + 8 planets + Moon from HermiteTable) from their Horizons
   states in data/targets.json, so the JS planner and re-fly both fly these exactly as refly.py does.
   (quote.py/trip.py still use 2-body Kepler from the same Horizons states.)
@@ -21,7 +21,7 @@ error vs DE421 (checked on a dense grid) is below that body's tolerance.
 
 usage: python3 bake_ephem.py            (writes ephem.json, ephem.js, ephem_errors.json, ephem_testvectors.json)
 """
-import json, math, os, sys, time
+import json, math, os, subprocess, sys, time
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -38,7 +38,7 @@ SPAN = JD_END - JD_START
 
 # position tolerance (km) the auto-tuner must meet, and the integer quantum (km)
 TOL = {"mercury": 2e-2, "venus": 1e-2, "emb": 1e-2, "mars": 1e-2, "jupiter": 1e-2, "saturn": 1e-2,
-       "uranus": 1e-2, "neptune": 1e-2, "moon_geo": 5e-2, "roadster": 1e-2, "bennu": 1e-2, "ceres": 1e-2}
+       "uranus": 1e-2, "neptune": 1e-2, "moon_geo": 5e-2, "bennu": 1e-2, "ceres": 1e-2}
 QFRAC = 20.0   # quantum = tol / QFRAC
 NAIF = {"mercury": 1, "venus": 2, "emb": 3, "mars": 4, "jupiter": 5, "saturn": 6, "uranus": 7, "neptune": 8}
 SEGS = [1, 2, 4, 7, 8, 11, 14, 16, 22, 28, 32, 44, 56, 64, 77, 88, 112, 128, 154, 176, 224, 308, 352, 448, 616, 704]  # all divide 9856
@@ -69,12 +69,21 @@ EARTH_K = float(np.mean(np.linalg.norm(_pe, axis=0) / np.linalg.norm(_pm - _pe, 
 
 
 # ---------------------------------------------------------------- small bodies: n-body, as refly.py
+def shipped_small_ids():
+    script = os.path.join(HERE, "ship-ephem.mjs")
+    out = subprocess.check_output(["node", script, "--small-ids"], text=True)
+    return [line.strip() for line in out.splitlines() if line.strip()]
+
+
 def small_body_fun():
     states = json.load(open(os.path.join(CODE, "..", "data", "targets.json")))["targets"]
     jd_lo = min(min(s["jd_tdb"] for s in states.values()), JD_START) - 2
     table = HermiteTable(eph, PERTURBERS, jd_lo, JD_END + 5)
+    want = set(shipped_small_ids())
     funs = {}
     for name, S in states.items():
+        if name not in want:
+            continue
         t0 = (S["jd_tdb"] - J2000) * DAY
         y0 = np.concatenate((S["r_km"], S["v_kms"]))
         tic = time.perf_counter()
@@ -316,7 +325,7 @@ def main():
     for name, naif in list(NAIF.items()) + [("earth", 399), ("moon", 301)]:
         P, V = helio_ecl(naif, jd)
         tv["bodies"][name] = {"r": P.T.tolist(), "v": V.T.tolist()}
-    for name in ("roadster", "bennu", "ceres"):
+    for name in shipped_small_ids():
         P, V = funs[name](jd)
         tv["bodies"][name] = {"r": P.T.tolist(), "v": V.T.tolist()}
     json.dump(tv, open(os.path.join(HERE, "ephem_testvectors.json"), "w"))
