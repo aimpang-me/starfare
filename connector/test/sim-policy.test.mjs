@@ -85,6 +85,19 @@ function partMean(report, key) {
   return landed.reduce((sum, row) => sum + row.parts.find((part) => part.key === key).got, 0) / landed.length;
 }
 
+test("careful lands a hail when another ship can fly and the earliest pickup cannot", async () => {
+  const report = await simulate({
+    policies: ["careful"],
+    seeds: SEEDS_1_TO_8,
+    hails: ["jovian-hop", "titan-home", "ceres-shift"],
+    skill: "weak",
+  });
+  assert.equal(report.rows.length, 24);
+  for (const row of report.rows) {
+    assert.equal(row.terminal, "landed", `${row.hailId} seed ${row.seed} ${row.terminal}`);
+  }
+});
+
 test("careful landed mean beats naive over seeds 1 to 8", async () => {
   const report = await simulate({ policies: ["naive", "careful"], seeds: SEEDS_1_TO_8 });
   const careful = report.means.find((mean) => mean.policy === "careful");
