@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recorded flight</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #050a14;
+    --bg-2: #0a1222;
+    --glass: rgba(12, 22, 40, .72);
+    --line: rgba(120, 180, 255, .14);
+    --line-2: rgba(120, 190, 255, .28);
+    --ink: #e8f0fa;
+    --ink-2: #9fb0c6;
+    --ink-3: #66788f;
+    --cy: #5cc8ff;
+    --ride: #8ec5ff;
+    --sun: #ffb65c;
+    --me: #ffcf7a;
+    --ok: #6fe0a8;
+    --bad: #ff8f80;
+    --sim: #7f8a99;
+    --r: 6px;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --cond: Rajdhani, "Arial Narrow", Inter, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); }
+  body {
+    font: 14px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    background: radial-gradient(1200px 700px at 50% -10%, #0c1a33 0%, var(--bg) 60%) fixed, var(--bg);
+  }
+  h1, h2 { margin: 0; font-weight: 600; }
+  button, select, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--me); outline-offset: 2px; border-radius: 4px; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .note { margin: 0; font-size: 12px; color: var(--ink-3); }
+  .tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font: 600 9.5px/1 Inter, sans-serif; letter-spacing: .1em; text-transform: uppercase;
+    padding: 3px 6px; border-radius: 999px; border: 1px solid; white-space: nowrap;
+  }
+  .tag.real { color: var(--ok); border-color: rgba(111, 224, 168, .4); background: rgba(111, 224, 168, .08); }
+  .tag.fict { color: var(--sun); border-color: rgba(255, 182, 92, .4); background: rgba(255, 182, 92, .08); }
+  .tag.sim { color: #b9c2ce; border-color: rgba(127, 138, 153, .5); background: rgba(127, 138, 153, .12); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 34px; padding: 6px 13px; border-radius: 4px;
+    border: 1px solid var(--line-2); background: rgba(92, 200, 255, .05);
+    cursor: pointer; color: var(--ink);
+    font: 600 12px/1 Inter, sans-serif; letter-spacing: .06em; text-transform: uppercase;
+  }
+  .btn:hover { background: rgba(92, 200, 255, .12); border-color: rgba(92, 200, 255, .5); }
+  .btn.primary { background: var(--cy); border-color: var(--cy); color: #04121f; }
+  .btn.primary:hover { background: #86d8ff; }
+  .top {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center; gap: 12px;
+    padding: 9px 16px;
+    background: rgba(5, 10, 20, .88);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(12px);
+  }
+  .top::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(92, 200, 255, .6) 30%, rgba(255, 182, 92, .5) 70%, transparent);
+  }
+  .brand { display: flex; flex-direction: column; min-width: 0; }
+  .brand b { font: 700 18px/1 var(--cond); letter-spacing: .34em; }
+  .brand span { font: 600 10px/1.2 var(--mono); letter-spacing: .14em; color: var(--cy); text-transform: uppercase; margin-top: 3px; }
+  .ctr { text-align: center; }
+  .ctr b { display: block; font: 600 40px/1 var(--cond); letter-spacing: .04em; }
+  .ctr span { font: 500 12px/1.3 var(--mono); color: var(--ink-2); }
+  .topr { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+  canvas { display: block; width: 100%; height: 100%; }
+  #view { position: fixed; inset: 0; background: radial-gradient(110% 90% at 50% 45%, #0b1730 0%, #050a14 70%); }
+  .panel {
+    position: fixed; top: 68px; left: 16px; z-index: 10;
+    width: min(360px, calc(100% - 32px));
+    max-height: calc(100% - 84px); overflow: auto;
+    background: var(--glass); border: 1px solid var(--line); border-radius: var(--r);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+  }
+  .panel::before, .panel::after { content: ""; position: absolute; width: 12px; height: 12px; pointer-events: none; }
+  .panel::before { left: -1px; top: -1px; border-left: 2px solid var(--cy); border-top: 2px solid var(--cy); border-top-left-radius: var(--r); }
+  .panel::after { right: -1px; bottom: -1px; border-right: 2px solid var(--sun); border-bottom: 2px solid var(--sun); border-bottom-right-radius: var(--r); }
+  .ph {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 11px 13px 8px; border-bottom: 1px solid var(--line);
+  }
+  .ph h1 { font: 700 14px/1.1 var(--cond); letter-spacing: .2em; text-transform: uppercase; }
+  .pb { padding: 10px 13px 13px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-top: 10px; }
+  .field { display: flex; flex-direction: column; gap: 4px; font: 600 10.5px/1.2 Inter, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+  .field.grow { flex: 1; }
+  select, input[type="range"] { accent-color: var(--cy); }
+  select {
+    background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 4px;
+    padding: 6px 8px; min-height: 34px; text-transform: none; letter-spacing: 0; color: var(--ink);
+  }
+  input[type="file"] { font: 500 11px var(--mono); text-transform: none; letter-spacing: 0; color: var(--ink-2); max-width: 160px; }
+  input[type="range"] { width: 100%; }
+  #ship { margin: 8px 0 0; font: 600 13px var(--mono); letter-spacing: .05em; }
+  #caption { min-height: 2.6em; margin: 8px 0 0; color: var(--cy); font-size: 16px; }
+  #status { margin: 8px 0 0; min-height: 1.2em; color: var(--cy); font: 600 11px/1.3 Inter, sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+  section { margin-top: 14px; }
+  section h2 { margin: 0 0 6px; font: 700 14px/1.1 var(--cond); letter-spacing: .2em; text-transform: uppercase; }
+  #score, #log { white-space: pre-wrap; font: 500 12px/1.45 var(--mono); color: var(--ink-2); }
+  #log ul { margin: 0; padding-left: 18px; }
+  #log li { margin: 4px 0; color: var(--ink); }
+  #places { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  #places li { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; }
+  @media (max-width: 720px) {
+    .brand b { letter-spacing: .2em; font-size: 15px; }
+    .ctr b { font-size: 28px; }
+    .panel { top: auto; bottom: 12px; max-height: 46%; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><b>STARFARE</b><span>Recorded flight</span></div>
+  <div class="ctr">
+    <b id="skytime"></b>
+    <span id="minute"></span>
+  </div>
+  <div class="topr"><span class="tag sim">Simulated</span></div>
+</header>
+<div id="view"><canvas id="sky"></canvas></div>
+<aside class="panel">
+  <div class="ph">
+    <h1>Recorded flight</h1>
+    <span class="tag sim">Simulated</span>
+  </div>
+  <div class="pb">
+    <p class="note" id="note">Simulated</p>
+    <p class="mono" id="status">Paused</p>
+    <p class="mono" id="ship"></p>
+    <p id="caption"></p>
+    <div class="row">
+      <button class="btn primary" type="button" id="play">Play</button>
+      <button class="btn" type="button" id="pause">Pause</button>
+      <label class="field" for="speed">Speed
+        <select id="speed" aria-label="Speed">
+          <option value="0.5">0.5</option>
+          <option value="1" selected>1</option>
+          <option value="2">2</option>
+          <option value="4">4</option>
+        </select>
+      </label>
+    </div>
+    <div class="row">
+      <label class="field grow" for="scrub">Sky time
+        <input id="scrub" type="range" min="0" max="1000" value="0" step="1" aria-label="Sky time">
+      </label>
+    </div>
+    <div class="row">
+      <label class="field" for="episode">Episode file
+        <input id="episode" type="file" aria-label="Episode file">
+      </label>
+      <label class="field" for="arcs">Arc file
+        <input id="arcs" type="file" aria-label="Arc file">
+      </label>
+    </div>
+    <section>
+      <h2>Score</h2>
+      <div id="score" role="region" aria-label="Score" aria-live="polite"></div>
+    </section>
+    <section>
+      <h2>Log</h2>
+      <div id="log" role="region" aria-label="Log" aria-live="polite"></div>
+    </section>
+    <ul id="places"></ul>
+  </div>
+</aside>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../world/engine/sol-page.js"></script>
+<script src="tape.js"></script>
+<script>
+(function () {
+  "use strict";
+  var clock = null;
+  var drawn = null;
+  var lastMs = 0;
+  var files = { episode: "", arcs: "" };
+  var renderer = null;
+  var scene = null;
+  var camera = null;
+  var shipMesh = null;
+  var trailLines = [];
+  var bodyMeshes = {};
+  var markerTex = null;
+
+  var noteEl = document.getElementById("note");
+  var statusEl = document.getElementById("status");
+  var shipEl = document.getElementById("ship");
+  var skyTimeEl = document.getElementById("skytime");
+  var minuteEl = document.getElementById("minute");
+  var captionEl = document.getElementById("caption");
+  var scoreEl = document.getElementById("score");
+  var logEl = document.getElementById("log");
+  var placesEl = document.getElementById("places");
+  var skyInput = document.getElementById("scrub");
+  var canvas = document.getElementById("sky");
+
+  function shown(s) {
+    return String(s == null ? "" : s).replace(/rider/ig, "passenger");
+  }
+
+  function colorFor(body) {
+    if (body.id === "sun") return 0xffb65c;
+    if (body.id === "mars") return 0xa85a3a;
+    if (body.id === "phobos") return 0xc2b280;
+    if (!body.real) return 0x8ec5ff;
+    return 0x9fb0c6;
+  }
+
+  function marker() {
+    if (markerTex) return markerTex;
+    var c = document.createElement("canvas");
+    c.width = 64;
+    c.height = 64;
+    var g = c.getContext("2d");
+    g.fillStyle = "#5cc8ff";
+    g.beginPath();
+    g.arc(32, 32, 10, 0, Math.PI * 2);
+    g.fill();
+    markerTex = new THREE.CanvasTexture(c);
+    return markerTex;
+  }
+
+  function bootGL() {
+    if (!window.THREE) {
+      statusEl.textContent = "The sky view did not load. Playback still reads the files.";
+      return;
+    }
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x050a14, 1);
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100000);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+    var lamp = new THREE.DirectionalLight(0xffffff, 0.7);
+    lamp.position.set(40, 60, 20);
+    scene.add(lamp);
+    var stars = new THREE.BufferGeometry();
+    var pos = new Float32Array(600);
+    for (var i = 0; i < pos.length; i++) pos[i] = (Math.random() - 0.5) * 400;
+    stars.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    scene.add(new THREE.Points(stars, new THREE.PointsMaterial({ color: 0x9fb6d0, size: 0.6, sizeAttenuation: false })));
+    shipMesh = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: marker(), color: 0xffcf7a, transparent: true, depthTest: false, depthWrite: false
+    }));
+    shipMesh.scale.set(1.8, 1.8, 1);
+    shipMesh.renderOrder = 3;
+    scene.add(shipMesh);
+    sizeGL();
+  }
+
+  function sizeGL() {
+    if (!renderer) return;
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / Math.max(1, h);
+    camera.updateProjectionMatrix();
+  }
+
+  function clearBodies() {
+    Object.keys(bodyMeshes).forEach(function (id) {
+      var mesh = bodyMeshes[id];
+      if (mesh.sphere) {
+        scene.remove(mesh.sphere);
+        mesh.sphere.geometry.dispose();
+        mesh.sphere.material.dispose();
+      }
+      if (mesh.sprite) scene.remove(mesh.sprite);
+    });
+    bodyMeshes = {};
+  }
+
+  function syncKnob() {
+    if (!clock) return;
+    var span = clock.span.end - clock.span.start;
+    var frac = span ? (clock.jd - clock.span.start) / span : 0;
+    skyInput.value = String(Math.round(Math.min(1, Math.max(0, frac)) * 1000));
+  }
+
+  function paintScore(score) {
+    if (!score) {
+      scoreEl.textContent = "";
+      return;
+    }
+    var lines = [];
+    if (score.total != null) lines.push("Score " + score.total + " out of " + score.outOf);
+    for (var i = 0; i < score.parts.length; i++) {
+      var p = score.parts[i];
+      lines.push(shown(p.label) + " " + p.got + " of " + p.max);
+    }
+    scoreEl.textContent = lines.join("\n");
+  }
+
+  function paintLog(frame) {
+    logEl.textContent = "";
+    var ul = document.createElement("ul");
+    var lines = [];
+    for (var r = 0; r < frame.recorded.length; r++) lines.push(frame.recorded[r].text);
+    var captions = frame.captions || [];
+    for (var c = 0; c < captions.length; c++) lines.push(captions[c]);
+    for (var i = 0; i < lines.length; i++) {
+      var li = document.createElement("li");
+      li.textContent = shown(lines[i]);
+      ul.appendChild(li);
+    }
+    logEl.appendChild(ul);
+  }
+
+  function trailSpan(points) {
+    var min = [Infinity, Infinity, Infinity];
+    var max = [-Infinity, -Infinity, -Infinity];
+    var pts = points.length ? points : [[0, 0, 0]];
+    for (var i = 0; i < pts.length; i++) {
+      for (var k = 0; k < 3; k++) {
+        if (pts[i][k] < min[k]) min[k] = pts[i][k];
+        if (pts[i][k] > max[k]) max[k] = pts[i][k];
+      }
+    }
+    return Math.max(max[0] - min[0], max[1] - min[1], max[2] - min[2], 4);
+  }
+
+  function paintBodies(view) {
+    var seen = {};
+    var span = trailSpan(view.trail);
+    var helio = view.mode === "helio";
+    var biggest = 0;
+    if (helio) {
+      for (var j = 0; j < view.bodies.length; j++) {
+        if (view.bodies[j].radius > biggest) biggest = view.bodies[j].radius;
+      }
+    }
+    var cap = span * 0.045;
+    var factor = helio && biggest > cap ? cap / biggest : 1;
+    var markSize = helio ? Math.max(1.8, span * 0.028) : 1.8;
+    if (shipMesh) shipMesh.scale.set(markSize, markSize, 1);
+    for (var i = 0; i < view.bodies.length; i++) {
+      var b = view.bodies[i];
+      seen[b.id] = true;
+      var mesh = bodyMeshes[b.id];
+      if (!mesh) {
+        var sphere = null;
+        var sprite = null;
+        if (b.kind === "planet" || b.kind === "small" || (b.kind === "moon" && b.radius >= 0.4)) {
+          sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(1, 24, 16),
+            new THREE.MeshStandardMaterial({ color: colorFor(b), roughness: 0.85, metalness: 0.05 })
+          );
+          scene.add(sphere);
+        } else {
+          sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: marker(), color: colorFor(b), transparent: true, depthWrite: false }));
+          sprite.scale.set(1.4, 1.4, 1);
+          scene.add(sprite);
+        }
+        mesh = { sphere: sphere, sprite: sprite };
+        bodyMeshes[b.id] = mesh;
+      }
+      if (mesh.sphere) {
+        var radius = (b.radius > 0 ? b.radius : 0.15) * factor;
+        mesh.sphere.scale.set(radius, radius, radius);
+        mesh.sphere.position.set(b.position[0], b.position[1], b.position[2]);
+      }
+      if (mesh.sprite) {
+        var spriteScale = b.kind === "sun" && helio ? markSize : (helio ? Math.max(1.4, span * 0.012) : 1.4);
+        mesh.sprite.scale.set(spriteScale, spriteScale, 1);
+        mesh.sprite.position.set(b.position[0], b.position[1], b.position[2]);
+      }
+    }
+    Object.keys(bodyMeshes).forEach(function (id) {
+      if (seen[id]) return;
+      if (bodyMeshes[id].sphere) scene.remove(bodyMeshes[id].sphere);
+      if (bodyMeshes[id].sprite) scene.remove(bodyMeshes[id].sprite);
+      delete bodyMeshes[id];
+    });
+  }
+
+  function paintTrail(lines) {
+    for (var i = 0; i < trailLines.length; i++) {
+      scene.remove(trailLines[i]);
+      trailLines[i].geometry.dispose();
+      trailLines[i].material.dispose();
+    }
+    trailLines = [];
+    if (!lines) return;
+    for (var n = 0; n < lines.length; n++) {
+      var points = lines[n];
+      if (!points || points.length < 2) continue;
+      var geom = new THREE.BufferGeometry();
+      var arr = new Float32Array(points.length * 3);
+      for (var k = 0; k < points.length; k++) {
+        arr[k * 3] = points[k][0];
+        arr[k * 3 + 1] = points[k][1];
+        arr[k * 3 + 2] = points[k][2];
+      }
+      geom.setAttribute("position", new THREE.BufferAttribute(arr, 3));
+      var line = new THREE.Line(geom, new THREE.LineBasicMaterial({ color: 0x5cc8ff, depthTest: false }));
+      line.renderOrder = 1;
+      scene.add(line);
+      trailLines.push(line);
+    }
+  }
+
+  function paintPlaces(bodies) {
+    placesEl.textContent = "";
+    for (var i = 0; i < bodies.length; i++) {
+      var li = document.createElement("li");
+      var name = document.createElement("span");
+      name.textContent = bodies[i].name;
+      var tag = document.createElement("span");
+      tag.className = "tag " + (bodies[i].real ? "real" : "fict");
+      tag.textContent = bodies[i].real ? "Real" : "Fictional";
+      li.appendChild(name);
+      li.appendChild(tag);
+      placesEl.appendChild(li);
+    }
+  }
+
+  function frameCamera(view) {
+    var pts = view.trail.length ? view.trail : [view.ship];
+    var min = [Infinity, Infinity, Infinity];
+    var max = [-Infinity, -Infinity, -Infinity];
+    for (var i = 0; i < pts.length; i++) {
+      for (var k = 0; k < 3; k++) {
+        if (pts[i][k] < min[k]) min[k] = pts[i][k];
+        if (pts[i][k] > max[k]) max[k] = pts[i][k];
+      }
+    }
+    var cx = (min[0] + max[0]) / 2;
+    var cy = (min[1] + max[1]) / 2;
+    var cz = (min[2] + max[2]) / 2;
+    var span = Math.max(max[0] - min[0], max[1] - min[1], max[2] - min[2], 4);
+    var dist = span * 1.35;
+    camera.position.set(cx + dist * 0.45, cy + dist * 0.55, cz + dist * 0.85);
+    camera.near = Math.max(0.05, dist / 80);
+    camera.far = dist * 30;
+    camera.lookAt(cx, cy, cz);
+    camera.updateProjectionMatrix();
+  }
+
+  function phaseWords(phase) {
+    switch (phase) {
+      case "before": return "Before departure";
+      case "transfer": return "In flight";
+      case "hold": return "Holding";
+      case "dwell": return "Between hops";
+      case "arrived": return "Arrived";
+      default: return phase;
+    }
+  }
+
+  function draw() {
+    if (!clock) return;
+    var frame = StarfareTape.frameAt(clock, window.SOLE);
+    if (!frame.ok) {
+      statusEl.textContent = frame.text;
+      return;
+    }
+    noteEl.textContent = shown(frame.note);
+    shipEl.textContent = frame.shipText;
+    var bits = String(frame.minute || "").split(" ");
+    skyTimeEl.textContent = bits[1] || "";
+    minuteEl.textContent = (bits[0] || "") + " " + phaseWords(frame.phase);
+    captionEl.textContent = frame.caption || "";
+    statusEl.textContent = clock.playing ? "Playing" : "Paused";
+    paintScore(frame.score);
+    paintLog(frame);
+    paintPlaces(frame.view.bodies);
+    if (!renderer) return;
+    shipMesh.position.set(frame.view.ship[0], frame.view.ship[1], frame.view.ship[2]);
+    paintBodies(frame.view);
+    paintTrail(frame.view.trails);
+    frameCamera(frame.view);
+    renderer.render(scene, camera);
+  }
+
+  function apply(action) {
+    if (!clock) return;
+    clock = StarfareTape.reduce(clock, action);
+    draw();
+    syncKnob();
+    drawn = clock;
+  }
+
+  function tryLoad() {
+    if (!files.episode || !files.arcs) return;
+    if (!window.SOLE) {
+      statusEl.textContent = "The planet table did not load.";
+      return;
+    }
+    var loaded = StarfareTape.loadReplay(files.episode, files.arcs, window.SOLE);
+    if (!loaded.ok) {
+      clock = null;
+      drawn = null;
+      statusEl.textContent = loaded.text;
+      scoreEl.textContent = "";
+      logEl.textContent = "";
+      shipEl.textContent = "";
+      minuteEl.textContent = "";
+      noteEl.textContent = "Simulated";
+      return;
+    }
+    clock = loaded.clock;
+    if (scene) clearBodies();
+    draw();
+    syncKnob();
+    drawn = clock;
+  }
+
+  function readInto(input, key) {
+    input.addEventListener("change", function () {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        files[key] = String(reader.result);
+        tryLoad();
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  document.getElementById("play").addEventListener("click", function () {
+    apply({ type: "play" });
+  });
+  document.getElementById("pause").addEventListener("click", function () {
+    apply({ type: "pause" });
+  });
+  document.getElementById("speed").addEventListener("change", function (ev) {
+    apply({ type: "speed", speed: Number(ev.target.value) });
+  });
+  skyInput.addEventListener("input", function () {
+    if (!clock) return;
+    var span = clock.span.end - clock.span.start;
+    var jd = clock.span.start + (Number(skyInput.value) / 1000) * span;
+    clock = StarfareTape.reduce(clock, { type: "scrub", jd: jd });
+    syncKnob();
+    draw();
+    drawn = clock;
+  });
+  readInto(document.getElementById("episode"), "episode");
+  readInto(document.getElementById("arcs"), "arcs");
+  window.addEventListener("resize", function () {
+    sizeGL();
+    if (clock) draw();
+  });
+
+  function loadSample() {
+    Promise.all([
+      fetch("sample/phobos.episode.jsonl").then(function (res) {
+        if (!res.ok) throw new Error("episode");
+        return res.text();
+      }),
+      fetch("sample/phobos.arcs.json").then(function (res) {
+        if (!res.ok) throw new Error("arcs");
+        return res.text();
+      })
+    ]).then(function (pair) {
+      if (files.episode || files.arcs) return;
+      files.episode = pair[0];
+      files.arcs = pair[1];
+      tryLoad();
+    }).catch(function () {
+      if (files.episode && files.arcs) return;
+      statusEl.textContent = "The sample flight did not load. Pick an episode file and an arc file.";
+    });
+  }
+
+  bootGL();
+  loadSample();
+
+  function loop(ms) {
+    var seconds = lastMs ? (ms - lastMs) / 1000 : 0;
+    lastMs = ms;
+    if (clock) {
+      var next = StarfareTape.reduce(clock, { type: "tick", seconds: seconds });
+      if (next !== clock || drawn !== clock) {
+        clock = next;
+        draw();
+        syncKnob();
+        drawn = clock;
+      }
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
