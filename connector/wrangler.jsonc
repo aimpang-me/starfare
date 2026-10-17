@@ -3,6 +3,9 @@
   "main": "src/index.js",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
+  // The art pass (design/assets, copied in by build.mjs) at /assets/*. Every other path runs the Worker first, so it keeps
+  // its routes (/, /mcp, /board, /bench, /flight/*, /live.json, /engine.js) and the OAuth gate.
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/*", "!/assets/*"] },
   "durable_objects": {
     "bindings": [
       { "name": "MCP_OBJECT", "class_name": "StarfareMcp" },

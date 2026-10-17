@@ -1,9 +1,11 @@
 // Build step: copy the SOL engine bundle (sol/world/engine/sol-page.js) byte for byte into src/engine/,
 // and read the sky calendar and the planet colours out of sol/world/build.py, so the Worker scores exactly like the page.
 // sol-page.cjs is what the Worker runs; sol-page.txt (gitignored) is the same bytes as text, served to browsers at /engine.js.
-// Never edits anything under sol/world/. Run: node build.mjs
+// It also copies the art pass (design/assets: sol-art.js, the star catalogue, planet maps, credits) into public/assets/,
+// which Workers static assets serves at /assets/*. design/assets stays the single source; public/ is gitignored.
+// Never edits anything under sol/world/ or design/. Run: node build.mjs
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -42,3 +44,9 @@ const meta = {
 };
 writeFileSync(join(OUT_DIR, "meta.json"), JSON.stringify(meta, null, 2) + "\n");
 console.log(`engine copied: ${meta.bytes} bytes, sha256 ${meta.sha256.slice(0, 16)}…, sky ${JSON.stringify(meta.sky)}`);
+
+const ART = join(HERE, "..", "design", "assets"), PUB = join(HERE, "public");
+if (!readFileSync(join(ART, "sol-art.js"), "utf8").includes("root.SolArt = {")) throw new Error("design/assets/sol-art.js has no SolArt");
+rmSync(join(PUB, "assets"), { recursive: true, force: true });
+cpSync(ART, join(PUB, "assets"), { recursive: true });
+console.log("art copied: design/assets -> public/assets");

@@ -7,52 +7,55 @@
 <meta name="description" content="Replay and receipt of one simulated Starfare flight: the path in 3D from real planet positions, the passenger list and the score. Works with Grok.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap">
 <style>
 :root{
   color-scheme: dark;
-  --bg:#06080c; --bg-2:#0b0e14; --glass:rgba(18,22,30,.72); --line:rgba(255,255,255,.12); --line-2:rgba(255,255,255,.22);
-  --ink:#eef1f5; --ink-2:#a3abb6; --ink-3:#6e7783; --sun:#ffb65c; --me:#ffcf7a; --ride:#9cc3ff; --sim:#7f8a99; --ok:#86d9a8; --bad:#ff8f80; --r:14px;
-  --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --bg:#050a14; --bg-2:#0a1222; --glass:rgba(12,22,40,.72); --line:rgba(120,180,255,.14); --line-2:rgba(120,190,255,.28);
+  --ink:#e8f0fa; --ink-2:#9fb0c6; --ink-3:#66788f; --cy:#5cc8ff; --ride:#8ec5ff; --sun:#ffb65c; --me:#ffcf7a; --ok:#6fe0a8; --bad:#ff8f80; --sim:#7f8a99;
+  --r:6px; --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; --cond:Rajdhani, "Arial Narrow", Inter, sans-serif;
   --gl:max(16px, env(safe-area-inset-left, 0px)); --gr:max(16px, env(safe-area-inset-right, 0px)); --gut:var(--gl);
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink)}
-body{font:14px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{background:radial-gradient(1200px 700px at 50% -10%, #0c1a33 0%, var(--bg) 60%) fixed, var(--bg);font:14px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{color:var(--ride)}
 button,input,select{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--me);outline-offset:2px;border-radius:6px}
+:focus-visible{outline:2px solid var(--me);outline-offset:2px;border-radius:4px}
 h1,h2,h3{margin:0;font-weight:600;letter-spacing:.01em}
 .caps{text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;font-weight:600;color:var(--ink-3)}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .muted{color:var(--ink-2)}.dim{color:var(--ink-3)}
 .tag{display:inline-flex;align-items:center;gap:4px;font:600 9.5px/1 Inter, sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:3px 6px;border-radius:999px;border:1px solid;white-space:nowrap;vertical-align:middle}
-.tag.real{color:var(--ok);border-color:rgba(134,217,168,.4);background:rgba(134,217,168,.08)}
+.tag.real{color:var(--ok);border-color:rgba(111,224,168,.4);background:rgba(111,224,168,.08)}
 .tag.fict{color:var(--sun);border-color:rgba(255,182,92,.4);background:rgba(255,182,92,.08)}
 .tag.sim{color:#b9c2ce;border-color:rgba(127,138,153,.5);background:rgba(127,138,153,.12)}
-.tag.ride{color:var(--ride);border-color:rgba(156,195,255,.45);background:rgba(156,195,255,.08)}
+.tag.ride{color:var(--ride);border-color:rgba(142,197,255,.45);background:rgba(142,197,255,.08)}
 .tag.me{color:var(--me);border-color:rgba(255,207,122,.5);background:rgba(255,207,122,.1)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:7px 14px;border-radius:10px;border:1px solid var(--line-2);background:rgba(255,255,255,.04);cursor:pointer;text-decoration:none;color:var(--ink);font-weight:600;font-size:13px}
-.btn:hover{background:rgba(255,255,255,.08)}
-.btn.primary{background:var(--me);border-color:var(--me);color:#1a1206}
-.btn.primary:hover{background:#ffd994}
-.btn.small{min-height:30px;padding:4px 10px;font-size:12px}
-.panel{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:34px;padding:6px 13px;border-radius:4px;border:1px solid var(--line-2);background:rgba(92,200,255,.05);cursor:pointer;text-decoration:none;color:var(--ink);font:600 12px/1 Inter, sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.btn:hover{background:rgba(92,200,255,.12);border-color:rgba(92,200,255,.5)}
+.btn.primary{background:var(--cy);border-color:var(--cy);color:#04121f}
+.btn.primary:hover{background:#86d8ff}
+.btn.small{min-height:28px;padding:4px 10px;font-size:11px}
+.panel{position:relative;background:var(--glass);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);min-width:0}
+.panel::before,.panel::after{content:"";position:absolute;width:12px;height:12px;pointer-events:none}
+.panel::before{left:-1px;top:-1px;border-left:2px solid var(--cy);border-top:2px solid var(--cy);border-top-left-radius:var(--r)}
+.panel::after{right:-1px;bottom:-1px;border-right:2px solid var(--sun);border-bottom:2px solid var(--sun);border-bottom-right-radius:var(--r)}
 .wrap{padding-left:var(--gl);padding-right:var(--gr)}
 /* loading */
 #loading{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:var(--bg)}
 #loading .box{display:flex;flex-direction:column;align-items:center;gap:12px;font:500 12px var(--mono);color:var(--ink-2);padding:0 24px;text-align:center}
 #loading .bar{width:180px;height:2px;background:var(--line);overflow:hidden;border-radius:2px}
-#loading .bar i{display:block;height:100%;width:40%;background:var(--ride);animation:ld 1.2s ease-in-out infinite}
+#loading .bar i{display:block;height:100%;width:40%;background:var(--cy);animation:ld 1.2s ease-in-out infinite}
 @keyframes ld{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
-.ph{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px 8px}
-.ph h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 13px 8px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.ph h2{font:700 14px/1.1 var(--cond);letter-spacing:.2em;text-transform:uppercase;color:var(--ink)}
 .pb{padding:0 14px 14px}
 .sub{margin:0 0 10px;color:var(--ink-3);font-size:12.5px}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
-.seg button{border:0;background:transparent;padding:6px 10px;font:600 11px Inter;letter-spacing:.06em;color:var(--ink-2);cursor:pointer;border-right:1px solid var(--line)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:6px 10px;font:600 10.5px Inter;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);cursor:pointer;border-right:1px solid var(--line)}
 .seg button:last-child{border-right:0}
-.seg button[aria-pressed="true"]{background:rgba(156,195,255,.14);color:var(--ride)}
+.seg button[aria-pressed="true"]{background:rgba(92,200,255,.14);color:var(--cy)}
 .hudbox{border-left:2px solid var(--ride);padding:4px 8px;background:rgba(6,8,12,.55)}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:6px 0 0;font-size:12.5px}
 .kv dt{color:var(--ink-3)}
@@ -109,7 +112,7 @@ button.lbl:hover{color:var(--ink)}
 .scrub .tick.checkpoint{background:var(--me)}.scrub .tick.incident{background:var(--bad)}.scrub .tick.note{background:var(--ok)}
 .scrub .ahead{position:absolute;top:13px;right:0;height:2px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.35) 0 4px,transparent 4px 8px);pointer-events:none}
 .ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.ctl select{background:#030407;border:1px solid var(--line-2);border-radius:8px;padding:5px 6px;font:500 12px var(--mono)}
+.ctl select{background:#030407;border:1px solid var(--line-2);border-radius:4px;padding:5px 6px;font:500 12px var(--mono)}
 .tcode{font:500 12.5px var(--mono);color:var(--ink);min-width:118px}
 .r-tele{position:absolute;z-index:2;right:12px;top:calc(clamp(52px,9vh,76px) + 12px);text-align:right;pointer-events:none;font:500 10.5px/1.55 var(--mono);color:var(--ink-2);max-width:calc(100% - 24px)}
 .r-tele .hudbox{border-left:0;border-right:2px solid var(--me);background:rgba(6,8,12,.66)}
@@ -117,14 +120,14 @@ button.lbl:hover{color:var(--ink)}
 .r-tele .big{font-size:15px;color:var(--ink);font-weight:500;letter-spacing:.02em}
 .r-tele b{color:var(--ink);font-weight:500}
 .callouts{position:absolute;z-index:2;left:12px;top:calc(clamp(52px,9vh,76px) + 12px);width:min(340px,calc(100% - 24px));display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.co{padding:8px 11px 9px;border:1px solid var(--line-2);border-left:3px solid var(--ride);background:rgba(6,8,12,.82);border-radius:8px;animation:co .3s ease-out;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.co{padding:8px 11px 9px;border:1px solid var(--line-2);border-left:3px solid var(--ride);background:rgba(6,8,12,.82);border-radius:4px;animation:co .3s ease-out;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .co.checkpoint{border-left-color:var(--me)}.co.incident{border-left-color:var(--bad)}.co.note{border-left-color:var(--ok)}
 .co.note p{color:var(--ink);font-style:italic}
-.hold{padding:10px 12px;border:1px solid rgba(255,207,122,.6);border-left:3px solid var(--me);background:rgba(20,14,4,.88);border-radius:8px;animation:hp 2s ease-in-out infinite}
+.hold{padding:10px 12px;border:1px solid rgba(255,207,122,.6);border-left:3px solid var(--me);background:rgba(20,14,4,.88);border-radius:4px;animation:hp 2s ease-in-out infinite}
 .hold b{display:block;font-size:13.5px;color:var(--me);margin:2px 0}
 .hold p{margin:0;font-size:12px;color:var(--ink-2)}
 @keyframes hp{50%{border-color:rgba(255,207,122,.2)}}
-.tag.live{color:var(--ok);border-color:rgba(134,217,168,.5);background:rgba(134,217,168,.1)}
+.tag.live{color:var(--ok);border-color:rgba(111,224,168,.5);background:rgba(111,224,168,.1)}
 .tag.live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok);animation:lv 1.4s ease-in-out infinite}
 @keyframes lv{50%{opacity:.25}}
 .co .k{font:600 9.5px Inter, sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
@@ -132,6 +135,7 @@ button.lbl:hover{color:var(--ink)}
 .co b{display:block;font-weight:600;font-size:13px;margin:2px 0}
 .co p{margin:0;font-size:12px;color:var(--ink-2)}
 @keyframes co{from{transform:translateX(-12px);opacity:0}to{transform:none;opacity:1}}
+.r-note .cred{display:block;margin-top:2px;font-size:10px;opacity:.8}.r-note .cred-s{display:none}.r-note a{pointer-events:auto;color:inherit}
 .r-note{position:absolute;z-index:2;left:12px;bottom:calc(clamp(60px,10vh,84px) + 10px);font-size:11.5px;color:var(--ink-3);pointer-events:none;text-shadow:0 1px 4px #000;max-width:calc(100% - 24px)}
 @media (max-width:520px){
   .lbar{padding:0 10px;gap:8px}
@@ -141,26 +145,27 @@ button.lbl:hover{color:var(--ink)}
   .r-tele{font-size:9.5px}.r-tele .big{font-size:12px}
   .callouts{top:auto;bottom:150px}
   .r-note{bottom:112px}
+  .r-note .cred-l{display:none}.r-note .cred-s{display:block}
 }
 
 /* passenger list (shared-flight shape: stops with who boards and who gets off) */
-.plist{max-height:calc(100vh - 82px);max-height:calc(100dvh - 82px);overflow:auto}
+.plist{max-height:calc(100vh - 82px);max-height:calc(100dvh - 82px);overflow:auto;overflow-x:hidden}
 @media (max-width:999px){.plist{max-height:none}}
-.seats{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.2)}
+.seats{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:rgba(0,0,0,.2)}
 .seat{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line-2);flex:none}
 .seat.on{background:var(--ride);border-color:var(--ride)}
-.seat.maybe{border-color:rgba(156,195,255,.6);background:repeating-linear-gradient(45deg,rgba(156,195,255,.4) 0 2px,transparent 2px 5px)}
+.seat.maybe{border-color:rgba(142,197,255,.6);background:repeating-linear-gradient(45deg,rgba(142,197,255,.4) 0 2px,transparent 2px 5px)}
 .seats .st{flex:1 1 150px;min-width:0;margin-left:4px;font:500 11.5px/1.4 var(--mono);color:var(--ink-2)}
 .seats .st b{color:var(--ink);font-weight:500}
 .pstops{list-style:none;margin:10px 0 0;padding:0}
-.pst{display:grid;grid-template-columns:26px minmax(0,1fr);gap:2px 8px;padding:8px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.18);transition:border-color .2s, background .2s}
+.pst{display:grid;grid-template-columns:26px minmax(0,1fr);gap:2px 8px;padding:8px;border:1px solid var(--line);border-radius:4px;background:rgba(0,0,0,.18);transition:border-color .2s, background .2s}
 .pst .wp{grid-row:span 3;width:22px;height:22px;border:1.5px solid var(--me);color:var(--me);display:grid;place-items:center;font:600 10px var(--mono);border-radius:4px}
 .pst .nm{font-size:13px;font-weight:600}
 .pst .m{font:500 10.5px var(--mono);color:var(--ink-3)}
 .pst ul{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:3px;font-size:12px;color:var(--ink-2)}
 .pst .bd,.pst .al{font:600 9.5px Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase;margin-right:4px}
 .pst .bd{color:var(--ok)}.pst .al{color:var(--me)}
-.pst.on{border-color:var(--ride);box-shadow:inset 3px 0 0 var(--ride);background:rgba(156,195,255,.07)}
+.pst.on{border-color:var(--ride);box-shadow:inset 3px 0 0 var(--ride);background:rgba(142,197,255,.07)}
 .pst.past{opacity:.6}
 .pleg{margin:0 0 0 18px;padding:7px 0 7px 14px;border-left:1.5px dashed var(--line-2);font:500 11px/1.45 var(--mono);color:var(--ink-3)}
 .pleg .r{font:600 9.5px Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase}
@@ -170,7 +175,7 @@ button.lbl:hover{color:var(--ink)}
 /* receipt: passenger list per booking, the ship block, timeline */
 .pt{min-width:760px}
 .tl{list-style:none;margin:0;padding:0;display:grid;gap:2px}
-.tl button{display:grid;grid-template-columns:150px minmax(0,1fr);gap:1px 12px;width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:8px;padding:6px 8px;cursor:pointer}
+.tl button{display:grid;grid-template-columns:150px minmax(0,1fr);gap:1px 12px;width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:4px;padding:6px 8px;cursor:pointer}
 .tl button:hover{border-color:var(--line);background:rgba(255,255,255,.03)}
 .tl .tm{font:500 11px var(--mono);color:var(--ink-3);grid-row:span 2}
 .tl b{font-size:12.5px;font-weight:600}
@@ -178,7 +183,7 @@ button.lbl:hover{color:var(--ink)}
 .tl .k-checkpoint b{color:var(--me)}.tl .k-incident b{color:var(--bad)}.tl .k-note b{color:var(--ok)}
 /* dispatcher log: the Grok bot's tool calls on this run, newest last */
 .dlog{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.dlog li{display:grid;grid-template-columns:150px minmax(0,1fr);gap:2px 12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.18)}
+.dlog li{display:grid;grid-template-columns:150px minmax(0,1fr);gap:2px 12px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:rgba(0,0,0,.18)}
 .dlog .tm{font:500 11px/1.5 var(--mono);color:var(--ink-3);grid-row:span 3}
 .dlog .tm b{display:block;color:var(--ink-2);font-weight:500}
 .dlog code{font:600 12px var(--mono);color:var(--me)}
@@ -192,7 +197,7 @@ button.lbl:hover{color:var(--ink)}
 /* debrief */
 .debrief{padding-top:16px;padding-bottom:48px}
 .sheet2{border:1px solid var(--line-2);border-radius:var(--r);background:#080a0f;overflow:hidden}
-.dh{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg, rgba(156,195,255,.05), transparent)}
+.dh{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg, rgba(142,197,255,.05), transparent)}
 .dh h2{font-size:22px;margin:4px 0 6px}
 .dh .who{color:var(--ink-2);font-size:13px}
 .dh .meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font:500 12px var(--mono);color:var(--ink-2)}
@@ -205,8 +210,8 @@ button.lbl:hover{color:var(--ink)}
 @media (max-width:560px){.dh{grid-template-columns:1fr}.dh .tot{text-align:left;display:flex;align-items:flex-end;gap:14px}.dh .art{margin:0 0 0 auto;width:120px}}
 .sec{padding:16px 18px;border-bottom:1px solid var(--line)}
 .sec:last-child{border-bottom:0}
-.sec h3{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.sec h3{font:700 14px/1.1 var(--cond);letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:4px}
 table.t{border-collapse:collapse;width:100%;font:500 12px var(--mono);min-width:640px}
 table.t th{font:600 9.5px Inter;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 table.t td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap;vertical-align:top}
@@ -215,7 +220,7 @@ table.t td.r,table.t th.r{text-align:right}
 table.t td.wrapc{white-space:normal;min-width:220px;font-family:Inter;font-size:12.5px;color:var(--ink-2)}
 .pass{color:var(--ok)}.fail{color:var(--bad)}
 .best{color:var(--me)}
-.cp{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.cp{border:1px solid var(--line);border-radius:4px;padding:12px;margin-bottom:10px}
 .cp .h{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-bottom:8px}
 .cp .h b{font-size:14px}
 .sparts{display:grid;gap:10px}
@@ -228,26 +233,27 @@ table.t td.wrapc{white-space:normal;min-width:220px;font-family:Inter;font-size:
 @media (max-width:560px){.sp{grid-template-columns:minmax(0,1fr) 64px}.sp .bar{grid-column:1/-1;grid-row:2}.sp .nt{grid-column:1/-1}}
 .cmp{display:grid;gap:12px;grid-template-columns:repeat(3,minmax(0,1fr))}
 @media (max-width:760px){.cmp{grid-template-columns:minmax(0,1fr)}}
-.cmp .c{border:1px solid var(--line);border-radius:10px;padding:12px}
+.cmp .c{border:1px solid var(--line);border-radius:4px;padding:12px}
 .cmp .ebar{height:8px;border-radius:4px;background:rgba(255,255,255,.07);margin:4px 0 8px;overflow:hidden}
 .cmp .ebar i{display:block;height:100%}
-.raw{font:500 12.5px var(--mono);color:var(--me);background:#030407;border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:inline-block;word-break:break-all}
+.raw{font:500 12.5px var(--mono);color:var(--me);background:#030407;border:1px solid var(--line);border-radius:4px;padding:8px 10px;display:inline-block;word-break:break-all}
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition:none!important}
   .planning i{border-right-color:var(--ride)}
 }
-.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px max(28px, var(--gut));border-bottom:1px solid var(--line);background:var(--bg)}
-.logo{display:flex;align-items:center;gap:10px;font-weight:500;font-size:22px;letter-spacing:.32em;text-transform:uppercase;text-decoration:none;color:var(--ink)}
+.nav{position:relative;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px max(28px, var(--gut));border-bottom:1px solid var(--line);background:rgba(5,10,20,.88)}
+.nav::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(92,200,255,.6) 30%,rgba(255,182,92,.5) 70%,transparent)}
+.logo{display:flex;align-items:center;gap:10px;font:700 20px/1 var(--cond);letter-spacing:.34em;text-transform:uppercase;text-decoration:none;color:var(--ink)}
 .logo svg{width:26px;height:26px}
 .links{display:flex;gap:28px}
 .links a{color:var(--ink-2);text-decoration:none;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:500}
 .links a:hover{color:var(--ink)}
-.pill{border:1px solid var(--line-2);border-radius:999px;padding:6px 14px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.pill{border:1px solid var(--line-2);border-radius:4px;padding:6px 14px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
 @media (max-width:900px){ .links{display:none} }
 @media (max-width:560px){ .nav{padding:12px 16px} .logo{font-size:17px;letter-spacing:.24em} .pill{padding:4px 10px;font-size:10.5px;letter-spacing:.08em} }
 footer{border-top:1px solid var(--line);padding:28px max(28px, var(--gut)) 48px;color:var(--ink-3);font-size:12.5px;display:flex;flex-direction:column;gap:8px;max-width:1240px;margin:0 auto}
 footer p{margin:0;max-width:100ch}
-.works{display:inline-flex;align-self:flex-start;border:1px solid var(--line-2);border-radius:8px;padding:6px 12px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:var(--ink-2)}
+.works{display:inline-flex;align-self:flex-start;border:1px solid var(--line-2);border-radius:4px;padding:6px 12px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:var(--ink-2)}
 #loading .box a{color:var(--ride)}
 </style>
 </head>
@@ -336,7 +342,7 @@ var SF = (function () {
   // Places. "system" is the planet (or the Sun's child) a place orbits; tag is what the page's chip says.
   function place(id) { return PID[id]; }
   function system(id) { var p = PID[id]; while (p && p.parent && p.parent !== "sun") p = PID[p.parent]; return p ? p.id : id; }
-  function name(id) { var p = PID[id]; return id === "roadster" ? "Roadster" : p ? p.name : id; }
+  function name(id) { var p = PID[id]; return p ? p.name : id; }
   function tag(id) { var p = PID[id]; return p && p.real ? "real" : "fict"; }
   function color(id) { var L = SITE.look[id] || SITE.look[system(id)]; return L ? L.color : "#a3abb6"; }
   function pos(id, jd) { if (id === "sun") return [0, 0, 0]; var r = E.placeState(id, jd).r; return [r[0] / AU, r[1] / AU, r[2] / AU]; }
@@ -486,6 +492,7 @@ function initGL() {
     r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     r.setClearColor(0x06080c, 1);
     GL = { r: r, tex: {} };
+    if (window.SolArt) { SolArt.init(r); GL.post = SolArt.composer(r, { vignette: true, grain: true, threshold: 0.9 }); }
   } catch (e) { return fail(); }
 }
 function attachCanvas(host) {
@@ -496,7 +503,7 @@ function onResize() {
   if (!GL) return;
   var host = GL.r.domElement.parentNode; if (!host || !host.clientWidth) return;
   var w = host.clientWidth || 1, h = host.clientHeight || 1;
-  GL.r.setSize(w, h);
+  GL.r.setSize(w, h); if (GL.post) GL.post.setSize(w, h);
   if (RS && RS.cam) { RS.cam.aspect = w / h; RS.cam.updateProjectionMatrix(); }
   GL.W = w; GL.H = h; GUT = null;
 }
@@ -533,6 +540,7 @@ function planetTex(id) {
 var GEO = {};
 function sphereGeo() { return GEO.s || (GEO.s = new THREE.SphereGeometry(1, 40, 20)); }
 function stars() {
+  if (window.SolArt) return SolArt.stars(3600);
   var n = 2600, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), rnd = prng(7);
   for (var i = 0; i < n; i++) {
     var u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, s = Math.sqrt(1 - u * u), R = 3600;
@@ -543,6 +551,7 @@ function stars() {
   return new THREE.Points(g, new THREE.PointsMaterial({ size: 1.5, sizeAttenuation: false, vertexColors: true, depthWrite: false }));
 }
 function sunObj(r) {
+  if (window.SolArt) return SolArt.sun(r, 22);
   var g = new THREE.Group();
   g.add(new THREE.Mesh(sphereGeo(), new THREE.MeshBasicMaterial({ color: 0xffe2b0 })));
   g.children[0].scale.setScalar(r);
@@ -553,6 +562,7 @@ function sunObj(r) {
   return g;
 }
 function planetMesh(id) {
+  var a = window.SolArt && SolArt.planet(id); if (a) return a;
   var m = new THREE.Mesh(sphereGeo(), new THREE.MeshLambertMaterial({ map: planetTex(id), emissive: new THREE.Color(SF.color(id)).multiplyScalar(0.05) }));
   if (id === "saturn") {
     var rg = new THREE.RingGeometry(1.35, 2.3, 64);
@@ -574,7 +584,7 @@ function lineOf(pts, color, opacity, dashed) {
 }
 function glowPoints(n, color, size) {
   var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
-  return new THREE.Points(g, new THREE.PointsMaterial({ size: size, sizeAttenuation: false, map: glowTex("rgba(255,255,255,1)", "rgba(156,195,255,.5)"), color: color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  return new THREE.Points(g, new THREE.PointsMaterial({ size: size, sizeAttenuation: false, map: glowTex("rgba(255,255,255,1)", "rgba(142,197,255,.5)"), color: color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
 }
 function setPts(obj, pts) {
   var a = obj.geometry.attributes.position, n = Math.min(pts.length, a.count);
@@ -585,7 +595,8 @@ function setPts(obj, pts) {
 /* The Starseeker: lifting-body hull (lathe teardrop, widest behind the middle), blue window band, swept stub wings,
    a dorsal fin and one round aft thruster. Nose along +z, length 1. Built from primitives; original design. */
 var SHIPMAT = null;
-function makeShip() {
+function makeShip(callsign) {
+  if (window.SolArt) return SolArt.ship({ callsign: callsign });
   if (!SHIPMAT) {
     var pts = [], N = 22;
     function rr(t) { return 0.15 * (t < 0.36 ? 0.6 + 0.4 * Math.sin(t / 0.36 * Math.PI / 2) : Math.pow(Math.cos((t - 0.36) / 0.64 * Math.PI / 2), 0.85)); }
@@ -624,7 +635,7 @@ function makeShip() {
 
 /* ---------- compressed solar-system scale ---------- */
 var K = 30;
-var SIZE = { sun: 5, mercury: 0.45, venus: 0.8, earth: 0.85, mars: 0.6, jupiter: 2.4, saturn: 2.0, uranus: 1.3, neptune: 1.3, ceres: 0.3, bennu: 0.1, roadster: 0.1, moon: 0.25, phobos: 0.12, io: 0.2, europa: 0.2, ganymede: 0.25, callisto: 0.22, enceladus: 0.12, titan: 0.25, triton: 0.18 };
+var SIZE = { sun: 5, mercury: 0.45, venus: 0.8, earth: 0.85, mars: 0.6, jupiter: 2.4, saturn: 2.0, uranus: 1.3, neptune: 1.3, ceres: 0.3, bennu: 0.1, moon: 0.25, phobos: 0.12, io: 0.2, europa: 0.2, ganymede: 0.25, callisto: 0.22, enceladus: 0.12, titan: 0.25, triton: 0.18 };
 function dispR(id) { return SIZE[id] || 0.08; }
 function axes(v, s) { return V(v[0] * s, v[2] * s, -v[1] * s); }
 function S(p) { var r = Math.hypot(p[0], p[1], p[2]); return r ? axes(p, K / Math.sqrt(r)) : V(); }
@@ -915,6 +926,7 @@ function loadRide(keep) {
   $("#rtitle").textContent = shipWords(h.title || rec.hail_id) + " \u00B7 " + SF.name(RIDE.lg.from) + " \u2192 " + SF.name(RIDE.lg.to);
   $("#rnote").textContent = local ? "Centred on " + SF.name(rp.focus) + ", distances in km. Not to scale: the " + SF.SHIP + " and small moons are enlarged. The flight is simulated."
     : "Not to scale: distances compressed, sizes exaggerated. Planet positions are real; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet." : "");
+  if (GL && window.SolArt) $("#rnote").insertAdjacentHTML("beforeend", '<span class="cred cred-l">' + esc(SolArt.CREDIT) + ' <a href="/assets/CREDITS.md">Credits</a></span><span class="cred cred-s">Maps: NASA, JPL, USGS; Solar System Scope (CC BY 4.0). <a href="/assets/CREDITS.md">Credits</a></span>');
   $("#sticks").innerHTML = rp.events.map(function (e) { return '<span class="tick ' + e.kind + '" style="left:' + ((e.jd - rp.start) / span * 100).toFixed(2) + '%" title="' + W(e.title) + '"></span>'; }).join("");
   $("#callouts").innerHTML = ""; RS.ckey = null; RS.lvst = null;
   playIcon();
@@ -941,11 +953,11 @@ function buildRideScene() {
     var dl = new THREE.DirectionalLight(0xfff1dc, 1.5); sc.add(dl); sc.add(dl.target); RS.dl = dl;
     var sun = sunObj(30); sc.add(sun); RS.sun = sun;
     var P = SF.place(focus), R = P.radius_km / 1000, pm = planetMesh(focus); pm.scale.setScalar(R); sc.add(pm);
-    pm.add(atmo(focus === "earth" ? "rgba(120,170,255,.35)" : "rgba(230,140,100,.22)", 1));
+    if (!(window.SolArt && SolArt.hasRim(focus))) pm.add(atmo(focus === "earth" ? "rgba(120,170,255,.35)" : "rgba(230,140,100,.22)", 1));
     RS.bodies.push({ id: focus, m: pm, r: R });
     labels.add({ html: esc(SF.name(focus)), cls: "k-planet", pri: 50, pos: function () { return V(); } });
     SF.E.PLACES.forEach(function (Q) {
-      if (Q.id === focus || SF.system(Q.id) !== focus) return;
+      if (Q.id === focus || Q.id === "roadster" || SF.system(Q.id) !== focus) return;
       var id = Q.id, m, r;
       if (Q.kind === "moon") { r = Math.max(0.05, Q.radius_km / 1000); m = planetMesh(id); m.scale.setScalar(r); }
       else { r = 0.03; m = new THREE.Mesh(GEO.oct || (GEO.oct = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: Q.real ? 0xdfe6ee : 0xffb65c, wireframe: true })); m.scale.setScalar(r); }
@@ -956,9 +968,11 @@ function buildRideScene() {
     });
   } else {
     sc.add(new THREE.AmbientLight(0x3a4252, 0.6)); sc.add(new THREE.PointLight(0xfff1dc, 1.7, 0)); sc.add(sunObj(SIZE.sun));
+    if (window.SolArt) SolArt.setSun(V());
     var used = {}; rp.legs.concat(rp.plan).forEach(function (L) { used[L.from] = used[L.to] = 1; });
     SF.E.PLACES.forEach(function (Q) {
       var id = Q.id, m, minPx = 2;
+      if (id === "roadster") return;
       if (Q.kind === "planet" || id === "ceres") {
         m = planetMesh(id); minPx = 2.6;
         var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 180).map(function (q) { return S([q[0] / AU, q[1] / AU, q[2] / AU]); });
@@ -988,7 +1002,7 @@ function buildRideScene() {
     for (var k = 0; k <= 24; k++) seg.push(a.clone().lerp(b, k / 24));
     sc.add(lineOf(seg, 0xffcf7a, 0.5, true));
   });
-  RS.ship = makeShip(); sc.add(RS.ship);
+  RS.ship = makeShip(rp.car); sc.add(RS.ship);
   RS.shipScale = local ? 0.14 : 0.55;
   RS.ship.scale.setScalar(RS.shipScale);
   onResize();
@@ -1066,6 +1080,7 @@ function rideFrame(dt, t) {
   if (RS.local) {
     var sd = axes(d3([0, 0, 0], SF.pos(rp.focus, jd)), 1); sd.normalize();
     RS.dl.position.copy(sd.clone().multiplyScalar(100)); RS.sun.position.copy(sd.clone().multiplyScalar(3000));
+    if (window.SolArt) SolArt.setSun(RS.sun.position);
   }
   var q = shipPos(Math.min(rp.end, jd + span / 900)), d = q.clone().sub(p);
   // Near a planet a parked Starseeker rides its station's orbit, often several laps per second of replay. The camera
@@ -1073,8 +1088,11 @@ function rideFrame(dt, t) {
   var snap = reduced || jump || (RS.local && !fl);
   if (d.lengthSq() > 1e-12 && (fl || RS.local)) RS.fwd.lerp(d.normalize(), snap ? 1 : 1 - Math.exp(-dt * 6)).normalize();
   RS.ship.position.copy(p); RS.ship.lookAt(p.clone().add(RS.fwd));
-  RS.ship.userData.glow.material.opacity = fl ? 1 : 0.2;
-  RS.ship.userData.glow.scale.setScalar(fl ? 0.42 + (reduced ? 0 : 0.06 * Math.sin(t / 45)) : 0.25);
+  if (RS.ship.userData.update) RS.ship.userData.update(t, fl, reduced);
+  else {
+    RS.ship.userData.glow.material.opacity = fl ? 1 : 0.2;
+    RS.ship.userData.glow.scale.setScalar(fl ? 0.42 + (reduced ? 0 : 0.06 * Math.sin(t / 45)) : 0.25);
+  }
   var nd = 0; while (nd < RS.ts.length && RS.ts[nd] <= jd) nd++;
   RS.done.geometry.setDrawRange(0, nd);
   // Camera: chase (behind and above) or overhead. In the heliocentric scene a parked or waiting Starseeker circles
@@ -1107,7 +1125,8 @@ function rideFrame(dt, t) {
   var tb = $("#rtbox"); tb.classList.toggle("alert", !!RS.alert);
   tbox(tb, cam, GW, GH, p, RS.shipScale * 0.6, 44);
   if (t - (RS.tt || 0) > 150) { RS.tt = t; $("#rti").innerHTML = "<b>" + esc(SF.SHIP) + " " + esc(rp.car) + "</b>" + esc(st.phase) + " \u00B7 " + (fl ? Math.round(st.f * 100) + "% of leg" : esc(SF.name(st.f >= 1 ? L.to : L.from))); }
-  GL.r.render(RS.sc, cam);
+  if (GL.post) { if (GL.post.post) GL.post.post.enabled = !RS.over; GL.post.tick(t, reduced); GL.post.render(RS.sc, cam); }
+  else GL.r.render(RS.sc, cam);
 }
 
 /* ---------- receipt ---------- */
@@ -1244,13 +1263,27 @@ function debrief() {
 /* ---------- start: engine, run log, then three.js (lazy, this page only) ---------- */
 var RIDE = null, AU = SF.AU, FL = window.FLIGHT, RUN = FL.run_id;
 function failMsg(html) { var b = $("#loading .box"); if (b) b.innerHTML = '<b class="caps" style="color:var(--ride)">Starfare flight</b>' + html; }
+// three.js, its bloom passes, then the art pass (/assets/sol-art.js), run in order. Any that fail leave the plain drawing.
+var THREE_SRC = [
+  ["https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js", "sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ=="],
+  ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js", "sha384-nhO9toQuMo5osCuA0l+YFpSqscZWxDu251Bnho2gD3kSPv1neEwHg0LyEmrA+mPj"],
+  ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js", "sha384-mY+ii969jnDCI2HjRHftH2NZVkIO5ZGUkcnGCg3oVJ3kVstWQXwerYWBg+nbUG4R"],
+  ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js", "sha384-GkidzTYmQg24v13sa3xhBBbvOLbVLO1QxfyKLdOWweQqNqS/iWwUst2T1fER2Xrg"],
+  ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js", "sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs"],
+  ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js", "sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3"],
+  ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js", "sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa"],
+  ["/assets/sol-art.js"]
+];
 function loadThree() {
-  return new Promise(function (ok) {
-    var s = document.createElement("script");
-    s.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"; s.integrity = "sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ=="; s.crossOrigin = "anonymous";
-    s.onload = s.onerror = function () { ok(); };
-    document.head.appendChild(s);
-  });
+  return Promise.all(THREE_SRC.map(function (u) {
+    return new Promise(function (ok) {
+      var s = document.createElement("script");
+      s.src = u[0]; s.async = false;
+      if (u[1]) { s.integrity = u[1]; s.crossOrigin = "anonymous"; }
+      s.onload = s.onerror = function () { ok(); };
+      document.head.appendChild(s);
+    });
+  }));
 }
 function start() {
   initGL(); bindRide();

@@ -33,7 +33,10 @@
   /* ---------- planets ---------- */
   var MAPS = {
     earth: "earth_day_2k.jpg", moon: "moon_1k.jpg", mars: "mars_1k.jpg", phobos: "phobos_1k.jpg",
-    jupiter: "jupiter_2k.jpg", saturn: "saturn_1k.jpg", titan: "titan_1k.jpg"
+    jupiter: "jupiter_2k.jpg", saturn: "saturn_1k.jpg", titan: "titan_1k.jpg",
+    mercury: "mercury_1k.jpg", venus: "venus_1k.jpg", uranus: "uranus_1k.jpg", neptune: "neptune_1k.jpg",
+    ceres: "ceres_1k.jpg", bennu: "bennu_1k.jpg", io: "io_1k.jpg", europa: "europa_1k.jpg", ganymede: "ganymede_1k.jpg",
+    callisto: "callisto_1k.jpg", enceladus: "enceladus_1k.jpg", triton: "triton_1k.jpg"
   };
   // Atmosphere rims: colour, front-rim strength, halo shell size and strength.
   var RIMS = {
