@@ -232,6 +232,33 @@ test("hold at the closed pad is the place, and the transfer stays on the recorde
   assert.ok(dist(frame.au, chord) > step);
 });
 
+function segmentGap(a, b, origin) {
+  const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+  const ao = [origin[0] - a[0], origin[1] - a[1], origin[2] - a[2]];
+  const ab2 = ab[0] * ab[0] + ab[1] * ab[1] + ab[2] * ab[2];
+  let f = ab2 ? (ao[0] * ab[0] + ao[1] * ab[1] + ao[2] * ab[2]) / ab2 : 0;
+  if (f < 0) f = 0;
+  if (f > 1) f = 1;
+  const p = [a[0] + ab[0] * f, a[1] + ab[1] * f, a[2] + ab[2] * f];
+  return Math.hypot(p[0] - origin[0], p[1] - origin[1], p[2] - origin[2]);
+}
+
+test("the drawn arc stays outside the primary", async () => {
+  const { text, arcsText } = await fixture();
+  const clock = load(text, arcsText).clock;
+  const frame = tape.frameAt(tape.reduce(clock, { type: "scrub", jd: (clock.span.start + clock.span.end) / 2 }), soleOf());
+  const mars = frame.view.bodies.find((b) => b.id === "mars");
+  const lines = Array.isArray(frame.view.trails) ? frame.view.trails : [frame.view.trail];
+  let cuts = 0;
+  for (const line of lines) {
+    for (let i = 1; i < line.length; i++) {
+      if (segmentGap(line[i - 1], line[i], mars.position) < mars.radius) cuts++;
+    }
+  }
+  assert.equal(cuts, 0);
+  assert.ok(lines.some((line) => line.length >= 2));
+});
+
 test("pause, a paused tick, and a scrub to the current date keep the same clock", async () => {
   const { text, arcsText } = await fixture();
   const clock = load(text, arcsText).clock;
@@ -337,6 +364,8 @@ test("the page sources omit the banned words and the dashes", () => {
   assert.ok(htmlSrc.includes("requestAnimationFrame"));
   assert.ok(htmlSrc.includes('type: "scrub"'));
   assert.ok(htmlSrc.includes('type: "tick"'));
+  assert.ok(htmlSrc.includes("paintTrail(frame.view.trails)"));
+  assert.equal(htmlSrc.includes("paintTrail(frame.view.trail)"), false);
   const three = htmlSrc.indexOf("three.min.js");
   const sole = htmlSrc.indexOf("sol-page.js");
   const page = htmlSrc.indexOf("tape.js");
