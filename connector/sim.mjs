@@ -123,20 +123,16 @@ export async function simulate(spec = {}) {
   }
   if (trials.every((trial) => !trial.audit.opened)) throw new SimCheckError("the clock cannot host a ride");
   const rows = trials.map((trial) => trial.row);
-  const means = resolved.policies.map((policy) => ({
-    policy,
-    mean: shownMean(rows, policy),
-    rides: rows.filter((row) => row.policy === policy).length,
-  }));
+  const means = resolved.policies.map((policy) => tally(rows, policy));
   let finding = null;
   if (resolved.policies.includes("naive") && resolved.policies.includes("careful")) {
-    const careful = shownMean(rows, "careful");
-    const naive = shownMean(rows, "naive");
-    if (careful < naive) {
+    const careful = tally(rows, "careful").mean;
+    const naive = tally(rows, "naive").mean;
+    if (careful != null && naive != null && careful < naive) {
       finding = {
         careful,
         naive,
-        text: `Finding: careful mean ${careful.toFixed(2)} is below naive mean ${naive.toFixed(2)}. Stranded rides count as 0 in this mean only.`,
+        text: `Finding: careful landed mean ${careful.toFixed(2)} is below naive landed mean ${naive.toFixed(2)}.`,
       };
     }
   }
@@ -221,7 +217,7 @@ export function formatReport(report) {
     ].join("\t"));
   }
   for (const mean of report.means) {
-    lines.push(`${mean.policy} ${mean.mean.toFixed(2)} over ${mean.rides} rides (stranded counts as 0 in this mean only)`);
+    lines.push(meanLine(mean));
   }
   if (report.finding) lines.push(report.finding.text);
   return lines.join("\n") + "\n";
@@ -327,11 +323,18 @@ function quoteOf(kind, ride, pickup) {
   throw new SimCheckError("Simulated quote is not a known kind.");
 }
 
-function shownMean(rows, policy) {
+function tally(rows, policy) {
   const mine = rows.filter((row) => row.policy === policy);
-  if (mine.length === 0) return null;
-  const raw = mine.reduce((sum, row) => sum + (row.total == null ? 0 : row.total), 0) / mine.length;
-  return Math.round(raw * 100) / 100;
+  const landedRows = mine.filter((row) => row.total != null);
+  const landed = landedRows.length;
+  const stranded = mine.length - landed;
+  const mean = landed === 0 ? null : Math.round((landedRows.reduce((sum, row) => sum + row.total, 0) / landed) * 100) / 100;
+  return { policy, mean, landed, stranded, rides: mine.length };
+}
+
+function meanLine(mean) {
+  const shown = mean.mean == null ? "none" : mean.mean.toFixed(2);
+  return `${mean.policy} landed mean ${shown} over ${mean.landed} landed, ${mean.stranded} stranded`;
 }
 
 function catalogOf(E) {
@@ -397,32 +400,17 @@ async function playTrial(env, cell) {
   const plan = applyNoise(policy.plan(hail, forecasts, rng), hail, rng, env.noise);
   if (!askHoursOk(plan.askAfterHours)) throw new SimCheckError("askAfterHours must be a number from 0 to 24");
 
-  const legal = legalShips(hail);
-  const index = legal.findIndex((ship) => ship.id === plan.ship);
-  const decoys = index < 0 ? [] : legal.slice(index + 1, index + 1 + plan.decoys);
-  for (const ship of decoys) {
-    const decoy = await callTool(session, "plan_pickup", {
-      ship: ship.id,
-      objective: plan.pickupObjective,
-      waitDays: 0,
-    });
-    knownKind(decoy, ["leg", "error"]);
-  }
-
-  const pickup = await callTool(session, "plan_pickup", {
-    ship: plan.ship,
-    objective: plan.pickupObjective,
-    waitDays: plan.waitDays,
-  });
-  knownKind(pickup, ["leg", "error"]);
-  if (pickup.kind === "leg" && pickup.leg.gate !== "FAIL") {
+  const pickupLeg = plan.comparePickups
+    ? await bestPickup(session, hail, plan, rng, env.noise)
+    : await onePickup(session, hail, plan);
+  if (pickupLeg && pickupLeg.gate !== "FAIL") {
     const ride = await callTool(session, "plan_ride", {
-      afterLeg: pickup.leg.legId,
+      afterLeg: pickupLeg.legId,
       objective: plan.rideObjective,
     });
     knownKind(ride, ["leg", "error"]);
     if (ride.kind === "leg" && ride.leg.gate !== "FAIL") {
-      score = await flyPlan(session, policy, rng, plan, pickup.leg, ride.leg, env.noise);
+      score = await flyPlan(session, policy, rng, plan, pickupLeg, ride.leg, env.noise);
     }
   }
   return finishTrial(session, score);
@@ -820,6 +808,7 @@ function carefulWaitDays(forecasts, riderReady) {
 function carefulPlan(hail, forecasts) {
   return {
     ship: firstShip(hail).id,
+    comparePickups: true,
     pickupObjective: "energy",
     rideObjective: "energy",
     waitDays: carefulWaitDays(forecasts, hail.riderReady),
@@ -890,10 +879,55 @@ function badPad(cp) {
   return { action: "divert", place: last.place, waitHours: BAD_DIVERT_WAIT_HOURS };
 }
 
+async function onePickup(session, hail, plan) {
+  const legal = legalShips(hail);
+  const index = legal.findIndex((ship) => ship.id === plan.ship);
+  const decoys = index < 0 ? [] : legal.slice(index + 1, index + 1 + plan.decoys);
+  for (const ship of decoys) {
+    const decoy = await callTool(session, "plan_pickup", {
+      ship: ship.id,
+      objective: plan.pickupObjective,
+      waitDays: 0,
+    });
+    knownKind(decoy, ["leg", "error"]);
+  }
+  const pickup = await callTool(session, "plan_pickup", {
+    ship: plan.ship,
+    objective: plan.pickupObjective,
+    waitDays: plan.waitDays,
+  });
+  knownKind(pickup, ["leg", "error"]);
+  return pickup.kind === "leg" ? pickup.leg : null;
+}
+
+async function bestPickup(session, hail, plan, rng, noise) {
+  const ranked = [];
+  for (const ship of legalShips(hail)) {
+    const pickup = await callTool(session, "plan_pickup", {
+      ship: ship.id,
+      objective: plan.pickupObjective,
+      waitDays: plan.waitDays,
+    });
+    knownKind(pickup, ["leg", "error"]);
+    if (pickup.kind === "leg" && pickup.leg.gate !== "FAIL") ranked.push(pickup.leg);
+  }
+  ranked.sort((a, b) => waitMinutes(a) - waitMinutes(b));
+  if (ranked.length === 0) return null;
+  let index = 0;
+  if (noise > 0 && ranked.length > 1 && rng() < noise) index = 1;
+  return ranked[index];
+}
+
+function waitMinutes(leg) {
+  const at = minuteOf(leg.arrive);
+  return at == null ? Number.POSITIVE_INFINITY : at;
+}
+
 function applyNoise(plan, hail, rng, noise) {
   if (!(noise > 0)) return plan;
   const next = {
     ship: plan.ship,
+    comparePickups: plan.comparePickups === true,
     pickupObjective: plan.pickupObjective,
     rideObjective: plan.rideObjective,
     waitDays: plan.waitDays,
@@ -902,7 +936,7 @@ function applyNoise(plan, hail, rng, noise) {
     decoys: plan.decoys,
   };
   const legal = legalShips(hail);
-  if (rng() < noise && legal.length > 1) {
+  if (!next.comparePickups && rng() < noise && legal.length > 1) {
     const index = legal.findIndex((ship) => ship.id === next.ship);
     const at = index < 0 ? 0 : (index + 1) % legal.length;
     next.ship = legal[at].id;
@@ -1036,18 +1070,20 @@ function checkReport(report, printed) {
   if (report.means.length !== report.policies.length) fail("The means do not match the policies.");
   report.policies.forEach((policy, index) => {
     const line = report.means[index];
-    const mean = shownMean(report.rows, policy);
-    const rides = report.rows.filter((row) => row.policy === policy).length;
-    if (!line || line.policy !== policy || line.mean !== mean || line.rides !== rides) fail("A mean does not match the rows.");
+    const mean = tally(report.rows, policy);
+    if (!line || line.policy !== policy || line.mean !== mean.mean || line.landed !== mean.landed || line.stranded !== mean.stranded) {
+      fail("A mean does not match the rows.");
+    }
+    if (!printed.includes(meanLine(mean))) fail("A mean line is missing.");
   });
   const both = report.policies.includes("naive") && report.policies.includes("careful");
   if (!both) {
     if (report.finding != null) fail("A finding was set without both policies.");
   } else {
-    const careful = shownMean(report.rows, "careful");
-    const naive = shownMean(report.rows, "naive");
-    if (careful < naive) {
-      const text = `Finding: careful mean ${careful.toFixed(2)} is below naive mean ${naive.toFixed(2)}. Stranded rides count as 0 in this mean only.`;
+    const careful = tally(report.rows, "careful").mean;
+    const naive = tally(report.rows, "naive").mean;
+    if (careful != null && naive != null && careful < naive) {
+      const text = `Finding: careful landed mean ${careful.toFixed(2)} is below naive landed mean ${naive.toFixed(2)}.`;
       if (!report.finding || report.finding.careful !== careful || report.finding.naive !== naive || report.finding.text !== text) {
         fail("The finding does not match the means.");
       }

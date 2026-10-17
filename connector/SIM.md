@@ -10,7 +10,7 @@ npm run sim -- --skill mid --noise 0 --policies naive --seeds 1 --hails iss-crew
 
 `package.json` defines `"sim": "node sim.mjs"`. That script is not part of `npm test`. `node --test test/sim-policy.test.mjs` checks the Ceres wait, the skill flags, and that a 100 point total need not equal the rounded parts. That file is not part of `npm test` either.
 
-The command prints one report and exits 0. A hard check exits 1. When the displayed careful mean is below the displayed naive mean, the report includes a finding, and the process still exits 0. Stdout is the whole shipped text.
+The command prints one report and exits 0. A hard check exits 1. When the careful landed mean is below the naive landed mean, the report includes a finding, and the process still exits 0. Stdout is the whole shipped text.
 
 If the copy scan fails, the command prints one line and does not print the table.
 
@@ -39,7 +39,7 @@ const paired = await simulate({
 
 `POLICY_NAMES` is `["naive", "careful", "random", "bad"]`.
 
-`simulate()` with no argument plays those four policies on hazard seeds `"1"` through `"4"` and on every catalog hail, in the order `listHails` returns them. Each cell is one simulated ride. The catalog call returns the real catalog. The cell then takes the hail it was given. Naive takes that hail as given. It does not rank the catalog, the fleet, or the forecasts.
+`simulate()` with no argument plays those four policies on hazard seeds `"1"` through `"4"` and on every catalog hail, in the order `listHails` returns them. Each cell is one simulated ride. The catalog call returns the real catalog. The cell then takes the hail it was given. Naive takes the first legal ship. It does not rank the catalog or the forecasts. Careful plans a pickup for every legal ship and keeps the one whose pickup arrives first. That arrival is the wait `plan_pickup` returns. The fleet listing is the list of ships it may plan.
 
 The first line of the report is the header. The next line names the skill tier. Then, when a ride lands, a line `Score out of N.` N is the engine `out_of`, 100 on this branch and 100000 when the engine scores that way. Columns are separated by tabs, so a blank cell stays empty. The lead columns, in order, are `policy`, `seed`, `hail_id`, `phase`, `terminal`, `total`, `plans`, `checkpoints`, and `errors`. The part columns are the engine's parts, in the engine's order. When a part has a unit, the header is the key and the unit, for example `pickup (min)`.
 
@@ -51,4 +51,4 @@ On a 100 point score the printed parts are rounded to 0.1 after the total is rou
 
 The skill line is `Skills: tier <tier>, noise <noise>, look depth <depth>. Simulated assumptions, not real model benchmark numbers.`
 
-Mean lines sit under the table. A stranded ride counts as 0 in those means only, and the mean line says so. Each mean line is `<policy> <two decimals> over <rides> rides (stranded counts as 0 in this mean only)`. When the displayed careful mean is below the displayed naive mean, the next line is `Finding: careful mean X is below naive mean Y. Stranded rides count as 0 in this mean only.`
+Mean lines sit under the table. A mean uses landed rides only. Stranded rides are counted beside it and are not folded in as 0. Each mean line is `<policy> landed mean <two decimals> over <landed> landed, <stranded> stranded`. When no ride lands, the mean is `none`. When the careful landed mean is below the naive landed mean, the next line is `Finding: careful landed mean X is below naive landed mean Y.`

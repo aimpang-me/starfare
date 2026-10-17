@@ -78,6 +78,34 @@ test("noise can replace a checkpoint answer and a quote", async () => {
   assert.equal(flipped.lookDepth, 3);
 });
 
+const SEEDS_1_TO_8 = ["1", "2", "3", "4", "5", "6", "7", "8"];
+
+function partMean(report, key) {
+  const landed = report.rows.filter((row) => row.parts);
+  return landed.reduce((sum, row) => sum + row.parts.find((part) => part.key === key).got, 0) / landed.length;
+}
+
+test("careful landed mean beats naive over seeds 1 to 8", async () => {
+  const report = await simulate({ policies: ["naive", "careful"], seeds: SEEDS_1_TO_8 });
+  const careful = report.means.find((mean) => mean.policy === "careful");
+  const naive = report.means.find((mean) => mean.policy === "naive");
+  assert.equal(careful.landed + careful.stranded, 40);
+  assert.equal(naive.landed + naive.stranded, 40);
+  assert.ok(careful.mean > naive.mean, `careful ${careful.mean} naive ${naive.mean}`);
+});
+
+test("bad noise raises fare and promise because the other quote is the ride quote", async () => {
+  const top = await simulate({ policies: ["bad"], seeds: SEEDS_1_TO_8, skill: "top" });
+  const weak = await simulate({ policies: ["bad"], seeds: SEEDS_1_TO_8, skill: "weak" });
+  assert.equal(partMean(top, "fare"), 0);
+  assert.equal(partMean(top, "promise"), 0);
+  assert.ok(partMean(weak, "fare") > 0);
+  assert.ok(partMean(weak, "promise") > 0);
+  const topMean = top.means[0].mean;
+  const weakMean = weak.means[0].mean;
+  assert.ok(weakMean > topMean, `weak ${weakMean} top ${topMean}`);
+});
+
 test("parseArgs reads skill and noise", () => {
   const run = spawnSync(process.execPath, [
     "sim.mjs",
