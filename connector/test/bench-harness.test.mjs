@@ -81,7 +81,7 @@ test("naive, random and the reference on a shared flight of two bookings", async
   assert.deepEqual([r.score.phase, r.score.total], ["arrived", 14204.228038116233]);
   assert.ok(r.score.total < n.score.total);
   const ref = reference(E, await openTask(E, SUITE, SHARED, "2"));
-  assert.deepEqual([ref.total, ref.car], [28333.410804818926, "sf-04"]);
+  assert.deepEqual([ref.total, ref.car], [28259.1704267676, "sf-04"]);
   assert.ok(ref.total >= n.score.total);
 });
 

@@ -20,4 +20,7 @@ const conflicts = run.ride.segs.flatMap((s, i, all) => i && s.flew.dep_jd < all[
   leg: i + 1, previous_landing: rec.log.flown[i - 1].arrive, departure: rec.log.flown[i].depart,
   overlap_minutes: Math.round((all[i - 1].flew.land_jd - s.flew.dep_jd) * 1440 * 10) / 10,
 }] : []);
-console.log(JSON.stringify({ ship: run.car, bookings: run.hails, conflicts, note: "Diagnostic only; an empty list for one case would not certify the engine." }, null, 2));
+console.log(JSON.stringify({ ship: run.car, bookings: run.hails, conflicts,
+  flown: rec.log.flown.map(({ from, to, depart, arrive }) => ({ from, to, depart, arrive })),
+  used_kwh: run.score.used_kwh, score: run.score.total,
+  note: "Diagnostic only; an empty list for one case would not certify the engine." }, null, 2));

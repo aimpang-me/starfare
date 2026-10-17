@@ -1591,7 +1591,7 @@ function arrivePhase(ride){
     var b = planned(N.from, N.to, ready, "energy", ride.end_jd, ride.car);
     N.dep_jd = b.dep_jd; N.arr_jd = b.arr_jd; N.kwh = b.battery.energy_kwh;
     ready = N.dep_jd;
-  } else if (boarding) ready = Math.max(N.dep_jd, land + DWELL);
+  } else ready = Math.max(N.dep_jd, land + (boarding ? DWELL : 0));
   ride.at = { seg: nx, phase: "depart", jd: ready };
   return null;
 }

@@ -27,7 +27,7 @@ For SF-04 carrying `ceres-shift` then `phobos-commute`, seed `2`, request JD `24
 
 Cause: `arrivePhase` in `world/engine/sol-rides.js` advances to `N.dep_jd` after a drop-off. Its clamp to actual landing plus dwell applies only when passengers board. A later empty pickup leg can therefore depart before the preceding landing.
 
-Affected flight pages show a recorded-timing warning and preserve the stored numbers. This defect remains open. Correcting it changes engine outcomes, shared-flight scores and benchmark reference values, requiring the engine/bundle/suite workflow and its benchmark key. It should be the next engine correction, alongside the separately documented propulsion model work.
+Affected flight pages show a recorded-timing warning and preserve the stored numbers. This defect was left open in PR #13. The Engineering follow-up in `SHARED-FLIGHT-TIMING.md` corrects continuation ordering and records its engine/bundle/suite prerequisites. The separate propulsion-model limitation remains open.
 
 ## Verification
 
