@@ -3,6 +3,7 @@
 Starfare (working title SOL) is Alvin Impang's passenger-flight game and agent platform for Starseeker ships across the solar system. It began as a portfolio project; the goal is now to develop it into a larger, ongoing product. Fictional assets and simulated gameplay remain, while calculations should follow established scientific knowledge and state their approximations.
 
 Current reliability and calculation findings: `docs/PLUMBING-AUDIT.md`.
+Latest timing correction, regenerated suite and key handoff: `docs/SHARED-FLIGHT-TIMING.md` and the current follow-up in `NEXT-STEPS.md`. Historical deployment notes below are earlier baselines.
 
 Read first: `docs/HANDOFF.md` (state, decisions, next steps), `docs/OPEN-QUESTIONS.md`, `docs/WEBSITES.md`, `docs/DESIGN.md`, `docs/HISTORY.md`, `docs/SPEC.md`.
 

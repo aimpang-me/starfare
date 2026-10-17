@@ -620,7 +620,7 @@ test("shared flight: dispatch with legs, stops and quotes scores each booking an
   for (const p of out.parts) assert.ok(p.got < p.max || p.max === 0, p.key);
   assert.deepEqual(out.bookings.map((b) => [b.hail_id, b.pickup, b.arrive, b.promise_slip_hours, b.fare_usd]), [
     ["ceres-shift", "2027-10-22 02:21", "2030-07-23 01:00", 0.6, 514158.13],
-    ["phobos-commute", "2030-07-23 02:36", "2030-07-23 06:02", 0, 1079.11]]);
+    ["phobos-commute", "2030-07-23 03:14", "2030-07-23 06:39", 0.6, 1079.11]]);
   const phobos = out.bookings.find((b) => b.hail_id === "phobos-commute");
   assert.ok(phobos.parts.find((x) => x.key === "on_time").got < phobos.parts.find((x) => x.key === "pickup").got);
   assert.deepEqual(out.passengers.map((p) => [p.place.id, p.board, p.alight, p.aboard, p.seats]), [

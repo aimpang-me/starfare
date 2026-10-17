@@ -1,13 +1,19 @@
 {
   "format": "starfare.suite/1",
   "id": "v1",
-  "engine_sha256": "6130a4578ea4e569cfed68c816120990d4bec9d36db1d6b02a94eb31a19d15a7",
+  "engine_sha256": "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65",
   "score_version": 3,
   "budget": 60,
   "world": "per_task",
   "margin": 5,
   "splits": {
     "dev": [
+      {
+        "id": "iss-crew/4289",
+        "hail_id": "iss-crew",
+        "clock_jd": 2465618.5,
+        "stratum": "quick/hazard"
+      },
       {
         "id": "titan-home/3391",
         "hail_id": "titan-home",
@@ -25,12 +31,36 @@
         "stratum": "long/clear"
       },
       {
+        "id": "iss-crew+ceres-shift/1431",
+        "hails": [
+          "iss-crew",
+          "ceres-shift"
+        ],
+        "clock_jd": 2462760.5,
+        "stratum": "quick/clear"
+      },
+      {
+        "id": "iss-crew+titan-home/1035",
+        "hails": [
+          "iss-crew",
+          "titan-home"
+        ],
+        "clock_jd": 2462364.5,
+        "stratum": "quick/clear"
+      },
+      {
         "id": "ceres-shift+jovian-hop/0636",
         "hails": [
           "ceres-shift",
           "jovian-hop"
         ],
         "clock_jd": 2461965.5,
+        "stratum": "long/clear"
+      },
+      {
+        "id": "ceres-shift/3136",
+        "hail_id": "ceres-shift",
+        "clock_jd": 2464465.5,
         "stratum": "long/hazard"
       },
       {
@@ -39,6 +69,12 @@
         "clock_jd": 2463664.5,
         "stratum": "long/clear",
         "anchor": true
+      },
+      {
+        "id": "titan-home/4792",
+        "hail_id": "titan-home",
+        "clock_jd": 2466121.5,
+        "stratum": "long/hazard"
       },
       {
         "id": "iss-crew/2370",
@@ -53,7 +89,16 @@
           "jovian-hop"
         ],
         "clock_jd": 2461505.5,
-        "stratum": "quick/hazard"
+        "stratum": "quick/clear"
+      },
+      {
+        "id": "iss-crew+jovian-hop/4111",
+        "hails": [
+          "iss-crew",
+          "jovian-hop"
+        ],
+        "clock_jd": 2465440.5,
+        "stratum": "quick/clear"
       },
       {
         "id": "iss-crew+phobos-commute/0784",
@@ -65,31 +110,13 @@
         "stratum": "quick/hazard"
       },
       {
-        "id": "phobos-commute+jovian-hop/5865",
+        "id": "ceres-shift+iss-crew/4237",
         "hails": [
-          "phobos-commute",
-          "jovian-hop"
+          "ceres-shift",
+          "iss-crew"
         ],
-        "clock_jd": 2467194.5,
-        "stratum": "quick/clear"
-      },
-      {
-        "id": "phobos-commute+titan-home/4638",
-        "hails": [
-          "phobos-commute",
-          "titan-home"
-        ],
-        "clock_jd": 2465967.5,
-        "stratum": "quick/clear"
-      },
-      {
-        "id": "titan-home+jovian-hop/4698",
-        "hails": [
-          "titan-home",
-          "jovian-hop"
-        ],
-        "clock_jd": 2466027.5,
-        "stratum": "long/clear"
+        "clock_jd": 2465566.5,
+        "stratum": "long/hazard"
       },
       {
         "id": "iss-crew+titan-home/4616",
@@ -98,22 +125,7 @@
           "titan-home"
         ],
         "clock_jd": 2465945.5,
-        "stratum": "quick/hazard"
-      },
-      {
-        "id": "titan-home+jovian-hop/2880",
-        "hails": [
-          "titan-home",
-          "jovian-hop"
-        ],
-        "clock_jd": 2464209.5,
-        "stratum": "long/hazard"
-      },
-      {
-        "id": "ceres-shift/2358",
-        "hail_id": "ceres-shift",
-        "clock_jd": 2463687.5,
-        "stratum": "long/hazard"
+        "stratum": "quick/clear"
       },
       {
         "id": "ceres-shift+iss-crew/4510",
@@ -125,12 +137,9 @@
         "stratum": "long/hazard"
       },
       {
-        "id": "titan-home+jovian-hop/2888",
-        "hails": [
-          "titan-home",
-          "jovian-hop"
-        ],
-        "clock_jd": 2464217.5,
+        "id": "titan-home/4530",
+        "hail_id": "titan-home",
+        "clock_jd": 2465859.5,
         "stratum": "long/hazard"
       },
       {
@@ -141,15 +150,6 @@
         "anchor": true
       },
       {
-        "id": "ceres-shift+titan-home/4573",
-        "hails": [
-          "ceres-shift",
-          "titan-home"
-        ],
-        "clock_jd": 2465902.5,
-        "stratum": "long/clear"
-      },
-      {
         "id": "jovian-hop+iss-crew/4995",
         "hails": [
           "jovian-hop",
@@ -157,121 +157,136 @@
         ],
         "clock_jd": 2466324.5,
         "stratum": "quick/hazard"
+      },
+      {
+        "id": "iss-crew/2412",
+        "hail_id": "iss-crew",
+        "clock_jd": 2463741.5,
+        "stratum": "quick/hazard"
       }
     ],
     "test": [
       {
-        "id": "jovian-hop/4793",
-        "hail_id": "jovian-hop",
-        "clock_jd": 2466122.5
+        "id": "iss-crew/6587",
+        "hail_id": "iss-crew",
+        "clock_jd": 2467916.5
       },
       {
-        "id": "ceres-shift+jovian-hop/2371",
+        "id": "ceres-shift+phobos-commute/4432",
+        "hails": [
+          "ceres-shift",
+          "phobos-commute"
+        ],
+        "clock_jd": 2465761.5
+      },
+      {
+        "id": "ceres-shift+jovian-hop/3749",
         "hails": [
           "ceres-shift",
           "jovian-hop"
         ],
-        "clock_jd": 2463700.5
+        "clock_jd": 2465078.5
       },
       {
-        "id": "phobos-commute+jovian-hop/4709",
-        "hails": [
-          "phobos-commute",
-          "jovian-hop"
-        ],
-        "clock_jd": 2466038.5
+        "id": "iss-crew/1620",
+        "hail_id": "iss-crew",
+        "clock_jd": 2462949.5
       },
       {
-        "id": "phobos-commute/4260",
-        "hail_id": "phobos-commute",
-        "clock_jd": 2465589.5
-      },
-      {
-        "id": "jovian-hop+titan-home/2519",
-        "hails": [
-          "jovian-hop",
-          "titan-home"
-        ],
-        "clock_jd": 2463848.5
-      },
-      {
-        "id": "jovian-hop+titan-home/2494",
-        "hails": [
-          "jovian-hop",
-          "titan-home"
-        ],
-        "clock_jd": 2463823.5
-      },
-      {
-        "id": "iss-crew+ceres-shift/0193",
-        "hails": [
-          "iss-crew",
-          "ceres-shift"
-        ],
-        "clock_jd": 2461522.5
-      },
-      {
-        "id": "ceres-shift+jovian-hop/4513",
-        "hails": [
-          "ceres-shift",
-          "jovian-hop"
-        ],
-        "clock_jd": 2465842.5
-      },
-      {
-        "id": "phobos-commute+ceres-shift/3955",
-        "hails": [
-          "phobos-commute",
-          "ceres-shift"
-        ],
-        "clock_jd": 2465284.5
-      },
-      {
-        "id": "phobos-commute+ceres-shift/5261",
-        "hails": [
-          "phobos-commute",
-          "ceres-shift"
-        ],
-        "clock_jd": 2466590.5
-      },
-      {
-        "id": "phobos-commute/1838",
-        "hail_id": "phobos-commute",
-        "clock_jd": 2463167.5
-      },
-      {
-        "id": "jovian-hop/4457",
-        "hail_id": "jovian-hop",
-        "clock_jd": 2465786.5
-      },
-      {
-        "id": "phobos-commute+iss-crew/1430",
+        "id": "phobos-commute+iss-crew/3510",
         "hails": [
           "phobos-commute",
           "iss-crew"
         ],
-        "clock_jd": 2462759.5
+        "clock_jd": 2464839.5
       },
       {
-        "id": "ceres-shift/4467",
-        "hail_id": "ceres-shift",
-        "clock_jd": 2465796.5
-      },
-      {
-        "id": "phobos-commute+ceres-shift/5639",
+        "id": "phobos-commute+iss-crew/3431",
         "hails": [
           "phobos-commute",
-          "ceres-shift"
+          "iss-crew"
         ],
-        "clock_jd": 2466968.5
+        "clock_jd": 2464760.5
       },
       {
-        "id": "titan-home+ceres-shift/0663",
+        "id": "phobos-commute+iss-crew/2495",
+        "hails": [
+          "phobos-commute",
+          "iss-crew"
+        ],
+        "clock_jd": 2463824.5
+      },
+      {
+        "id": "ceres-shift/3068",
+        "hail_id": "ceres-shift",
+        "clock_jd": 2464397.5
+      },
+      {
+        "id": "phobos-commute/6323",
+        "hail_id": "phobos-commute",
+        "clock_jd": 2467652.5
+      },
+      {
+        "id": "iss-crew/4956",
+        "hail_id": "iss-crew",
+        "clock_jd": 2466285.5
+      },
+      {
+        "id": "titan-home/0371",
+        "hail_id": "titan-home",
+        "clock_jd": 2461700.5
+      },
+      {
+        "id": "iss-crew/0416",
+        "hail_id": "iss-crew",
+        "clock_jd": 2461745.5
+      },
+      {
+        "id": "iss-crew/6433",
+        "hail_id": "iss-crew",
+        "clock_jd": 2467762.5
+      },
+      {
+        "id": "titan-home+ceres-shift/1992",
         "hails": [
           "titan-home",
           "ceres-shift"
         ],
-        "clock_jd": 2461992.5
+        "clock_jd": 2463321.5
+      },
+      {
+        "id": "titan-home+iss-crew/4968",
+        "hails": [
+          "titan-home",
+          "iss-crew"
+        ],
+        "clock_jd": 2466297.5
+      },
+      {
+        "id": "jovian-hop/6109",
+        "hail_id": "jovian-hop",
+        "clock_jd": 2467438.5
+      },
+      {
+        "id": "phobos-commute+ceres-shift/1265",
+        "hails": [
+          "phobos-commute",
+          "ceres-shift"
+        ],
+        "clock_jd": 2462594.5
+      },
+      {
+        "id": "jovian-hop+phobos-commute/5276",
+        "hails": [
+          "jovian-hop",
+          "phobos-commute"
+        ],
+        "clock_jd": 2466605.5
+      },
+      {
+        "id": "ceres-shift/3546",
+        "hail_id": "ceres-shift",
+        "clock_jd": 2464875.5
       }
     ]
   }

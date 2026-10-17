@@ -13,72 +13,88 @@
   },
   "counts": {
     "quick/clear": {
-      "candidates": 23,
-      "selected": 2
+      "candidates": 32,
+      "selected": 5
     },
     "quick/hazard": {
-      "candidates": 26,
+      "candidates": 17,
       "selected": 5
     },
     "long/clear": {
-      "candidates": 15,
-      "selected": 3
+      "candidates": 19,
+      "selected": 2
     },
     "long/hazard": {
-      "candidates": 16,
+      "candidates": 11,
       "selected": 5
     }
   },
   "unselected_sample": [
-    "titan-home/0490",
-    "iss-crew/4289",
-    "iss-crew+titan-home/1035",
-    "jovian-hop/3114",
+    "phobos-commute/3138",
+    "titan-home/0504",
+    "jovian-hop/6419",
+    "phobos-commute/1523",
+    "titan-home/3350",
+    "titan-home/3508",
+    "titan-home+ceres-shift/2739",
     "titan-home/1269",
     "iss-crew/3706",
-    "ceres-shift+phobos-commute/5293",
-    "iss-crew+titan-home/1373",
-    "iss-crew/1649"
+    "iss-crew+titan-home/2798"
   ],
   "candidates": [
     {
       "task_id": "titan-home/2257",
       "naive": {
-        "total": 100,
+        "total": 34886.457611923055,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4786.457611923053,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 62,
+        "total": 34886.457611923055,
         "parts": {
-          "pickup": 0.5,
-          "on_time": 20,
-          "energy": 3.1,
-          "promise": 13.8,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4786.457611923053,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
-        "incidents": 4
+        "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34886.457611923055,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4786.457611923053,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy/energy",
@@ -92,89 +108,97 @@
     {
       "task_id": "iss-crew+jovian-hop/2775",
       "naive": {
-        "total": 73,
-        "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 19.1,
-          "promise": 13.5,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "random": {
-        "total": 39,
-        "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 2.9,
-          "promise": 11,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 2
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 80,
+        "total": 27407.068309846298,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.051154633243,
+          "on_time": 2800.018671193731,
+          "energy": 8369.799083538948,
+          "promise": 4827.199400480374,
+          "checker": 559.9999999999999,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy",
-        "choices": []
+        "choices": [
+          "hold until open",
+          "hold until open",
+          "replan, leaving 2034-05-26 14:30"
+        ]
       },
-      "headroom": 7,
-      "stratum": "quick/hazard",
-      "reason": "stratum quick/hazard already has 5",
+      "headroom": 27407.068309846298,
+      "stratum": "quick/clear",
+      "reason": "stratum quick/clear already has 5",
       "selected": false
     },
     {
       "task_id": "phobos-commute/0909",
       "naive": {
-        "total": 100,
+        "total": 34817.4182714348,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4717.418271434799,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 36,
+        "total": 13366.151171105575,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 0.3,
-          "promise": 10.3,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.12894630333108137,
+          "on_time": 0.042167819750872436,
+          "energy": 75.14372524731851,
+          "promise": 4890.836331735176,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
-        "incidents": 1
+        "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34817.4182714348,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4717.418271434799,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-03",
         "plan": "energy/energy",
@@ -188,41 +212,56 @@
     {
       "task_id": "iss-crew/4289",
       "naive": {
-        "total": 93,
+        "total": 29203.260399708237,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.4,
-          "promise": 8.9,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7191.158488791346,
+          "promise": 312.10191091689194,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "random": {
-        "total": 37,
+        "total": 9156.473443830186,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 0.6,
-          "promise": 11.4,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.31607897869545587,
+          "on_time": 0.07721195290373835,
+          "energy": 247.286566794068,
+          "promise": 508.7935861045195,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "reference": {
-        "total": 100,
+        "total": 34204.823772421805,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.5,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7672.894538763903,
+          "promise": 4831.929233657897,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
@@ -232,49 +271,51 @@
           "divert to Moon, wait 0 h"
         ]
       },
-      "headroom": 7,
+      "headroom": 5001.563372713568,
       "stratum": "quick/hazard",
-      "reason": "stratum quick/hazard already has 5",
-      "selected": false
+      "selected": true,
+      "reason": "headroom 5001.563372713568 > margin 5"
     },
     {
       "task_id": "titan-home/3391",
       "naive": {
-        "total": 100,
+        "total": 34957.01888914995,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4857.018889149947,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 55,
-        "parts": {
-          "pickup": 0,
-          "on_time": 11.8,
-          "energy": 3.2,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 0
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 100,
+        "total": 34957.01888914995,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4857.018889149947,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy/energy",
@@ -282,48 +323,63 @@
       },
       "headroom": 0,
       "stratum": "long/clear",
-      "reason": "anchor: naive scores 100",
+      "reason": "anchor: naive scores 34957.01888914995",
       "anchor": true,
       "selected": true
     },
     {
       "task_id": "titan-home/0504",
       "naive": {
-        "total": 100,
+        "total": 34790.143484559674,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4732.560671199421,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1007.5828133602494,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 46,
+        "total": 29009.89232534031,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 5.8,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 2420.5259755584516,
+          "promise": 4889.366349781862,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34790.143484559674,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4732.560671199421,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1007.5828133602494,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy/energy",
@@ -337,89 +393,106 @@
     {
       "task_id": "titan-home+phobos-commute/2793",
       "naive": {
-        "total": 70,
+        "total": 22920.57974922119,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 14.7,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
+          "pickup": 3850.0847818643724,
+          "on_time": 2800.0065597666826,
+          "energy": 4010.4520454082485,
+          "promise": 4760.036362181887,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 150,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 44,
-        "parts": {
-          "pickup": 0,
-          "on_time": 10,
-          "energy": 1.8,
-          "promise": 7,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 3
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 80,
+        "total": 28235.700844923027,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.1108567856436,
+          "on_time": 2800.008578599143,
+          "energy": 8400,
+          "promise": 4785.581409538243,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 10,
+      "headroom": 5315.1210957018375,
       "stratum": "long/clear",
       "selected": true,
-      "reason": "headroom 10 > margin 5"
+      "reason": "headroom 5315.1210957018375 > margin 5"
     },
     {
       "task_id": "jovian-hop/6400",
       "naive": {
-        "total": 100,
+        "total": 34941.35861918468,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4841.358619184677,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 75,
+        "total": 21358.037809670706,
         "parts": {
-          "pickup": 6.5,
-          "on_time": 20,
-          "energy": 8.4,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 575.8496880769829,
+          "on_time": 5600,
+          "energy": 1910.876213799584,
+          "promise": 4871.311907794137,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34941.35861918468,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4841.358619184677,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy/energy",
@@ -433,41 +506,56 @@
     {
       "task_id": "jovian-hop/1986",
       "naive": {
-        "total": 100,
+        "total": 34941.35861918468,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4841.358619184677,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 75,
+        "total": 21358.037809670706,
         "parts": {
-          "pickup": 6.5,
-          "on_time": 20,
-          "energy": 8.4,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 575.8496880769829,
+          "on_time": 5600,
+          "energy": 1910.876213799584,
+          "promise": 4871.311907794137,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34941.35861918468,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4841.358619184677,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy/energy",
@@ -481,137 +569,130 @@
     {
       "task_id": "iss-crew+ceres-shift/1431",
       "naive": {
-        "total": 46,
-        "parts": {
-          "pickup": 0,
-          "on_time": 2.1,
-          "energy": 9.3,
-          "promise": 14.9,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "random": {
-        "total": 44,
-        "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 9,
-          "promise": 11.5,
-          "checker": 10,
-          "fare": 10,
-          "economy": 4
-        },
-        "incidents": 2
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 71,
+        "total": 21747.987229048602,
         "parts": {
-          "pickup": 10,
-          "on_time": 12.1,
-          "energy": 8.5,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 79.17491723184325,
+          "on_time": 0.231517338247002,
+          "energy": 8400,
+          "promise": 4868.58079447851,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
-        "car": "sf-01",
+        "car": "sf-04",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 25,
-      "stratum": "quick/hazard",
-      "reason": "stratum quick/hazard already has 5",
-      "selected": false
+      "headroom": 21747.987229048602,
+      "stratum": "quick/clear",
+      "selected": true,
+      "reason": "headroom 21747.987229048602 > margin 5"
     },
     {
       "task_id": "iss-crew+titan-home/1035",
       "naive": {
-        "total": 42,
-        "parts": {
-          "pickup": 10,
-          "on_time": 0,
-          "energy": 4.3,
-          "promise": 7.5,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 3
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "random": {
-        "total": 49,
-        "parts": {
-          "pickup": 0.1,
-          "on_time": 10,
-          "energy": 3.6,
-          "promise": 10.7,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 80,
+        "total": 28218.97729649087,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 19.9,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.0921259468228,
+          "on_time": 2800.0114143699006,
+          "energy": 8400,
+          "promise": 4816.586415792684,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1002.2873403814634,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 38,
-      "stratum": "quick/hazard",
-      "reason": "stratum quick/hazard already has 5",
-      "selected": false
+      "headroom": 28218.97729649087,
+      "stratum": "quick/clear",
+      "selected": true,
+      "reason": "headroom 28218.97729649087 > margin 5"
     },
     {
       "task_id": "iss-crew/3706",
       "naive": {
-        "total": 100,
+        "total": 34854.98227662235,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4754.982276622352,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 100,
+        "total": 34854.98227662235,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4754.982276622352,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34854.98227662235,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4754.982276622352,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
@@ -625,41 +706,56 @@
     {
       "task_id": "phobos-commute/3113",
       "naive": {
-        "total": 100,
+        "total": 34817.4182714348,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4717.418271434799,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 100,
+        "total": 34817.4182714348,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4717.418271434799,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34817.4182714348,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4717.418271434799,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-03",
         "plan": "energy/energy",
@@ -673,41 +769,56 @@
     {
       "task_id": "jovian-hop/6419",
       "naive": {
-        "total": 100,
+        "total": 34941.35861918468,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4841.358619184677,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 42,
+        "total": 34941.35861918468,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 1.9,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4841.358619184677,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34941.35861918468,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4841.358619184677,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy/energy",
@@ -721,41 +832,56 @@
     {
       "task_id": "titan-home/3350",
       "naive": {
-        "total": 100,
+        "total": 34963.17315011471,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4863.173150114709,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 100,
+        "total": 34963.17315011471,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4863.173150114709,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34963.17315011471,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4863.173150114709,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy/energy",
@@ -769,137 +895,143 @@
     {
       "task_id": "ceres-shift+jovian-hop/0636",
       "naive": {
-        "total": 66,
-        "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 18.2,
-          "promise": 7.5,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "random": {
-        "total": 67,
-        "parts": {
-          "pickup": 3.3,
-          "on_time": 10,
-          "energy": 14.9,
-          "promise": 14.1,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 80,
+        "total": 28288.612822148294,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.025335655839,
+          "on_time": 2800.009646945456,
+          "energy": 8400,
+          "promise": 4838.577839547001,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 14,
-      "stratum": "long/hazard",
+      "headroom": 28288.612822148294,
+      "stratum": "long/clear",
       "selected": true,
-      "reason": "headroom 14 > margin 5"
+      "reason": "headroom 28288.612822148294 > margin 5"
     },
     {
       "task_id": "ceres-shift/3136",
       "naive": {
-        "total": 98,
+        "total": 30406.250000427826,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 13.4,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 306.25000042782625,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 44,
+        "total": 14309.615956859852,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 4.1,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.04727385583911214,
+          "on_time": 0.012353495267067124,
+          "energy": 1009.5563295087474,
+          "promise": 4900,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 35000,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4900,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-04",
         "plan": "energy/energy",
         "choices": []
       },
-      "headroom": 2,
+      "headroom": 4593.749999572174,
       "stratum": "long/hazard",
-      "reason": "headroom 2 <= margin 5",
-      "selected": false
+      "selected": true,
+      "reason": "headroom 4593.749999572174 > margin 5"
     },
     {
       "task_id": "titan-home/0717",
       "naive": {
-        "total": 100,
+        "total": 34727.50044272301,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4679.16518406189,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 998.3352586611155,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 61,
-        "parts": {
-          "pickup": 0,
-          "on_time": 17,
-          "energy": 3.8,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 0
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 100,
+        "total": 34727.50044272301,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4679.16518406189,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 998.3352586611155,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy/energy",
@@ -913,41 +1045,56 @@
     {
       "task_id": "ceres-shift/0884",
       "naive": {
-        "total": 100,
+        "total": 34899.81624761778,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4799.816247617779,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 62,
+        "total": 18024.58939738449,
         "parts": {
-          "pickup": 0,
-          "on_time": 19.1,
-          "energy": 3.2,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.05255952124810365,
+          "on_time": 0.03040905371243373,
+          "energy": 4747.4710157256395,
+          "promise": 4877.03541308389,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34899.81624761778,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4799.816247617779,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-04",
         "plan": "energy/energy",
@@ -961,41 +1108,56 @@
     {
       "task_id": "jovian-hop/5387",
       "naive": {
-        "total": 100,
+        "total": 34973.52971708127,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4873.529717081274,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 41,
+        "total": 22140.457227438037,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 0.8,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 1358.2691058443154,
+          "on_time": 5600,
+          "energy": 1910.876213799584,
+          "promise": 4871.311907794137,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34973.52971708127,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4873.529717081274,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy/energy",
@@ -1009,41 +1171,56 @@
     {
       "task_id": "ceres-shift/2335",
       "naive": {
-        "total": 100,
+        "total": 34873.645212682524,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4773.645212682523,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 47,
+        "total": 34348.645212682524,
         "parts": {
-          "pickup": 0,
-          "on_time": 5.2,
-          "energy": 1.7,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4773.645212682523,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 525,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34873.645212682524,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4773.645212682523,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-04",
         "plan": "energy/energy",
@@ -1051,48 +1228,63 @@
       },
       "headroom": 0,
       "stratum": "long/clear",
-      "reason": "anchor: naive scores 100",
+      "reason": "anchor: naive scores 34873.645212682524",
       "anchor": true,
       "selected": true
     },
     {
       "task_id": "iss-crew/0877",
       "naive": {
-        "total": 100,
+        "total": 34902.83214429559,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4802.832144295592,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 43,
+        "total": 13534.214178293456,
         "parts": {
-          "pickup": 0.1,
-          "on_time": 13.1,
-          "energy": 5.1,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.0637298202814323,
+          "on_time": 0.059657869376452115,
+          "energy": 248.00449812397954,
+          "promise": 4886.130809470469,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1049.9554830093484,
+          "recovery": 1050,
+          "dose": 0
         },
-        "incidents": 1
+        "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34902.83214429559,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4802.832144295592,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
@@ -1106,89 +1298,119 @@
     {
       "task_id": "titan-home/4792",
       "naive": {
-        "total": 99,
+        "total": 31094.550229944707,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.7,
-          "promise": 14.7,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7997.793957461445,
+          "promise": 1396.7562724832649,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "random": {
-        "total": 62,
+        "total": 31094.550229944707,
         "parts": {
-          "pickup": 0.9,
-          "on_time": 20,
-          "energy": 1,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7997.793957461445,
+          "promise": 1396.7562724832649,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
-        "incidents": 0
+        "incidents": 2
       },
       "reference": {
-        "total": 100,
+        "total": 34558.28706170239,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.7,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7997.793957461445,
+          "promise": 4860.493104240945,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy/energy",
         "choices": []
       },
-      "headroom": 1,
+      "headroom": 3463.73683175768,
       "stratum": "long/hazard",
-      "reason": "headroom 1 <= margin 5",
-      "selected": false
+      "selected": true,
+      "reason": "headroom 3463.73683175768 > margin 5"
     },
     {
       "task_id": "ceres-shift/1629",
       "naive": {
-        "total": 100,
+        "total": 34914.86583992849,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8373.339781761024,
+          "promise": 4841.526058167465,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 44,
+        "total": 22778.35200373477,
         "parts": {
-          "pickup": 0,
-          "on_time": 1,
-          "energy": 3.4,
-          "promise": 14.8,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 1067.8457298151611,
+          "promise": 10.506273919609963,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
-        "incidents": 1
+        "incidents": 2
       },
       "reference": {
-        "total": 100,
+        "total": 34914.86583992849,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8373.339781761024,
+          "promise": 4841.526058167465,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-04",
         "plan": "energy/energy",
@@ -1202,89 +1424,123 @@
     {
       "task_id": "iss-crew/2370",
       "naive": {
-        "total": 82,
+        "total": 26261.171629511042,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.2,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 4534.196205324311,
+          "promise": 26.97542418673191,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "random": {
-        "total": 82,
+        "total": 26261.171629511042,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.2,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 4534.196205324311,
+          "promise": 26.97542418673191,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "reference": {
-        "total": 97,
+        "total": 31378.901140680657,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.2,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 4998.05447470817,
+          "promise": 4680.846665972487,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
-        "choices": []
+        "choices": [
+          "divert to Tiangong, wait 0 h",
+          "divert to Tiangong, wait 0 h",
+          "divert to Tiangong, wait 0 h"
+        ]
       },
-      "headroom": 15,
+      "headroom": 5117.729511169615,
       "stratum": "quick/hazard",
       "selected": true,
-      "reason": "headroom 15 > margin 5"
+      "reason": "headroom 5117.729511169615 > margin 5"
     },
     {
       "task_id": "iss-crew/0545",
       "naive": {
-        "total": 82,
+        "total": 26556.133619542194,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.4,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 4783.108284239612,
+          "promise": 73.02533530257855,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "random": {
-        "total": 82,
+        "total": 26556.133619542194,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.4,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 4783.108284239612,
+          "promise": 73.02533530257855,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "reference": {
-        "total": 98,
+        "total": 32251.050200184785,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 18.3,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 5651.050200184785,
+          "promise": 4900,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
@@ -1294,7 +1550,7 @@
           "divert to Moon, wait 0 h"
         ]
       },
-      "headroom": 16,
+      "headroom": 5694.916580642592,
       "stratum": "quick/hazard",
       "reason": "stratum quick/hazard already has 5",
       "selected": false
@@ -1302,89 +1558,93 @@
     {
       "task_id": "iss-crew+jovian-hop/0176",
       "naive": {
-        "total": 72,
-        "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 17.5,
-          "promise": 14.4,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 2
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "random": {
-        "total": 42,
-        "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 2.1,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 0
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 80,
+        "total": 28232.166434371284,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.0215539312267,
+          "on_time": 2800.015738087866,
+          "energy": 8400,
+          "promise": 4782.129142352191,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 8,
-      "stratum": "quick/hazard",
+      "headroom": 28232.166434371284,
+      "stratum": "quick/clear",
       "selected": true,
-      "reason": "headroom 8 > margin 5"
+      "reason": "headroom 28232.166434371284 > margin 5"
     },
     {
       "task_id": "iss-crew/0527",
       "naive": {
-        "total": 100,
+        "total": 34992.34650293409,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4892.346502934087,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 41,
+        "total": 13600.464574848398,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 1,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 1.1808282950314455,
+          "on_time": 0.04411721430636499,
+          "energy": 325.50700367568794,
+          "promise": 4873.732625663372,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34992.34650293409,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4892.346502934087,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
@@ -1398,89 +1658,93 @@
     {
       "task_id": "iss-crew+jovian-hop/4111",
       "naive": {
-        "total": 66,
-        "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 14.1,
-          "promise": 11.9,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "random": {
-        "total": 45,
-        "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 5.3,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 0
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 80,
+        "total": 28301.091223984706,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.0231636807125,
+          "on_time": 2800.0216479886494,
+          "energy": 8400,
+          "promise": 4852.639839158621,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1048.4065731567196,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 14,
-      "stratum": "quick/hazard",
-      "reason": "stratum quick/hazard already has 5",
-      "selected": false
+      "headroom": 28301.091223984706,
+      "stratum": "quick/clear",
+      "selected": true,
+      "reason": "headroom 28301.091223984706 > margin 5"
     },
     {
       "task_id": "iss-crew/0584",
       "naive": {
-        "total": 100,
+        "total": 34902.83214429559,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4802.832144295592,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 52,
+        "total": 34902.83214429559,
         "parts": {
-          "pickup": 0.1,
-          "on_time": 14.4,
-          "energy": 5.1,
-          "promise": 7.6,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4802.832144295592,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
-        "incidents": 2
+        "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34902.83214429559,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4802.832144295592,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
@@ -1494,41 +1758,56 @@
     {
       "task_id": "jovian-hop/6071",
       "naive": {
-        "total": 100,
+        "total": 34941.35861918468,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4841.358619184677,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 100,
+        "total": 34941.35861918468,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4841.358619184677,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34941.35861918468,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4841.358619184677,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy/energy",
@@ -1542,47 +1821,62 @@
     {
       "task_id": "phobos-commute/0978",
       "naive": {
-        "total": 82,
+        "total": 25091.893887453407,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.4,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 3355.624457397991,
+          "promise": 36.26943005541385,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "random": {
-        "total": 41,
+        "total": 13423.558433697119,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 0.8,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.5521708986628749,
+          "on_time": 0.022207277347239027,
+          "energy": 136.50233083768893,
+          "promise": 4886.481724683421,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 97,
+        "total": 29955.624457397993,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.4,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 3355.624457397991,
+          "promise": 4900,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-03",
         "plan": "energy/energy",
         "choices": []
       },
-      "headroom": 15,
+      "headroom": 4863.730569944586,
       "stratum": "quick/hazard",
       "reason": "stratum quick/hazard already has 5",
       "selected": false
@@ -1590,65 +1884,22 @@
     {
       "task_id": "iss-crew+phobos-commute/0784",
       "naive": {
-        "total": 67,
+        "total": 22890.993368674175,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 19.9,
-          "promise": 6.8,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
+          "pickup": 3852.4459624660913,
+          "on_time": 2800.0625623294786,
+          "energy": 8074.345950806841,
+          "promise": 551.6388930717637,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 262.5,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
-        "incidents": 2
-      },
-      "random": {
-        "total": 34,
-        "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 2,
-          "promise": 7.2,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 5
-      },
-      "reference": {
-        "total": 80,
-        "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 19.9,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "car": "sf-01",
-        "plan": "energy",
-        "choices": []
-      },
-      "headroom": 13,
-      "stratum": "quick/hazard",
-      "selected": true,
-      "reason": "headroom 13 > margin 5"
-    },
-    {
-      "task_id": "titan-home/6491",
-      "naive": {
-        "total": 98,
-        "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 18.8,
-          "promise": 14,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 2
+        "incidents": 3
       },
       "random": {
         "total": 0,
@@ -1656,63 +1907,89 @@
         "incidents": null
       },
       "reference": {
-        "total": 99,
+        "total": 27989.10502912035,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 18.8,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3852.4459624660913,
+          "on_time": 2800.0625623294786,
+          "energy": 8074.345950806841,
+          "promise": 4862.250553517941,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
-        "car": "sf-07",
-        "plan": "energy/energy",
+        "car": "sf-01",
+        "plan": "energy",
         "choices": []
       },
-      "headroom": 1,
-      "stratum": "long/hazard",
-      "reason": "headroom 1 <= margin 5",
+      "headroom": 5098.111660446175,
+      "stratum": "quick/hazard",
+      "selected": true,
+      "reason": "headroom 5098.111660446175 > margin 5"
+    },
+    {
+      "task_id": "titan-home/6491",
+      "error": "The season ends too soon for a new hail. Wait for the reset.",
+      "reason": "could not be opened",
       "selected": false
     },
     {
       "task_id": "jovian-hop/3114",
       "naive": {
-        "total": 100,
+        "total": 34975.78151026482,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4875.781510264818,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 42,
+        "total": 21586.466757390193,
         "parts": {
-          "pickup": 0.1,
-          "on_time": 0,
-          "energy": 1.9,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 804.2786357964721,
+          "on_time": 5600,
+          "energy": 1910.876213799584,
+          "promise": 4871.311907794137,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34975.78151026482,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4875.781510264818,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy/energy",
@@ -1726,47 +2003,62 @@
     {
       "task_id": "iss-crew/6264",
       "naive": {
-        "total": 85,
+        "total": 27958.460294983634,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 18.6,
-          "promise": 1.4,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 6113.059701492537,
+          "promise": 145.40059349109765,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "random": {
-        "total": 27,
+        "total": 27958.460294983634,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 1.9,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 6113.059701492537,
+          "promise": 145.40059349109765,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "reference": {
-        "total": 99,
+        "total": 32713.059701492537,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 18.6,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 6113.059701492537,
+          "promise": 4900,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
         "choices": []
       },
-      "headroom": 14,
+      "headroom": 4754.5994065089035,
       "stratum": "quick/hazard",
       "reason": "stratum quick/hazard already has 5",
       "selected": false
@@ -1774,89 +2066,119 @@
     {
       "task_id": "iss-crew/5927",
       "naive": {
-        "total": 98,
+        "total": 30930.61875236604,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.9,
-          "promise": 13.6,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8091.08386982979,
+          "promise": 1139.5348825362516,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 26,
+        "total": 8844.919401613235,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 1.4,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 1.0883691541214011,
+          "on_time": 0.03665364213696102,
+          "energy": 420.46581545202065,
+          "promise": 23.328563364956047,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "reference": {
-        "total": 100,
+        "total": 34691.08386982979,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.9,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8091.08386982979,
+          "promise": 4900,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
         "choices": []
       },
-      "headroom": 2,
+      "headroom": 3760.4651174637474,
       "stratum": "quick/hazard",
-      "reason": "headroom 2 <= margin 5",
+      "reason": "stratum quick/hazard already has 5",
       "selected": false
     },
     {
       "task_id": "iss-crew/2042",
       "naive": {
-        "total": 100,
+        "total": 34902.83214429559,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4802.832144295592,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 39,
+        "total": 9814.34745789299,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 0.6,
-          "promise": 13.7,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.03879982049527943,
+          "on_time": 0.03623446285644035,
+          "energy": 247.7393013760774,
+          "promise": 1166.6666637692185,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1049.866458464343,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "reference": {
-        "total": 100,
+        "total": 34902.83214429559,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4802.832144295592,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
@@ -1870,41 +2192,56 @@
     {
       "task_id": "jovian-hop/6021",
       "naive": {
-        "total": 100,
+        "total": 34766.755790558134,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4666.755790558135,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 77,
+        "total": 21585.794263907977,
         "parts": {
-          "pickup": 8.2,
-          "on_time": 20,
-          "energy": 8.4,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 803.6061423142556,
+          "on_time": 5600,
+          "energy": 1910.876213799584,
+          "promise": 4871.311907794137,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34766.755790558134,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4666.755790558135,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy/energy",
@@ -1918,89 +2255,106 @@
     {
       "task_id": "ceres-shift+iss-crew/4237",
       "naive": {
-        "total": 75,
+        "total": 27356.220069245483,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
+          "pickup": 3850.012656905033,
+          "on_time": 2800.009222162707,
+          "energy": 8397.619834710744,
+          "promise": 4808.578355466999,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 150,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 52,
-        "parts": {
-          "pickup": 0.1,
-          "on_time": 15.1,
-          "energy": 4.7,
-          "promise": 7.5,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 80,
+        "total": 28256.220069245483,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.012656905033,
+          "on_time": 2800.009222162707,
+          "energy": 8397.619834710744,
+          "promise": 4808.578355466999,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-04",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 5,
+      "headroom": 900,
       "stratum": "long/hazard",
-      "reason": "headroom 5 <= margin 5",
-      "selected": false
+      "selected": true,
+      "reason": "headroom 900 > margin 5"
     },
     {
       "task_id": "jovian-hop/0711",
       "naive": {
-        "total": 100,
+        "total": 34941.35861918468,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4841.358619184677,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 43,
+        "total": 34941.35861918468,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 3.4,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4841.358619184677,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34941.35861918468,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4841.358619184677,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy/energy",
@@ -2014,41 +2368,56 @@
     {
       "task_id": "phobos-commute/1795",
       "naive": {
-        "total": 100,
+        "total": 34979.62140065367,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4879.6214006536675,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 40,
+        "total": 13253.860078621085,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 0.3,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.5568901457322836,
+          "on_time": 0.033786407958772746,
+          "energy": 75.14372524731851,
+          "promise": 4778.17591845843,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1049.9497583616442,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34979.62140065367,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4879.6214006536675,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-03",
         "plan": "energy/energy",
@@ -2062,41 +2431,56 @@
     {
       "task_id": "phobos-commute/1523",
       "naive": {
-        "total": 100,
+        "total": 34817.4182714348,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4717.418271434799,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 100,
+        "total": 34817.4182714348,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4717.418271434799,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34817.4182714348,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4717.418271434799,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-03",
         "plan": "energy/energy",
@@ -2110,89 +2494,96 @@
     {
       "task_id": "iss-crew+jovian-hop/1347",
       "naive": {
-        "total": 64,
-        "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 13.1,
-          "promise": 11,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "random": {
-        "total": 38,
-        "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 3.2,
-          "promise": 10.5,
-          "checker": 10,
-          "fare": 10,
-          "economy": 4
-        },
-        "incidents": 2
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 80,
+        "total": 28284.611643267668,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 19.9,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.434597797408,
+          "on_time": 2800.0226900854573,
+          "energy": 8400,
+          "promise": 4834.154355384802,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy",
-        "choices": []
+        "choices": [
+          "divert to Moon, wait 0 h",
+          "divert to Moon, wait 0 h"
+        ]
       },
-      "headroom": 16,
-      "stratum": "quick/hazard",
-      "reason": "stratum quick/hazard already has 5",
+      "headroom": 28284.611643267668,
+      "stratum": "quick/clear",
+      "reason": "stratum quick/clear already has 5",
       "selected": false
     },
     {
       "task_id": "iss-crew/1984",
       "naive": {
-        "total": 82,
+        "total": 26516.23102646357,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.3,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 4744.520866732171,
+          "promise": 71.71015973140118,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 26,
+        "total": 8920.807927425438,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 1.4,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.6257356604659817,
+          "on_time": 0.03807932414690565,
+          "energy": 423.37045052860844,
+          "promise": 96.7736619122171,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "reference": {
-        "total": 98,
+        "total": 31713.78884911484,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.6,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 5259.390048154092,
+          "promise": 4754.398800960747,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
@@ -2202,7 +2593,7 @@
           "divert to Tiangong, wait 0 h"
         ]
       },
-      "headroom": 16,
+      "headroom": 5197.55782265127,
       "stratum": "quick/hazard",
       "reason": "stratum quick/hazard already has 5",
       "selected": false
@@ -2220,24 +2611,29 @@
         "incidents": null
       },
       "reference": {
-        "total": 78,
+        "total": 25792.959795421437,
         "parts": {
-          "pickup": 7.6,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 1310.6117717628017,
+          "on_time": 2800.0208325783174,
+          "energy": 8400,
+          "promise": 4882.327191080318,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 78,
+      "headroom": 25792.959795421437,
       "stratum": "quick/clear",
-      "selected": true,
-      "reason": "headroom 78 > margin 5"
+      "reason": "stratum quick/clear already has 5",
+      "selected": false
     },
     {
       "task_id": "phobos-commute+titan-home/4638",
@@ -2251,64 +2647,65 @@
         "parts": null,
         "incidents": null
       },
-      "reference": {
-        "total": 80,
-        "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "car": "sf-07",
-        "plan": "energy",
-        "choices": []
-      },
-      "headroom": 80,
+      "reference": null,
+      "headroom": null,
       "stratum": "quick/clear",
-      "selected": true,
-      "reason": "headroom 80 > margin 5"
+      "reason": "no plan flies",
+      "selected": false
     },
     {
       "task_id": "jovian-hop/3996",
       "naive": {
-        "total": 100,
+        "total": 34821.27477481303,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4721.274774813029,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 42,
+        "total": 34821.27477481303,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 2.2,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4721.274774813029,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34821.27477481303,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4721.274774813029,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy/energy",
@@ -2327,76 +2724,56 @@
         "incidents": null
       },
       "random": {
-        "total": 48,
-        "parts": {
-          "pickup": 1.9,
-          "on_time": 10,
-          "energy": 3.9,
-          "promise": 12.7,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 3
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
-      "reference": {
-        "total": 65,
-        "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 4.8,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "car": "sf-07",
-        "plan": "time",
-        "choices": []
-      },
-      "headroom": 65,
+      "reference": null,
+      "headroom": null,
       "stratum": "long/clear",
-      "selected": true,
-      "reason": "headroom 65 > margin 5"
+      "reason": "no plan flies",
+      "selected": false
     },
     {
       "task_id": "ceres-shift/3463",
       "naive": {
-        "total": 100,
+        "total": 34981.907447310055,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4881.907447310054,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 54,
-        "parts": {
-          "pickup": 0.1,
-          "on_time": 10.7,
-          "energy": 2.8,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 100,
+        "total": 34981.907447310055,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4881.907447310054,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-04",
         "plan": "energy/energy",
@@ -2410,95 +2787,103 @@
     {
       "task_id": "iss-crew+titan-home/4616",
       "naive": {
-        "total": 65,
-        "parts": {
-          "pickup": 10.2,
-          "on_time": 20,
-          "energy": 0.1,
-          "promise": 14.3,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 3
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "random": {
-        "total": 47,
-        "parts": {
-          "pickup": 0.2,
-          "on_time": 10,
-          "energy": 0.2,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 2
-        },
-        "incidents": 0
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 80,
+        "total": 28247.64804871251,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 19.8,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.293459736318,
+          "on_time": 2800.010190971527,
+          "energy": 8398.093220338984,
+          "promise": 4799.251177665682,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 15,
-      "stratum": "quick/hazard",
+      "headroom": 28247.64804871251,
+      "stratum": "quick/clear",
       "selected": true,
-      "reason": "headroom 15 > margin 5"
+      "reason": "headroom 28247.64804871251 > margin 5"
     },
     {
       "task_id": "iss-crew/0679",
       "naive": {
-        "total": 82,
+        "total": 26516.23102646357,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.3,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 4744.520866732171,
+          "promise": 71.71015973140118,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 39,
+        "total": 9455.350171026435,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 0.9,
-          "promise": 12.6,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.5717410324009268,
+          "on_time": 0.03479060405186768,
+          "energy": 323.40035531992885,
+          "promise": 731.3432840700536,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "reference": {
-        "total": 97,
+        "total": 31530.463866801183,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.3,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 5076.065065840434,
+          "promise": 4754.398800960747,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
-        "choices": []
+        "choices": [
+          "divert to Tiangong, wait 0 h",
+          "divert to Tiangong, wait 0 h",
+          "hold until open"
+        ]
       },
-      "headroom": 15,
+      "headroom": 5014.232840337612,
       "stratum": "quick/hazard",
       "reason": "stratum quick/hazard already has 5",
       "selected": false
@@ -2506,191 +2891,180 @@
     {
       "task_id": "jovian-hop/3707",
       "naive": {
-        "total": 98,
+        "total": 30848.02229757,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.9,
-          "promise": 13.3,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8187.237988336058,
+          "promise": 960.7843092339444,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 42,
+        "total": 30848.02229757,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 1.9,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8187.237988336058,
+          "promise": 960.7843092339444,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
-        "incidents": 0
+        "incidents": 1
       },
       "reference": {
-        "total": 100,
+        "total": 34787.237988336055,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.9,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8187.237988336058,
+          "promise": 4900,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy/energy",
         "choices": []
       },
-      "headroom": 2,
-      "stratum": "quick/hazard",
-      "reason": "headroom 2 <= margin 5",
-      "selected": false
-    },
-    {
-      "task_id": "iss-crew+titan-home/1373",
-      "naive": {
-        "total": 57,
-        "parts": {
-          "pickup": 10,
-          "on_time": 12.2,
-          "energy": 6.9,
-          "promise": 7.5,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 2
-      },
-      "random": {
-        "total": 50,
-        "parts": {
-          "pickup": 0,
-          "on_time": 8,
-          "energy": 1.7,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 1
-      },
-      "reference": {
-        "total": 80,
-        "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "car": "sf-07",
-        "plan": "energy",
-        "choices": []
-      },
-      "headroom": 23,
+      "headroom": 3939.2156907660537,
       "stratum": "quick/hazard",
       "reason": "stratum quick/hazard already has 5",
       "selected": false
     },
     {
-      "task_id": "titan-home+jovian-hop/2880",
+      "task_id": "iss-crew+titan-home/1373",
       "naive": {
-        "total": 65,
-        "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 9.6,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "random": {
-        "total": 54,
-        "parts": {
-          "pickup": 0.3,
-          "on_time": 10,
-          "energy": 3.7,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 0
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 73,
+        "total": 28172.358363412175,
         "parts": {
-          "pickup": 10,
-          "on_time": 3.5,
-          "energy": 19.7,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.01192755855,
+          "on_time": 2800.011123286279,
+          "energy": 8400,
+          "promise": 4778.334049200474,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 994.0012633668725,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 8,
-      "stratum": "long/hazard",
-      "selected": true,
-      "reason": "headroom 8 > margin 5"
+      "headroom": 28172.358363412175,
+      "stratum": "quick/clear",
+      "reason": "stratum quick/clear already has 5",
+      "selected": false
+    },
+    {
+      "task_id": "titan-home+jovian-hop/2880",
+      "naive": {
+        "total": 0,
+        "parts": null,
+        "incidents": null
+      },
+      "random": {
+        "total": 0,
+        "parts": null,
+        "incidents": null
+      },
+      "reference": null,
+      "headroom": null,
+      "stratum": "long/clear",
+      "reason": "no plan flies",
+      "selected": false
     },
     {
       "task_id": "iss-crew/0783",
       "naive": {
-        "total": 93,
+        "total": 29103.68731895113,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.3,
-          "promise": 8.4,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7112.551360570586,
+          "promise": 291.1359583805453,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 93,
+        "total": 29103.68731895113,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.3,
-          "promise": 8.4,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7112.551360570586,
+          "promise": 291.1359583805453,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "reference": {
-        "total": 99,
+        "total": 33566.950161531335,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.3,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7112.551360570586,
+          "promise": 4754.398800960747,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
         "choices": []
       },
-      "headroom": 6,
+      "headroom": 4463.262842580203,
       "stratum": "quick/hazard",
       "reason": "stratum quick/hazard already has 5",
       "selected": false
@@ -2698,333 +3072,318 @@
     {
       "task_id": "ceres-shift/2358",
       "naive": {
-        "total": 85,
+        "total": 30123.867510956454,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 23.867510956453106,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 85,
+        "total": 30123.867510956454,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 23.867510956453106,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "reference": {
-        "total": 100,
+        "total": 35000,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4900,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-04",
         "plan": "energy/energy",
         "choices": []
       },
-      "headroom": 15,
+      "headroom": 4876.132489043546,
       "stratum": "long/hazard",
-      "selected": true,
-      "reason": "headroom 15 > margin 5"
+      "reason": "stratum long/hazard already has 5",
+      "selected": false
     },
     {
       "task_id": "ceres-shift+iss-crew/4510",
       "naive": {
-        "total": 74,
+        "total": 23691.53712320952,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 19.4,
-          "promise": 14.8,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
+          "pickup": 3850.0747166199712,
+          "on_time": 2800.0108970292395,
+          "energy": 8279.3628837039,
+          "promise": 1262.0886258564087,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 150,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
-        "incidents": 2
+        "incidents": 3
       },
       "random": {
-        "total": 52,
-        "parts": {
-          "pickup": 0,
-          "on_time": 10,
-          "energy": 3.2,
-          "promise": 13.4,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 84,
+        "total": 28208.235205275458,
         "parts": {
-          "pickup": 10,
-          "on_time": 20,
-          "energy": 13.6,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.0747166199712,
+          "on_time": 2800.0108970292395,
+          "energy": 8279.3628837039,
+          "promise": 4878.786707922347,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
-        "car": "sf-01",
+        "car": "sf-04",
         "plan": "energy",
-        "choices": [
-          "hold until open",
-          "divert to Moon, wait 0 h",
-          "divert to Moon, wait 0 h"
-        ]
+        "choices": []
       },
-      "headroom": 10,
+      "headroom": 4516.698082065937,
       "stratum": "long/hazard",
       "selected": true,
-      "reason": "headroom 10 > margin 5"
+      "reason": "headroom 4516.698082065937 > margin 5"
     },
     {
       "task_id": "titan-home/4530",
       "naive": {
-        "total": 98,
+        "total": 29670.828930909072,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.1,
-          "promise": 14.3,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7366.08590505231,
+          "promise": 611.4538970611759,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1043.289128795586,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "random": {
-        "total": 90,
+        "total": 25170.06517135209,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 10.3,
-          "promise": 14.7,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 2290.5146003419986,
+          "promise": 1179.6035380024064,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1049.9470330076845,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "reference": {
-        "total": 99,
+        "total": 33893.21534353032,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.1,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7366.08590505231,
+          "promise": 4833.84030968242,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1043.289128795586,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy/energy",
         "choices": []
       },
-      "headroom": 1,
+      "headroom": 4222.386412621247,
       "stratum": "long/hazard",
-      "reason": "headroom 1 <= margin 5",
-      "selected": false
+      "selected": true,
+      "reason": "headroom 4222.386412621247 > margin 5"
     },
     {
       "task_id": "iss-crew/5728",
       "naive": {
-        "total": 97,
+        "total": 30038.871264297195,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.7,
-          "promise": 11.9,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7750.6800709639265,
+          "promise": 588.1911933332666,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 41,
+        "total": 13487.471498088595,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 0.6,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.13008044191566523,
+          "on_time": 0.04752693890157081,
+          "energy": 248.00449812397954,
+          "promise": 4839.333909574451,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1049.9554830093484,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34205.07887192468,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.7,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7750.6800709639265,
+          "promise": 4754.398800960747,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
         "choices": []
       },
-      "headroom": 3,
+      "headroom": 4166.2076076274825,
       "stratum": "quick/hazard",
-      "reason": "headroom 3 <= margin 5",
+      "reason": "stratum quick/hazard already has 5",
       "selected": false
     },
     {
       "task_id": "titan-home+ceres-shift/2739",
       "naive": {
-        "total": 75,
-        "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 14.6,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "random": {
-        "total": 40,
-        "parts": {
-          "pickup": 0.4,
-          "on_time": 8.3,
-          "energy": 4.2,
-          "promise": 4,
-          "checker": 10,
-          "fare": 10,
-          "economy": 3
-        },
-        "incidents": 4
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
-      "reference": {
-        "total": 80,
-        "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "car": "sf-07",
-        "plan": "energy",
-        "choices": []
-      },
-      "headroom": 5,
-      "stratum": "long/hazard",
-      "reason": "headroom 5 <= margin 5",
+      "reference": null,
+      "headroom": null,
+      "stratum": "long/clear",
+      "reason": "no plan flies",
       "selected": false
     },
     {
       "task_id": "titan-home+jovian-hop/2888",
       "naive": {
-        "total": 63,
-        "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 9.2,
-          "promise": 14,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 2
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "random": {
-        "total": 53,
-        "parts": {
-          "pickup": 10,
-          "on_time": 4,
-          "energy": 0,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 4
-        },
-        "incidents": 0
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
-      "reference": {
-        "total": 76,
-        "parts": {
-          "pickup": 10,
-          "on_time": 20,
-          "energy": 5.9,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "car": "sf-05",
-        "plan": "time",
-        "choices": []
-      },
-      "headroom": 13,
-      "stratum": "long/hazard",
-      "selected": true,
-      "reason": "headroom 13 > margin 5"
+      "reference": null,
+      "headroom": null,
+      "stratum": "long/clear",
+      "reason": "no plan flies",
+      "selected": false
     },
     {
       "task_id": "titan-home/3452",
       "naive": {
-        "total": 100,
+        "total": 34973.18797173782,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4873.187971737821,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 51,
-        "parts": {
-          "pickup": 0,
-          "on_time": 10.9,
-          "energy": 0,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 0
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 100,
+        "total": 34973.18797173782,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4873.187971737821,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy/energy",
@@ -3032,96 +3391,126 @@
       },
       "headroom": 0,
       "stratum": "long/clear",
-      "reason": "anchor: naive scores 100",
+      "reason": "anchor: naive scores 34973.18797173782",
       "anchor": true,
       "selected": true
     },
     {
       "task_id": "jovian-hop/2970",
       "naive": {
-        "total": 96,
+        "total": 30190.528615935124,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.8,
-          "promise": 11.5,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7974.739143868989,
+          "promise": 515.7894720661342,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 41,
+        "total": 14568.060138219904,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 0.9,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.8628748955210108,
+          "on_time": 0.012717542065566339,
+          "energy": 1331.237873804243,
+          "promise": 4851.809862451767,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1034.1368095263076,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34574.73914386899,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.8,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 7974.739143868989,
+          "promise": 4900,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy/energy",
         "choices": []
       },
-      "headroom": 4,
+      "headroom": 4384.210527933865,
       "stratum": "quick/hazard",
-      "reason": "headroom 4 <= margin 5",
+      "reason": "stratum quick/hazard already has 5",
       "selected": false
     },
     {
       "task_id": "titan-home/0490",
       "naive": {
-        "total": 100,
+        "total": 34909.875923666754,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4850.20855205166,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1009.6673716150981,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 43,
+        "total": 24368.537568288906,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 3.2,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 2385.300573532535,
+          "promise": 283.23699475637176,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
-        "incidents": 0
+        "incidents": 1
       },
       "reference": {
-        "total": 100,
+        "total": 34909.875923666754,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4850.20855205166,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1009.6673716150981,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy/energy",
@@ -3135,41 +3524,56 @@
     {
       "task_id": "titan-home/2436",
       "naive": {
-        "total": 100,
+        "total": 34978.41178604313,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4880.456272555193,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1047.955513487932,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 61,
+        "total": 34978.41178604313,
         "parts": {
-          "pickup": 0,
-          "on_time": 18.9,
-          "energy": 2.1,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4880.456272555193,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1047.955513487932,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34978.41178604313,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4880.456272555193,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1047.955513487932,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy/energy",
@@ -3192,64 +3596,65 @@
         "parts": null,
         "incidents": null
       },
-      "reference": {
-        "total": 90,
-        "parts": {
-          "pickup": 10,
-          "on_time": 19.9,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "car": "sf-07",
-        "plan": "energy",
-        "choices": []
-      },
-      "headroom": 90,
+      "reference": null,
+      "headroom": null,
       "stratum": "long/clear",
-      "selected": true,
-      "reason": "headroom 90 > margin 5"
+      "reason": "no plan flies",
+      "selected": false
     },
     {
       "task_id": "phobos-commute/3138",
       "naive": {
-        "total": 100,
+        "total": 34817.4182714348,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4717.418271434799,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 40,
+        "total": 13331.522262974,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 0.3,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.10616704757046787,
+          "on_time": 0.034706796796448766,
+          "energy": 75.14372524731851,
+          "promise": 4876.652087909808,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1029.5855759725075,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34817.4182714348,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4717.418271434799,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-03",
         "plan": "energy/energy",
@@ -3263,95 +3668,86 @@
     {
       "task_id": "iss-crew+titan-home/2798",
       "naive": {
-        "total": 58,
-        "parts": {
-          "pickup": 10.2,
-          "on_time": 13.2,
-          "energy": 5,
-          "promise": 9.4,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
-        },
-        "incidents": 2
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "random": {
-        "total": 48,
-        "parts": {
-          "pickup": 0.2,
-          "on_time": 8.7,
-          "energy": 1.5,
-          "promise": 12.9,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 80,
+        "total": 28254.495454952368,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 19.9,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.0432735235254,
+          "on_time": 2800.0105124250017,
+          "energy": 8400,
+          "promise": 4848.700146953213,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1005.7415220506288,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 22,
-      "stratum": "quick/hazard",
-      "reason": "stratum quick/hazard already has 5",
+      "headroom": 28254.495454952368,
+      "stratum": "quick/clear",
+      "reason": "stratum quick/clear already has 5",
       "selected": false
     },
     {
       "task_id": "titan-home+phobos-commute/2453",
       "naive": {
-        "total": 66,
+        "total": 23068.50227197442,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 18.4,
-          "promise": 7.5,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
+          "pickup": 3850.0242699652167,
+          "on_time": 2800.007925167863,
+          "energy": 6424.549103861594,
+          "promise": 2434.1424413501973,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 209.99999999999997,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1049.7785316295501,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "random": {
-        "total": 32,
-        "parts": {
-          "pickup": 0,
-          "on_time": 1.9,
-          "energy": 0.1,
-          "promise": 7.5,
-          "checker": 10,
-          "fare": 10,
-          "economy": 3
-        },
-        "incidents": 1
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 80,
+        "total": 28171.063622363374,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.0316491135623,
+          "on_time": 2800.010339724692,
+          "energy": 8400,
+          "promise": 4721.021633525119,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 14,
+      "headroom": 5102.561350388954,
       "stratum": "long/hazard",
       "reason": "stratum long/hazard already has 5",
       "selected": false
@@ -3359,41 +3755,56 @@
     {
       "task_id": "titan-home/1602",
       "naive": {
-        "total": 100,
+        "total": 34742.26986749645,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4719.927802781506,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 972.3420647149461,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 60,
+        "total": 33954.76986749645,
         "parts": {
-          "pickup": 0,
-          "on_time": 16,
-          "energy": 3.6,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4719.927802781506,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 262.5,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 972.3420647149461,
+          "recovery": 1050,
+          "dose": 0
         },
-        "incidents": 2
+        "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34742.26986749645,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4719.927802781506,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 972.3420647149461,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy/energy",
@@ -3407,41 +3818,56 @@
     {
       "task_id": "iss-crew/6477",
       "naive": {
-        "total": 100,
+        "total": 34902.83214429559,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4802.832144295592,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 60,
+        "total": 34902.83214429559,
         "parts": {
-          "pickup": 0.1,
-          "on_time": 14.6,
-          "energy": 5.1,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4802.832144295592,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34902.83214429559,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4802.832144295592,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
@@ -3455,185 +3881,223 @@
     {
       "task_id": "ceres-shift+phobos-commute/5293",
       "naive": {
-        "total": 75,
+        "total": 27603.03234296685,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
+          "pickup": 3850.8749497948334,
+          "on_time": 2800.0272532745444,
+          "energy": 8400,
+          "promise": 4677.130139897471,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 525,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 39,
-        "parts": {
-          "pickup": 10.8,
-          "on_time": 2,
-          "energy": 0.9,
-          "promise": 4.3,
-          "checker": 10,
-          "fare": 10,
-          "economy": 1
-        },
-        "incidents": 5
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 80,
+        "total": 28128.03234296685,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.8749497948334,
+          "on_time": 2800.0272532745444,
+          "energy": 8400,
+          "promise": 4677.130139897471,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-04",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 5,
+      "headroom": 525,
       "stratum": "long/hazard",
-      "reason": "headroom 5 <= margin 5",
+      "reason": "stratum long/hazard already has 5",
       "selected": false
     },
     {
       "task_id": "jovian-hop+iss-crew/4995",
       "naive": {
-        "total": 67,
+        "total": 24891.59617035663,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 7.5,
-          "checker": 10,
-          "fare": 10,
-          "economy": 0
+          "pickup": 3850.025809115875,
+          "on_time": 2800.024082231364,
+          "energy": 8400,
+          "promise": 2430.7742510944704,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 95.45454545454544,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1015.3174824603784,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "random": {
-        "total": 55,
-        "parts": {
-          "pickup": 0.1,
-          "on_time": 7,
-          "energy": 7.8,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
-        },
-        "incidents": 0
+        "total": 0,
+        "parts": null,
+        "incidents": null
       },
       "reference": {
-        "total": 80,
+        "total": 28283.482699135555,
         "parts": {
-          "pickup": 10,
-          "on_time": 10,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 3850.025809115875,
+          "on_time": 2800.024082231364,
+          "energy": 8400,
+          "promise": 4868.115325327938,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1015.3174824603784,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy",
         "choices": []
       },
-      "headroom": 13,
+      "headroom": 3391.886528778923,
       "stratum": "quick/hazard",
       "selected": true,
-      "reason": "headroom 13 > margin 5"
+      "reason": "headroom 3391.886528778923 > margin 5"
     },
     {
       "task_id": "iss-crew/2412",
       "naive": {
-        "total": 82,
+        "total": 26120.268539791836,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.1,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 4367.198390793844,
+          "promise": 53.070148997992284,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 37,
+        "total": 9192.505421043095,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 0.7,
-          "promise": 11.6,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 1.6353988442835738,
+          "on_time": 0.07495950847981682,
+          "energy": 252.33352343524055,
+          "promise": 538.4615392550915,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "reference": {
-        "total": 97,
+        "total": 31095.822684822735,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.1,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 4641.423883861986,
+          "promise": 4754.398800960747,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
-        "choices": []
+        "choices": [
+          "divert to Tiangong, wait 0 h",
+          "divert to Tiangong, wait 0 h",
+          "hold until open"
+        ]
       },
-      "headroom": 15,
+      "headroom": 4975.554145030899,
       "stratum": "quick/hazard",
-      "reason": "stratum quick/hazard already has 5",
-      "selected": false
+      "selected": true,
+      "reason": "headroom 4975.554145030899 > margin 5"
     },
     {
       "task_id": "iss-crew/1649",
       "naive": {
-        "total": 100,
+        "total": 34902.83214429559,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4802.832144295592,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 39,
+        "total": 9689.786578409043,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 0.6,
-          "promise": 13.5,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.03838569316300809,
+          "on_time": 0.03584619422236163,
+          "energy": 247.693150862453,
+          "promise": 1042.5531957863466,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1049.465999872857,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "reference": {
-        "total": 100,
+        "total": 34902.83214429559,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4802.832144295592,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
@@ -3647,41 +4111,56 @@
     {
       "task_id": "titan-home/3508",
       "naive": {
-        "total": 100,
+        "total": 34938.26253296454,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4883.35752726245,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1004.9050057020843,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "random": {
-        "total": 100,
+        "total": 34938.26253296454,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4883.35752726245,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1004.9050057020843,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34938.26253296454,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4883.35752726245,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1004.9050057020843,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy/energy",
@@ -3695,89 +4174,119 @@
     {
       "task_id": "jovian-hop/5196",
       "naive": {
-        "total": 99,
+        "total": 31135.444170573992,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.9,
-          "promise": 13.7,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8240.322224132426,
+          "promise": 1195.121946441567,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 43,
+        "total": 14242.509038255108,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 2.5,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 1.736816790070679,
+          "on_time": 0.04048988344078437,
+          "energy": 998.0551795939614,
+          "promise": 4842.676551987635,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 0
       },
       "reference": {
-        "total": 100,
+        "total": 34840.322224132426,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 19.9,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8240.322224132426,
+          "promise": 4900,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-05",
         "plan": "energy/energy",
         "choices": []
       },
-      "headroom": 1,
+      "headroom": 3704.8780535584337,
       "stratum": "quick/hazard",
-      "reason": "headroom 1 <= margin 5",
+      "reason": "stratum quick/hazard already has 5",
       "selected": false
     },
     {
       "task_id": "titan-home/1269",
       "naive": {
-        "total": 100,
+        "total": 34763.45606142129,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4747.172003910763,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 966.2840575105251,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 58,
+        "total": 24294.83445303491,
         "parts": {
-          "pickup": 0,
-          "on_time": 15.9,
-          "energy": 2.6,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 2132.875891872633,
+          "promise": 461.95856116227617,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
-        "incidents": 0
+        "incidents": 2
       },
       "reference": {
-        "total": 100,
+        "total": 34763.45606142129,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 20,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 8400,
+          "promise": 4747.172003910763,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 966.2840575105251,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-07",
         "plan": "energy/energy",
@@ -3791,47 +4300,66 @@
     {
       "task_id": "iss-crew/0620",
       "naive": {
-        "total": 82,
+        "total": 26295.19411274703,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.2,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 4534.196205324311,
+          "promise": 60.99790742271891,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 1
       },
       "random": {
-        "total": 26,
+        "total": 8840.873053194244,
         "parts": {
-          "pickup": 0,
-          "on_time": 0,
-          "energy": 1.3,
-          "promise": 0,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 0.6357106633604348,
+          "on_time": 0.03313332470220452,
+          "energy": 393.3447316712175,
+          "promise": 48.88827334648228,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1047.9712041884818,
+          "recovery": 1050,
+          "dose": 0
         },
         "incidents": 2
       },
       "reference": {
-        "total": 97,
+        "total": 31452.453275668915,
         "parts": {
-          "pickup": 20,
-          "on_time": 20,
-          "energy": 17.2,
-          "promise": 15,
-          "checker": 10,
-          "fare": 10,
-          "economy": 5
+          "pickup": 7699.999999999999,
+          "on_time": 5600,
+          "energy": 4998.05447470817,
+          "promise": 4754.398800960747,
+          "checker": 1400,
+          "fare": 1400,
+          "economy": 1050,
+          "tank": 1400,
+          "throttle": 1050,
+          "window": 1050,
+          "recovery": 1050,
+          "dose": 0
         },
         "car": "sf-01",
         "plan": "energy/energy",
-        "choices": []
+        "choices": [
+          "divert to Tiangong, wait 0 h",
+          "divert to Tiangong, wait 0 h",
+          "divert to Tiangong, wait 0 h"
+        ]
       },
-      "headroom": 15,
+      "headroom": 5157.259162921884,
       "stratum": "quick/hazard",
       "reason": "stratum quick/hazard already has 5",
       "selected": false
