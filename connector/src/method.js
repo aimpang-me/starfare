@@ -21,6 +21,9 @@ function unitWord(unit) {
   return UNIT_WORDS[unit];
 }
 
+import { EPISODE_SCHEMA } from "./episode.js";
+import { POOL_TIERS } from "./game.js";
+
 // Labels and units are whatever score() emits, so the page cannot keep a second copy.
 function partCatalog(E) {
   const R = E.R;
@@ -53,8 +56,7 @@ export function methodPage(E, sky) {
   const catalog = partCatalog(E);
   const parts = catalog.parts;
   const fare = fareRates(E);
-  const bookings = R.HAILS;
-  const passengers = bookings.reduce((n, h) => n + h.party, 0);
+  if (!POOL_TIERS.placeholder) throw new Error("pool tiers are no longer a placeholder");
   const places = E.PLACES;
   const simulatedStations = places.filter((p) => p.real === false).map((p) => p.name);
   const classes = Object.values(E.SHIP_CLASSES);
@@ -66,8 +68,8 @@ export function methodPage(E, sky) {
     const mode = c.power_mode === "constant" ? "constant" : "arrays, 1/r^2";
     return `<tr data-class="${esc(c.id)}"><td>${esc(c.name)}</td><td class="num">${esc(c.dry_kg)}</td><td class="num">${esc(c.xenon_kg)}</td><td class="num">${esc(c.power_w_1au)}</td><td class="num">${esc(c.housekeeping_w)}</td><td class="num">${esc(c.seats)}</td><td>${esc(mode)}</td><td>${parked.length ? esc(parked.join(", ")) : "not parked"}</td></tr>`;
   }).join("");
-  const bookingRows = bookings.map((h) =>
-    `<tr data-booking="${esc(h.id)}"><td>${esc(h.title)}</td><td class="num">${esc(h.party)}</td></tr>`).join("");
+  const tierRows = POOL_TIERS.rows.map((row) =>
+    `<tr data-tier="${esc(row.min_players)}"><td class="num">${esc(row.min_players)}</td><td class="num">${esc(row.hails)}</td></tr>`).join("");
   const dawn = E.SHIP_CLASSES.dawn;
   const ds1 = E.SHIP_CLASSES.ds1;
   const rtg = E.SHIP_CLASSES.rtg;
@@ -133,7 +135,7 @@ th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;t
   <p class="note">Reported cruise dose uses ${esc(R.CRUISE_MSV_DAY)} mSv per day. The engine comment cites Curiosity RAD, cruise to Mars, Zeitlin et al. 2013. The dose part scores 0.</p>
 
   <h2>Stranded flights</h2>
-  <p>In the local report, a flight that does not arrive is stranded. The score cell is blank. The mean counts that flight as 0. The report says stranded counts as 0 in this mean only.</p>
+  <p>In the local report, a flight that does not arrive is stranded. The score cell is blank. The mean uses landed flights only. Stranded flights are counted beside it and are not folded in as 0.</p>
 
   <h2>Starseeker classes</h2>
   <p>The catalog has Dawn class, Deep Space 1 class, RTG class, and Shuttle class. The first three are parked. Shuttle class is not parked. Seat counts on Dawn class and Deep Space 1 class are a simulated cabin. Those probes flew with no passengers.</p>
@@ -157,17 +159,19 @@ th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;t
   <p>The engine does not use a solar constant of 1361 W/m2. docs/SOLAR-VARIABLES.md lists irradiance among the workbook rows the engine does not use. Solar array power is the class power at 1 AU divided by the square of the heliocentric distance. The RTG class generator does not fall off. It holds its watts at every distance.</p>
 
   <h2>Passengers and seasons</h2>
-  <p>A season is ${esc(sky.len_days)} sky days. One real second is one sky day. Hazards are seeded by the season number, so every player in that season meets the same simulated hazards. The passenger list is not redrawn. The catalog has ${esc(bookings.length)} bookings and ${esc(passengers)} passengers.</p>
+  <p>A season is ${esc(sky.len_days)} sky days. One real second is one sky day. Hazards are seeded by the season number, so every player in that season meets the same simulated hazards. A season's passengers are a seeded pool of simulated passengers. The tier sizes are placeholders.</p>
+  <p>The pool size is frozen from the previous season's distinct signed-in players. The first season counts 0 players, so it uses the first tier. A later season keeps the size written for it.</p>
   <table>
-    <thead><tr><th>Booking</th><th>Passengers</th></tr></thead>
-    <tbody>${bookingRows}</tbody>
+    <thead><tr><th>Distinct signed-in players</th><th>Hails</th></tr></thead>
+    <tbody>${tierRows}</tbody>
   </table>
 
   <h2>Held out seeds</h2>
-  <p>The suite file stores no seeds. Practice tasks use the dev split. A dev seed is the prefix k1: and 128 bits from SHA-256 of a public string. The test split is held out. Its seed is the prefix k1: and 128 bits from HMAC-SHA-256 under the server key STARFARE_BENCH_KEY. That key is not in the repository. A split named train is refused. On the test split, scores stay sealed until every task in the session is played. The task list can name the booking and the sky day. The hazard world drawn from the keyed seed stays out of the suite file.</p>
+  <p>The suite file stores no seeds. Practice tasks use the dev split. A dev seed is the prefix k1: and 128 bits from SHA-256 of a public string. The test split is held out. Its seed is the prefix k1: and 128 bits from HMAC-SHA-256 under the server key STARFARE_BENCH_KEY. That key is not in the repository. A split named train is refused. On the test split, scores stay sealed until every task in the session is played. The task list can name the booking and the sky day. The hazard world drawn from the keyed seed stays out of the suite file. Hidden test seeds stay out of training data. An episode export refuses a hidden test seed.</p>
 
   <h2>Flight records</h2>
-  <p>A download at /rides/export/&lt;token&gt;.jsonl is one starfare.ride/1 record per line. It holds the newest 500 arrived flights and lasts 24 hours. Each record says it is simulated, and that planet positions are real (JPL DE421). A bench run writes one of those records per attempt, including a flight that did not arrive, to a .rides.jsonl file. A bench session does not add those attempts to the player download. The engine also steps a flight with start and step. Each return is plain JSON, an open checkpoint or a finished flight. The repository does not define an RL episode format.</p>
+  <p>A download at /rides/export/&lt;token&gt;.jsonl is one starfare.ride/1 record per line. It holds the newest 500 arrived flights and lasts 24 hours. Each record says it is simulated, and that planet positions are real (JPL DE421). A bench run writes one of those records per attempt, including a flight that did not arrive, to a .rides.jsonl file. A bench session does not add those attempts to the player download.</p>
+  <p>An arrived flight also downloads at /flight/&lt;run_id&gt;/episode.jsonl. The file is ${esc(EPISODE_SCHEMA)} JSONL, one full episode per arrived flight. Each line is one step, and the file says it is simulated. A hidden test seed exports nothing. A public dev seed and a live season seed can. The engine also steps a flight with start and step. Each return is plain JSON, an open checkpoint or a finished flight.</p>
 </main>
 </body>
 </html>`;
