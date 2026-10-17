@@ -41,6 +41,15 @@
   label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-2); }
   .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   .sim { color: #7f8a99; font-size: 12px; margin: 8px 0 0; }
+  .clock {
+    font-family: Rajdhani, Inter, sans-serif;
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    line-height: 1;
+    margin: 4px 0 0;
+  }
+  #caption { min-height: 2.6em; margin: 8px 0 0; color: var(--cy); font-size: 16px; }
   #status { min-height: 1.2em; color: var(--cy); }
   #minute { margin: 8px 0 0; }
   section { margin-top: 12px; }
@@ -61,7 +70,10 @@
   <p class="sim" id="note">Simulated</p>
   <p class="mono" id="status">Paused</p>
   <p class="mono" id="ship"></p>
+  <p class="sim">Sky time</p>
+  <p class="clock" id="skytime"></p>
   <p class="mono" id="minute"></p>
+  <p id="caption"></p>
   <div class="row">
     <button type="button" id="play">Play</button>
     <button type="button" id="pause">Pause</button>
@@ -112,7 +124,9 @@
   var noteEl = document.getElementById("note");
   var statusEl = document.getElementById("status");
   var shipEl = document.getElementById("ship");
+  var skyTimeEl = document.getElementById("skytime");
   var minuteEl = document.getElementById("minute");
+  var captionEl = document.getElementById("caption");
   var scoreEl = document.getElementById("score");
   var logEl = document.getElementById("log");
   var placesEl = document.getElementById("places");
@@ -207,7 +221,8 @@
       scoreEl.textContent = "";
       return;
     }
-    var lines = ["Score " + score.total + " out of " + score.outOf];
+    var lines = [];
+    if (score.total != null) lines.push("Score " + score.total + " out of " + score.outOf);
     for (var i = 0; i < score.parts.length; i++) {
       var p = score.parts[i];
       lines.push(shown(p.label) + " " + p.got + " of " + p.max);
@@ -218,10 +233,13 @@
   function paintLog(frame) {
     logEl.textContent = "";
     var ul = document.createElement("ul");
-    var marks = frame.recorded.concat(frame.arrived);
-    for (var i = 0; i < marks.length; i++) {
+    var lines = [];
+    for (var r = 0; r < frame.recorded.length; r++) lines.push(frame.recorded[r].text);
+    var captions = frame.captions || [];
+    for (var c = 0; c < captions.length; c++) lines.push(captions[c]);
+    for (var i = 0; i < lines.length; i++) {
       var li = document.createElement("li");
-      li.textContent = shown(marks[i].text);
+      li.textContent = shown(lines[i]);
       ul.appendChild(li);
     }
     logEl.appendChild(ul);
@@ -366,7 +384,10 @@
     }
     noteEl.textContent = shown(frame.note);
     shipEl.textContent = frame.shipText;
-    minuteEl.textContent = frame.minute + " " + phaseWords(frame.phase);
+    var bits = String(frame.minute || "").split(" ");
+    skyTimeEl.textContent = bits[1] || "";
+    minuteEl.textContent = (bits[0] || "") + " " + phaseWords(frame.phase);
+    captionEl.textContent = frame.caption || "";
     statusEl.textContent = clock.playing ? "Playing" : "Paused";
     paintScore(frame.score);
     paintLog(frame);

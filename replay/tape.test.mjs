@@ -159,14 +159,27 @@ test("a loaded flight hides the score until arrival and then copies the seven pa
   const mid = tape.reduce(clock, { type: "scrub", jd: (clock.span.start + clock.span.end) / 2 });
   assert.equal(tape.frameAt(mid, soleOf()).score, null);
   const done = tape.reduce(clock, { type: "scrub", jd: clock.span.end });
-  const frame = tape.frameAt(done, soleOf());
+  const arrived = tape.frameAt(done, soleOf());
   const reward = rows.at(-1).reward;
+  assert.equal(arrived.score, null);
+  assert.equal(arrived.caption, "Arrived.");
+  assert.equal(arrived.minute, rows.at(-1).outcome.arrive);
+  let showing = tape.reduce(done, { type: "play" });
+  showing = tape.reduce(showing, { type: "tick", seconds: 4 });
+  assert.equal(tape.frameAt(showing, soleOf()).score, null);
+  showing = tape.reduce(showing, { type: "tick", seconds: 2 });
+  const first = tape.frameAt(showing, soleOf());
+  assert.equal(first.score.parts.length, 1);
+  assert.equal(first.score.total, null);
+  assert.equal(first.score.parts[0].got, reward.parts[0].got);
+  assert.equal(first.score.parts[0].max, reward.parts[0].max);
+  showing = tape.reduce(showing, { type: "tick", seconds: 12 });
+  const frame = tape.frameAt(showing, soleOf());
   assert.equal(frame.score.total, reward.total);
   assert.equal(frame.score.outOf, reward.out_of);
   assert.deepEqual(frame.score.parts.map((p) => ({ key: p.key, label: p.label, got: p.got, max: p.max, note: p.note })), reward.parts);
   assert.deepEqual(frame.score.measures, reward.measures);
   assert.equal(frame.score.parShip, "SF-03");
-  assert.equal(frame.minute, rows.at(-1).outcome.arrive);
   assert.ok(frame.arrived.some((m) => m.text.includes("Booking phobos-commute")));
   assert.ok(frame.arrived.some((m) => m.text.includes("Starseeker SF-03")));
 });
@@ -244,7 +257,13 @@ test("pause, a paused tick, and a scrub to the current date keep the same clock"
   const done = tape.reduce(clock, { type: "scrub", jd: clock.span.end });
   const paused = tape.reduce(done, { type: "pause" });
   assert.equal(tape.reduce(paused, { type: "tick", seconds: 5 }).jd, done.jd);
-  const again = tape.reduce(done, { type: "play" });
+  const revealing = tape.reduce(done, { type: "play" });
+  assert.equal(revealing.playing, true);
+  assert.equal(revealing.jd, clock.span.end);
+  const finished = tape.reduce(revealing, { type: "tick", seconds: 30 });
+  assert.equal(finished.playing, false);
+  assert.equal(finished.jd, clock.span.end);
+  const again = tape.reduce(finished, { type: "play" });
   assert.equal(again.playing, true);
   assert.equal(again.jd, clock.span.start);
   const lost = tape.frameAt({ ...clock }, soleOf());
@@ -371,7 +390,62 @@ test("an outer hail replays in the heliocentric view and hides the score until a
   const end = tape.frameAt(tape.reduce(loaded.clock, { type: "scrub", jd: loaded.clock.span.end }), soleOf());
   const reward = JSON.parse(text.trim().split("\n").at(-1)).reward;
   assert.equal(end.phase, "arrived");
-  assert.equal(end.score.total, reward.total);
-  assert.equal(end.score.parts.length, 7);
+  assert.equal(end.score, null);
   assert.equal(end.view.mode, "helio");
+  let shown = tape.reduce(loaded.clock, { type: "scrub", jd: loaded.clock.span.end });
+  shown = tape.reduce(shown, { type: "play" });
+  shown = tape.reduce(shown, { type: "tick", seconds: 20 });
+  const scored = tape.frameAt(shown, soleOf());
+  assert.equal(scored.score.total, reward.total);
+  assert.equal(scored.score.parts.length, 7);
+  assert.equal(scored.view.mode, "helio");
+});
+
+test("a departure and a decision hold the sky clock while the caption stays", async () => {
+  const { text, arcsText, rows } = await fixture();
+  const clock = load(text, arcsText).clock;
+  const hop = rows.at(-1).observation.flown[0];
+  const depart = jdOfIso(hop.depart);
+  let at = tape.reduce(clock, { type: "scrub", jd: depart });
+  at = tape.reduce(at, { type: "play" });
+  const held = tape.reduce(at, { type: "tick", seconds: 1 });
+  const frame = tape.frameAt(held, soleOf());
+  assert.equal(held.jd, depart);
+  assert.equal(frame.caption, "Departure. Mars Base to Phobos.");
+  assert.equal(frame.captions.filter((line) => line === frame.caption).length, 1);
+  const moved = tape.reduce(held, { type: "tick", seconds: 4 });
+  assert.ok(moved.jd > depart);
+  const cp = rows.find((row) => row.kind === "checkpoint");
+  const reply = tape.frameAt(tape.reduce(clock, { type: "scrub", jd: jdOfIso(cp.observation.reply_arrives) }), soleOf());
+  assert.equal(reply.caption, "Decision. Hold.");
+  const closed = tape.frameAt(tape.reduce(clock, { type: "scrub", jd: jdOfIso(cp.checkpoint.at) }), soleOf());
+  assert.equal(closed.caption, "Checkpoint. Mars Base. A dust storm closed the pad.");
+  const slow = tape.reduce(at, { type: "speed", speed: 1 });
+  const fast = tape.reduce(at, { type: "speed", speed: 4 });
+  const slowJd = tape.reduce(slow, { type: "tick", seconds: 4 }).jd;
+  const fastJd = tape.reduce(fast, { type: "tick", seconds: 4 }).jd;
+  assert.ok(fastJd > slowJd);
+});
+
+test("append accepts another recorded checkpoint and refuses a hidden seed", async () => {
+  const { text, arcsText, rows } = await fixture();
+  const clock = load(text, arcsText).clock;
+  const row = rows.find((item) => item.kind === "checkpoint");
+  assert.equal(tape.reduce(clock, { type: "append", row: row }), clock);
+  const hidden = JSON.parse(JSON.stringify(row));
+  hidden.observation = Object.assign({}, hidden.observation, { why: seedHead + "a".repeat(32) });
+  assert.equal(tape.reduce(clock, { type: "append", row: hidden }), clock);
+  const extra = JSON.parse(JSON.stringify(row));
+  extra.checkpoint = Object.assign({}, extra.checkpoint, { at: "2029-02-09 12:00" });
+  extra.observation = Object.assign({}, extra.observation, {
+    why: row.observation.why,
+    reply_arrives: "2029-02-09 12:14",
+    place: row.observation.place
+  });
+  const next = tape.reduce(clock, { type: "append", row: extra });
+  assert.notEqual(next, clock);
+  const frame = tape.frameAt(tape.reduce(next, { type: "scrub", jd: jdOfIso("2029-02-09 12:00") }), soleOf());
+  assert.equal(frame.caption, "Checkpoint. Mars Base. A dust storm closed the pad.");
+  assert.equal(frame.score, null);
+  assert.equal(JSON.stringify(frame).includes(seedHead), false);
 });

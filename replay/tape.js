@@ -7,6 +7,10 @@
 
   var AU_KM = 149597870.7;
   var SPEEDS = [0.5, 1, 2, 4];
+  var DWELL = 4;
+  var PART = 2;
+  var CRUISE_MIN = 2;
+  var CRUISE_MAX = 8;
   var SCHEMA = "starfare.episode/1";
   var ARC_SCHEMA = "starfare.arcs/1";
   var RUN_ID = /^run_[0-9a-f]{20}$/;
@@ -400,6 +404,9 @@
     var parShip = obs && typeof obs.par_ship === "string" ? obs.par_ship : null;
     var hailId = typeof outcome.hail_id === "string" ? outcome.hail_id : "";
     pushTimed(bag.marks, end, { tool: null, hailId: hailId, ship: shipName });
+    var names = nameMap(sole);
+    var beats = captionBeats(rows, hops, names);
+    var schedule = buildSchedule(start, end, beats);
 
     var clock = {
       jd: start,
@@ -414,7 +421,10 @@
       marks: bag.marks,
       recorded: bag.recorded.map(markView),
       reward: copyReward(last.reward),
-      fit: (end - start) / 28,
+      schedule: schedule,
+      beats: beats,
+      names: names,
+      cursor: 0,
       note: typeof outcome.note === "string" ? outcome.note : "",
       parShip: parShip,
       shipName: shipName
@@ -422,7 +432,147 @@
     return { ok: true, clock: clock };
   }
 
-  function retarget(clock, seal, jd, playing, speed) {
+  function nameMap(sole) {
+    var map = {};
+    var places = sole && sole.PLACES || [];
+    for (var i = 0; i < places.length; i++) {
+      if (places[i] && places[i].id) map[places[i].id] = places[i].name || places[i].id;
+    }
+    return map;
+  }
+
+  function named(names, id, fallback) {
+    if (fallback) return fallback;
+    if (id && names && names[id]) return names[id];
+    return id || "";
+  }
+
+  function lead(s) {
+    var text = String(s || "").replace(/\s+/g, " ").trim();
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  function cruiseSeconds(days) {
+    if (!(days > 0)) return 0;
+    return Math.min(CRUISE_MAX, Math.max(CRUISE_MIN, days));
+  }
+
+  function captionBeats(rows, hops, names) {
+    var beats = [];
+    for (var i = 0; i < hops.length; i++) {
+      beats.push({
+        jd: hops[i].depart,
+        caption: "Departure. " + named(names, hops[i].from) + " to " + named(names, hops[i].to) + "."
+      });
+    }
+    for (var r = 0; r < rows.length; r++) addRowBeats(beats, rows[r], names);
+    beats.sort(function (a, b) {
+      if (a.jd !== b.jd) return a.jd - b.jd;
+      if (a.caption < b.caption) return -1;
+      if (a.caption > b.caption) return 1;
+      return 0;
+    });
+    return beats;
+  }
+
+  function addRowBeats(beats, row, names) {
+    if (!row || row.kind !== "checkpoint") return;
+    var cp = row.checkpoint || {};
+    var obs = row.observation || {};
+    var at = jdOfMinute(cp.at);
+    var place = named(names, cp.place, obs.place && obs.place.name);
+    var why = lead(obs.why).replace(/\.+$/, "");
+    if (at != null && place) {
+      beats.push({
+        jd: at,
+        caption: why ? "Checkpoint. " + place + ". " + why + "." : "Checkpoint. " + place + "."
+      });
+    }
+    var reply = jdOfMinute(obs.reply_arrives);
+    var act = row.action && row.action.arguments ? row.action.arguments.action : "";
+    if (reply != null && act) beats.push({ jd: reply, caption: "Decision. " + lead(act).replace(/\.+$/, "") + "." });
+  }
+
+  function buildSchedule(start, end, beats) {
+    var events = [];
+    for (var i = 0; i < beats.length; i++) {
+      if (beats[i].jd > start && beats[i].jd < end) events.push(beats[i]);
+    }
+    events.push({ jd: end, caption: "Arrived." });
+    events.sort(function (a, b) { return a.jd - b.jd; });
+    var points = [{ t: 0, jd: start, caption: null, parts: 0 }];
+    var t = 0;
+    var jd = start;
+    var caption = null;
+    for (var n = 0; n < events.length; n++) {
+      var gap = cruiseSeconds(events[n].jd - jd);
+      if (gap > 0) {
+        t += gap;
+        points.push({ t: t, jd: events[n].jd, caption: caption, parts: 0 });
+      }
+      caption = events[n].caption;
+      jd = events[n].jd;
+      points.push({ t: t, jd: jd, caption: caption, parts: 0 });
+      t += DWELL;
+      points.push({ t: t, jd: jd, caption: caption, parts: 0 });
+    }
+    for (var p = 1; p <= 7; p++) {
+      t += PART;
+      points.push({ t: t, jd: end, caption: "Arrived.", parts: p });
+    }
+    return { points: points, duration: t };
+  }
+
+  function atCursor(points, cursor) {
+    var i = 0;
+    while (i < points.length - 1 && points[i + 1].t <= cursor) i++;
+    var a = points[i];
+    if (i === points.length - 1 || points[i + 1].t === a.t) return a;
+    var b = points[i + 1];
+    if (a.jd === b.jd) return a;
+    var f = (cursor - a.t) / (b.t - a.t);
+    return { t: cursor, jd: a.jd + (b.jd - a.jd) * f, caption: a.caption, parts: a.parts };
+  }
+
+  function cursorForJd(points, jd) {
+    for (var i = 0; i < points.length; i++) {
+      if (points[i].parts > 0) break;
+      if (points[i].jd === jd && (i === 0 || points[i - 1].jd !== jd)) return points[i].t;
+    }
+    for (var k = 1; k < points.length; k++) {
+      var a = points[k - 1];
+      var b = points[k];
+      if (a.parts > 0 || b.parts > 0) break;
+      if (b.jd > a.jd && jd > a.jd && jd < b.jd) {
+        var f = (jd - a.jd) / (b.jd - a.jd);
+        return a.t + f * (b.t - a.t);
+      }
+    }
+    return 0;
+  }
+
+  function captionsSoFar(points, cursor) {
+    var out = [];
+    var seen = {};
+    for (var i = 0; i < points.length; i++) {
+      if (points[i].t > cursor) break;
+      var text = points[i].caption;
+      if (!text || seen[text]) continue;
+      seen[text] = true;
+      out.push(text);
+    }
+    return out;
+  }
+
+  function rowBeats(row, names) {
+    var beats = [];
+    addRowBeats(beats, row, names);
+    return beats;
+  }
+
+  function retarget(clock, seal, jd, playing, speed, cursor, schedule, beats) {
+    if (clock.jd === jd && clock.playing === playing && clock.speed === speed && seal.cursor === cursor && !schedule) return clock;
     var next = {
       jd: jd,
       playing: playing,
@@ -431,7 +581,19 @@
       runId: clock.runId,
       shipName: clock.shipName
     };
-    secret.set(next, seal);
+    secret.set(next, {
+      hops: seal.hops,
+      marks: seal.marks,
+      recorded: seal.recorded,
+      reward: seal.reward,
+      schedule: schedule || seal.schedule,
+      beats: beats || seal.beats,
+      names: seal.names,
+      cursor: cursor,
+      note: seal.note,
+      parShip: seal.parShip,
+      shipName: seal.shipName
+    });
     return next;
   }
 
@@ -443,27 +605,48 @@
     switch (action.type) {
       case "tick":
         if (!clock.playing || !(action.seconds > 0)) return clock;
-        var jd = Math.min(clock.span.end, clock.jd + action.seconds * seal.fit * clock.speed);
-        var playing = jd < clock.span.end;
-        if (jd === clock.jd && playing === clock.playing) return clock;
-        return retarget(clock, seal, jd, playing, clock.speed);
+        var cursor = Math.min(seal.schedule.duration, seal.cursor + action.seconds * clock.speed);
+        if (cursor === seal.cursor) return clock;
+        var here = atCursor(seal.schedule.points, cursor);
+        return retarget(clock, seal, here.jd, cursor < seal.schedule.duration, clock.speed, cursor);
       case "pause":
         if (!clock.playing) return clock;
-        return retarget(clock, seal, clock.jd, false, clock.speed);
+        return retarget(clock, seal, clock.jd, false, clock.speed, seal.cursor);
       case "play":
-        if (clock.playing && clock.jd < clock.span.end) return clock;
-        return retarget(clock, seal, clock.jd >= clock.span.end ? clock.span.start : clock.jd, true, clock.speed);
+        if (seal.cursor >= seal.schedule.duration) return retarget(clock, seal, clock.span.start, true, clock.speed, 0);
+        if (clock.playing) return clock;
+        return retarget(clock, seal, clock.jd, true, clock.speed, seal.cursor);
       case "speed":
         if (SPEEDS.indexOf(action.speed) < 0 || action.speed === clock.speed) return clock;
-        return retarget(clock, seal, clock.jd, clock.playing, action.speed);
+        return retarget(clock, seal, clock.jd, clock.playing, action.speed, seal.cursor);
       case "scrub":
         if (!finite(action.jd)) return clock;
         var nextJd = Math.min(clock.span.end, Math.max(clock.span.start, action.jd));
-        if (nextJd === clock.jd) return clock;
-        return retarget(clock, seal, nextJd, clock.playing, clock.speed);
+        var nextCursor = cursorForJd(seal.schedule.points, nextJd);
+        return retarget(clock, seal, nextJd, clock.playing, clock.speed, nextCursor);
+      case "append":
+        return appendRow(clock, seal, action.row);
       default:
         assertNever(action);
     }
+  }
+
+  function appendRow(clock, seal, row) {
+    if (!row || typeof row !== "object" || Array.isArray(row)) return clock;
+    if (banned(JSON.stringify(row))) return clock;
+    if (row.schema !== SCHEMA || row.simulated !== true || row.run_id !== clock.runId) return clock;
+    var extra = rowBeats(row, seal.names).filter(function (beat) {
+      if (!(beat.jd > clock.span.start && beat.jd < clock.span.end)) return false;
+      for (var i = 0; i < seal.beats.length; i++) {
+        if (seal.beats[i].jd === beat.jd && seal.beats[i].caption === beat.caption) return false;
+      }
+      return true;
+    });
+    if (!extra.length) return clock;
+    var beats = seal.beats.concat(extra);
+    var schedule = buildSchedule(clock.span.start, clock.span.end, beats);
+    var cursor = cursorForJd(schedule.points, clock.jd);
+    return retarget(clock, seal, clock.jd, clock.playing, clock.speed, cursor, schedule, beats);
   }
 
   function clamp01(f) {
@@ -609,19 +792,22 @@
     };
   }
 
-  function scoreView(seal) {
+  function scoreView(seal, count) {
+    if (!(count > 0)) return null;
     var reward = seal.reward;
+    var n = Math.min(count, reward.parts.length);
+    var done = n >= reward.parts.length;
     return {
-      total: reward.total,
+      total: done ? reward.total : null,
       outOf: reward.out_of,
-      parts: reward.parts.map(function (p) {
+      parts: reward.parts.slice(0, n).map(function (p) {
         return { key: p.key, label: p.label, got: p.got, max: p.max, note: p.note };
       }),
-      measures: reward.measures.map(function (m) {
+      measures: done ? reward.measures.map(function (m) {
         return { key: m.key, value: m.value, unit: m.unit };
-      }),
+      }) : [],
       parShip: seal.parShip,
-      text: "Score " + reward.total + " out of " + reward.out_of + "."
+      text: done ? "Score " + reward.total + " out of " + reward.out_of + "." : ""
     };
   }
 
@@ -629,30 +815,33 @@
     if (!clock || typeof clock !== "object") return refuse("lost-clock");
     var seal = secret.get(clock);
     if (!seal) return refuse("lost-clock");
+    var here = atCursor(seal.schedule.points, seal.cursor);
     var pose;
     var view;
     try {
-      pose = poseAu(seal, clock.jd, sole);
-      view = toScene(pose, seal, clock.jd, sole);
+      pose = poseAu(seal, here.jd, sole);
+      view = toScene(pose, seal, here.jd, sole);
     } catch (e) {
       if (e && (e.name === "RangeError" || /ephemeris/i.test(String(e && e.message)))) return refuse("outside-ephemeris");
       throw e;
     }
-    var arrived = seal.marks.filter(function (m) { return m.jd <= clock.jd; })
+    var arrived = seal.marks.filter(function (m) { return m.jd <= here.jd; })
       .sort(function (a, b) { return a.jd - b.jd; })
       .map(markView);
     var shipText = seal.shipName ? "Starseeker " + seal.shipName : "Starseeker";
     return {
       ok: true,
-      minute: isoMinute(clock.jd),
+      minute: isoMinute(here.jd),
       phase: knownPhase(pose.phase),
       shipText: shipText,
       note: seal.note,
+      caption: here.caption,
+      captions: captionsSoFar(seal.schedule.points, seal.cursor),
       au: pose.p,
       view: view,
       recorded: seal.recorded,
       arrived: arrived,
-      score: clock.jd >= clock.span.end ? scoreView(seal) : null
+      score: scoreView(seal, here.parts)
     };
   }
 
