@@ -1,14 +1,17 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { EPISODE_SCHEMA } from "../src/episode.js";
 import { SKY, RIDE_FORMAT, POOL_TIERS } from "../src/game.js";
 import { methodPage } from "../src/method.js";
+import { stopWorkerProcess } from "./worker-process.mjs";
 
 const require = createRequire(import.meta.url);
 const E = require("../src/engine/sol-page.cjs");
@@ -205,26 +208,29 @@ const freePort = () => new Promise((res, rej) => {
   s.listen(0, "127.0.0.1", () => { const { port } = s.address(); s.close(() => res(port)); });
 });
 
-function stopWorker(child, persist) {
-  try { process.kill(-child.pid, "SIGKILL"); } catch { try { child.kill("SIGKILL"); } catch { /* already gone */ } }
-  rmSync(persist, { recursive: true, force: true });
+async function stopWorker(child, persist) {
+  await stopWorkerProcess(child);
+  try { await rm(persist, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); }
+  catch (error) { console.warn("Local Worker storage cleanup failed:", error.message); }
 }
 
 test("GET /method returns the page and stays public when OAuth is on", async () => {
   const port = await freePort();
   const persist = mkdtempSync(join(tmpdir(), "method-page-"));
-  const bin = new URL("../node_modules/wrangler/bin/wrangler.js", import.meta.url).pathname;
+  const bin = fileURLToPath(new URL("../node_modules/wrangler/bin/wrangler.js", import.meta.url));
   const args = [bin, "dev", "--port", String(port), "--ip", "127.0.0.1", "--persist-to", persist, "--var", "STARFARE_OAUTH:on"];
-  const child = spawn(process.execPath, args, { cwd: new URL("..", import.meta.url).pathname, detached: true, env: { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "1" } });
+  const child = spawn(process.execPath, args, { cwd: fileURLToPath(new URL("..", import.meta.url)), detached: true, windowsHide: true, env: { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "1" } });
   const log = [];
   child.stdout.on("data", (c) => log.push(String(c)));
   child.stderr.on("data", (c) => log.push(String(c)));
-  let exited = false;
+  let exited = false, startError = null;
   child.on("exit", () => { exited = true; });
+  child.on("error", (error) => { startError = error; });
   const base = `http://127.0.0.1:${port}`;
   const deadline = Date.now() + 180000;
   try {
     for (;;) {
+      if (startError) throw startError;
       if (exited) throw new Error("wrangler dev exited early:\n" + log.join("").slice(-2000));
       if (Date.now() > deadline) throw new Error("wrangler dev not ready:\n" + log.join("").slice(-2000));
       try { await fetch(base + "/"); break; } catch { await new Promise((r) => setTimeout(r, 250)); }
@@ -236,6 +242,6 @@ test("GET /method returns the page and stays public when OAuth is on", async () 
     const posted = await fetch(base + "/method", { method: "POST" });
     assert.equal(posted.status, 405);
   } finally {
-    stopWorker(child, persist);
+    await stopWorker(child, persist);
   }
 });
