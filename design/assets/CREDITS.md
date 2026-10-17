@@ -35,6 +35,6 @@ The Yale Bright Star Catalogue, 5th revised edition (Hoffleit and Warren, 1991),
 
 ## Original work
 
-The Starseeker ship model, its engine plume, nav lights and callsign decal, the Fresnel atmosphere rims, the bloom, vignette and grain settings, and the SVG icon sprite are all original. They were drawn in code in `sol-art.js` for Starfare. They are not modelled on any real vehicle, and Starfare has no affiliation with Tesla or SpaceX.
+The Starseeker ship model, its engine plume, nav lights and callsign decal, the Fresnel atmosphere rims, the bloom, vignette and grain settings, and the SVG icon sprite are all original. They were drawn in code in `sol-art.js` for Starfare. They are not modelled on any real vehicle, and Starfare is not affiliated with any real company.
 
 The rides, riders, weather and fleet on these pages are simulated. Planet positions are real (NASA JPL DE421).

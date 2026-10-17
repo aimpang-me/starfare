@@ -544,8 +544,8 @@ p{text-wrap:pretty}
   <div class="sheet">
     <header><div class="ttl"><div class="caps">Log &amp; reports</div><h2 id="logH" tabindex="-1">Scoreboard</h2></div><button class="btn small" type="button" id="logClose">Close</button></header>
     <div class="bd">
-      <p class="note" id="boardLead" style="margin-top:0">The best arrived flight for each booking this season (simulated). Full table at <a href="/board">/board</a>, data at <code>/board.json</code>. Every arrived flight also has a public log at <code>/rides/&lt;run_id&gt;.json</code>.</p>
-      <div class="tw"><table class="t" style="min-width:560px"><thead><tr><th>Booking</th><th class="r">Points</th><th>Starseeker</th><th class="r">kWh vs par</th><th class="r">Wait h</th><th class="r">Plans</th><th>Run</th></tr></thead><tbody id="boardRows"></tbody></table></div>
+      <p class="note" id="boardLead" style="margin-top:0">The best arrived flight for each booking this season (simulated). Full table at <a href="/board">/board</a>, data at <code>/board.json</code>. The Tag column is a 6-character label. It is not a flight address. A flight page is <code>/flight/</code> plus the full run id, and this board does not publish that id.</p>
+      <div class="tw"><table class="t" style="min-width:560px"><thead><tr><th>Booking</th><th class="r">Points</th><th>Starseeker</th><th class="r">kWh vs par</th><th class="r">Wait h</th><th class="r">Plans</th><th>Tag</th></tr></thead><tbody id="boardRows"></tbody></table></div>
       <div class="caps" style="margin-top:14px">You</div>
       <p id="youRow" style="margin:4px 0 0;font-size:13px"></p>
     </div>
