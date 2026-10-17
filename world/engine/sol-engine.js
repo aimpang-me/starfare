@@ -483,18 +483,25 @@ export const NSTAR_POINTS = [
 ];
 // Sourced hulls. Dawn and Deep Space 1 seat counts are a simulated cabin (those probes flew with no passengers).
 // Shuttle seats are the orbiter crew of 7. Dawn array power is the published lower bound (over 10000 W at 1 AU).
-// Shuttle dry mass is the published orbiter figure of about 68000 kg. The fleet assignment lives in sol-rides.js.
+// Shuttle dry mass is the published orbiter figure of about 68000 kg.
+// RTG class is not a flown spacecraft. The combination is simulated, from three published numbers:
+// Dawn dry mass 747.1 kg, Psyche's xenon load of up to 1085 kg (NASA JPL Psyche quick facts),
+// and Cassini's 633 W at the end of the mission (NASA Cassini quick facts). power_mode "constant" holds those watts
+// at every distance. Housekeeping is not charged, and the dry mass does not grow a heavier tank structure.
+// The fleet assignment lives in sol-rides.js. The Shuttle class stays in the catalog and is not parked.
 export const SHIP_CLASSES = {
   dawn: { id: "dawn", name: "Dawn class", dry_kg: 747.1, xenon_kg: 425, hydrazine_kg: 45.6, seats: 4, power_w_1au: 10000, housekeeping_w: 0, ion: true },
   ds1: { id: "ds1", name: "Deep Space 1 class", dry_kg: 373, xenon_kg: 82, hydrazine_kg: 31, seats: 4, power_w_1au: 2500, housekeeping_w: 400, ion: true },
+  rtg: { id: "rtg", name: "RTG class", dry_kg: 747.1, xenon_kg: 1085, hydrazine_kg: 0, seats: 4, power_w_1au: 633, housekeeping_w: 0, ion: true, power_mode: "constant" },
   shuttle: { id: "shuttle", name: "Shuttle class", dry_kg: 68000, xenon_kg: 0, hydrazine_kg: 0, seats: 7, power_w_1au: 0, housekeeping_w: 0, ion: false },
 };
 export const ASSUMPTIONS = [
   "Dawn class dry mass 747.1 kg, xenon tank 425 kg, arrays over 10000 W at 1 AU (that power figure is a lower bound)",
   "Deep Space 1 class dry mass 373 kg, xenon tank 82 kg, arrays 2500 W at 1 AU, housekeeping near 400 W",
-  "Shuttle class dry mass 68000 kg, 7 seats, no xenon ion thruster",
+  "RTG class is a simulated hull, not a flown ship: dry mass 747.1 kg (Dawn), xenon tank 1085 kg (Psyche, up to 1085 kg), generator 633 W held constant (Cassini end of mission). The 633 W is treated as spare for the thruster. Housekeeping is not charged, and the dry mass does not add tank structure for the larger xenon load",
+  "Shuttle class dry mass 68000 kg, 7 seats, no xenon ion thruster. It is not parked",
   "NSTAR set points: 2.31 kW, 3280 s, 64 percent; or 0.49 kW, 1950 s, 38 percent. No set point is published below 0.49 kW",
-  "array power falls as 1/r^2. Standard gravity is 9.80665 m/s^2",
+  "Solar array power falls as 1/r^2. The RTG class generator does not. Standard gravity is 9.80665 m/s^2",
   "fare = $0.16/kWh energy + $0.35/min time fee",
   "landing, aerobraking and life support are not priced"];
 function pyRound(x, nd = 0) {  // Python round(): half to even, on the decimal repr like CPython's
@@ -506,6 +513,7 @@ function pyRound(x, nd = 0) {  // Python round(): half to even, on the decimal r
   return r / m;
 }
 export function arraySpareW(cls, r_au) {
+  if (cls && cls.power_mode === "constant") return cls.power_w_1au - (cls.housekeeping_w || 0);
   const r = Math.max(+r_au || 0, 1e-9);
   return cls.power_w_1au / (r * r) - (cls.housekeeping_w || 0);
 }
@@ -695,7 +703,7 @@ function planRideInner(origin, dest, opts) {
   const objective = opts.objective || "energy";
   const capture = (opts.arrive || "capture") === "capture";
   const req = opts.requestJd ?? depFrom;
-  const notPriced = [...ASSUMPTIONS.slice(3), "launch from the surface to the parking orbit is not priced",
+  const notPriced = [...ASSUMPTIONS.slice(4), "launch from the surface to the parking orbit is not priced",
     "burns are impulsive and in the best direction"];
   for (const ep of [o, d]) {
     const p = ep.place && P[ep.place];
@@ -863,7 +871,7 @@ function finish(opt, { o, d, req, notPriced, objective, t0, capture, ship }) {
   opt.objective = objective;
   opt.arrive_mode = capture ? "capture" : "none";
   opt.not_priced = notPriced;
-  opt.assumptions = [...ASSUMPTIONS.slice(0, 3),
+  opt.assumptions = [...ASSUMPTIONS.slice(0, 4),
     "patched conics: Sun-centred leg between the centres of the endpoints' Sun-orbiting bodies (a moon or station uses its planet)",
     "burns from/into circular parking orbits (PLACES park_alt_km); moon endpoints escape/capture through the parent's well at the moon's orbit radius, burning along the moon's motion (trip.py titan_burn, generalised)",
     "moon and station orbits are circular with approximate radii/periods and arbitrary phase",

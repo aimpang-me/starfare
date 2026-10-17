@@ -30,7 +30,7 @@ ok("ask_after_hours \"never\" is fly(); answering with defaults flies the same r
     assert.strictEqual(asked.used_kwh, r.flown.used_kwh, r.hail + " seed " + r.seed);
     assert.strictEqual(asked.arrive_jd, r.flown.arrive_jd);
   }
-  assert.deepStrictEqual(waited, [["ceres-shift", "17", 72596, "2034-02-04 16:12"]]);
+  assert.deepStrictEqual(waited, [["titan-home", "10", 87761, "2035-05-02 05:29"], ["ceres-shift", "17", 72596, "2034-02-04 16:12"]]);
 });
 
 ok("pad_closed at Mars Base: diverting to Phobos beats holding through the storm", () => {

@@ -7,18 +7,20 @@ SOLE.R = (function(E){
 var DWELL = 0.05;        // days at the pickup for the rider to board (1.2 h)
 var WINDOW = 120;        // a leg may depart up to this many days after it is allowed to
 var LEAD = 150;          // long-haul hails are booked this many sky days ahead (quick hails: 1 day)
-// Which sourced hull each parked ship uses. A simulated assignment, not a published fleet plan:
-// Dawn class where the 425 kg tank is the one that can leave (Earth, Ceres, and the outer ships, which then
-// fail the array power check past about 4.5 AU). Deep Space 1 class on the light inner ships. Shuttle class,
-// 7 seats and no ion thruster, on the second Jupiter ship.
+// Which hull each parked ship uses. A simulated assignment, not a published fleet plan.
+// Dawn class at Earth: the 2.31 kW set point fits the lunar hop, and Deep Space 1's 82 kg tank does not.
+// Deep Space 1 class on the light inner ships. The short Mars hop is the one it spends the least energy on.
+// RTG class on the outer ships. Its constant 633 W can feed the 0.49 kW set point at Jupiter and Saturn,
+// and its 1085 kg tank holds Ceres and Titan burns that Dawn's 425 kg tank does not.
+// The Shuttle class is not parked. It has no xenon ion thruster.
 var FLEET = [
   { id: "sf-01", name: "SF-01", at: "orbital-depot", ship_class: "dawn" },
   { id: "sf-02", name: "SF-02", at: "lunar-data-center", ship_class: "ds1" },
   { id: "sf-03", name: "SF-03", at: "mars-base", ship_class: "ds1" },
-  { id: "sf-04", name: "SF-04", at: "ceres", ship_class: "dawn" },
-  { id: "sf-05", name: "SF-05", at: "europa", ship_class: "dawn" },
-  { id: "sf-06", name: "SF-06", at: "callisto", ship_class: "shuttle" },
-  { id: "sf-07", name: "SF-07", at: "titan-dock", ship_class: "dawn" }
+  { id: "sf-04", name: "SF-04", at: "ceres", ship_class: "rtg" },
+  { id: "sf-05", name: "SF-05", at: "europa", ship_class: "rtg" },
+  { id: "sf-06", name: "SF-06", at: "callisto", ship_class: "rtg" },
+  { id: "sf-07", name: "SF-07", at: "titan-dock", ship_class: "rtg" }
 ];
 var CAR = {}; FLEET.forEach(function(c){
   var spec = E.SHIP_CLASSES[c.ship_class];
@@ -589,7 +591,22 @@ function par(id, t0, endJd, seed){
       if (!wait || G.pickup_jd < wait.arr_jd) wait = { car: c.id, arr_jd: G.pickup_jd };
     } catch (e) { if (/cannot thrust|no xenon|xenon tank/.test(e.message)) refused = e.message; }
   });
-  if (!best) throw new Error(refused || ("no ship can serve " + h.title));
+  if (!best) {
+    // A burn that fits only by arriving after the season is not a flight this season can run.
+    // If some ship can fly the same hail before the ephemeris ends, the season is what ran out.
+    // A tank or thrust refusal that still fails on that longer limit stays the refusal.
+    var ephEnd = E.EPHEM_RANGE[1] - 1, later = false;
+    if (endJd < ephEnd - 1) nearCars(h).forEach(function(c){
+      if (later) return;
+      try {
+        var stL = H.pickupStart(id, c.id, t0), pL = planned(c.at, h.from, stL, "energy", ephEnd, c.id);
+        planned(h.from, h.to, pL.arr_jd + DWELL, "energy", ephEnd, c.id);
+        later = true;
+      } catch (e) {}
+    });
+    if (later) throw new Error("no ship can serve " + h.title);
+    throw new Error(refused || ("no ship can serve " + h.title));
+  }
   return { car: best.car, kwh: best.kwh, planned_kwh: best.planned_kwh, arr_jd: best.arr_jd, planned_arr_jd: best.planned_arr_jd, legs: best.legs, wait_hours: best.wait_h || [0, 0],
     choices: best.path, best_wait_days: wait ? Math.max(1e-6, wait.arr_jd - t0) : 1e-6, best_wait_car: wait ? wait.car : best.car };
 }

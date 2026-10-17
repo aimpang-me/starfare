@@ -10,7 +10,8 @@
     "e2e:off": "node build.mjs && node test/e2e.mjs --mode=off",
     "e2e:on": "node build.mjs && node test/e2e.mjs --mode=on",
     "bench": "node build.mjs && node test/bench.mjs",
-    "dry-run": "node build.mjs && node node_modules/wrangler/bin/wrangler.js deploy --dry-run --outdir /tmp/starfare-dry"
+    "dry-run": "node build.mjs && node node_modules/wrangler/bin/wrangler.js deploy --dry-run --outdir /tmp/starfare-dry",
+    "sim": "node sim.mjs"
   },
   "dependencies": {
     "agents": "0.28.1",

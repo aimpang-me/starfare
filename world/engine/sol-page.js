@@ -489,18 +489,25 @@ const NSTAR_POINTS = [
 ];
 // Sourced hulls. Dawn and Deep Space 1 seat counts are a simulated cabin (those probes flew with no passengers).
 // Shuttle seats are the orbiter crew of 7. Dawn array power is the published lower bound (over 10000 W at 1 AU).
-// Shuttle dry mass is the published orbiter figure of about 68000 kg. The fleet assignment lives in sol-rides.js.
+// Shuttle dry mass is the published orbiter figure of about 68000 kg.
+// RTG class is not a flown spacecraft. The combination is simulated, from three published numbers:
+// Dawn dry mass 747.1 kg, Psyche's xenon load of up to 1085 kg (NASA JPL Psyche quick facts),
+// and Cassini's 633 W at the end of the mission (NASA Cassini quick facts). power_mode "constant" holds those watts
+// at every distance. Housekeeping is not charged, and the dry mass does not grow a heavier tank structure.
+// The fleet assignment lives in sol-rides.js. The Shuttle class stays in the catalog and is not parked.
 const SHIP_CLASSES = {
   dawn: { id: "dawn", name: "Dawn class", dry_kg: 747.1, xenon_kg: 425, hydrazine_kg: 45.6, seats: 4, power_w_1au: 10000, housekeeping_w: 0, ion: true },
   ds1: { id: "ds1", name: "Deep Space 1 class", dry_kg: 373, xenon_kg: 82, hydrazine_kg: 31, seats: 4, power_w_1au: 2500, housekeeping_w: 400, ion: true },
+  rtg: { id: "rtg", name: "RTG class", dry_kg: 747.1, xenon_kg: 1085, hydrazine_kg: 0, seats: 4, power_w_1au: 633, housekeeping_w: 0, ion: true, power_mode: "constant" },
   shuttle: { id: "shuttle", name: "Shuttle class", dry_kg: 68000, xenon_kg: 0, hydrazine_kg: 0, seats: 7, power_w_1au: 0, housekeeping_w: 0, ion: false },
 };
 const ASSUMPTIONS = [
   "Dawn class dry mass 747.1 kg, xenon tank 425 kg, arrays over 10000 W at 1 AU (that power figure is a lower bound)",
   "Deep Space 1 class dry mass 373 kg, xenon tank 82 kg, arrays 2500 W at 1 AU, housekeeping near 400 W",
-  "Shuttle class dry mass 68000 kg, 7 seats, no xenon ion thruster",
+  "RTG class is a simulated hull, not a flown ship: dry mass 747.1 kg (Dawn), xenon tank 1085 kg (Psyche, up to 1085 kg), generator 633 W held constant (Cassini end of mission). The 633 W is treated as spare for the thruster. Housekeeping is not charged, and the dry mass does not add tank structure for the larger xenon load",
+  "Shuttle class dry mass 68000 kg, 7 seats, no xenon ion thruster. It is not parked",
   "NSTAR set points: 2.31 kW, 3280 s, 64 percent; or 0.49 kW, 1950 s, 38 percent. No set point is published below 0.49 kW",
-  "array power falls as 1/r^2. Standard gravity is 9.80665 m/s^2",
+  "Solar array power falls as 1/r^2. The RTG class generator does not. Standard gravity is 9.80665 m/s^2",
   "fare = $0.16/kWh energy + $0.35/min time fee",
   "landing, aerobraking and life support are not priced"];
 function pyRound(x, nd = 0) {  // Python round(): half to even, on the decimal repr like CPython's
@@ -512,6 +519,7 @@ function pyRound(x, nd = 0) {  // Python round(): half to even, on the decimal r
   return r / m;
 }
 function arraySpareW(cls, r_au) {
+  if (cls && cls.power_mode === "constant") return cls.power_w_1au - (cls.housekeeping_w || 0);
   const r = Math.max(+r_au || 0, 1e-9);
   return cls.power_w_1au / (r * r) - (cls.housekeeping_w || 0);
 }
@@ -701,7 +709,7 @@ function planRideInner(origin, dest, opts) {
   const objective = opts.objective || "energy";
   const capture = (opts.arrive || "capture") === "capture";
   const req = opts.requestJd ?? depFrom;
-  const notPriced = [...ASSUMPTIONS.slice(3), "launch from the surface to the parking orbit is not priced",
+  const notPriced = [...ASSUMPTIONS.slice(4), "launch from the surface to the parking orbit is not priced",
     "burns are impulsive and in the best direction"];
   for (const ep of [o, d]) {
     const p = ep.place && P[ep.place];
@@ -869,7 +877,7 @@ function finish(opt, { o, d, req, notPriced, objective, t0, capture, ship }) {
   opt.objective = objective;
   opt.arrive_mode = capture ? "capture" : "none";
   opt.not_priced = notPriced;
-  opt.assumptions = [...ASSUMPTIONS.slice(0, 3),
+  opt.assumptions = [...ASSUMPTIONS.slice(0, 4),
     "patched conics: Sun-centred leg between the centres of the endpoints' Sun-orbiting bodies (a moon or station uses its planet)",
     "burns from/into circular parking orbits (PLACES park_alt_km); moon endpoints escape/capture through the parent's well at the moon's orbit radius, burning along the moon's motion (trip.py titan_burn, generalised)",
     "moon and station orbits are circular with approximate radii/periods and arbitrary phase",
@@ -1229,18 +1237,20 @@ SOLE.R = (function(E){
 var DWELL = 0.05;        // days at the pickup for the rider to board (1.2 h)
 var WINDOW = 120;        // a leg may depart up to this many days after it is allowed to
 var LEAD = 150;          // long-haul hails are booked this many sky days ahead (quick hails: 1 day)
-// Which sourced hull each parked ship uses. A simulated assignment, not a published fleet plan:
-// Dawn class where the 425 kg tank is the one that can leave (Earth, Ceres, and the outer ships, which then
-// fail the array power check past about 4.5 AU). Deep Space 1 class on the light inner ships. Shuttle class,
-// 7 seats and no ion thruster, on the second Jupiter ship.
+// Which hull each parked ship uses. A simulated assignment, not a published fleet plan.
+// Dawn class at Earth: the 2.31 kW set point fits the lunar hop, and Deep Space 1's 82 kg tank does not.
+// Deep Space 1 class on the light inner ships. The short Mars hop is the one it spends the least energy on.
+// RTG class on the outer ships. Its constant 633 W can feed the 0.49 kW set point at Jupiter and Saturn,
+// and its 1085 kg tank holds Ceres and Titan burns that Dawn's 425 kg tank does not.
+// The Shuttle class is not parked. It has no xenon ion thruster.
 var FLEET = [
   { id: "sf-01", name: "SF-01", at: "orbital-depot", ship_class: "dawn" },
   { id: "sf-02", name: "SF-02", at: "lunar-data-center", ship_class: "ds1" },
   { id: "sf-03", name: "SF-03", at: "mars-base", ship_class: "ds1" },
-  { id: "sf-04", name: "SF-04", at: "ceres", ship_class: "dawn" },
-  { id: "sf-05", name: "SF-05", at: "europa", ship_class: "dawn" },
-  { id: "sf-06", name: "SF-06", at: "callisto", ship_class: "shuttle" },
-  { id: "sf-07", name: "SF-07", at: "titan-dock", ship_class: "dawn" }
+  { id: "sf-04", name: "SF-04", at: "ceres", ship_class: "rtg" },
+  { id: "sf-05", name: "SF-05", at: "europa", ship_class: "rtg" },
+  { id: "sf-06", name: "SF-06", at: "callisto", ship_class: "rtg" },
+  { id: "sf-07", name: "SF-07", at: "titan-dock", ship_class: "rtg" }
 ];
 var CAR = {}; FLEET.forEach(function(c){
   var spec = E.SHIP_CLASSES[c.ship_class];
@@ -1811,7 +1821,22 @@ function par(id, t0, endJd, seed){
       if (!wait || G.pickup_jd < wait.arr_jd) wait = { car: c.id, arr_jd: G.pickup_jd };
     } catch (e) { if (/cannot thrust|no xenon|xenon tank/.test(e.message)) refused = e.message; }
   });
-  if (!best) throw new Error(refused || ("no ship can serve " + h.title));
+  if (!best) {
+    // A burn that fits only by arriving after the season is not a flight this season can run.
+    // If some ship can fly the same hail before the ephemeris ends, the season is what ran out.
+    // A tank or thrust refusal that still fails on that longer limit stays the refusal.
+    var ephEnd = E.EPHEM_RANGE[1] - 1, later = false;
+    if (endJd < ephEnd - 1) nearCars(h).forEach(function(c){
+      if (later) return;
+      try {
+        var stL = H.pickupStart(id, c.id, t0), pL = planned(c.at, h.from, stL, "energy", ephEnd, c.id);
+        planned(h.from, h.to, pL.arr_jd + DWELL, "energy", ephEnd, c.id);
+        later = true;
+      } catch (e) {}
+    });
+    if (later) throw new Error("no ship can serve " + h.title);
+    throw new Error(refused || ("no ship can serve " + h.title));
+  }
   return { car: best.car, kwh: best.kwh, planned_kwh: best.planned_kwh, arr_jd: best.arr_jd, planned_arr_jd: best.planned_arr_jd, legs: best.legs, wait_hours: best.wait_h || [0, 0],
     choices: best.path, best_wait_days: wait ? Math.max(1e-6, wait.arr_jd - t0) : 1e-6, best_wait_car: wait ? wait.car : best.car };
 }

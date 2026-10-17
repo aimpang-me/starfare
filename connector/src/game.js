@@ -212,10 +212,11 @@ const rules = (E) =>
   "energy 3000 (kWh actually flown, including holds and correction burns, versus par), " +
   "kept the promise 2000 (full marks for arriving when promised, 0 at 6 hours late on a quick hail or 1 day late on a long haul, arriving early costs a quarter as much), " +
   "every leg checked 2000, honest fare 2000 (within $1 of the ride leg's fare_usd), planning economy 2000 (6 plans free, then the part falls, and it is 0 at 5 plans past that; check_pad and space_weather are free), " +
-  "xenon tank 25000 (0 if the plan needs more xenon than the ship holds), distance throttle 25000 (kWh above the published set point the arrays can feed), " +
+  "xenon tank 25000 (0 if the plan needs more xenon than the ship holds), distance throttle 25000 (kWh above the published set point the power on hand can feed), " +
   "departure window 20000 (kWh above the lowest energy departure in the search; the tool list does not mark that departure), " +
   "checkpoint recovery 15000 (kWh above a hindsight option at a checkpoint), cruise dose 0 (reported, not scored). " +
-  "Ships are Dawn class, Deep Space 1 class, or Shuttle class. A leg is refused when the arrays cannot feed a published NSTAR set point or the xenon tank cannot hold the burn. " +
+  "Ships are Dawn class, Deep Space 1 class, RTG class, or Shuttle class. A leg is refused when the power on hand cannot feed a published NSTAR set point or the xenon tank cannot hold the burn. " +
+  "The RTG class is a simulated hull, not a flown ship: Dawn dry mass 747.1 kg, a 1085 kg xenon tank (Psyche's published load), and 633 W held constant (Cassini at the end of the mission). The Shuttle class has no xenon ion thruster and is not parked. " +
   "The sky clock runs 1 sky day per real second: if a leg flies between planets and its departure passes before dispatch, the hail goes cold. " +
   "In flight (simulated), the ship stops at checkpoints and asks you: a launch between planets that can't leave on time (wait for it to clear, or replan a fresh leg, which counts as a plan), " +
   "and a pad still closed or full after the ship has held ask_after_hours in orbit (hold, or divert to a nearby pad, wait on the ground and hop back). " +

@@ -100,7 +100,7 @@ ok("stop orders: every booking boards before it lands, and events at the same pl
 
 ok("par for a set: the best pooled flight checks and flies to its par, the split baseline is each booking's own par, and terms stay each booking's own", () => {
   const T = R.termsSet(["ceres-shift", "phobos-commute"], t0, END, SEED), p = T.par, P = p.pooled;
-  assert.deepStrictEqual([P.car, P.plan.stops.map((s) => s.at), P.kwh, P.choices], ["sf-04", ["ceres", "ceres-port", "mars-base", "phobos", "mars-base"], 61232, []]);
+  assert.deepStrictEqual([P.car, P.plan.stops.map((s) => s.at), P.kwh, P.choices], ["sf-04", ["ceres", "ceres-port", "mars-base", "phobos", "mars-base"], 61412, []]);
   assert.deepStrictEqual(R.check("ceres-shift", P.car, P.plan, t0, SEED), []);
   assert.strictEqual(R.fly("ceres-shift", P.car, P.plan, t0, SEED).used_kwh, P.kwh);
   const solo = ["ceres-shift", "phobos-commute"].map((id) => R.terms(id, t0, END, SEED));

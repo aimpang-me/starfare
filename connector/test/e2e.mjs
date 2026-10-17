@@ -233,16 +233,19 @@ async function phaseOff() {
   await check("a ride that stops at checkpoints (ask_after_hours 0), answered with decide's defaults, lands where R.fly does in Node; get_hail shows the open checkpoint", async () => {
     const tried = [];
     let stop = null;
-    for (const hailId of ["iss-crew", "phobos-commute"]) { // jovian-hop and titan-home are refused by the tanks; ceres stays unplayed for the board's empty row
-      for (const car of R.FLEET.map((c) => c.id)) {
-        let play;
-        try { play = await playHail(client, hailId, car, { ask: 0 }); }
-        catch (e) { tried.push(`${hailId} ${car} refused`); continue; }
-        tried.push(`${hailId} ${car} ${play.score.status ?? "refused"}`);
-        if (play.score.status === "checkpoint") { stop = play; break; }
-        noteBest(play);
+    for (let day = 0; day < 25 && !stop; day++) {
+      if (day) await sleep(1000); // one sky day; a checkpoint is not up every minute
+      for (const hailId of ["iss-crew", "phobos-commute"]) { // the board row below only scores these two; the outer hails are checked on their own
+        for (const car of R.FLEET.map((c) => c.id)) {
+          let play;
+          try { play = await playHail(client, hailId, car, { ask: 0 }); }
+          catch (e) { tried.push(`${hailId} ${car} refused`); continue; }
+          tried.push(`${hailId} ${car} ${play.score.status ?? "refused"}`);
+          if (play.score.status === "checkpoint") { stop = play; break; }
+          noteBest(play);
+        }
+        if (stop) break;
       }
-      if (stop) break;
     }
     assert.ok(stop, "no ride stopped in " + tried.join(", "));
     const seen = [];
@@ -273,6 +276,8 @@ async function phaseOff() {
   await check("live playback: dispatch returns watch_url and lands_in_s; /rides, /flight and /live.json show the flight held at its checkpoint; the notes join the dispatcher log", async () => {
     const tried = [], NOTE = "e2e: dispatching the par plan";
     let held = null;
+    for (let day = 0; day < 25 && !held; day++) {
+      if (day) await sleep(1000); // one sky day; a held flight is not up every minute
     for (const hailId of ["iss-crew", "phobos-commute"]) {
       for (const car of R.FLEET.map((c) => c.id)) {
         let hail, pickup, ride, d;
@@ -290,6 +295,7 @@ async function phaseOff() {
         scored++; noteBest({ hail, score: d });
       }
       if (held) break;
+    }
     }
     assert.ok(held, "no ride stopped in " + tried.join(", "));
     const id = held.hail.run_id, s = held.d.situation;
@@ -373,10 +379,12 @@ async function phaseOff() {
       for (const hailId of ["iss-crew", "phobos-commute"]) {
         const h = await ok(client, "take_hail", { hail_id: hailId });
         const later = h.fleet.filter((c) => c.busy_until !== "free" && jdOf(c.busy_until) > jdOf(h.rider_ready) + 1 / 1440 && c.parked_at.id !== R.BY[hailId].from);
+        let attempts = 0;
         for (const busy of later) {
+          attempts++;
           const p = await call(client, "plan_pickup", { run_id: h.run_id, car: busy.car });
           if (p.isError || p.value.car_busy_until !== busy.busy_until) continue;
-          found = { h, busy, p: p.value };
+          found = { h, busy, p: p.value, attempts };
           break;
         }
         if (found) break;
@@ -386,7 +394,7 @@ async function phaseOff() {
     const p = found.p;
     assert.equal(p.car_busy_until, found.busy.busy_until); assert.match(p.note, /busy on another job/);
     assert.ok(jdOf(p.depart) >= jdOf(found.busy.busy_until) - 1 / 1440, `${p.depart} before ${found.busy.busy_until}`);
-    assert.equal(p.plans_used, 1);
+    assert.equal(p.plans_used, found.attempts);
     report.busy = { hail: found.h.hail_id, car: found.busy.car, rider_ready: found.h.rider_ready, busy_until: found.busy.busy_until, depart: p.depart, note: p.note };
   });
 
@@ -469,22 +477,27 @@ async function phaseOff() {
     report.bad_ids = { unknown_run: r.value, malformed_run: String(r2.value).slice(0, 160), unknown_hail: h1.value, proto_hail: h2.value };
   });
 
-  await check("ceres-shift, jovian-hop and titan-home open only when a ship can fly them; a refusal names the tank or the arrays", async () => {
-    const opened = [];
-    for (const [hailId, re] of [["ceres-shift", /xenon tank holds|cannot thrust|no xenon ion/], ["jovian-hop", /no xenon ion thruster|cannot thrust|xenon tank holds/], ["titan-home", /cannot thrust|no xenon ion|xenon tank holds/]]) {
+  await check("ceres-shift, jovian-hop and titan-home each open on a ship that can fly them, or the season ends too soon", async () => {
+    const opened = [], held = [];
+    for (const hailId of ["ceres-shift", "jovian-hop", "titan-home"]) {
       const h = await call(client, "take_hail", { hail_id: hailId });
-      if (h.isError) assert.match(h.value, re, hailId + " " + h.value);
-      else { assert.equal(h.value.hail_id, hailId); opened.push(hailId); }
+      if (h.isError) {
+        assert.match(h.value, /season ends too soon/, hailId + " " + h.value);
+        held.push(hailId);
+      } else {
+        assert.equal(h.value.hail_id, hailId);
+        opened.push(hailId);
+      }
     }
-    report.long_hauls = opened;
+    report.long_hauls = { opened, held };
   });
 
   await check("re-fly cache: the same pickup parameters are served from the cache", async () => {
     const h = await ok(client, "take_hail", { hail_id: "phobos-commute" });
-    const a = await ok(client, "plan_pickup", { run_id: h.run_id, car: "sf-01" });
-    const b = await ok(client, "plan_pickup", { run_id: h.run_id, car: "sf-01" });
+    const a = await ok(client, "plan_pickup", { run_id: h.run_id, car: "sf-03" });
+    const b = await ok(client, "plan_pickup", { run_id: h.run_id, car: "sf-03" });
     assert.equal(b.cached, true); assert.equal(b.battery_kwh, a.battery_kwh); assert.equal(b.plans_used, 2); assert.notEqual(b.leg_id, a.leg_id);
-    const tA = Date.now(); await ok(client, "plan_pickup", { run_id: h.run_id, car: "sf-01" });
+    const tA = Date.now(); await ok(client, "plan_pickup", { run_id: h.run_id, car: "sf-03" });
     report.cache = { first_cached: a.cached, second_cached: b.cached, first_ms: timings.at(-3).ms, cached_call_ms: Date.now() - tA };
   });
   await check("one run per session: a new take_hail abandons the open run and says so in previous_run", async () => {

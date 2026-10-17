@@ -26,11 +26,16 @@ ok("Dawn at Earth can thrust and Deep Space 1 stays under its tank on the lunar 
   assert(ds1.battery.propellant_kg <= 82);
 });
 
-ok("a far hull with the Dawn lower bound cannot use a published set point", () => {
+ok("a far Dawn cannot use a published set point, and the Shuttle class has no ion thruster", () => {
   const far = E.battery(5, "dawn", 9.5);
   assert.match(far.refused, /490 W/);
-  assert.throws(() => R.planLeg("europa", "io", t0, "energy", END, "sf-05"), /490 W/);
-  assert.throws(() => R.planLeg("callisto", "ganymede", t0, "energy", END, "sf-06"), /no xenon ion thruster/);
+  assert.throws(() => R.planLeg("titan-dock", "earth", t0, "energy", END, "sf-01"), /490 W/);
+  const shuttle = E.planRide({ place: "callisto" }, "ganymede", { depFrom: t0, depTo: t0 + 5, arriveBy: END, allLocal: true, ship: E.SHIP_CLASSES.shuttle });
+  assert.match(shuttle.error, /no xenon ion thruster/);
+  const rtg = E.battery(5, "rtg", 9.5);
+  assert.strictEqual(rtg.refused, undefined);
+  assert.strictEqual(rtg.set_point_w, 490);
+  assert.ok(rtg.propellant_kg <= 1085);
 });
 
 ok("the tank check refuses a plan that names more xenon than the hull holds", () => {

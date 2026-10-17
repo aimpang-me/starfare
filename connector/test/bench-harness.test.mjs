@@ -67,16 +67,18 @@ test("naive, random and the reference on one hail", async () => {
   const n = await play(SOLO, (call) => naive(call, E));
   assert.deepEqual([n.score.total, n.run.tool_calls, n.run.calls], [98626.5424842698, 6, 3]);
   const r = await play(SOLO, (call) => random(call, E, rngOf(SOLO.id + "|0")));
-  assert.deepEqual([r.score.phase, r.score.total, r.run.tool_calls], ["planning", 0, 7]);
+  assert.deepEqual([r.score.phase, r.score.total, r.run.tool_calls], ["arrived", 91524.20005110196, 6]);
+  assert.ok(r.score.total < n.score.total);
   const ref = reference(E, await openTask(E, SUITE, SOLO, "2"));
   assert.deepEqual([ref.total, ref.car, ref.label], [99999.82031807303, "sf-01", "energy/energy"]);
 });
 
 test("naive, random and the reference on a shared flight of two bookings", async () => {
   const n = await play(SHARED, (call) => naive(call, E));
-  assert.deepEqual([n.score.phase, n.score.total, n.run.calls], ["arrived", 94998.54775849446, 7]);
+  assert.deepEqual([n.score.phase, n.score.total, n.run.calls], ["arrived", 95006.33966882, 7]);
   const r = await play(SHARED, (call) => random(call, E, rngOf(SHARED.id + "|0")));
-  assert.deepEqual([r.score.phase, r.score.total], ["planning", 0]);
+  assert.deepEqual([r.score.phase, r.score.total], ["arrived", 92542.9134699362]);
+  assert.ok(r.score.total < n.score.total);
   const ref = reference(E, await openTask(E, SUITE, SHARED, "2"));
   assert.deepEqual([ref.total, ref.car], [98000.49361300499, "sf-04"]);
   assert.ok(ref.total >= n.score.total);
