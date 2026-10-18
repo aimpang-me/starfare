@@ -1,5 +1,7 @@
 # Next steps for whoever picks this up (2026-10-16)
 
+Current priorities and integration receipt: [Monday 19 October 2026 model handoff](docs/MODEL-HANDOFF-2026-10-19.md). The dated sections below are historical and must not override the current handoff or GitHub state.
+
 Read `CLAUDE.md` first. Its "Rules from Alvin" section applies to everything below.
 
 ## Current Engineering follow-up (2026-10-17)

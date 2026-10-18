@@ -1,5 +1,7 @@
 # Open questions for Alvin (2026-10-16)
 
+> This is the 16 October decision log. Current unresolved fleet, physics, visual-acceptance, asset-generation, and deployment decisions are indexed in [the Monday model handoff](MODEL-HANDOFF-2026-10-19.md). “None waiting” below refers only to the historical questions in this file.
+
 Decisions only Alvin can make. Ask them one at a time, with the options below and the recommendation marked; carry on with the recommended option where the work allows, and record each answer here (move it to "Answered" with the date).
 
 ## Waiting

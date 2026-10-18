@@ -1,5 +1,7 @@
 # Starfare handoff (2026-10-16)
 
+> Historical snapshot. Start with [the Monday 19 October 2026 model handoff](MODEL-HANDOFF-2026-10-19.md) for the integrated application, team artifacts, current verification, and unresolved decisions. Old scores, deployment claims, and next steps below describe their dated baseline.
+
 Context for a new Claude Code session picking up Starfare. `CLAUDE.md` has the layout, tests and rules; this file has the why, the decisions and what's next.
 
 ## What Starfare is
