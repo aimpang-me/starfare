@@ -2,6 +2,8 @@
 
 Status: planning only. Requested by Alvin on October 17, 2026. No application changes or deployment are authorized by this document.
 
+**October 18 implementation note:** The user subsequently authorized implementation, then expanded it to every currently mapped planet/moon and the Sun. The user also requested a Monday handoff with merges coordinated after all chats finish. The original design rationale below is preserved. See [actual results](../../design-audit/2026-10-17/planet-effects/RESULT.md) for delivered behavior, tests and outstanding limits; deployment remains prohibited.
+
 ## Design context
 
 Starfare is a passenger-flight game and bring-your-own-agent platform. People should be able to enjoy a living solar system while understanding real simulated bookings, ships and destinations. Alvin wants the solar system to be the canvas, minimal SpaceX/xAI-like UI, and the orbital presentation of Solar Expanse. Dark SOL, Inter and the existing restrained controls remain the chosen direction.

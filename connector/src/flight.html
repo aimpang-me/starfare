@@ -856,7 +856,7 @@ function bindRide() {
   $("#play").addEventListener("click", function () {
     if (!RS) return;
     if (RS.live && RS.follow) { RS.playing = false; setFollow(false); return; }
-    if (!RS.live && RS.cur >= RS.rp.end) RS.cur = RS.rp.start;
+    if (!RS.live && RS.cur >= RS.rp.end) { RS.cur = RS.rp.start; RS.scrubbed = true; }
     RS.playing = !RS.playing; playIcon();
   });
   $("#golive").addEventListener("click", function () { if (!RS || !RS.live) return; if (RS.follow) RS.playing = false; setFollow(!RS.follow); });
@@ -904,10 +904,13 @@ function liveStatus(lj) {
 // keep: a rebuild of the same flight (the bot answered a checkpoint, or it landed), so the view and the play state carry over.
 function loadRide(keep) {
   var old = RS, live = RIDE.live, rp = SF.replay(RIDE, live), rec = rp.record, h = hailOf(rec.hail_id) || {};
+  if (old && old.bodies && window.SolArt && SolArt.disposePlanet) old.bodies.forEach(function (b) { SolArt.disposePlanet(b.m); });
+  if (old && old.sun && window.SolArt && SolArt.disposePlanet) SolArt.disposePlanet(old.sun);
   var span = rp.end - rp.start, local = rp.focus !== "sun";
   // Local scenes open further out and higher, so the planet frames the shot instead of filling it.
   RS = { pax: (h.rider || "").split(",")[0] || "passenger", rp: rp, cur: rp.start, playing: !reduced, speed: +$("#speed").value, rate: span / 28, over: false,
     yaw: 0, pitch: local ? 0.55 : 0.3, zf: rp.focus === "earth" ? 2.6 : local ? 1.6 : 1, fwd: window.THREE ? V(0, 0, 1) : null, camp: null, local: local, live: !!live, follow: !!live && !reduced };
+  RS.planetClock = keep && old && old.planetClock ? old.planetClock : window.StarfarePlanetEffects ? StarfarePlanetEffects.createClock() : null;
   if (keep && old && old.local === local) {
     ["cur", "playing", "follow", "over", "yaw", "pitch", "zf", "fwd", "camp", "look", "up"].forEach(function (k) { RS[k] = old[k]; });
     RS.cur = Math.max(rp.start, Math.min(rp.end, RS.cur)); RS.follow = RS.follow && RS.live;
@@ -965,7 +968,7 @@ function buildRideScene() {
       labels.add({ html: esc(SF.name(id)), cls: Q.kind === "moon" ? "k-planet" : "k-place", pri: Q.kind === "moon" ? 40 : 30, pos: function () { return placeK(id, RS.cur); } });
     });
   } else {
-    sc.add(new THREE.AmbientLight(0x3a4252, 0.6)); sc.add(new THREE.PointLight(0xfff1dc, 1.7, 0)); sc.add(sunObj(SIZE.sun));
+    sc.add(new THREE.AmbientLight(0x3a4252, 0.6)); sc.add(new THREE.PointLight(0xfff1dc, 1.7, 0)); RS.sun = sunObj(SIZE.sun); sc.add(RS.sun);
     if (window.SolArt) SolArt.setSun(V());
     var used = {}; rp.legs.concat(rp.plan).forEach(function (L) { used[L.from] = used[L.to] = 1; });
     SF.E.PLACES.forEach(function (Q) {
@@ -1128,6 +1131,12 @@ function rideFrame(dt, t) {
   if (RS.camp.distanceTo(p) > D * 30 && !RS.over && !hold) { RS.camp.copy(want); RS.look.copy(look); }
   cam.up.copy(RS.local && !RS.over && !hold && RS.up ? RS.up : V(0, 1, 0));
   cam.position.copy(RS.camp); cam.lookAt(RS.look);
+  if (RS.planetClock && window.SolArt && SolArt.updatePlanet) {
+    if (jump) RS.planetClock.reset(t);
+    var effectsTime = RS.planetClock.sample(t, RS.playing && !reduced && !document.hidden);
+    if (RS.sun && SolArt.updateSun) SolArt.updateSun(RS.sun, { elapsedSeconds: effectsTime, camera: cam, radiusPx: 40, quality: GW <= 760 ? "mobile" : "desktop" });
+    RS.bodies.forEach(function (b) { if (b.m && b.m.userData.planetEffects) SolArt.updatePlanet(b.m, { elapsedSeconds: effectsTime, camera: cam, radiusPx: b.m.scale.x / pxw(cam, b.m.position, GH), quality: GW <= 760 ? "mobile" : "desktop" }); });
+  }
   RS.labels.update(cam, GW, GH);
   var tb = $("#rtbox"); tb.classList.toggle("alert", !!RS.alert);
   tbox(tb, cam, GW, GH, p, RS.shipScale * 0.6, 44);
@@ -1279,6 +1288,7 @@ var THREE_SRC = [
   ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js", "sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs"],
   ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js", "sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3"],
   ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js", "sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa"],
+  ["/assets/planet-effects.js"],
   ["/assets/sol-art.js"]
 ];
 function loadThree() {
@@ -1295,7 +1305,7 @@ function loadThree() {
 function start() {
   initGL(); bindRide();
   if (window.ResizeObserver) new ResizeObserver(onResize).observe($("#rstage")); else addEventListener("resize", onResize);
-  document.addEventListener("visibilitychange", function () { if (document.hidden) glStop(); else glStart(); });
+  document.addEventListener("visibilitychange", function () { if (RS && RS.planetClock) RS.planetClock.sample(performance.now(), false); if (document.hidden) glStop(); else glStart(); });
   loadRide(false);
   if (GL) attachCanvas($("#rhost"));
   glStart();

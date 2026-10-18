@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-17-living-planets-design.md`
 
-**Status:** Proposed plan only. All checkboxes are unexecuted. No application source has been changed for this plan.
+**Status (October 18):** Implementation authorized, first for Earth/Moon, then expanded by the user to all currently mapped bodies. The original checklists below remain the proposal baseline; actual completed checks and limitations are recorded in `docs/design-audit/2026-10-17/planet-effects/RESULT.md`. Do not infer completion from this proposal.
 
 **Plan review:** Independent graphics-engineering builder check completed; no important unanswered questions or contradictions were identified. Implementation still requires a subsequent user request.
 
@@ -22,7 +22,7 @@
 - Pause, reduced motion and hidden tabs freeze the added effects.
 - Cosmetic motion is independent of simulation time. Replay seeking resets it to a stable initial phase.
 - GSAP stays responsible for existing UI/camera transitions; shaders and the render loop own planetary appearance.
-- No deployment, merge, remote push or hosted configuration changes.
+- No deployment or hosted configuration changes. The user subsequently authorized pushing and merging; the latest handoff instruction coordinates merge after every chat finishes. Prepare the Design PR for that serial integration.
 - Resolve concurrent ownership of `connector/src/site.html` and `connector/src/flight.html` before source edits; preserve other chats' work.
 
 ## Review Focus

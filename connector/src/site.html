@@ -492,7 +492,7 @@ p{text-wrap:pretty}
           <li><span class="sh" id="lgShip"></span>Starseeker on a flight</li>
           <li><span class="dt"></span>Ready <span class="dt b" style="margin-left:6px"></span>Busy</li>
         </ul>
-        <p class="lgn">JPL positions at simulated sky dates. Stored paths where available; straight route guides otherwise. Distances compressed; sizes exaggerated.</p>
+        <p class="lgn">JPL positions at simulated sky dates. Stored paths where available; straight route guides otherwise. Distances compressed; sizes exaggerated. Surface rotation and clouds are slowed for viewing.</p>
         <p class="lgn cred" id="artCred" hidden></p>
         <p class="lgn">Arrow keys orbit. + / − zoom. Home resets. Drag to orbit; pinch or scroll to zoom. <a href="/method">Models &amp; assumptions</a>.</p>
       </div>
@@ -641,6 +641,7 @@ p{text-wrap:pretty}
 
 <script>window.SITE = __SITE__;</script><script src="__ENGINE_URL__" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js" integrity="sha384-nhO9toQuMo5osCuA0l+YFpSqscZWxDu251Bnho2gD3kSPv1neEwHg0LyEmrA+mPj" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js" integrity="sha384-mY+ii969jnDCI2HjRHftH2NZVkIO5ZGUkcnGCg3oVJ3kVstWQXwerYWBg+nbUG4R" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js" integrity="sha384-GkidzTYmQg24v13sa3xhBBbvOLbVLO1QxfyKLdOWweQqNqS/iWwUst2T1fER2Xrg" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js" integrity="sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js" integrity="sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js" integrity="sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa" crossorigin="anonymous"></script><script src="/assets/sol-art.js"></script>
+<script src="/assets/planet-effects.js"></script>
 <script src="/assets/flight-view.js"></script>
 <script src="/assets/solar-map.js"></script>
 <script src="/assets/vendor/gsap-3.15.0.min.js"></script>
@@ -1103,8 +1104,10 @@ function parName(car) { var f = SF.SITE.fleet.filter(function (x) { return x.car
    ========================================================= */
 var GL = null, scene, cam, GW = 1, GH = 1, MAPJD = 0, LIVEJD = 0, LIVEMAP = true;
 var MAP_PAUSED = reduced, MAP_TIME = Date.now();
+var PLANET_CLOCK = window.StarfarePlanetEffects ? StarfarePlanetEffects.createClock() : null;
 function mapWallNow() { return MAP_PAUSED ? MAP_TIME : Date.now(); }
 function toggleMapPause() {
+  if (PLANET_CLOCK) PLANET_CLOCK.sample(performance.now(), false);
   if (!MAP_PAUSED) MAP_TIME = Date.now();
   MAP_PAUSED = !MAP_PAUSED;
   $("#pauseMap").textContent = MAP_PAUSED ? "Resume live" : "Pause map";
@@ -1458,7 +1461,7 @@ function updateProjection() {
 /* ---------- camera rig: user-controlled orbit, zoom and GSAP focus ---------- */
 function cancelFly() { if (window.StarfareMotion) StarfareMotion.stopCamera(); RIG.fly = null; }
 var RIG = { az: 0.25, el: 0.72, dist: 150, tgt: V(), touched: -1e9, fly: null, zoom: function (f) { cancelFly(); RIG.dist = clamp(RIG.dist * f, 1.2, 1200); glStart(); } };
-var FOCI = { sun: { id: "sun", d: 150, el: 0.62 }, inner: { id: "sun", d: 58, el: 0.72 }, sol: { id: "sun", d: 8 }, mercury: { id: "mercury", d: 5 }, venus: { id: "venus", d: 7 }, earth: { id: "earth", d: 9 }, mars: { id: "mars", d: 6.5 }, ceres: { id: "ceres", d: 5 }, jupiter: { id: "jupiter", d: 14 }, saturn: { id: "saturn", d: 16 }, uranus: { id: "uranus", d: 9 }, neptune: { id: "neptune", d: 9 } };
+var FOCI = { sun: { id: "sun", d: 150, el: 0.62 }, inner: { id: "sun", d: 58, el: 0.72 }, sol: { id: "sun", d: 8 }, mercury: { id: "mercury", d: 5 }, venus: { id: "venus", d: 7 }, earth: { id: "earth", d: 9 }, moon: { id: "moon", d: 3.5 }, mars: { id: "mars", d: 6.5 }, ceres: { id: "ceres", d: 5 }, jupiter: { id: "jupiter", d: 14 }, saturn: { id: "saturn", d: 16 }, uranus: { id: "uranus", d: 9 }, neptune: { id: "neptune", d: 9 } };
 var FOC = FOCI.sun, FOCKEY = "sun";
 function bindRig(host) {
   var ptrs = {}, pinch = 0;
@@ -1509,7 +1512,7 @@ function focusBody(key) {
   flyTo(FOCI[key], key);
 }
 function renderPlanetNav() {
-  $("#planetNav").innerHTML = ["sol", "mercury", "venus", "earth", "mars", "ceres", "jupiter", "saturn", "uranus", "neptune"].map(function (key) {
+  $("#planetNav").innerHTML = ["sol", "mercury", "venus", "earth", "moon", "mars", "ceres", "jupiter", "saturn", "uranus", "neptune"].map(function (key) {
     var id = key === "sol" ? "sun" : key, name = id === "sun" ? "Sun" : SF.name(id), size = id === "earth" ? "day_2k" : id === "jupiter" ? "2k" : "1k";
     return '<button type="button" data-body="' + key + '" aria-pressed="false" aria-label="Focus ' + esc(name) + '"><img alt="" src="/assets/tex/' + id + '_' + size + '.jpg"><span>' + esc(name) + '</span></button>';
   }).join("");
@@ -1548,7 +1551,7 @@ function buildScene(J0) {
     }
     var o, r, min;
     if (p.kind === "planet" || p.kind === "moon" || p.id === "ceres") { o = planetMesh(p.id); r = dispR(p.id); min = p.kind === "moon" ? 2.2 : 4.5; }
-    else if (p.kind === "small") { o = new THREE.Mesh(sphereGeo(), new THREE.MeshBasicMaterial({ color: new THREE.Color(SF.color(p.id)) })); r = dispR(p.id); min = 1.6; }
+    else if (p.kind === "small") { o = planetMesh(p.id); r = dispR(p.id); min = 1.6; }
     else { o = new THREE.Mesh(GEO.oc || (GEO.oc = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: 0x5cc8ff, wireframe: true, transparent: true, opacity: 0.85 })); r = 0.06; min = 3.2; }
     if (ATMO[p.id] && !(window.SolArt && SolArt.hasRim(p.id))) o.add(atmo(ATMO[p.id], 1));
     scene.add(o);
@@ -1659,12 +1662,16 @@ function draw(dt, t) {
   SUN.scale.setScalar(Math.max(1, pxw() * 7 / SIZE.sun));
   DETAIL_SYS = detailSystem();
   SUN.visible = !DETAIL_SYS || DETAIL_SYS === "sun";
+  // Surface animation is illustrative and independent of ephemerides and recorded flights.
+  var effectSeconds = PLANET_CLOCK ? PLANET_CLOCK.sample(t, !MAP_PAUSED && !reduced && !document.hidden) : 0;
+  if (SUN.visible && window.SolArt && SolArt.updateSun) SolArt.updateSun(SUN, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: SIZE.sun * SUN.scale.x / pxw(), quality: GW <= 760 ? "mobile" : "desktop" });
   // bodies
   for (var i = 0; i < BODIES.length; i++) {
     var b = BODIES[i], v = marker(b.id, MAPJD);
     b.obj.position.copy(v);
     b.obj.visible = (!DETAIL_SYS || SF.system(b.id) === DETAIL_SYS) && (b.kind === "planet" || b.kind === "small" || RIG.dist < (b.kind === "moon" ? 70 : 40));
     if (b.obj.visible) b.obj.scale.setScalar(Math.max(b.r, pxw(v) * b.min));
+    if (b.obj.visible && window.SolArt && SolArt.updatePlanet) SolArt.updatePlanet(b.obj, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: b.obj.scale.x / pxw(), quality: GW <= 760 ? "mobile" : "desktop" });
   }
   MOR.forEach(function (m) { m.g.position.copy(marker(m.par, MAPJD)); m.g.visible = LAY.moon && RIG.dist < 45 && (!DETAIL_SYS || SF.system(m.par) === DETAIL_SYS); });
   ORB.children.forEach(function (o) { o.material.opacity = o.userData.baseOpacity * (DETAIL_SYS ? .3 : 1); });
@@ -2168,7 +2175,8 @@ function start() {
     onResize();
     if (window.ResizeObserver) new ResizeObserver(onResize).observe($("#mapbox")); else addEventListener("resize", onResize);
     if (window.IntersectionObserver) new IntersectionObserver(function (en) { MAPVIS = en[0].isIntersecting; if (MAPVIS) glStart(); else glStop(); }).observe($("#mapbox"));
-    document.addEventListener("visibilitychange", function () { if (document.hidden) glStop(); else glStart(); });
+    document.addEventListener("visibilitychange", function () { if (PLANET_CLOCK) PLANET_CLOCK.sample(performance.now(), false); if (document.hidden) glStop(); else glStart(); });
+    addEventListener("solart-texture-ready", glStart);
     if (window.MutationObserver) new MutationObserver(function () { if (!$("#intro").hidden || !$("#logM").hidden) { MAPVIS = false; glStop(); } else { MAPVIS = true; glStart(); } }).observe(document.body, {subtree:true, attributes:true, attributeFilter:["hidden"]});
     cancelFly(); RIG.dist = focusDistance(FOCI.sun, "sun"); RIG.el = FOCI.sun.el;
     glStart();
