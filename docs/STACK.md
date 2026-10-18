@@ -1,5 +1,7 @@
 # Starfare production stack (2026-10-18)
 
+> Environment snapshot from the incoming model's preparation on `ff66fbc`. Read [the Monday handoff](MODEL-HANDOFF-2026-10-19.md) and dated team reports for the integrated game, available art, transfer release, actual checks and unresolved limits. Connector/account claims below refer to that model's environment and may differ on this machine. No deployment is authorized.
+
 What we use to make everything Starfare needs, in three lanes: development, marketing (copy, images, motion, 3D, audio, social, launch) and shipping (release, deploy, monitoring). Surveyed on main `ff66fbc`. Nothing here was deployed or posted, and no Cloudflare setting was changed.
 
 The rules in `CLAUDE.md` ("Rules from Alvin") apply to every generated asset: no Tesla, SpaceX, Grok or xAI logos ("Works with Grok" text only), everything simulated is labelled simulated, and no number appears in copy, video or voice unless a tool produced it.
@@ -52,7 +54,7 @@ Status: **ready** means checked in this session. **limited** means it works with
 
 | Tool | Makes | Status |
 |---|---|---|
-| `design/assets/sol-art.js` (three.js r128) | the Starseeker ship, atmospheres, bloom, HUD icons, all built in code; planet maps from NASA, USGS and Solar System Scope (`design/assets/CREDITS.md`) | ready, and the house approach: no licence risk and no binary model files |
+| `design/assets/sol-art.js` (three.js r128) | the Starseeker ship, atmospheres, bloom, HUD icons, all built in code; planet maps from NASA, USGS and Solar System Scope (`design/assets/CREDITS.md`) | procedural runtime geometry with sourced textures; retain each source's licence and credits. Separate Art trials include binary models; see the Monday handoff |
 | Figma `create_shader` | GLSL shaders for space effects | limited by the View seat |
 | Blender (headless, `pip install bpy`) | modelling and glTF export when a real mesh is needed (cabin interior, new ship classes) | available on request: PyPI is reachable from the container; not installed |
 | Text-to-3D generation | none found in the connector directory | gap 9 |

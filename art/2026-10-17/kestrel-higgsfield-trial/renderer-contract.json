@@ -1,0 +1,26 @@
+{
+  "targetMainCommit": "ff66fbc4532ec694770099e257dcc7214b9faaa0",
+  "verification": "Read exact commit objects locally; current GitHub branch tip not queried; no integration attempted",
+  "files": {
+    "connector/src/site.html": {
+      "gitBlob": "78020ec03c63fbbbd1650bf9bd64a6e48638c0f7",
+      "three128": true,
+      "logDepth": true,
+      "solArtComposer": true
+    },
+    "connector/src/flight.html": {
+      "gitBlob": "d51bb02d92e5662ec2adffefa052c1db7af5eeb9",
+      "three128": true,
+      "logDepth": true,
+      "solArtComposer": true
+    },
+    "design/assets/sol-art.js": {
+      "gitBlob": "6e467a5aea2e51e42fc21a2a91911ac9dfcda470",
+      "three128": false,
+      "logDepth": false,
+      "solArtComposer": false
+    }
+  },
+  "engineOwnership": "Engineering: timing, recorded data, positions and flight state",
+  "artScope": "independent static Kestrel asset preview"
+}

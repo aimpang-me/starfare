@@ -1,5 +1,7 @@
 # Starfare web pages
 
+> Historical page/deployment inventory. Read [the Monday model handoff](MODEL-HANDOFF-2026-10-19.md) for the integrated application and current restrictions. Hosted versions listed below have not been reverified for this handoff. Merging main does not deploy.
+
 Every page is a single self-contained HTML file built from a template plus baked data, then published as a **private claude.ai artifact** (only Alvin can open it until he shares it from the page's Share menu). The one public page is the Starfare website on the `starfare` Worker; see "Going public" below.
 
 | Page | Live link | Source | Build | Status |

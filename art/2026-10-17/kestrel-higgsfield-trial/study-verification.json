@@ -1,0 +1,32 @@
+{
+    "scope":  "Review setup verification only. Existing procedural v3 Kestrel used as a local test fixture; no Higgsfield generation exists.",
+    "checks":  [
+                   "Standalone starts with no model and no external requests",
+                   "Existing fixture loads, manual rotation responds, phone layout has no overflow, 96px rendering has no WebGL error"
+               ],
+    "cleanup":  {
+                    "browserExited":  true,
+                    "serverClosed":  true,
+                    "portReleased":  true
+                },
+    "fixture":  {
+                    "file":  "kestrel.glb",
+                    "bytes":  11619948,
+                    "rawBounds":  [
+                                      8.349800109863281,
+                                      1.769986629486084,
+                                      8.894000053405762
+                                  ],
+                    "triangles":  65128,
+                    "meshes":  19,
+                    "texturedMeshes":  9,
+                    "skins":  0,
+                    "animations":  0,
+                    "revision":  "128",
+                    "displayScale":  "largest bound = 1 art unit"
+                },
+    "errors":  [
+
+               ],
+    "passed":  true
+}

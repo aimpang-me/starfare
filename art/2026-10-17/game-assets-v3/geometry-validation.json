@@ -1,0 +1,97 @@
+{
+  "models": [
+    {
+      "id": "kestrel",
+      "triangles": 65128,
+      "zeroAreaTriangles": 0,
+      "finiteAttributes": true,
+      "unitNormals": true,
+      "uvPerVertex": true,
+      "embeddedMapsMatchSource": true,
+      "sha256": "1cbff4b6b02f7ea6f88c8d165f11a60ef9f6d40d3ca4331356fbefa751484ad4"
+    },
+    {
+      "id": "tandem",
+      "triangles": 91440,
+      "zeroAreaTriangles": 0,
+      "finiteAttributes": true,
+      "unitNormals": true,
+      "uvPerVertex": true,
+      "embeddedMapsMatchSource": true,
+      "sha256": "f96e2c18a2ec9cb8a0839e831f4f47efd184ed979e761e5ea654a684f9584b15"
+    },
+    {
+      "id": "lantern",
+      "triangles": 102628,
+      "zeroAreaTriangles": 0,
+      "finiteAttributes": true,
+      "unitNormals": true,
+      "uvPerVertex": true,
+      "embeddedMapsMatchSource": true,
+      "sha256": "083d38a67749b91088e231dc2d58124add8f9b281c950b0f0a71f730be0e4563"
+    },
+    {
+      "id": "wayfarer",
+      "triangles": 106724,
+      "zeroAreaTriangles": 0,
+      "finiteAttributes": true,
+      "unitNormals": true,
+      "uvPerVertex": true,
+      "embeddedMapsMatchSource": true,
+      "sha256": "55b64bd4268539b2d4f0b91aeed36ea61423997024bdb3ac3b9a7720adbbfec9"
+    }
+  ],
+  "textures": [
+    {
+      "name": "hull-basecolor",
+      "width": 1254,
+      "height": 1254,
+      "channelMeans": [
+        37.984372178089124,
+        45.68717647388007,
+        54.7865732367747
+      ]
+    },
+    {
+      "name": "hull-normal",
+      "width": 1254,
+      "height": 1254,
+      "channelMeans": [
+        122.83184908770403,
+        127.58907063584726,
+        249.22444159550682
+      ]
+    },
+    {
+      "name": "hull-metalrough",
+      "width": 1254,
+      "height": 1254,
+      "channelMeans": [
+        246.79458523792445,
+        209.1474242551427,
+        239.70053404862017
+      ]
+    },
+    {
+      "name": "alloy-basecolor",
+      "width": 1254,
+      "height": 1254,
+      "channelMeans": [
+        160.92379727773834,
+        167.3396989283416,
+        174.913113125717
+      ]
+    },
+    {
+      "name": "hull-occlusion",
+      "width": 1254,
+      "height": 1254,
+      "channelMeans": [
+        234.63849588811814,
+        234.96734468838474,
+        234.93844514141668
+      ]
+    }
+  ],
+  "passed": true
+}

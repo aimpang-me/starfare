@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.dirname(fileURLToPath(import.meta.url));
+const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json')));
+const models=Object.fromEntries(manifest.models.map(m=>[m.id,fs.readFileSync(path.join(root,m.file)).toString('base64')]));
+const source=fs.readFileSync(path.join(root,'viewer.js'),'utf8');
+const html=fs.readFileSync(path.join(root,'preview.html'),'utf8').replace('<script type="module" src="viewer.js"></script>','<script>window.STARFARE_PACKAGED_DATA='+JSON.stringify({manifest,models})+';</script><script type="module">'+source.replaceAll('</script','<\\/script')+'</script>');
+fs.writeFileSync(path.join(root,'standalone-preview.html'),html);
+console.log('Self-contained preview saved. No preview server required.');

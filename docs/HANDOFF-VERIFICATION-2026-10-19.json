@@ -1,0 +1,335 @@
+{
+  "format": "starfare.model-handoff-verification/1",
+  "completed_utc": "2026-10-18T06:57:14.455509+00:00",
+  "code_baseline_main": "896e5d84b4cbdc70aa6f7a631633a91d6d2a9251",
+  "checked_integration_commit": "7943bf3927f6946001659fcda3b6188ac133a5b6",
+  "scope": "Combined Engineering PR #15, Design PR #16 and documentation/art packaging. No deployment or hosted-secret change.",
+  "unit": {
+    "command": "npm run test:unit",
+    "startedAt": "2026-10-18T06:49:10.3850728Z",
+    "exitCode": 0,
+    "finishedAt": "2026-10-18T06:56:28.6799923Z",
+    "tests": 242,
+    "pass": 242,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "worker": {
+    "passing_checks": 43,
+    "off": 26,
+    "on": 17,
+    "initial_command": "npm run test:e2e",
+    "initial_exit_code": 1,
+    "initial_passed": 28,
+    "initial_total": 43,
+    "initial_failure": "OAuth-off local Worker stopped responding during SF-02 refusal case, followed by connection refusals. Cause unconfirmed; not erased or represented as a pass. OAuth-on passed 17/17.",
+    "rerun_command": "node --require ./.wrangler/capture-worker.cjs test/e2e.mjs --mode=off",
+    "rerun_exit_code": 0,
+    "rerun_note": "Ignored preload only records spawned Worker output and process exit; no application source or assertions changed.",
+    "tested_ports": [
+      50831,
+      62342,
+      62943
+    ]
+  },
+  "offline_numerical": {
+    "format": "starfare.propulsion-study-check/1",
+    "completed_utc": "2026-10-18T06:49:42.571Z",
+    "kind": "public offline numerical evaluation; not application tests or hardware validation",
+    "status": "passed",
+    "commands": [
+      {
+        "command": [
+          "node",
+          "audit/option-b-ship-budget.mjs",
+          "--out",
+          "connector/.wrangler/propulsion-handoff-check/2026-10-18T06-49-30-742Z/original.json"
+        ],
+        "exit_code": 0,
+        "elapsed_ms": 91.13829999999999
+      },
+      {
+        "command": [
+          "node",
+          "audit/option-b-ship-budget.mjs",
+          "--feed-proposal",
+          "audit/option-b-feed-proposal.json",
+          "--out",
+          "connector/.wrangler/propulsion-handoff-check/2026-10-18T06-49-30-742Z/feed.json"
+        ],
+        "exit_code": 0,
+        "elapsed_ms": 98.68849999999999
+      },
+      {
+        "command": [
+          "node",
+          "audit/option-b-ship-budget.mjs",
+          "--feed-proposal",
+          "audit/option-b-feed-proposal.json",
+          "--thermal-proposal",
+          "audit/option-b-thermal-proposal.json",
+          "--out",
+          "connector/.wrangler/propulsion-handoff-check/2026-10-18T06-49-30-742Z/thermal.json"
+        ],
+        "exit_code": 0,
+        "elapsed_ms": 402.3526999999999
+      },
+      {
+        "command": [
+          "node",
+          "audit/option-b-ship-budget.mjs",
+          "--feed-proposal",
+          "audit/option-b-feed-proposal.json",
+          "--thermal-proposal",
+          "audit/option-b-thermal-proposal.json",
+          "--thermal-hardware",
+          "audit/option-b-thermal-hardware.json",
+          "--out",
+          "connector/.wrangler/propulsion-handoff-check/2026-10-18T06-49-30-742Z/installed.json"
+        ],
+        "exit_code": 0,
+        "elapsed_ms": 3485.727
+      },
+      {
+        "command": [
+          "node",
+          "audit/option-b-ship-budget.mjs",
+          "--feed-proposal",
+          "audit/option-b-feed-proposal.json",
+          "--thermal-proposal",
+          "connector/.wrangler/propulsion-handoff-check/2026-10-18T06-49-30-742Z/step1-proposal.json",
+          "--thermal-hardware",
+          "audit/option-b-thermal-hardware.json",
+          "--out",
+          "connector/.wrangler/propulsion-handoff-check/2026-10-18T06-49-30-742Z/installed-step1.json"
+        ],
+        "exit_code": 0,
+        "elapsed_ms": 7685.1711
+      }
+    ],
+    "compatibility": [
+      {
+        "mode": "original",
+        "numeric_fields": 6692,
+        "sha256": "f7c910a46296469fc0dc60f76994336d6c9af9f96a9c1738ed29eb661386acbe",
+        "unchanged": true
+      },
+      {
+        "mode": "feed",
+        "numeric_fields": 17052,
+        "sha256": "38793628b735d05000210e131a4c2dfd5ddf6abecff7e3df7d849153a4899b17",
+        "unchanged": true
+      },
+      {
+        "mode": "thermal",
+        "numeric_fields": 34644,
+        "sha256": "18dab383c5da09a2861ec81eacc0b322335dce260f02c75fedcee77d4a2da09e",
+        "unchanged": true
+      }
+    ],
+    "arithmetic_max_absolute_error_kg": 4.547473508864641e-13,
+    "refinement": [
+      {
+        "mission_id": "phobos-pad-500kg",
+        "role": "cargo",
+        "absolute_difference": {
+          "peak_electrical_w": 0.03599076161412995,
+          "duty_energy_wh": 3.102144319200306e-07,
+          "radiator_rating_w": 0.05659796505369741,
+          "installed_design_kg": 0.00245829218806648,
+          "maximum_phase_case_energy_wh": 0.0035905368270618965
+        }
+      },
+      {
+        "mission_id": "phobos-pad-1000kg",
+        "role": "cargo",
+        "absolute_difference": {
+          "peak_electrical_w": 0.018013358193002205,
+          "duty_energy_wh": 1.883756794995861e-07,
+          "radiator_rating_w": 0.028327253267661945,
+          "installed_design_kg": 0.0012303740132892926,
+          "maximum_phase_case_energy_wh": 0.007183027916710216
+        }
+      },
+      {
+        "mission_id": "phobos-pad-2000kg",
+        "role": "passenger",
+        "absolute_difference": {
+          "peak_electrical_w": 0.012012906822747027,
+          "duty_energy_wh": 1.3068506632407662e-07,
+          "radiator_rating_w": 0.01889112635717538,
+          "installed_design_kg": 0.0008205225824440276,
+          "maximum_phase_case_energy_wh": 0.01436586530689965
+        }
+      }
+    ],
+    "source_hashes": {
+      "world/engine/sol-page.js": "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65",
+      "connector/src/engine/sol-page.cjs": "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65",
+      "connector/src/suites/v1.json": "f77def45a0ea18821355e102a702593e7173492494a03fbdae610a6396597a1f",
+      "audit/option-b-ship-budget.mjs": "18e62960b556c3725680788d6c52f354a4083668dd242a405db2e6fd4752c911",
+      "audit/option-b-thermal.mjs": "45bb4295845d094dad09682acaf6bb007f29aed8b34926ad1c9964dfbbec8d61",
+      "audit/option-b-thermal-hardware.mjs": "69b266b5e2af45d5bd7d3316d91f1f7801005f5daabfe8bc1f9d7a693b910bdc",
+      "audit/option-b-thermal-hardware.json": "44346c6dd269dedb801d8652206e966c991d258764a5384c6ef68cb5928e34e2",
+      "audit/option-b-thermal-properties.json": "7dde08620fbaaa5b352be9ad1643b4894df7a719933447e034d52ab05ba2aa44",
+      "audit/option-b-thermal-proposal.json": "d680e3468d52d47b839b510c473699abc40d382614d88b24f1004e4c077b60a3",
+      "audit/option-b-feed-proposal.json": "13756f96bb7a079116b241ee6738d3af711637b9f05680c8d5e45a6e7e51d277",
+      "audit/option-b-ship-assumptions.json": "a9e6e90cdd529040497147c02122e1ce2d0e6bebd2c267364f083fd06c119a36",
+      "audit/option-b-ship-missions.json": "ef4d1a4d463a9017041c5353a2614d922a6fb9fb389865ba54c713aaa5295705",
+      "audit/option-b-hardware.json": "ded1955e9171282ef064448abe20b92294c6f65f7c940c314fb5f0d1838b8c48",
+      "audit/propulsion-study-baselines.json": "8027a6b138fbde6151f6632b79eea831ae45a64224a7dab760f63da2ff5e24ca",
+      "audit/propulsion-study-check.mjs": "9dfea160b9ddebaeb77b32295a53a121441f4279919c5a3eb219a7aea7679e83"
+    },
+    "selected": [
+      {
+        "mission_id": "phobos-pad-500kg",
+        "role": "cargo",
+        "mass_status": "mass_deficit",
+        "pressure_status": "installed_hardware_requirements_only_transfer_and_exposure_unproven",
+        "installed_design_kg": 525.208054997647,
+        "cargo_kg": 0,
+        "occupants": 0,
+        "trim_kg": 0,
+        "deficit_kg": 72.7856222545521,
+        "thermal_rating_w": 2046.9256575386964,
+        "duty_energy_wh": 896.0102661358616
+      },
+      {
+        "mission_id": "phobos-pad-1000kg",
+        "role": "cargo",
+        "mass_status": "conditional_mass_budget_closes",
+        "pressure_status": "installed_hardware_requirements_only_transfer_and_exposure_unproven",
+        "installed_design_kg": 611.0302343519394,
+        "cargo_kg": 290,
+        "occupants": 0,
+        "trim_kg": 4.9941317078476,
+        "deficit_kg": 0,
+        "thermal_rating_w": 2085.0368209071685,
+        "duty_energy_wh": 1175.794224242433
+      },
+      {
+        "mission_id": "phobos-pad-2000kg",
+        "role": "passenger",
+        "mass_status": "mass_deficit",
+        "pressure_status": "installed_hardware_requirements_only_transfer_and_exposure_unproven",
+        "installed_design_kg": 1585.8777716276188,
+        "cargo_kg": 0,
+        "occupants": 2,
+        "trim_kg": 0,
+        "deficit_kg": 5.151302713545192,
+        "thermal_rating_w": 2155.426867866503,
+        "duty_energy_wh": 1739.282754952268
+      }
+    ],
+    "application_tests_run": false,
+    "external_processes_left_running": 0,
+    "process_scope": "only this runner's synchronous sizing children, all returned exit 0; unrelated workers are not inspected or stopped",
+    "limit": "Conditional reference-path arithmetic only. Installed exposure, gas/wall/coolant/actuator transients and selected component ratings remain unproven."
+  },
+  "publication_scan": {
+    "unique_history_blobs_scanned": 603,
+    "private_key_values_checked": 2,
+    "art_files_checked": 129,
+    "reviewed_false_positives": [],
+    "issues": []
+  },
+  "ci": {
+    "command": "GitHub sol-regression workflow: regression plus planted-error negative control",
+    "head": "896e5d84b4cbdc70aa6f7a631633a91d6d2a9251",
+    "status": "success",
+    "url": "https://github.com/aimpang-me/starfare/actions/runs/39105457141"
+  },
+  "process_cleanup": {
+    "checkedAt": "2026-10-18T07:15:35.2817893Z",
+    "tested_ports": [
+      49388,
+      50831,
+      50903,
+      50999,
+      54120,
+      54178,
+      58510,
+      61020,
+      62342,
+      62943,
+      63148,
+      63380
+    ],
+    "active_owned_runtimes": [],
+    "listening_test_ports": [],
+    "note": "Unit, Worker, missing-browser, desktop/phone, video and Ctrl+C checks are finished. Other applications were left alone."
+  },
+  "limits": [
+    "No production inspection or deployment.",
+    "No physical phone GPU, resident-memory or frame-time certification.",
+    "No propulsion hardware, thermal-continuity or fleet qualification.",
+    "No completed Higgsfield-generated GLB or final human visual acceptance.",
+    "Private benchmark files and original local stores are retained locally, excluded from transfer."
+  ],
+  "raw_logs": "Preserved locally under connector/.wrangler/handoff-*; excluded from Git and release.",
+  "tooling_addendum": {
+    "reviewed_pr17_head": "57890141edd8afe34aa3acef1f3ac55881f98297",
+    "capture_cleanup_fix": "1238fa4cb1320a8f4c99e4dd61cf1995da61347e",
+    "application_sources_unchanged_since_combined_suite": true,
+    "missing_browser_failure_check": {
+      "actualExitCode": 1,
+      "expectedExitCode": 1,
+      "checkedAt": "2026-10-18T07:03:13.4677166Z",
+      "leftoverNewTempDirectories": [],
+      "browserLaunchFailedAsExpected": true
+    },
+    "interrupt_cleanup_check": {
+      "checkedAt": "2026-10-18T07:14:00.8402728Z",
+      "survivors": [],
+      "trackedProcesses": 15
+    },
+    "desktop_phone_capture": {
+      "made": "2026-10-18T07:07:39.827Z",
+      "base": "http://127.0.0.1:54120",
+      "commit": "cfc5b181e3eeecd52bb647b4e7be6ffb562636d9",
+      "working_tree_dirty": false,
+      "engine_sha256": "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65",
+      "pages": [
+        "/"
+      ],
+      "sizes": [
+        "desktop",
+        "phone"
+      ],
+      "video_seconds": 0,
+      "files": [
+        "home-desktop.png",
+        "home-phone.png"
+      ],
+      "console_errors": [],
+      "note": "Captured from the Starfare pages: the sky, fleet, bookings and flights are simulated. Label them so wherever they are posted."
+    },
+    "video_capture": {
+      "made": "2026-10-18T07:08:59.390Z",
+      "base": "http://127.0.0.1:61020",
+      "commit": "cfc5b181e3eeecd52bb647b4e7be6ffb562636d9",
+      "working_tree_dirty": false,
+      "engine_sha256": "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65",
+      "pages": [
+        "/"
+      ],
+      "sizes": [
+        "og"
+      ],
+      "video_seconds": 5,
+      "files": [
+        "home-og.png",
+        "home-og.mp4",
+        "home-og.gif"
+      ],
+      "console_errors": [],
+      "note": "Captured from the Starfare pages: the sky, fleet, bookings and flights are simulated. Label them so wherever they are posted."
+    },
+    "measured_mp4_seconds": 4.96,
+    "ci_change": "Incoming model raised connector job limit from 20 to 45 minutes after Windows timeout; push-triggered runs now apply only to main, alongside PR checks.",
+    "verification_limit": "Capture error/normal/Ctrl+C paths were exercised on this Windows host; not every startup/close error, OS or device was tested.",
+    "final_ci_and_merge_evidence": "Final release verification JSON and live PR #17/#18 check runs."
+  }
+}

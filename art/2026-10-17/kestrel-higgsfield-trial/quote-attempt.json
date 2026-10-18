@@ -1,0 +1,13 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Invalid request: model \"image_to_3d\" is a 3d model; use generate_3d instead.\n\nCheck models_get for allowed aspect ratios, durations, media roles, and params for this model."
+    }
+  ],
+  "structuredContent": {
+    "error": "model \"image_to_3d\" is a 3d model; use generate_3d instead.",
+    "error_code": "INVALID_ARGUMENT"
+  },
+  "isError": true
+}

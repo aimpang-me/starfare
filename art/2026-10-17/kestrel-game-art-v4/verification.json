@@ -1,0 +1,354 @@
+{
+    "date":  "2026-10-18T00:15:53.773Z",
+    "models":  [
+                   {
+                       "id":  "kestrel",
+                       "revision":  "128",
+                       "meshes":  17,
+                       "textured":  9,
+                       "normal":  6,
+                       "uv":  17,
+                       "yaw":  1.02,
+                       "pitch":  0.66,
+                       "glError":  0,
+                       "info":  {
+                                    "frame":  36,
+                                    "calls":  17,
+                                    "triangles":  143368,
+                                    "points":  0,
+                                    "lines":  0
+                                }
+                   },
+                   {
+                       "id":  "kestrel-low",
+                       "revision":  "128",
+                       "meshes":  17,
+                       "textured":  9,
+                       "normal":  6,
+                       "uv":  17,
+                       "yaw":  1.02,
+                       "pitch":  0.66,
+                       "glError":  0,
+                       "info":  {
+                                    "frame":  54,
+                                    "calls":  17,
+                                    "triangles":  31284,
+                                    "points":  0,
+                                    "lines":  0
+                                }
+                   }
+               ],
+    "errors":  [
+
+               ],
+    "engine":  {
+                   "home":  [
+                                {
+                                    "id":  "kestrel",
+                                    "meshes":  17,
+                                    "maps":  9,
+                                    "normals":  6,
+                                    "uvs":  17,
+                                    "occlusionMaps":  6,
+                                    "occlusionUV":  6,
+                                    "effects":  false,
+                                    "revision":  "128",
+                                    "glError":  0,
+                                    "post":  true,
+                                    "logDepth":  true,
+                                    "outputEncoding":  3000
+                                },
+                                {
+                                    "id":  "kestrel-low",
+                                    "meshes":  17,
+                                    "maps":  9,
+                                    "normals":  6,
+                                    "uvs":  17,
+                                    "occlusionMaps":  6,
+                                    "occlusionUV":  6,
+                                    "effects":  false,
+                                    "revision":  "128",
+                                    "glError":  0,
+                                    "post":  true,
+                                    "logDepth":  true,
+                                    "outputEncoding":  3000
+                                }
+                            ],
+                   "replay":  [
+                                  {
+                                      "art":  {
+                                                  "id":  "kestrel",
+                                                  "meshes":  17,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  17,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462529.834548611,
+                                      "position":  [
+                                                       1.9703267566662603,
+                                                       -2.6213056151148026,
+                                                       -6.046101052307078
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174837,
+                                                         -0.6980733512678393,
+                                                         -0.0038371680886762115,
+                                                         0.7160051552720212
+                                                     ],
+                                      "phase":  "parked",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "kestrel-low",
+                                                  "meshes":  17,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  17,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462529.834548611,
+                                      "position":  [
+                                                       1.9703267566662603,
+                                                       -2.6213056151148026,
+                                                       -6.046101052307078
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174837,
+                                                         -0.6980733512678393,
+                                                         -0.003837168088676211,
+                                                         0.7160051552720212
+                                                     ],
+                                      "phase":  "parked",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "kestrel",
+                                                  "meshes":  17,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  17,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462531.331814236,
+                                      "position":  [
+                                                       64.401556925186,
+                                                       6.426362833320142,
+                                                       116.39319151406863
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174673,
+                                                         -0.6980733512678406,
+                                                         -0.0038371680886760662,
+                                                         0.71600515527202
+                                                     ],
+                                      "phase":  "flight",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "kestrel-low",
+                                                  "meshes":  17,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  17,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462531.331814236,
+                                      "position":  [
+                                                       64.401556925186,
+                                                       6.426362833320142,
+                                                       116.39319151406863
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174673,
+                                                         -0.6980733512678406,
+                                                         -0.0038371680886760662,
+                                                         0.71600515527202
+                                                     ],
+                                      "phase":  "flight",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "kestrel",
+                                                  "meshes":  17,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  17,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462533.727439236,
+                                      "position":  [
+                                                       244.82403163601154,
+                                                       23.828367333059916,
+                                                       233.37567544194067
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.00393573559017441,
+                                                         -0.6980733512678354,
+                                                         -0.0038371680886757535,
+                                                         0.7160051552720251
+                                                     ],
+                                      "phase":  "flight",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "kestrel-low",
+                                                  "meshes":  17,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  17,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462533.727439236,
+                                      "position":  [
+                                                       244.82403163601154,
+                                                       23.828367333059916,
+                                                       233.37567544194067
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.00393573559017441,
+                                                         -0.6980733512678354,
+                                                         -0.0038371680886757535,
+                                                         0.7160051552720251
+                                                     ],
+                                      "phase":  "flight",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "kestrel",
+                                                  "meshes":  17,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  17,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462535.823611111,
+                                      "position":  [
+                                                       300.5767966217264,
+                                                       28.990853236226307,
+                                                       231.44603791769572
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174297,
+                                                         -0.6980733512678358,
+                                                         -0.003837168088675645,
+                                                         0.7160051552720248
+                                                     ],
+                                      "phase":  "arrived",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "kestrel-low",
+                                                  "meshes":  17,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  17,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462535.823611111,
+                                      "position":  [
+                                                       300.5767966217264,
+                                                       28.990853236226307,
+                                                       231.44603791769572
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174297,
+                                                         -0.6980733512678358,
+                                                         -0.003837168088675645,
+                                                         0.7160051552720248
+                                                     ],
+                                      "phase":  "arrived",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  }
+                              ],
+                   "clones":  {
+                                  "instances":  7,
+                                  "sharedGeometry":  true,
+                                  "geometries":  71,
+                                  "after":  71,
+                                  "glError":  0
+                              },
+                   "sourceUnchanged":  true,
+                   "targetCommit":  "ff66fbc4532ec694770099e257dcc7214b9faaa0",
+                   "fixture":  "Committed iss-crew.record.arrived, static recorded fixture; no live dispatch"
+               },
+    "responsive":  "390px layout and keyboard rotation passed",
+    "offline":  "Both embedded GLBs load with zero secondary network requests",
+    "passed":  true,
+    "cleanup":  {
+                    "browserExited":  true,
+                    "serverClosed":  true,
+                    "portReleased":  true
+                }
+}

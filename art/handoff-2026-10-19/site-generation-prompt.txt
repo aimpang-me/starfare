@@ -1,0 +1,17 @@
+Create an actual, fully rotatable 3D GAME ASSET of the Kestrel spacecraft in the reference. Deliver a textured GLB mesh.
+
+REFERENCE FIDELITY
+Reconstruct the supplied design as closely as possible. Preserve its broad, low-profile delta hull, narrow blunt bow, central stern notch, two angular rising aft shrouds, and long uninterrupted panoramic passenger lounge. Match the proportions and sculpted contours. Do not redesign or simplify the ship into generic wedges or blocks.
+
+HULL AND MECHANICAL DETAIL
+Add closely fitted, mostly flush armor panels with fine recessed seams, subtle bevels, access covers, captive fasteners, hinges and service latches. Reproduce recessed cooling vents, layered louvers, intake frames, machined perimeter armor and restrained exposed machinery. Use purposeful detail at several scales. Avoid oversized raised tiles, excessive bolts and random surface noise.
+
+TEXTURES AND MATERIALS
+Use deep navy coated metal, pale satin brushed titanium, graphite recesses, darker heat-treated machinery and smoked panoramic glazing. Preserve the thin cyan trim and restrained warm cabin detail. Give these surfaces distinct roughness and metallic responses, subtle wear and fine normal detail. Keep the finish maintained and premium.
+
+Provide properly aligned base-color, roughness, metallic, normal and ambient-occlusion maps where supported. Avoid baking strong directional lighting or reflections into the base color.
+
+GAME-ASSET DELIVERY
+Create coherent geometry on every side, including the stern and underside. Target approximately 60,000 triangles, preserving silhouette detail and using textures for tiny surface features. Provide usable UVs and embed textures in one self-contained GLB. Orient +Y up and +Z toward the bow, with a centered pivot if supported.
+
+No background, floor, pedestal, stars, text, logos, additional ships, weapons, exhaust or engine flames. No rigging or animation. Output the 3D mesh asset, not a rendered picture or video.

@@ -1,0 +1,858 @@
+{
+    "date":  "2026-10-17T23:09:34.186Z",
+    "checks":  [
+                   {
+                       "id":  "kestrel",
+                       "revision":  "128",
+                       "meshes":  19,
+                       "textured":  9,
+                       "normal":  6,
+                       "uv":  19,
+                       "yaw":  1.02,
+                       "pitch":  0.42,
+                       "glError":  0,
+                       "info":  {
+                                    "frame":  36,
+                                    "calls":  19,
+                                    "triangles":  65128,
+                                    "points":  0,
+                                    "lines":  0
+                                }
+                   },
+                   {
+                       "id":  "tandem",
+                       "revision":  "128",
+                       "meshes":  18,
+                       "textured":  8,
+                       "normal":  5,
+                       "uv":  18,
+                       "yaw":  1.02,
+                       "pitch":  0.42,
+                       "glError":  0,
+                       "info":  {
+                                    "frame":  58,
+                                    "calls":  18,
+                                    "triangles":  91440,
+                                    "points":  0,
+                                    "lines":  0
+                                }
+                   },
+                   {
+                       "id":  "lantern",
+                       "revision":  "128",
+                       "meshes":  18,
+                       "textured":  9,
+                       "normal":  6,
+                       "uv":  18,
+                       "yaw":  1.02,
+                       "pitch":  0.42,
+                       "glError":  0,
+                       "info":  {
+                                    "frame":  80,
+                                    "calls":  18,
+                                    "triangles":  102628,
+                                    "points":  0,
+                                    "lines":  0
+                                }
+                   },
+                   {
+                       "id":  "wayfarer",
+                       "revision":  "128",
+                       "meshes":  18,
+                       "textured":  8,
+                       "normal":  5,
+                       "uv":  18,
+                       "yaw":  1.02,
+                       "pitch":  0.42,
+                       "glError":  0,
+                       "info":  {
+                                    "frame":  102,
+                                    "calls":  18,
+                                    "triangles":  106724,
+                                    "points":  0,
+                                    "lines":  0
+                                }
+                   },
+                   {
+                       "interaction":  "keyboard and 390px viewport passed"
+                   },
+                   {
+                       "standalone":  "All four embedded models load without external requests"
+                   }
+               ],
+    "errors":  [
+
+               ],
+    "renders":  [
+                    {
+                        "file":  "sprites/kestrel-portrait.png",
+                        "bounds":  [
+                                       200,
+                                       344,
+                                       899,
+                                       639
+                                   ],
+                        "transparent":  923876,
+                        "visible":  124700
+                    },
+                    {
+                        "file":  "sprites/kestrel-top.png",
+                        "bounds":  [
+                                       206,
+                                       177,
+                                       817,
+                                       838
+                                   ],
+                        "transparent":  821372,
+                        "visible":  227204
+                    },
+                    {
+                        "file":  "sprites/kestrel-side.png",
+                        "bounds":  [
+                                       180,
+                                       439,
+                                       879,
+                                       597
+                                   ],
+                        "transparent":  975198,
+                        "visible":  73378
+                    },
+                    {
+                        "file":  "sprites/kestrel-rear.png",
+                        "bounds":  [
+                                       167,
+                                       463,
+                                       856,
+                                       628
+                                   ],
+                        "transparent":  966993,
+                        "visible":  81583
+                    },
+                    {
+                        "file":  "sprites/tandem-portrait.png",
+                        "bounds":  [
+                                       62,
+                                       373,
+                                       917,
+                                       696
+                                   ],
+                        "transparent":  897674,
+                        "visible":  150902
+                    },
+                    {
+                        "file":  "sprites/tandem-top.png",
+                        "bounds":  [
+                                       365,
+                                       76,
+                                       657,
+                                       939
+                                   ],
+                        "transparent":  885601,
+                        "visible":  162975
+                    },
+                    {
+                        "file":  "sprites/tandem-side.png",
+                        "bounds":  [
+                                       57,
+                                       437,
+                                       972,
+                                       594
+                                   ],
+                        "transparent":  941570,
+                        "visible":  107006
+                    },
+                    {
+                        "file":  "sprites/tandem-rear.png",
+                        "bounds":  [
+                                       338,
+                                       424,
+                                       685,
+                                       665
+                                   ],
+                        "transparent":  996530,
+                        "visible":  52046
+                    },
+                    {
+                        "file":  "sprites/lantern-portrait.png",
+                        "bounds":  [
+                                       143,
+                                       334,
+                                       872,
+                                       745
+                                   ],
+                        "transparent":  880913,
+                        "visible":  167663
+                    },
+                    {
+                        "file":  "sprites/lantern-top.png",
+                        "bounds":  [
+                                       333,
+                                       125,
+                                       690,
+                                       890
+                                   ],
+                        "transparent":  886267,
+                        "visible":  162309
+                    },
+                    {
+                        "file":  "sprites/lantern-side.png",
+                        "bounds":  [
+                                       125,
+                                       351,
+                                       906,
+                                       701
+                                   ],
+                        "transparent":  891335,
+                        "visible":  157241
+                    },
+                    {
+                        "file":  "sprites/lantern-rear.png",
+                        "bounds":  [
+                                       309,
+                                       350,
+                                       716,
+                                       724
+                                   ],
+                        "transparent":  967668,
+                        "visible":  80908
+                    },
+                    {
+                        "file":  "sprites/wayfarer-portrait.png",
+                        "bounds":  [
+                                       212,
+                                       377,
+                                       832,
+                                       761
+                                   ],
+                        "transparent":  926891,
+                        "visible":  121685
+                    },
+                    {
+                        "file":  "sprites/wayfarer-top.png",
+                        "bounds":  [
+                                       137,
+                                       251,
+                                       886,
+                                       774
+                                   ],
+                        "transparent":  909285,
+                        "visible":  139291
+                    },
+                    {
+                        "file":  "sprites/wayfarer-side.png",
+                        "bounds":  [
+                                       203,
+                                       447,
+                                       786,
+                                       615
+                                   ],
+                        "transparent":  970400,
+                        "visible":  78176
+                    },
+                    {
+                        "file":  "sprites/wayfarer-rear.png",
+                        "bounds":  [
+                                       142,
+                                       457,
+                                       904,
+                                       608
+                                   ],
+                        "transparent":  967042,
+                        "visible":  81534
+                    }
+                ],
+    "cleanup":  {
+                    "browserExited":  true,
+                    "serverClosed":  true,
+                    "portReleased":  true
+                },
+    "engine":  {
+                   "home":  [
+                                {
+                                    "id":  "kestrel",
+                                    "meshes":  19,
+                                    "maps":  9,
+                                    "normals":  6,
+                                    "uvs":  19,
+                                    "occlusionMaps":  6,
+                                    "occlusionUV":  6,
+                                    "effects":  false,
+                                    "revision":  "128",
+                                    "glError":  0,
+                                    "post":  true,
+                                    "logDepth":  true,
+                                    "outputEncoding":  3000
+                                },
+                                {
+                                    "id":  "tandem",
+                                    "meshes":  18,
+                                    "maps":  8,
+                                    "normals":  5,
+                                    "uvs":  18,
+                                    "occlusionMaps":  5,
+                                    "occlusionUV":  5,
+                                    "effects":  false,
+                                    "revision":  "128",
+                                    "glError":  0,
+                                    "post":  true,
+                                    "logDepth":  true,
+                                    "outputEncoding":  3000
+                                },
+                                {
+                                    "id":  "lantern",
+                                    "meshes":  18,
+                                    "maps":  9,
+                                    "normals":  6,
+                                    "uvs":  18,
+                                    "occlusionMaps":  6,
+                                    "occlusionUV":  6,
+                                    "effects":  false,
+                                    "revision":  "128",
+                                    "glError":  0,
+                                    "post":  true,
+                                    "logDepth":  true,
+                                    "outputEncoding":  3000
+                                },
+                                {
+                                    "id":  "wayfarer",
+                                    "meshes":  18,
+                                    "maps":  8,
+                                    "normals":  5,
+                                    "uvs":  18,
+                                    "occlusionMaps":  5,
+                                    "occlusionUV":  5,
+                                    "effects":  false,
+                                    "revision":  "128",
+                                    "glError":  0,
+                                    "post":  true,
+                                    "logDepth":  true,
+                                    "outputEncoding":  3000
+                                }
+                            ],
+                   "flight":  [
+                                  {
+                                      "art":  {
+                                                  "id":  "tandem",
+                                                  "meshes":  18,
+                                                  "maps":  8,
+                                                  "normals":  5,
+                                                  "uvs":  18,
+                                                  "occlusionMaps":  5,
+                                                  "occlusionUV":  5,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462529.834548611,
+                                      "position":  [
+                                                       1.9703267566662603,
+                                                       -2.6213056151148026,
+                                                       -6.046101052307078
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174837,
+                                                         -0.6980733512678393,
+                                                         -0.0038371680886762115,
+                                                         0.7160051552720212
+                                                     ],
+                                      "phase":  "parked",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "kestrel",
+                                                  "meshes":  19,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  19,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462529.834548611,
+                                      "position":  [
+                                                       1.9703267566662603,
+                                                       -2.6213056151148026,
+                                                       -6.046101052307078
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174837,
+                                                         -0.6980733512678393,
+                                                         -0.003837168088676211,
+                                                         0.7160051552720212
+                                                     ],
+                                      "phase":  "parked",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "lantern",
+                                                  "meshes":  18,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  18,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462529.834548611,
+                                      "position":  [
+                                                       1.9703267566662603,
+                                                       -2.6213056151148026,
+                                                       -6.046101052307078
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174837,
+                                                         -0.6980733512678393,
+                                                         -0.003837168088676211,
+                                                         0.7160051552720212
+                                                     ],
+                                      "phase":  "parked",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "wayfarer",
+                                                  "meshes":  18,
+                                                  "maps":  8,
+                                                  "normals":  5,
+                                                  "uvs":  18,
+                                                  "occlusionMaps":  5,
+                                                  "occlusionUV":  5,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462529.834548611,
+                                      "position":  [
+                                                       1.9703267566662603,
+                                                       -2.6213056151148026,
+                                                       -6.046101052307078
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174837,
+                                                         -0.6980733512678393,
+                                                         -0.003837168088676211,
+                                                         0.7160051552720212
+                                                     ],
+                                      "phase":  "parked",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "tandem",
+                                                  "meshes":  18,
+                                                  "maps":  8,
+                                                  "normals":  5,
+                                                  "uvs":  18,
+                                                  "occlusionMaps":  5,
+                                                  "occlusionUV":  5,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462531.331814236,
+                                      "position":  [
+                                                       64.401556925186,
+                                                       6.426362833320142,
+                                                       116.39319151406863
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174673,
+                                                         -0.6980733512678406,
+                                                         -0.0038371680886760662,
+                                                         0.71600515527202
+                                                     ],
+                                      "phase":  "flight",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "kestrel",
+                                                  "meshes":  19,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  19,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462531.331814236,
+                                      "position":  [
+                                                       64.401556925186,
+                                                       6.426362833320142,
+                                                       116.39319151406863
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174673,
+                                                         -0.6980733512678406,
+                                                         -0.0038371680886760662,
+                                                         0.71600515527202
+                                                     ],
+                                      "phase":  "flight",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "lantern",
+                                                  "meshes":  18,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  18,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462531.331814236,
+                                      "position":  [
+                                                       64.401556925186,
+                                                       6.426362833320142,
+                                                       116.39319151406863
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174673,
+                                                         -0.6980733512678406,
+                                                         -0.0038371680886760662,
+                                                         0.71600515527202
+                                                     ],
+                                      "phase":  "flight",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "wayfarer",
+                                                  "meshes":  18,
+                                                  "maps":  8,
+                                                  "normals":  5,
+                                                  "uvs":  18,
+                                                  "occlusionMaps":  5,
+                                                  "occlusionUV":  5,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462531.331814236,
+                                      "position":  [
+                                                       64.401556925186,
+                                                       6.426362833320142,
+                                                       116.39319151406863
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174673,
+                                                         -0.6980733512678406,
+                                                         -0.0038371680886760662,
+                                                         0.71600515527202
+                                                     ],
+                                      "phase":  "flight",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "tandem",
+                                                  "meshes":  18,
+                                                  "maps":  8,
+                                                  "normals":  5,
+                                                  "uvs":  18,
+                                                  "occlusionMaps":  5,
+                                                  "occlusionUV":  5,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462533.727439236,
+                                      "position":  [
+                                                       244.82403163601154,
+                                                       23.828367333059916,
+                                                       233.37567544194067
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.00393573559017441,
+                                                         -0.6980733512678354,
+                                                         -0.0038371680886757535,
+                                                         0.7160051552720251
+                                                     ],
+                                      "phase":  "flight",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "kestrel",
+                                                  "meshes":  19,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  19,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462533.727439236,
+                                      "position":  [
+                                                       244.82403163601154,
+                                                       23.828367333059916,
+                                                       233.37567544194067
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.00393573559017441,
+                                                         -0.6980733512678354,
+                                                         -0.0038371680886757535,
+                                                         0.7160051552720251
+                                                     ],
+                                      "phase":  "flight",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "lantern",
+                                                  "meshes":  18,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  18,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462533.727439236,
+                                      "position":  [
+                                                       244.82403163601154,
+                                                       23.828367333059916,
+                                                       233.37567544194067
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.00393573559017441,
+                                                         -0.6980733512678354,
+                                                         -0.0038371680886757535,
+                                                         0.7160051552720251
+                                                     ],
+                                      "phase":  "flight",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "wayfarer",
+                                                  "meshes":  18,
+                                                  "maps":  8,
+                                                  "normals":  5,
+                                                  "uvs":  18,
+                                                  "occlusionMaps":  5,
+                                                  "occlusionUV":  5,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462533.727439236,
+                                      "position":  [
+                                                       244.82403163601154,
+                                                       23.828367333059916,
+                                                       233.37567544194067
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.00393573559017441,
+                                                         -0.6980733512678354,
+                                                         -0.0038371680886757535,
+                                                         0.7160051552720251
+                                                     ],
+                                      "phase":  "flight",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "tandem",
+                                                  "meshes":  18,
+                                                  "maps":  8,
+                                                  "normals":  5,
+                                                  "uvs":  18,
+                                                  "occlusionMaps":  5,
+                                                  "occlusionUV":  5,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462535.823611111,
+                                      "position":  [
+                                                       300.5767966217264,
+                                                       28.990853236226307,
+                                                       231.44603791769572
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174297,
+                                                         -0.6980733512678358,
+                                                         -0.003837168088675645,
+                                                         0.7160051552720248
+                                                     ],
+                                      "phase":  "arrived",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "kestrel",
+                                                  "meshes":  19,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  19,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462535.823611111,
+                                      "position":  [
+                                                       300.5767966217264,
+                                                       28.990853236226307,
+                                                       231.44603791769572
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174297,
+                                                         -0.6980733512678358,
+                                                         -0.003837168088675645,
+                                                         0.7160051552720248
+                                                     ],
+                                      "phase":  "arrived",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "lantern",
+                                                  "meshes":  18,
+                                                  "maps":  9,
+                                                  "normals":  6,
+                                                  "uvs":  18,
+                                                  "occlusionMaps":  6,
+                                                  "occlusionUV":  6,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462535.823611111,
+                                      "position":  [
+                                                       300.5767966217264,
+                                                       28.990853236226307,
+                                                       231.44603791769572
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174297,
+                                                         -0.6980733512678358,
+                                                         -0.003837168088675645,
+                                                         0.7160051552720248
+                                                     ],
+                                      "phase":  "arrived",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  },
+                                  {
+                                      "art":  {
+                                                  "id":  "wayfarer",
+                                                  "meshes":  18,
+                                                  "maps":  8,
+                                                  "normals":  5,
+                                                  "uvs":  18,
+                                                  "occlusionMaps":  5,
+                                                  "occlusionUV":  5,
+                                                  "effects":  false,
+                                                  "revision":  "128",
+                                                  "glError":  0,
+                                                  "post":  true,
+                                                  "logDepth":  true,
+                                                  "outputEncoding":  3000
+                                              },
+                                      "jd":  2462535.823611111,
+                                      "position":  [
+                                                       300.5767966217264,
+                                                       28.990853236226307,
+                                                       231.44603791769572
+                                                   ],
+                                      "quaternion":  [
+                                                         -0.003935735590174297,
+                                                         -0.6980733512678358,
+                                                         -0.003837168088675645,
+                                                         0.7160051552720248
+                                                     ],
+                                      "phase":  "arrived",
+                                      "events":  5,
+                                      "forwardAligned":  true
+                                  }
+                              ],
+                   "outputCorrection":  "Opt-in final linear-to-sRGB pass after Starfare bloom, before perceptual grain/vignette; preserve clear-color appearance; original native-color screenshot preserved",
+                   "fleet":  {
+                                 "instances":  7,
+                                 "sharedGeometry":  true,
+                                 "geometries":  110,
+                                 "after":  110,
+                                 "glError":  0
+                             },
+                   "sourceUnchanged":  true,
+                   "fixture":  "Committed iss-crew.record.arrived; local-hops fallback, no arc payload or live dispatch"
+               },
+    "passed":  true
+}
