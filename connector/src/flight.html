@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Starfare flight</title>
 <meta name="description" content="Replay and receipt of one simulated Starfare flight: the path in 3D from real planet positions, the passenger list and the score. Works with Grok.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap">
 <style>
 :root{
   color-scheme: dark;
@@ -256,14 +253,15 @@ footer p{margin:0;max-width:100ch}
 .works{display:inline-flex;align-self:flex-start;border:1px solid var(--line-2);border-radius:4px;padding:6px 12px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:var(--ink-2)}
 #loading .box a{color:var(--ride)}
 </style>
+<link rel="stylesheet" href="/assets/mission-control.css">
 </head>
-<body>
+<body class="mc-flight">
 <header class="nav">
   <a class="logo" href="/" aria-label="Starfare home">
     <svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M13 1.8v3M13 21.2v3M1.8 13h3M21.2 13h3M5.1 5.1l2.1 2.1M18.8 18.8l2.1 2.1M5.1 20.9l2.1-2.1M18.8 7.2l2.1-2.1"/></g></svg>
     Starfare
   </a>
-  <nav class="links" aria-label="Sections"><a href="/#hails">Ride hails</a><a href="/#scores">Scoreboard</a><a href="/#play">Play</a></nav>
+  <nav class="links" aria-label="Sections"><a href="/">Mission control</a><a href="/board">Scoreboard</a><a href="/bench">Benchmark</a></nav>
   <span class="pill num" id="skydate" title="Sky clock: one real second is one sky day">Sky clock</span>
 </header>
 <div id="loading" role="status"><div class="box"><b class="caps" style="color:var(--ride)">Starfare flight</b>Loading the engine and the run log<div class="bar"><i></i></div></div></div>
@@ -460,7 +458,7 @@ var SF = (function () {
 var $ = function (s, r) { return (r || document).querySelector(s); };
 var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 var RM = window.matchMedia ? matchMedia("(prefers-reduced-motion: reduce)") : null, reduced = !!(RM && RM.matches);
-if (RM && RM.addEventListener) RM.addEventListener("change", function (e) { reduced = e.matches; });
+if (RM && RM.addEventListener) RM.addEventListener("change", function (e) { reduced = e.matches; if (reduced && RS) { RS.playing = false; RS.follow = false; $("#golive").setAttribute("aria-pressed", "false"); playIcon(); } });
 function esc(s) { return SF.esc(s); }
 // Display words only. Data fields, tool calls and paths keep car / ride / rider / hail.
 var WORDS = [[/\bcars\b/gi, function () { return SF.SHIPS; }], [/\bcar\b/gi, function () { return SF.SHIP; }],
@@ -901,13 +899,13 @@ function loadRide(keep) {
   var old = RS, live = RIDE.live, rp = SF.replay(RIDE, live), rec = rp.record, h = hailOf(rec.hail_id) || {};
   var span = rp.end - rp.start, local = rp.focus !== "sun";
   // Local scenes open further out and higher, so the planet frames the shot instead of filling it.
-  RS = { pax: (h.rider || "").split(",")[0] || "passenger", rp: rp, cur: rp.start, playing: !reduced || !!live, speed: +$("#speed").value, rate: span / 28, over: false,
-    yaw: 0, pitch: local ? 0.55 : 0.3, zf: rp.focus === "earth" ? 2.6 : local ? 1.6 : 1, fwd: window.THREE ? V(0, 0, 1) : null, camp: null, local: local, live: !!live, follow: !!live };
+  RS = { pax: (h.rider || "").split(",")[0] || "passenger", rp: rp, cur: rp.start, playing: !reduced, speed: +$("#speed").value, rate: span / 28, over: false,
+    yaw: 0, pitch: local ? 0.55 : 0.3, zf: rp.focus === "earth" ? 2.6 : local ? 1.6 : 1, fwd: window.THREE ? V(0, 0, 1) : null, camp: null, local: local, live: !!live, follow: !!live && !reduced };
   if (keep && old && old.local === local) {
     ["cur", "playing", "follow", "over", "yaw", "pitch", "zf", "fwd", "camp", "look", "up"].forEach(function (k) { RS[k] = old[k]; });
     RS.cur = Math.max(rp.start, Math.min(rp.end, RS.cur)); RS.follow = RS.follow && RS.live;
   }
-  if (RS.live && RS.follow) RS.cur = Math.max(rp.start, liveJd());
+  if (RS.live && (!keep || RS.follow)) RS.cur = Math.max(rp.start, liveJd());
   RS.pl = passengerList();
   $("#timingWarning").hidden = !window.StarfareView.timingConflicts(RIDE.record, RIDE.lg).length;
   $("#cammode").setAttribute("aria-pressed", String(RS.over));

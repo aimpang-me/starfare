@@ -1,7 +1,9 @@
-<title>Starfare Fleet Operations</title>
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Starfare — Mission control</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap">
 <style>
 :root{
   color-scheme: dark;
@@ -414,13 +416,17 @@ p{text-wrap:pretty}
 @media (pointer:coarse){.btn,.btn.small,.chipb,.seg button,.tabs button{min-height:44px}}
 @media (pointer:coarse){.popm label{min-height:44px}}
 </style>
+<link rel="stylesheet" href="/assets/mission-control.css">
+<body class="mc-home">
+<a class="skip-link" href="#tabB">Skip to bookings</a>
 
 <div id="loading" role="status"><div class="box"><b class="caps" style="color:var(--cy)">Starfare &middot; Dispatch operations</b>Loading the engine<div class="bar"><i></i></div></div></div>
 
 <header class="top wrap">
-  <div class="brand"><b>STARFARE</b><span>Dispatch operations</span></div>
+  <div class="brand"><b>STARFARE</b><span>Mission control</span></div>
   <div class="ctr"><b>DISPATCH OPERATIONS</b><span>Live sky &middot; simulated fleet</span></div>
   <div class="topr">
+    <span class="mc-read-status" id="liveStatus" role="status">Connecting to fleet…</span>
     <div class="clock" title="One real second is one sky day"><span class="caps">Sky time &middot; simulated clock</span><b id="clk">&nbsp;</b><span class="s" id="clkS">&nbsp;</span></div>
     <div class="stat"><i></i>Engine &middot; JPL DE421 positions</div>
     <button class="btn primary small" type="button" id="connectBtn">Connect your agent</button>
@@ -431,12 +437,14 @@ p{text-wrap:pretty}
   <section class="panel c-fl" aria-labelledby="flH">
     <div class="ph"><h2 id="flH">Flights in the air</h2><div class="tags"><span class="tag live">Live</span><span class="tag sim">Simulated</span></div></div>
     <div class="tabs" role="tablist" aria-label="Flights or bookings">
-      <button type="button" role="tab" id="tabF" aria-selected="true" aria-controls="flList">Live flights<span class="n" id="flN"></span></button>
-      <button type="button" role="tab" id="tabB" aria-selected="false" aria-controls="bkList">Open bookings<span class="n" id="bkN"></span></button>
+      <button type="button" role="tab" id="tabB" aria-selected="true" aria-controls="bkWrap">Bookings<span class="n" id="bkN"></span></button>
+      <button type="button" role="tab" id="tabF" aria-selected="false" aria-controls="flList" tabindex="-1">Flights<span class="n" id="flN"></span></button>
     </div>
-    <div class="scroll">
-      <ul class="cards" id="flList" role="tabpanel" aria-labelledby="tabF"></ul>
-      <div id="bkWrap" role="tabpanel" aria-labelledby="tabB" hidden>
+    <div class="mc-mobile-nav"><button type="button" id="mobileActivity" aria-expanded="false" aria-controls="activityPanel">Activity</button></div>
+    <button type="button" class="mc-sheet-collapse" id="sheetCollapse" aria-expanded="true" aria-label="Collapse bookings" aria-controls="bookingScroll">⌄</button>
+    <div class="scroll" id="bookingScroll">
+      <ul class="cards" id="flList" role="tabpanel" aria-labelledby="tabF" hidden></ul>
+      <div id="bkWrap" role="tabpanel" aria-labelledby="tabB">
         <p class="note" style="margin:10px 13px 0">The same seasonal bookings your agent sees. Pick one to calculate its route preview.</p>
         <label class="note" style="display:block;margin:10px 13px">Find a booking<input id="bkSearch" type="search" placeholder="Booking ID, passenger or place" style="width:100%;margin-top:4px"></label>
         <div style="display:flex;align-items:center;gap:8px;margin:10px 13px"><button class="btn small" id="bkPrev" type="button">Previous</button><span class="note" id="bkPage" role="status"></span><button class="btn small" id="bkNext" type="button">Next</button></div>
@@ -447,7 +455,7 @@ p{text-wrap:pretty}
 
   <section class="panel c-map" aria-labelledby="mapH">
     <div class="mtool">
-      <div class="ttl"><b id="mapH">Fleet map</b><span id="mapSub">True positions &middot; three.js</span></div>
+      <div class="ttl"><b id="mapH">Solar system</b><span id="mapSub">Live sky &middot; simulated flights</span></div>
       <div class="seg" id="focus" role="group" aria-label="Focus the map">
         <button type="button" data-f="sun" aria-pressed="true">Whole system</button><button type="button" data-f="inner" aria-pressed="false">Inner system</button><button type="button" data-f="earth" aria-pressed="false">Earth&ndash;Moon</button><button type="button" data-f="mars" aria-pressed="false">Mars</button><button type="button" data-f="jupiter" aria-pressed="false">Jupiter</button><button type="button" data-f="saturn" aria-pressed="false">Saturn</button>
       </div>
@@ -460,19 +468,19 @@ p{text-wrap:pretty}
       <div class="pop"><button class="btn small" type="button" id="lBtn" aria-expanded="false" aria-controls="lMenu">Layers</button>
         <div class="popm" id="lMenu" hidden><div class="caps">Layers</div>
           <label><input type="checkbox" data-lay="orb" checked> Orbits</label>
-          <label><input type="checkbox" data-lay="ring" checked> Rings &amp; grid</label>
+          <label><input type="checkbox" data-lay="ring"> Distance grid</label>
           <label><input type="checkbox" data-lay="lbl" checked> Labels</label>
           <label><input type="checkbox" data-lay="moon" checked> Moon orbits</label>
         </div></div>
     </div>
     <div class="mapwrap">
       <div class="mapbox" id="mapbox">
-        <div class="gl-host" id="glhost"></div>
+        <div class="gl-host" id="glhost" tabindex="0" role="region" aria-label="Solar system map. Arrow keys orbit; plus and minus zoom; Home resets."></div>
         <div class="labels" id="labels"><div class="tbox" id="tbox"><i></i><i></i><i></i><i></i></div></div>
         <div class="nogl-msg" id="nogl" hidden><p>This browser has no WebGL, so the 3D map is off. The flights, Starseekers, alerts and the feed below still run from the engine.</p></div>
         <div class="hud tl"><div class="hudbox" id="hud"></div><button class="btn small" type="button" id="liveBtn" hidden>Back to live sky</button></div>
       </div>
-      <div class="ov info" id="info" aria-live="polite"></div>
+      <div class="ov info" id="info" role="region" aria-label="Selection details"></div>
       <div class="ov legend" id="legend">
         <div class="caps">Legend</div>
         <ul class="lg">
@@ -485,6 +493,10 @@ p{text-wrap:pretty}
         </ul>
         <p class="lgn">JPL positions at simulated sky dates. Stored paths where available; straight route guides otherwise. Distances compressed; sizes exaggerated.</p>
         <p class="lgn cred" id="artCred" hidden></p>
+        <p class="lgn">Arrow keys orbit. + / − zoom. Home resets. Drag to orbit; pinch or scroll to zoom. <a href="/method">Models &amp; assumptions</a>.</p>
+      </div>
+      <div class="mc-map-controls" role="group" aria-label="Map controls">
+        <button type="button" id="zoomIn" aria-label="Zoom in">+</button><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="resetMap" aria-label="Reset system view">⊙</button><button type="button" id="mapHelp" class="mc-map-note" aria-expanded="false" aria-controls="legend">Map info</button>
       </div>
       <div class="ov scale" id="scale">
         <div class="caps">Distance scale</div>
@@ -540,7 +552,18 @@ p{text-wrap:pretty}
       </div>
     </section>
   </div>
+  <aside class="mc-activity" id="activityDock" aria-label="Activity">
+    <button class="btn" type="button" id="activityToggle" aria-expanded="false" aria-controls="activityPanel"><span>Activity <span id="activityCount">0</span></span><span class="mc-sign">+</span></button>
+  </aside>
+  <aside class="mc-drawer" id="opsDrawer" aria-labelledby="drawerTitle" hidden>
+    <div class="mc-drawer-head"><h2 id="drawerTitle">Fleet</h2><button class="btn small" type="button" id="drawerClose">Close</button></div>
+  </aside>
 </main>
+<div class="mc-strip">
+  <div class="mc-sky"><button class="btn small" id="pauseMap" type="button" aria-pressed="false">Pause map</button><span id="mcClock"></span><span class="mc-season" id="mcSeason"></span><span class="mc-rate">1 s = 1 sky day · Simulated</span></div>
+  <button class="btn small mc-operations-toggle" type="button" id="operationsMenu" aria-expanded="false" aria-controls="opsNav">Operations</button>
+  <nav aria-label="Operations" id="opsNav"><button class="btn small" type="button" data-drawer="fleet" aria-expanded="false" aria-controls="opsDrawer">Fleet</button><button class="btn small" type="button" data-drawer="tools" aria-expanded="false" aria-controls="opsDrawer">Agent tools</button><button class="btn small" type="button" data-drawer="alerts" aria-expanded="false" aria-controls="opsDrawer">Alerts</button><button class="btn small" type="button" data-drawer="reports" aria-expanded="false" aria-controls="opsDrawer">Reports</button><button class="btn small" type="button" id="hidePanels" aria-pressed="false">Hide panels</button></nav>
+</div>
 
 <div class="modal" id="logM" role="dialog" aria-modal="true" aria-labelledby="logH" hidden>
   <div class="sheet">
@@ -618,6 +641,8 @@ p{text-wrap:pretty}
 <script>window.SITE = __SITE__;</script><script src="__ENGINE_URL__" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js" integrity="sha384-nhO9toQuMo5osCuA0l+YFpSqscZWxDu251Bnho2gD3kSPv1neEwHg0LyEmrA+mPj" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js" integrity="sha384-mY+ii969jnDCI2HjRHftH2NZVkIO5ZGUkcnGCg3oVJ3kVstWQXwerYWBg+nbUG4R" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js" integrity="sha384-GkidzTYmQg24v13sa3xhBBbvOLbVLO1QxfyKLdOWweQqNqS/iWwUst2T1fER2Xrg" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js" integrity="sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js" integrity="sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js" integrity="sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa" crossorigin="anonymous"></script><script src="/assets/sol-art.js"></script>
 <script src="/assets/flight-view.js"></script>
+<script src="/assets/vendor/gsap-3.15.0.min.js"></script>
+<script src="/assets/mission-control.js"></script>
 <script>
 // Shared data layer: everything comes from the engine (/engine.js, window.SOLE) or window.SITE.
 (function (root) {
@@ -858,10 +883,10 @@ function sgn(n, d) { return (n < 0 ? "\u2212" : "+") + Math.abs(n).toFixed(d); }
 
 /* =========================================================
    LIVE FLIGHTS from /live.json, polled every 30 s while the tab is open.
-   Each track maps wall-clock ms to sky time. The engine re-plans one leg arc per tick in the browser, so a new flight
-   draws as straight legs for a moment and then follows its planned path.
+   Each recorded track maps wall-clock ms to sky time; stored arcs determine physical flight positions.
+   GSAP is used only for interface/camera transitions, never for the flight clock or paths.
    ========================================================= */
-var FL = [], LIVEF = { details: {}, timer: 0, first: true }, RUN_ID = /^run_[0-9a-f]{20}$/;
+var FL = [], LIVEF = { details: {}, timer: 0, first: true, seen: [] }, RUN_ID = /^run_[0-9a-f]{20}$/;
 function liveJd(f, ms) {
   var tr = f.track;
   if (ms <= tr[0][0]) return tr[0][1];
@@ -912,7 +937,8 @@ function addFlightObjs(F) {
 function removeFlightObjs(F) {
   if (!GL || !F.ship) return;
   [F.full, F.flown, F.halo, F.ship].forEach(function (o) { scene.remove(o); });
-  F.full.geometry.dispose(); F.flown.geometry.dispose();
+  F.full.geometry.dispose(); F.flown.geometry.dispose(); F.full.material.dispose(); F.flown.material.dispose(); F.halo.material.dispose();
+  DASHED = DASHED.filter(function (m) { return m !== F.full.material; });
   if (F.lbl) LBL.remove(F.lbl);
 }
 function setFlights(list) {
@@ -921,18 +947,23 @@ function setFlights(list) {
   var next = list.map(function (f) { var k = flightKey(f), F = old[k]; if (F) { delete old[k]; if (F.f.arcs !== f.arcs) { F.rp = SF.replay(liveRide(f).ride); F.pl = passengerList(F.rp.record); } F.f = f; return F; } F = makeFlight(f); addFlightObjs(F); return F; });
   Object.keys(old).forEach(function (k) { removeFlightObjs(old[k]); });
   FL = next;
+  FL.forEach(function (F) {
+    if (!F.lbl) return;
+    var duplicates = FL.filter(function (other) { return other.call === F.call; }).length > 1;
+    F.lbl.el.textContent = F.call + (duplicates ? ' · ' + F.run_id.slice(4,10) : ''); F.lbl.w = 0;
+    F.lbl.el.setAttribute('aria-label', 'Inspect flight ' + F.call + ', run ' + F.run_id.slice(4,10));
+  });
   if (SEL.t === "f") {
     var i = FL.map(function (F) { return F.run_id; }).indexOf(sel);
     if (i >= 0) SEL.i = i; else { SEL = { t: "n" }; FOLLOW = false; }
   }
   if (LIVEF.first) {
     LIVEF.first = false;
-    if (SEL.t === "n" && FL.length) SEL = { t: "f", i: 0 };
     // Seed the feed with each flight's last two events so far.
     FL.forEach(function (F) { F.rp.events.filter(function (e) { return e.jd <= F.jd; }).slice(-2).forEach(function (e) { pushFeed({ jd: e.jd, who: F.call, kind: e.kind, txt: e.title + ". " + e.text }); }); });
   }
   routesDirty = true;
-  renderCards(); renderReports(); renderSk(); renderInfo();
+  renderCards(); renderReports(); renderSk(); renderInfo(); glStart();
 }
 function loadLive() {
   clearTimeout(LIVEF.timer);
@@ -940,14 +971,31 @@ function loadLive() {
     var list = (j && Array.isArray(j.flights) ? j.flights : []).map(liveClean).filter(Boolean);
     return Promise.all(list.map(function (f) {
       var key = flightKey(f), saved = LIVEF.details[f.run_id];
-      if (saved && saved.key === key) return Object.assign(f, { arcs: saved.arcs });
       if (!RUN_ID.test(f.run_id)) return f;
-      return fetch("/flight/" + encodeURIComponent(f.run_id) + ".json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (fl) {
+      var arcRequest = saved && saved.key === key ? Promise.resolve({arcs:saved.arcs}) : fetch("/flight/" + encodeURIComponent(f.run_id) + ".json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+      var recordRequest = fetch("/rides/" + encodeURIComponent(f.run_id) + ".json", {cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).catch(function(){return {};});
+      return Promise.all([arcRequest,recordRequest]).then(function (data) {
+        var fl=data[0], rec=data[1];
         LIVEF.details[f.run_id] = { key: key, arcs: fl.arcs || {} };
-        return Object.assign(f, { arcs: fl.arcs || {} });
+        return Object.assign(f, { arcs: fl.arcs || {}, trail: rec.trail || [] });
       }).catch(function () { return f; });
-    })).then(setFlights);
-  }).catch(function () { setFlights([]); }).then(function () {
+    })).then(function (flights) {
+      setFlights(flights); LIVEF.error = false;
+      flights.forEach(function (f) { (f.trail || []).slice(-8).forEach(function (event) {
+        var stamp = f.run_id + ':' + event.at_ms + ':' + event.tool, jd = SF.jdOf(event.sky);
+        if (!Number.isFinite(jd) || LIVEF.seen.indexOf(stamp) >= 0) return;
+        LIVEF.seen.push(stamp); if (LIVEF.seen.length > 400) LIVEF.seen.shift();
+        pushFeed({source:'agent', jd:jd, who:f.ship.toUpperCase(), kind:'tool', txt:'Agent called ' + event.tool + (event.error ? ': ' + event.error : '') + (event.note ? ' · ' + event.note : '')});
+      }); });
+      $("#liveStatus").textContent = flights.length ? flights.length + " simulated flight" + (flights.length === 1 ? "" : "s") + " · connected" : "Connected · no active flights";
+      $("#liveStatus").dataset.error = "false";
+      $("#mapSub").textContent = "Live sky · simulated flights";
+    });
+  }).catch(function () {
+    LIVEF.error = true; $("#liveStatus").textContent = "Fleet unavailable · retrying"; $("#liveStatus").dataset.error = "true";
+    $("#mapSub").textContent = "Fleet unavailable · retrying · simulated sky";
+    if (!FL.length) $("#flList").innerHTML = '<li class="skn" style="padding:14px">Fleet data is unavailable. Retrying shortly.</li>';
+  }).then(function () {
     LIVEF.timer = setTimeout(function again() { if (document.hidden) LIVEF.timer = setTimeout(again, 30000); else loadLive(); }, 30000);
   });
 }
@@ -1037,7 +1085,7 @@ function planBooking(id, ms) {
     else { B.rp = SF.replay(bookingRide(P, P.hail)); }
   } catch (e) { B.err = "The engine could not plan this booking (" + (e && e.message) + ")."; }
   B.samp = null; routesDirty = true;
-  pushFeed({ jd: SF.sky(ms).jd, who: "DESK", kind: "plan", txt: B.err ? "Could not plan " + (hailOf(id) || {}).title : "Engine planned " + (hailOf(id) || {}).title + (B.plan && B.plan.par ? ", par " + SF.SHIP + " " + parName(B.plan.par.car) : "") });
+  // A local route preview is not agent/flight activity and never enters the dispatcher feed.
   renderBookings(); if (SEL.t === "b" && SEL.id === id) renderInfo();
 }
 function parName(car) { var f = SF.SITE.fleet.filter(function (x) { return x.car === car; })[0]; return f ? f.name : String(car).toUpperCase(); }
@@ -1046,6 +1094,14 @@ function parName(car) { var f = SF.SITE.fleet.filter(function (x) { return x.car
    THE 3D MAP (three.js r128): tilted ecliptic, log-compressed radius, true bearings and dates
    ========================================================= */
 var GL = null, scene, cam, GW = 1, GH = 1, MAPJD = 0, LIVEJD = 0, LIVEMAP = true;
+var MAP_PAUSED = reduced, MAP_TIME = Date.now();
+function mapWallNow() { return MAP_PAUSED ? MAP_TIME : Date.now(); }
+function toggleMapPause() {
+  if (!MAP_PAUSED) MAP_TIME = Date.now();
+  MAP_PAUSED = !MAP_PAUSED;
+  $("#pauseMap").textContent = MAP_PAUSED ? "Resume live" : "Pause map";
+  $("#pauseMap").setAttribute("aria-pressed", String(MAP_PAUSED)); glStart();
+}
 function V(x, y, z) { return new THREE.Vector3(x || 0, y || 0, z || 0); }
 function initGL() {
   function fail() { GL = null; $("#nogl").hidden = false; }
@@ -1069,6 +1125,9 @@ function onResize() {
   var host = $("#mapbox"), w = host.clientWidth || 1, h = host.clientHeight || 1;
   GL.r.setSize(w, h); if (GL.post) GL.post.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix();
   GW = w; GH = h; GUT = null;
+  cam.setViewOffset(w, h, 0, w <= 760 ? h * .12 : 0, w, h);
+  if (FOCKEY === "sun" && !FOLLOW) { cancelFly(); RIG.dist = FOCI.sun.d / Math.min(1, w / h); }
+  glStart();
 }
 /* ---------- textures and meshes ---------- */
 function prng(seed) { var s = seed >>> 0 || 1; return function () { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 100000) / 100000; }; }
@@ -1209,7 +1268,7 @@ function makeShip() {
 var R0 = 0.25, KS = 30;
 function rs(r) { return KS * Math.log10(1 + r / R0); }
 function rsInv(x) { return R0 * (Math.pow(10, x / KS) - 1); }
-var SIZE = { sun: 3.2, mercury: 0.45, venus: 0.8, earth: 0.85, mars: 0.6, jupiter: 1.8, saturn: 1.5, uranus: 1.1, neptune: 1.1, ceres: 0.3, bennu: 0.1, moon: 0.25, phobos: 0.12, io: 0.2, europa: 0.2, ganymede: 0.25, callisto: 0.22, enceladus: 0.12, titan: 0.25, triton: 0.18 };
+var SIZE = { sun: 3.2, mercury: 0.6, venus: 1.05, earth: 1.15, mars: 0.8, jupiter: 2.7, saturn: 2.2, uranus: 1.5, neptune: 1.5, ceres: 0.4, bennu: 0.1, moon: 0.3, phobos: 0.12, io: 0.2, europa: 0.2, ganymede: 0.25, callisto: 0.22, enceladus: 0.12, titan: 0.3, triton: 0.18 };
 function dispR(id) { return SIZE[id] || 0.08; }
 function axes(v, s) { return V(v[0] * s, v[2] * s, -v[1] * s); }
 function S(p) { var r = Math.hypot(p[0], p[1], p[2]); return r ? axes(p, rs(r) / r) : V(); }
@@ -1355,12 +1414,13 @@ function tbox(el, p, minPx) {
 function pxw(v) { return cam.position.distanceTo(v) * 2 * Math.tan(cam.fov * Math.PI / 360) / GH; }
 
 /* ---------- camera rig: slow auto-orbit, drag, wheel / pinch, fly-to ---------- */
-var RIG = { az: 0.7, el: 0.62, dist: 150, tgt: V(), touched: -1e9, fly: null, zoom: function (f) { RIG.fly = null; RIG.dist = clamp(RIG.dist * f, 1.2, 420); } };
+function cancelFly() { if (window.StarfareMotion) StarfareMotion.stopCamera(); RIG.fly = null; }
+var RIG = { az: 0.25, el: 0.72, dist: 150, tgt: V(), touched: -1e9, fly: null, zoom: function (f) { cancelFly(); RIG.dist = clamp(RIG.dist * f, 1.2, 420); glStart(); } };
 var FOCI = { sun: { id: "sun", d: 150, el: 0.62 }, inner: { id: "sun", d: 58, el: 0.78 }, earth: { id: "earth", d: 7 }, mars: { id: "mars", d: 6.5 }, jupiter: { id: "jupiter", d: 19 }, saturn: { id: "saturn", d: 16 } };
 var FOC = FOCI.sun, FOCKEY = "sun";
 function bindRig(host) {
   var ptrs = {}, pinch = 0;
-  host.addEventListener("pointerdown", function (e) { ptrs[e.pointerId] = [e.clientX, e.clientY]; try { host.setPointerCapture(e.pointerId); } catch (x) { /* ok */ } RIG.touched = performance.now(); RIG.fly = null; });
+  host.addEventListener("pointerdown", function (e) { ptrs[e.pointerId] = [e.clientX, e.clientY]; try { host.setPointerCapture(e.pointerId); } catch (x) { /* ok */ } RIG.touched = performance.now(); cancelFly(); glStart(); });
   host.addEventListener("pointermove", function (e) {
     if (!ptrs[e.pointerId]) return;
     var prev = ptrs[e.pointerId]; ptrs[e.pointerId] = [e.clientX, e.clientY];
@@ -1372,16 +1432,19 @@ function bindRig(host) {
       RIG.az -= (e.clientX - prev[0]) * 0.006; RIG.el = clamp(RIG.el + (e.clientY - prev[1]) * 0.005, -1.35, 1.45);
     }
     RIG.touched = performance.now();
+    glStart();
   });
   function up(e) { delete ptrs[e.pointerId]; pinch = 0; }
   host.addEventListener("pointerup", up); host.addEventListener("pointercancel", up);
   host.addEventListener("wheel", function (e) { e.preventDefault(); RIG.zoom(Math.exp(e.deltaY * 0.0012)); RIG.touched = performance.now(); }, { passive: false });
 }
 function flyTo(f, key) {
+  cancelFly();
   FOC = f; FOCKEY = key || null;
   $$("#focus [data-f]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.f === key ? "true" : "false"); });
-  RIG.fly = { t0: performance.now(), p0: RIG.tgt.clone(), d0: RIG.dist, d1: f.d, el0: RIG.el, el1: f.el != null ? f.el : clamp(RIG.el, 0.35, 0.9) };
-  if (reduced) RIG.fly.t0 = -1e9;
+  RIG.fly = { value: 0, p0: RIG.tgt.clone(), d0: RIG.dist, d1: key === "sun" ? f.d / Math.min(1, GW / GH) : f.d, el0: RIG.el, el1: f.el != null ? f.el : clamp(RIG.el, 0.35, 0.9) };
+  if (window.StarfareMotion) StarfareMotion.camera(RIG.fly); else RIG.fly.value = 1;
+  glStart();
 }
 function sysFocus(id) { var s = SF.system(id); return FOCI[s] ? s : null; }
 function focusTarget() {
@@ -1390,12 +1453,12 @@ function focusTarget() {
 }
 
 /* ---------- scene objects ---------- */
-var BODIES = [], GRID, ORB, MOR = [], LBL, STOPS = {}, PARK_R, PARK_B, routesDirty = true, lastRoute = 0, lastFlown = 0, lastHud = 0;
+var BODIES = [], GRID, ORB, MOR = [], LBL, STOPS = {}, PARK_R, PARK_B, PARK_SHIPS = {}, routesDirty = true, lastRoute = 0, lastFlown = 0, lastHud = 0;
 var ATMO = { earth: "rgba(120,180,255,.55)", venus: "rgba(255,220,160,.4)", mars: "rgba(255,140,90,.35)", jupiter: "rgba(255,210,170,.3)", saturn: "rgba(255,230,180,.28)", uranus: "rgba(150,230,240,.35)", neptune: "rgba(110,150,255,.38)", titan: "rgba(255,190,110,.45)" };
 var RINGS = [0.5, 1, 2, 5, 10, 20, 30];
 function buildScene(J0) {
   scene.add(stars());
-  scene.add(new THREE.AmbientLight(0xffffff, 0.17));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.28));
   scene.add(new THREE.PointLight(0xfff1dc, 1.45, 0));
   var sun = sunObj(SIZE.sun); scene.add(sun);
   if (window.SolArt) SolArt.setSun(V());
@@ -1421,7 +1484,7 @@ function buildScene(J0) {
       } catch (e) { /* no orbit */ }
     }
     var o, r, min;
-    if (p.kind === "planet" || p.kind === "moon" || p.id === "ceres") { o = planetMesh(p.id); r = dispR(p.id); min = p.kind === "moon" ? 1.6 : 2.6; }
+    if (p.kind === "planet" || p.kind === "moon" || p.id === "ceres") { o = planetMesh(p.id); r = dispR(p.id); min = p.kind === "moon" ? 2.2 : 5; }
     else if (p.kind === "small") { o = new THREE.Mesh(sphereGeo(), new THREE.MeshBasicMaterial({ color: new THREE.Color(SF.color(p.id)) })); r = dispR(p.id); min = 1.6; }
     else { o = new THREE.Mesh(GEO.oc || (GEO.oc = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: 0x5cc8ff, wireframe: true, transparent: true, opacity: 0.85 })); r = 0.06; min = 3.2; }
     if (ATMO[p.id] && !(window.SolArt && SolArt.hasRim(p.id))) o.add(atmo(ATMO[p.id], 1));
@@ -1502,13 +1565,15 @@ function updateFlown() {
 var raf = 0, last = 0, MAPVIS = true, AIM = null;
 function frame(t) {
   raf = requestAnimationFrame(frame);
+  if (t - last < 1000 / (GW <= 760 ? 24 : 30)) return;
   var dt = Math.min(0.1, Math.max(0, (t - last) / 1000)); last = t; MEMO = {}; MEMON = 0;
   try { draw(dt, t); } catch (e) { if (!frame.err) { frame.err = 1; console.error(e); } }
+  if (MAP_PAUSED && !RIG.fly) glStop();
 }
 function glStart() { if (GL && !raf && !document.hidden && MAPVIS) { last = performance.now(); raf = requestAnimationFrame(frame); } }
 function glStop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
 function draw(dt, t) {
-  var now = Date.now(), rep = FOLLOW && SEL.t === "f" && !!FL[SEL.i];
+  var now = mapWallNow(), rep = FOLLOW && SEL.t === "f" && !!FL[SEL.i];
   if (!AIM) AIM = new THREE.Object3D();
   LIVEJD = SF.sky(now).jd;
   FL.forEach(function (F) { F.jd = liveJd(F.f, now); });
@@ -1518,13 +1583,13 @@ function draw(dt, t) {
   // camera
   var want = focusTarget();
   if (RIG.fly) {
-    var k = clamp((t - RIG.fly.t0) / 1200, 0, 1), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    var e = RIG.fly.value;
     RIG.tgt.copy(RIG.fly.p0).lerp(want, e);
     RIG.dist = RIG.fly.d0 * Math.pow(RIG.fly.d1 / RIG.fly.d0, e);
     RIG.el = RIG.fly.el0 + (RIG.fly.el1 - RIG.fly.el0) * e;
-    if (k >= 1) RIG.fly = null;
+    if (e >= 1) RIG.fly = null;
   } else RIG.tgt.copy(want);
-  if (!reduced && t - RIG.touched > 4000) RIG.az += dt * 0.035;
+  // Keep the observer's camera steady. Only user intent moves the view.
   var ce = Math.cos(RIG.el);
   cam.position.set(RIG.tgt.x + RIG.dist * ce * Math.sin(RIG.az), RIG.tgt.y + RIG.dist * Math.sin(RIG.el), RIG.tgt.z + RIG.dist * ce * Math.cos(RIG.az));
   cam.lookAt(RIG.tgt);
@@ -1551,7 +1616,7 @@ function draw(dt, t) {
     F.ship.visible = F.halo.visible = on && fa > 0.01;
     if (!F.ship.visible) { F.aimed = false; return; }
     var v = F.sc.v, s = pxw(v) * fa;
-    F.ship.position.copy(v); F.ship.scale.setScalar(s * (sel ? 30 : 22));
+    F.ship.position.copy(v); F.ship.scale.setScalar(s * (sel ? 38 : 30));
     if (F.sc.s.phase !== "arrived") {
       // heading eases toward the direction of travel (or of the next departure) instead of snapping each frame
       var L = F.sc.s.leg, st = Math.max(1e-5, (L.arr - L.dep) / 300), ja = Math.min(Math.max(F.jd, L.dep), L.arr - st);
@@ -1567,7 +1632,7 @@ function draw(dt, t) {
     (F.lastV || (F.lastV = V())).copy(v);
     F.halo.position.copy(v); F.halo.scale.setScalar(s * (sel ? 34 : 24));
     F.halo.material.color.setScalar(sel ? 1.5 : 0.75); // over the bloom threshold only when selected
-    if (F.ship.userData.update) F.ship.userData.update(t, F.sc.s.phase === "flight", reduced);
+    if (F.ship.userData.update) F.ship.userData.update(t, F.sc.s.phase === "flight", reduced || MAP_PAUSED);
     if (F.lbl) F.lbl.el.classList.toggle("on", sel);
   });
   Object.keys(BK).forEach(function (id) {
@@ -1582,8 +1647,15 @@ function draw(dt, t) {
   });
   // parked Starseekers
   var pr = [], pb = [];
+  Object.keys(PARK_SHIPS).forEach(function (id) { PARK_SHIPS[id].visible = false; });
   if (FILT.pk && !FOLLOW) LIVE.forEach(function (c) { (c.busy && c.busy > LIVEJD ? pb : pr).push(marker(c.at, MAPJD)); });
-  setPts(PARK_R, pr); setPts(PARK_B, pb);
+  if (window.SolArt && FILT.pk && !FOLLOW) LIVE.forEach(function (c) {
+    var ship = PARK_SHIPS[c.car];
+    if (!ship) { ship = PARK_SHIPS[c.car] = SolArt.ship({callsign:c.car.toUpperCase()}); scene.add(ship); }
+    var p = marker(c.at, MAPJD); ship.visible = true; ship.position.copy(p); ship.scale.setScalar(pxw(p) * 16);
+    if (ship.userData.update) ship.userData.update(t, false, reduced || MAP_PAUSED);
+  });
+  setPts(PARK_R, window.SolArt ? [] : pr); setPts(PARK_B, window.SolArt ? [] : pb);
   LBL.update(cam, GW, GH);
   var tb = $("#tbox");
   if (SEL.t === "f" && FILT.fl && FL[SEL.i] && FL[SEL.i].ship && FL[SEL.i].ship.visible) { var F0 = FL[SEL.i]; tb.className = "tbox " + (F0.st ? F0.st.k : ""); tbox(tb, F0.sc.v, 34); }
@@ -1597,7 +1669,7 @@ function mapHud() {
   var rep = FOLLOW && SEL.t === "f" && !!FL[SEL.i], F = rep ? FL[SEL.i] : null;
   $("#hud").innerHTML = rep
     ? '<span class="caps">Map time &middot; following ' + esc(F.call) + '</span><br><b>' + iso(MAPJD) + "</b> UTC<br>Live flight (simulated). Other layers are hidden."
-    : '<span class="caps">Map time &middot; live sky</span><br><b>' + iso(MAPJD) + "</b> UTC &middot; season " + SF.sky().season;
+    : '<span class="caps">' + (MAP_PAUSED ? 'Map paused · ' + iso(MAPJD) + ' UTC' : 'Live sky') + '</span><br><span>Distances compressed · bodies enlarged</span>';
   $("#liveBtn").hidden = !rep;
   var sysf = (FOC.id !== "sun" && !rep) || (rep && F.sc && F.sc.s.leg.sys && F.sc.s.phase === "flight") || (rep && F.sc && F.sc.s.phase !== "flight" && RIG.dist < 30);
   if (sysf) $("#sBar").innerHTML = '<p class="note" style="margin:4px 0 0">Offsets around the planet are log-scaled; no single scale.</p>';
@@ -1617,17 +1689,18 @@ function mapHud() {
    SELECTION, CARDS, INFO CARD
    ========================================================= */
 var SEL = { t: "n" }, FOLLOW = false;
-var FILT = { fl: true, bk: true, pk: true }, LAY = { orb: true, ring: true, lbl: true, moon: true };
+var FILT = { fl: true, bk: true, pk: true }, LAY = { orb: true, ring: false, lbl: true, moon: true };
 function select(s) {
   if (s.t === "f" && !FL[s.i]) return;
   var same = s.t === SEL.t && (s.t === "f" ? s.i === SEL.i : s.id === SEL.id);
   SEL = s;
+  document.body.classList.toggle("has-selection", s.t !== "n"); glStart();
   LIVE_T = 0;
   if (s.t === "b") { FOLLOW = false; showTab("b"); var B = BK[s.id]; if (!B || (!B.rp && !B.err && !B.busy)) startPlan(s.id); }
   else { showTab("f"); if (FOLLOW && !same) FOLLOW = true; }
   routesDirty = true;
   renderCardsSel(); renderBookings(); renderInfo();
-  if (GL && !same) {
+  if (GL && !same && s.t !== "n") {
     var rp = s.t === "f" ? FL[s.i].rp : BK[s.id] && BK[s.id].rp, hail = s.t === "b" ? hailOf(s.id) : null;
     var fid = s.t === "f" ? (rp.focus !== "sun" ? sysFocus(rp.focus) : null) : (sysFocus(hail.from.id) === sysFocus(hail.to.id) ? sysFocus(hail.from.id) : null);
     if (FOLLOW && s.t === "f") flyTo({ id: "sun", d: rp.focus === "sun" ? 70 : 7 }, null);
@@ -1645,6 +1718,7 @@ function setFollow(on) {
 function showTab(t) {
   $("#tabF").setAttribute("aria-selected", t === "f" ? "true" : "false"); $("#tabB").setAttribute("aria-selected", t === "b" ? "true" : "false");
   $("#flList").hidden = t !== "f"; $("#bkWrap").hidden = t !== "b";
+  $("#tabF").tabIndex = t === "f" ? 0 : -1; $("#tabB").tabIndex = t === "b" ? 0 : -1;
 }
 function renderCards() {
   $("#flN").textContent = FL.length;
@@ -1703,6 +1777,7 @@ function startPlan(id) {
 }
 function renderInfo() {
   var el = $("#info");
+  document.body.classList.toggle("has-selection", SEL.t !== "n");
   if (SEL.t === "n") {
     el.innerHTML = '<div class="caps">Nothing selected</div><p class="note" style="margin-top:6px">Pick a flight on the left or on the map, or open a booking, to see it here.</p>';
     return;
@@ -1732,6 +1807,7 @@ function renderInfo() {
       '<div class="note" style="margin-top:4px">' + W(h.rider) + "</div>" + body +
       '<div class="irow">' + (B.busy ? "" : '<button class="btn small" type="button" data-act="replan">' + (B.rp || B.err ? "Replan now" : "Plan now") + "</button>") + '<button class="btn small primary" type="button" data-act="take">Ask your agent to take it</button></div>';
   }
+  if (SEL.t !== "n") el.insertAdjacentHTML("afterbegin", '<button class="btn small" data-act="dismiss" type="button" style="float:right">Close</button>');
 }
 function updateInfo() {
   if (SEL.t !== "f" || !$("#iSt")) return;
@@ -1783,9 +1859,11 @@ function renderAlerts() {
 var BINS = [], BIN0 = 0, WVK = { checkpoint: 1, incident: 2, alert: 2, clear: 3 }, WVC = ["#5cc8ff", "#ffcf7a", "#ffb65c", "#6fe0a8"];
 for (var bi = 0; bi < 60; bi++) BINS.push([0, 0, 0, 0]);
 function pushFeed(o) {
+  if (o.kind === "plan" || o.source === "preview" || o.who === "DESK") return;
   var ul = $("#feed"); if (!ul) return;
   var li = document.createElement("li"); li.className = "k-" + o.kind;
-  li.innerHTML = '<span class="tm">' + iso(o.jd) + "</span><b>" + esc(o.who) + "</b>" + W(o.txt);
+  li.dataset.source = o.source === "agent" ? "agent" : "simulation";
+  li.innerHTML = '<span class="tm">' + iso(o.jd) + ' · ' + (li.dataset.source === 'agent' ? 'Agent' : 'Simulation') + "</span><b>" + esc(o.who) + "</b>" + W(o.txt);
   ul.insertBefore(li, ul.firstChild);
   while (ul.children.length > 40) ul.removeChild(ul.lastChild);
   BINS[59][WVK[o.kind] || 0]++;
@@ -1890,7 +1968,8 @@ function openBoard() {
   LAST_FOCUS = document.activeElement;
   $("#logM").hidden = false; setTimeout(function () { $("#logH").focus(); }, 0);
 }
-function closeBoard() { $("#logM").hidden = true; if (LAST_FOCUS && LAST_FOCUS.focus) LAST_FOCUS.focus(); }
+function restoreFocus() { setTimeout(function () { if (LAST_FOCUS && LAST_FOCUS.getClientRects().length) LAST_FOCUS.focus(); else $("#connectBtn").focus(); }, 0); }
+function closeBoard() { $("#logM").hidden = true; restoreFocus(); }
 
 /* ---------- intro (connect your agent) ---------- */
 var CK = store("sf-ops-checks") || [false, false, false, false];
@@ -1944,14 +2023,14 @@ function initIntro() {
   $("#intro").addEventListener("click", function (e) { if (e.target === $("#intro")) closeIntro(); });
 }
 function openIntro() { LAST_FOCUS = document.activeElement; $("#intro").hidden = false; setTimeout(function () { $("#introH").focus(); }, 0); }
-function closeIntro() { $("#intro").hidden = true; if (LAST_FOCUS && LAST_FOCUS.focus) LAST_FOCUS.focus(); }
+function closeIntro() { $("#intro").hidden = true; restoreFocus(); }
 
 /* ---------- ticks: cards and feed every 250 ms, the sky every second ---------- */
 var lastSlow = 0;
 function uiTick() {
   var now = Date.now();
   if (!raf) { LIVEJD = SF.sky(now).jd; }
-  FL.forEach(function (F) { F.jd = liveJd(F.f, now); F.st = statusOf(F, F.jd); });
+  FL.forEach(function (F) { F.jd = liveJd(F.f, mapWallNow()); F.st = statusOf(F, F.jd); });
   feedTick(); updateCards(); updateInfo(); waveTick(now);
   if (now - lastSlow >= 1000) { lastSlow = now; slowTick(now); }
 }
@@ -1985,6 +2064,15 @@ function start() {
   FL = [];
   DESK = SF.desk();
   renderCards(); renderBookings(); renderTools(); renderReports(); initIntro();
+  StarfareMotion.mount({
+    zoom: function (f) { if (GL) RIG.zoom(f); },
+    reset: function () { if (GL) { FOLLOW = false; routesDirty = true; flyTo(FOCI.sun, "sun"); } },
+    pause: toggleMapPause,
+    orbit: function (key) { if (!GL) return; cancelFly(); RIG.az += key === "ArrowLeft" ? .12 : key === "ArrowRight" ? -.12 : 0; RIG.el = clamp(RIG.el + (key === "ArrowUp" ? .08 : key === "ArrowDown" ? -.08 : 0), -1.35, 1.45); glStart(); }
+  });
+  $("#pauseMap").textContent = MAP_PAUSED ? "Resume live" : "Pause map";
+  $("#pauseMap").setAttribute("aria-pressed", String(MAP_PAUSED));
+  if (RM && RM.addEventListener) RM.addEventListener("change", function (e) { if (e.matches && !MAP_PAUSED) toggleMapPause(); });
   LIVE = liveFleet(Date.now()); LIVE_T = Date.now();
   slowTick(Date.now()); renderInfo();
   initGL();
@@ -1995,15 +2083,19 @@ function start() {
     if (window.ResizeObserver) new ResizeObserver(onResize).observe($("#mapbox")); else addEventListener("resize", onResize);
     if (window.IntersectionObserver) new IntersectionObserver(function (en) { MAPVIS = en[0].isIntersecting; if (MAPVIS) glStart(); else glStop(); }).observe($("#mapbox"));
     document.addEventListener("visibilitychange", function () { if (document.hidden) glStop(); else glStart(); });
-    flyTo(FOCI.sun, "sun"); RIG.fly = null; RIG.dist = FOCI.sun.d;
+    if (window.MutationObserver) new MutationObserver(function () { if (!$("#intro").hidden || !$("#logM").hidden) { MAPVIS = false; glStop(); } else { MAPVIS = true; glStart(); } }).observe(document.body, {subtree:true, attributes:true, attributeFilter:["hidden"]});
+    cancelFly(); RIG.dist = FOCI.sun.d / Math.min(1, GW / GH);
     glStart();
   }
   loadLive();
   // Route previews are calculated only for the selected booking.
-  setInterval(uiTick, 250);
+  var uiTimer = setInterval(function () { if (!document.hidden) uiTick(); }, 250);
+  addEventListener("pagehide", function (event) { glStop(); if (!event.persisted) { clearInterval(uiTimer); clearTimeout(LIVEF.timer); StarfareMotion.dispose(); } });
+  addEventListener("pageshow", function (event) { if (event.persisted) { uiTick(); loadLive(); glStart(); } });
   // events
   $("#tabF").addEventListener("click", function () { showTab("f"); });
   $("#tabB").addEventListener("click", function () { showTab("b"); });
+  $(".tabs").addEventListener("keydown", function (e) { if (["ArrowLeft", "ArrowRight", "Home", "End"].indexOf(e.key) < 0) return; e.preventDefault(); var t = e.key === "Home" ? "b" : e.key === "End" ? "f" : $("#tabB").getAttribute("aria-selected") === "true" ? "f" : "b"; showTab(t); $(t === "b" ? "#tabB" : "#tabF").focus(); });
   $("#flList").addEventListener("click", function (e) { var b = e.target.closest("[data-f]"); if (b) select({ t: "f", i: +b.dataset.f }); });
   $("#bkList").addEventListener("click", function (e) { var b = e.target.closest("[data-b]"); if (b) select({ t: "b", id: b.dataset.b }); });
   $("#bkSearch").addEventListener("input", function () { BOOKING_PAGE = 0; renderBookings(); });
@@ -2018,9 +2110,10 @@ function start() {
   $("#info").addEventListener("click", function (e) {
     var b = e.target.closest("[data-act]"); if (!b) return;
     var a = b.dataset.act;
-    if (a === "follow") setFollow(!FOLLOW);
+    if (a === "dismiss") { select({t:"n"}); $("#tabB").focus(); }
+    else if (a === "follow") setFollow(!FOLLOW);
     else if (a === "replan") startPlan(SEL.id);
-    else if (a === "take") { var h = hailOf(SEL.id); ask("Take booking " + h.hail_id + " (" + h.title + ") and show me the terms.", 0); $("#ask").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" }); }
+    else if (a === "take") { var h = hailOf(SEL.id); ask("Take booking " + h.hail_id + " (" + h.title + ") and show me the terms.", 0); StarfareMotion.openTools(); }
   });
   $("#skList").addEventListener("click", function (e) {
     var b = e.target.closest("[data-sf],[data-park]"); if (!b) return;
@@ -2036,8 +2129,8 @@ function start() {
   }
   pop("#fBtn", "#fMenu"); pop("#lBtn", "#lMenu");
   document.addEventListener("click", function () { $$(".popm").forEach(function (m) { m.hidden = true; }); $$("#fBtn,#lBtn").forEach(function (x) { x.setAttribute("aria-expanded", "false"); }); });
-  $$("[data-filt]").forEach(function (c) { c.addEventListener("change", function () { FILT[c.dataset.filt] = c.checked; routesDirty = true; }); });
-  $$("[data-lay]").forEach(function (c) { c.addEventListener("change", function () { LAY[c.dataset.lay] = c.checked; }); });
+  $$("[data-filt]").forEach(function (c) { c.addEventListener("change", function () { FILT[c.dataset.filt] = c.checked; routesDirty = true; glStart(); }); });
+  $$("[data-lay]").forEach(function (c) { c.addEventListener("change", function () { LAY[c.dataset.lay] = c.checked; glStart(); }); });
   $("#connectBtn").addEventListener("click", openIntro);
   $("#askConnect").addEventListener("click", openIntro);
   $("#askCopy").addEventListener("click", function () { copyText($("#askQ").value, $("#askQ"), $("#askMsg")); });
