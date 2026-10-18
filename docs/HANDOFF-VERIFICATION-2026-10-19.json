@@ -242,15 +242,24 @@
     "url": "https://github.com/aimpang-me/starfare/actions/runs/39105457141"
   },
   "process_cleanup": {
-    "active_owned_runtimes": [],
-    "note": "Completed test sessions exited; no retained Worker runtime from this checkout. Other applications were left alone.",
-    "listening_test_ports": [],
-    "checkedAt": "2026-10-18T06:57:06.3029324Z",
+    "checkedAt": "2026-10-18T07:15:35.2817893Z",
     "tested_ports": [
+      49388,
       50831,
+      50903,
+      50999,
+      54120,
+      54178,
+      58510,
+      61020,
       62342,
-      62943
-    ]
+      62943,
+      63148,
+      63380
+    ],
+    "active_owned_runtimes": [],
+    "listening_test_ports": [],
+    "note": "Unit, Worker, missing-browser, desktop/phone, video and Ctrl+C checks are finished. Other applications were left alone."
   },
   "limits": [
     "No production inspection or deployment.",
@@ -259,5 +268,68 @@
     "No completed Higgsfield-generated GLB or final human visual acceptance.",
     "Private benchmark files and original local stores are retained locally, excluded from transfer."
   ],
-  "raw_logs": "Preserved locally under connector/.wrangler/handoff-*; excluded from Git and release."
+  "raw_logs": "Preserved locally under connector/.wrangler/handoff-*; excluded from Git and release.",
+  "tooling_addendum": {
+    "reviewed_pr17_head": "57890141edd8afe34aa3acef1f3ac55881f98297",
+    "capture_cleanup_fix": "1238fa4cb1320a8f4c99e4dd61cf1995da61347e",
+    "application_sources_unchanged_since_combined_suite": true,
+    "missing_browser_failure_check": {
+      "actualExitCode": 1,
+      "expectedExitCode": 1,
+      "checkedAt": "2026-10-18T07:03:13.4677166Z",
+      "leftoverNewTempDirectories": [],
+      "browserLaunchFailedAsExpected": true
+    },
+    "interrupt_cleanup_check": {
+      "checkedAt": "2026-10-18T07:14:00.8402728Z",
+      "survivors": [],
+      "trackedProcesses": 15
+    },
+    "desktop_phone_capture": {
+      "made": "2026-10-18T07:07:39.827Z",
+      "base": "http://127.0.0.1:54120",
+      "commit": "cfc5b181e3eeecd52bb647b4e7be6ffb562636d9",
+      "working_tree_dirty": false,
+      "engine_sha256": "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65",
+      "pages": [
+        "/"
+      ],
+      "sizes": [
+        "desktop",
+        "phone"
+      ],
+      "video_seconds": 0,
+      "files": [
+        "home-desktop.png",
+        "home-phone.png"
+      ],
+      "console_errors": [],
+      "note": "Captured from the Starfare pages: the sky, fleet, bookings and flights are simulated. Label them so wherever they are posted."
+    },
+    "video_capture": {
+      "made": "2026-10-18T07:08:59.390Z",
+      "base": "http://127.0.0.1:61020",
+      "commit": "cfc5b181e3eeecd52bb647b4e7be6ffb562636d9",
+      "working_tree_dirty": false,
+      "engine_sha256": "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65",
+      "pages": [
+        "/"
+      ],
+      "sizes": [
+        "og"
+      ],
+      "video_seconds": 5,
+      "files": [
+        "home-og.png",
+        "home-og.mp4",
+        "home-og.gif"
+      ],
+      "console_errors": [],
+      "note": "Captured from the Starfare pages: the sky, fleet, bookings and flights are simulated. Label them so wherever they are posted."
+    },
+    "measured_mp4_seconds": 4.96,
+    "ci_change": "Incoming model raised connector job limit from 20 to 45 minutes after Windows timeout; push-triggered runs now apply only to main, alongside PR checks.",
+    "verification_limit": "Capture error/normal/Ctrl+C paths were exercised on this Windows host; not every startup/close error, OS or device was tested.",
+    "final_ci_and_merge_evidence": "Final release verification JSON and live PR #17/#18 check runs."
+  }
 }
