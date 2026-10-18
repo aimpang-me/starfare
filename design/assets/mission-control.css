@@ -34,7 +34,7 @@ button,input,select,textarea{font-family:inherit}
 .mc-home .clock{display:none}
 .mc-home .ops{position:relative;display:block;padding:0;height:calc(100dvh - 110px);min-height:410px;isolation:isolate}
 .mc-home .c-map{position:absolute;inset:0;height:auto;border:0;border-radius:0;background:none;display:block;z-index:0}
-.mc-home .mapwrap,.mc-home .mapbox{position:absolute;inset:0;background:#06090d;border-radius:0}
+.mc-home .mapwrap,.mc-home .mapbox{position:absolute;inset:0;height:auto;min-height:0;background:#06090d;border-radius:0}
 .mc-home .mtool{position:absolute;top:22px;left:24px;right:24px;border:0;padding:0;z-index:5;display:flex;align-items:flex-start;gap:8px;pointer-events:none}
 .mc-home .mtool>*{pointer-events:auto}
 .mc-home .mtool .ttl{flex:1;gap:5px}
@@ -84,6 +84,17 @@ button,input,select,textarea{font-family:inherit}
 .mc-home .lbl.k-place{opacity:1;color:#a8b6c6}
 .mc-home .lbl.k-sample{font:600 11px Inter,sans-serif;letter-spacing:0;background:rgba(6,9,13,.8);border-color:#42607a}
 .mc-home .lbl.k-fleet{color:#bdd5e9}
+.mc-home button.lbl.k-planet{border:0;padding:3px 5px;background:rgba(5,9,12,.5);border-radius:2px;cursor:pointer;pointer-events:auto;font-family:Inter,sans-serif;font-weight:500;letter-spacing:.06em}
+.mc-home button.lbl.k-planet:hover{background:#17232d;color:#fff}
+.mc-home button.lbl.k-planet:focus-visible,.planet-nav button:focus-visible{outline:2px solid #d6e7f4;outline-offset:3px}
+.planet-nav{position:absolute;z-index:5;left:316px;right:222px;bottom:14px;max-width:680px;margin-inline:auto;display:flex;align-items:center;gap:2px;padding:5px 7px;overflow-x:auto;scrollbar-width:none;border:1px solid #26323e;border-radius:4px;background:rgba(7,12,16,.9)}
+.planet-nav::-webkit-scrollbar{display:none}
+.planet-nav button{flex:1 0 52px;min-width:52px;min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:transparent;border:1px solid transparent;border-radius:3px;color:#aab6c3;cursor:pointer;font:400 10px/1 Inter,sans-serif}
+.planet-nav img{width:28px;height:28px;border-radius:50%;object-fit:cover;box-shadow:inset -7px -2px 12px #000;opacity:.85}
+.planet-nav button:hover,.planet-nav button[aria-pressed=true]{background:#14212b;border-color:#354957;color:#fff}
+.planet-nav button[aria-pressed=true] img,.planet-nav button:hover img{opacity:1}
+.mc-home .c-fl{max-height:460px}
+@media(min-width:761px){.mc-home .c-fl:has(#flList:not([hidden])){bottom:auto}.mc-home .c-fl:has(#flList:not([hidden])) .scroll{max-height:400px}}
 .mc-home .mc-map-controls{position:absolute;right:20px;bottom:18px;display:flex;align-items:center;padding:3px;background:#0a1018;border:1px solid var(--line);border-radius:4px;z-index:6}
 .mc-map-controls button{min-width:40px;border:0;min-height:38px;background:none;font-size:17px;cursor:pointer;color:var(--ink-2)}
 .mc-map-controls button:hover{color:#fff;background:#1b2835}
@@ -138,15 +149,22 @@ button,input,select,textarea{font-family:inherit}
 .mc-flight .debrief{max-width:1440px;margin-inline:auto}
 .mc-flight h1,.mc-flight h2,.mc-flight h3{font-family:Inter,sans-serif;letter-spacing:-.01em;text-transform:none}
 @media(max-width:1100px){
+ .planet-nav{left:280px;right:222px}
  .mc-home .c-fl{width:246px}.mc-activity{width:260px}.mc-home .info{width:270px}
  .mc-home #focus{max-width:45vw}.mc-home .mtool{left:20px;right:20px}.mc-home .mtool .ttl{max-width:210px}
  .mc-strip{gap:6px;padding-inline:16px}.mc-strip .mc-sky{font-size:11px;gap:8px}.mc-strip .mc-season{display:none}
  .mc-flight .fdeck{grid-template-columns:minmax(0,1fr) 260px}
 }
 @media(max-width:760px){
+ .mc-home #focus [data-f=earth]{display:none}
+ .planet-nav{left:14px;right:14px;bottom:calc(31% + 66px);max-width:none;margin:0;padding:4px;gap:0}
+ .planet-nav button{min-height:54px;min-width:52px;flex-basis:52px;font-size:10px;gap:5px}.planet-nav img{width:25px;height:25px}
+ .mc-home.has-selection .planet-nav{display:none}
+ .mc-home:has(.c-fl.mc-collapsed) .planet-nav{bottom:110px}
+ .mc-home.mc-panels-hidden .planet-nav{bottom:66px}
  .mc-home{min-height:520px}.mc-home .top{height:56px;padding:8px 16px;gap:10px}.mc-home .brand span{display:none}.mc-home .topr{gap:8px}.mc-home .mc-read-status{display:none}.mc-home #connectBtn{font-size:11px;min-height:40px;padding:8px 10px}
  .mc-home .ops{height:calc(100dvh - 102px);min-height:418px}.mc-home .mtool{top:18px;left:16px;right:16px;gap:7px;flex-wrap:wrap}.mc-home .mtool .ttl{max-width:none;flex-basis:100%;margin-bottom:4px}.mc-home .mtool .ttl b{font-size:20px}.mc-home .mtool .ttl span{font-size:10px}
- .mc-home .mtool{display:grid;grid-template-columns:minmax(0,1fr) auto auto}.mc-home .mtool .ttl{grid-column:1/-1}.mc-home #focus{width:100%;max-width:none;min-width:0}.mc-home #focus button{min-height:38px;font-size:11px;padding:6px 10px}.mc-home .mtool>.pop>.btn{padding:4px 8px;font-size:11px;min-height:38px}.mc-home .popm{max-width:calc(100vw - 32px)}
+ .mc-home .mtool{display:grid;grid-template-columns:minmax(0,1fr) auto auto}.mc-home .mtool .ttl{grid-column:1/-1}.mc-home #focus{width:max-content;max-width:100%;min-width:0;justify-self:start}.mc-home #focus button{min-height:38px;font-size:11px;padding:6px 10px}.mc-home .mtool>.pop>.btn{padding:4px 8px;font-size:11px;min-height:38px}.mc-home .popm{max-width:calc(100vw - 32px)}
  .mc-home .c-fl{position:absolute;top:auto;left:0;right:0;bottom:0;width:auto;max-height:none;height:31%;min-height:142px;border-radius:0;border-inline:0;z-index:10;overflow:visible;background:#0c151f}
  .mc-home .c-fl>.tabs{padding-left:0;padding-right:84px;min-height:44px;background:#0c151f}.mc-home .c-fl>.tabs button{font-size:11px;min-height:44px}
  .mc-home .c-fl .scroll{overflow:auto;min-height:0}.mc-home .fc{padding:10px 14px}.mc-home .fc .r1>span:first-child{font-size:12px!important}.mc-home .fc .rt{font-size:12px}.mc-home .fc .lb{font-size:10px}

@@ -1,0 +1,144 @@
+{
+  "threeRevision": "128",
+  "integrityVerified": true,
+  "actualCameraClass": "OrthographicCamera",
+  "passed": 16,
+  "cases": [
+    {
+      "width": 1191,
+      "height": 903,
+      "state": {},
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 1191,
+      "height": 903,
+      "state": {
+        "collapsed": true
+      },
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 1191,
+      "height": 903,
+      "state": {
+        "panelsHidden": true
+      },
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 1191,
+      "height": 903,
+      "state": {
+        "selection": true
+      },
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 900,
+      "height": 690,
+      "state": {},
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 900,
+      "height": 690,
+      "state": {
+        "collapsed": true
+      },
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 900,
+      "height": 690,
+      "state": {
+        "panelsHidden": true
+      },
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 900,
+      "height": 690,
+      "state": {
+        "selection": true
+      },
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 390,
+      "height": 742,
+      "state": {},
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 390,
+      "height": 742,
+      "state": {
+        "collapsed": true
+      },
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 390,
+      "height": 742,
+      "state": {
+        "panelsHidden": true
+      },
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 390,
+      "height": 742,
+      "state": {
+        "selection": true
+      },
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 360,
+      "height": 638,
+      "state": {},
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 360,
+      "height": 638,
+      "state": {
+        "collapsed": true
+      },
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 360,
+      "height": 638,
+      "state": {
+        "panelsHidden": true
+      },
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    },
+    {
+      "width": 360,
+      "height": 638,
+      "state": {
+        "selection": true
+      },
+      "orbitFitsSafeFrame": true,
+      "scaleUnaffectedByDepth": true
+    }
+  ]
+}

@@ -170,14 +170,18 @@
     g.setAttribute("mag", new THREE.BufferAttribute(mag, 1));
     g.computeBoundingSphere();
   }
-  function stars(radius) {
+  function stars(radius, opt) {
+    opt = opt || {};
     var mat = new THREE.ShaderMaterial({
-      uniforms: { pr: { value: R ? R.getPixelRatio() : 1 } },
+      uniforms: { pr: { value: R ? R.getPixelRatio() : 1 }, skyBackdrop: { value: opt.backdrop ? 1 : 0 }, skyAspect: { value: 1 } },
       vertexShader: VS_HEAD +
-        "attribute float mag; attribute vec3 color; uniform float pr; varying vec3 vC; varying float vA;\n" +
+        "attribute float mag; attribute vec3 color; uniform float pr; uniform float skyBackdrop; uniform float skyAspect; varying vec3 vC; varying float vA;\n" +
         "void main(){ vC = color; float m = 6.6 - mag;\n" +
         " gl_PointSize = clamp(0.9 + 0.62 * m, 0.9, 6.5) * pr; vA = clamp(0.22 + 0.13 * m, 0.22, 1.0);\n" +
-        " gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n#include <logdepthbuf_vertex>\n}",
+        " gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n" +
+        // A distant sky uses angular perspective even behind an orthographic map.
+        // Ignore camera translation/strategic zoom; clip the rear hemisphere normally.
+        " if(skyBackdrop > 0.5){ vec3 d = mat3(viewMatrix) * position; float w = -d.z; gl_Position = vec4(d.x / (0.41421356237 * skyAspect), d.y / 0.41421356237, w * 0.99999, w); }\n#include <logdepthbuf_vertex>\n}",
       fragmentShader: FS_HEAD +
         "varying vec3 vC; varying float vA;\n" +
         "void main(){\n#include <logdepthbuf_fragment>\n" +
