@@ -1,0 +1,105 @@
+{
+  "format": "starfare.option-b-lunar-cases/1",
+  "diagnostic_only": true,
+  "source_engine_sha256": "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65",
+  "epoch_jd": 2461700.5,
+  "chemical": {
+    "engine_count": 4,
+    "engine_nominal_thrust_n": 425,
+    "total_thrust_n": 1700,
+    "isp_s": 321,
+    "bare_engine_mass_kg": 17.2,
+    "oxidizer_to_fuel_mass_ratio": 1.65,
+    "source": "https://www.ariane.group/app/uploads/2024/09/ArianeGroup_Chemical_Bipropellant_Thruster_Family.pdf#page=8"
+  },
+  "cases": {
+    "500kg-3day": {
+      "search_center_days": 3,
+      "final_nonburned_mass_kg": 500,
+      "nominal_wait_seconds": 1467065.8596226955,
+      "controls": [
+        1.2744753660604353,
+        0.36947432842438377,
+        -0.08232856286827482,
+        0.6367167503017045,
+        1.5672382525658954,
+        -0.10128815779808074,
+        -2178.2965226827655,
+        1675.6083176346147
+      ],
+      "reference": {
+        "flight_seconds": 260875.60831763461,
+        "launch_wait_seconds": 1464887.5631000127,
+        "chemical_propellant_kg": 2880.57203331874,
+        "departure_mass_kg": 3380.57203331874,
+        "raw_result_sha256": "7f0e290a3f9b59430266ae9bd82357b04ca83de4fcd4f13742120ee4fd6cd853"
+      }
+    },
+    "1000kg-3day": {
+      "search_center_days": 3,
+      "final_nonburned_mass_kg": 1000,
+      "nominal_wait_seconds": 1467065.8596226955,
+      "controls": [
+        1.4038470951798834,
+        0.3055332071953845,
+        -0.08626873442886683,
+        0.31676450325504146,
+        2.8742872205424175,
+        -0.33073957743925503,
+        -3797.150417910656,
+        4715.365268190391
+      ],
+      "reference": {
+        "flight_seconds": 263915.3652681904,
+        "launch_wait_seconds": 1463268.7092047848,
+        "chemical_propellant_kg": 4587.9449978113835,
+        "departure_mass_kg": 5587.9449978113835,
+        "raw_result_sha256": "d7b555dcf6dec91f700e9febf118df98207523e6d93671d7d602f0025024722c"
+      }
+    },
+    "500kg-5day": {
+      "search_center_days": 5,
+      "final_nonburned_mass_kg": 500,
+      "nominal_wait_seconds": 81037.07826966989,
+      "controls": [
+        1.4301598399604623,
+        0.4935949420811079,
+        0.37545286568873154,
+        0.593634541871562,
+        1.5727980177275298,
+        0.11535465743196843,
+        -2794.6858149947366,
+        2628.135686808615
+      ],
+      "reference": {
+        "flight_seconds": 434628.1356868086,
+        "launch_wait_seconds": 78242.39245467515,
+        "chemical_propellant_kg": 3283.491275711716,
+        "departure_mass_kg": 3783.491275711716,
+        "raw_result_sha256": "c9b7d48f4ce32bee082f55362541e95907544f74191b372daa6fbcf00eb607b1"
+      }
+    },
+    "2000kg-3day": {
+      "search_center_days": 3,
+      "final_nonburned_mass_kg": 2000,
+      "nominal_wait_seconds": 1467065.8596226955,
+      "controls": [
+        1.5395292523185247,
+        0.2594743699281754,
+        -0.08057696492685508,
+        0.33359639830327503,
+        2.811979584563475,
+        -0.34095945929036514,
+        -9311.396108960267,
+        10581.819186274835
+      ],
+      "reference": {
+        "flight_seconds": 269781.81918627484,
+        "launch_wait_seconds": 1457754.4635137352,
+        "chemical_propellant_kg": 11017.216548674553,
+        "departure_mass_kg": 13017.216548674553,
+        "raw_result_sha256": "60aa72d40ef720b02dbc0532363525a7518d7e61a2691a112480d026cae7dda8"
+      }
+    }
+  }
+}
