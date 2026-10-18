@@ -1,0 +1,38 @@
+{
+  "checkedOnClientDate": "2026-10-17",
+  "clientTimezone": "America/Toronto",
+  "status": "blocked_before_quote_or_generation",
+  "catalogAccessible": true,
+  "model": "image_to_3d",
+  "catalogToolCalls": [
+    "models_list(type=3d)",
+    "models_get(image_to_3d)"
+  ],
+  "nativeGenerationToolExposed": false,
+  "native3DPriceToolExposed": false,
+  "hostedCLIAvailable": false,
+  "costAttempt": {
+    "tool": "estimate_image_cost",
+    "submitted": false,
+    "quotedCredits": null,
+    "error": "model \"image_to_3d\" is a 3d model; use generate_3d instead."
+  },
+  "observedTools": [
+    "mcp__codex_apps__higgsfield_estimate_image_cost",
+    "mcp__codex_apps__higgsfield_models_get",
+    "mcp__codex_apps__higgsfield_models_list",
+    "mcp__codex_apps__higgsfield_sandbox_exec"
+  ],
+  "spend": {
+    "jobsSubmitted": 0,
+    "creditsSpent": 0,
+    "generationCostApproval": false
+  },
+  "localPreview": {
+    "retainedFile": "standalone-study.html",
+    "serverRetained": false,
+    "testModel": "existing procedural game-assets-v3/models/kestrel.glb only",
+    "notAHiggsfieldGeneration": true
+  },
+  "neededToContinue": "A supported native generate_3d path and exact 3D price quote; approve exact cost before submission."
+}

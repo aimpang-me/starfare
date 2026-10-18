@@ -1,0 +1,167 @@
+{
+  "version": 4,
+  "format": "glTF 2.0 binary",
+  "stage": "source-directed Kestrel reconstruction",
+  "units": "arbitrary art units; rescale explicitly",
+  "axes": {
+    "up": "+Y",
+    "forward": "+Z"
+  },
+  "pivot": "bounds center",
+  "models": [
+    {
+      "id": "kestrel",
+      "name": "Kestrel · detailed",
+      "file": "models/kestrel.glb",
+      "triangles": 143368,
+      "vertices": 84935,
+      "renderNodes": 17,
+      "materialCount": 17,
+      "bytes": 4873840,
+      "bounds": {
+        "min": [
+          -4.124490185850743,
+          -0.9705579078542733,
+          -4.51825
+        ],
+        "max": [
+          4.124490185850743,
+          0.9705579078542733,
+          4.51825
+        ]
+      },
+      "sockets": [
+        {
+          "name": "main_nozzle_starboard",
+          "translation": [
+            -2.3499999999999988,
+            -0.0005579078542733429,
+            -4.49825
+          ],
+          "axis": [
+            0,
+            0,
+            -1
+          ],
+          "kind": "propulsion",
+          "enabled": false
+        },
+        {
+          "name": "main_nozzle_port",
+          "translation": [
+            2.3500000000000014,
+            -0.0005579078542733429,
+            -4.49825
+          ],
+          "axis": [
+            0,
+            0,
+            -1
+          ],
+          "kind": "propulsion",
+          "enabled": false
+        },
+        {
+          "name": "dock_collar",
+          "translation": [
+            1.3322676295501878e-15,
+            -0.7705579078542734,
+            -0.28125
+          ],
+          "axis": [
+            0,
+            -1,
+            0
+          ],
+          "kind": "docking",
+          "enabled": false
+        }
+      ],
+      "provenance": "fictional",
+      "effectsEnabled": false,
+      "detailFeatures": {
+        "panels": 443,
+        "fasteners": 486,
+        "vents": 15,
+        "pipes": 6
+      }
+    },
+    {
+      "id": "kestrel-low",
+      "name": "Kestrel · reduced geometry",
+      "file": "models/kestrel-low.glb",
+      "triangles": 31284,
+      "vertices": 20199,
+      "renderNodes": 17,
+      "materialCount": 17,
+      "bytes": 1457196,
+      "bounds": {
+        "min": [
+          -4.1323599999999985,
+          -0.97,
+          -4.51825
+        ],
+        "max": [
+          4.1323599999999985,
+          0.97,
+          4.51825
+        ]
+      },
+      "sockets": [
+        {
+          "name": "main_nozzle_starboard",
+          "translation": [
+            -2.35,
+            0,
+            -4.49825
+          ],
+          "axis": [
+            0,
+            0,
+            -1
+          ],
+          "kind": "propulsion",
+          "enabled": false
+        },
+        {
+          "name": "main_nozzle_port",
+          "translation": [
+            2.35,
+            0,
+            -4.49825
+          ],
+          "axis": [
+            0,
+            0,
+            -1
+          ],
+          "kind": "propulsion",
+          "enabled": false
+        },
+        {
+          "name": "dock_collar",
+          "translation": [
+            0,
+            -0.77,
+            -0.28125
+          ],
+          "axis": [
+            0,
+            -1,
+            0
+          ],
+          "kind": "docking",
+          "enabled": false
+        }
+      ],
+      "provenance": "fictional",
+      "effectsEnabled": false,
+      "detailFeatures": {
+        "panels": 140,
+        "fasteners": 0,
+        "vents": 8,
+        "pipes": 0
+      }
+    }
+  ]
+}

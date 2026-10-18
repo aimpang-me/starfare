@@ -1,0 +1,22 @@
+[
+  {
+    "key": "v3TexturePrompt",
+    "prompt": "Use case: stylized-concept. Asset type: square PBR BASE COLOR hull surface texture for an actual 3D spaceship game asset. The reference is Starfare Tandem's original concept art, for material language only. Create a flat orthographic seamless dark graphite/navy aerospace panel texture, NO ship silhouette, no lighting or reflections, no bevel shadows. High density micro mechanical detail: dozens of irregular flush armor rectangles and clipped corner access panels at varied scales, fine hairline charcoal expansion seams, tiny flush fasteners, subtle latch shapes and engineering stencil ticks, a few fine inset linear vents. Very restrained wear at panel edges and tiny tool scratches; pristine professionally maintained expensive shuttle. Deep navy near RGB 27,36,48 with subtle small tone variations and occasional dull titanium-gray small latch hardware. 85 percent painted navy surface, 15 percent small mechanical detail, no large repeating squares, no bolts larger than 4px, no glowing details, no grids of bright silver circles, no heavy bevels. Dense varied elegant panel detail, matching the concept's sophisticated scale. No text, logos, symbols or border. Even intrinsic color, physically based texture map, not a rendered material ball."
+  },
+  {
+    "key": "v3NormalPrompt",
+    "prompt": "Precise technical image edit: convert the attached dark navy hull BASECOLOR atlas to a subtle tangent-space OpenGL NORMAL MAP, not a beauty image. Preserve every panel boundary and screw exactly, identical square canvas and registration. Mostly uniform RGB128,128,255 lavender surface, with only narrow directional normal gradients along the shallow recessed seams, flush tiny latches, screw heads, small vents. Panels are almost coplanar; no pillow or inflated panels, no thick bevels, no strong height noise from scratches, no large colors/shadows or words. OpenGL Y+ normal map: blue remains high; purple neutral panel faces. The output is a technical normal texture, with no albedo color."
+  },
+  {
+    "key": "v3RoughnessPrompt",
+    "prompt": "Technical game texture edit. Convert the attached navy hull BASE COLOR layout into glTF packed METALLIC-ROUGHNESS, exact same panel/seam/screw/vent layout and dimensions. Red constant255 unused; blue constant255 metallic multiplier. Green stores roughness: main painted panels 175, subtle alternating panel regions 155 or195, metal small latches135, deep vent/recesses210. Output should be VERY PALE PINK, nearly white, NEVER saturated magenta. No shading, new details, normal-map gradients, colored lights or text. Flat channel data with subtle variation only. Preserve the reference layout exactly."
+  },
+  {
+    "key": "v3AOPrompt",
+    "prompt": "Technical texture edit for glTF PBR: convert the attached base-color mechanical hull atlas into a grayscale ambient OCCLUSION map, exactly preserve its layout. Most broad flush panel faces WHITE RGB250-255. ONLY thin recessed panel gaps darkgray RGB70-100, screw holes RGB100, deepest vent apertures RGB25-50, narrow soft 2-3px lightgray contacts around tiny latches. Do not fill entire large panels dark; they are coplanar, flat and unoccluded. NO directional shadows, shading gradients across panels, text, borders, colored pixels, new features or normal-map colors. A near-white technical AO map with subtle local crevice darkening, same square canvas and exact panel registration."
+  },
+  {
+    "key": "v2AlloyPrompt",
+    "prompt": "Use case: stylized-concept. Create a seamless square game base-color texture of satin cool silver titanium alloy, #939da7 to #b4bdc6, very fine brushed machining grain, sparse tiny fasteners and narrow subtle panel joins. Broad clean structural plates for the pale alloy edges of a premium fictional civilian spacecraft. Uniform diffuse illumination; no shadows, specular reflections, directional gradients, rust, logos, words, numbers or perspective. Orthographic face-on texture fills all edges, no surrounding object or backdrop. Restrained realistic fine surface wear, not grunge. This is a PBR albedo map, not a render of a ship."
+  }
+]

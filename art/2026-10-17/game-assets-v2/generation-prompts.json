@@ -1,0 +1,22 @@
+[
+  {
+    "key": "v2HullPrompt",
+    "prompt": "Use case: stylized-concept. Asset type: physically based game texture, base color only.\nCreate a perfectly flat, seamless tileable square albedo texture of the Starfare spacecraft hull material: satin midnight navy ceramic-metal panels, graphite hairline seams, fine micro-scratches, restrained patch-to-patch blue-gray variation, tiny recessed fasteners and occasional small service hatches. Match the navy hull finish of the fictional Starseeker designs. Broad clean rectangular panels with subtly clipped corners, primarily lengthwise organization; just enough precision service detail, not a noisy cyberpunk wall. Color around #253347 to #36455b, dark seam #111924, selective pale brushed-metal fasteners. Uniform color illumination: absolutely no directional lighting, shadows, perspective, bevel highlights, ambient occlusion, vignette or specular reflections baked into the image. Orthographic face-on material sample fills entire image to edges. No labels, text, numbers, logos, insignia, windows, engines, lamps, glow, borders or surrounding background. Every edge must repeat seamlessly. This is a texture to wrap onto a separately modeled 3D ship, NOT an image of a ship."
+  },
+  {
+    "key": "v2NormalPrompt",
+    "prompt": "Use case: precise-object-edit. Input image is the exact base-color texture of a fictional Starfare ship hull. Produce its corresponding tangent-space normal-map texture. Preserve the exact image size and pixel-aligned panel seam layout, fastener positions and small hatch positions. Convert ONLY material appearance to a technically valid OpenGL-style tangent normal map: flat outward-facing panel interiors RGB (128,128,255), very shallow recessed seam edges and circular fasteners, tiny subtle grain. Red encodes tangent X, green encodes tangent Y, blue outward Z. Flat panels must remain neutral lavender; do not emboss whole panels into large bulges. No albedo colors, text, light, shadows, perspective or scenery. Same framing and dimensions as reference; no new panels, no redesigned shapes. This will be used with the source base-color map on the same UVs, so exact registration is essential."
+  },
+  {
+    "key": "v2RoughnessPrompt",
+    "prompt": "Use case: precise-object-edit. Technical game material map, NOT a beauty image. Reference is the exact Starfare hull base-color texture.\nCreate a glTF packed roughness/metallic texture with the exact same dimensions and pixel-aligned panel, seam, fastener and hatch layout. RGB channel encoding: R is constant 255 (unused/no occlusion); B is constant 255 (neutral metallic multiplier, metallic amount controlled by material factor); G is roughness, panel faces around 120-155, tiny gentle texture variation, seams 210, fastener faces 95. Therefore the output should appear pale MAGENTA/PINK with mostly variable green channel, NOT grayscale, NOT a purple normal map. No directional lighting or shading. Preserve all boundaries and registration exactly. No new shapes or words. Smooth low-noise roughness variation. Do not introduce reflections, text or borders."
+  },
+  {
+    "key": "v2AlloyPrompt",
+    "prompt": "Use case: stylized-concept. Create a seamless square game base-color texture of satin cool silver titanium alloy, #939da7 to #b4bdc6, very fine brushed machining grain, sparse tiny fasteners and narrow subtle panel joins. Broad clean structural plates for the pale alloy edges of a premium fictional civilian spacecraft. Uniform diffuse illumination; no shadows, specular reflections, directional gradients, rust, logos, words, numbers or perspective. Orthographic face-on texture fills all edges, no surrounding object or backdrop. Restrained realistic fine surface wear, not grunge. This is a PBR albedo map, not a render of a ship."
+  },
+  {
+    "key": "v2RoughnessCorrectedPrompt",
+    "prompt": "Precise image edit for a technical glTF texture. Preserve the attached map's exact panel seams, screw positions, boundaries and dimensions, change ONLY colors. This is a packed metallic-roughness map. It must be EXTREMELY PALE PINK, nearly off-white. Every panel face RGB approximately (255,190,255), seams (255,225,255), screws (255,165,255). The green channel must average 190, NOT the old 75. Red and blue constant255. No dark purple or saturated magenta anywhere. No lighting, shadows, text, new shapes. Uniform high roughness with subtle variation and identical registration."
+  }
+]

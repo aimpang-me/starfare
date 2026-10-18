@@ -1,0 +1,471 @@
+{
+  "version": 3,
+  "format": "glTF 2.0 binary",
+  "stage": "fitted armor and mechanical detail",
+  "units": "arbitrary art units; rescale explicitly",
+  "axes": {
+    "up": "+Y",
+    "forward": "+Z"
+  },
+  "pivot": "bounds center",
+  "models": [
+    {
+      "id": "kestrel",
+      "name": "Starseeker Kestrel",
+      "file": "models/kestrel.glb",
+      "triangles": 65128,
+      "vertices": 48560,
+      "renderNodes": 19,
+      "materialCount": 19,
+      "bytes": 11619948,
+      "bounds": {
+        "min": [
+          -4.1749,
+          -0.88499332411905,
+          -4.447
+        ],
+        "max": [
+          4.1749,
+          0.88499332411905,
+          4.447
+        ]
+      },
+      "sockets": [
+        {
+          "name": "main_nozzle_starboard",
+          "translation": [
+            -2.18,
+            0.07500667588095006,
+            -4.422
+          ],
+          "axis": [
+            0,
+            0,
+            -1
+          ],
+          "kind": "propulsion",
+          "enabled": false
+        },
+        {
+          "name": "nav_starboard",
+          "translation": [
+            -4.04,
+            -0.3349933241190499,
+            -2.592
+          ],
+          "kind": "navigation",
+          "enabled": false
+        },
+        {
+          "name": "main_nozzle_port",
+          "translation": [
+            2.18,
+            0.07500667588095006,
+            -4.422
+          ],
+          "axis": [
+            0,
+            0,
+            -1
+          ],
+          "kind": "propulsion",
+          "enabled": false
+        },
+        {
+          "name": "nav_port",
+          "translation": [
+            4.04,
+            -0.3349933241190499,
+            -2.592
+          ],
+          "kind": "navigation",
+          "enabled": false
+        },
+        {
+          "name": "dock_collar",
+          "translation": [
+            0,
+            -0.87499332411905,
+            -0.17199999999999988
+          ],
+          "axis": [
+            0,
+            -1,
+            0
+          ],
+          "kind": "docking",
+          "enabled": false
+        },
+        {
+          "name": "nav_aft",
+          "translation": [
+            0,
+            -0.14499332411904994,
+            -4.382
+          ],
+          "kind": "navigation",
+          "enabled": false
+        }
+      ],
+      "provenance": "fictional",
+      "effectsEnabled": false,
+      "detailFeatures": {
+        "panels": 486,
+        "fasteners": 570,
+        "vents": 25,
+        "pipes": 8
+      }
+    },
+    {
+      "id": "tandem",
+      "name": "Starseeker Tandem",
+      "file": "models/tandem.glb",
+      "triangles": 91440,
+      "vertices": 78046,
+      "renderNodes": 18,
+      "materialCount": 18,
+      "bytes": 12878788,
+      "bounds": {
+        "min": [
+          -1.7745000000000002,
+          -0.8606019999999999,
+          -5.20375
+        ],
+        "max": [
+          1.7745000000000002,
+          0.8606019999999999,
+          5.20375
+        ]
+      },
+      "sockets": [
+        {
+          "name": "main_nozzle_starboard",
+          "translation": [
+            -1.14,
+            -0.18120199999999986,
+            -4.8462499999999995
+          ],
+          "axis": [
+            0,
+            0,
+            -1
+          ],
+          "kind": "propulsion",
+          "enabled": false
+        },
+        {
+          "name": "dock_starboard_-1.55",
+          "translation": [
+            -1.776,
+            -0.18120199999999986,
+            -1.3462499999999997
+          ],
+          "axis": [
+            -1,
+            0,
+            0
+          ],
+          "kind": "docking",
+          "enabled": false
+        },
+        {
+          "name": "dock_starboard_1.05",
+          "translation": [
+            -1.776,
+            -0.18120199999999986,
+            1.2537500000000004
+          ],
+          "axis": [
+            -1,
+            0,
+            0
+          ],
+          "kind": "docking",
+          "enabled": false
+        },
+        {
+          "name": "nav_starboard",
+          "translation": [
+            -1.5899999999999999,
+            0.05959800000000015,
+            3.6037500000000002
+          ],
+          "kind": "navigation",
+          "enabled": false
+        },
+        {
+          "name": "main_nozzle_port",
+          "translation": [
+            1.14,
+            -0.18120199999999986,
+            -4.8462499999999995
+          ],
+          "axis": [
+            0,
+            0,
+            -1
+          ],
+          "kind": "propulsion",
+          "enabled": false
+        },
+        {
+          "name": "dock_port_-1.55",
+          "translation": [
+            1.776,
+            -0.18120199999999986,
+            -1.3462499999999997
+          ],
+          "axis": [
+            1,
+            0,
+            0
+          ],
+          "kind": "docking",
+          "enabled": false
+        },
+        {
+          "name": "dock_port_1.05",
+          "translation": [
+            1.776,
+            -0.18120199999999986,
+            1.2537500000000004
+          ],
+          "axis": [
+            1,
+            0,
+            0
+          ],
+          "kind": "docking",
+          "enabled": false
+        },
+        {
+          "name": "nav_port",
+          "translation": [
+            1.5899999999999999,
+            0.05959800000000015,
+            3.6037500000000002
+          ],
+          "kind": "navigation",
+          "enabled": false
+        },
+        {
+          "name": "nav_aft",
+          "translation": [
+            0,
+            0.06819800000000012,
+            -3.24625
+          ],
+          "kind": "navigation",
+          "enabled": false
+        }
+      ],
+      "provenance": "fictional",
+      "effectsEnabled": false,
+      "detailFeatures": {
+        "panels": 548,
+        "fasteners": 732,
+        "vents": 25,
+        "pipes": 4
+      }
+    },
+    {
+      "id": "lantern",
+      "name": "Starseeker Lantern",
+      "file": "models/lantern.glb",
+      "triangles": 102628,
+      "vertices": 81498,
+      "renderNodes": 18,
+      "materialCount": 18,
+      "bytes": 13122832,
+      "bounds": {
+        "min": [
+          -2.3628322744827512,
+          -1.9593816973626974,
+          -4.70125
+        ],
+        "max": [
+          2.3628322744827512,
+          1.9593816973626974,
+          4.70125
+        ]
+      },
+      "sockets": [
+        {
+          "name": "nav_pod_1",
+          "translation": [
+            -0.0029344859163648197,
+            1.7428169640281612,
+            -0.1437499999999997
+          ],
+          "kind": "navigation",
+          "enabled": false
+        },
+        {
+          "name": "nav_pod_2",
+          "translation": [
+            -1.3539341158200895,
+            -0.5971830359718384,
+            -0.1437499999999997
+          ],
+          "kind": "navigation",
+          "enabled": false
+        },
+        {
+          "name": "nav_pod_3",
+          "translation": [
+            1.348065143987359,
+            -0.5971830359718395,
+            -0.1437499999999997
+          ],
+          "kind": "navigation",
+          "enabled": false
+        },
+        {
+          "name": "main_nozzle",
+          "translation": [
+            -0.002934485916364915,
+            -0.4971830359718389,
+            -4.36375
+          ],
+          "axis": [
+            0,
+            0,
+            -1
+          ],
+          "kind": "propulsion",
+          "enabled": false
+        },
+        {
+          "name": "dock_collar",
+          "translation": [
+            -0.002934485916364915,
+            -1.2371830359718388,
+            3.0762500000000004
+          ],
+          "axis": [
+            0,
+            -1,
+            0
+          ],
+          "kind": "docking",
+          "enabled": false
+        }
+      ],
+      "provenance": "fictional",
+      "effectsEnabled": false,
+      "detailFeatures": {
+        "panels": 680,
+        "fasteners": 866,
+        "vents": 33,
+        "pipes": 19
+      }
+    },
+    {
+      "id": "wayfarer",
+      "name": "Wayfarer Station",
+      "file": "models/wayfarer.glb",
+      "triangles": 106724,
+      "vertices": 92020,
+      "renderNodes": 18,
+      "materialCount": 18,
+      "bytes": 13508796,
+      "bounds": {
+        "min": [
+          -5.4215,
+          -0.8174999999999999,
+          -3.7905529879457576
+        ],
+        "max": [
+          5.4215,
+          0.8174999999999999,
+          3.7905529879457576
+        ]
+      },
+      "sockets": [
+        {
+          "name": "nav_ring_0",
+          "translation": [
+            4.289396534380867,
+            0.4725000000000001,
+            2.532447012054243
+          ],
+          "kind": "navigation",
+          "enabled": false
+        },
+        {
+          "name": "nav_ring_3",
+          "translation": [
+            2.898500000000001,
+            0.4725000000000001,
+            -2.658449522326624
+          ],
+          "kind": "navigation",
+          "enabled": false
+        },
+        {
+          "name": "nav_ring_6",
+          "translation": [
+            -2.292396534380867,
+            0.4725000000000001,
+            -1.2675529879457559
+          ],
+          "kind": "navigation",
+          "enabled": false
+        },
+        {
+          "name": "dock_collar_-1.65",
+          "translation": [
+            -5.1815,
+            -0.19749999999999995,
+            -1.0175529879457574
+          ],
+          "axis": [
+            -1,
+            0,
+            0
+          ],
+          "kind": "docking",
+          "enabled": false
+        },
+        {
+          "name": "dock_collar_-0.7",
+          "translation": [
+            -5.1815,
+            -0.19749999999999995,
+            -0.06755298794575748
+          ],
+          "axis": [
+            -1,
+            0,
+            0
+          ],
+          "kind": "docking",
+          "enabled": false
+        },
+        {
+          "name": "dock_collar_0.25",
+          "translation": [
+            -5.1815,
+            -0.19749999999999995,
+            0.8824470120542425
+          ],
+          "axis": [
+            -1,
+            0,
+            0
+          ],
+          "kind": "docking",
+          "enabled": false
+        }
+      ],
+      "provenance": "fictional",
+      "effectsEnabled": false,
+      "detailFeatures": {
+        "panels": 320,
+        "fasteners": 414,
+        "vents": 15,
+        "pipes": 15
+      }
+    }
+  ]
+}

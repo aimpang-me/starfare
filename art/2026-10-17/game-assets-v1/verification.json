@@ -1,0 +1,311 @@
+{
+    "checks":  [
+                   {
+                       "file":  "models/kestrel.glb",
+                       "passed":  true,
+                       "triangles":  4108,
+                       "degenerate":  0,
+                       "finiteGeometry":  true,
+                       "unitNormals":  true,
+                       "indicesInRange":  true,
+                       "emissionOff":  true
+                   },
+                   {
+                       "file":  "models/tandem.glb",
+                       "passed":  true,
+                       "triangles":  7316,
+                       "degenerate":  0,
+                       "finiteGeometry":  true,
+                       "unitNormals":  true,
+                       "indicesInRange":  true,
+                       "emissionOff":  true
+                   },
+                   {
+                       "file":  "models/lantern.glb",
+                       "passed":  true,
+                       "triangles":  5248,
+                       "degenerate":  0,
+                       "finiteGeometry":  true,
+                       "unitNormals":  true,
+                       "indicesInRange":  true,
+                       "emissionOff":  true
+                   },
+                   {
+                       "file":  "models/wayfarer.glb",
+                       "passed":  true,
+                       "triangles":  14244,
+                       "degenerate":  0,
+                       "finiteGeometry":  true,
+                       "unitNormals":  true,
+                       "indicesInRange":  true,
+                       "emissionOff":  true
+                   },
+                   {
+                       "test":  "keyboard rotation changes view",
+                       "passed":  true
+                   },
+                   {
+                       "test":  "no automatic motion under reduced motion",
+                       "passed":  true
+                   },
+                   {
+                       "test":  "viewer at 390px has no horizontal overflow",
+                       "passed":  true
+                   },
+                   {
+                       "test":  "standalone loads all four embedded GLBs with no resource requests",
+                       "passed":  true
+                   }
+               ],
+    "renders":  [
+                    {
+                        "file":  "sprites/kestrel-portrait.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  835865,
+                        "opaque":  211217,
+                        "partial":  1494,
+                        "alphaBounds":  [
+                                            244,
+                                            218,
+                                            965,
+                                            717
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/kestrel-top.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  713717,
+                        "opaque":  333278,
+                        "partial":  1581,
+                        "alphaBounds":  [
+                                            137,
+                                            112,
+                                            886,
+                                            911
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/kestrel-side.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  960128,
+                        "opaque":  87393,
+                        "partial":  1055,
+                        "alphaBounds":  [
+                                            112,
+                                            438,
+                                            911,
+                                            585
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/kestrel-rear.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  951326,
+                        "opaque":  96102,
+                        "partial":  1148,
+                        "alphaBounds":  [
+                                            137,
+                                            427,
+                                            886,
+                                            648
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/tandem-portrait.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  879888,
+                        "opaque":  166548,
+                        "partial":  2140,
+                        "alphaBounds":  [
+                                            124,
+                                            241,
+                                            932,
+                                            769
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/tandem-top.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  832362,
+                        "opaque":  213569,
+                        "partial":  2645,
+                        "alphaBounds":  [
+                                            287,
+                                            112,
+                                            736,
+                                            911
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/tandem-side.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  961899,
+                        "opaque":  85192,
+                        "partial":  1485,
+                        "alphaBounds":  [
+                                            112,
+                                            440,
+                                            911,
+                                            583
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/tandem-rear.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  969940,
+                        "opaque":  77047,
+                        "partial":  1589,
+                        "alphaBounds":  [
+                                            287,
+                                            400,
+                                            736,
+                                            661
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/lantern-portrait.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  909492,
+                        "opaque":  137023,
+                        "partial":  2061,
+                        "alphaBounds":  [
+                                            231,
+                                            236,
+                                            869,
+                                            746
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/lantern-top.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  889292,
+                        "opaque":  157004,
+                        "partial":  2280,
+                        "alphaBounds":  [
+                                            341,
+                                            112,
+                                            681,
+                                            911
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/lantern-side.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  914437,
+                        "opaque":  131463,
+                        "partial":  2676,
+                        "alphaBounds":  [
+                                            112,
+                                            358,
+                                            911,
+                                            665
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/lantern-rear.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  976106,
+                        "opaque":  71116,
+                        "partial":  1354,
+                        "alphaBounds":  [
+                                            341,
+                                            354,
+                                            681,
+                                            709
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/wayfarer-portrait.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  916690,
+                        "opaque":  129930,
+                        "partial":  1956,
+                        "alphaBounds":  [
+                                            141,
+                                            315,
+                                            865,
+                                            787
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/wayfarer-top.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  904933,
+                        "opaque":  141363,
+                        "partial":  2280,
+                        "alphaBounds":  [
+                                            112,
+                                            223,
+                                            911,
+                                            800
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/wayfarer-side.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  997871,
+                        "opaque":  49793,
+                        "partial":  912,
+                        "alphaBounds":  [
+                                            223,
+                                            452,
+                                            800,
+                                            571
+                                        ],
+                        "passed":  true
+                    },
+                    {
+                        "file":  "sprites/wayfarer-rear.png",
+                        "width":  1024,
+                        "height":  1024,
+                        "transparent":  956889,
+                        "opaque":  90260,
+                        "partial":  1427,
+                        "alphaBounds":  [
+                                            112,
+                                            433,
+                                            911,
+                                            624
+                                        ],
+                        "passed":  true
+                    }
+                ],
+    "errors":  [
+
+               ],
+    "cleanup":  {
+                    "browserExited":  true,
+                    "serverClosed":  true,
+                    "portReleased":  true
+                },
+    "passed":  true
+}

@@ -1,0 +1,23 @@
+{
+  "status": "rejected_by_account_trial_policy_no_job_created",
+  "provider": "Higgsfield official CLI",
+  "cli_version": "1.2.2",
+  "model": "image_to_3d",
+  "source": "source/kestrel-isolated-reference.png",
+  "original_source": "source/kestrel-original-concept.png",
+  "original_sha256": "FE34453022EA00598E3261964DFD48546003826B16ECD0E574E74C75A4A138F8",
+  "input_preparation": "Built-in imagegen isolated the original hero ship from titles, stars and the lower orthographic views. Original concept unchanged.",
+  "authorization": "User explicitly requested CLI setup and one textured Kestrel generation; earlier request skips cost quoting.",
+  "params": {
+    "should_texture": true,
+    "enable_pbr": true,
+    "should_remesh": true,
+    "target_polycount": 60000,
+    "topology": "triangle",
+    "symmetry_mode": "on",
+    "enable_rigging": false,
+    "enable_animation": false,
+    "seed": 20261017,
+    "texture_prompt": "Faithfully reproduce the supplied fictional Starfare Kestrel: fine fitted navy hull armor panels, pale satin brushed alloy perimeter, graphite recessed cooling louvers and mechanical service hatches, smoked central panoramic lounge glazing with warm cabin detail, restrained narrow cyan painted seams. Preserve the reference design and original surface details. PBR navy coated metal, satin titanium, graphite and smoked glass with physically varied roughness and normal detail. No sky, stars, text, logos, background, floor, exhaust or engine glow baked into the asset."
+  }
+}

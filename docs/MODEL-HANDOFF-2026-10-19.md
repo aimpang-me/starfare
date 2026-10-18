@@ -62,7 +62,7 @@ At that baseline, engine SHA-256 is `13f5c2f0d2187b352d67d914057c54fb320aed3b020
 
 ## Propulsion: diagnostics are not a new fleet
 
-Read Engineering's final handoff, [propulsion audit](PROPULSION-AUDIT.md), [ledger](PROPULSION-LEDGER.md), [verification](PROPULSION-VERIFICATION.md), and [fleet options](FLEET-OPTIONS.md).
+Read [Engineering's final handoff](ENGINEERING-HANDOFF-2026-10-19.md), [propulsion audit](PROPULSION-AUDIT.md), [ledger](PROPULSION-LEDGER.md), [verification](PROPULSION-VERIFICATION.md), and [fleet options](FLEET-OPTIONS.md).
 
 The runtime planner combines impulsive transfers with low-thrust operating points. A successful gravitational re-flight does not establish propulsion feasibility. The audit's 26 accepted canonical legs required more firing time than flight duration at their quoted fixed operating points. Whole-itinerary carried fuel, payload, reserves, refueling, and power require explicit accounting.
 
@@ -90,7 +90,7 @@ Art has concept packs and local model experiments. Do not describe a procedural 
 
 Higgsfield's catalog has exposed Meshy, Tripo, and SAM 3D tools in some turns, but connection and account entitlements changed during the session. Verify actual access and quote the credit cost before generation. Do not request secrets in chat or silently use a paid fallback. GSAP can be used directly in code without a connector; its approval is not evidence it has been added.
 
-Large transferable media is indexed separately in the Art handoff. Originals stay in place. Use the sanitized archive and checksums in the final integration receipt to recover files on another machine.
+Large transferable media is indexed in [the Art transfer guide](../art/README.md) and [Art's final handoff](../art/handoff-2026-10-19/README.md). Originals stay in place. Use the sanitized archive and checksums in the final integration receipt to recover files on another machine.
 
 ## Secrets and deployment
 

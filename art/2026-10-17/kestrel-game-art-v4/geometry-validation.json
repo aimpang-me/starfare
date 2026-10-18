@@ -1,0 +1,77 @@
+{
+  "models": [
+    {
+      "id": "kestrel",
+      "triangles": 143368,
+      "zeroAreaTriangles": 0,
+      "finiteAttributes": true,
+      "unitNormals": true,
+      "uvPerVertex": true,
+      "embeddedMapsMatchSource": true,
+      "sha256": "cea969260939c8cc3c6e26083e491785e5b9a02b936a4def181eb8ea442a4386"
+    },
+    {
+      "id": "kestrel-low",
+      "triangles": 31284,
+      "zeroAreaTriangles": 0,
+      "finiteAttributes": true,
+      "unitNormals": true,
+      "uvPerVertex": true,
+      "embeddedMapsMatchSource": true,
+      "sha256": "6fd8f57bd9e9f21f471339a440164f08fd417dfcbeb8ef9f9d492576c7dda5a4"
+    }
+  ],
+  "textures": [
+    {
+      "name": "hull-basecolor",
+      "width": 512,
+      "height": 512,
+      "channelMeans": [
+        149.49744033813477,
+        149.49744033813477,
+        149.49744033813477
+      ]
+    },
+    {
+      "name": "hull-normal",
+      "width": 512,
+      "height": 512,
+      "channelMeans": [
+        127.50118637084961,
+        127.50073623657227,
+        255
+      ]
+    },
+    {
+      "name": "hull-metalrough",
+      "width": 512,
+      "height": 512,
+      "channelMeans": [
+        255,
+        144.4957275390625,
+        235
+      ]
+    },
+    {
+      "name": "alloy-basecolor",
+      "width": 512,
+      "height": 512,
+      "channelMeans": [
+        190.50107192993164,
+        190.50107192993164,
+        190.50107192993164
+      ]
+    },
+    {
+      "name": "hull-occlusion",
+      "width": 512,
+      "height": 512,
+      "channelMeans": [
+        255,
+        255,
+        255
+      ]
+    }
+  ],
+  "passed": true
+}

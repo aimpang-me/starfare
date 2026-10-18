@@ -1,0 +1,75 @@
+{
+  "status": "draft_not_submitted_cost_unavailable",
+  "model": "image_to_3d",
+  "params": {
+    "model": "image_to_3d",
+    "count": 1,
+    "should_texture": true,
+    "enable_pbr": true,
+    "should_remesh": true,
+    "target_polycount": 60000,
+    "topology": "triangle",
+    "symmetry_mode": "on",
+    "enable_rigging": false,
+    "enable_animation": false,
+    "seed": 20261017,
+    "texture_prompt": "Preserve the existing fictional Starfare Kestrel concept: broad compact navy delta passenger hull with a split rear notch, two integrated angular aft shrouds, one long glazed central lounge, fine fitted hull panels, brushed pale alloy perimeter and dark graphite recesses. Narrow cyan painted trim; restrained warm cabin windows. Physically based navy ceramic paint, satin alloy and smoked glazing; micro roughness and normal detail. No stars, titles, logos, planet, platform or background baked into textures. No propulsion glow, exhaust, navigation flashing, invented flight motion or character features."
+  },
+  "required_input": {
+    "role": "image",
+    "status": "not_prepared_or_uploaded",
+    "description": "ONE isolated three-quarter hero view from the existing Kestrel concept; preserve silhouette and panel language, remove sheet title, the two lower orthographic views, stars and background; neutral white background. Do not submit the full multi-view concept sheet."
+  },
+  "billing": {
+    "quote": null,
+    "currency": "Higgsfield workspace credits",
+    "user_cost_approval": false,
+    "submission_count": 0,
+    "spend": 0
+  },
+  "scope": {
+    "assets": 1,
+    "asset": "Kestrel",
+    "humanoid_rigging": false,
+    "character_animation": false,
+    "remaining_fleet": "on hold",
+    "cinematic_video": "on hold"
+  },
+  "versions": {
+    "art": "independent Kestrel Higgsfield feasibility trial; no generated model yet",
+    "target_engine_main": "ff66fbc4532ec694770099e257dcc7214b9faaa0",
+    "target_main_source": "coordination message; verify against GitHub before integration",
+    "locally_inspected_renderer_commit": "f0564ba493ba2b5cfcb8fa461674cec8cab4424d",
+    "design": "PR12 7839868 + standalone presentation changes; not the merged game"
+  },
+  "acceptance": {
+    "silhouette": [
+      "delta planform",
+      "central panoramic lounge",
+      "twin angular aft shrouds",
+      "rear notch"
+    ],
+    "materials": [
+      "base-color present",
+      "PBR maps present if returned",
+      "no source background or typography baked",
+      "glazing inspected without assuming transparent mesh exists"
+    ],
+    "geometry": [
+      "finite vertex attributes",
+      "valid indices and normals",
+      "triangle count and disconnected parts measured",
+      "no unwanted ground slab or extra ships"
+    ],
+    "transform": [
+      "raw orientation measured",
+      "adapter aligns nose +Z/up +Y",
+      "unit-length display normalization only; no invented physical ship size"
+    ],
+    "size": [
+      "GLB bytes and texture dimensions measured",
+      "desktop and mobile projected-size study"
+    ],
+    "motion": "static asset preview; manual rotation only, no flight or burn animation"
+  }
+}

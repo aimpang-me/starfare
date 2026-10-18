@@ -1,0 +1,135 @@
+﻿{
+    "completed":  true,
+    "scope":  "Art handoff inventory and transfer verification only. No new generation, browser render, application test, commit, push or merge.",
+    "sourceFileCount":  319,
+    "sourceBytes":  597190353,
+    "includedAssetFiles":  293,
+    "excludedFiles":  26,
+    "archiveEntries":  297,
+    "archiveBytes":  262796036,
+    "archiveSha256":  "9bcc14890c71146b770e268b37e8222bfd1f6b16a8a0c3993328df2499b8f590",
+    "everyArchiveEntryVerified":  true,
+    "wrongDigestNegativeControlRejected":  true,
+    "originalKestrelUnchanged":  true,
+    "higgsfieldModelCount":  0,
+    "ownedArtProcesses":  0,
+    "largeSourceFiles":  [
+                             {
+                                 "path":  "2026-10-17/game-assets-v2/standalone-preview.html",
+                                 "bytes":  61863382
+                             },
+                             {
+                                 "path":  "2026-10-17/game-assets-v3/standalone-preview.html",
+                                 "bytes":  80332116
+                             },
+                             {
+                                 "path":  "2026-10-17/starfare-game-assets-v2.zip",
+                                 "bytes":  97872803
+                             },
+                             {
+                                 "path":  "2026-10-17/starfare-game-assets-v3.zip",
+                                 "bytes":  122837435
+                             }
+                         ],
+    "modelChecks":  [
+                        {
+                            "path":  "game-assets-v1/models/kestrel.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  8,
+                            "savedHashCompared":  false,
+                            "sha256":  "73f4027b09dc4a13dcfc00a794e528a755c1d78d50d46e28f30e60e76341cae5"
+                        },
+                        {
+                            "path":  "game-assets-v1/models/lantern.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  8,
+                            "savedHashCompared":  false,
+                            "sha256":  "4ea2d9767262bec261e8ab0894efab49939445924bc125e76c078039f386a7d9"
+                        },
+                        {
+                            "path":  "game-assets-v1/models/tandem.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  8,
+                            "savedHashCompared":  false,
+                            "sha256":  "d22f07449b2018550a8ef9dfeeefb10adc397877b51e2511704443b5b4e33149"
+                        },
+                        {
+                            "path":  "game-assets-v1/models/wayfarer.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  7,
+                            "savedHashCompared":  false,
+                            "sha256":  "3b6fe7ac7b838db7d0ad84a275be43020ad1d03983e1db3eedc4442e435abc10"
+                        },
+                        {
+                            "path":  "game-assets-v2/models/kestrel.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  12,
+                            "savedHashCompared":  true,
+                            "sha256":  "7c68672256dc3f1490591204d4672a01ffc6b0af83c39b27969ed365dd5a167a"
+                        },
+                        {
+                            "path":  "game-assets-v2/models/lantern.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  12,
+                            "savedHashCompared":  true,
+                            "sha256":  "515330329fa78fb9175eb7bf679aae5ca110ace7386076c0e0148a4b223d5eb4"
+                        },
+                        {
+                            "path":  "game-assets-v2/models/tandem.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  12,
+                            "savedHashCompared":  true,
+                            "sha256":  "a7dea966bafac11895a42f01e1eb313301f3953c8eec00562e04ff3d9aff5aa6"
+                        },
+                        {
+                            "path":  "game-assets-v2/models/wayfarer.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  11,
+                            "savedHashCompared":  true,
+                            "sha256":  "fc7da0c0e366a7f4b69f585f701c1ef871c6394832d53071e12eaa43025eb36a"
+                        },
+                        {
+                            "path":  "game-assets-v3/models/kestrel.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  19,
+                            "savedHashCompared":  true,
+                            "sha256":  "1cbff4b6b02f7ea6f88c8d165f11a60ef9f6d40d3ca4331356fbefa751484ad4"
+                        },
+                        {
+                            "path":  "game-assets-v3/models/lantern.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  18,
+                            "savedHashCompared":  true,
+                            "sha256":  "083d38a67749b91088e231dc2d58124add8f9b281c950b0f0a71f730be0e4563"
+                        },
+                        {
+                            "path":  "game-assets-v3/models/tandem.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  18,
+                            "savedHashCompared":  true,
+                            "sha256":  "f96e2c18a2ec9cb8a0839e831f4f47efd184ed979e761e5ea654a684f9584b15"
+                        },
+                        {
+                            "path":  "game-assets-v3/models/wayfarer.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  18,
+                            "savedHashCompared":  true,
+                            "sha256":  "55b64bd4268539b2d4f0b91aeed36ea61423997024bdb3ac3b9a7720adbbfec9"
+                        },
+                        {
+                            "path":  "kestrel-game-art-v4/models/kestrel.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  17,
+                            "savedHashCompared":  true,
+                            "sha256":  "cea969260939c8cc3c6e26083e491785e5b9a02b936a4def181eb8ea442a4386"
+                        },
+                        {
+                            "path":  "kestrel-game-art-v4/models/kestrel-low.glb",
+                            "validGlbHeader":  true,
+                            "meshes":  17,
+                            "savedHashCompared":  true,
+                            "sha256":  "6fd8f57bd9e9f21f471339a440164f08fd417dfcbeb8ef9f9d492576c7dda5a4"
+                        }
+                    ],
+    "remaining":  "User website generation and GLB review. Coordinator serial integration."
+}

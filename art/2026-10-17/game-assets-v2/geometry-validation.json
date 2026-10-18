@@ -1,0 +1,87 @@
+{
+  "models": [
+    {
+      "id": "kestrel",
+      "triangles": 18708,
+      "zeroAreaTriangles": 0,
+      "finiteAttributes": true,
+      "unitNormals": true,
+      "uvPerVertex": true,
+      "embeddedMapsMatchSource": true,
+      "sha256": "7c68672256dc3f1490591204d4672a01ffc6b0af83c39b27969ed365dd5a167a"
+    },
+    {
+      "id": "tandem",
+      "triangles": 65492,
+      "zeroAreaTriangles": 0,
+      "finiteAttributes": true,
+      "unitNormals": true,
+      "uvPerVertex": true,
+      "embeddedMapsMatchSource": true,
+      "sha256": "a7dea966bafac11895a42f01e1eb313301f3953c8eec00562e04ff3d9aff5aa6"
+    },
+    {
+      "id": "lantern",
+      "triangles": 42708,
+      "zeroAreaTriangles": 0,
+      "finiteAttributes": true,
+      "unitNormals": true,
+      "uvPerVertex": true,
+      "embeddedMapsMatchSource": true,
+      "sha256": "515330329fa78fb9175eb7bf679aae5ca110ace7386076c0e0148a4b223d5eb4"
+    },
+    {
+      "id": "wayfarer",
+      "triangles": 26408,
+      "zeroAreaTriangles": 0,
+      "finiteAttributes": true,
+      "unitNormals": true,
+      "uvPerVertex": true,
+      "embeddedMapsMatchSource": true,
+      "sha256": "fc7da0c0e366a7f4b69f585f701c1ef871c6394832d53071e12eaa43025eb36a"
+    }
+  ],
+  "textures": [
+    {
+      "name": "hull-basecolor",
+      "width": 1254,
+      "height": 1254,
+      "channelMeans": [
+        47.32354074616729,
+        60.93045539759214,
+        77.90726008511201
+      ]
+    },
+    {
+      "name": "hull-normal",
+      "width": 1254,
+      "height": 1254,
+      "channelMeans": [
+        116.96078322891468,
+        124.57111088217863,
+        248.41500309058858
+      ]
+    },
+    {
+      "name": "hull-metalrough",
+      "width": 1254,
+      "height": 1254,
+      "channelMeans": [
+        250.49102012316567,
+        188.4677141599831,
+        251.84444991338722
+      ]
+    },
+    {
+      "name": "alloy-basecolor",
+      "width": 1254,
+      "height": 1254,
+      "channelMeans": [
+        160.92379727773834,
+        167.3396989283416,
+        174.913113125717
+      ]
+    }
+  ],
+  "passed": true
+}

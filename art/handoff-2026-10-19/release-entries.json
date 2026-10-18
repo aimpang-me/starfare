@@ -1,0 +1,1487 @@
+﻿[
+    {
+        "path":  "2026-10-17/art-direction.md",
+        "bytes":  5307,
+        "sha256":  "5cadc0c5bc6028504201f05c7e7c49d81eaecf69840e202f0405041ef7bcd165"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/assemble-preview.mjs",
+        "bytes":  851,
+        "sha256":  "fdcc0434a23f91b9f494b7d96a404d0c1a3704f627584083d4c24f01a1887a05"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/build-models.mjs",
+        "bytes":  15689,
+        "sha256":  "a4b1eec3db2705ef65d07e0138ccaa49e059e08fa1025c31091dc3c0f27afaa7"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/inspection/all-models.png",
+        "bytes":  188125,
+        "sha256":  "9ece1313e482e781e482af7935ec33a57726043bca1f5fd1d579fc73f497ed25"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/inspection/checker-alpha.png",
+        "bytes":  223873,
+        "sha256":  "93bdec6fcc515961883bc0db206a683fc6bb34d8c868407eed3cc260c821ef40"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/inspection/tandem-viewer.png",
+        "bytes":  214243,
+        "sha256":  "40b205c94b70bf9d6ee270d5473c0334a74a97878c13436a042db34b03f5e7d9"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/manifest.json",
+        "bytes":  10053,
+        "sha256":  "92de4897381be9728c8fec2b4a78ea23890574601a682d01462b1266136bb3f3"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/models/kestrel.glb",
+        "bytes":  202872,
+        "sha256":  "73f4027b09dc4a13dcfc00a794e528a755c1d78d50d46e28f30e60e76341cae5"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/models/lantern.glb",
+        "bytes":  271800,
+        "sha256":  "4ea2d9767262bec261e8ab0894efab49939445924bc125e76c078039f386a7d9"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/models/tandem.glb",
+        "bytes":  478600,
+        "sha256":  "d22f07449b2018550a8ef9dfeeefb10adc397877b51e2511704443b5b4e33149"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/models/wayfarer.glb",
+        "bytes":  464948,
+        "sha256":  "3b6fe7ac7b838db7d0ad84a275be43020ad1d03983e1db3eedc4442e435abc10"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/portrait-experiment-prompt.md",
+        "bytes":  1889,
+        "sha256":  "e7d9a0db4c630ea20f15d4f9445be1689f43d8074df6e18394fa941485196ca0"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/preview.html",
+        "bytes":  3833,
+        "sha256":  "e10661278b7d1555fdfe82fc8156c00827b03470cf037cc0545068de58b0c475"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/README.md",
+        "bytes":  7197,
+        "sha256":  "0dc6d644a58b514e6aaf8e6126d07adb433a5b270ab3895bd45a3bf83d151891"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/review-sheet.html",
+        "bytes":  2753,
+        "sha256":  "cb3976ae9636d579ec25948c8f4ed836847aa489e68e86e14347ed925987637d"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/kestrel-portrait.png",
+        "bytes":  143516,
+        "sha256":  "a87c37444a35312f1a1a068866550ba7fe168d407b63a3b544166fed368e78bf"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/kestrel-portrait-96.png",
+        "bytes":  4884,
+        "sha256":  "8f0d6f0d2d847ffbebea785f536abcde86b81d328d001a08dd01ae58f77a783d"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/kestrel-rear.png",
+        "bytes":  99416,
+        "sha256":  "6b9b1d1010784d39171cd928c05c603688a7dbf014aa0e7ab2a9a68d1564e9fd"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/kestrel-side.png",
+        "bytes":  76374,
+        "sha256":  "2dd58bfc19a6023271ca52c4b45bbcca7dacdff0480b0748d2a2f5fce3dccf57"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/kestrel-top.png",
+        "bytes":  153074,
+        "sha256":  "e3412ac26e8ac7cdb9bde9829ee9d2f07c853cc6fe467182d0442ba3361d5ef5"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/lantern-portrait.png",
+        "bytes":  158750,
+        "sha256":  "c15345f8921f10ebc787d286fdf8c10a83439f6553c9edcf229a83a1d72ee095"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/lantern-portrait-96.png",
+        "bytes":  4698,
+        "sha256":  "8ffaba5d6f572c98ace46ad1b7d5b4baf530d5fcb231bc3a7e0f4936f7bb6e34"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/lantern-rear.png",
+        "bytes":  88807,
+        "sha256":  "841b41f49efa64eb8bd464666215ef172e3abec41dea3644d51b1050312468f7"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/lantern-side.png",
+        "bytes":  90550,
+        "sha256":  "ab93cb6473d129c53f616114138c6e78296d4e29b1a57bb73369014b5b7361d2"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/lantern-top.png",
+        "bytes":  98258,
+        "sha256":  "5305079489d1353c5efd0eee8d1af634d5fdd54749f2fb466e718f70c4e41d40"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/tandem-portrait.png",
+        "bytes":  178532,
+        "sha256":  "301a245f2c347fa9b6bd06600345c9f514b817de0eaf092f415e1b9e64ed5284"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/tandem-portrait-96.png",
+        "bytes":  5327,
+        "sha256":  "ae5e87dbcf209dc95a61cdaba8baac9f02a018d34a07f400ab0f7e7925c30816"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/tandem-rear.png",
+        "bytes":  77620,
+        "sha256":  "6b10c2ef61f12a5c55c76286aeb6634e87870830c4e9be67dfde954170237e82"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/tandem-side.png",
+        "bytes":  61966,
+        "sha256":  "6f70f2441d661e02bf2cf22b763d26416b3798437c2f219b9cc6aaa7e9b64b1e"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/tandem-top.png",
+        "bytes":  93182,
+        "sha256":  "e79e146c1dca437055ac4878146571161744bbd801f4bde4dd169ff8f01d7486"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/wayfarer-portrait.png",
+        "bytes":  177073,
+        "sha256":  "63e7d9eca082775c73afaa12826fddd3b69abd44ed1ed3e0c0a03fbc8a723309"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/wayfarer-portrait-96.png",
+        "bytes":  4849,
+        "sha256":  "ca9d6523d7e67d239724be930dd15789c567c4ea1c741603b6fdc03638dc5663"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/wayfarer-rear.png",
+        "bytes":  123959,
+        "sha256":  "5c47e3bbf2a010221c2b51520e4701a24a764ca7e048045a66ed437cd73cf68c"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/wayfarer-side.png",
+        "bytes":  76220,
+        "sha256":  "47e39356c3e711692f8f759858af692edcd2b554131f8092f3bf2fb7ade95605"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/sprites/wayfarer-top.png",
+        "bytes":  170011,
+        "sha256":  "db575526494525ba3adf1894ab5d235d5936ae55ae6eb4f0ed692fce212a9059"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/standalone-preview.html",
+        "bytes":  1908313,
+        "sha256":  "56e5461fc50ba4a73ceead220a63817ce4fa0fc71c3ef5534d0fa6e9ad683d1b"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/verification.json",
+        "bytes":  13123,
+        "sha256":  "bea076cfd66e68c046473af11b56234520946391d48deb1d4d92477c5875a2ba"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/verify-export.cjs",
+        "bytes":  9424,
+        "sha256":  "c26d03f5fb9358e2dbc8aad9cf4880cbb6fdfd16579c944835dd280bfe880af1"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v1/viewer.js",
+        "bytes":  8415,
+        "sha256":  "200637096e22d448681b6d83cde51f35efbfc23c2144b79554bc87866b5afdd2"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/assemble-preview.cjs",
+        "bytes":  1523,
+        "sha256":  "0c6687ed75cf6172f187e68abc3fa8b4794e6556bee530ea9ee1d3ce17bcaa74"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/build-models.mjs",
+        "bytes":  28179,
+        "sha256":  "17581071d6a7587498d94669dbbe438f1c5944b47aa9894423afea4e3b5bc709"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/concept/starseeker-01-kestrel.png",
+        "bytes":  2115686,
+        "sha256":  "fe34453022ea00598e3261964dfd48546003826b16ecd0e574e74c75a4a138f8"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/concept/starseeker-02-tandem.png",
+        "bytes":  2044924,
+        "sha256":  "61585be423d23aaa12e67b6b0e01fc8448e03a08a21c83fdc3a8765ec6f320ae"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/concept/starseeker-03-lantern.png",
+        "bytes":  2095685,
+        "sha256":  "e4133304eeb93b7bc045c2930dd706367b3457d3d2801ad41893d8cf012ba0f4"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/concept/wayfarer-station.png",
+        "bytes":  2327265,
+        "sha256":  "152ea24536fae48e39a6272dd0befc7ae3e1eb4e9b82b4fcaa70055b12431a3f"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/engine-check.cjs",
+        "bytes":  6131,
+        "sha256":  "0363cea514e3273112ba33cac2deaef571ccc0284fb0b5b93c6e71efe5073249"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/fetch-renderer.mjs",
+        "bytes":  1164,
+        "sha256":  "5c16805aca47821267e875fa78526cbfc9eefa0297b184b95536f2b223288cf9"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/gallery.html",
+        "bytes":  2001,
+        "sha256":  "6d907c0173c7567236dc85ec416491c99016a63c8c451c40a94139480196c129"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/generation-prompts.json",
+        "bytes":  4448,
+        "sha256":  "a21ec56a01ce10c8a3680083eb0e595fb362cd74f3b066675fb1c032b3b37333"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/geometry-validation.json",
+        "bytes":  2062,
+        "sha256":  "dc2b57be6ca9ee64fee76b3cf9dec7c2e93f375ef540fe76bb0abe7f08a9b386"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/inspection/actual-flight-scene.png",
+        "bytes":  1143763,
+        "sha256":  "de593068fb3393416280f16730642bc80e9f331eb8d18013d8691f5d47a6d135"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/inspection/actual-home-scene.png",
+        "bytes":  245267,
+        "sha256":  "e2998d37987697bc5721f084404093a43e8d0a45c02c07810c6a7e26b4cf74eb"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/inspection/asset-gallery.png",
+        "bytes":  799400,
+        "sha256":  "76f4120b8a5d98af1c66797092fd6a840f4337f6d89de9c3987e22153cb191b9"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/inspection/engine-flight-tandem.png",
+        "bytes":  967805,
+        "sha256":  "1383b7dc9459f086dd428691b1351c637c722db291747fdcc2d3e3ae62db2304"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/inspection/engine-home-kestrel.png",
+        "bytes":  78770,
+        "sha256":  "9909d14067cdf0fa1d01a6fe741a466806412026f51e69e72608f371b777ade6"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/inspection/engine-home-lantern.png",
+        "bytes":  96884,
+        "sha256":  "4512d489177d5df23433d6316800afbe8fb61ce22011497c59d5fd8e929eca6d"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/inspection/engine-home-native-color.png",
+        "bytes":  86918,
+        "sha256":  "75b3f03cca82a4221731db7ef02f77de8d7c5997466c5e86e4256914a5899e92"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/inspection/engine-home-tandem.png",
+        "bytes":  103065,
+        "sha256":  "d8339fc6a9e1de496f320dc7ba5cdf13e64c5620bd00969c5c2dbeba472498d9"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/inspection/engine-home-wayfarer.png",
+        "bytes":  85709,
+        "sha256":  "767a9d2aebc888ab06b6f09defcc285bf3de5b146c7103ea3cb7bd8072a5fcb3"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/inspection/kestrel-comparison.png",
+        "bytes":  596625,
+        "sha256":  "e7e2a0a9dcb0ef89aa35d01933db3ef8297168da38951913dcaccad67a1f8c4f"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/inspection/lantern-comparison.png",
+        "bytes":  628498,
+        "sha256":  "a65a129b71ebc6638ba88355d284025d3b9c51e90283ac033c27d9861008fdf6"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/inspection/tandem-comparison.png",
+        "bytes":  627200,
+        "sha256":  "6598c4e7ed9c51105fd1e02f771ddb6c0c5d3063bfd644eb7fe371bccc21211c"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/inspection/wayfarer-comparison.png",
+        "bytes":  670880,
+        "sha256":  "66ed7b0d056a5ee6f5e7bae3aee9ea76cb0d95a9a892b5ff888f0e7ae8774e99"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/manifest.json",
+        "bytes":  9810,
+        "sha256":  "2cf9f8159963704379c2187132f16787bf50af0a8b0f2c7d97b4e245287d6d7a"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/models/kestrel.glb",
+        "bytes":  8616056,
+        "sha256":  "7c68672256dc3f1490591204d4672a01ffc6b0af83c39b27969ed365dd5a167a"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/models/lantern.glb",
+        "bytes":  9453128,
+        "sha256":  "515330329fa78fb9175eb7bf679aae5ca110ace7386076c0e0148a4b223d5eb4"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/models/tandem.glb",
+        "bytes":  10270460,
+        "sha256":  "a7dea966bafac11895a42f01e1eb313301f3953c8eec00562e04ff3d9aff5aa6"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/models/wayfarer.glb",
+        "bytes":  8940196,
+        "sha256":  "fc7da0c0e366a7f4b69f585f701c1ef871c6394832d53071e12eaa43025eb36a"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/preview.html",
+        "bytes":  2191,
+        "sha256":  "bb2acfc83701f57e4639bae1c34e39f4215760a482b5ea2c37c5f6c39fc179a7"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/README.md",
+        "bytes":  8468,
+        "sha256":  "875d4167bee9b0acdb8796cdc8dadd492c85d6ed5ccf2b9d404d3b9ee7ff8a9a"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/kestrel-portrait.png",
+        "bytes":  268921,
+        "sha256":  "d3a70fa59dd2250d8d65b12dbbb5ef01f5c0d98ac0049cd22424212226366142"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/kestrel-portrait-96.png",
+        "bytes":  4313,
+        "sha256":  "75222732b4f57d7b62fb10a45fa4244ab5217fccedfa8673f1d19e0c36e199eb"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/kestrel-rear.png",
+        "bytes":  155894,
+        "sha256":  "e2f0232badb61c0448fa07c3e371ba2002daf98040f2c28d4293e53e75529f9b"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/kestrel-side.png",
+        "bytes":  166141,
+        "sha256":  "c8abe4b4a5c51ea65b0365ae129fc92249d50f3f2f9ca44aa738eca1d2acaf49"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/kestrel-top.png",
+        "bytes":  380925,
+        "sha256":  "6168969c1566e5439d582f53d3b59f904ae0d628e3dd40f647aa6acbb436509a"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/lantern-portrait.png",
+        "bytes":  340362,
+        "sha256":  "470388a8cc7e8277b7c0219e3ab58750cfa1c02f6c143f29583fa913d41d944e"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/lantern-portrait-96.png",
+        "bytes":  5599,
+        "sha256":  "5145b5c639598527df92ab250cbaf724dbb7ca17be0e38f644eaf1effdd09c04"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/lantern-rear.png",
+        "bytes":  211512,
+        "sha256":  "092058e0805fec8bf835ea7148b9ceab2e02c5b0a4da6955adf7ef3aeb5fb8d4"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/lantern-side.png",
+        "bytes":  273933,
+        "sha256":  "03ebeac178ef2740beb12f136982ad03a8471fdd0660f330b978561d951d621a"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/lantern-top.png",
+        "bytes":  310870,
+        "sha256":  "b1bbe5c41d1083b94fc47b71aae7cd4253876d99a6e867e28d93eafd3f21c785"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/tandem-portrait.png",
+        "bytes":  385343,
+        "sha256":  "2da0bf513a8d6d69bfe660833a93fa4a1cba499c80d95949ea465ea0d08aea07"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/tandem-portrait-96.png",
+        "bytes":  6174,
+        "sha256":  "1ba2d5d02a1e9892294c3469936432b11d82c023ab01f06fd7ba7831165f3b52"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/tandem-rear.png",
+        "bytes":  180482,
+        "sha256":  "d1f428f3d456a7f9dd35b128f213e352834549dcea76cc024831131935b27aab"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/tandem-side.png",
+        "bytes":  214386,
+        "sha256":  "a35081c90ae404b7a51500e77d7a2312380029e50e54d97aa914c96d66e1ea30"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/tandem-top.png",
+        "bytes":  370584,
+        "sha256":  "b670471b4d479bec164cd7718eef7bc06964a195b3b6707824493f873ad68929"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/wayfarer-portrait.png",
+        "bytes":  271656,
+        "sha256":  "166d375d50f8997f4ab63a762b0cb52fb9f5579aa7856a24e0dbd9d3338f4851"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/wayfarer-portrait-96.png",
+        "bytes":  4694,
+        "sha256":  "628def531df01f9781326bcbca050e50adf56b48540b23e2d75f540ebaba0d46"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/wayfarer-rear.png",
+        "bytes":  183820,
+        "sha256":  "f069ef7d9c00687c9e79a807b75d68631665bae0394cd8257322e3b66b1d83b2"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/wayfarer-side.png",
+        "bytes":  176257,
+        "sha256":  "9dc3f114ede4c8ed339bf752dcc2bbb4e7bee3d064fc43450d47bcdc72a193c6"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/sprites/wayfarer-top.png",
+        "bytes":  297258,
+        "sha256":  "25a9fec014be351bca018913c7b41425cd7ddd85062b31f8f5f5f7cefbd0ac1a"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/standalone-preview.html",
+        "bytes":  61863382,
+        "sha256":  "0e47b343d07113a0ce3040bb9c7fcd7621e1e3152cac52754f9eb9079b6cf1ef"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/starfare-adapter.js",
+        "bytes":  3133,
+        "sha256":  "83c6d6c678319e49156da2c5011fee4d6b3d3bbbcc9abbb342257924069aac12"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/textures/alloy-basecolor.png",
+        "bytes":  2241625,
+        "sha256":  "34788e46438ac3bff5a1600d4877d176aa64823148835084349ff91cae61e9fd"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/textures/hull-basecolor.png",
+        "bytes":  2161217,
+        "sha256":  "8888663669d08f9eabf04f34ebecf23f68c5329af88b20e69bc40da4b21629c7"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/textures/hull-metalrough.png",
+        "bytes":  1409678,
+        "sha256":  "b962deaa96aac697a5550ef70d781eb6727ef3e90fd2d037ac022f3a4443c57c"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/textures/hull-normal.png",
+        "bytes":  2196193,
+        "sha256":  "0c23a69478d37b8d93689820fb58db1b18315688b9be9682186f4e95afc88442"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/validate.cjs",
+        "bytes":  2965,
+        "sha256":  "e082f231ee83b223e94c0987d455ae7be220a38ac4a2cabcfb7c7c610393f745"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/vendor/CopyShader.js",
+        "bytes":  606,
+        "sha256":  "6b5da4fe3b410286974590885f82fe4a446f25c728f7d6c888e2a2a331333949"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/vendor/EffectComposer.js",
+        "bytes":  6271,
+        "sha256":  "4fc320fa3185847797332bc2b0125b1a39b9cf5fc4170a2f180cfa54fb057a2b"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/vendor/GLTFLoader.js",
+        "bytes":  96550,
+        "sha256":  "5c15967ba830918a9caea6338712c994c354bccd4edc4569bde411c3ec06a3e6"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/vendor/LICENSE",
+        "bytes":  1081,
+        "sha256":  "7dddf7c5b8fd10ee654db8857d75d104b5557889aa5a91fc4ca545ea7c07062f"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/vendor/LuminosityHighPassShader.js",
+        "bytes":  1228,
+        "sha256":  "00ed0682e61ca207d9c62298269472d6d4eedd9d33528400e7cbc633da8544da"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/vendor/RenderPass.js",
+        "bytes":  1746,
+        "sha256":  "57a549b2d6a947cddf0385a804dc70c3b2d155663d908e99e35d42274b3878be"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/vendor/ShaderPass.js",
+        "bytes":  1416,
+        "sha256":  "2e64890b8e4c4dafcfd796d5c84877f2ad36a101c83263211c500ec40eaf1240"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/vendor/sources.json",
+        "bytes":  2089,
+        "sha256":  "ef3488812b87e38e617a36a1caed527fa79c1f228589237200910d59b68a4748"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/vendor/three.min.js",
+        "bytes":  603445,
+        "sha256":  "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/vendor/UnrealBloomPass.js",
+        "bytes":  12612,
+        "sha256":  "1ed342b273e9b077a3e92e5caeecd45043f03071306c696564d5b53f0562dced"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/verification.json",
+        "bytes":  45181,
+        "sha256":  "2c1e9233ed7c18d970d39c6f196e8ae6c6d3e9d3db9745daa7e8cae69279145f"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/verify.cjs",
+        "bytes":  9637,
+        "sha256":  "17ca2ce5bdb75df008d4daf60177eb4a96e8863158bb0b2d5999a0851abd10e5"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v2/viewer.js",
+        "bytes":  4779,
+        "sha256":  "1041bb25a876d67a48a56fc3735c0123534c4839d6e350ba281798c9e7158766"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/assemble-preview.cjs",
+        "bytes":  1523,
+        "sha256":  "0c6687ed75cf6172f187e68abc3fa8b4794e6556bee530ea9ee1d3ce17bcaa74"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/build-models.mjs",
+        "bytes":  29879,
+        "sha256":  "335c626afed40000c8b41997c806b98d56e4b3e3d93510e01016ad24f854ca62"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/comparison.html",
+        "bytes":  2770,
+        "sha256":  "44f61ea3962f52009901f54e141614980e9734250cddd06672740f19ca9fd423"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/comparison/kestrel-v2.png",
+        "bytes":  257046,
+        "sha256":  "e5587a617036ccb6561f48c150429f700e4245d0f090d9aef02f2dac4e39838c"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/comparison/lantern-v2.png",
+        "bytes":  358595,
+        "sha256":  "93a397f6a36703dd16d25050b229b7535aea11c6b9dfbeeefa85470ba933bcbf"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/comparison/tandem-v2.png",
+        "bytes":  391333,
+        "sha256":  "041976034206267706c2c8518c13f3e350b427375b2d988d009fea25fe4bb49c"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/comparison/wayfarer-v2.png",
+        "bytes":  271206,
+        "sha256":  "e1b31a05e1961ab6dd53d8c514f32252e5645df7081bc7eb1c8ecced8d6d2f3f"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/concept/starseeker-01-kestrel.png",
+        "bytes":  2115686,
+        "sha256":  "fe34453022ea00598e3261964dfd48546003826b16ecd0e574e74c75a4a138f8"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/concept/starseeker-02-tandem.png",
+        "bytes":  2044924,
+        "sha256":  "61585be423d23aaa12e67b6b0e01fc8448e03a08a21c83fdc3a8765ec6f320ae"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/concept/starseeker-03-lantern.png",
+        "bytes":  2095685,
+        "sha256":  "e4133304eeb93b7bc045c2930dd706367b3457d3d2801ad41893d8cf012ba0f4"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/concept/wayfarer-station.png",
+        "bytes":  2327265,
+        "sha256":  "152ea24536fae48e39a6272dd0befc7ae3e1eb4e9b82b4fcaa70055b12431a3f"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/detail-geometry.mjs",
+        "bytes":  6897,
+        "sha256":  "5e729b806d9a3ea178decc9d98128379c227478d763f148eded790442c9c47fc"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/detail-models.mjs",
+        "bytes":  8351,
+        "sha256":  "d2c5613d05fe6fca42a65e94209740b7e78f0c54d516c1a2e9928d5772db22e4"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/details.html",
+        "bytes":  1609,
+        "sha256":  "66d7e910f1efddace9373bf0ba461fda1dd58c85f2375e0480e5b4c1c82655a7"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/engine-check.cjs",
+        "bytes":  6275,
+        "sha256":  "37c33e3fe08de5ff33a4c8c0a6401d5f0c66bfcde243d1a25bfb16e89101d492"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/fetch-renderer.mjs",
+        "bytes":  1164,
+        "sha256":  "5c16805aca47821267e875fa78526cbfc9eefa0297b184b95536f2b223288cf9"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/gallery.html",
+        "bytes":  2042,
+        "sha256":  "7a905f89aac9220fe826eb05b7bf7c46f9220c4fd9bd9b064ba12610e0a0eb14"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/generation-prompts.json",
+        "bytes":  4138,
+        "sha256":  "2cfa8a2f6afa0f9b490d5c06e2889467e5620cac0c5110414d5b280b512e8c87"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/geometry-validation.json",
+        "bytes":  2267,
+        "sha256":  "08da26c3ee2425e2c04c11cecfa6c54dd9c62f594d1b4e4ffecb92cc9bdcda32"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/actual-flight-scene.png",
+        "bytes":  1151191,
+        "sha256":  "7ea52451fc3d8a04d76073b98e7a4b1fcc8408d9a60e865daf41b4b57fb57dd6"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/actual-home-scene.png",
+        "bytes":  248516,
+        "sha256":  "f3540b5066d9d8aa9e93e112d69c267cf83938221be2bc324d89bb30b973889a"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/asset-gallery.png",
+        "bytes":  977855,
+        "sha256":  "98208be3d22069266443275fb6be74456792165f84e847a06dbfa569f51fdd24"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/detail-gallery.png",
+        "bytes":  1742130,
+        "sha256":  "c55fb69a0b95fc36a56d8b1f2af4b52f842a32a5df8866443f28c2b271cbd4d5"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/engine-flight-tandem.png",
+        "bytes":  945184,
+        "sha256":  "0d3c5e5ed122bea4102dcccb9ab225672480099f3d3457ee3f0a777bff9f43bf"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/engine-home-kestrel.png",
+        "bytes":  84650,
+        "sha256":  "cf0ae91869366015dc6b74b37c0faf5330629b7a972e8f1e7c08503a6c38186c"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/engine-home-lantern.png",
+        "bytes":  107603,
+        "sha256":  "a95e5cebe728e56b536951089dd43976d5b527d9e4698a5dcc7ab6b0a67c250c"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/engine-home-native-color.png",
+        "bytes":  76097,
+        "sha256":  "0ea14a71a1d94804195ebbe71efaa3b845630eaacfecf304f12f543b0c52ba58"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/engine-home-tandem.png",
+        "bytes":  95399,
+        "sha256":  "f2d695d2cd4ccbafca1610d67b77691e67955de74d910ca370c3bb3ecb7fa256"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/engine-home-wayfarer.png",
+        "bytes":  84870,
+        "sha256":  "e49fef1e86f35d2022c21884aab511b06a7d669ffef92d8e2ffcc95c69f588f4"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/kestrel-comparison.png",
+        "bytes":  612316,
+        "sha256":  "d321fe22f3d31d7b114f1e08fa57544719af6654b565ec4c32fb7645e0fe078b"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/kestrel-detail.png",
+        "bytes":  397529,
+        "sha256":  "861eb0c9a62de3f2281c2d4063c1ead531a50e1641e9088e62fb17d2bca8a8c2"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/lantern-comparison.png",
+        "bytes":  642283,
+        "sha256":  "54473c399f5217e3616add41256d27118ac5af264b773a686fb3c9ade5f375a1"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/lantern-detail.png",
+        "bytes":  497967,
+        "sha256":  "11d4290fee73e55a6a653d89d344fe87f8e22d60562ad74a4ce0ca8ee1c9a275"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/tandem-comparison.png",
+        "bytes":  618212,
+        "sha256":  "c74f402f7ec6572d6b1e0440b916046c103ce12338844d124d4fcd961f7c9c65"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/tandem-detail.png",
+        "bytes":  398574,
+        "sha256":  "a3a974b652643d83ea383528df7a2b3470fdf4f4641f785fa5e8841168dc430a"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/v2-v3-comparison.png",
+        "bytes":  2198620,
+        "sha256":  "87f3006ced1d68417a1f7ca18f2c02476b06d2e309eb50df5b8ef38b9771ebb4"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/wayfarer-comparison.png",
+        "bytes":  677022,
+        "sha256":  "4667c8793176348c6077a715ee7d232d1b635bdf3c6ead634b05d1eeac0deb2f"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/inspection/wayfarer-detail.png",
+        "bytes":  370246,
+        "sha256":  "570319053f0043328eee57cad30a23c9e320a9f03d64cfa31ebe9535c8ec475d"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/manifest.json",
+        "bytes":  10301,
+        "sha256":  "6d5b39722c7d867479c0e1a3814531e07cb09f3ff8decb2fc87ec4654862641f"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/models/kestrel.glb",
+        "bytes":  11619948,
+        "sha256":  "1cbff4b6b02f7ea6f88c8d165f11a60ef9f6d40d3ca4331356fbefa751484ad4"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/models/lantern.glb",
+        "bytes":  13122832,
+        "sha256":  "083d38a67749b91088e231dc2d58124add8f9b281c950b0f0a71f730be0e4563"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/models/tandem.glb",
+        "bytes":  12878788,
+        "sha256":  "f96e2c18a2ec9cb8a0839e831f4f47efd184ed979e761e5ea654a684f9584b15"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/models/wayfarer.glb",
+        "bytes":  13508796,
+        "sha256":  "55b64bd4268539b2d4f0b91aeed36ea61423997024bdb3ac3b9a7720adbbfec9"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/preview.html",
+        "bytes":  2251,
+        "sha256":  "aabc8a915d864772e27f2e18083129257f4ffa571f4ec2c176c18abbec3bd1cd"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/README.md",
+        "bytes":  8602,
+        "sha256":  "cb706730362cf1fec626e475c4e024dc5d5b0c2a37da748449f5633affbf456c"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/kestrel-portrait.png",
+        "bytes":  321864,
+        "sha256":  "ea0c817076c732061465b39bb04e77fc6cd34e46ccd07caa8420ec9bc7f42030"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/kestrel-portrait-96.png",
+        "bytes":  4699,
+        "sha256":  "12dce3b2d6cf28834d5ca3b91094146a67afea862b33c9c9518676de09e37823"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/kestrel-rear.png",
+        "bytes":  170309,
+        "sha256":  "c663c5e33671beebbe69482419a068652a6f8638d9e5311e4afdc5804b7bf512"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/kestrel-side.png",
+        "bytes":  197678,
+        "sha256":  "c742ecf11d64b73678a6b9014af00e28db04089ce3cdb4f437e85e1ab70cf44f"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/kestrel-top.png",
+        "bytes":  463270,
+        "sha256":  "de6083a24a58aec842ec465a300105d17c1e8a297ebb31d5e16b98a5ac3dc79a"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/lantern-portrait.png",
+        "bytes":  401600,
+        "sha256":  "74b61988988c23f223a568c63eb586d53ecc0fce61bfcc5ceb8984ede2b31909"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/lantern-portrait-96.png",
+        "bytes":  6081,
+        "sha256":  "6de5c3a4f7203e61898c1d09693c2af701c9eccbe9286a6a2382ed78c0077ddf"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/lantern-rear.png",
+        "bytes":  193891,
+        "sha256":  "2bc5a687c7c1a0677766376d04e21e27374d0498181d704cd5f9681ee445b2a5"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/lantern-side.png",
+        "bytes":  318422,
+        "sha256":  "6b697d9b5ee73ff302ca8314c964a39fc92ff23580dc94a2a66e95720d82cdc7"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/lantern-top.png",
+        "bytes":  352068,
+        "sha256":  "cbc2674e580b2a59c32e70b9a56c80b7b7f60240c1c913aab148e920ecfbf1c1"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/tandem-portrait.png",
+        "bytes":  364312,
+        "sha256":  "d089db60d8f469c56660e80b3174466c1f7ffe5724e5dbf29872f3b3b360c20f"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/tandem-portrait-96.png",
+        "bytes":  5559,
+        "sha256":  "3e7350a8c1cb33e43c6e53bab75bccee45cf1198cd19889581b0d84b2dd6b11a"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/tandem-rear.png",
+        "bytes":  142194,
+        "sha256":  "bda3eeb9a895fe487f3f071d0efcc7830c7b3b20cc00ad200de6ace2ec4f8102"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/tandem-side.png",
+        "bytes":  217825,
+        "sha256":  "71d0cc547e780ab444921a3edb97516693711ea6f6b53e7f6fa82f6b901b37cd"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/tandem-top.png",
+        "bytes":  338411,
+        "sha256":  "8514b4027d19af68d73807b9aef2e0ffe96d23a0b8a9af4f46e60314ab4b3b57"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/wayfarer-portrait.png",
+        "bytes":  316281,
+        "sha256":  "cc509344e968c132907543cd08df1965278d5b1185f78f158bfbaa576348dae7"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/wayfarer-portrait-96.png",
+        "bytes":  4893,
+        "sha256":  "27333b2e586a3f05f6cc6cab3459a4e39e729233ddc5f7050dee3edf6b2d0103"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/wayfarer-rear.png",
+        "bytes":  213281,
+        "sha256":  "e6f4eda8b17b7d646cb2d18af07cd435f02ec66e88c9bd4b257933f76b7b138d"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/wayfarer-side.png",
+        "bytes":  190149,
+        "sha256":  "cfc6a7de4e6fa5b4e43dbca905eeda7bfdf03ea0d8821132f4a29863974a556f"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/sprites/wayfarer-top.png",
+        "bytes":  328550,
+        "sha256":  "f4a9615cbaf9becdd06f2abf8078ad0b3e4b72260797c3273454d092b8415a46"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/standalone-preview.html",
+        "bytes":  80332116,
+        "sha256":  "dcbf50637fdb591697d7a0d72240418ccea5b139d4b7ff47f4a1eea769e4e21e"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/starfare-adapter.js",
+        "bytes":  3141,
+        "sha256":  "1e14bb8b502bc568903ea592df29f8e83381bbeffdd1e08a5107743dbd0bd852"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/textures/alloy-basecolor.png",
+        "bytes":  2241625,
+        "sha256":  "34788e46438ac3bff5a1600d4877d176aa64823148835084349ff91cae61e9fd"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/textures/hull-basecolor.png",
+        "bytes":  2603529,
+        "sha256":  "cfa56baaa81c463f76b36eb9a68ffcd2af02e33a2b2a08a9da7098e7682259d8"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/textures/hull-metalrough.png",
+        "bytes":  1364819,
+        "sha256":  "f15c83190186217cee61727c8e249e1b1df97505b665c5ae8b84a8bdc174666b"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/textures/hull-normal.png",
+        "bytes":  1513058,
+        "sha256":  "5312652fa1aa8b3da2d1a47dc27473c500a997fdceee526670070b4bd9e6f680"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/textures/hull-occlusion.png",
+        "bytes":  1536239,
+        "sha256":  "3f4b3967201f8829427fe6c46dec53ee3361555a13c48a384e03dd83568f3dcb"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/validate.cjs",
+        "bytes":  2982,
+        "sha256":  "0c9ee7cc1f1fde8f6a681fcca59e3e3e68eb848b44129da8ce1ffe17a7bb8bb9"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/vendor/CopyShader.js",
+        "bytes":  606,
+        "sha256":  "6b5da4fe3b410286974590885f82fe4a446f25c728f7d6c888e2a2a331333949"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/vendor/EffectComposer.js",
+        "bytes":  6271,
+        "sha256":  "4fc320fa3185847797332bc2b0125b1a39b9cf5fc4170a2f180cfa54fb057a2b"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/vendor/GLTFLoader.js",
+        "bytes":  96550,
+        "sha256":  "5c15967ba830918a9caea6338712c994c354bccd4edc4569bde411c3ec06a3e6"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/vendor/LICENSE",
+        "bytes":  1081,
+        "sha256":  "7dddf7c5b8fd10ee654db8857d75d104b5557889aa5a91fc4ca545ea7c07062f"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/vendor/LuminosityHighPassShader.js",
+        "bytes":  1228,
+        "sha256":  "00ed0682e61ca207d9c62298269472d6d4eedd9d33528400e7cbc633da8544da"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/vendor/RenderPass.js",
+        "bytes":  1746,
+        "sha256":  "57a549b2d6a947cddf0385a804dc70c3b2d155663d908e99e35d42274b3878be"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/vendor/ShaderPass.js",
+        "bytes":  1416,
+        "sha256":  "2e64890b8e4c4dafcfd796d5c84877f2ad36a101c83263211c500ec40eaf1240"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/vendor/sources.json",
+        "bytes":  2089,
+        "sha256":  "ef3488812b87e38e617a36a1caed527fa79c1f228589237200910d59b68a4748"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/vendor/three.min.js",
+        "bytes":  603445,
+        "sha256":  "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/vendor/UnrealBloomPass.js",
+        "bytes":  12612,
+        "sha256":  "1ed342b273e9b077a3e92e5caeecd45043f03071306c696564d5b53f0562dced"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/verification.json",
+        "bytes":  47914,
+        "sha256":  "ae5361957f8f6a4500c28a3d9eee664beb5ff6f251da0afb12820868521fd680"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/verify.cjs",
+        "bytes":  11054,
+        "sha256":  "0968670651b402fb8b31d66bd33a2c89b8414e84ebd7c0668658d17bdcb8cb6f"
+    },
+    {
+        "path":  "2026-10-17/game-assets-v3/viewer.js",
+        "bytes":  5702,
+        "sha256":  "f618bfd76e5c06c44904e5a450488bf616734878728caaac049ee7d09f36709e"
+    },
+    {
+        "path":  "2026-10-17/generation-prompts.md",
+        "bytes":  9096,
+        "sha256":  "c7b39afb5a82289d7c141a51282d0fcfd3e39cf1f3d3fa15004ef3f678aa4e17"
+    },
+    {
+        "path":  "2026-10-17/inspection.md",
+        "bytes":  1821,
+        "sha256":  "628682c28eaaf837d8c26a9059261e2301a20e1586d3adc21c5b4e9107d3275c"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/assemble-preview.cjs",
+        "bytes":  1250,
+        "sha256":  "19f9be8de8fe59db2a5464bbd68f093fac835800980d1831d737d1da4ea45c0f"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/build-models.mjs",
+        "bytes":  29732,
+        "sha256":  "5e98bf934852f920d4ccbbe470cc63b6b7c3314282810e36e85fa67eb6119ad9"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/concept/starseeker-01-kestrel.png",
+        "bytes":  2115686,
+        "sha256":  "fe34453022ea00598e3261964dfd48546003826b16ecd0e574e74c75a4a138f8"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/detail-geometry.mjs",
+        "bytes":  7300,
+        "sha256":  "f2a110b5e6cae82d3f0ab9f3a3c7b067ed79ab3973bce8ec9ee760d513a9ff2a"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/detail-models.mjs",
+        "bytes":  8984,
+        "sha256":  "02b5ea83e000a2be4ae1fc32624f7175d3df737d04155b372977ef227876c393"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/engine-check.cjs",
+        "bytes":  6277,
+        "sha256":  "7ad5d247dc32af42968bc9e608e928bf7136244a69af404f81377bd1e633028a"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/geometry-validation.json",
+        "bytes":  1576,
+        "sha256":  "54c251fb487aa7c10706776a2c622d0169e82fc8e1f003c6f29c250d3f6f145e"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/inspection/engine-home-kestrel.png",
+        "bytes":  88341,
+        "sha256":  "29516f5ad8e4bedf3c1f69b81a4e442a46a5c06a858c12297705f26d922f2a16"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/inspection/engine-home-kestrel-low.png",
+        "bytes":  79807,
+        "sha256":  "e8bebf2f78c594ea666d561f4e71b7a5bd7e354892d75b269e810a4b068dae89"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/inspection/engine-replay-kestrel.png",
+        "bytes":  930403,
+        "sha256":  "9b102c0fd930990542afca7d77aa6d3bf64d049852e04dab8d99e9e8fc0a8fcb"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/inspection/kestrel-comparison.png",
+        "bytes":  701709,
+        "sha256":  "1d143c3be85d385d9f2e6a9a96f10f467083b4b3419eca606825d79c782d8607"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/inspection/kestrel-detail.png",
+        "bytes":  352909,
+        "sha256":  "8de05b062598bd9498094e870a6dd58124182a7b6b21eaa3d73b2ef1dc99d2b8"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/inspection/kestrel-low-comparison.png",
+        "bytes":  687461,
+        "sha256":  "b53719c5e1b180055331a84075f570c84a7b41edff5197ec251b52b0f912157b"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/inspection/kestrel-low-detail.png",
+        "bytes":  321226,
+        "sha256":  "226e03c09e0ffdfdd31b1679882f4fb4d2a39cd5b5f7b1fdf417383bd567ee54"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/inspection/v3-same-lighting.png",
+        "bytes":  472263,
+        "sha256":  "1e31c5917fd661f0632b60ad47f8c6f24ee4cdcbb289cac90e28f061fad9ee31"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/manifest.json",
+        "bytes":  3465,
+        "sha256":  "cf14732e33a3a8ddf6396357cba3ee00076d6aa230e90699f5213133b8f5434b"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/models/kestrel.glb",
+        "bytes":  4873840,
+        "sha256":  "cea969260939c8cc3c6e26083e491785e5b9a02b936a4def181eb8ea442a4386"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/models/kestrel-low.glb",
+        "bytes":  1457196,
+        "sha256":  "6fd8f57bd9e9f21f471339a440164f08fd417dfcbeb8ef9f9d492576c7dda5a4"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/prepare.cjs",
+        "bytes":  1362,
+        "sha256":  "e9719b479dca817daa9e4eed5c219a9b3889108826363e06141767dc8ddf9d2e"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/preview.html",
+        "bytes":  2251,
+        "sha256":  "aabc8a915d864772e27f2e18083129257f4ffa571f4ec2c176c18abbec3bd1cd"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/README.md",
+        "bytes":  5111,
+        "sha256":  "155d9ad3a4cf0ded860cf932e198bc61fefba942a2202ec8ecbdcc9af200e2b8"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/sprites/kestrel-low-portrait.png",
+        "bytes":  349559,
+        "sha256":  "9c5df1c7f01c8cdaa57a9c47ae7a09715954c510682341062887c843d9acea67"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/sprites/kestrel-low-portrait-96.png",
+        "bytes":  5943,
+        "sha256":  "665ddeecfe7dc932faa7c46e866c9aaad0b1cb39d64b082ba15dada168da7ccc"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/sprites/kestrel-low-rear.png",
+        "bytes":  152377,
+        "sha256":  "dc05ef21f12520b4475d77d88f4784855ba1615075347256ceef2f57d9ea6550"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/sprites/kestrel-low-side.png",
+        "bytes":  170042,
+        "sha256":  "7d6a83c5b9afdb30e861a040e157bcf03888f9e3ace7bd360bbc5dcdf1c0f741"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/sprites/kestrel-low-top.png",
+        "bytes":  282952,
+        "sha256":  "317432fdb4e795fb7b1979e425b91e6986d930c829b1efb52eb7ecde725fe853"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/sprites/kestrel-portrait.png",
+        "bytes":  388510,
+        "sha256":  "ff10656a6ae980fdb959bf758eca5c546e42399c72cf24f3cef19ddbda41d338"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/sprites/kestrel-portrait-96.png",
+        "bytes":  6242,
+        "sha256":  "50369deb8570725b42eccf9f85e955ad93b3c8008deb700826fa42f237bc66c1"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/sprites/kestrel-rear.png",
+        "bytes":  162263,
+        "sha256":  "29bdc9c033057fde70daa6d8f7fa31f9e29a5e6483987e31ab107c7d3797e1ab"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/sprites/kestrel-side.png",
+        "bytes":  180945,
+        "sha256":  "2e5a01436b2d2841ed7a58f58db0cbb59c54c741e873e181ea5b19ae4a0a3b9c"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/sprites/kestrel-top.png",
+        "bytes":  316879,
+        "sha256":  "1102aac051ed320e1bc878732393f3b121fbf41f86f19c356e6d1546adb497b2"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/standalone-preview.html",
+        "bytes":  14793232,
+        "sha256":  "144255708bd67ea1298431389afd1eafcccdcb8e97047d8c55652ce5603f03f1"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/starfare-adapter.js",
+        "bytes":  3127,
+        "sha256":  "22dc5710f3d223670ae89a2a3ff121c5fdbac4d4078a27337dfddcf4811d18a7"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/textures/alloy-basecolor.png",
+        "bytes":  86714,
+        "sha256":  "33a055a676da78278465d941627b3762fd79ed2fe848a7152bbae79e1babbf17"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/textures/hull-basecolor.png",
+        "bytes":  75696,
+        "sha256":  "9911040e813f172ec65614c102fe3ec559c39f796f88b54348bb0fbfd0a7787f"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/textures/hull-metalrough.png",
+        "bytes":  148789,
+        "sha256":  "c5b7940c52bec264544ea757c818ae39eefa8f8ecbb0611e22408418901074ef"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/textures/hull-normal.png",
+        "bytes":  99363,
+        "sha256":  "641418e46af7b2a5ab29581cd99b59a165f74788adaf7bd4e6c12694ec7fce81"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/textures/hull-occlusion.png",
+        "bytes":  1896,
+        "sha256":  "7e028966597d4dd0c20c93b79c672002f189c7a58e2cda413612f853b7c41284"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/validate.cjs",
+        "bytes":  2964,
+        "sha256":  "f86a4524e7508e83004498592f3759a08d1b4e62e7547a9c616f9f10c42b8127"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/vendor/CopyShader.js",
+        "bytes":  606,
+        "sha256":  "6b5da4fe3b410286974590885f82fe4a446f25c728f7d6c888e2a2a331333949"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/vendor/EffectComposer.js",
+        "bytes":  6271,
+        "sha256":  "4fc320fa3185847797332bc2b0125b1a39b9cf5fc4170a2f180cfa54fb057a2b"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/vendor/GLTFLoader.js",
+        "bytes":  96550,
+        "sha256":  "5c15967ba830918a9caea6338712c994c354bccd4edc4569bde411c3ec06a3e6"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/vendor/LICENSE",
+        "bytes":  1081,
+        "sha256":  "7dddf7c5b8fd10ee654db8857d75d104b5557889aa5a91fc4ca545ea7c07062f"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/vendor/LuminosityHighPassShader.js",
+        "bytes":  1228,
+        "sha256":  "00ed0682e61ca207d9c62298269472d6d4eedd9d33528400e7cbc633da8544da"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/vendor/RenderPass.js",
+        "bytes":  1746,
+        "sha256":  "57a549b2d6a947cddf0385a804dc70c3b2d155663d908e99e35d42274b3878be"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/vendor/ShaderPass.js",
+        "bytes":  1416,
+        "sha256":  "2e64890b8e4c4dafcfd796d5c84877f2ad36a101c83263211c500ec40eaf1240"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/vendor/sources.json",
+        "bytes":  2089,
+        "sha256":  "ef3488812b87e38e617a36a1caed527fa79c1f228589237200910d59b68a4748"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/vendor/three.min.js",
+        "bytes":  603445,
+        "sha256":  "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/vendor/UnrealBloomPass.js",
+        "bytes":  12612,
+        "sha256":  "1ed342b273e9b077a3e92e5caeecd45043f03071306c696564d5b53f0562dced"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/verification.json",
+        "bytes":  20767,
+        "sha256":  "e5f14b7f9e92ddd35c266a1f75233b5cd7b7e5edff4cdc9c4e0b1058e5dc5b1c"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/verify.cjs",
+        "bytes":  8443,
+        "sha256":  "7d3e5d149a05457592ed84a087d6c8619a0b89c0cacdc365428d6b103274cccd"
+    },
+    {
+        "path":  "2026-10-17/kestrel-game-art-v4/viewer.js",
+        "bytes":  5788,
+        "sha256":  "eaff8453b5586b442f80e22169c985573eed2aa9ccf156a1733989ce1f7b75e1"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/assemble-study.cjs",
+        "bytes":  666,
+        "sha256":  "e084ea50a918e5f92ab503ed8288a19a61021b1bfea7bb79e08a32a710381e6c"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/capability-report.json",
+        "bytes":  1230,
+        "sha256":  "ea97164c9ca28dc3eafd3b426f193a733450fb74f1db9dc362cf26a994e0931d"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/fixture-v3-lighting-desktop.png",
+        "bytes":  561975,
+        "sha256":  "fafa33c0486416b5356a9946e2c380ae96ad14a449cbfbd392a212b8f947d6d7"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/fixture-v3-lighting-mobile.png",
+        "bytes":  246789,
+        "sha256":  "3f6846e30f29fdd1b6aeaeed0ebb5f15e3d0182ddaace70dba55a4ed42747a36"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/generation-settings-draft.json",
+        "bytes":  3140,
+        "sha256":  "6e7157cf7775ffc5be070513cfab9c10ad54b3a23cf635b59049319a7859c2d2"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/quote-attempt.json",
+        "bytes":  414,
+        "sha256":  "77e0b38802c2eefe284156fa7a0ef9a13db6fdd77d73196239b020cbea97b864"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/README.md",
+        "bytes":  6242,
+        "sha256":  "cd798c1e538be0432bf52bcc08f3eea155285cc3f6bfa130ffc547c72cf41362"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/renderer-contract.json",
+        "bytes":  890,
+        "sha256":  "c2c00b9d61101cb909fbbd9d82caaa8d1fd34966b3c5e031693c1cdbd0ef3669"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/source/kestrel-original-concept.png",
+        "bytes":  2115686,
+        "sha256":  "fe34453022ea00598e3261964dfd48546003826b16ecd0e574e74c75a4a138f8"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/standalone-study.html",
+        "bytes":  3527716,
+        "sha256":  "70a55d03e6e1a49594eef2b3e924629ebac7f6218efadd72d1feff1bb332a2b3"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/study.js",
+        "bytes":  3563,
+        "sha256":  "ec8aa3765fe206b295f95f7c4d92ce0550cea4d93337bb024b88b13a068764dc"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/study-pending-desktop.png",
+        "bytes":  488019,
+        "sha256":  "94fba24d053abd4833d9d7fa519d08c85d5297c7391f8c0a03b9a2f1af20befb"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/study-source.html",
+        "bytes":  3359,
+        "sha256":  "f5ce76822022c8ba8a5d8249ac6eb6dfbc8ef9d73cf1b2a6335979ae1827bc48"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/study-verification.json",
+        "bytes":  1307,
+        "sha256":  "5ff2c8197cb1829112aa0254f1204cdab91da04b8bffd26f50ee6d88136faa05"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-trial/verify-study.cjs",
+        "bytes":  3984,
+        "sha256":  "c2ea6f20abd4ca7ed62014d3be24a352c51040d5bd82ceda964440877e26ceaf"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/assemble-preview.cjs",
+        "bytes":  1250,
+        "sha256":  "19f9be8de8fe59db2a5464bbd68f093fac835800980d1831d737d1da4ea45c0f"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/concept/starseeker-01-kestrel.png",
+        "bytes":  2115686,
+        "sha256":  "fe34453022ea00598e3261964dfd48546003826b16ecd0e574e74c75a4a138f8"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/engine-check.cjs",
+        "bytes":  6277,
+        "sha256":  "7ad5d247dc32af42968bc9e608e928bf7136244a69af404f81377bd1e633028a"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/generation-request.json",
+        "bytes":  1510,
+        "sha256":  "3251f26e9523ddaf12b16c85a554d1bb64e9b2c8e5bb9c68821ad98c87cf15b6"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/prepare-harness.cjs",
+        "bytes":  944,
+        "sha256":  "dbd73586b4c968e2498e5bcd610597fc61c4a010d1b30a67aea5b93188be056e"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/preview.html",
+        "bytes":  2224,
+        "sha256":  "f3da058ddc03321ecd1a44be63e023201fbf2f8822429d5ce451cdc932385c4f"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/README.md",
+        "bytes":  1546,
+        "sha256":  "377b0e4a8fc2aaa645ef923557fe775ef4f5315f449200f9803c4cb457b0a597"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/source/kestrel-isolated-reference.png",
+        "bytes":  1655614,
+        "sha256":  "d3eee0a4a8a709d42f236b5f6781b9876df1ade0b6981020f384509300a65a20"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/source/kestrel-original-concept.png",
+        "bytes":  2115686,
+        "sha256":  "fe34453022ea00598e3261964dfd48546003826b16ecd0e574e74c75a4a138f8"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/starfare-adapter.js",
+        "bytes":  2701,
+        "sha256":  "63c099e2501b3832367d3e069eb02b06dc6b409ef70ed1469002e723f20c0d5f"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/vendor/CopyShader.js",
+        "bytes":  606,
+        "sha256":  "6b5da4fe3b410286974590885f82fe4a446f25c728f7d6c888e2a2a331333949"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/vendor/EffectComposer.js",
+        "bytes":  6271,
+        "sha256":  "4fc320fa3185847797332bc2b0125b1a39b9cf5fc4170a2f180cfa54fb057a2b"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/vendor/GLTFLoader.js",
+        "bytes":  96550,
+        "sha256":  "5c15967ba830918a9caea6338712c994c354bccd4edc4569bde411c3ec06a3e6"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/vendor/LICENSE",
+        "bytes":  1081,
+        "sha256":  "7dddf7c5b8fd10ee654db8857d75d104b5557889aa5a91fc4ca545ea7c07062f"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/vendor/LuminosityHighPassShader.js",
+        "bytes":  1228,
+        "sha256":  "00ed0682e61ca207d9c62298269472d6d4eedd9d33528400e7cbc633da8544da"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/vendor/RenderPass.js",
+        "bytes":  1746,
+        "sha256":  "57a549b2d6a947cddf0385a804dc70c3b2d155663d908e99e35d42274b3878be"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/vendor/ShaderPass.js",
+        "bytes":  1416,
+        "sha256":  "2e64890b8e4c4dafcfd796d5c84877f2ad36a101c83263211c500ec40eaf1240"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/vendor/sources.json",
+        "bytes":  2089,
+        "sha256":  "ef3488812b87e38e617a36a1caed527fa79c1f228589237200910d59b68a4748"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/vendor/three.min.js",
+        "bytes":  603445,
+        "sha256":  "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/vendor/UnrealBloomPass.js",
+        "bytes":  12612,
+        "sha256":  "1ed342b273e9b077a3e92e5caeecd45043f03071306c696564d5b53f0562dced"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/verify.cjs",
+        "bytes":  8411,
+        "sha256":  "ada96178b4f29cd1411d5a73d8bb119164de4f8fa4ddef9ad1e0b0a9ad22e0d0"
+    },
+    {
+        "path":  "2026-10-17/kestrel-higgsfield-v1/viewer.js",
+        "bytes":  5788,
+        "sha256":  "eaff8453b5586b442f80e22169c985573eed2aa9ccf156a1733989ce1f7b75e1"
+    },
+    {
+        "path":  "2026-10-17/motion-spec.md",
+        "bytes":  6730,
+        "sha256":  "7048bac8337667ea810a6f378981b7310e211c4ed4ad61a39d0ec1a7fcc2f75c"
+    },
+    {
+        "path":  "2026-10-17/README.md",
+        "bytes":  4216,
+        "sha256":  "69746e4f41da5d6dd724cad402e4af95f8b3f11a3b63d80270fe7efe859da736"
+    },
+    {
+        "path":  "2026-10-17/starseeker-01-kestrel.png",
+        "bytes":  2115686,
+        "sha256":  "fe34453022ea00598e3261964dfd48546003826b16ecd0e574e74c75a4a138f8"
+    },
+    {
+        "path":  "2026-10-17/starseeker-02-tandem.png",
+        "bytes":  2044924,
+        "sha256":  "61585be423d23aaa12e67b6b0e01fc8448e03a08a21c83fdc3a8765ec6f320ae"
+    },
+    {
+        "path":  "2026-10-17/starseeker-03-lantern.png",
+        "bytes":  2095685,
+        "sha256":  "e4133304eeb93b7bc045c2930dd706367b3457d3d2801ad41893d8cf012ba0f4"
+    },
+    {
+        "path":  "2026-10-17/wayfarer-station.png",
+        "bytes":  2327265,
+        "sha256":  "152ea24536fae48e39a6272dd0befc7ae3e1eb4e9b82b4fcaa70055b12431a3f"
+    },
+    {
+        "path":  "handoff-2026-10-19/README.md",
+        "bytes":  11230,
+        "sha256":  "7e0dc8876daf9d452fc99d791e38e4674cebdd62f9105f1f2d02d3cfa3edcce2"
+    },
+    {
+        "path":  "handoff-2026-10-19/site-generation-prompt.txt",
+        "bytes":  1976,
+        "sha256":  "2f4ae437d1e24adcbe936d0a7e829e8b0e26f9dee9117c912d097f6b086eaf2a"
+    },
+    {
+        "path":  "handoff-2026-10-19/package-art.ps1",
+        "bytes":  11243,
+        "sha256":  "2bc1136cabd73675271464d221a78de404d20eb088a886fc457e8155d174c8f7"
+    },
+    {
+        "path":  "handoff-2026-10-19/artifact-manifest.json",
+        "bytes":  283564,
+        "sha256":  "06ae3bdf367dea92639a196c09661741688b704e948132bcd3c6896dd64d1cf0"
+    }
+]
