@@ -3,6 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { OPTION_B } from "./option-b-spec.mjs";
 import { validateFeedProposal, feedAllocation, assessFeed } from "./option-b-feed.mjs";
+import { validateThermalProposal, sizeThermal } from "./option-b-thermal.mjs";
 
 const read = path => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
 const hardware = read("./option-b-hardware.json");
@@ -45,7 +46,9 @@ for (const m of missions.missions) {
   const expected = [m.arrival_mass_kg, m.consumed_propellant_kg, m.departure_mass_kg, m.flight_seconds, m.launch_wait_seconds];
   if (report.source_engine_sha256 !== sourceHash || !spec
     || ["total_thrust_n", "isp_s", "oxidizer_to_fuel_mass_ratio", "bare_engine_mass_kg"].some(k => spec[k] !== OPTION_B[k])
-    || row?.status !== m.verification_status || !copied?.every((v, i) => Number.isFinite(v) && Math.abs(v - expected[i]) < 1e-5))
+    || row?.status !== m.verification_status || !copied?.every((v, i) => Number.isFinite(v) && Math.abs(v - expected[i]) < 1e-5)
+    || m.burn_schedule_seconds && Object.entries(m.burn_schedule_seconds).some(([phase, seconds]) => !Number.isFinite(seconds)
+      || !Number.isFinite(row.burn_schedule_seconds?.[phase]) || Math.abs(seconds - row.burn_schedule_seconds[phase]) > 1e-5))
     throw new Error("Mission snapshot differs from accepted local report: " + m.id);
   const hash = createHash("sha256").update(raw).digest("hex");
   provenance.push({mission_id: m.id, status: "matched_accepted_local_report", source_report: m.source_report,
@@ -54,7 +57,7 @@ for (const m of missions.missions) {
 
 const args = process.argv.slice(2), options = {};
 for (let i = 0; i < args.length; i += 2) {
-  if (!["--out", "--mission", "--role", "--feed-proposal"].includes(args[i]) || !args[i + 1]) throw new Error("Use --out <json>, --mission <id>, --role <cargo|passenger>, --feed-proposal <json>");
+  if (!["--out", "--mission", "--role", "--feed-proposal", "--thermal-proposal"].includes(args[i]) || !args[i + 1]) throw new Error("Use --out <json>, --mission <id>, --role <cargo|passenger>, --feed-proposal <json>, --thermal-proposal <json>");
   options[args[i]] = args[i + 1];
 }
 if (options["--mission"] && !missions.missions.some(m => m.id === options["--mission"])) throw new Error("Unknown mission");
@@ -62,6 +65,13 @@ if (options["--role"] && !Object.hasOwn(assumptions.roles, options["--role"])) t
 const feedProposalRaw = options["--feed-proposal"] ? readFileSync(options["--feed-proposal"], "utf8") : null;
 const feedProposal = feedProposalRaw ? JSON.parse(feedProposalRaw) : null;
 if (feedProposal) validateFeedProposal(feedProposal);
+const thermalProposalRaw = options["--thermal-proposal"] ? readFileSync(options["--thermal-proposal"], "utf8") : null;
+const thermalProposal = thermalProposalRaw ? JSON.parse(thermalProposalRaw) : null;
+const thermalProperties = thermalProposal ? read("./option-b-thermal-properties.json") : null;
+if (thermalProposal) {
+  if (!feedProposal) throw new Error("Thermal study requires --feed-proposal");
+  validateThermalProposal(thermalProposal, thermalProperties);
+}
 
 function liquidInventory(mission, policy) {
   const burned = mission.consumed_propellant_kg, mf = mission.arrival_mass_kg;
@@ -138,13 +148,14 @@ function heliumInventory(banks, liquids, policy) {
 }
 
 function sizeShip(mission, role, policy, fixedCargo) {
+  if (thermalProposal) policy = {...policy, residual_fraction_of_loaded_liquid: thermalProposal.residual_fraction_of_loaded_liquid};
   const liquids = liquidInventory(mission, policy);
   const feedHardware = {...hardware, rcs_count: policy.rcs_engine_count};
   const allocation = feedProposal ? feedAllocation(role, feedProposal, feedHardware, OPTION_B) : null;
   const fixed = Object.entries(assumptions.roles[role].fixed_hardware_estimates_kg)
     .filter(([name]) => !allocation || name !== "regulators_isolation_valves_common_feed")
     .map(([name, kg]) => ({name, kg, basis: "concept estimate"}));
-  if (allocation) fixed.push(...allocation.components);
+  if (allocation) fixed.push(...allocation.components.filter(x => !thermalProposal || x.name !== "additional_propellant_thermal_conditioning"));
   fixed.push({name: "four_main_engines_with_valves", kg: OPTION_B.bare_engine_mass_kg, basis: "manufacturer"},
     {name: "twelve_rcs_engines_with_dual_seat_valves", kg: policy.rcs_engine_count * hardware.rcs_thruster.dry_kg, basis: "manufacturer mass; proposed count/layout"});
   const crewCount = role === "passenger" ? policy.crew_count : 0;
@@ -153,7 +164,8 @@ function sizeShip(mission, role, policy, fixedCargo) {
   consumables.cabin_air_kg = crewCount ? policy.cabin_air_kg : 0;
   const retainedCrewMass = crewCount * policy.occupant_and_suit_kg_each + sum(Object.values(consumables));
   const retainedLiquids = sum(liquids.map(x => x.contingency_kg + x.docking_reserve_kg + x.unusable_residual_kg));
-  const banks = liquids.map(x => tankBanks(x, policy));
+  const banks = liquids.map(x => tankBanks(x, policy).filter(bank => !thermalProposal || bank.items.length === 1
+    && bank.items[0].id === thermalProposal.tank_id && bank.items[0].count === thermalProposal.fixed_tanks_each_fluid[mission.id]));
   let best;
   for (const fuel of banks[0]) for (const oxidizer of banks[1]) {
     const selected = [fuel, oxidizer], helium = heliumInventory(selected, liquids, policy);
@@ -170,15 +182,24 @@ function sizeShip(mission, role, policy, fixedCargo) {
       { name: "helium_bottle_shells", kg: helium.shell_kg, basis: "manufacturer" },
       { name: "helium_bottle_mounts_and_branch_feed", kg: helium.mount_kg + helium.branch_feed_kg, basis: "estimate" }
     ];
-    const dryParts = [...fixed, ...dynamic], baseDry = sum(dryParts.map(x => x.kg));
+    const thermal = thermalProposal ? sizeThermal({mission, liquids, tanks: selected, helium, allocation, chemical: OPTION_B}, thermalProposal, thermalProperties, feedProposal, hardware) : null;
+    if (thermal) {
+      helium.previous_assumed_total_retained_kg = helium.total_retained_kg;
+      helium.total_retained_kg = thermal.retained_helium_kg;
+      helium.precharged_ullage_kg = thermal.initial_tank_helium_kg;
+      helium.initial_ullage_l = thermal.initial_ullage_l;
+      helium.additional_retained_gas_lines_kg = thermal.high_pressure_helium_kg - helium.stored_kg + thermal.low_pressure_line_helium_kg;
+      delete helium.additional_retained_feed_and_ullage_kg;
+    }
+    const dryParts = [...fixed, ...dynamic, ...(thermal?.sizing.components ?? [])], baseDry = sum(dryParts.map(x => x.kg));
     const growth = baseDry * policy.dry_hardware_growth_fraction;
     const beforeCargo = baseDry + growth + retainedLiquids + helium.total_retained_kg + retainedCrewMass;
     if (!best || beforeCargo < best.required_arrival_before_cargo_kg) best = { dryParts, baseDry, growth, beforeCargo,
-      required_arrival_before_cargo_kg: beforeCargo, tanks: selected, helium };
+      required_arrival_before_cargo_kg: beforeCargo, tanks: selected, helium, thermal };
   }
   if (!best) return { mission_id: mission.id, role, status: "no_catalog_assembly" };
   const available = mission.arrival_mass_kg - best.beforeCargo;
-  const cargo = fixedCargo ?? feedProposal?.cargo_targets_kg[mission.id]?.[role]
+  const cargo = fixedCargo ?? thermalProposal?.cargo_targets_kg[mission.id]?.[role] ?? feedProposal?.cargo_targets_kg[mission.id]?.[role]
     ?? assumptions.proposal_targets[mission.id]?.[role] ?? Math.max(0, Math.floor(available));
   const fits = available >= cargo;
   const trim = fits ? available - cargo : 0;
@@ -219,10 +240,17 @@ function sizeShip(mission, role, policy, fixedCargo) {
     result.feed = assessFeed(result, feedProposal, feedHardware, OPTION_B, policy);
     if (!result.feed.conditional_inventory_allocation_valid) result.status = "feed_inventory_allocation_invalid";
   }
+  if (best.thermal) {
+    result.thermal = best.thermal;
+    result.pressure_status = "controlled_path_requirements_only_continuity_unverified";
+    if (!best.thermal.residual_allocation_valid) result.status = "thermal_inventory_allocation_invalid";
+  }
   return result;
 }
 
-const selectedMissions = missions.missions.filter(m => !options["--mission"] || m.id === options["--mission"]);
+const selectedMissions = missions.missions.filter(m => (!options["--mission"] || m.id === options["--mission"])
+  && (!thermalProposal || Object.hasOwn(thermalProposal.fixed_tanks_each_fluid, m.id)));
+if (!selectedMissions.length) throw new Error("No missions in requested study scope");
 const roles = options["--role"] ? [options["--role"]] : Object.keys(assumptions.roles);
 const scenarios = { baseline: {}, conservative_hardware: {dry_hardware_growth_fraction: .4}, extra_contingency: {contingency_fraction_of_nominal_burn: .1},
   combined_conservative: {dry_hardware_growth_fraction: .4, contingency_fraction_of_nominal_burn: .1} };
@@ -237,9 +265,11 @@ for (const [scenario, changes] of Object.entries(scenarios)) for (const mission 
 const report = {format: "starfare.option-b-ship-budget/1", diagnostic_only: true, source_engine_sha256: sourceHash,
   completed_utc: new Date().toISOString(), chemical: OPTION_B, hardware, assumptions, feed_proposal: feedProposal,
   feed_proposal_sha256: feedProposalRaw ? createHash("sha256").update(feedProposalRaw).digest("hex") : null,
+  thermal_proposal: thermalProposal,
+  thermal_proposal_sha256: thermalProposalRaw ? createHash("sha256").update(thermalProposalRaw).digest("hex") : null,
   provenance, scenarios, rows,
   scope: "conditional conceptual mass budgets; no qualification, fleet update or reserve/docking trajectory claim",
-  source_hashes: Object.fromEntries(["option-b-ship-budget.mjs", "option-b-feed.mjs", "option-b-hardware.json", "option-b-ship-assumptions.json", "option-b-ship-missions.json"].map(p =>
+  source_hashes: Object.fromEntries(["option-b-ship-budget.mjs", "option-b-feed.mjs", "option-b-thermal.mjs", ...(thermalProposal ? ["option-b-thermal-properties.json"] : []), "option-b-hardware.json", "option-b-ship-assumptions.json", "option-b-ship-missions.json"].map(p =>
     [p, createHash("sha256").update(readFileSync(new URL(p, import.meta.url))).digest("hex")]))};
 if (options["--out"]) writeFileSync(options["--out"], JSON.stringify(report, null, 2) + "\n");
 console.log(JSON.stringify(rows.filter(r => ["baseline", "combined_conservative"].includes(r.scenario)).map(r => ({scenario: r.scenario, mission: r.mission_id, role: r.role,

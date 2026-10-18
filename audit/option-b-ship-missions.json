@@ -80,7 +80,13 @@
       "verification_status": "accepted_within_model",
       "source_report_sha256": "4192b239dc1efac98dc3cb0b30ee1c6192a97f6d21e667a139064893ecc07275",
       "source_doc": "docs/OPTION-B-PHOBOS-EVALUATION.md",
-      "source_report": "audit/option-b-phobos.json"
+      "source_report": "audit/option-b-phobos.json",
+      "burn_schedule_seconds": {
+        "lift": 20,
+        "departure": 212.5543766549602,
+        "coast": 8043.329988705076,
+        "arrival": 221.43413247564203
+      }
     },
     {
       "id": "phobos-pad-1000kg",
@@ -94,7 +100,13 @@
       "verification_status": "accepted_within_model",
       "source_report_sha256": "4192b239dc1efac98dc3cb0b30ee1c6192a97f6d21e667a139064893ecc07275",
       "source_doc": "docs/OPTION-B-PHOBOS-EVALUATION.md",
-      "source_report": "audit/option-b-phobos.json"
+      "source_report": "audit/option-b-phobos.json",
+      "burn_schedule_seconds": {
+        "lift": 20,
+        "departure": 424.43292054026375,
+        "coast": 7718.138266800464,
+        "arrival": 443.993798336916
+      }
     },
     {
       "id": "phobos-pad-2000kg",
@@ -108,7 +120,13 @@
       "verification_status": "accepted_within_model",
       "source_report_sha256": "4192b239dc1efac98dc3cb0b30ee1c6192a97f6d21e667a139064893ecc07275",
       "source_doc": "docs/OPTION-B-PHOBOS-EVALUATION.md",
-      "source_report": "audit/option-b-phobos.json"
+      "source_report": "audit/option-b-phobos.json",
+      "burn_schedule_seconds": {
+        "lift": 20,
+        "departure": 842.6021626550626,
+        "coast": 7247.20199837392,
+        "arrival": 898.3354585948376
+      }
     }
   ]
 }

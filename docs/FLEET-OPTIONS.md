@@ -18,6 +18,8 @@ The [tank, reserve and complete ship budgets](OPTION-B-SHIP-BUDGETS.md) propose 
 
 The [feed-pressure follow-up](OPTION-B-FEED-PRESSURE.md) proposes separate helium regulation, wider feed lines, calibrated orifices and a measured firing envelope. Updated mass allocations allow 40/420 kg courier cargo or two occupants plus 150 kg cargo; exact regulators, thermal continuity and delivered performance remain unverified. These proposed budgets do not authorize a fleet change.
 
+The subsequent [thermal power study](OPTION-B-THERMAL-POWER.md) replaces the 8 kg thermal placeholder with dedicated conditioning, radiator and battery estimates. Under its declared heat sensitivities, the small courier is overweight; revised proposals allow **350 kg medium-courier cargo** or **two occupants plus 60 kg cabin cargo**, with **1.91/1.98 kW** thermal electrical design ratings. Actual heat exposure, conductance, pad service and hardware remain unverified; pressure continuity is not demonstrated.
+
 The four-engine alignment is a proposal, not a flown assembly. The chemical engine datasheet lists 4.30 kg bare mass with valve per engine (17.2 kg for four); this excludes tanks, piping, pressurization, mounting, thermal protection, cabin and passengers. No hull dry mass, tank capacity, electrical plant, reserve or passenger mass is silently assigned to an existing Starseeker. A hybrid must supply 2310 W **net at the ion burn location**, not merely have that solar rating at 1 AU.
 
 ## Quantified comparison: burn budget, not a new trajectory
