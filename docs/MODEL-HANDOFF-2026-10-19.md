@@ -84,11 +84,11 @@ The completed ledger verification before later offline studies was 202 unit test
 
 ## Design and Art
 
-Read the final Design handoff before reusing prototypes or effects. Historical studies remain evidence, not the current application. The latest in-progress scope at handoff preparation is restrained material and cosmetic effects for all planets and moons, following the Earth and Moon pass. Preserve recorded-flight motion. Actual completion and merged commits belong in the integration receipt.
+Read [Design's handoff](design-audit/2026-10-17/DESIGN-HANDOFF.md) before reusing prototypes or effects. Historical studies remain evidence, not the current application. PR #16 implements the canvas-focused Mission Control interface, compact mobile details, corrected route precision and ship headings, and restrained material effects for every mapped planet and moon. Earth/Moon have sourced relief maps; other worlds use declared rough, icy, haze or gas treatments. Recorded-flight motion remains authoritative. Physical phone GPU performance and final user visual acceptance remain unverified.
 
 Art has concept packs and local model experiments. Do not describe a procedural approximation as a generated Higgsfield reconstruction or a concept drawing as an approved production asset. The latest attempted Higgsfield CLI generation was rejected with `only_mcp_usage_on_trial_is_available`. Art supplied an isolated Kestrel reference and a prompt for the user to generate on the website. No completed Higgsfield GLB was established at handoff preparation. Check the final Art manifest for any subsequent supplied result.
 
-Higgsfield's catalog has exposed Meshy, Tripo, and SAM 3D tools in some turns, but connection and account entitlements changed during the session. Verify actual access and quote the credit cost before generation. Do not request secrets in chat or silently use a paid fallback. GSAP can be used directly in code without a connector; its approval is not evidence it has been added.
+Higgsfield's catalog has exposed Meshy, Tripo, and SAM 3D tools in some turns, but connection and account entitlements changed during the session. Verify actual access and quote the credit cost before generation. Do not request secrets in chat or silently use a paid fallback. Design added vendored GSAP 3.15.0 for interface and camera transitions; its notice is in `design/assets/vendor/`. It does not tween physical flight paths or simulation time.
 
 Large transferable media is indexed in [the Art transfer guide](../art/README.md) and [Art's final handoff](../art/handoff-2026-10-19/README.md). Originals stay in place. Use the sanitized archive and checksums in the final integration receipt to recover files on another machine.
 
