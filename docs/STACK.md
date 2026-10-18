@@ -14,7 +14,7 @@ Status: **ready** means checked in this session. **limited** means it works with
 |---|---|---|
 | Repo suites (`CLAUDE.md` "Tests") | engine hazards, reroute, connector unit, e2e, Python regression | ready: hazards 8/8 and regression 20/20 run here after the setup hook |
 | `.claude/hooks/session-start.sh` (new) | installs connector `npm ci` and the Python regression packages in every new cloud session, so any thread can run the suites at once | ready: runs in about 15 s, skips `npm ci` when `node_modules` is in sync, and does nothing on a local machine |
-| GitHub Actions `sol-regression.yml` | Python regression gate on every push | ready, but the connector suites are not in CI (gap 1) |
+| GitHub Actions `sol-regression.yml` | Python regression gate on every push | ready; the connector job (gap 1) is added alongside this file |
 | Claude Code skills | `engineering:*` (code review, debug, system design, architecture, testing strategy, tech debt, deploy checklist), `run`, `simplify`, `security-review`, `code-review` | ready |
 | `connector/sim.mjs`, `connector/bench/*` | simulated seasons by policy, benchmark suites and verification | ready |
 | Grok Bot connector | sends prompts to named Grok bots and reads replies (`list_bots`, `send_to_bot`, `check_inbox`): a way to playtest the MCP connector with real Grok once it is deployed | ready, not yet used for Starfare |
@@ -86,7 +86,7 @@ Status: **ready** means checked in this session. **limited** means it works with
 
 ## Gaps, in the order to close them
 
-1. **Connector suites in CI.** Only the Python regression runs on push. The ready patch is `audit/connector-ci.patch` (Ubuntu and Windows, `npm test`). Pushing a workflow file needs a GitHub token with `workflow` scope; see the PR for whether it went in.
+1. **Connector suites in CI.** Until now only the Python regression ran on push. The PR that added this file applies `audit/connector-ci.patch`: a `connector` job runs `npm test` (unit and local e2e) on Ubuntu and Windows.
 2. **Network for browser checks.** The cloud container's network policy refuses `cdnjs.cloudflare.com`, `cdn.jsdelivr.net` and `starfare.aimpang.workers.dev`. `capture.mjs` works around the first two by serving three r128 from npm (the same bytes, so SRI still matches). Live-site smoke tests need those hosts allowed in a cloud environment for this project.
 3. **Worker observability.** Add `"observability": { "enabled": true }` to `connector/wrangler.jsonc` so Workers Logs keeps request logs and exceptions. It only takes effect on a deploy, so it waits for Alvin's go.
 4. **Error tracking.** Sentry for Worker exceptions and page errors on the map and flight pages (suggested connector, so threads can read issues).
@@ -118,4 +118,3 @@ Status: **ready** means checked in this session. **limited** means it works with
 - Link Figma to Weave (app.weavy.ai, profile settings) and decide whether a Full Figma seat is worth it.
 - Add the full ElevenLabs connector only if music is wanted.
 - Give the go for the next deploy, which can carry the observability block, meta tags and the new benchmark key.
-- Merge the connector CI job if it could not be pushed from here (needs `workflow` scope).
