@@ -1,0 +1,179 @@
+{
+  "round": "initial",
+  "checks": [
+    {
+      "name": "Nine orbit curves including Ceres",
+      "pass": true
+    },
+    {
+      "name": "Eleven textured planets and moons",
+      "pass": true
+    },
+    {
+      "name": "Full viewport canvas",
+      "pass": true
+    },
+    {
+      "name": "No horizontal overflow desktop",
+      "pass": true
+    },
+    {
+      "name": "Zoom responds",
+      "pass": true
+    },
+    {
+      "name": "Keyboard camera rotation",
+      "pass": true
+    },
+    {
+      "name": "Earth focus and Moon label",
+      "pass": true
+    },
+    {
+      "name": "Frozen sky time",
+      "pass": true
+    },
+    {
+      "name": "No invented ship motion",
+      "pass": true
+    },
+    {
+      "name": "Labels toggle",
+      "pass": true
+    },
+    {
+      "name": "Booking selects Earth to Mars",
+      "pass": true
+    },
+    {
+      "name": "Manifest has selected passengers",
+      "pass": true
+    },
+    {
+      "name": "Dialog focus contained",
+      "pass": true
+    },
+    {
+      "name": "Focus restores",
+      "pass": true
+    },
+    {
+      "name": "Agent filter",
+      "pass": true
+    },
+    {
+      "name": "Replay stays held",
+      "pass": true
+    },
+    {
+      "name": "Replay stops at last record",
+      "pass": true
+    },
+    {
+      "name": "Replay excluded from feed",
+      "pass": true
+    },
+    {
+      "name": "Canvas-only mode",
+      "pass": true
+    },
+    {
+      "name": "Bookings collapsible",
+      "pass": true
+    },
+    {
+      "name": "Reduced motion creates no animation",
+      "pass": true
+    },
+    {
+      "name": "Scene idle without render loop",
+      "pass": true
+    },
+    {
+      "name": "No overflow 1280",
+      "pass": true
+    },
+    {
+      "name": "No overflow 900",
+      "pass": true
+    },
+    {
+      "name": "No overflow 390",
+      "pass": true
+    },
+    {
+      "name": "World remains visible 390",
+      "pass": true
+    },
+    {
+      "name": "Bookings default sheet 390",
+      "pass": true
+    },
+    {
+      "name": "Activity sheet 390",
+      "pass": true
+    },
+    {
+      "name": "Mobile booking details 390",
+      "pass": true
+    },
+    {
+      "name": "Locate expands canvas 390",
+      "pass": true
+    },
+    {
+      "name": "No overflow 360",
+      "pass": true
+    },
+    {
+      "name": "World remains visible 360",
+      "pass": true
+    },
+    {
+      "name": "Bookings default sheet 360",
+      "pass": true
+    },
+    {
+      "name": "Activity sheet 360",
+      "pass": true
+    },
+    {
+      "name": "Mobile booking details 360",
+      "pass": true
+    },
+    {
+      "name": "Locate expands canvas 360",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "requests": [],
+  "process": {
+    "node": 95796,
+    "browser": 47376,
+    "browserClosed": true
+  },
+  "startedAt": "2026-10-17T22:38:49.247Z",
+  "finalState": {
+    "ready": true,
+    "mode": "system",
+    "zoom": 1,
+    "yaw": -0.35,
+    "tilt": 0.69,
+    "drawCount": 14,
+    "epoch": "2033-09-10T03:20:00Z",
+    "orbits": 9,
+    "bodyCount": 11,
+    "shipPosition": [
+      13.881947400361137,
+      0.1501069325071983,
+      3.460409232717998
+    ],
+    "target": [
+      0,
+      0,
+      0
+    ]
+  },
+  "finishedAt": "2026-10-17T22:38:54.993Z"
+}

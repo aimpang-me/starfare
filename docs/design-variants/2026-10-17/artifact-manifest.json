@@ -1,0 +1,77 @@
+[
+  {
+    "name": "compare.html",
+    "bytes": 4290,
+    "sha256": "0F54B4C1B8655977FFAAF55ECBE49E8AB4540269BAF11005574F85A51ED36537"
+  },
+  {
+    "name": "comparison.png",
+    "bytes": 661740,
+    "sha256": "DC06031533B3A1489A67B53585905E4763540736510CF3AB6BB6751ED4B5093E"
+  },
+  {
+    "name": "departure-lounge-desktop.png",
+    "bytes": 214982,
+    "sha256": "7DB6AFC84B6B327F26956C4986B440022B49FF4B8A6606E81FC6C113CD92E803"
+  },
+  {
+    "name": "departure-lounge-mobile.png",
+    "bytes": 98531,
+    "sha256": "233589602881539A14B7BA541AC9725D5E32E813DD8B66E4C05E76AAFDA09224"
+  },
+  {
+    "name": "index.html",
+    "bytes": 32584,
+    "sha256": "6B2552B5206AA5B8308ED50DD490A2F7C5245808E43348BB6CF50270B893B6F1"
+  },
+  {
+    "name": "mission-control-desktop.png",
+    "bytes": 244313,
+    "sha256": "832C840A98D2307D18853818F022101F788940EFD629252241EA0424233325CA"
+  },
+  {
+    "name": "mission-control-mobile.png",
+    "bytes": 92043,
+    "sha256": "ADAF797ADB4DC5CC18AA75FC3432ACCFD58CA9AFD186AE7A682F8ABAC0D6B048"
+  },
+  {
+    "name": "orbital-desk-desktop.png",
+    "bytes": 259044,
+    "sha256": "959F85C87D67A3AF3D026927F41809DC6C041952BBE8D85FFF76B6DE9E4B1525"
+  },
+  {
+    "name": "orbital-desk-mobile.png",
+    "bytes": 95757,
+    "sha256": "7636C735A3F25C1BD09230940AC1E637DB2D0C6C4E14A6A5EDCE8EBC58B737C1"
+  },
+  {
+    "name": "README.md",
+    "bytes": 9123,
+    "sha256": "BAD24D4D29EF46198DE815B24C64580A814AB075EEE7E3AA28B519EC9DC9B894"
+  },
+  {
+    "name": "serve.cjs",
+    "bytes": 810,
+    "sha256": "1014BCF5E45431F4D24D16F5B439929DF61795344FF46AB421C4995663122D48"
+  },
+  {
+    "name": "verification.json",
+    "bytes": 3242,
+    "sha256": "2AEE74E7633EA488DEACF4B5854789C629EA32B01AAEBACA6FF68B7AAE392F51"
+  },
+  {
+    "name": "verification.txt",
+    "bytes": 46,
+    "sha256": "98F0A94043809FC4BAF34C26F1A27AD5D655CFA3EE18E3EC932AC5AEFA89FA86"
+  },
+  {
+    "name": "verify-browser.js",
+    "bytes": 3889,
+    "sha256": "92CD1894D0A718F42E203D029147DFBE9D401A63766DE3155A8A854D3D12B1F1"
+  },
+  {
+    "name": "verify.cjs",
+    "bytes": 1704,
+    "sha256": "BFE101A5FC0C02FB076934B7DB5C3570DA31A0025F398B0CFBD18301C9116586"
+  }
+]

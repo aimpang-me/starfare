@@ -1,0 +1,175 @@
+{
+  "round": "initial",
+  "startedAt": "2026-10-17T22:24:49.390Z",
+  "checks": [
+    {
+      "name": "Images loaded",
+      "pass": true
+    },
+    {
+      "name": "Inter loaded",
+      "pass": true
+    },
+    {
+      "name": "No desktop overflow",
+      "pass": true
+    },
+    {
+      "name": "Booking selection updates route",
+      "pass": true
+    },
+    {
+      "name": "Manifest matches selection",
+      "pass": true
+    },
+    {
+      "name": "Focus stays in dialog",
+      "pass": true
+    },
+    {
+      "name": "Escape restores focus",
+      "pass": true
+    },
+    {
+      "name": "Replay holds recorded position",
+      "pass": true
+    },
+    {
+      "name": "Replay boundary",
+      "pass": true
+    },
+    {
+      "name": "Replay excluded from feed",
+      "pass": true
+    },
+    {
+      "name": "Starter prompt copies",
+      "pass": true
+    },
+    {
+      "name": "Agent filter",
+      "pass": true
+    },
+    {
+      "name": "Simulation filter",
+      "pass": true
+    },
+    {
+      "name": "Paused event stays queued",
+      "pass": true
+    },
+    {
+      "name": "Resume adds event once",
+      "pass": true
+    },
+    {
+      "name": "loading replaces bookings",
+      "pass": true
+    },
+    {
+      "name": "empty replaces bookings",
+      "pass": true
+    },
+    {
+      "name": "unavailable replaces bookings",
+      "pass": true
+    },
+    {
+      "name": "Retry restores sample",
+      "pass": true
+    },
+    {
+      "name": "Restored manifest works",
+      "pass": true
+    },
+    {
+      "name": "No overflow 768",
+      "pass": true
+    },
+    {
+      "name": "No overflow 390",
+      "pass": true
+    },
+    {
+      "name": "Mobile priorities 390",
+      "pass": true
+    },
+    {
+      "name": "Compact bookings 390",
+      "pass": true
+    },
+    {
+      "name": "Compact events 390",
+      "pass": true
+    },
+    {
+      "name": "Map expands 390",
+      "pass": true
+    },
+    {
+      "name": "Mobile dialog fits 390",
+      "pass": true
+    },
+    {
+      "name": "No overflow 360",
+      "pass": true
+    },
+    {
+      "name": "Mobile priorities 360",
+      "pass": true
+    },
+    {
+      "name": "Compact bookings 360",
+      "pass": true
+    },
+    {
+      "name": "Compact events 360",
+      "pass": true
+    },
+    {
+      "name": "Map expands 360",
+      "pass": true
+    },
+    {
+      "name": "Mobile dialog fits 360",
+      "pass": true
+    },
+    {
+      "name": "Reduced motion creates no animation",
+      "pass": true
+    },
+    {
+      "name": "No idle animations",
+      "pass": true
+    },
+    {
+      "name": "Core text colors meet 4.5:1",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "process": {
+    "node": 41596,
+    "browser": 90384,
+    "browserClosed": true
+  },
+  "contrast": [
+    {
+      "name": "primary",
+      "ratio": 17.73
+    },
+    {
+      "name": "secondary",
+      "ratio": 8.55
+    },
+    {
+      "name": "selected",
+      "ratio": 9.47
+    },
+    {
+      "name": "cyan",
+      "ratio": 12.95
+    }
+  ],
+  "completedAt": "2026-10-17T22:24:52.988Z"
+}

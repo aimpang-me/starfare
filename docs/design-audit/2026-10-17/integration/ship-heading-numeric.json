@@ -1,0 +1,190 @@
+{
+  "capturedAt": "2026-10-18T02:17:21.636Z",
+  "threeRevision": "128",
+  "threeIntegrityVerified": true,
+  "runId": "run_d2275ddf3493c65104a6",
+  "originalReplayDiagnostic": {
+    "pickupDurationDays": 0.09811438852921128,
+    "oldLookAheadDays": 2.0637524918539243,
+    "sampledAfterPickup": true,
+    "sampledPhase": "dwell",
+    "sampledLeg": 2
+  },
+  "samples": [
+    {
+      "leg": 1,
+      "fraction": 0.1,
+      "direction": [
+        0.2548261971285528,
+        -0.009279568658436725,
+        0.9669423451594792
+      ],
+      "noseDotTangent": 1.0000000000000002,
+      "exhaustDotTangent": -1.0000000000000002,
+      "samplesStayInsideLeg": true
+    },
+    {
+      "leg": 1,
+      "fraction": 0.3,
+      "direction": [
+        0.9468382772089505,
+        -0.14619038043017044,
+        -0.28657573079671006
+      ],
+      "noseDotTangent": 1,
+      "exhaustDotTangent": -1,
+      "samplesStayInsideLeg": true
+    },
+    {
+      "leg": 1,
+      "fraction": 0.5,
+      "direction": [
+        0.5185873739953832,
+        -0.10000174353206948,
+        -0.8491565149153122
+      ],
+      "noseDotTangent": 1.0000000000000002,
+      "exhaustDotTangent": -1.0000000000000002,
+      "samplesStayInsideLeg": true
+    },
+    {
+      "leg": 1,
+      "fraction": 0.7,
+      "direction": [
+        -0.2713501670903985,
+        0.01181740021578176,
+        -0.9624081441218963
+      ],
+      "noseDotTangent": 1,
+      "exhaustDotTangent": -1,
+      "samplesStayInsideLeg": true
+    },
+    {
+      "leg": 1,
+      "fraction": 0.9,
+      "direction": [
+        -0.8768475684830833,
+        0.11429426154163143,
+        -0.4669851854437759
+      ],
+      "noseDotTangent": 1,
+      "exhaustDotTangent": -1,
+      "samplesStayInsideLeg": true
+    },
+    {
+      "leg": 2,
+      "fraction": 0.1,
+      "direction": [
+        -0.3814551320582116,
+        0.06893081591191462,
+        -0.9218137148275511
+      ],
+      "noseDotTangent": 1,
+      "exhaustDotTangent": -1,
+      "samplesStayInsideLeg": true
+    },
+    {
+      "leg": 2,
+      "fraction": 0.3,
+      "direction": [
+        -0.48252784960626216,
+        0.09854835613499661,
+        0.8703189621382762
+      ],
+      "noseDotTangent": 0.9999999999999999,
+      "exhaustDotTangent": -0.9999999999999999,
+      "samplesStayInsideLeg": true
+    },
+    {
+      "leg": 2,
+      "fraction": 0.5,
+      "direction": [
+        0.979008252298588,
+        -0.1886794026430258,
+        -0.07709036872097111
+      ],
+      "noseDotTangent": 1.0000000000000002,
+      "exhaustDotTangent": -1.0000000000000002,
+      "samplesStayInsideLeg": true
+    },
+    {
+      "leg": 2,
+      "fraction": 0.7,
+      "direction": [
+        0.3943919509768157,
+        -0.08055215722038983,
+        -0.9154050136261231
+      ],
+      "noseDotTangent": 1.0000000000000002,
+      "exhaustDotTangent": -1.0000000000000002,
+      "samplesStayInsideLeg": true
+    },
+    {
+      "leg": 2,
+      "fraction": 0.9,
+      "direction": [
+        -0.6979108770705663,
+        0.131157116781812,
+        -0.7040725945412696
+      ],
+      "noseDotTangent": 1,
+      "exhaustDotTangent": -1,
+      "samplesStayInsideLeg": true
+    }
+  ],
+  "parked": [
+    {
+      "id": "iss",
+      "noseDotOrbit": 0.9999999999999998,
+      "quaternion": [
+        0.0019180693181573664,
+        0.9698144713378296,
+        0.2437169609044209,
+        -0.007632506883702714
+      ]
+    },
+    {
+      "id": "moon",
+      "noseDotOrbit": 0.9999999999999999,
+      "quaternion": [
+        0.01912185859839633,
+        0.8982326095608674,
+        0.039273111776630926,
+        -0.4373444367276183
+      ]
+    },
+    {
+      "id": "ceres",
+      "noseDotOrbit": 1.0000000000000002,
+      "quaternion": [
+        0.000548192879980196,
+        0.9935322711135969,
+        -0.004800886267273264,
+        0.11344724426566516
+      ]
+    },
+    {
+      "id": "mars-base",
+      "noseDotOrbit": 1.0000000000000002,
+      "quaternion": [
+        0.06516475207344619,
+        0.9177840132432897,
+        0.16932651329376572,
+        -0.35320616078718614
+      ]
+    },
+    {
+      "id": "titan",
+      "noseDotOrbit": 1,
+      "quaternion": [
+        -0.03345346695706117,
+        0.9639947753686421,
+        -0.21879012093702874,
+        -0.14739681675963898
+      ]
+    }
+  ],
+  "passed": 15,
+  "failed": 0,
+  "note": "Actual application mapping and real archived Worker payload; model nose +Z and exhaust -Z transformed by actual Three quaternions. Positions and recorded times are unchanged."
+}

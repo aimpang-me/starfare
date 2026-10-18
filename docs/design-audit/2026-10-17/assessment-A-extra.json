@@ -1,0 +1,208 @@
+{
+  "focus": [
+    {
+      "id": "introH",
+      "text": "Get your agent flying",
+      "inDialog": true
+    },
+    {
+      "id": "introClose",
+      "text": "CLOSE",
+      "inDialog": true
+    },
+    {
+      "id": "",
+      "text": "✓\n01\nConnect your agent\nOpen",
+      "inDialog": true
+    },
+    {
+      "id": "grokLink",
+      "text": "grok.com/connectors",
+      "inDialog": true
+    },
+    {
+      "id": "mcpUrl",
+      "text": "",
+      "inDialog": true
+    },
+    {
+      "id": "copyBtn",
+      "text": "COPY",
+      "inDialog": true
+    },
+    {
+      "id": "",
+      "text": "DONE, NEXT CHECK",
+      "inDialog": true
+    },
+    {
+      "id": "",
+      "text": "✓\n02\nTell us who's flying\nOpen",
+      "inDialog": true
+    },
+    {
+      "id": "",
+      "text": "✓\n03\nKnow what's real\nOpen",
+      "inDialog": true
+    },
+    {
+      "id": "",
+      "text": "✓\n04\nKnow how a flight is scored\nOpen",
+      "inDialog": true
+    },
+    {
+      "id": "toOps",
+      "text": "BACK TO OPERATIONS",
+      "inDialog": true
+    },
+    {
+      "id": "",
+      "text": "STARFARE\nDISPATCH OPERATIONS\nDISPATCH OPERATIONS\nLive sky · simulated ",
+      "inDialog": false
+    },
+    {
+      "id": "connectBtn",
+      "text": "CONNECT YOUR AGENT",
+      "inDialog": false
+    },
+    {
+      "id": "tabF",
+      "text": "LIVE FLIGHTS0",
+      "inDialog": false
+    },
+    {
+      "id": "tabB",
+      "text": "OPEN BOOKINGS5",
+      "inDialog": false
+    },
+    {
+      "id": "",
+      "text": "WHOLE SYSTEM",
+      "inDialog": false
+    },
+    {
+      "id": "",
+      "text": "INNER SYSTEM",
+      "inDialog": false
+    },
+    {
+      "id": "",
+      "text": "EARTH–MOON",
+      "inDialog": false
+    },
+    {
+      "id": "",
+      "text": "MARS",
+      "inDialog": false
+    },
+    {
+      "id": "",
+      "text": "JUPITER",
+      "inDialog": false
+    },
+    {
+      "id": "",
+      "text": "SATURN",
+      "inDialog": false
+    },
+    {
+      "id": "fBtn",
+      "text": "FILTERS",
+      "inDialog": false
+    },
+    {
+      "id": "lBtn",
+      "text": "LAYERS",
+      "inDialog": false
+    },
+    {
+      "id": "",
+      "text": "Credits",
+      "inDialog": false
+    },
+    {
+      "id": "",
+      "text": "SF-01\nDocked at Orbital Depot FICTIONAL\nFrees at 2034-08-12 21:16",
+      "inDialog": false
+    },
+    {
+      "id": "",
+      "text": "SF-02\nDocked at Lunar Data Center FICTIONAL\nFrees at 2034-01-19 22:44",
+      "inDialog": false
+    },
+    {
+      "id": "",
+      "text": "SF-03\nDocked at Mars Base FICTIONAL\nFrees at 2034-01-19 02:27",
+      "inDialog": false
+    },
+    {
+      "id": "",
+      "text": "SF-04\nDocked at Ceres REAL\nFrees at 2034-07-08 23:46",
+      "inDialog": false
+    },
+    {
+      "id": "",
+      "text": "SF-05\nDocked at Europa REAL\nFrees at 2034-01-19 11:39",
+      "inDialog": false
+    },
+    {
+      "id": "",
+      "text": "SF-06\nDocked at Callisto REAL\nFrees at 2034-07-18 16:46",
+      "inDialog": false
+    }
+  ],
+  "css390": {
+    "innerWidth": 390,
+    "feedY": 2845.734375,
+    "rects": [
+      {
+        "text": "WHOLE SYSTEM",
+        "r": {
+          "x": 28,
+          "w": 114.6875,
+          "h": 25
+        }
+      },
+      {
+        "text": "INNER SYSTEM",
+        "r": {
+          "x": 142.6875,
+          "w": 107.84375,
+          "h": 25
+        }
+      },
+      {
+        "text": "EARTH–MOON",
+        "r": {
+          "x": 250.53125,
+          "w": 102.0625,
+          "h": 25
+        }
+      },
+      {
+        "text": "MARS",
+        "r": {
+          "x": 352.59375,
+          "w": 53.375,
+          "h": 25
+        }
+      },
+      {
+        "text": "JUPITER",
+        "r": {
+          "x": 405.96875,
+          "w": 68.515625,
+          "h": 25
+        }
+      },
+      {
+        "text": "SATURN",
+        "r": {
+          "x": 474.484375,
+          "w": 65.96875,
+          "h": 25
+        }
+      }
+    ]
+  }
+}

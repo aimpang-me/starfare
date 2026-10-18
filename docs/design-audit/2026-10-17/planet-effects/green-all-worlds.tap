@@ -1,0 +1,19 @@
+✔ visual time advances slowly, freezes and resumes without catching up (1.0943ms)
+✔ seek/reset is deterministic and each page owns its clock (0.1096ms)
+✔ reduced-motion/static sampling never animates (0.0824ms)
+✔ detail has a smooth ramp and does not request texture layers at overview size (0.0797ms)
+✔ appearance changes only surface children, keeping root and external anchors intact (88.0516ms)
+✔ Moon is matte relief without atmosphere; unknown bodies use the existing fallback (0.4304ms)
+✔ all mapped worlds have bounded, distinct profiles and preserve their external anchors (2.3987ms)
+✔ Saturn casts opposite ring shadows as the Sun moves, with a clear light-facing side (0.1462ms)
+✔ the Sun effect has a stable silhouette and a deterministic static phase (0.2141ms)
+✔ same-flight rebuild preserves the paused cosmetic clock; a new flight starts at zero (1.3021ms)
+✔ asynchronous texture completion requests a redraw even when the map is paused (3.7939ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 163.5212

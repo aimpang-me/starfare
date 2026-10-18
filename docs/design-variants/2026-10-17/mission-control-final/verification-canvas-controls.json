@@ -1,0 +1,30 @@
+{
+  "checks": [
+    {
+      "name": "Destination picker focuses Titan",
+      "pass": true
+    },
+    {
+      "name": "Focus restored after layer selection",
+      "pass": true
+    },
+    {
+      "name": "Credits reachable on mobile",
+      "pass": true
+    },
+    {
+      "name": "Credits retain asset attribution",
+      "pass": true
+    },
+    {
+      "name": "Canvas time still frozen",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "process": {
+    "node": 92040,
+    "browser": 61008,
+    "browserClosed": true
+  }
+}

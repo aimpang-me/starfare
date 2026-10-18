@@ -16,7 +16,8 @@
   var loader = THREE ? new THREE.TextureLoader() : null;
   function tex(file) {
     if (TEX[file]) return TEX[file];
-    var t = loader.load(BASE + "tex/" + file);
+    function ready() { root.dispatchEvent(new CustomEvent("solart-texture-ready")); }
+    var t = loader.load(BASE + "tex/" + file, ready, undefined, function () { t.userData = t.userData || {}; t.userData.failed = true; ready(); });
     t.anisotropy = ANISO;
     return (TEX[file] = t);
   }
@@ -99,6 +100,10 @@
   // A unit-radius textured body, or null when there is no map for it (the page then draws its own).
   function planet(id) {
     if (!MAPS[id]) return null;
+    if (root.StarfarePlanetEffects) {
+      var enhanced = root.StarfarePlanetEffects.createBody(THREE, id, { texture: tex, sun: SUN, maxTextures: R && R.capabilities.maxTextures });
+      if (enhanced) return enhanced;
+    }
     var mat = id === "earth" ? earthMat() : new THREE.MeshLambertMaterial({ map: tex(MAPS[id]) });
     var m = new THREE.Mesh(sphere(), mat);
     var rc = RIMS[id];
@@ -128,8 +133,9 @@
   }
   function sun(r, wide) {
     var g = new THREE.Group();
-    var ball = new THREE.Mesh(sphere(), new THREE.MeshBasicMaterial({ map: tex("sun_1k.jpg"), color: new THREE.Color(1.6, 1.35, 1.05) }));
+    var ball = root.StarfarePlanetEffects ? root.StarfarePlanetEffects.createSun(THREE, {texture:tex}) : new THREE.Mesh(sphere(), new THREE.MeshBasicMaterial({ map: tex("sun_1k.jpg"), color: new THREE.Color(1.6, 1.35, 1.05) }));
     ball.scale.setScalar(r); g.add(ball);
+    g.userData.solarSurface = ball;
     var s1 = additiveSprite(glow("rgba(255,240,210,1)", "rgba(255,180,92,.5)", 0.22)); s1.scale.setScalar(r * 4.4); g.add(s1);
     var s2 = additiveSprite(glow("rgba(255,190,110,.32)", "rgba(255,140,60,.07)")); s2.scale.setScalar(r * (wide || 14)); g.add(s2);
     return g;
@@ -170,14 +176,18 @@
     g.setAttribute("mag", new THREE.BufferAttribute(mag, 1));
     g.computeBoundingSphere();
   }
-  function stars(radius) {
+  function stars(radius, opt) {
+    opt = opt || {};
     var mat = new THREE.ShaderMaterial({
-      uniforms: { pr: { value: R ? R.getPixelRatio() : 1 } },
+      uniforms: { pr: { value: R ? R.getPixelRatio() : 1 }, skyBackdrop: { value: opt.backdrop ? 1 : 0 }, skyAspect: { value: 1 } },
       vertexShader: VS_HEAD +
-        "attribute float mag; attribute vec3 color; uniform float pr; varying vec3 vC; varying float vA;\n" +
+        "attribute float mag; attribute vec3 color; uniform float pr; uniform float skyBackdrop; uniform float skyAspect; varying vec3 vC; varying float vA;\n" +
         "void main(){ vC = color; float m = 6.6 - mag;\n" +
         " gl_PointSize = clamp(0.9 + 0.62 * m, 0.9, 6.5) * pr; vA = clamp(0.22 + 0.13 * m, 0.22, 1.0);\n" +
-        " gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n#include <logdepthbuf_vertex>\n}",
+        " gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n" +
+        // A distant sky uses angular perspective even behind an orthographic map.
+        // Ignore camera translation/strategic zoom; clip the rear hemisphere normally.
+        " if(skyBackdrop > 0.5){ vec3 d = mat3(viewMatrix) * position; float w = -d.z; gl_Position = vec4(d.x / (0.41421356237 * skyAspect), d.y / 0.41421356237, w * 0.99999, w); }\n#include <logdepthbuf_vertex>\n}",
       fragmentShader: FS_HEAD +
         "varying vec3 vC; varying float vA;\n" +
         "void main(){\n#include <logdepthbuf_fragment>\n" +
@@ -400,8 +410,11 @@
   if (THREE) loadStars();
 
   root.SolArt = {
-    BASE: BASE, init: init, setSun: setSun, planet: planet, hasRim: function (id) { return !!RIMS[id]; },
+    BASE: BASE, init: init, setSun: setSun, planet: planet, hasRim: function (id) { return !!RIMS[id] || !!(root.StarfarePlanetEffects && MAPS[id]); },
+    updatePlanet: function (body, context) { if (root.StarfarePlanetEffects) root.StarfarePlanetEffects.update(body, context); },
+    disposePlanet: function (body) { if (root.StarfarePlanetEffects && body) root.StarfarePlanetEffects.dispose(body.userData.solarSurface || body); },
+    updateSun: function (body, context) { if (root.StarfarePlanetEffects && body.userData.solarSurface) root.StarfarePlanetEffects.update(body.userData.solarSurface, context); },
     sun: sun, stars: stars, composer: composer, ship: ship, icon: icon, ICONS: Object.keys(ICONS),
-    CREDIT: "Maps: NASA, JPL, USGS (public domain); Saturn, rings, Sun: Solar System Scope (CC BY 4.0). Stars: Yale Bright Star Catalog."
+    CREDIT: "Maps: NASA, JPL, USGS (public domain); Earth effects, Saturn, rings, Sun: Solar System Scope (CC BY 4.0). Moon relief: NASA SVS / LRO LOLA. Stars: Yale Bright Star Catalog."
   };
 })(window);

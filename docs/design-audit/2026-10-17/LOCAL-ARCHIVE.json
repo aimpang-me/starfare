@@ -1,0 +1,23 @@
+{
+  "path": "docs/design-audit/2026-10-17/design-source-reference-archive.zip",
+  "bytes": 5508678,
+  "sha256": "b4fee93f26a1d5b998456def0bb8fb98921946812a6ac74b8903ff8d0b61f322",
+  "files": [
+    "docs/design-audit/2026-10-17/planet-effects/sources/2k_earth_clouds.jpg",
+    "docs/design-audit/2026-10-17/planet-effects/sources/2k_earth_normal_map.tif",
+    "docs/design-audit/2026-10-17/planet-effects/sources/2k_earth_specular_map.tif",
+    "docs/design-audit/2026-10-17/planet-effects/sources/ldem_3_8bit.jpg",
+    "docs/design-audit/2026-10-17/planet-effects/sources/ldem_4_uint.tif",
+    "docs/design-audit/2026-10-17/integration/solar-reference/steam-1.jpg",
+    "docs/design-audit/2026-10-17/integration/solar-reference/steam-2.jpg",
+    "docs/design-audit/2026-10-17/integration/solar-reference/steam-3.jpg",
+    "docs/design-audit/2026-10-17/integration/solar-reference/steam-4.jpg",
+    "docs/design-audit/2026-10-17/integration/solar-reference/steam-5.jpg",
+    "docs/design-audit/2026-10-17/integration/solar-reference/steam-6.jpg",
+    "docs/design-audit/2026-10-17/integration/solar-reference/steam-7.jpg",
+    "docs/design-audit/2026-10-17/integration/solar-reference/steam-8.jpg",
+    "docs/design-audit/2026-10-17/integration/solar-reference/steam-9.jpg",
+    "docs/design-audit/2026-10-17/integration/solar-expanse-page.html"
+  ],
+  "scope": "Only public texture sources and Solar Expanse reference downloads; no process ownership/auth/cache/application-state records. Originals preserved."
+}

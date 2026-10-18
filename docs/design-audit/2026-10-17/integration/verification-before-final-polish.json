@@ -1,0 +1,204 @@
+{
+  "startedAt": "2026-10-18T00:11:00.179Z",
+  "browserPid": null,
+  "checks": [
+    {
+      "name": "Actual seasonal bookings rendered",
+      "pass": true
+    },
+    {
+      "name": "Bookings is the default tab",
+      "pass": true
+    },
+    {
+      "name": "World fills the viewport",
+      "pass": true
+    },
+    {
+      "name": "GSAP is local and loaded",
+      "pass": true
+    },
+    {
+      "name": "No illustrative demo flights installed",
+      "pass": true
+    },
+    {
+      "name": "Real MCP flight is present",
+      "pass": true
+    },
+    {
+      "name": "Flight has recorded arcs",
+      "pass": true
+    },
+    {
+      "name": "Real flight moves as its recorded clock advances",
+      "pass": true,
+      "details": {
+        "a": {
+          "id": "run_51321c116835af17a3a2",
+          "jd": 2466940.501959197,
+          "phase": "flight",
+          "p": [
+            -30.23933139517602,
+            5.573411212494005,
+            5.700053624064104
+          ],
+          "expected": [
+            -30.23933139517602,
+            5.573411212494005,
+            5.700053624064104
+          ]
+        },
+        "b": {
+          "id": "run_51321c116835af17a3a2",
+          "jd": 2466940.5047517433,
+          "phase": "flight",
+          "p": [
+            -30.46644129526228,
+            5.624756098498928,
+            6.017539392168982
+          ],
+          "expected": [
+            -30.46644129526228,
+            5.624756098498928,
+            6.017539392168982
+          ]
+        }
+      }
+    },
+    {
+      "name": "Rendered flight positions equal recorded replay mapping",
+      "pass": true
+    },
+    {
+      "name": "Pause freezes the visual sky/flight clock and renderer",
+      "pass": true
+    },
+    {
+      "name": "GSAP camera focus completes while map is paused",
+      "pass": true
+    },
+    {
+      "name": "Agent trail events are explicitly attributed",
+      "pass": true
+    },
+    {
+      "name": "Flight/hazard simulation events are explicitly attributed",
+      "pass": true
+    },
+    {
+      "name": "Agent filter hides simulation output",
+      "pass": true
+    },
+    {
+      "name": "Simulation filter hides agent calls",
+      "pass": true
+    },
+    {
+      "name": "Booking search filters real seasonal rows",
+      "pass": true
+    },
+    {
+      "name": "Booking selection opens real planner inspector",
+      "pass": true
+    },
+    {
+      "name": "Local route previews never enter feed",
+      "pass": true
+    },
+    {
+      "name": "Connect modal traps keyboard focus",
+      "pass": true
+    },
+    {
+      "name": "Connect modal returns focus",
+      "pass": true
+    },
+    {
+      "name": "Scoreboard returns focus to its visible Reports trigger",
+      "pass": true
+    },
+    {
+      "name": "Flight inspector links to actual run receipt",
+      "pass": true
+    },
+    {
+      "name": "Actual flight replay and manifest render",
+      "pass": true
+    },
+    {
+      "name": "Browser Back restores a ticking app",
+      "pass": true
+    },
+    {
+      "name": "No horizontal overflow at 1280px",
+      "pass": true
+    },
+    {
+      "name": "No horizontal overflow at 900px",
+      "pass": true
+    },
+    {
+      "name": "No horizontal overflow at 390px",
+      "pass": true
+    },
+    {
+      "name": "No horizontal overflow at 360px",
+      "pass": true
+    },
+    {
+      "name": "Mobile tools navigation remains reachable",
+      "pass": true
+    },
+    {
+      "name": "Mobile reports navigation remains reachable",
+      "pass": true
+    },
+    {
+      "name": "Mobile fleet navigation remains reachable",
+      "pass": true
+    },
+    {
+      "name": "Mobile alerts navigation remains reachable",
+      "pass": true
+    },
+    {
+      "name": "Mobile compact Activity opens",
+      "pass": true
+    },
+    {
+      "name": "Mobile bookings can collapse for more canvas",
+      "pass": true
+    },
+    {
+      "name": "Reduced motion starts with a paused map",
+      "pass": true
+    },
+    {
+      "name": "Reduced motion focus is immediate",
+      "pass": true
+    },
+    {
+      "name": "WebGL fallback keeps bookings usable",
+      "pass": true
+    },
+    {
+      "name": "No browser JavaScript errors",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "No failed local assets",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "failedAssets": [],
+  "origin": "Actual local Worker; actual MCP dispatch. Browser-only read-only renderer probe; no data fixtures.",
+  "runId": "run_51321c116835af17a3a2",
+  "browserClosed": true,
+  "finishedAt": "2026-10-18T00:11:15.382Z",
+  "passed": 39,
+  "failed": 0
+}

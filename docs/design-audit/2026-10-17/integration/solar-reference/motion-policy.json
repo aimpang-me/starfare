@@ -1,0 +1,18 @@
+{
+  "actualController": "design/assets/mission-control.js",
+  "passed": 2,
+  "results": [
+    {
+      "reducedMotion": true,
+      "tweenCount": 0,
+      "snapsToTarget": true,
+      "killed": 0
+    },
+    {
+      "reducedMotion": false,
+      "tweenCount": 1,
+      "snapsToTarget": false,
+      "killed": 1
+    }
+  ]
+}
