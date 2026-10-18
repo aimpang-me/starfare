@@ -1,11 +1,10 @@
 // Proposal arithmetic only. Does not edit fleet, plan trajectories or price fares.
 import { createRequire } from "node:module";
 import { writeFileSync } from "node:fs";
+import { OPTION_B } from "./option-b-spec.mjs";
 const E = createRequire(import.meta.url)("../world/engine/sol-page.js");
 const G0 = 9.80665, finalMassKg = 1000;
-const chemical = { engine_count: 4, engine_nominal_thrust_n: 425, total_thrust_n: 1700,
-  isp_s: 321, bare_engine_mass_kg: 17.2, oxidizer_to_fuel_mass_ratio: 1.65,
-  source: "https://www.ariane.group/app/uploads/2024/09/ArianeGroup_Chemical_Bipropellant_Thruster_Family.pdf#page=8" };
+const chemical = OPTION_B;
 const rows = [["phobos", "mars-base", "sf-03"], ["iss", "lunar-data-center", "sf-01"], ["titan", "earth", "sf-07"]].map(([from, to, ship]) => {
   const plan = E.R.planLeg(from, to, 2461700.5, "energy", 2468328.5, ship), b = plan.battery;
   const dvMps = plan.dv_total_kms * 1000;
@@ -17,7 +16,8 @@ const rows = [["phobos", "mars-base", "sf-03"], ["iss", "lunar-data-center", "sf
     final_nonburned_mass_kg: finalMassKg,
     ion: { point_w: b.set_point_w, isp_s: b.isp_s, propellant_kg: iPropellant,
       firing_days_at_quoted_point: iPropellant * iVe / iThrust / 86400 },
-    chemical: { combined_propellant_kg: cPropellant, mmh_kg: cPropellant / 2.65, oxidizer_kg: cPropellant * 1.65 / 2.65,
+    chemical: { combined_propellant_kg: cPropellant, mmh_kg: cPropellant / (1 + chemical.oxidizer_to_fuel_mass_ratio),
+      oxidizer_kg: cPropellant * chemical.oxidizer_to_fuel_mass_ratio / (1 + chemical.oxidizer_to_fuel_mass_ratio),
       firing_minutes: cPropellant * cVe / chemical.total_thrust_n / 60,
       propellant_share_of_initial_mass: cPropellant / (finalMassKg + cPropellant) } };
 });

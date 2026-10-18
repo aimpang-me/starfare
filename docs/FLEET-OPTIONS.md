@@ -10,6 +10,8 @@
 
 **Recommendation:** evaluate B on local routes first, with A as the efficiency reference. Evaluate C after explicitly allocating chemical versus electric maneuvers and extending the ledger beyond its current xenon-only consumption model. Choose a profile only after reviewing the resulting masses, trajectories, route coverage and fares. This recommendation is not authorization to replace a fleet class.
 
+The [first Option B local evaluation](OPTION-B-LOCAL-EVALUATION.md) now supplies integrated flight/fuel results for three same-primary orbital pairs at three masses in both directions. It does not yet validate the existing Phobos or Earth–Moon bookings, select a hull or change the fleet.
+
 The four-engine alignment is a proposal, not a flown assembly. The chemical engine datasheet lists 4.30 kg bare mass with valve per engine (17.2 kg for four); this excludes tanks, piping, pressurization, mounting, thermal protection, cabin and passengers. No hull dry mass, tank capacity, electrical plant, reserve or passenger mass is silently assigned to an existing Starseeker. A hybrid must supply 2310 W **net at the ion burn location**, not merely have that solar rating at 1 AU.
 
 ## Quantified comparison: burn budget, not a new trajectory

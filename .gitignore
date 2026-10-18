@@ -8,3 +8,4 @@ output/playwright/
 audit/propulsion-audit.json
 audit/propulsion-ledger.json
 audit/ship-options.json
+audit/option-b-local.json
