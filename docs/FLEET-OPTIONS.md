@@ -12,6 +12,8 @@
 
 The [first Option B local evaluation](OPTION-B-LOCAL-EVALUATION.md) now supplies integrated flight/fuel results for three same-primary orbital pairs at three masses in both directions. It does not yet validate the existing Phobos or Earth–Moon bookings, select a hull or change the fleet.
 
+The subsequent [Phobos → Mars Base study](OPTION-B-PHOBOS-EVALUATION.md) evaluates a proposed pad and an instantaneous staging reference. At 1000 kg final mass the pad case takes 143.4 minutes of flight and consumes 479.8 kg of fuel plus oxidizer, with alignment wait reported separately. It remains conditional on the stated source/dynamics assumptions; no fleet or endpoint is selected by the study.
+
 The four-engine alignment is a proposal, not a flown assembly. The chemical engine datasheet lists 4.30 kg bare mass with valve per engine (17.2 kg for four); this excludes tanks, piping, pressurization, mounting, thermal protection, cabin and passengers. No hull dry mass, tank capacity, electrical plant, reserve or passenger mass is silently assigned to an existing Starseeker. A hybrid must supply 2310 W **net at the ion burn location**, not merely have that solar rating at 1 AU.
 
 ## Quantified comparison: burn budget, not a new trajectory

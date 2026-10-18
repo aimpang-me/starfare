@@ -2,6 +2,8 @@
 
 2026-10-17. Offline proposal, saved against engine `13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65`. **Fleet and live physics are unchanged.**
 
+Follow-up: the [Phobos → Mars Base evaluation](OPTION-B-PHOBOS-EVALUATION.md) now supplies finite-thrust flight/fuel results for two explicitly defined Phobos source conditions, with launch wait and remaining assumptions. The headline-booking gap below describes this earlier three-pair study; the follow-up does not validate the old parking orbit or change the fleet.
+
 ## Results to review
 
 For **1000 kg final nonburned mass**, four 425 N engines and 321 s Isp:
