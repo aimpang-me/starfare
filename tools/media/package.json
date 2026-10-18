@@ -1,0 +1,13 @@
+{
+  "name": "starfare-media",
+  "private": true,
+  "type": "module",
+  "//": "Marketing and QA capture of the real pages (not part of the Worker). Playwright drives the local Worker; three r128 is served from node_modules so capture works without the CDNs.",
+  "scripts": {
+    "capture": "node capture.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1",
+    "three": "0.128.0"
+  }
+}

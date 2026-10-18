@@ -12,3 +12,25 @@ jobs:
         run: python day3/run_regression.py
       - name: Self-test, a planted made-up number must turn the suite red
         run: "! python day3/run_regression.py --plant 2"
+  connector:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        working-directory: connector
+    env:
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: connector/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Connector unit and local MCP integration tests
+        run: npm test
