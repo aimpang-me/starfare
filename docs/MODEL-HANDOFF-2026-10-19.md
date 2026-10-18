@@ -1,6 +1,6 @@
 # Starfare model handoff for Monday, 19 October 2026
 
-Prepared on 18 October 2026 in America/Toronto. This is the entry point for the incoming model. The integration receipt and final verification below are completed after Engineering, Design, and Art finish their current tasks.
+Prepared on 18 October 2026 in America/Toronto for the model taking over on Monday, 19 October. This is the entry point; older handoffs retain historical decisions and evidence.
 
 ## Start here
 
@@ -120,4 +120,27 @@ Engine changes require rebundling with `python world/bundle.py`, rebuilding the 
 
 ## Final integration receipt
 
-Pending team finalization. Record the merged PRs, retained branches/worktrees, artifact archive URL/checksum, final combined checks, known failures, and retained process state here before completion. The incoming model must recheck remote main, because the documentation commit cannot contain its own final commit hash.
+Engineering, Design and Art finished their implementation and packaging before coordinated integration. Design merged [PR #16](https://github.com/aimpang-me/starfare/pull/16) as `285cb84bfb8a680dbd0fb763e78cba062c682671`; Orchestrator merged [PR #15](https://github.com/aimpang-me/starfare/pull/15) afterward as `896e5d84b4cbdc70aa6f7a631633a91d6d2a9251`. Both latest PR heads and the combined code baseline on main passed the Python CI gates.
+
+The final documentation/art transfer PR adds this entry point and preserves archival materials. Fetch `origin/main` and tag `handoff-2026-10-19` to identify the completed transfer; a document cannot contain its own final merge hash. All source branches and original worktrees are retained. Older unrelated PR #3 remains a separate verification-skill proposal; it was not part of these teams' completed implementation.
+
+The private repository's **draft** release tagged `handoff-2026-10-19` carries the large files. Use authenticated `gh release view handoff-2026-10-19 --repo aimpang-me/starfare` to find its current URL. Draft assets are a transfer package, not a deployed application:
+
+| Archive | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `art-artifacts-sanitized.zip` | 262,796,036 | `9bcc14890c71146b770e268b37e8222bfd1f6b16a8a0c3993328df2499b8f590` |
+| `design-source-reference-archive.zip` | 5,508,678 | `b4fee93f26a1d5b998456def0bb8fb98921946812a6ac74b8903ff8d0b61f322` |
+
+The Art transfer guide explains its 297 entries and exclusions. Design's [archive manifest](design-audit/2026-10-17/LOCAL-ARCHIVE.json) names the public source/reference files; its audit, prototypes and current evidence are committed separately. Restore archives into an empty directory, verify hashes, and inspect before copying over existing work. Private benchmark material, local app state, browser/auth caches and process ownership records stay on this machine and are intentionally absent from the release.
+
+Design stopped its preview after local review and verified port 8796 closed. Engineering and Art report no owned background helpers retained. At `2026-10-18T06:57:06Z`, the integration checkout had no active owned Node/Worker/Python runtime and none of the three logged test-server ports was listening. Other applications were left alone.
+
+Combined-tree checks completed on 18 October UTC. Read the [machine-readable verification receipt](HANDOFF-VERIFICATION-2026-10-19.json) for timestamps, commands, caveats and numerical results:
+
+- Full unit suite: **242/242 passed**, zero failed/skipped/cancelled, 437.7 seconds.
+- Local Worker checks: **26/26 OAuth-off** and **17/17 OAuth-on passed**. The initial combined invocation exited 1 after its OAuth-off server stopped responding: 28/43 passed on that invocation. A logged OAuth-off rerun passed all 26 without changing application code or assertions. The original failure and logs remain recorded; its process-loss cause is unconfirmed.
+- Offline propulsion numerical checker: all five sizing/refinement commands passed; engine/suite compatibility and the declared numerical fingerprints were unchanged. This is model arithmetic, not hardware validation.
+- Publication review: both local benchmark keys checked without displaying them; no matches in new history blobs. All 129 selected art files match their manifest hashes. Two broad credential-pattern hits in a historical prototype were confirmed to be encoded ephemeris substrings with identical surrounding data in the pre-existing public engine, not credentials. No private key, auth/cache path or oversized Git object was found.
+- All 18 local links in this entry point resolved. Both archive hashes were checked locally before upload; release asset verification establishes the remote copies separately.
+
+The remaining quality and physics limits in the team handoffs are open. A passing suite does not grant final visual acceptance, device-performance certification, fleet approval or deployment permission.
