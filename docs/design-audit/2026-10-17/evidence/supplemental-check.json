@@ -1,0 +1,392 @@
+{
+  "at": "2026-10-17T21:26:29.272Z",
+  "live.json": {
+    "status": 200,
+    "bytes": 54
+  },
+  "board.json": {
+    "status": 200,
+    "bytes": 705
+  },
+  "provenance": {
+    "liveCSS": "bd35d3603f6419d4ddc57818b72c2552272a62a52e1ab972013cea36282dd7e6",
+    "mainCSS": "6cbb43c53a7f64614cad9be33a58575a42606999093c43e7b2d33e8d6fa3afbd",
+    "cssEqual": false,
+    "liveEngine": "/engine.js?v=c5fdd816d464827c",
+    "mainEngine": "/engine.js?v=6130a4578ea4e569"
+  },
+  "performance": {
+    "nav": [
+      {
+        "domReady": 283.40000000596046,
+        "load": 600.5
+      }
+    ],
+    "longTasks": [
+      {
+        "start": 124.19999998807907,
+        "duration": 160
+      },
+      {
+        "start": 284.40000000596046,
+        "duration": 157
+      },
+      {
+        "start": 456,
+        "duration": 144
+      },
+      {
+        "start": 606.9000000059605,
+        "duration": 85
+      }
+    ],
+    "resources": [
+      {
+        "name": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap",
+        "transferSize": 1429,
+        "duration": 59.29999998211861
+      },
+      {
+        "name": "http://127.0.0.1:8794/engine.js?v=6130a4578ea4e569",
+        "transferSize": 308824,
+        "duration": 16.400000005960464
+      },
+      {
+        "name": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js",
+        "transferSize": 611,
+        "duration": 21
+      },
+      {
+        "name": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js",
+        "transferSize": 121159,
+        "duration": 30.69999998807907
+      },
+      {
+        "name": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js",
+        "transferSize": 834,
+        "duration": 21.099999994039536
+      },
+      {
+        "name": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js",
+        "transferSize": 2025,
+        "duration": 20.69999998807907
+      },
+      {
+        "name": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js",
+        "transferSize": 922,
+        "duration": 21.599999994039536
+      },
+      {
+        "name": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js",
+        "transferSize": 3286,
+        "duration": 21.19999998807907
+      },
+      {
+        "name": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js",
+        "transferSize": 893,
+        "duration": 21.400000005960464
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/sol-art.js",
+        "transferSize": 9333,
+        "duration": 23.19999998807907
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/stars-bsc5.json",
+        "transferSize": 76607,
+        "duration": 10.800000011920929
+      },
+      {
+        "name": "http://127.0.0.1:8794/live.json",
+        "transferSize": 374,
+        "duration": 14.599999994039536
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/sun_1k.jpg",
+        "transferSize": 99112,
+        "duration": 19.599999994039536
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/mercury_1k.jpg",
+        "transferSize": 103790,
+        "duration": 24.400000005960464
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/earth_lights_2k.jpg",
+        "transferSize": 53452,
+        "duration": 23.099999994039536
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/venus_1k.jpg",
+        "transferSize": 32343,
+        "duration": 24.30000001192093
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/earth_day_2k.jpg",
+        "transferSize": 309572,
+        "duration": 26.5
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/mars_1k.jpg",
+        "transferSize": 116067,
+        "duration": 18.099999994039536
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/saturn_1k.jpg",
+        "transferSize": 28147,
+        "duration": 28.400000005960464
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/jupiter_2k.jpg",
+        "transferSize": 224965,
+        "duration": 30.599999994039536
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/saturn_ring_1k.webp",
+        "transferSize": 3356,
+        "duration": 30.5
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/neptune_1k.jpg",
+        "transferSize": 15696,
+        "duration": 30.80000001192093
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/moon_1k.jpg",
+        "transferSize": 85128,
+        "duration": 34.30000001192093
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/uranus_1k.jpg",
+        "transferSize": 8522,
+        "duration": 34.400000005960464
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/phobos_1k.jpg",
+        "transferSize": 73504,
+        "duration": 34.900000005960464
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/io_1k.jpg",
+        "transferSize": 78935,
+        "duration": 36.10000002384186
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/ganymede_1k.jpg",
+        "transferSize": 115646,
+        "duration": 37.70000001788139
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/europa_1k.jpg",
+        "transferSize": 87390,
+        "duration": 38
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/callisto_1k.jpg",
+        "transferSize": 72213,
+        "duration": 38.89999997615814
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/titan_1k.jpg",
+        "transferSize": 25484,
+        "duration": 40.099999994039536
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/enceladus_1k.jpg",
+        "transferSize": 124175,
+        "duration": 40.29999998211861
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/triton_1k.jpg",
+        "transferSize": 27575,
+        "duration": 40.599999994039536
+      },
+      {
+        "name": "http://127.0.0.1:8794/assets/tex/ceres_1k.jpg",
+        "transferSize": 144645,
+        "duration": 41.29999998211861
+      },
+      {
+        "name": "http://127.0.0.1:8794/favicon.ico",
+        "transferSize": 329,
+        "duration": 7.5
+      }
+    ],
+    "compatMode": "BackCompat",
+    "feedText": "2033-11-18 10:40DESKEngine planned Jovian hop, par Starseeker SF-05\n2033-11-18 07:39DESKEngine planned Phobos commute, par Starseeker SF-03\n2033-11-18 07:37SKYCleared: Haze at Titan Dock (simulated)\n2033-11-18 07:37SKYCleared: Dust storm at Mars Base (simulated)\n2033-11-18 03:53DESKEngine planned ISS crew change, par Starseeker SF-01\n2033-11-17 20:34SKYNow: Pad full at Ceres (simulated)\n2033-11-17 20:34SKYNow: Haze at Titan Dock (simulated)\n2033-11-17 20:34SKYNow: Dust storm at Mars Base (simulated)"
+  },
+  "textSamples": [
+    {
+      "text": "Sky time · simulated clock",
+      "color": "rgb(102, 120, 143)",
+      "size": "9px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "Map time · live sky",
+      "color": "rgb(102, 120, 143)",
+      "size": "9.5px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "Nothing selected",
+      "color": "rgb(102, 120, 143)",
+      "size": "9.5px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "Pick a flight on the left or on the map, or open a booking, to see it here.",
+      "color": "rgb(102, 120, 143)",
+      "size": "12px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "Legend",
+      "color": "rgb(102, 120, 143)",
+      "size": "9.5px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "Distance scale",
+      "color": "rgb(102, 120, 143)",
+      "size": "9.5px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "Outward from the Sun. Log-compressed, so it stretches inward.",
+      "color": "rgb(102, 120, 143)",
+      "size": "12px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "Map centre · heliocentric ecliptic",
+      "color": "rgb(102, 120, 143)",
+      "size": "9.5px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "Ready 3",
+      "color": "rgb(102, 120, 143)",
+      "size": "10.5px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "On a flight 0",
+      "color": "rgb(102, 120, 143)",
+      "size": "10.5px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "Docked / busy · simulated fleet competition 4",
+      "color": "rgb(102, 120, 143)",
+      "size": "10.5px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "The site does not dispatch; your agent calls these through the Starfare connecto",
+      "color": "rgb(102, 120, 143)",
+      "size": "12px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "simulated hazards right now (flares, Mars dust, Titan haze, full pads)",
+      "color": "rgb(102, 120, 143)",
+      "size": "12px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "Dispatcher feed",
+      "color": "rgb(232, 240, 250)",
+      "size": "14px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "Feed activity",
+      "color": "rgb(102, 120, 143)",
+      "size": "9.5px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "2033-11-18 10:40",
+      "color": "rgb(102, 120, 143)",
+      "size": "11px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "2033-11-18 07:39",
+      "color": "rgb(102, 120, 143)",
+      "size": "11px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "2033-11-18 07:37",
+      "color": "rgb(102, 120, 143)",
+      "size": "11px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "2033-11-18 07:37",
+      "color": "rgb(102, 120, 143)",
+      "size": "11px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "2033-11-18 03:53",
+      "color": "rgb(102, 120, 143)",
+      "size": "11px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "2033-11-17 20:34",
+      "color": "rgb(102, 120, 143)",
+      "size": "11px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "2033-11-17 20:34",
+      "color": "rgb(102, 120, 143)",
+      "size": "11px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "2033-11-17 20:34",
+      "color": "rgb(102, 120, 143)",
+      "size": "11px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "text": "Flight logs",
+      "color": "rgb(102, 120, 143)",
+      "size": "10.5px",
+      "bg": "rgba(0, 0, 0, 0)"
+    }
+  ],
+  "reflow": {
+    "width": 720,
+    "scrollWidth": 720,
+    "feedY": 2331.75
+  },
+  "noWebGL": "This browser has no WebGL, so the 3D map is off. The flights, Starseekers, alerts and the feed below still run from the engine.",
+  "contrast": [
+    {
+      "fg": "#66788f",
+      "bg": "#050a14",
+      "ratio": 4.385194596457528
+    },
+    {
+      "fg": "#66788f",
+      "bg": "#0a1222",
+      "ratio": 4.1408161777144565
+    },
+    {
+      "fg": "#66788f",
+      "bg": "#0c1628",
+      "ratio": 4.003473119455094
+    },
+    {
+      "fg": "#9fb0c6",
+      "bg": "#0a1222",
+      "ratio": 8.462835759712602
+    }
+  ]
+}

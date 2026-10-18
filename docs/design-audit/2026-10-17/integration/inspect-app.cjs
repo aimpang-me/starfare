@@ -1,0 +1,10 @@
+const {chromium}=require('C:/Users/PC-AIMPANG/AppData/Local/npm-cache/_npx/1ac161d228dd2210/node_modules/playwright');
+const fs=require('node:fs');const path=require('node:path');
+(async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--enable-unsafe-swiftshader']});const errors=[];
+try{const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});page.on('pageerror',e=>errors.push(e.message));
+await page.goto('http://127.0.0.1:8796/');await page.locator('#loading').waitFor({state:'detached',timeout:60000});await page.waitForTimeout(1600);
+await page.screenshot({path:path.join(__dirname,'app-first-desktop.png')});
+console.log(JSON.stringify({errors,bookings:await page.locator('[data-b]').count(),canvas:await page.locator('#glhost canvas').count(),status:await page.locator('#liveStatus').innerText(),main:await page.locator('#ops').boundingBox()}));
+await page.setViewportSize({width:390,height:844});await page.waitForTimeout(1200);await page.screenshot({path:path.join(__dirname,'app-first-mobile.png')});
+console.log(JSON.stringify({mobileOverflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors}));
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1,0 +1,40 @@
+{
+  "a": {
+    "at": "2026-10-18T02:39:58.605Z",
+    "hud": "Map time · following SF-042028-04-25 07:13 UTCLive flight (simulated). Other layers are hidden.",
+    "labels": [
+      {
+        "text": "Ceres",
+        "transform": "translate3d(739.6px, 417.9px, 0px)"
+      },
+      {
+        "text": "Ceres Port",
+        "transform": "translate3d(617.7px, 414.5px, 0px)"
+      },
+      {
+        "text": "SF-04",
+        "transform": "translate3d(676.5px, 432px, 0px)"
+      }
+    ],
+    "selected": "SF-04PickupDetails×Ceres Port → Mars BaseCloseSelected flight LiveSimulatedSF-04Starseeker FictionalPickupCeres Port Fictional → Mars Base FictionalBelt shift changeNow between Ceres and Ceres PortProgress0%ETA2.3 yearsArrival2030-08-12 00:00Legs flown2Bookings1Passengers / seats0 / 4 (simulated)Departed2028-04-25 06:26View flightFollowing"
+  },
+  "b": {
+    "at": "2026-10-18T02:40:14.613Z",
+    "hud": "Map time · following SF-042028-04-25 08:17 UTCLive flight (simulated). Other layers are hidden.",
+    "labels": [
+      {
+        "text": "Ceres",
+        "transform": "translate3d(701.2px, 404.7px, 0px)"
+      },
+      {
+        "text": "Ceres Port",
+        "transform": "translate3d(627.6px, 431.5px, 0px)"
+      },
+      {
+        "text": "SF-04",
+        "transform": "translate3d(737.5px, 432px, 0px)"
+      }
+    ],
+    "selected": "SF-04PickupDetails×Ceres Port → Mars BaseCloseSelected flight LiveSimulatedSF-04Starseeker FictionalPickupCeres Port Fictional → Mars Base FictionalBelt shift changeNow between Ceres and Ceres PortProgress0%ETA2.3 yearsArrival2030-08-12 00:00Legs flown2Bookings1Passengers / seats0 / 4 (simulated)Departed2028-04-25 06:26View flightFollowing"
+  }
+}

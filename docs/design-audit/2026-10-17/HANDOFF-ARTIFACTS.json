@@ -1,0 +1,2557 @@
+{
+  "createdAt": "2026-10-18T06:42:27.948Z",
+  "implementationCommit": "5cb1ab9",
+  "note": "Historical screenshots/prototypes are not claims about current production. Sources/runtime logs stay local. Hidden browser/tool caches excluded without reading them. Regenerate after final captures/tests.",
+  "files": [
+    {
+      "path": "docs/design-audit/2026-10-17/artifact-manifest.json",
+      "bytes": 8924,
+      "sha256": "cb6c596c0af86d2d725ce46bc445c3c39fa6df2938c62cf52b8d682b2486aab4",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/assessment-A-capture.cjs",
+      "bytes": 3503,
+      "sha256": "fd0dd66580ce09d34d8b4a33dd342680df5d0b1fd0896e1a45466b47204c81d1",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/assessment-A-checks.cjs",
+      "bytes": 1381,
+      "sha256": "fe9b2155ececce3558d549ae8c52bb89dd4dec737eccb9ace253afe275a37e55",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/assessment-A-extra.json",
+      "bytes": 3909,
+      "sha256": "1c1da30be443f6603e39a20125065094b491ef5282ac1ebb918afe28546fcd5c",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/assessment-A-observations.json",
+      "bytes": 14535,
+      "sha256": "521afa035fe6cc57dc9f58105a2b556603589b2c4d4e5a91689b655bf5aa6249",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/assessment-A.md",
+      "bytes": 19350,
+      "sha256": "a56c280151ba9ed788cf69b235fc6afb70c52b1db665fcd0b32c90083836ee51",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/assessment-B.md",
+      "bytes": 9415,
+      "sha256": "aa7aeee1ac0f735145d067bf717b28f378264e8634e7f464af0bd2228d6dc142",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/DESIGN-HANDOFF.md",
+      "bytes": 8997,
+      "sha256": "39c84e696fbdb62c526b04f6edc56a957c134740c613760052e3797d6abeebfc",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/b-bench-desktop.png",
+      "bytes": 83499,
+      "sha256": "b5f81949156e74cd20902f25907b13ccd318d6ec56e17a15a8290490c5dbd554",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/b-bench-mobile.png",
+      "bytes": 77098,
+      "sha256": "c3c07d900df33921b77b211f46b7276d61c0a58f1dce3166bc3833b7eca3d2ce",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/b-bench-overlay.png",
+      "bytes": 83499,
+      "sha256": "b5f81949156e74cd20902f25907b13ccd318d6ec56e17a15a8290490c5dbd554",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/b-board-desktop.png",
+      "bytes": 75585,
+      "sha256": "9e0493d547315c41b3324c4bbf8e165d9622a2b5549b76c27e3e7041cb8034e3",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/b-board-mobile.png",
+      "bytes": 66740,
+      "sha256": "d5fb3885f8d6a0ad2e396ac987f0d2c5e65acee3e679df06a98912a064ff0120",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/b-board-overlay.png",
+      "bytes": 75585,
+      "sha256": "9e0493d547315c41b3324c4bbf8e165d9622a2b5549b76c27e3e7041cb8034e3",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/b-home-desktop.png",
+      "bytes": 389632,
+      "sha256": "a2a0879a9117207f0ca14d226b3e28251905cd496a0d4235852413443ca133cd",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/b-home-mobile.png",
+      "bytes": 323725,
+      "sha256": "2d010ae753fad3f253efbb9ec635c06c8136142ebda5a601f903584f6b3b6c3a",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/b-home-overlay.png",
+      "bytes": 392212,
+      "sha256": "9434c5b9b15625a8f7b537c27d1011ce5f78d118aeb3d15d5e5e809635dc18a7",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/board-live.html",
+      "bytes": 3619,
+      "sha256": "987751764808f9b8218219dc4b125974460179759b62bf1385160609988d27d8",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/css-provenance.json",
+      "bytes": 89,
+      "sha256": "1894b1057ab3ba0f2296044220ae36d32fc2c9c59f3f22f9283016d3ce8fa114",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/deployed-board.json",
+      "bytes": 705,
+      "sha256": "d660e944572c8a418959f93dc8990c6a2d285daf1da015fdf8de56183335009f",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/deployed-live.json",
+      "bytes": 54,
+      "sha256": "3a57bea1d6ac74f32f8c9843874f08b7948126c35433d32b5d437c2342427ab2",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/detector-browser.cjs",
+      "bytes": 3805,
+      "sha256": "67c35c203f17ac50a4cdf3ea9ace17bca26c3f5b38e886424d6ede9f85952286",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/detector-browser.json",
+      "bytes": 27361,
+      "sha256": "848fbbb51072abcf4559f7e984a6318b9005157d1b7fcf6bf3e2dba7903790b4",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/detector-markup.json",
+      "bytes": 103918,
+      "sha256": "394bf2363e68ea254f02d7962dc30655bd78e7b6986521d146d981344859f6ca",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/detector-raw.json",
+      "bytes": 109426,
+      "sha256": "6ae5d8a73f078a7d5d7591e5b6ad503b7f13e620e162a2b559ecd03ab1480354",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/detector-summary.json",
+      "bytes": 29075,
+      "sha256": "0ddd255632baf99cb445bda43b666a609a3570a5da13829fbb00e1c4fcaf8550",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/fixture-flight-check.json",
+      "bytes": 16709,
+      "sha256": "4ca1f1d239c5729c4833dc1f93380d74c17024b95819248602664f26e3d1d5ad",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/supplemental-check.json",
+      "bytes": 11127,
+      "sha256": "7ae649b9812b839369e84a096b6e3f497830e4da3730164bc85fe92ccc21ed4d",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/evidence/technical-check.json",
+      "bytes": 76281,
+      "sha256": "3cd17f51a7a3fb67c5dbf66344a17b69029fc22ea6338a2450609c32610d4b48",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/fixture-flight-check.cjs",
+      "bytes": 2599,
+      "sha256": "5d9bf5c301f16a9b3bdc1147c65226766453c0d41a90a6232188103b48d288a2",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/INTEGRATION-PLAN.md",
+      "bytes": 3817,
+      "sha256": "822f33f14deda8c3096c713333587dd5008d786a2ad0e121b5505656e932f569",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/app-first-desktop.png",
+      "bytes": 195207,
+      "sha256": "e3fa627c0a0d75fe7312026cb0c278d32d90d791b2df7102ff23eb73b8679aed",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/app-first-mobile.png",
+      "bytes": 87464,
+      "sha256": "9ddade28e9eb306d66c01d405781064d4d11738fb10bb9c6d4ddc625cb096a73",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/artifact-preservation.json",
+      "bytes": 114,
+      "sha256": "58b1a8ae6383367aa3716a61a07b4017bc1ea18872a210c6c5df38455631b864",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/FLIGHT-GEOMETRY.md",
+      "bytes": 5136,
+      "sha256": "46383150fa0b32747fd38274e71dad9ea451435f7555f3ed7aaadb7096a1086b",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/inspect-app.cjs",
+      "bytes": 1290,
+      "sha256": "bb3548791f5f114a0044f2d5de18c1df08370e2f98544978a1534a62678c4845",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/integrated-1280.png",
+      "bytes": 200934,
+      "sha256": "eac6c42c83fc294303b10584666912c2dd536e85bc0da09d6c3c4f92d519ac90",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/integrated-360.png",
+      "bytes": 87957,
+      "sha256": "961aa205152b899e2c58726998048eaa0c2abab56e4ffe64509ced4b3d9535c8",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/integrated-390.png",
+      "bytes": 93411,
+      "sha256": "7bb310ed98bff8b33a6c68ab1cfeb34b5cda06020b00874b8d55c6aef8a6ba22",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/integrated-900.png",
+      "bytes": 173763,
+      "sha256": "09076a21ea6747c445f47939475d7093b8abab376e699a7ff395ce3028f8cc55",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/integrated-desktop.png",
+      "bytes": 206509,
+      "sha256": "a93a7a4fd6c4c0e9fe203fd99553c0517b34933d8755eea4ac29c85d8d7ff380",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/integrated-fleet-outage.png",
+      "bytes": 88121,
+      "sha256": "485f9c2f306d658ac74dcd4fcf96640ea6d275f8d057c9e691eec5e44b84ceff",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/integrated-flight-mobile-reduced.png",
+      "bytes": 681490,
+      "sha256": "68030c1b9f0729300284eb222191349d211bed0a16e6f843be4e317fd78fe95c",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/integrated-flight.png",
+      "bytes": 1044978,
+      "sha256": "11a68243995f29d55ca18f1ca8951d4c1130b5f3cce3d2ab58d3743b4dd0ef6f",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/integrated-mobile-canvas.png",
+      "bytes": 76572,
+      "sha256": "cd975e2cd46e1db2f68690d939d1f5d0e88925f8fc542bc679339422411baca3",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/mobile-details-collapsed-360.png",
+      "bytes": 41306,
+      "sha256": "c4752285310538dea9b326f5439e043a35bce0573e0aa4c2e998d11d73cbaa2e",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/mobile-details-collapsed-390.png",
+      "bytes": 45519,
+      "sha256": "1e7eafed0b658860621af9fbab0d19c7df27c197b5b3f80b88b647491bf778bb",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/mobile-details-collapsed.png",
+      "bytes": 27338,
+      "sha256": "7bd74baeb447a5ce450de6f89820b1f649113cc27ed5391cae28e3cc646600ed",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/mobile-details-desktop-check.png",
+      "bytes": 98535,
+      "sha256": "494bc1dc558352c8b21dd06a7429ae6c909d497c43bcc4a79321a463d6d1385f",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/mobile-details-expanded.png",
+      "bytes": 48255,
+      "sha256": "860cbcba4e1c6b6e7dd44c43ca45705ccc287d3fc49e83a464beb4e10bedd53c",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/mobile-details-verification.json",
+      "bytes": 2428,
+      "sha256": "1d4bf6b6715bd8060e80948e949cbd2d0b5533109491078f33106edba1375ad8",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/MOBILE-DETAILS.md",
+      "bytes": 2934,
+      "sha256": "fe59ceab22c9e924d6af335eef2fef219f0e44b355a95355057b655e0867e6ca",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/orientation-active-a.png",
+      "bytes": 76486,
+      "sha256": "601945401d2cef7e8a189fb261657a4dbe361ad6e30b7b7f36c4e3a68703baa3",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/orientation-before.png",
+      "bytes": 82591,
+      "sha256": "273562c9b369fa63597f76dbd19f17cabc0486ddf68c9bd91ac13e8fbf7894c2",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/orientation-fixed-flight.png",
+      "bytes": 77090,
+      "sha256": "f8666881fc54db0ee62ecfdba09848c5001433988ea436c2a0c088e7196092b8",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/orientation-fixed-mobile.png",
+      "bytes": 36370,
+      "sha256": "4ac707f3fd9bd94dc5fa45bfa853e03605b9fe67767f84e1c4aa171a2783a19d",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/orientation-fixed-replay.png",
+      "bytes": 105086,
+      "sha256": "be90137cfa73fa5f41aa68ad4a5c32d8c9918445e9ebf19c46b057d62df14682",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/orientation-local-flight.json",
+      "bytes": 13395,
+      "sha256": "16ef4d39915bdd3eb949f9fae4ed21e00c326701bcd92e4cf12d672cce5b1f6e",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/README.md",
+      "bytes": 7460,
+      "sha256": "d8766133da74e2971cdd9186b4bfa1136626c53ba39da1c64450a43dbb8820b9",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/review-active-desktop.png",
+      "bytes": 103669,
+      "sha256": "b23aafd68cdf47434a3d0a84f3ea1ed56235e64a092fce00712c6423e8331f65",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/review-active-mobile.png",
+      "bytes": 42402,
+      "sha256": "dab2e54fb2871a86e1dec47344a8079327a7969a61f19a436319f5d412577ec0",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-active-closeup.png",
+      "bytes": 77376,
+      "sha256": "5aabe5457d700e59445fa011a1eccebaabb89624dd9fc4f73cec2df487d3f79f",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-active-pickup-a.png",
+      "bytes": 86453,
+      "sha256": "9efce4aef4da85b90fdb42980d5855c3aaf11264e86953da3078b121606cedca",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-after-archived.png",
+      "bytes": 97181,
+      "sha256": "f1f35691828f73e3571d564cb289c98d5b399f644c23342d6de02b9a0bc35663",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-after-desktop-closeup.png",
+      "bytes": 84829,
+      "sha256": "d39b8b85da00d9c1ca86064ca20df30ee1cc9c8f3923a0c5fc409c94673d1c92",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-after-mobile-closeup.png",
+      "bytes": 25068,
+      "sha256": "5698a4d33f29a3b86b932c5428623097081a6f81e1b7293d5c0128cbae1e1152",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-after-system.png",
+      "bytes": 77659,
+      "sha256": "ef7621f0354fd7480dfbdbb9d01b5349a4a575d6f06ab8158dff7c1cd0c9f81f",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-before.png",
+      "bytes": 103101,
+      "sha256": "774ee5caf2198487e4021a69a250610633c9e28e164a9487b977a480af4bc8e2",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-browser-verification.json",
+      "bytes": 1983,
+      "sha256": "2d45deb0f7dc4184f409507dc7cc1b7912d600c8711623daa3536e4175ecd066",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-fixed-desktop.png",
+      "bytes": 82510,
+      "sha256": "b67a9845afa622b24c15cf58c8d534fe9c05ef4dcfa113b5911f7bde29c296ff",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-fixed-mobile.png",
+      "bytes": 36483,
+      "sha256": "23564a19c67057aad51f303ec531acdbf03efe93d321e93b056a1d7e19d2d11e",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-local-flight.json",
+      "bytes": 14517,
+      "sha256": "876cd646fec9aab7c0ed247871c5449ef42fdebcd99f0962286d4e6b547c33e0",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-numeric-verification.json",
+      "bytes": 493,
+      "sha256": "bad21a6b2af936d17d5d13b12efd2fc838f9a7a47dccf5e2668991e8cfe097c6",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-replay-moving-a.png",
+      "bytes": 104465,
+      "sha256": "40e7131506109f21aeabd5ea0fcc242ddf66ae1677b72450cc888ac9204be5bd",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-replay-moving-b.png",
+      "bytes": 103028,
+      "sha256": "1b7c8959b37465c7d6ca43cfb91636765414fa1a534f33c3ed4b8d58e99885b6",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-reported.png",
+      "bytes": 230701,
+      "sha256": "0fd5f8ad0816c6c38a83a9ce4641ef81c881f2cdfd2399f2aab978d29dafabd8",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-reproduction.json",
+      "bytes": 16226,
+      "sha256": "29255bbad6f3451570046fb330f398db6c2c74d911251fe30e28d13eb1db8655",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/route-tests.tap",
+      "bytes": 21354,
+      "sha256": "f198aca31f766dc6bc9289caf389699c6b6bd8e9a058c620c991a8d4a77d339e",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/seed-flight.mjs",
+      "bytes": 2337,
+      "sha256": "d5be49b18212c1f67a2d0c72d02f02fd5780fbcbd7a79e5858fb77fa1bfe9450",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/serve-app.cjs",
+      "bytes": 1474,
+      "sha256": "ce4017c913baeb9577106cc232d3f4821303254bd61faad2bd7f4e58710fb58d",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/ship-heading-browser.json",
+      "bytes": 1440,
+      "sha256": "9ce753024159f7157430b3e170a36e6b98ed9112f93f50819b317bb3d9132d66",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/ship-heading-numeric.json",
+      "bytes": 4484,
+      "sha256": "9434c1c06cccaa3c9a765c26fa79ea69db2d5e23163be3ea93a42d4661fe73a6",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/ship-heading-tests.tap",
+      "bytes": 10604,
+      "sha256": "683fec1a74575b07d326abc6558ef07a68890c596eecb9621e451f39e7010e73",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/SHIP-HEADING.md",
+      "bytes": 4375,
+      "sha256": "38b8c7a953dffbb941330547ebf951e517717bf55d184bc117b5a56807991775",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/browser-qa.json",
+      "bytes": 867,
+      "sha256": "9f90dd2997a7fdcbdc5fa73374a2a3645d2b44e4c470876fa00861c0ffb28ae2",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/flight-motion-browser.json",
+      "bytes": 1708,
+      "sha256": "d3062f5b06e6ff2feaf3961cdb0217bb3be9cea36df34c5e15a8a8243af4ce8a",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/heading-numeric.json",
+      "bytes": 4470,
+      "sha256": "1aaf6600afca70eb3e13d297134f43de6bdf32eac1b6b3626d9dcab420878e53",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/motion-policy.json",
+      "bytes": 321,
+      "sha256": "dc5c7197a2c7213fcfb44a396ed985f6f43050c92dffaca1166441f2aed1b252",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/projection-numeric.json",
+      "bytes": 2852,
+      "sha256": "ee4ad67c71b51437c6c5b997759b36a150120fde31274606fcee1ca458dc1505",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/real-flight.json",
+      "bytes": 16032,
+      "sha256": "f945777fc75ed137dee2d6e92e10c4e8320bd86b5d5f45a4d377e69bfe2462cf",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/REFERENCE-LOCK.md",
+      "bytes": 3536,
+      "sha256": "0f3fb2c47636bea2fbf1f175ae21e87d8a87ad7dd0ddb053e12266535ae18aae",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/refero-research.json",
+      "bytes": 51841,
+      "sha256": "c743b441db6da88f9e9a20e76acf13edfb89abf279eb2046b0965f441caf28c0",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/RESULT.md",
+      "bytes": 5670,
+      "sha256": "7986bbd6b6971802dd4eb00549bebf460450d5fd3b65001ef966ccd72ba32477",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-before.png",
+      "bytes": 75608,
+      "sha256": "571c47fd7c5eb6e031921a8d0f8824c8ae766555f4d662e8107fe3aafe044724",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-desktop-earth.png",
+      "bytes": 83344,
+      "sha256": "eef65ba216df6f1d2e41ada756f24984ea1c087419f282999d0e0957bdb0d990",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-desktop-inner.png",
+      "bytes": 107873,
+      "sha256": "0133749b2a2b0d7462931d7e70cc48448f7af4d175b25d930904e11ed9f46406",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-desktop-jupiter.png",
+      "bytes": 100360,
+      "sha256": "5de5f5b7d94b57de2edfd8fcf07c2ea3d09a416286a8c742ba2630929895af45",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-desktop-neptune.png",
+      "bytes": 81111,
+      "sha256": "d4f0c4f373c6a26e22421e7ebeefa56ec46496f4e5dd89b227c5c99f68c23883",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-desktop-overview.png",
+      "bytes": 100605,
+      "sha256": "9f9d689317b06e0171f1604e277217ae0246aa2d765681c80bc218bafc3ca528",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-earth-v1.png",
+      "bytes": 80569,
+      "sha256": "9a88f63312c537ccd49c3f98ca668781d667033c3dc5d62ad76216bbb6fe3079",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-mobile-360.png",
+      "bytes": 39807,
+      "sha256": "51378d964aebecadabc7634ede8275f95ecd9fe695acfddffd82e9692f2d2471",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-mobile-collapsed.png",
+      "bytes": 39943,
+      "sha256": "ab75535ae9c996cfdfcc02ec96333bd492b6bb52cffb089610cb836d2ca9de46",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-mobile-earth.png",
+      "bytes": 43084,
+      "sha256": "c7eb5df02182700cc1e48f2830825a128334dadf636424dd52bdcfcc7b0a2b4e",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-mobile-overview.png",
+      "bytes": 46168,
+      "sha256": "28864647c7254616669bd07939e1e9aeb01bb9ffd74643585e995cbeae2cd60f",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-mobile-real-flight.png",
+      "bytes": 33598,
+      "sha256": "97ae7e96c3a50c5bb198c5bcd50f2bc5a000a5f23839e6767d46cf40fdbc0f5e",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-mobile-v1.png",
+      "bytes": 43364,
+      "sha256": "f6f7ac8555e951c286e1c8cf806425c87f8a41f4450ea0b11ceb934617fc087e",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-overview-v1.png",
+      "bytes": 105001,
+      "sha256": "2aa2e058ed5b7780a3ff842a16f4bcc9a35e56c09e7ffd12f2f9fce689d8050c",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-real-flight-a.png",
+      "bytes": 84947,
+      "sha256": "6127bb117f9c44f23a324ac3b8935a023daeb6772f666d51e6b1965cd93cd8c8",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-real-flight-b.png",
+      "bytes": 84823,
+      "sha256": "fd9e599b7ef69d367f60535de93e5dfdbf084efdfd54911b2370a6b34a7b87ce",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/solar-tablet-saturn.png",
+      "bytes": 75654,
+      "sha256": "4da467fb6b938ac4642f9879675124ef965cd87ca8f8702a7fa3f5cba00e6a97",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/sources.json",
+      "bytes": 1730,
+      "sha256": "2a5b399c6ff63149f4ae3c73054f90df2a397be3f1310be54f7734ad4f4b0131",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/tests.tap",
+      "bytes": 5372,
+      "sha256": "3c9a07a02d5db9da4c1befd1f20d8acb5e76aa6af76f66f92b7f0dad8d1f25bb",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/verify-motion-policy.cjs",
+      "bytes": 1477,
+      "sha256": "f53d118475a905edaf3155639e0f90c609767d5edc6f428dc320563004ecf0a7",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/verify-projection.cjs",
+      "bytes": 3005,
+      "sha256": "45d428d938a19513145644444ab520bc426fdac045cd347368c18bc9615b63c4",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/state-verification.json",
+      "bytes": 1076,
+      "sha256": "50f2104cc65b8b8dfb2b3d7cc860f751f5ad0c33a87692f547273f0329c539bb",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/unit-tests.tap",
+      "bytes": 14137,
+      "sha256": "e20577a2eb1e99afaa6bd2b08124d645614177a102064b1a8340f772f8a77d54",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/verification-before-final-polish.json",
+      "bytes": 4623,
+      "sha256": "5ce0335ac68d9b159835d1a1dcf994b8713d65e79cf394f2d883b75e0a2bd0ed",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/verification-first.json",
+      "bytes": 3932,
+      "sha256": "1ee3d593eaf46f1bef76309d8f2e77503c3dbd1c4c2c6d73b798ba4308f88a9c",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/verification-layout-pass.json",
+      "bytes": 4629,
+      "sha256": "d0c7cad7a2328deb134cd0443b7e30d2ad88b4a534a873777d145d2ca7661c7f",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/verification.json",
+      "bytes": 4628,
+      "sha256": "4268e6407b684873387e2d1795fe852da7f46c030e364db7e4635dac5ba61a77",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/verify-app.cjs",
+      "bytes": 10818,
+      "sha256": "c7ee259d79c0edb23fcae3ea9bccaa4b3b642fd1321f5fbe19bec5a30cfae168",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/verify-route-data.cjs",
+      "bytes": 2457,
+      "sha256": "3fb5b9f742ad3ea159ef8d1897561e0fdf9abb0847f6944664519f55fa188a9b",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/verify-ship-heading.cjs",
+      "bytes": 4825,
+      "sha256": "f0cae6bbcbda89210fd6aee9505341a8072ee5df0df4d0b8329fc05de8a976e3",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/verify-states.cjs",
+      "bytes": 3368,
+      "sha256": "65bed2de66dca784a311a9f739968fc26a6acc0c3bac9e74c8a8b167e2a194ac",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/LOCAL-ARCHIVE.json",
+      "bytes": 1535,
+      "sha256": "929b65d063db8b4619638c63ab22ae2740ce380cd52572927d4723849180fc2c",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/ceres-desktop.png",
+      "bytes": 38003,
+      "sha256": "714528efb246d62e263825616b7eb1160f326cea365bdb7c33f9f56f820056bb",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/earth-daylight.png",
+      "bytes": 84939,
+      "sha256": "27f570324b61f01fff147cbb21a4c5a544dc730940da053cdf9beb57de742879",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/earth-desktop-final.png",
+      "bytes": 83558,
+      "sha256": "c0f7cedacd625560095fadde984f25f2d5bb89903891373e1dd1dba51e4c316f",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/earth-first.png",
+      "bytes": 81214,
+      "sha256": "f5957ff3c0b13c41049b387fec79bf32bdbbd64b60b3e63063548930558eca51",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/earth-lit.png",
+      "bytes": 77489,
+      "sha256": "8f601aea9c5e547b8a034c595cd8c1d0750e66cdc4fea8ff52ed359d3b0d6930",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/earth-mobile-390.png",
+      "bytes": 39231,
+      "sha256": "e3ebab74c3e98aabb2e9490f489b05b8642ac7f4d64cdacf4dc1ebc4b802bfb7",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/final-local-app.png",
+      "bytes": 65392,
+      "sha256": "48b91a1ed60f3bcb44421779b35ae00e823658e408740f0f1448326c2423bb40",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/full-final.tap",
+      "bytes": 17320,
+      "sha256": "6bbee3d39c9b8631f881498452a6cd33a518b0c22f1c31c1c066436e2d69698f",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/full-unit.tap",
+      "bytes": 16874,
+      "sha256": "e2df9c218c322e3671a2a6499651695b99abcb115adf94f8a45457b5c76d6c15",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/green-all-worlds.tap",
+      "bytes": 1101,
+      "sha256": "d8ea21840bceffb95dbfae4d42b12934fe1b646289ad60bc609f6cc52dbe9d1d",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/green.tap",
+      "bytes": 719,
+      "sha256": "0b7a8bfb83600d7308dee4c23bb9c458e006d812fb568854c00896a2f5770cc1",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/jupiter-desktop.png",
+      "bytes": 84431,
+      "sha256": "adf2e8a0e95f2f983e61c15afdc771e85d0b1eb021dc91f53f4c0d4e618e1dfc",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/mars-desktop.png",
+      "bytes": 73060,
+      "sha256": "0af6acedab00693df78d10914ff5701afad47d9082d2f866a1411245f1678ec2",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/mercury-desktop.png",
+      "bytes": 38515,
+      "sha256": "a5b6e0b2cede9fbcf067ebed47032c3083d5ec6b1c87388b5a332393a1e34478",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/moon-focus.png",
+      "bytes": 78856,
+      "sha256": "348639a615d159f8821bd29159961abb951965d0b028b43b327a4dfa8cfa88a4",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/moon-lit-mobile-360.png",
+      "bytes": 33637,
+      "sha256": "6de16c5fe05c91233c0be8c8c47df1d8853615b22ea925c0e6318e52df089a6b",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/moon-mobile-360.png",
+      "bytes": 31374,
+      "sha256": "9cdb2280cb115f1e8addbaecfcdec39562afc141414d43e30cf93122a5e1aee4",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/motion-a.png",
+      "bytes": 13411,
+      "sha256": "8f01cce04d6197bb29ee49e27c4188a0e150878e89b4f191ac7ae8e36ff2f028",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/motion-b.png",
+      "bytes": 31714,
+      "sha256": "71f5499f5fec003ad5068ff182e4007431cf9c394e88ddea54155ef9733b3c64",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/motion-end.json",
+      "bytes": 173,
+      "sha256": "a541f6e89586c78e9e8e85402ecfebc2c03d5efb7d87e2fc3b280170c1680f91",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/motion-full-a.png",
+      "bytes": 30783,
+      "sha256": "5c19fa66584d9f2a73d97748bb9e893cd31440c5848629970a645aa66a412d03",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/motion-full-b.png",
+      "bytes": 31144,
+      "sha256": "4636c229c4ec259f7a0a682893d9cff9b9afea81f1312cadccaa8aa196ba9e21",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/motion-start.json",
+      "bytes": 210,
+      "sha256": "7f7f7feca8218a63913467a27b6d8ff7812fafaf381127204c69b519926613fa",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/neptune-desktop.png",
+      "bytes": 73085,
+      "sha256": "4f8cb63234a68d910b57f8b8868e964cdf2aafdb360ed43d9477b5e5165bc573",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/pause-pixel-check.json",
+      "bytes": 549,
+      "sha256": "fd9ac98ae7d15147fbb143bed2332d8aea08ec7a16dcb2a258479338a31b7493",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/paused-a.png",
+      "bytes": 14089,
+      "sha256": "b25f46d5bdfda5f513412fe7434a5a619d5a84913de77e9076532ca6ada7c6a8",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/paused-b.png",
+      "bytes": 14081,
+      "sha256": "b627105d52d096457fbaf42f6ab3943273a3f4c726702cdfd5dd67bbeeb45b71",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/paused-settled-a.png",
+      "bytes": 31367,
+      "sha256": "24c0321e97b2a338409e9e25d810e81bf81a363cf4d308debdd3f3d93f8da3c8",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/paused-settled-b.png",
+      "bytes": 32015,
+      "sha256": "9d08f9bb23dd08e39e5158519a4c86abbc5ac7aa347e3c30a1dbf5f43f408069",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/real-flight-desktop.png",
+      "bytes": 103091,
+      "sha256": "ff109809aef10b1cdc126cd3943d5e50662678212681ef16e1d6e922920816b8",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/real-flight-mobile-390.png",
+      "bytes": 41534,
+      "sha256": "fbfcedc21b9c15f50374092b36ab01eeed28dfa90ab11aa7fe266edb4f2f36a6",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/real-flight-overhead.png",
+      "bytes": 75624,
+      "sha256": "24ca1f21ba6450a13f453ec99a074df73439184b8ad052c92e20e24c8fd0b27e",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/red-all-worlds.tap",
+      "bytes": 4619,
+      "sha256": "61dd7a62a4f4273106a06a87500127a61c052f1f811c656a3f53db1466b122cc",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/red-texture-redraw.tap",
+      "bytes": 1569,
+      "sha256": "c907f2bfa35f881d2f541ba8d9333b9af000ac6f5a27378b43ebb3bd563ed9c8",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/red.tap",
+      "bytes": 5291,
+      "sha256": "0ed2683a147365dd619bc54ae804d1a68699eb814083faeac9f70e867d48e95b",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/RESULT.md",
+      "bytes": 6947,
+      "sha256": "1326e67ab1d7b53af1d702edacea2dacdd4b6122f045121628d69028770a5403",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/saturn-desktop.png",
+      "bytes": 74515,
+      "sha256": "3669bfb2a045f4d0dd880b1aa9d0ca7452745ed28d4556341de7b634492f3096",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/saturn-lit.png",
+      "bytes": 81425,
+      "sha256": "d532a371443689a88fdd4882ce0136595ff475dee66d7b72a051f6bb704d042d",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/saturn-mobile-360.png",
+      "bytes": 29291,
+      "sha256": "30c19908f6fc717b8d6d3ff46c4791a380988de0ec35be97ce597fe9ca2cc0e8",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/seed-earth.mjs",
+      "bytes": 2048,
+      "sha256": "fbf81e8dee083f5090eded4d23275a5c0d5eebe5ea803a20c44dadfa064d82ad",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/ship-heading-numeric.json",
+      "bytes": 4470,
+      "sha256": "0364c1cded3683fd2ca7f72470ce00785b933e6d3f6271e1c30878cecccbd836",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/sun-mobile-360.png",
+      "bytes": 31103,
+      "sha256": "97a390e4bff1afa86937d158f7929af94b2af6ecf2330515517e72fff3327ade",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/tests-final.tap",
+      "bytes": 6352,
+      "sha256": "622c7b8e67e36d4dd0365e9f9bebc0d45fe681e8e2e150e0529acf3b181fdfab",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/tests.tap",
+      "bytes": 5883,
+      "sha256": "8d0eb8fb8d203f7941ecbea5d4afe77564f4fd3bfa1fe4167925154bba6c19d0",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/uranus-desktop.png",
+      "bytes": 39947,
+      "sha256": "f0f89ce45ef231be373406ab0fa2a94f2192d2b0d7381c7435503275c579d693",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/venus-desktop.png",
+      "bytes": 72885,
+      "sha256": "bbc2d793fdc351e6a41ef1fcb0b4d1468f83fa0aecfc05d1cc3bc2d283de08ec",
+      "role": "current all-world validation"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/README.md",
+      "bytes": 28849,
+      "sha256": "54f8cd8ed960c0d423c1656261353d4cd17eed8fd6205d2828b4eb6aaef2a8ff",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/SCREENSHOTS.md",
+      "bytes": 3293,
+      "sha256": "e33c8f12813bab14cba83664f2d8596e42a1e9b39fd6f99a4d50db6eab9119d0",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/A-bench-desktop.png",
+      "bytes": 83499,
+      "sha256": "b5f81949156e74cd20902f25907b13ccd318d6ec56e17a15a8290490c5dbd554",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/A-board-desktop.png",
+      "bytes": 75585,
+      "sha256": "9e0493d547315c41b3324c4bbf8e165d9622a2b5549b76c27e3e7041cb8034e3",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/A-bookings-desktop.png",
+      "bytes": 463041,
+      "sha256": "b0c0dd860799c624f440929d7eb9c43fa00b430ea47a12a9c85638fad4615a95",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/A-home-desktop.png",
+      "bytes": 404043,
+      "sha256": "0d63a4159c25d3dba7dbb3863e270fd68420a5c8b8ba7f75a5170e87dbf7def5",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/A-home-phone-device.png",
+      "bytes": 356923,
+      "sha256": "1acfe655874b3044445d838b9279c753fbd633bc3418e5a1b5f276816cde3bdf",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/A-main-phone-css-390.png",
+      "bytes": 330505,
+      "sha256": "257c92746a91aa971f5a1b1b19bc72ee34765c6b97c32b3d82fb02a87c8061dd",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/A-main-phone-device.png",
+      "bytes": 366144,
+      "sha256": "3f832a7e3ab19ba6dc020ce48e7dc41010b062416a7c1f5b356e2f0461b6e68c",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/A-scoreboard-desktop.png",
+      "bytes": 315974,
+      "sha256": "ecb7d3b7514d61a210730e1491958b33843d42d5dc0a05749d4ce7a64f5f839e",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/fixture-flight-desktop.png",
+      "bytes": 1603860,
+      "sha256": "6212774a230a1cf7586977f05b961ce00f17ff07aa7adec89db3634b2facb484",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/fixture-flight-phone.png",
+      "bytes": 737767,
+      "sha256": "2696acc66f3d4d4c77827489ba4fd6613f0a8599401dedd145bc99b311131a4e",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-200pct-equivalent-reflow.png",
+      "bytes": 290828,
+      "sha256": "01edb3be9ea515a81f9cc185efb56b4cd57a089edd427db7aa556b9a14706cc9",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-bench.png",
+      "bytes": 82759,
+      "sha256": "7fd78f49ffe0d6634dc75cf3f53877633cb1d44ebd00d0b977913be57ce870bd",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-board.png",
+      "bytes": 68823,
+      "sha256": "71576da7abd1bb3fd3fd08be22469c2597d2f4857ee2a18299798ee9e0ec4cc5",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-bookings.png",
+      "bytes": 455316,
+      "sha256": "330489060a609b5c3e1bf0206e129527e51705af2d937fe092b84e855bdc96fa",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-connect-dialog.png",
+      "bytes": 212375,
+      "sha256": "d8b9f23b0493a9f1d65337d144896e21007253c79afeaae078a8763b6cce12fc",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-desktop.png",
+      "bytes": 391742,
+      "sha256": "c883d28daf38d67cd38e75a0fe3bc9ddba459a7893c0433a0f47b901f5f51bd3",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-feed-detail.png",
+      "bytes": 38080,
+      "sha256": "14e89ec5ad1e1f206022fe576f0e1dd0d664202f9add14b66ecc228fc06495ed",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-flight.png",
+      "bytes": 43921,
+      "sha256": "8ac78edfe9e7a24b327e64d5b5c8d5b25b68cc85b330a95555785c51cc5765f8",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-live-service-error.png",
+      "bytes": 396440,
+      "sha256": "e90c2d94fc60ee4ddc31486bedcfb0d25d72131fd8e4ac8796632f6b8a7b765a",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-method.png",
+      "bytes": 652104,
+      "sha256": "f0483a77e8cbbd42fe8ce4dcbfdba3b4951e698458170514d80878bbb1180967",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-no-webgl.png",
+      "bytes": 462822,
+      "sha256": "7f79ac76d697d2d9c7d43ffd7b99e58956324d97961086b3087127f2bd54ed8e",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-phone.png",
+      "bytes": 370453,
+      "sha256": "92f07eac041318e12f361ed9cfcdc9aeaf55bbb19753b23cea0f3fcb3088cd6a",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-phone360.png",
+      "bytes": 369629,
+      "sha256": "db57c877facfb4095bf345f1c83291533ea364f116dac812226d993732e82745",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/screenshots/main-tablet.png",
+      "bytes": 366269,
+      "sha256": "db2637fb7ee41236bda846ebeae91de41b77878ad0b43609d87d268ad36f8a78",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/supplemental-check.cjs",
+      "bytes": 4072,
+      "sha256": "4daa6d410a12960c86f34b066728b17fac165f2c5c9d90e768724f04e0f1d272",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/technical-check.cjs",
+      "bytes": 5231,
+      "sha256": "91e0257c8d6fff2e889deb2778594aadbc29459f77171bce20a315146b1985aa",
+      "role": "historical audit and integration evidence"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/artifact-manifest.json",
+      "bytes": 2233,
+      "sha256": "fdbd2639b1e61a2c9b3ce370f448dc456bc0da757b0f5b4828f78073ae920827",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/compare.html",
+      "bytes": 4290,
+      "sha256": "0f54b4c1b8655977ffaaf55ecbe49e8ab4540269baf11005574f85a51ed36537",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/comparison.png",
+      "bytes": 661740,
+      "sha256": "dc06031533b3a1489a67b53585905e4763540736510cf3ab6bb6751ed4b5093e",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/departure-lounge-desktop.png",
+      "bytes": 214982,
+      "sha256": "7db6afc84b6b327f26956c4986b440022b49ff4b8a6606e81fc6c113cd92e803",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/departure-lounge-mobile.png",
+      "bytes": 98531,
+      "sha256": "233589602881539a14b7ba541ac9725d5e32e813dd8b66e4c05e76aafda09224",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/index.html",
+      "bytes": 32584,
+      "sha256": "6b2552b5206aa5b8308ed50dd490a2f7c5245808e43348bb6cf50270b893b6f1",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-desktop.png",
+      "bytes": 244313,
+      "sha256": "832c840a98d2307d18853818f022101f788940efd629252241ea0424233325ca",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/app.js",
+      "bytes": 17363,
+      "sha256": "f115fa878c71d7069e31e0f8994334a459d304220fc01ab9ce5d4df0b54a360a",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/asset-manifest.json",
+      "bytes": 5234,
+      "sha256": "dc20a411c37e50ece842930a41cebc99853b3a12845810cd800f434b8e024744",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/ASSETS.md",
+      "bytes": 5106,
+      "sha256": "ef03bf4ddc41b1288da651650b602fdda289ab3a3f5dd35a383008dc04afc753",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/design-version.json",
+      "bytes": 664,
+      "sha256": "96bbf2a46e671fba74dc0596529119dbab9554d4a95fcb469c0c871bd03fab8d",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/earth.jpg",
+      "bytes": 159915,
+      "sha256": "b476c28b3e2b96c4a1c10f2bc020ed8e561c178a928aa9c6aa77dbb43a022c93",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/Inter-OFL.txt",
+      "bytes": 4380,
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/InterVariable.woff2",
+      "bytes": 352240,
+      "sha256": "693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/kestrel.png",
+      "bytes": 1972367,
+      "sha256": "eb486782c0415389235710e773d902b908e2f4590629e6401e63a2ad6a9075cc",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/moon.png",
+      "bytes": 684323,
+      "sha256": "af0f9a0ded97fcc26b1a39636ed46a3c8e0f353674a52d941c316223bb1ea12b",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/sky-engine.js",
+      "bytes": 524087,
+      "sha256": "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/sol-art.js",
+      "bytes": 25789,
+      "sha256": "cdc136fdc19d7bf4dbb93871ecba391c02f351226de8efd7fba121cc6ceebf25",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/SOLAR-CREDITS.md",
+      "bytes": 6042,
+      "sha256": "19366aa890f57b53df5848c0b0af706fdaeaec51451444e4cd8c50a49eb1f880",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/stars-bsc5.json",
+      "bytes": 207685,
+      "sha256": "4909986a471140e214220cef4ac5ca445f21bfdf8835aa7a16a4df0dba7a7ad1",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/system-snapshot.json",
+      "bytes": 152890,
+      "sha256": "3dcd0c1e139e8967cb542e510a24deb10b764285f5f81f6088cdd93cae624588",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/bennu_1k.jpg",
+      "bytes": 139187,
+      "sha256": "2d1c1abb1489d126134e38e29398f2e95773e9bccdb72475fc686dec92c4760b",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/callisto_1k.jpg",
+      "bytes": 71913,
+      "sha256": "c7876895bdcf5b8ef525805b59ecc13db49bff4fa82196b84c55ba77134b6591",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/ceres_1k.jpg",
+      "bytes": 144345,
+      "sha256": "014381b6eece188a4e85affdc6c63f1c77994ec144039b5a6545aa01097e08db",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/earth_day_2k.jpg",
+      "bytes": 309272,
+      "sha256": "37577bad09c8f818ab7eb7ce81a93a270a98257e7ade914055e0ab7d4081aae1",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/earth_lights_2k.jpg",
+      "bytes": 53152,
+      "sha256": "c80c5e956b22f53d416cb91565929aa77c7aa9db41532b80a45604100ada1a75",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/enceladus_1k.jpg",
+      "bytes": 123875,
+      "sha256": "de11146eab93045dc9484e9759a1619b0a876d54651c265c65df1b1a8d472913",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/europa_1k.jpg",
+      "bytes": 87090,
+      "sha256": "2277e0139711a947c1cf05d2c21448551f00767881cb25b54e0eea0e2a79ff36",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/ganymede_1k.jpg",
+      "bytes": 115346,
+      "sha256": "1bf66f45b5a82f903144cbb4dc53050cc099d1cc4a0448d60f290b0bb1eb6742",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/io_1k.jpg",
+      "bytes": 78635,
+      "sha256": "b5ef6c0cd4e4b7548a8e6ab94046609bc80e5ff896e0b944997fa4e5025b02b3",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/jupiter_2k.jpg",
+      "bytes": 224665,
+      "sha256": "e5a41dd2875d7df09fb5a9013d46543e7b11ddd4fdca964fa3bc9dd5e9cde536",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/mars_1k.jpg",
+      "bytes": 115767,
+      "sha256": "2bdcb98cf52155af135e404fbb55f8559f991de9ec33ed86ac18e6a23a1b083d",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/mercury_1k.jpg",
+      "bytes": 103490,
+      "sha256": "5adab5fc0e1d40c98961ced753b34d47df3542c510d85e0f15f4e1474b8745ee",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/moon_1k.jpg",
+      "bytes": 84828,
+      "sha256": "34f0778221ecda7f130488c38844d688e20d1280b2762685bb66c8f550066866",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/neptune_1k.jpg",
+      "bytes": 15396,
+      "sha256": "e59c42801acfa3664d794182f8a5c1a4017913e0e8afeb0adcebbd53abe72fe9",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/phobos_1k.jpg",
+      "bytes": 73204,
+      "sha256": "d9c6e123080d7886b9d5567608ba7c9ffbf67435d4a998437df4c5dc7fc68bdc",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/saturn_1k.jpg",
+      "bytes": 27847,
+      "sha256": "64d9bbd861d09a33f6dc40efc1f7c061977697c5a1141a7c69726da3fd6c1075",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/saturn_ring_1k.webp",
+      "bytes": 3056,
+      "sha256": "eacd635d805929032818ed11b180ff1e9e7baf1c9e49d94d0db2ec20941e402b",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/sun_1k.jpg",
+      "bytes": 98812,
+      "sha256": "f6252d3effda6362b37ee85c40fe96db869abcca6063550ba3b8d7d468070706",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/titan_1k.jpg",
+      "bytes": 25184,
+      "sha256": "9369e39049ee773136dfd033604dbd57ed0f7d8a622f3d15e25c68e163c3ffef",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/triton_1k.jpg",
+      "bytes": 27275,
+      "sha256": "d876e9d5694b67b3c49f62730989a670114d9a9ddaaf78375f1508ed0f170e29",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/uranus_1k.jpg",
+      "bytes": 8222,
+      "sha256": "6b91e1b066295cbe7474cd6b6c103d061fc1f3378dfe4e54ef3f4f53bf996cbd",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/tex/venus_1k.jpg",
+      "bytes": 32043,
+      "sha256": "7d697dd0a5f4142e1507bd7ff8e6f0742e2f2bf886791b8b7bea9c4a4043a789",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/THREE-LICENSE.txt",
+      "bytes": 1081,
+      "sha256": "7dddf7c5b8fd10ee654db8857d75d104b5557889aa5a91fc4ca545ea7c07062f",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/assets/three.min.js",
+      "bytes": 603445,
+      "sha256": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/build-snapshot.cjs",
+      "bytes": 1422,
+      "sha256": "8a35114a6a2d51bb455f34efa4c5e257ea4b003fa507b083b7661f13ab574ce4",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/CANVAS-DIRECTION.md",
+      "bytes": 3035,
+      "sha256": "1303f9a3ebb45c32dbe41926eef0481a99ef70fc4e8dfdd063ea7a5c7b66a0f0",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/canvas-docked.html",
+      "bytes": 7116,
+      "sha256": "e207b5488c1f0ff30c7eddb33f70426e0e55a3ba5729a62e2750c8c2250bee10",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/CANVAS-README.md",
+      "bytes": 8030,
+      "sha256": "1cf202a0ef9e873baaafc48ff11a80da374b2ba9bc8fd90b95beb26a35083fa5",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/canvas-static.html",
+      "bytes": 6677,
+      "sha256": "34a044f09592e8c148e555bfd7530444b2c742c7e2f246041dea1fba24f6c567",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/canvas.html",
+      "bytes": 7545,
+      "sha256": "c321f1bd891deff0ae42104ac90828a265f5d68b0eac0a12d69552f18b1c31f9",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/demo-flights.css",
+      "bytes": 1502,
+      "sha256": "8e16bd79ab5cee4014013a5c9df964ea89b4824cb1eca3956ad81a86685a0e60",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/demo-flights.js",
+      "bytes": 4769,
+      "sha256": "03eab1d88c28a0036f3d1d1e383e32d0eede066e2301169b0fb52eb54e898e59",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/DEMO-FLIGHTS.md",
+      "bytes": 3034,
+      "sha256": "2972957b5188c264c06b8e959678d344fc0524fdb892b08a34e3b6f76ade55ae",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/DEMO-README.md",
+      "bytes": 7343,
+      "sha256": "11acabeeb2e0f6ee0a8a9af73506414de38df4ed16c8445687d0c7b425544291",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/detector-demo.json",
+      "bytes": 5608,
+      "sha256": "f4e0c6eab3b63b69bbb48728e1230ea0a9c53b50ba7fb2b775284e39cecb330e",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/detector-living.json",
+      "bytes": 10528,
+      "sha256": "e7c19ada2446dda78193eb7fe2f272c9831a47d69a5886a4d914c87e9cd84357",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/detector.json",
+      "bytes": 11630,
+      "sha256": "e2e878102404f367eaaa1d3167699320836b7d0e4c63497f426628cfaadd5525",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/DIRECTION.md",
+      "bytes": 3458,
+      "sha256": "ba8e9d1cbdf4eb299843bd27a4ed90f815daab97bea694fcfe344cfbca5765ee",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/finalize-sync.cjs",
+      "bytes": 2420,
+      "sha256": "2598e4a4688fd326a0652f9cb2abcc2ba519405e7677fd16daec7380f3db806a",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/finish-demo-checks.cjs",
+      "bytes": 822,
+      "sha256": "07173b0f8c8d2d19d731dce0e4143383ba638ff66bb5bfffa8645f7f304cf1d2",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/finish-living.cjs",
+      "bytes": 1316,
+      "sha256": "d49f68855b5c8b50736efc116974b8a50fdf74b62d9a82b70090aeff9ceb19c9",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/index.html",
+      "bytes": 7545,
+      "sha256": "c321f1bd891deff0ae42104ac90828a265f5d68b0eac0a12d69552f18b1c31f9",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/LIVING-DIRECTION.md",
+      "bytes": 2969,
+      "sha256": "9160ff2ccdd5b5e99e9458e51a1322157b86cf8646270b8a795ab0c5585f4908",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/LIVING-README.md",
+      "bytes": 7192,
+      "sha256": "ca838a42f8cd14004167c232d29b2b6e3c76f7d8e8471b94140853d6a41eaf4e",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/living.css",
+      "bytes": 6644,
+      "sha256": "a63070477db8ae4875529b94683fa1be4d22b8312d8dbe4e4b0dc08af22babd1",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/MOTION.md",
+      "bytes": 2627,
+      "sha256": "c63155a52b289f932b996beb9c77bf996265a0c7e21bf0ddbb3bc3ceb37f8257",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/PR-COORDINATION.md",
+      "bytes": 5689,
+      "sha256": "6b0a8803788e668d5615522d648c07b1db98a8605a843e51ba4a2e5b57d6d52e",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/preview-process.json",
+      "bytes": 338,
+      "sha256": "149f79aa0f6d69363d5c7b1fd05e76074361e306508e35cb67a6e6cccf348131",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/README.md",
+      "bytes": 7343,
+      "sha256": "11acabeeb2e0f6ee0a8a9af73506414de38df4ed16c8445687d0c7b425544291",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/recordings/demo-flights.webm",
+      "bytes": 748571,
+      "sha256": "81426cea4f431ac06e5d2848c065da74a25ab0efa1d5fb3920db0bbb56c6a09e",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/refine-living.cjs",
+      "bytes": 2224,
+      "sha256": "dd66375fc1686431a535b52063c8ebe98a667283612d1ec99d5f20ec51212f83",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/run-sync-tests.cjs",
+      "bytes": 1285,
+      "sha256": "6779d87eae0be72b37e85bd20b4f705327ad34ffbb0a189bd1d08750e7c8c012",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-error.png",
+      "bytes": 106308,
+      "sha256": "e65cd252ed03ffc4f2c3c5790f3d7645493a8a2d405df742c361431972cfb0bd",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-final-1280.png",
+      "bytes": 151439,
+      "sha256": "e23dcc216bb1c55d407373140da4d4f3a889482defeb8684a4bffaa9ccbd4f3a",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-final-360-activity.png",
+      "bytes": 59199,
+      "sha256": "cebb022758010e1368f48d08496b3ae02c7b16b95720e1e4163a543f3260d3b6",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-final-360-focus.png",
+      "bytes": 40882,
+      "sha256": "4d7c35a783849ee17c26a905995b238ebb93f2898209ae42e2512e2f3f9c59ba",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-final-360.png",
+      "bytes": 61318,
+      "sha256": "5f1989c8c3fffd56e9f8858bf1f4ce26c1997406f19ac92d0b15c70551bfcb74",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-final-390-activity.png",
+      "bytes": 61963,
+      "sha256": "c0b035715b302d94b937ba9be23be13a12fe537be33507d849815d164943992b",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-final-390-focus.png",
+      "bytes": 42812,
+      "sha256": "0d860c97e2f868c59755aa4c4db67b338e636b04f99552af0a02755e7a3f0248",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-final-390.png",
+      "bytes": 64080,
+      "sha256": "cb72f366a3a4e9fe649f3eaa5e756154829457c89e7c30901beaeda41084794f",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-final-900.png",
+      "bytes": 147724,
+      "sha256": "a329b52f93fc23a297c83c3fbcf32c15efc36f85784176dc4ca8fb632d064b9e",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-final-canvas-only.png",
+      "bytes": 113080,
+      "sha256": "f5b18d1042e5cbab83ca7998a2e31682e644d85d9c4afdc0222811caa6a87339",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-final-desktop.png",
+      "bytes": 187057,
+      "sha256": "bfd715e476b5ae68b40cfde38dc5929e97a9c107e2f8ea67b248e23795e48ea2",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-final-earth.png",
+      "bytes": 144304,
+      "sha256": "de4c4c5e71d7a342899a1839ee0b28809e76cedef435d5c09cf6b1b3c91e0689",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-initial-1280.png",
+      "bytes": 163513,
+      "sha256": "00d1d0c2fbf8289f317a16a6c3629a37891fcfb53bfcb97cc7c47cfac884d1d2",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-initial-360-activity.png",
+      "bytes": 64903,
+      "sha256": "9321cb744ad1d6f536fe294508e64f04e0504509072bc5ac24f121b1f29c9842",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-initial-360-focus.png",
+      "bytes": 68600,
+      "sha256": "a23ac6d9f53773db62f9fff0b1c2f0e5cfce1e9b040b0e9801702aace7f44513",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-initial-360.png",
+      "bytes": 67073,
+      "sha256": "f7bcb8f6d641080af2e30c298ece17dbe7a9776b8dd4a6e5f66eb4e8dbf34200",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-initial-390-activity.png",
+      "bytes": 67325,
+      "sha256": "4e3ae5fbd5575182c95b0590447030df2bddedb9257a5dffde67969e9b2c1fad",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-initial-390-focus.png",
+      "bytes": 74071,
+      "sha256": "676dd582875cfc9b271d988089b23ec8c7a8204ea50179b97b7e28e6f65eb669",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-initial-390.png",
+      "bytes": 69547,
+      "sha256": "e5195f0d7cb1a104c43df9cb92b615f27b4d690d3bd8ede1a4712f87b1694226",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-initial-900.png",
+      "bytes": 166336,
+      "sha256": "46589dfaec5788fdd162ab3de8b95a881e21ca5a5e0c4f3a4be595d109eb955d",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-initial-canvas-only.png",
+      "bytes": 114186,
+      "sha256": "9a3753c0fdf91a37d5d5d1ba4a89552a50bac124b9fe5f9dfcc973e85a56b306",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-initial-desktop.png",
+      "bytes": 186720,
+      "sha256": "3d3cf6b0087c2696f9bf0cd6cbfb7df010a6ea254bba72ba2973f4b760e1d4cf",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/canvas-initial-earth.png",
+      "bytes": 280619,
+      "sha256": "f78318645a06c0a43cf4afe3741c649ea76133f47feff29dc8a5021d40827ac9",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-final-1280.png",
+      "bytes": 147816,
+      "sha256": "e47621003d7680f8436b32ab4ee0fe06812bed74df253cca490d7b2b87982b73",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-final-360-focus.png",
+      "bytes": 53501,
+      "sha256": "80c57e1c9ef1e3c32f33c55d97232d500401fdd25309d1839b6f522f992a88c9",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-final-360.png",
+      "bytes": 78555,
+      "sha256": "4220bc606d61324521fd7d3cebe29feebab05544e3c6953badfda9c52bc27cb4",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-final-390-focus.png",
+      "bytes": 55549,
+      "sha256": "2a235b93fdd557432eb5057874864f8448ff63a636cec7c2d9a861b8ee6e3ccf",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-final-390.png",
+      "bytes": 81196,
+      "sha256": "d250a20a0982f338d985e8d6b1954c712330e3501be2b84d941b03ff702f595a",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-final-900.png",
+      "bytes": 155749,
+      "sha256": "bf23e639c4767b123cdff61a629356918df3f704ca0c54e8b42d302bce9882f9",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-final-desktop.png",
+      "bytes": 172972,
+      "sha256": "eef456926d4f09379c01ab797a440165c1d04f68a0f89fb8d044290009149cd0",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-final-earth.png",
+      "bytes": 123392,
+      "sha256": "b053e5f9932b2d5e3af725d215cb05a483ee0a37d555f94504c7e003f5b6f638",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-initial-1280.png",
+      "bytes": 150793,
+      "sha256": "fcec9f8f3a5ebd6535b9b41c2b0a7e29a93b46d13cfed36968aa13bfb17ee7a2",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-initial-360-focus.png",
+      "bytes": 54608,
+      "sha256": "dbb51b23cd784c057a61a336c113b2e15cb387ae6a275204da139d87f416010c",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-initial-360.png",
+      "bytes": 80781,
+      "sha256": "5dbd74eebc0a1ace29191547bcd08c1e4085e95564f9130c84e4e529d7039c84",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-initial-390-focus.png",
+      "bytes": 56401,
+      "sha256": "c1fba2ab40c8f241830821fbca43bbc041372c8a2c0f6a21576603620dad7781",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-initial-390.png",
+      "bytes": 83552,
+      "sha256": "2eba5c34b47dab08908a37de2b6cfc3f15055f71f7a7ef010d5655e471f2a57f",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-initial-900.png",
+      "bytes": 158178,
+      "sha256": "0d3aa7b5b30d35dc281c2247edf6bacaccf3c26fa1c6a9e1861ce58035c5a1aa",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-initial-desktop.png",
+      "bytes": 175992,
+      "sha256": "2b144913ce538e68d7adb1c066cd34dc64423d3e4fae914da2c277aab64f585c",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-initial-earth.png",
+      "bytes": 124326,
+      "sha256": "0ffeecfcfc703303065d3e4316c25bb2cd90cc217c362cf8ee21a336b65a70e8",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-synced-1280.png",
+      "bytes": 148111,
+      "sha256": "8ef63ee9909f4b76592a53e9d2ed118440ecf2f4d5ddd07d6e9b3edc895034df",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-synced-360-focus.png",
+      "bytes": 53873,
+      "sha256": "4d83c5d79c73f390f7f7773c6ae629aab6c5b2d8cd316c9ef33101363cd4c457",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-synced-360.png",
+      "bytes": 78671,
+      "sha256": "a2da1c203be001c20719417184e579fad3ed6e62efd47e0bc59ffddbcc7a18ef",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-synced-390-focus.png",
+      "bytes": 55582,
+      "sha256": "31f553a1628eea7a71be7634bcb81c769d96ece3ad85c469707381f064455163",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-synced-390.png",
+      "bytes": 81314,
+      "sha256": "6801a6b46fc2720520e8641a2b111b0c15b7f771561582665f33fd8aa62f9f70",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-synced-900.png",
+      "bytes": 156014,
+      "sha256": "4bf9437fc63b5f2167f71b9f835cb920a2f281a5c90af111bcee05eb0c538891",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-synced-desktop.png",
+      "bytes": 173034,
+      "sha256": "10c1db6b920e2e9866e01842327d02ca0fd18747fca4cdc7ec466657ad9a244d",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/demo-synced-earth.png",
+      "bytes": 123662,
+      "sha256": "179559e358a5259f03ca59283bacbbad9133e665c2ba49b060fb030cee17a6aa",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/final-360-map.png",
+      "bytes": 236943,
+      "sha256": "66f4e18833568fcccc95445586966249115b21e5b970fcf0ff62001cfcc9d0bd",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/final-360.png",
+      "bytes": 169451,
+      "sha256": "1c7669919ae64958c13241af7675a4eaaf066468920a8dfb79685c511c9fe43b",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/final-390-map.png",
+      "bytes": 243267,
+      "sha256": "cfe6a26923b7a6a416cb3b951be82ba8ad5aaaca954d2e95c226be51f1996b31",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/final-390.png",
+      "bytes": 170951,
+      "sha256": "73265c1e87a5322e721583b43ddac74555d8063a1b65a7e800c2d1d74b15e5cb",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/final-768.png",
+      "bytes": 265024,
+      "sha256": "cc1bd7476ec55564f7c8004c9293ba1f36975ebafb537d2bd68ce73d0b89fc9b",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/final-desktop.png",
+      "bytes": 307905,
+      "sha256": "b978d96f1107a2e18f71b1f92bf68be06b25d60cc2f420b2596b76b23b158477",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/final-empty.png",
+      "bytes": 171257,
+      "sha256": "b7c052d1c0fe1ce15d72052f4d2fd92db87bc41ac2188d10bcf31bc7dec87d3d",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/final-loading.png",
+      "bytes": 166615,
+      "sha256": "9b73d2aac2e21e6ee53f07d01d68c4acb56eb14d288b3e4a6db8ff1cca208845",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/final-manifest.png",
+      "bytes": 176104,
+      "sha256": "cae735dc331fc5c5cd94034a2c0f1cdbdf871079fda0e3780d6b52c7a7915220",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/final-replay.png",
+      "bytes": 147118,
+      "sha256": "fabc695b437c1c6a41a49d153d3103f6a33d39b577df12c990f3234dde791267",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/final-unavailable.png",
+      "bytes": 175669,
+      "sha256": "f8c0626256322e19653ab1f8bd0eac0e3cadc75fd918813e197fb4d1281c433c",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/initial-360-map.png",
+      "bytes": 222469,
+      "sha256": "912279bdba084d90cbda8ca905d890625cf97dcd07e8bd250e5d9a2fd2b933af",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/initial-360.png",
+      "bytes": 168230,
+      "sha256": "74714fab8cafc395138591d88b7ea819270670571a4e893c2291e31664c6f054",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/initial-390-map.png",
+      "bytes": 228161,
+      "sha256": "83161ff1539f856539fcc47043509e3c1aa61f62407c18d957ec736b7763274b",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/initial-390.png",
+      "bytes": 169708,
+      "sha256": "376ab42dceced60c5e290a82ae4d1cf2a5fdd260479fcd3690e1585cce50e18c",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/initial-768.png",
+      "bytes": 260054,
+      "sha256": "a66caf9b0f0131375df56baece0535b23d912cf255f4816a59f69cc48a45b7d6",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/initial-desktop.png",
+      "bytes": 301450,
+      "sha256": "c091c1fb41c9b63e2111b5676d5ee125aa9c9069a4144f26d3911b5b36b4a763",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/initial-empty.png",
+      "bytes": 169988,
+      "sha256": "5a39eb31835c4383891ad3552c49a757f2df808abd28531b8714c123aa1eefca",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/initial-loading.png",
+      "bytes": 165579,
+      "sha256": "9f7dc7e510f2a4bfdb7d17ac2117977ab88d7d526fabbb3bc3f79df64fddf15d",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/initial-manifest.png",
+      "bytes": 189754,
+      "sha256": "2af54ec3b64468b8221073d49fba6251b2267027920ebeb6a3b3d730646bbf2f",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/initial-replay.png",
+      "bytes": 156226,
+      "sha256": "2167354b7d1ddc83905ac3e6a77520357787efe0e4c4f76e5317f2993ba549c5",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/initial-unavailable.png",
+      "bytes": 173567,
+      "sha256": "4929f223484074ae7ac44ca4c8f423716687ba62d9c01b8cf0ef7a6f57d7ce9d",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-final-1280.png",
+      "bytes": 146410,
+      "sha256": "86e93c28a56431af65d3ddfe30ff783e448c85d53e8a0bed544ae07e6761997b",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-final-360-focus.png",
+      "bytes": 47814,
+      "sha256": "5f2acccd2dc9c2f5cfe8c6b2f5e974f92af672321d644bb7917524187cdc1c5a",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-final-360.png",
+      "bytes": 81527,
+      "sha256": "5b2edbb09ca3057d15fff01a5a4aa00c591cb822ee2134d12b9477ff1050b73d",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-final-390-focus.png",
+      "bytes": 55429,
+      "sha256": "28755d6ccd19e635b3ab0ffa8b89c551b1af250dd2bb82044c8109cad3b5ffd0",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-final-390.png",
+      "bytes": 84486,
+      "sha256": "0d9966d3a864cf18b2c9a5e2854c2a75aae8e38aa06d04566e670b8c0ec96202",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-final-900.png",
+      "bytes": 154606,
+      "sha256": "1121b069f22518b803ed0481a6900f95cbcad9a45fb318b411102cd99a9b3d72",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-final-desktop.png",
+      "bytes": 172957,
+      "sha256": "3fef4dab1fd0334e9ca9eedb225bce123025ab8fd4066d254495c2ad08035361",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-final-earth.png",
+      "bytes": 123898,
+      "sha256": "3d65392f2316b9ffa27a3a107f3c7f0fe2fc16c2492fabb387e63d55322a5a58",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-initial-1280.png",
+      "bytes": 146095,
+      "sha256": "e3f003da18bbcb97d00038cad9744cd39d5d02993c21fa81e8bf48932206118e",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-initial-360-focus.png",
+      "bytes": 47359,
+      "sha256": "134613b7daee6277fb7f58d356d662ef2f9ef04feda6f46c980af7d1fe1faf2a",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-initial-360.png",
+      "bytes": 75007,
+      "sha256": "f725748326530cbf8b024ac9392b998470d55e9a0cfd3d4e4ce5db4bcaad1e91",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-initial-390-focus.png",
+      "bytes": 54840,
+      "sha256": "19e3b031d11d184813f0a661bc3d8ed7918133f281dce8e648db8dfe1ebbbc40",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-initial-390.png",
+      "bytes": 83438,
+      "sha256": "77698dbb67f429a0c5e7a70d424fd48f4cd61c84fa2043fffb45b8ae34eafa66",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-initial-900.png",
+      "bytes": 154294,
+      "sha256": "25deb097e98bb44c4c559eab0f0d7e79e13bfa9aa1d22705aee4ead758bcc677",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-initial-desktop.png",
+      "bytes": 165350,
+      "sha256": "90191767ad87d5e3033a0dc05dfd4c83a15536e87b688ce9b7150a1984f22f4a",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/screenshots/living-initial-earth.png",
+      "bytes": 124195,
+      "sha256": "65fa8c35c0efac0f705427a8e5b6440dd8e55350baaa327b407eca06db893e46",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/serve.cjs",
+      "bytes": 2463,
+      "sha256": "c8de2b169c432eb6eefe07e5c06ca4bebd17a3f7af0ab6d5569b209455ac6491",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/SKELETON-README.md",
+      "bytes": 5601,
+      "sha256": "29d1d89d4de4a721c8c0f479634d5fca568e5a75cb331f90509cf4cb382415a8",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/skeleton.html",
+      "bytes": 10302,
+      "sha256": "62dba2107e3a192ae7664272cd7028e144b757e3a2db88b5a03c86634027a8f4",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/sky-motion-docked.js",
+      "bytes": 4028,
+      "sha256": "6600aed72a67a89358af5b5366e6a7c282782800c51e7a3550d4487e946e042c",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/sky-motion.js",
+      "bytes": 4170,
+      "sha256": "4e228afe2a504b6a8b6923c72e5d1509e52d195bf18d100a20b16354460c3b82",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/solar-docked.js",
+      "bytes": 28111,
+      "sha256": "e84759c429263ffd98a362510c367ed4729bcbac4da5ca9be994cdedda507828",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/solar-static.css",
+      "bytes": 15682,
+      "sha256": "87d700f957d30b54eaa12a4a67f612909492c610db8dc88775a05a52f7ecdfa0",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/solar-static.js",
+      "bytes": 25182,
+      "sha256": "61f1c74e94802883d770998a91ea04b789be99254b661fec117363ea0c2c6137",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/solar.css",
+      "bytes": 15682,
+      "sha256": "87d700f957d30b54eaa12a4a67f612909492c610db8dc88775a05a52f7ecdfa0",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/solar.js",
+      "bytes": 28960,
+      "sha256": "b7d7dd2047f18b37fd05b89eca8e775953ef1069481738cf755473e99a5d4b86",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/styles.css",
+      "bytes": 21210,
+      "sha256": "2816e760ea2d93cd810d1b32b0f8b4026117ce864dc115e5043d069f21765cf0",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/sync-compatibility.json",
+      "bytes": 1538,
+      "sha256": "26a7a79dc25ea23ba55b6434a906c3fbc67ad275606ce227670b6d98fc6af083",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/SYNC-HANDOFF.md",
+      "bytes": 4429,
+      "sha256": "9c528ed6f8d9f0d32b0d48ac445018752a885379d437a3ec46aed8bee84cc614",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/sync-preservation-final.json",
+      "bytes": 1384,
+      "sha256": "b8a16b7112041bde79d5f31c0d5dddefc2a5c8da5700c0d59aacb2fb335469fb",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/sync-preview-version.cjs",
+      "bytes": 2859,
+      "sha256": "3271d6691f882e568c4cb1c5b51d9833ed6c3c7adca0b24ea568b81083986cac",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/sync-unit-tests.json",
+      "bytes": 486,
+      "sha256": "a1e1eabdcce521e6738f1b76fb724bb5e9f8c08842359ba5f8ceaec5ee6f9b53",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/sync-unit-tests.tap",
+      "bytes": 5610,
+      "sha256": "f769d507d40cdfa9cb38b52a05fc06ca3ec321b42e8b5147fbde2833bb6e99d5",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verification-canvas-controls.json",
+      "bytes": 524,
+      "sha256": "206ae1fd058e7a0d2db0a22f40bcf46b0faf26a10309a44a2c11a8a4f225edc5",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verification-canvas-final.json",
+      "bytes": 3222,
+      "sha256": "45b099db959ca4aaf33d13df0a202a4c40923c1e29e6a4be1c328f6727df12ea",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verification-canvas-initial.json",
+      "bytes": 3224,
+      "sha256": "e62b7f6652bb11f02bf4d3a8e40f0b1d0833527469ba7d68e02cc4a39a89eba9",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verification-demo-final.json",
+      "bytes": 3783,
+      "sha256": "7fb7ef24a508474e9e8ae3daa11addeedd0604c70fb99494b8e3fd9fe5a3360b",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verification-demo-initial.json",
+      "bytes": 3732,
+      "sha256": "446c1c721725095bbe8831a36ed74989e6e933835e70a55ed03444c478e0dc75",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verification-demo-synced-server-down.json",
+      "bytes": 819,
+      "sha256": "8260a83abe21210863b390fc748fcac8678572f42f77e6d4d44caf7180bf6966",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verification-demo-synced-toggle-race.json",
+      "bytes": 3732,
+      "sha256": "b05238ed3f60d4766e147583cce2c36f8cc18af0ae97b69fce4ff9bf39c5c333",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verification-demo-synced.json",
+      "bytes": 3731,
+      "sha256": "bb387d822a1182f56752e92782eb677545769240c334a7e54bb061c7ea52d42c",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verification-final.json",
+      "bytes": 3250,
+      "sha256": "ef7098722dd3dd65797cb2302ce99a8777f25e9236291ee290df109ee88e2f50",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verification-initial.json",
+      "bytes": 3035,
+      "sha256": "015545dceeb82e1bd6e7b016982eca0602e662ba24ee70f0ade1387a175e6074",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verification-living-final.json",
+      "bytes": 5180,
+      "sha256": "ce92b88dbd524a182330fa87909150796e561c8fbff6579f37c6d2fb5fd6048f",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verification-living-initial.json",
+      "bytes": 5181,
+      "sha256": "8f4f9b51de3cf328ab2be2ac347e58a39317fd123579d506f9989e627895baa5",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verify-canvas.cjs",
+      "bytes": 6624,
+      "sha256": "c7dfba523c22b03b77309d571b9c4bff917aab19f73cbbef8248ae98f5e77d56",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verify-controls.cjs",
+      "bytes": 1876,
+      "sha256": "0ff7dd79b969bd1c2f15a8709bf287740771ab6047d797c52cfba0e77815fcdf",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verify-demo.cjs",
+      "bytes": 8085,
+      "sha256": "083cbf1407dab6a2d1e33d9bbfb50033e2306cbf72ac438c97fc66a35111f31b",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verify-living.cjs",
+      "bytes": 7749,
+      "sha256": "c5609a6fc64e35da9e4365af451eb541c5d7368a3a4d80f0022d738a401311f7",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/verify.cjs",
+      "bytes": 7393,
+      "sha256": "45e47eca393f0f054e40479392319eccc24919412b79b981d2a8747aa49fb8de",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/wire-demo-flights.cjs",
+      "bytes": 4130,
+      "sha256": "2d16738a9f6b9a9971f93553460764c6f037b33ff5ccbfc59deda9d1eb6ea4cf",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-mobile.png",
+      "bytes": 92043,
+      "sha256": "adaf797adb4dc5cc18aa75fc3432accfd58ca9afd186ae7a682f8abac0d6b048",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/orbital-desk-desktop.png",
+      "bytes": 259044,
+      "sha256": "959f85c87d67a3af3d026927f41809dc6c041952bbe8d85fff76b6de9e4b1525",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/orbital-desk-mobile.png",
+      "bytes": 95757,
+      "sha256": "7636c735a3f25c1bd09230940ac1e637db2d0c6c4e14a6a5edce8ebc58b737c1",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/README.md",
+      "bytes": 10956,
+      "sha256": "41e322d7251271428cbf0670b64776609b190366466950ca54ed6b3e9cf1923c",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/serve.cjs",
+      "bytes": 810,
+      "sha256": "1014bcf5e45431f4d24d16f5b439929df61795344ff46ab421c4995663122d48",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/verification.json",
+      "bytes": 3242,
+      "sha256": "2aee74e7633ea488deacf4b5854789c629ea32b01aaebaca6ff68b7aae392f51",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/verification.txt",
+      "bytes": 46,
+      "sha256": "98f0a94043809fc4baf34c26f1a27ad5d655cfa3ee18e3ec932ac5aefa89fa86",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/verify-browser.js",
+      "bytes": 3889,
+      "sha256": "92cd1894d0a718f42e203d029147dfbe9d401a63766de3155a8a854d3d12b1f1",
+      "role": "historical standalone prototype"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/verify.cjs",
+      "bytes": 1704,
+      "sha256": "bfe101a5fc0c02fb076934b7db5c3570da31a0025f398b0cfbd18301c9116586",
+      "role": "historical standalone prototype"
+    }
+  ],
+  "localOnly": [
+    {
+      "path": "docs/design-audit/2026-10-17/design-source-reference-archive.zip",
+      "bytes": 5508678,
+      "sha256": "b4fee93f26a1d5b998456def0bb8fb98921946812a6ac74b8903ff8d0b61f322",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/app-process.json",
+      "bytes": 272,
+      "sha256": "bc9bb35d75acfd73cb2cbbdfdd186e3cc7f54f396b9bb1e841b558e491c63af8",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/local-flight.json",
+      "bytes": 16032,
+      "sha256": "f945777fc75ed137dee2d6e92e10c4e8320bd86b5d5f45a4d377e69bfe2462cf",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-expanse-page.html",
+      "bytes": 228682,
+      "sha256": "33a12165a76661fa2a1717c91ba174cb737a336d5c11ccfc282034dac0d80ebf",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/steam-1.jpg",
+      "bytes": 196870,
+      "sha256": "081b9bc29c01aacc32cdabc4ffbb9f09c6d2a9427941cda9fbdfa03940b979d6",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/steam-2.jpg",
+      "bytes": 154767,
+      "sha256": "c89f4b9e54e6ebb5775ca61983433a91101f8823c84fceef54de6911606c5c25",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/steam-3.jpg",
+      "bytes": 287656,
+      "sha256": "22fb7d13d5b73d106d591c2a65a5ac3479a93cf682162a9f3973eb484be0ca04",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/steam-4.jpg",
+      "bytes": 116640,
+      "sha256": "800034560b424938affc8366e2b81a0bdb3b3674b6de6d6c5c92e1c4bee002a4",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/steam-5.jpg",
+      "bytes": 250102,
+      "sha256": "3a3e4b926056a1f8bdcacfabc56e525e50c677a48522deb78fed61d1b9f1f4c8",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/steam-6.jpg",
+      "bytes": 108728,
+      "sha256": "182e5421fe7701def179e3a8556c4286c5bfe1ade3510dd2f9d2f06834a7b663",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/steam-7.jpg",
+      "bytes": 165674,
+      "sha256": "58a1a6cca2e7d95b9a9cfc3f2b813409ea562d10c90fab01ab99f2cb7c645a22",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/steam-8.jpg",
+      "bytes": 295871,
+      "sha256": "b4520841336d865e7fdda9adc1bed31deb6b11a2db0f70bcaff42d222e16ce92",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/solar-reference/steam-9.jpg",
+      "bytes": 239544,
+      "sha256": "0db9cb63aa3cc5c9dcabb2e4bdf35a4c0ba84ee1ff29e93762a5c08f2a20848b",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/integration/worker.log",
+      "bytes": 195398,
+      "sha256": "35e9dde10a2115cc7a9a1b3c1e4b85c5b018340a335281efe0cd54cdea67a88b",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/full-interrupted.tap",
+      "bytes": 17333,
+      "sha256": "d0b85b272064e603c95a694de44ec93736fa9c39f62efd9629875e0b243fa13b",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/local-earth-flight.json",
+      "bytes": 19960,
+      "sha256": "af4c16d0c2c15a6a5d291caacda40aee4289bc280ab6b46fcdeece8ff378eb6d",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/sources/2k_earth_clouds.jpg",
+      "bytes": 965676,
+      "sha256": "fffd7f68d41b37274822150e54a6ef605af1d3ec35624d9f628c3b896bfa42ed",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/sources/2k_earth_normal_map.tif",
+      "bytes": 521376,
+      "sha256": "f518ce2646ca935dbc17e316041de4fea7a5da0ec441e4eb22e711eabd843ba2",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/sources/2k_earth_specular_map.tif",
+      "bytes": 338524,
+      "sha256": "6b90ecfce248591a1ecc9a3e49acca1a7059b6828877e718302ed9a6b4471bd7",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/sources/ldem_3_8bit.jpg",
+      "bytes": 111552,
+      "sha256": "6d93f887e7d8bedfe35ab89ba785e5e3ca12381bd092a5e6abe2c707dda8bb98",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-audit/2026-10-17/planet-effects/sources/ldem_4_uint.tif",
+      "bytes": 2076866,
+      "sha256": "e6668bec27fc9b8fbb02d198c7ddfb08eedeeb790167b494f95e6b34201da05e",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/preview-sync.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "preserved local research or runtime state"
+    },
+    {
+      "path": "docs/design-variants/2026-10-17/mission-control-final/preview-sync.stdout.log",
+      "bytes": 42,
+      "sha256": "155ff783eb4f9181bb2a3c9f6f0eccb80e911a4c21f972cdd05020ed9e70f99b",
+      "role": "preserved local research or runtime state"
+    }
+  ],
+  "omittedCaches": [
+    "docs/design-audit/2026-10-17/evidence/.impeccable",
+    "docs/design-variants/2026-10-17/.playwright-cli"
+  ]
+}

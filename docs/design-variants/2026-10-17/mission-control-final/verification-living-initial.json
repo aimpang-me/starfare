@@ -1,0 +1,269 @@
+{
+  "round": "initial",
+  "checks": [
+    {
+      "name": "Sky runs by default",
+      "pass": true
+    },
+    {
+      "name": "Sky clock advances",
+      "pass": true
+    },
+    {
+      "name": "Planet position follows sky time",
+      "pass": true
+    },
+    {
+      "name": "Three sample ships stay docked to parent offsets",
+      "pass": true
+    },
+    {
+      "name": "Pause freezes clock and bodies",
+      "pass": true
+    },
+    {
+      "name": "Paused renderer is idle",
+      "pass": true
+    },
+    {
+      "name": "Pause button names resume",
+      "pass": true
+    },
+    {
+      "name": "Earth more legible at overview",
+      "pass": true
+    },
+    {
+      "name": "Jupiter more legible at overview",
+      "pass": true
+    },
+    {
+      "name": "Ship artwork visible",
+      "pass": true
+    },
+    {
+      "name": "Ship assets loaded",
+      "pass": true
+    },
+    {
+      "name": "Booking panel reduced",
+      "pass": true
+    },
+    {
+      "name": "Activity starts collapsed",
+      "pass": true
+    },
+    {
+      "name": "No redundant fleet panel",
+      "pass": true
+    },
+    {
+      "name": "Ship inspector names docked state",
+      "pass": true
+    },
+    {
+      "name": "Manifest opens",
+      "pass": true
+    },
+    {
+      "name": "Dialog focus stays contained",
+      "pass": true
+    },
+    {
+      "name": "Escape restores focus",
+      "pass": true
+    },
+    {
+      "name": "Agent activity filter works",
+      "pass": true
+    },
+    {
+      "name": "Replay retains held sample",
+      "pass": true
+    },
+    {
+      "name": "Local replay excluded from activity",
+      "pass": true
+    },
+    {
+      "name": "Earth focus shows Moon",
+      "pass": true
+    },
+    {
+      "name": "Keyboard camera responds",
+      "pass": true
+    },
+    {
+      "name": "Modal suspends sky time",
+      "pass": true
+    },
+    {
+      "name": "Closing modal resumes requested playback",
+      "pass": true
+    },
+    {
+      "name": "Hidden-state event suspends sky",
+      "pass": true
+    },
+    {
+      "name": "Preference change pauses sky",
+      "pass": true
+    },
+    {
+      "name": "Reduced motion skips dialog fades",
+      "pass": true
+    },
+    {
+      "name": "Reduced motion starts paused 1280",
+      "pass": true
+    },
+    {
+      "name": "No overflow 1280",
+      "pass": true
+    },
+    {
+      "name": "Reduced motion starts paused 900",
+      "pass": true
+    },
+    {
+      "name": "No overflow 900",
+      "pass": true
+    },
+    {
+      "name": "Reduced motion starts paused 390",
+      "pass": true
+    },
+    {
+      "name": "No overflow 390",
+      "pass": true
+    },
+    {
+      "name": "Larger canvas on phone 390",
+      "pass": true
+    },
+    {
+      "name": "Earth visible on phone 390",
+      "pass": true
+    },
+    {
+      "name": "Phone ship artwork visible 390",
+      "pass": true
+    },
+    {
+      "name": "Activity sheet opens 390",
+      "pass": true
+    },
+    {
+      "name": "Locate expands scene 390",
+      "pass": true
+    },
+    {
+      "name": "Reduced motion starts paused 360",
+      "pass": true
+    },
+    {
+      "name": "No overflow 360",
+      "pass": true
+    },
+    {
+      "name": "Larger canvas on phone 360",
+      "pass": true
+    },
+    {
+      "name": "Earth visible on phone 360",
+      "pass": true
+    },
+    {
+      "name": "Phone ship artwork visible 360",
+      "pass": true
+    },
+    {
+      "name": "Activity sheet opens 360",
+      "pass": true
+    },
+    {
+      "name": "Locate expands scene 360",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "failedResponses": [],
+  "process": {
+    "node": 68636,
+    "browser": 97408,
+    "browserClosed": true
+  },
+  "startedAt": "2026-10-17T22:53:23.622Z",
+  "desktop": {
+    "ready": true,
+    "mode": "system",
+    "zoom": 1,
+    "yaw": -0.35,
+    "tilt": 0.69,
+    "drawCount": 26,
+    "epoch": "2033-09-10T03:20:00Z",
+    "orbits": 9,
+    "bodyCount": 11,
+    "shipPosition": [
+      13.923877253143809,
+      0.15009954246151122,
+      3.256523948498172
+    ],
+    "target": [
+      0,
+      0,
+      0
+    ],
+    "skyPlaying": false,
+    "skyOffsetDays": 0.978900000000002,
+    "currentEpoch": "2033-09-11T02:49:36.960Z",
+    "earthPosition": [
+      12.273877253143809,
+      0.00009954246151123052,
+      2.5565239484981723
+    ],
+    "ships": [
+      {
+        "id": "SF–01",
+        "visible": true,
+        "offset": [
+          1.6500000000000004,
+          0.15,
+          0.6999999999999997
+        ]
+      },
+      {
+        "id": "SF–04",
+        "visible": false,
+        "offset": [
+          1.4000000000000004,
+          0.15000000000000002,
+          0.40000000000000036
+        ]
+      },
+      {
+        "id": "SF–07",
+        "visible": true,
+        "offset": [
+          3,
+          0.2,
+          -1
+        ]
+      }
+    ],
+    "bodyPixels": {
+      "mercury": 12.75,
+      "venus": 18.75,
+      "earth": 24.000000000000004,
+      "mars": 15.75,
+      "ceres": 6.3,
+      "jupiter": 40.5,
+      "saturn": 32.24999999999999,
+      "uranus": 24.000000000000004,
+      "neptune": 22.5,
+      "moon": 6.000000000000001,
+      "titan": 7.5
+    }
+  },
+  "finishedAt": "2026-10-17T22:53:30.055Z"
+}

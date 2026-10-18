@@ -33,6 +33,23 @@ The design mockups (`design/mockups/d-hybrid.html`, `design/mockups/f-ops-3d.htm
 
 The Yale Bright Star Catalogue, 5th revised edition (Hoffleit and Warren, 1991), from CDS catalogue V/50: https://cdsarc.cds.unistra.fr/viz-bin/cat/V/50. It holds 9096 stars with a position and V magnitude. Each entry keeps the J2000 position (converted to the ecliptic frame), the V magnitude, which sets the star's size, and the B-V colour index, which sets its colour. Nothing else from the catalogue is kept.
 
+## Earth and Moon material layers (October 17, 2026)
+
+- `earth_clouds_1k.webp`, `earth_clouds_2k.webp`: Solar System Scope Earth cloud map, [source](https://www.solarsystemscope.com/textures/download/2k_earth_clouds.jpg), INOVE, CC BY 4.0. Converted to grayscale cloud coverage, resized, WebP quality 90.
+- `earth_normal_1k.png`, `earth_normal_2k.png`: Solar System Scope Earth normal map, [source](https://www.solarsystemscope.com/textures/download/2k_earth_normal_map.tif), INOVE, CC BY 4.0. Resized and stored as linear tangent-space data.
+- `earth_ocean_1k.png`: Solar System Scope specular/water map, [source](https://www.solarsystemscope.com/textures/download/2k_earth_specular_map.tif), INOVE, CC BY 4.0. Resized grayscale mask; white marks reflective water.
+- `moon_normal_1k.png`: NASA's Scientific Visualization Studio / LRO LOLA, [CGI Moon Kit](https://svs.gsfc.nasa.gov/4720/), [unsigned elevation source](https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4_uint.tif). Height-derived tangent normals, 4x relief shading for the game globe, without geometric displacement. Latitude-aware slopes and longitude wrapping. NASA public-domain data; credit to NASA SVS / LRO LOLA.
+
+The six derivatives are reproducible with `python design/prepare-planet-assets.py` (Pillow and numpy, offline tooling only). Their source/output hashes and coordinate conventions are recorded in `planet-assets.json`. Surface and cloud rotation are illustrative and slowed; they do not represent live weather or alter the simulation.
+
+## Other-world material profiles (October 18, 2026)
+
+`planet-effects.js` reuses the credited color maps above for all other mapped worlds. Mercury, Phobos, Ceres, Bennu, Io and Callisto use matte diffuse shading; Europa, Ganymede, Enceladus and Triton add restrained ice highlights. No elevation or normals are fabricated from color imagery. Only Earth and the Moon have registered relief assets in this pass.
+
+Mars has a thin warm limb; Venus uses its existing cloud-top map; Titan uses the existing haze-treated Cassini mosaic. Jupiter, Saturn, Uranus and Neptune have body-specific atmospheric colors and bounded latitude-dependent map drift. These are illustrative materials, not current atmospheric measurements or game-weather events. [NASA Titan facts](https://science.nasa.gov/titan/facts/) describes Titan's dense atmosphere; [NASA Saturn rings](https://science.nasa.gov/saturn/rings/) supplies the physical context for the ring treatment.
+
+Saturn reuses the existing alpha ring strip with analytic planet/ring shadows; no shadow-map asset is added. The Sun reuses its existing texture and compact halo with subtle shader convection. Existing presentation tilt is retained. Slow appearance periods (180–720 seconds, with Venus/Uranus illustrated retrograde) are explicitly decorative, independent of ephemerides and replay timing; they are not scientific axial-orientation telemetry.
+
 ## Original work
 
 The Starseeker ship model, its engine plume, nav lights and callsign decal, the Fresnel atmosphere rims, the bloom, vignette and grain settings, and the SVG icon sprite are all original. They were drawn in code in `sol-art.js` for Starfare. They are not modelled on any real vehicle, and Starfare is not affiliated with any real company.

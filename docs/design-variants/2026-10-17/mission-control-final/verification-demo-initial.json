@@ -1,0 +1,188 @@
+{
+  "round": "initial",
+  "checks": [
+    {
+      "name": "Two illustrative system flights",
+      "pass": true
+    },
+    {
+      "name": "Flight clock runs",
+      "pass": true
+    },
+    {
+      "name": "Ships move between worlds",
+      "pass": true
+    },
+    {
+      "name": "Persistent illustrative label",
+      "pass": true
+    },
+    {
+      "name": "Moving ships have DEMO labels",
+      "pass": true
+    },
+    {
+      "name": "Pause freezes flight and sky clocks",
+      "pass": true
+    },
+    {
+      "name": "Pause freezes positions",
+      "pass": true
+    },
+    {
+      "name": "Paused renderer rests",
+      "pass": true
+    },
+    {
+      "name": "Inspector clearly labels illustrative motion",
+      "pass": true
+    },
+    {
+      "name": "Escape restores demo focus",
+      "pass": true
+    },
+    {
+      "name": "Restart resets visual clock",
+      "pass": true
+    },
+    {
+      "name": "Demo off restores docked samples",
+      "pass": true
+    },
+    {
+      "name": "Demo paths and IDs removed",
+      "pass": true
+    },
+    {
+      "name": "Activity count unchanged",
+      "pass": true
+    },
+    {
+      "name": "Arrival, stop, return and loop boundaries continuous",
+      "pass": true
+    },
+    {
+      "name": "Earth focus selects lunar demo",
+      "pass": true
+    },
+    {
+      "name": "Dialog suspends flight clock",
+      "pass": true
+    },
+    {
+      "name": "Close resumes flight clock",
+      "pass": true
+    },
+    {
+      "name": "Preference change stops both clocks",
+      "pass": false
+    },
+    {
+      "name": "Reduced preference holds flights",
+      "pass": true
+    },
+    {
+      "name": "Agent filter remains correct",
+      "pass": true
+    },
+    {
+      "name": "Default feed excludes demo flights",
+      "pass": true
+    },
+    {
+      "name": "Reduced-motion startup paused 1280",
+      "pass": true
+    },
+    {
+      "name": "No overflow 1280",
+      "pass": true
+    },
+    {
+      "name": "Demo control fits 1280",
+      "pass": true
+    },
+    {
+      "name": "Reduced-motion startup paused 900",
+      "pass": true
+    },
+    {
+      "name": "No overflow 900",
+      "pass": true
+    },
+    {
+      "name": "Demo control fits 900",
+      "pass": true
+    },
+    {
+      "name": "Reduced-motion startup paused 390",
+      "pass": true
+    },
+    {
+      "name": "No overflow 390",
+      "pass": true
+    },
+    {
+      "name": "Demo control fits 390",
+      "pass": true
+    },
+    {
+      "name": "Camera and demo controls do not overlap 390",
+      "pass": true
+    },
+    {
+      "name": "Explicit Play enables reduced-motion demo 390",
+      "pass": true
+    },
+    {
+      "name": "Mobile activity sheet works 390",
+      "pass": true
+    },
+    {
+      "name": "Lunar demo visible on phone 390",
+      "pass": true
+    },
+    {
+      "name": "Reduced-motion startup paused 360",
+      "pass": true
+    },
+    {
+      "name": "No overflow 360",
+      "pass": true
+    },
+    {
+      "name": "Demo control fits 360",
+      "pass": true
+    },
+    {
+      "name": "Camera and demo controls do not overlap 360",
+      "pass": true
+    },
+    {
+      "name": "Explicit Play enables reduced-motion demo 360",
+      "pass": true
+    },
+    {
+      "name": "Mobile activity sheet works 360",
+      "pass": true
+    },
+    {
+      "name": "Lunar demo visible on phone 360",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "failedAssets": [],
+  "process": {
+    "node": 8956,
+    "browser": 82640,
+    "browserClosed": true
+  },
+  "startedAt": "2026-10-17T23:04:18.626Z",
+  "boundaryDistances": [
+    0.000008570135576718073,
+    0.000008570135576718073,
+    0.000008569846097940812,
+    0.000008569846097939987
+  ],
+  "finishedAt": "2026-10-17T23:04:25.208Z"
+}

@@ -1,0 +1,48 @@
+{
+  "mobile390": {
+    "allPlanetAssetsLoaded": true,
+    "bookingsSelected": true,
+    "mapHeight": 742,
+    "noOverflow": true,
+    "opsHeight": 742,
+    "touchTargetMinimum": 52,
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  "mobile360": {
+    "allPlanetAssetsLoaded": true,
+    "mapHeight": 638,
+    "noOverflow": true,
+    "opsHeight": 638,
+    "viewport": [
+      360,
+      740
+    ]
+  },
+  "desktopAfterMobileFocus": {
+    "assetsLoaded": true,
+    "bookingsSelected": true,
+    "noOverflow": true,
+    "selectedBody": "earth",
+    "viewport": [
+      1191,
+      1012
+    ],
+    "visibleBodyLabels": [
+      "Earth",
+      "Moon",
+      "ISS",
+      "Tiangong",
+      "Orbital Depot",
+      "Lunar Data Center"
+    ]
+  },
+  "keyboardNavigation": {
+    "target": "Neptune",
+    "activatedWith": "Enter",
+    "selected": true
+  },
+  "consoleErrors": []
+}

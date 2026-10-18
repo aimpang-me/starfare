@@ -1,0 +1,93 @@
+✔ visual time advances slowly, freezes and resumes without catching up (0.54ms)
+✔ seek/reset is deterministic and each page owns its clock (0.0993ms)
+✔ reduced-motion/static sampling never animates (0.0657ms)
+✔ detail has a smooth ramp and does not request texture layers at overview size (0.0717ms)
+✔ appearance changes only surface children, keeping root and external anchors intact (82.423ms)
+✔ Moon is matte relief without atmosphere; unknown bodies use the existing fallback (0.4432ms)
+✖ all mapped worlds have bounded, distinct profiles and preserve their external anchors (0.4184ms)
+✖ Saturn casts opposite ring shadows as the Sun moves, with a clear light-facing side (0.3565ms)
+✖ the Sun effect has a stable silhouette and a deterministic static phase (0.142ms)
+✖ same-flight rebuild preserves the paused cosmetic clock; a new flight starts at zero (1.924ms)
+✔ asynchronous texture completion requests a redraw even when the map is paused (3.4082ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 7
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 161.2655
+
+✖ failing tests:
+
+test at test\planet-effects.test.mjs:89:1
+✖ all mapped worlds have bounded, distinct profiles and preserve their external anchors (0.4184ms)
+  AssertionError [ERR_ASSERTION]: mercury
+      at TestContext.<anonymous> (file:///C:/Users/PC-AIMPANG/Documents/New%20project%203/.worktrees/starfare-design-audit/connector/test/planet-effects.test.mjs:93:62)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test\planet-effects.test.mjs:106:1
+✖ Saturn casts opposite ring shadows as the Sun moves, with a clear light-facing side (0.3565ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at TestContext.<anonymous> (file:///C:/Users/PC-AIMPANG/Documents/New%20project%203/.worktrees/starfare-design-audit/connector/test/planet-effects.test.mjs:107:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\planet-effects.test.mjs:113:1
+✖ the Sun effect has a stable silhouette and a deterministic static phase (0.142ms)
+  TypeError: Effects.createSun is not a function
+      at TestContext.<anonymous> (file:///C:/Users/PC-AIMPANG/Documents/New%20project%203/.worktrees/starfare-design-audit/connector/test/planet-effects.test.mjs:114:39)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+
+test at test\planet-effects.test.mjs:122:1
+✖ same-flight rebuild preserves the paused cosmetic clock; a new flight starts at zero (1.924ms)
+  AssertionError [ERR_ASSERTION]: Values have same structure but are not reference-equal:
+  
+  {
+    reset: [Function: reset],
+    sample: [Function: sample]
+  }
+  
+      at TestContext.<anonymous> (file:///C:/Users/PC-AIMPANG/Documents/New%20project%203/.worktrees/starfare-design-audit/connector/test/planet-effects.test.mjs:132:30)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Object],
+    expected: [Object],
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

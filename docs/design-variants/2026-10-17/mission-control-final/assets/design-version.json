@@ -1,0 +1,14 @@
+{
+  "kind": "standalone-design-prototype",
+  "branch": "codex/design-audit",
+  "worktreeCommit": "ff66fbc4532ec694770099e257dcc7214b9faaa0",
+  "mergedMainCommit": "ff66fbc4532ec694770099e257dcc7214b9faaa0",
+  "engineeringCodeCommit": "f0564ba493ba2b5cfcb8fa461674cec8cab4424d",
+  "engineSha256": "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65",
+  "previousEngineSha256": "6130a4578ea4e569cfed68c816120990d4bec9d36db1d6b02a94eb31a19d15a7",
+  "backendConnected": false,
+  "bookingFixtures": true,
+  "illustrativeFlights": true,
+  "productionDomIntegrated": false,
+  "art": "independent asset revision; existing Kestrel concept derivative reused"
+}

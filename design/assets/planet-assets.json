@@ -1,0 +1,89 @@
+{
+  "note": "Appearance assets only; not live weather or scientific surface-orientation telemetry.",
+  "assets": [
+    {
+      "body": "earth",
+      "layer": "cloud",
+      "file": "earth_clouds_1k.webp",
+      "width": 1024,
+      "height": 512,
+      "encoding": "linear mask",
+      "source": "https://www.solarsystemscope.com/textures/download/2k_earth_clouds.jpg",
+      "source_sha256": "fffd7f68d41b37274822150e54a6ef605af1d3ec35624d9f628c3b896bfa42ed",
+      "sha256": "17519fc23037cb91f64bf88b78bd4392f520fe97f8055f0493230019564303cd",
+      "registration": "Equirectangular; north up; zero longitude at image center; same UV convention as existing color maps.",
+      "conversion": "Grayscale coverage, Lanczos resize, WebP quality 90.",
+      "credit": "Solar System Scope / INOVE, CC BY 4.0"
+    },
+    {
+      "body": "earth",
+      "layer": "normal",
+      "file": "earth_normal_1k.png",
+      "width": 1024,
+      "height": 512,
+      "encoding": "linear tangent-space RGB",
+      "source": "https://www.solarsystemscope.com/textures/download/2k_earth_normal_map.tif",
+      "source_sha256": "f518ce2646ca935dbc17e316041de4fea7a5da0ec441e4eb22e711eabd843ba2",
+      "sha256": "3d08aef8a49155ece42d94610424414da3bd6deb9e0273722ad8b15d0f07c932",
+      "registration": "Equirectangular; north up; zero longitude at image center; same UV convention as existing color maps.",
+      "conversion": "Lanczos resize; normals renormalized in shader. No color encoding.",
+      "credit": "Solar System Scope / INOVE, CC BY 4.0"
+    },
+    {
+      "body": "earth",
+      "layer": "cloud",
+      "file": "earth_clouds_2k.webp",
+      "width": 2048,
+      "height": 1024,
+      "encoding": "linear mask",
+      "source": "https://www.solarsystemscope.com/textures/download/2k_earth_clouds.jpg",
+      "source_sha256": "fffd7f68d41b37274822150e54a6ef605af1d3ec35624d9f628c3b896bfa42ed",
+      "sha256": "28b7b6f8a28b1e868116b51eb3051e1837c5cefd8340838a0e9f6d6d845c883f",
+      "registration": "Equirectangular; north up; zero longitude at image center; same UV convention as existing color maps.",
+      "conversion": "Grayscale coverage, Lanczos resize, WebP quality 90.",
+      "credit": "Solar System Scope / INOVE, CC BY 4.0"
+    },
+    {
+      "body": "earth",
+      "layer": "normal",
+      "file": "earth_normal_2k.png",
+      "width": 2048,
+      "height": 1024,
+      "encoding": "linear tangent-space RGB",
+      "source": "https://www.solarsystemscope.com/textures/download/2k_earth_normal_map.tif",
+      "source_sha256": "f518ce2646ca935dbc17e316041de4fea7a5da0ec441e4eb22e711eabd843ba2",
+      "sha256": "dc31bcae022ba82cf6a033016f10d2d45cba96c38eb270c6bb3f77b08718df7f",
+      "registration": "Equirectangular; north up; zero longitude at image center; same UV convention as existing color maps.",
+      "conversion": "Lanczos resize; normals renormalized in shader. No color encoding.",
+      "credit": "Solar System Scope / INOVE, CC BY 4.0"
+    },
+    {
+      "body": "earth",
+      "layer": "ocean",
+      "file": "earth_ocean_1k.png",
+      "width": 1024,
+      "height": 512,
+      "encoding": "linear mask",
+      "source": "https://www.solarsystemscope.com/textures/download/2k_earth_specular_map.tif",
+      "source_sha256": "6b90ecfce248591a1ecc9a3e49acca1a7059b6828877e718302ed9a6b4471bd7",
+      "sha256": "3d5887a162ed2ade85c8bf9dc15bcbd9ccaf96bb62dbcd06e718bef6a9c77e33",
+      "registration": "Equirectangular; north up; zero longitude at image center; same UV convention as existing color maps.",
+      "conversion": "Grayscale water/specular mask; white is reflective ocean.",
+      "credit": "Solar System Scope / INOVE, CC BY 4.0"
+    },
+    {
+      "body": "moon",
+      "layer": "moon",
+      "file": "moon_normal_1k.png",
+      "width": 1024,
+      "height": 512,
+      "encoding": "linear tangent-space RGB",
+      "source": "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4_uint.tif",
+      "source_sha256": "e6668bec27fc9b8fbb02d198c7ddfb08eedeeb790167b494f95e6b34201da05e",
+      "sha256": "d7458e3715738bf6d09bcd371e165414fb121449a4c5f6dda950bc7edb8887fc",
+      "registration": "Equirectangular; north up; zero longitude at image center; same UV convention as existing color maps.",
+      "conversion": "LOLA 0.5m unsigned heights converted to km; geodesic slopes, 4x relief shading, normal-map encoding. No geometric displacement.",
+      "credit": "NASA SVS / LRO LOLA"
+    }
+  ]
+}

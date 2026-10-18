@@ -1,0 +1,49 @@
+{
+  "checks": [
+    {
+      "name": "Fleet outage is stated on mobile canvas",
+      "pass": true
+    },
+    {
+      "name": "Fleet outage is not presented as an empty sky",
+      "pass": true
+    },
+    {
+      "name": "Real bookings remain usable during fleet outage",
+      "pass": true
+    },
+    {
+      "name": "Escape closes only the top modal",
+      "pass": true
+    },
+    {
+      "name": "Escape restores keyboard focus inside Reports",
+      "pass": true
+    },
+    {
+      "name": "Reduced-motion flight replay starts paused",
+      "pass": true
+    },
+    {
+      "name": "Reduced-motion replay keeps actual manifest accessible",
+      "pass": true
+    },
+    {
+      "name": "Replay phone has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "Reduced-motion user can explicitly play actual replay",
+      "pass": true
+    },
+    {
+      "name": "State checks have no browser JavaScript errors",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "browserClosed": true,
+  "completedAt": "2026-10-18T00:16:24.003Z",
+  "pass": 10,
+  "fail": 0
+}

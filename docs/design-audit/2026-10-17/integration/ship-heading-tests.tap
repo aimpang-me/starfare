@@ -1,0 +1,298 @@
+TAP version 13
+# Subtest: the public booking desk admits seasonal rows and closes stale seasons until refreshed
+ok 1 - the public booking desk admits seasonal rows and closes stale seasons until refreshed
+  ---
+  duration_ms: 3.316
+  type: 'test'
+  ...
+# Subtest: the flight passenger list follows recorded stops through diversions and repeated destinations
+ok 2 - the flight passenger list follows recorded stops through diversions and repeated destinations
+  ---
+  duration_ms: 1.2773
+  type: 'test'
+  ...
+# Subtest: replay selects the dispatched arc even when an unused alternative is closer to the delayed departure
+ok 3 - replay selects the dispatched arc even when an unused alternative is closer to the delayed departure
+  ---
+  duration_ms: 1.5879
+  type: 'test'
+  ...
+# Subtest: public flight records retain booking identity, cabin counts and segment stop mapping
+ok 4 - public flight records retain booking identity, cabin counts and segment stop mapping
+  ---
+  duration_ms: 14.6861
+  type: 'test'
+  ...
+# Subtest: cabin occupancy counts every person, while legacy missing numbers remain unknown
+ok 5 - cabin occupancy counts every person, while legacy missing numbers remain unknown
+  ---
+  duration_ms: 0.3924
+  type: 'test'
+  ...
+# Subtest: a live shared manifest shows future stops without boarding passengers at an open orbital hold
+ok 6 - a live shared manifest shows future stops without boarding passengers at an open orbital hold
+  ---
+  duration_ms: 0.223
+  type: 'test'
+  ...
+# Subtest: the home map uses stored flight arcs and explicit booking identity, never the generic route planner
+ok 7 - the home map uses stored flight arcs and explicit booking identity, never the generic route planner
+  ---
+  duration_ms: 1.0948
+  type: 'test'
+  ...
+# Subtest: the home scoreboard uses the fresh board catalog, including a winner absent from the old page snapshot
+ok 8 - the home scoreboard uses the fresh board catalog, including a winner absent from the old page snapshot
+  ---
+  duration_ms: 4.738
+  type: 'test'
+  ...
+# Subtest: shared dispatch feed shows each booking's quote and escapes agent-controlled content
+ok 9 - shared dispatch feed shows each booking's quote and escapes agent-controlled content
+  ---
+  duration_ms: 1.7006
+  type: 'test'
+  ...
+# Subtest: recorded time conflicts are detected without retiming the flight
+ok 10 - recorded time conflicts are detected without retiming the flight
+  ---
+  duration_ms: 0.2301
+  type: 'test'
+  ...
+# Subtest: replay timeline dates round-trip the recorded minute without slipping into the previous minute
+ok 11 - replay timeline dates round-trip the recorded minute without slipping into the previous minute
+  ---
+  duration_ms: 0.8526
+  type: 'test'
+  ...
+# Subtest: the home map keeps a flight visible before launch and labels a held checkpoint as awaiting its agent
+ok 12 - the home map keeps a flight visible before launch and labels a held checkpoint as awaiting its agent
+  ---
+  duration_ms: 1.8775
+  type: 'test'
+  ...
+# Subtest: a completed replay is arrived at its exact final track time on both pages
+ok 13 - a completed replay is arrived at its exact final track time on both pages
+  ---
+  duration_ms: 4.2939
+  type: 'test'
+  ...
+# Subtest: a thousand-booking desk renders twenty cards, searches all rows, and keeps card nodes while its clock updates
+ok 14 - a thousand-booking desk renders twenty cards, searches all rows, and keeps card nodes while its clock updates
+  ---
+  duration_ms: 2.2046
+  type: 'test'
+  ...
+# Subtest: stored Ceres pickup arcs retain sub-metre coordinate precision
+ok 15 - stored Ceres pickup arcs retain sub-metre coordinate precision
+  ---
+  duration_ms: 6.0141
+  type: 'test'
+  ...
+# Subtest: site: archived six-decimal local arcs recover only the identical recorded transfer
+ok 16 - site: archived six-decimal local arcs recover only the identical recorded transfer
+  ---
+  duration_ms: 4.2454
+  type: 'test'
+  ...
+# Subtest: flight: archived six-decimal local arcs recover only the identical recorded transfer
+ok 17 - flight: archived six-decimal local arcs recover only the identical recorded transfer
+  ---
+  duration_ms: 2.9751
+  type: 'test'
+  ...
+# Subtest: main-map routes exclude orbit holds and idle legs
+ok 18 - main-map routes exclude orbit holds and idle legs
+  ---
+  duration_ms: 1.0739
+  type: 'test'
+  ...
+# Subtest: site: compressed local positions remain continuous at a body centre
+ok 19 - site: compressed local positions remain continuous at a body centre
+  ---
+  duration_ms: 1.3501
+  type: 'test'
+  ...
+# Subtest: flight: compressed local positions remain continuous at a body centre
+ok 20 - flight: compressed local positions remain continuous at a body centre
+  ---
+  duration_ms: 0.8482
+  type: 'test'
+  ...
+# Subtest: site: the local scale has no sharp bend at the surface radius
+ok 21 - site: the local scale has no sharp bend at the surface radius
+  ---
+  duration_ms: 0.9578
+  type: 'test'
+  ...
+# Subtest: flight: the local scale has no sharp bend at the surface radius
+ok 22 - flight: the local scale has no sharp bend at the surface radius
+  ---
+  duration_ms: 0.9513
+  type: 'test'
+  ...
+# Subtest: main map draws an arrival hold at the destination
+ok 23 - main map draws an arrival hold at the destination
+  ---
+  duration_ms: 1.1763
+  type: 'test'
+  ...
+# Subtest: site: interpolation stays in the local frame between stored waypoints
+ok 24 - site: interpolation stays in the local frame between stored waypoints
+  ---
+  duration_ms: 1.9038
+  type: 'test'
+  ...
+# Subtest: flight: interpolation stays in the local frame between stored waypoints
+ok 25 - flight: interpolation stays in the local frame between stored waypoints
+  ---
+  duration_ms: 1.6031
+  type: 'test'
+  ...
+# Subtest: route geometry never connects separate legs or a holding ship
+ok 26 - route geometry never connects separate legs or a holding ship
+  ---
+  duration_ms: 1.7349
+  type: 'test'
+  ...
+# Subtest: a delayed shared drop-off lands before the empty pickup departs
+ok 27 - a delayed shared drop-off lands before the empty pickup departs
+  ---
+  duration_ms: 2529.2239
+  type: 'test'
+  ...
+# Subtest: delays propagate through drop-offs and stops without passenger events
+ok 28 - delays propagate through drop-offs and stops without passenger events
+  ---
+  duration_ms: 0.3429
+  type: 'test'
+  ...
+# Subtest: a late interplanetary continuation asks before launch and keeps its correction burn
+ok 29 - a late interplanetary continuation asks before launch and keeps its correction burn
+  ---
+  duration_ms: 0.4474
+  type: 'test'
+  ...
+# Subtest: a diversion waits at its alternate and returns before the remaining stops continue
+ok 30 - a diversion waits at its alternate and returns before the remaining stops continue
+  ---
+  duration_ms: 0.4759
+  type: 'test'
+  ...
+# Subtest: a later scheduled departure is preserved after a delayed landing
+ok 31 - a later scheduled departure is preserved after a delayed landing
+  ---
+  duration_ms: 0.1526
+  type: 'test'
+  ...
+# Subtest: the newest landed flight stays after the live map window
+ok 32 - the newest landed flight stays after the live map window
+  ---
+  duration_ms: 0.8428
+  type: 'test'
+  ...
+# Subtest: a landed flight inside the window stays, and an older one leaves
+ok 33 - a landed flight inside the window stays, and an older one leaves
+  ---
+  duration_ms: 0.087
+  type: 'test'
+  ...
+# Subtest: a held flight leaves after the hold window
+ok 34 - a held flight leaves after the hold window
+  ---
+  duration_ms: 0.5901
+  type: 'test'
+  ...
+# Subtest: equal landing times keep the greater run id
+ok 35 - equal landing times keep the greater run id
+  ---
+  duration_ms: 0.0943
+  type: 'test'
+  ...
+# Subtest: a second pass drops nothing once the older landed flight is gone
+ok 36 - a second pass drops nothing once the older landed flight is gone
+  ---
+  duration_ms: 0.0997
+  type: 'test'
+  ...
+# Subtest: live output is byte-identical to the golden capture
+ok 37 - live output is byte-identical to the golden capture
+  ---
+  duration_ms: 3431.077
+  type: 'test'
+  ...
+# Subtest: a short pickup's heading samples only its own flight, even when the run and landing hold span years
+ok 38 - a short pickup's heading samples only its own flight, even when the run and landing hold span years
+  ---
+  duration_ms: 1.1759
+  type: 'test'
+  ...
+# Subtest: departure and arrival headings remain within the active leg
+ok 39 - departure and arrival headings remain within the active leg
+  ---
+  duration_ms: 0.1513
+  type: 'test'
+  ...
+# Subtest: parked, held and arrived ships do not borrow the next flight's heading
+ok 40 - parked, held and arrived ships do not borrow the next flight's heading
+  ---
+  duration_ms: 0.0934
+  type: 'test'
+  ...
+# Subtest: a zero-length or idle leg has no flight tangent
+ok 41 - a zero-length or idle leg has no flight tangent
+  ---
+  duration_ms: 0.0801
+  type: 'test'
+  ...
+# Subtest: parked orientation follows its destination's displayed orbital tangent
+ok 42 - parked orientation follows its destination's displayed orbital tangent
+  ---
+  duration_ms: 0.0902
+  type: 'test'
+  ...
+# Subtest: the nose follows arbitrary three-dimensional headings without axis snapping
+ok 43 - the nose follows arbitrary three-dimensional headings without axis snapping
+  ---
+  duration_ms: 0.1752
+  type: 'test'
+  ...
+# Subtest: crossing a vertical heading keeps the same roll instead of flipping 180 degrees
+ok 44 - crossing a vertical heading keeps the same roll instead of flipping 180 degrees
+  ---
+  duration_ms: 0.0736
+  type: 'test'
+  ...
+# Subtest: zero motion preserves the existing pose rather than producing an invalid attitude
+ok 45 - zero motion preserves the existing pose rather than producing an invalid attitude
+  ---
+  duration_ms: 0.0602
+  type: 'test'
+  ...
+# Subtest: applying a frame points the model's +Z nose at the tangent, with its dorsal +Y kept upright
+ok 46 - applying a frame points the model's +Z nose at the tangent, with its dorsal +Y kept upright
+  ---
+  duration_ms: 0.5314
+  type: 'test'
+  ...
+# Subtest: the landing-page plan and pickup previews use the par ship and each candidate's own hull
+ok 47 - the landing-page plan and pickup previews use the par ship and each candidate's own hull
+  ---
+  duration_ms: 2.9214
+  type: 'test'
+  ...
+# Subtest: a legacy flight without stored arcs recomputes its path with the recorded ship
+ok 48 - a legacy flight without stored arcs recomputes its path with the recorded ship
+  ---
+  duration_ms: 2.6634
+  type: 'test'
+  ...
+1..48
+# tests 48
+# suites 0
+# pass 48
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3572.0438

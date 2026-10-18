@@ -1,0 +1,42 @@
+{
+  "capturedAt": "2026-10-18T02:20:16.356Z",
+  "method": "CUA interactions, screenshots, and read-only DOM observations of the real local Worker. No fixtures or injected runtime state.",
+  "checks": [
+    {
+      "name": "Real flight remains rendered during camera orbit",
+      "pass": true,
+      "state": {
+        "hud": "Map time · following SF-042044-06-02 22:44 UTCLive flight (simulated). Other layers are hidden.",
+        "paused": "true",
+        "phase": "In flight"
+      }
+    },
+    {
+      "name": "Mobile keeps the oriented ship visible with a compact flight panel",
+      "pass": true,
+      "details": {
+        "detailsHidden": true,
+        "height": 844,
+        "hud": "Map time · following SF-042044-06-02 22:44 UTCLive flight (simulated). Other layers are hidden.",
+        "overflow": false,
+        "panelHeight": 84.1875,
+        "width": 390
+      }
+    },
+    {
+      "name": "Actual replay renders the route-aligned ship without errors",
+      "pass": true,
+      "details": {
+        "phase": "STARSEEKER SF-04\nflight · 0% of leg",
+        "errors": []
+      }
+    }
+  ],
+  "passed": 3,
+  "failed": 0,
+  "homeErrors": [],
+  "replayErrors": [],
+  "visualReview": "Inspected the oblique map view, phone view, and replay. Nose aligns with remaining route; exhaust is aft. Camera orbit changes the projected angle without a screen-axis lock.",
+  "viewportRestored": true,
+  "mainAppPausedForReview": true
+}

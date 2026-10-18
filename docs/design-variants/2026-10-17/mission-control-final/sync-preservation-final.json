@@ -1,0 +1,28 @@
+{
+  "verifiedAt": "2026-10-17T23:47:13.022Z",
+  "branch": "codex/design-audit",
+  "head": "ff66fbc4532ec694770099e257dcc7214b9faaa0",
+  "originalCount": 245,
+  "originalBytes": 30969945,
+  "missing": [],
+  "changed": [
+    "docs/design-audit/2026-10-17/README.md",
+    "docs/design-variants/2026-10-17/mission-control-final/asset-manifest.json",
+    "docs/design-variants/2026-10-17/mission-control-final/assets/sky-engine.js",
+    "docs/design-variants/2026-10-17/mission-control-final/ASSETS.md",
+    "docs/design-variants/2026-10-17/mission-control-final/canvas.html",
+    "docs/design-variants/2026-10-17/mission-control-final/DEMO-FLIGHTS.md",
+    "docs/design-variants/2026-10-17/mission-control-final/DEMO-README.md",
+    "docs/design-variants/2026-10-17/mission-control-final/index.html",
+    "docs/design-variants/2026-10-17/mission-control-final/PR-COORDINATION.md",
+    "docs/design-variants/2026-10-17/mission-control-final/preview-process.json",
+    "docs/design-variants/2026-10-17/mission-control-final/README.md",
+    "docs/design-variants/2026-10-17/mission-control-final/verify-demo.cjs",
+    "docs/design-variants/2026-10-17/README.md"
+  ],
+  "backupChanged": [],
+  "backup": "C:/Users/PC-AIMPANG/Documents/New project 3/starfare-design-preservation/sync-ff66fbc-20261017",
+  "trackedStatus": "",
+  "mergedMainAncestor": true,
+  "copiedEngineMatchesSource": true
+}

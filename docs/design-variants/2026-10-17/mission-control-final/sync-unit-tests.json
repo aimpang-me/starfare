@@ -1,0 +1,19 @@
+{
+  "purpose": "Merged booking/manifest/replay/timing compatibility",
+  "parentPid": 36372,
+  "pid": 67652,
+  "files": [
+    "connector/test/booking-replay.test.mjs",
+    "connector/test/flight-timing.test.mjs",
+    "connector/test/public-pool.test.mjs",
+    "connector/test/e2e-parity.test.mjs"
+  ],
+  "startedAt": "2026-10-17T23:43:29.120Z",
+  "status": "exited",
+  "exitCode": 0,
+  "completedAt": "2026-10-17T23:43:31.811Z",
+  "tests": 23,
+  "pass": 23,
+  "fail": 0,
+  "skipped": 0
+}
