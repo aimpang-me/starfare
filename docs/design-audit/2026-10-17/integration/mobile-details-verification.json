@@ -1,0 +1,101 @@
+{
+  "checks": [
+    {
+      "check": "Phone details default collapsed",
+      "pass": true
+    },
+    {
+      "check": "Expand retains live status and manifest controls",
+      "pass": true
+    },
+    {
+      "check": "Expansion survives follow-state rerender",
+      "pass": true
+    },
+    {
+      "check": "Keyboard Space collapses details",
+      "pass": true
+    },
+    {
+      "check": "Expanded mobile panel is capped at 44vh and scrolls",
+      "pass": true,
+      "geometry": {
+        "cssWidth": 468,
+        "display": "block",
+        "height": 340,
+        "scrollable": true,
+        "viewport": 1013
+      }
+    },
+    {
+      "check": "390px phone summary stays compact without overflow",
+      "pass": true,
+      "geometry": {
+        "collapsed": true,
+        "overflow": false,
+        "panelHeight": 84.1875,
+        "panelWidth": 366,
+        "viewportHeight": 844,
+        "width": 390
+      }
+    },
+    {
+      "check": "360px phone summary is compact without overflow",
+      "pass": true,
+      "geometry": {
+        "collapsed": true,
+        "overflow": false,
+        "panelHeight": 84.1875,
+        "width": 360
+      }
+    },
+    {
+      "check": "Collapsed hidden controls are skipped by keyboard Tab",
+      "pass": true
+    },
+    {
+      "check": "320px phone summary is compact without overflow",
+      "pass": true,
+      "geometry": {
+        "collapsed": true,
+        "overflow": false,
+        "panelHeight": 84.1875,
+        "width": 320
+      }
+    },
+    {
+      "check": "Keyboard Enter expands details",
+      "pass": true
+    },
+    {
+      "check": "Desktop keeps full details visible",
+      "pass": true
+    },
+    {
+      "check": "Returning to mobile preserves collapsed choice",
+      "pass": true
+    },
+    {
+      "check": "A new selection starts compact",
+      "pass": true
+    },
+    {
+      "check": "Compact Close dismisses the selection",
+      "pass": true
+    }
+  ],
+  "passed": 14,
+  "failed": 0,
+  "browser": "In-app browser via CUA; desktop and emulated mobile, not a physical phone",
+  "initialInvalidatedCheck": {
+    "checks": [
+      {
+        "check": "Expanded panel is bounded and scrollable",
+        "pass": false
+      }
+    ],
+    "reason": "The old selected flight was removed by the live poll after a new run was created; geometry was rechecked with a current selection."
+  },
+  "consoleErrors": [],
+  "completedAt": "2026-10-18T01:52:27.745Z"
+}

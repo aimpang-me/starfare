@@ -231,7 +231,7 @@ button.lbl:hover{color:var(--ink)}
   .mapwrap{display:flex;flex-direction:column;gap:8px;padding:0 0 8px}
   .mapbox{position:relative;inset:auto;height:60vh;min-height:340px;border-radius:0}
   .gl-host{touch-action:pan-y}
-  .ov{position:static;width:auto!important;max-width:none!important;max-height:none!important;margin:0 8px}
+  .ov{position:static;width:auto;max-width:none;max-height:none;margin:0 8px}
   .hud.tl{max-width:calc(100% - 24px)}
 }
 
@@ -1688,11 +1688,14 @@ function mapHud() {
 /* =========================================================
    SELECTION, CARDS, INFO CARD
    ========================================================= */
-var SEL = { t: "n" }, FOLLOW = false;
+var SEL = { t: "n" }, FOLLOW = false, INFO_OPEN = false;
+var INFO_MEDIA = matchMedia("(max-width:760px)");
+INFO_MEDIA.addEventListener("change", syncInfoDisclosure);
 var FILT = { fl: true, bk: true, pk: true }, LAY = { orb: true, ring: false, lbl: true, moon: true };
 function select(s) {
   if (s.t === "f" && !FL[s.i]) return;
   var same = s.t === SEL.t && (s.t === "f" ? s.i === SEL.i : s.id === SEL.id);
+  if (!same) INFO_OPEN = false;
   SEL = s;
   document.body.classList.toggle("has-selection", s.t !== "n"); glStart();
   LIVE_T = 0;
@@ -1777,6 +1780,8 @@ function startPlan(id) {
 }
 function renderInfo() {
   var el = $("#info");
+  var focusedAction = el.contains(document.activeElement) ? document.activeElement.dataset.act : null;
+  el.dataset.kind = SEL.t === "f" ? "flight" : "booking";
   document.body.classList.toggle("has-selection", SEL.t !== "n");
   if (SEL.t === "n") {
     el.innerHTML = '<div class="caps">Nothing selected</div><p class="note" style="margin-top:6px">Pick a flight on the left or on the map, or open a booking, to see it here.</p>';
@@ -1784,13 +1789,12 @@ function renderInfo() {
   }
   if (SEL.t === "f") {
     var F = FL[SEL.i], lg = F.rp.record.log, legs = F.f.legs;
-    el.innerHTML = '<div class="caps" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">Selected flight <span class="tag live">' + (F.st && F.st.k === "arr" ? "Arrived" : "Live") + '</span><span class="tag sim">Simulated</span></div>' +
+    el.innerHTML = '<div class="caps" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">Selected flight <span class="tag live" id="iPresence">' + (F.st && F.st.k === "arr" ? "Arrived" : "Live") + '</span><span class="tag sim">Simulated</span></div>' +
       '<div class="ihd"><div class="art">' + SF.SHIP_SVG + '</div><div class="who"><div class="nm">' + esc(F.call) + '</div><div class="dim" style="font-size:11px">' + esc(SF.SHIP) + ' <span class="tag fict">Fictional</span></div><span class="st" id="iSt"></span></div></div>' +
       '<div class="irt">' + placeH(lg.from) + ' <span class="dim">&rarr;</span> ' + placeH(lg.to) + "</div>" +
       '<div class="note" style="margin-top:3px">' + W(F.f.title) + (F.f.hold ? " · awaiting agent decision" : "") + '</div><div class="note" id="iW" style="margin-top:3px"></div><div class="ipb"><i id="iBar"></i></div>' +
       '<dl class="kv"><dt>Progress</dt><dd id="iP"></dd><dt>ETA</dt><dd id="iEta"></dd><dt>Arrival</dt><dd>' + esc(arrOf(F)) + "</dd><dt>Legs flown</dt><dd>" + legs.filter(function (L) { return !L.idle; }).length + "</dd><dt>Bookings</dt><dd>" + F.pl.bookings.length + '</dd><dt>Passengers / seats</dt><dd id="iSeats"></dd><dt>Departed</dt><dd>' + (legs[0].idle ? "Awaiting launch" : iso(legs[0].dep_jd)) + "</dd></dl>" +
       '<div class="irow">' + (RUN_ID.test(F.run_id) ? '<a class="btn small primary" href="/flight/' + esc(F.run_id) + '">View flight</a>' : "") + '<button class="btn small" type="button" data-act="follow" aria-pressed="' + FOLLOW + '">' + (FOLLOW ? "Following" : "Follow") + "</button></div>";
-    updateInfo();
   } else {
     var B = BK[SEL.id] || {}, h = hailOf(SEL.id), P = B.plan, body;
     if (B.busy) body = '<div class="planning" style="margin-top:10px"><i></i>Planning with the engine</div>';
@@ -1807,12 +1811,31 @@ function renderInfo() {
       '<div class="note" style="margin-top:4px">' + W(h.rider) + "</div>" + body +
       '<div class="irow">' + (B.busy ? "" : '<button class="btn small" type="button" data-act="replan">' + (B.rp || B.err ? "Replan now" : "Plan now") + "</button>") + '<button class="btn small primary" type="button" data-act="take">Ask your agent to take it</button></div>';
   }
-  if (SEL.t !== "n") el.insertAdjacentHTML("afterbegin", '<button class="btn small" data-act="dismiss" type="button" style="float:right">Close</button>');
+  if (SEL.t === "f") {
+    var full = el.innerHTML;
+    el.innerHTML = '<div class="mc-flight-glance"><div class="mc-glance-heading"><strong>' + esc(F.call) + '</strong><span id="compactSt"></span></div>' +
+      '<div class="mc-glance-actions"><button type="button" class="btn small" data-act="details" id="flightDetailsToggle" aria-expanded="false" aria-controls="flightDetails">Details</button>' +
+      '<button type="button" class="btn small mc-dismiss" data-act="dismiss" aria-label="Close flight details">×</button></div>' +
+      '<p class="mc-glance-route">' + esc(SF.name(lg.from)) + ' <span aria-hidden="true">→</span> ' + esc(SF.name(lg.to)) + '</p></div>' +
+      '<div class="mc-flight-details" id="flightDetails"><button class="btn small mc-detail-close" data-act="dismiss" type="button">Close</button>' + full + '</div>';
+    syncInfoDisclosure(); updateInfo();
+  } else if (SEL.t !== "n") el.insertAdjacentHTML("afterbegin", '<button class="btn small" data-act="dismiss" type="button" style="float:right">Close</button>');
+  if (focusedAction) { var focusTarget = $$("[data-act]", el).find(function (button) { return button.dataset.act === focusedAction && button.getClientRects().length; }); if (focusTarget) focusTarget.focus(); }
+}
+function syncInfoDisclosure() {
+  var panel = $("#info"), details = $("#flightDetails"), toggle = $("#flightDetailsToggle");
+  if (!details || !toggle) return;
+  details.hidden = INFO_MEDIA.matches && !INFO_OPEN;
+  panel.classList.toggle("info-expanded", INFO_MEDIA.matches && INFO_OPEN);
+  toggle.setAttribute("aria-expanded", String(!details.hidden));
+  toggle.textContent = INFO_OPEN ? "Less" : "Details";
 }
 function updateInfo() {
   if (SEL.t !== "f" || !$("#iSt")) return;
   var F = FL[SEL.i]; if (!F || !F.st) return;
   setSt($("#iSt"), F.st.k);
+  $("#iPresence").textContent = F.st.k === "arr" ? "Arrived" : "Live";
+  if ($("#compactSt")) setSt($("#compactSt"), F.st.k);
   $("#iBar").style.width = (progOf(F, F.jd) * 100).toFixed(1) + "%";
   $("#iP").textContent = Math.round(progOf(F, F.jd) * 100) + "%";
   $("#iEta").textContent = etaOf(F, F.jd);
@@ -2110,7 +2133,8 @@ function start() {
   $("#info").addEventListener("click", function (e) {
     var b = e.target.closest("[data-act]"); if (!b) return;
     var a = b.dataset.act;
-    if (a === "dismiss") { select({t:"n"}); $("#tabB").focus(); }
+    if (a === "details") { INFO_OPEN = !INFO_OPEN; syncInfoDisclosure(); if (INFO_OPEN) StarfareMotion.enter($("#flightDetails")); }
+    else if (a === "dismiss") { select({t:"n"}); $("#tabB").focus(); }
     else if (a === "follow") setFollow(!FOLLOW);
     else if (a === "replan") startPlan(SEL.id);
     else if (a === "take") { var h = hailOf(SEL.id); ask("Take booking " + h.hail_id + " (" + h.title + ") and show me the terms.", 0); StarfareMotion.openTools(); }

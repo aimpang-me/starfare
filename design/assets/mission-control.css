@@ -66,6 +66,8 @@ button,input,select,textarea{font-family:inherit}
 .mc-home .info .nm{font:600 18px Inter,sans-serif}
 .mc-home .info .irt{font-size:14px}
 .mc-home .info .irow{display:flex;flex-wrap:wrap;gap:8px}
+.mc-flight-glance{display:none}
+.mc-detail-close{float:right}
 .mc-home .legend{display:none;left:20px;bottom:80px;width:280px;max-height:50vh;overflow:auto;background:var(--glass);z-index:12}
 .mc-home .legend.mc-open{display:block}
 .mc-home .legend{top:auto;max-width:calc(100% - 40px)}
@@ -154,6 +156,14 @@ button,input,select,textarea{font-family:inherit}
  .mc-home .mc-activity{top:auto;bottom:31%;left:0;right:0;width:auto;z-index:11}.mc-home .mc-activity>button{display:none}.mc-home .mc-activity .panel{max-height:32vh;background:#0c151f;border-radius:0}.mc-home .mc-activity .feed{max-height:19vh}
  .mc-home .mc-map-controls{right:12px;bottom:calc(31% + 14px)}.mc-home .hud{left:14px;bottom:calc(31% + 14px);max-width:46%}.mc-home .hud .hudbox{font-size:9px;line-height:1.5}.mc-home .hud .caps{font-size:9px}.mc-home .hud .hudbox b{font-weight:500}
  .mc-home .info{left:12px;right:12px;width:auto;bottom:calc(31% + 66px);max-height:32%;z-index:9;padding:12px}.mc-home .info .kv{font-size:11px}.mc-home .info .irt{font-size:13px}.mc-home .info .nm{font-size:16px}
+ .mc-home .info[data-kind=flight]{margin:0;padding:8px 12px;max-height:min(44dvh,340px);backdrop-filter:none}
+ .mc-home .mc-flight-glance{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;align-items:center;background:var(--glass)}
+ .mc-glance-heading{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;font-size:14px}
+ .mc-glance-heading strong{font-weight:600}.mc-glance-heading .st{font-size:10px;padding:3px 5px}
+ .mc-glance-actions{display:flex;gap:2px}.mc-glance-actions .btn.small{min-height:44px;min-width:60px;padding:5px 8px;font-size:12px;border:0}.mc-glance-actions .mc-dismiss{min-width:44px;font-size:22px}
+ .mc-glance-route{grid-column:1/-1;margin:0 0 4px;font-size:13px;line-height:1.4;overflow-wrap:anywhere;color:var(--ink-2)}.mc-glance-route span{color:var(--ride);margin-inline:3px}
+ .mc-home .mc-flight-details{padding-top:10px;border-top:1px solid var(--line);margin-top:6px}.mc-home .mc-detail-close{display:none}
+ .mc-home .info.info-expanded[data-kind=flight] .mc-flight-glance{position:sticky;top:-8px;z-index:2;padding-top:0}
  .mc-home .legend{left:12px;bottom:calc(31% + 64px);width:calc(100% - 24px);max-height:42%}
  .mc-home .mc-drawer{inset:112px 12px 12px;width:auto;max-width:none;z-index:20}.mc-strip{height:46px;padding:0 10px;gap:4px}.mc-strip .mc-sky{font-size:10px;gap:5px;flex:1}.mc-strip .mc-rate{display:none}.mc-strip .btn{font-size:11px;min-height:40px;padding:4px 8px}.mc-strip .mc-operations-toggle{display:flex}.mc-strip nav{display:none;position:absolute;bottom:48px;right:12px;width:240px;max-width:calc(100vw - 24px);padding:8px;border:1px solid var(--line-2);border-radius:4px;background:#0c151f;box-shadow:0 12px 24px #0007}.mc-strip nav.mc-open{display:grid;grid-template-columns:1fr 1fr}.mc-strip nav .btn{min-height:44px;justify-content:flex-start}.mc-strip #hidePanels{display:none}
  .mc-home:has(.c-fl.mc-collapsed) .mc-activity{bottom:44px}.mc-home:has(.c-fl.mc-collapsed) .mc-map-controls,.mc-home:has(.c-fl.mc-collapsed) .hud{bottom:58px}.mc-home:has(.c-fl.mc-collapsed) .info{bottom:110px}
