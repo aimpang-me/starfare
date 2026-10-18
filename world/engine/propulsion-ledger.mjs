@@ -159,6 +159,12 @@ function engine(burn) {
   return { ve, thrust_n: thrust, mass_flow_kg_s: finite(thrust / ve, "mass flow") };
 }
 
+function timingTolerance(leg) {
+  // Subtracting two large Julian dates loses precision at the date scale, not
+  // the short interval scale. Bound rounding at both endpoints in seconds.
+  return Math.max(EPS, (Math.abs(leg.depart_jd) * Number.EPSILON + Math.abs(leg.arrive_jd) * Number.EPSILON) * DAY);
+}
+
 function requiredFuel(plan, states) {
   let fuel = plan.reserve.value, paths = [...plan.reserve.missing];
   const beforeStops = new Array(plan.stops.length);
@@ -260,8 +266,9 @@ function forward(plan, states, start, mode) {
       seconds += duration; energy += kwh; consumed += spent; legMissing = unionPaths(legMissing, burnPaths);
     }
     const available = finite((leg.arrive_jd - leg.depart_jd) * DAY, "flight time");
-    if (complete && seconds > available + EPS) fail("firing_exceeds_flight", { certainty: certainty(legMissing),
-      leg: leg.id, firing_seconds: seconds, flight_seconds: available, basis: legMissing.length ? "optimistic_projection" : "model_value" });
+    if (complete && seconds > available + timingTolerance(leg)) fail("firing_exceeds_flight", { certainty: certainty(legMissing),
+      leg: leg.id, firing_seconds: seconds, flight_seconds: available, timing_tolerance_seconds: timingTolerance(leg),
+      basis: legMissing.length ? "optimistic_projection" : "model_value" });
     perLeg.push({ leg: leg.id, complete, flight_seconds: available,
       firing_seconds: complete ? q(seconds, legMissing) : null,
       thruster_energy_kwh: complete ? q(energy, legMissing) : null,
@@ -291,11 +298,13 @@ export function assessItinerary(input) {
     const burns = required.burnsByLeg[i], seconds = burns.reduce((n, b) => n + b.firing_seconds.value, 0);
     const paths = unionPaths(...burns.map((b) => b.firing_seconds.missing));
     const available = finite((leg.arrive_jd - leg.depart_jd) * DAY, "flight time"), fuel = required.departureFuel[i];
-    if (seconds > available + EPS) findings.push({ code: "minimum_firing_exceeds_flight", certainty: "necessary",
-      leg: leg.id, minimum_firing_seconds: seconds, flight_seconds: available, basis: paths.length ? "lower_bound" : "model_value" });
+    if (seconds > available + timingTolerance(leg)) findings.push({ code: "minimum_firing_exceeds_flight", certainty: "necessary",
+      leg: leg.id, minimum_firing_seconds: seconds, flight_seconds: available, timing_tolerance_seconds: timingTolerance(leg),
+      basis: paths.length ? "lower_bound" : "model_value" });
     if (fuel.value > plan.vehicle.xenon_capacity_kg + EPS) findings.push({ code: "minimum_tank_capacity", certainty: "necessary",
       leg: leg.id, minimum_required_kg: fuel.value, capacity_kg: plan.vehicle.xenon_capacity_kg, basis: fuel.basis });
-    return { leg: leg.id, xenon_at_departure_kg: fuel, burns, minimum_firing_seconds: quantity(seconds, paths), flight_seconds: available };
+    return { leg: leg.id, xenon_at_departure_kg: fuel, burns, minimum_firing_seconds: quantity(seconds, paths),
+      flight_seconds: available, timing_tolerance_seconds: timingTolerance(leg) };
   });
   if (!plan.initial.missing.length && plan.initial.value + EPS < required.minimum.value)
     findings.push({ code: "initial_fuel_shortfall", certainty: "necessary", available_kg: plan.initial.value, minimum_required_kg: required.minimum.value,

@@ -7,3 +7,4 @@ output/playwright/
 .playwright-cli/
 audit/propulsion-audit.json
 audit/propulsion-ledger.json
+audit/ship-options.json
