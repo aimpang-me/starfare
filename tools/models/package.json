@@ -1,0 +1,16 @@
+{
+  "name": "starfare-models",
+  "private": true,
+  "type": "module",
+  "//": "Builds the game versions of the generated ship meshes (not part of the Worker). Output goes to design/assets/models/.",
+  "scripts": {
+    "build": "node build-lods.mjs"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "4.1.1",
+    "@gltf-transform/extensions": "4.1.1",
+    "@gltf-transform/functions": "4.1.1",
+    "meshoptimizer": "0.22.0",
+    "sharp": "0.33.5"
+  }
+}
