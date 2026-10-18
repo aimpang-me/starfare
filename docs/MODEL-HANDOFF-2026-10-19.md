@@ -106,7 +106,9 @@ Use Node 24 where available. Check `connector/package.json` for current scripts 
 
 From the repository root, the timing reproduction is `node audit/shared-flight-timing.mjs`. Engine checks include `node world/engine/test-hazards.js` and `node world/engine/test-reroute.js`. Python CI runs `python day3/run_regression.py` and requires `python day3/run_regression.py --plant 2` to fail. The workflow installs numpy, scipy, jplephem, and skyfield-data.
 
-The existing GitHub workflow runs the Python regression. Passing GitHub gates do not prove every JavaScript, browser, or Worker test ran remotely. A proposed connector CI patch has historically required workflow-token authorization; inspect its final status rather than assuming it was applied.
+PR #17 adds connector unit/local Worker jobs on Ubuntu and Windows alongside Python regression. Read the actual latest check runs: its Windows matrix had both a passing run and a 20-minute timeout, with no assertion failure before cancellation; a rerun is required before merge. Browser/device checks remain separate from these jobs. Workflow-token authorization was a historical blocker, not evidence that the new job ran.
+
+The incoming model's preparation also adds [the dated stack survey](STACK.md), a Claude cloud-only dependency hook, and [the real-page capture tool](../tools/media/README.md). The stack survey describes the other model's account/container snapshot at `ff66fbc`; its connector access, asset availability, no-release statement and Design gaps can be outdated. This handoff and dated team reports supersede those snapshots. Captures must use actual simulated state and remain labelled simulated. The handoff PR repairs the capture tool's Worker cleanup on startup/browser failures and records its fault check.
 
 Engine changes require rebundling with `python world/bundle.py`, rebuilding the connector, and genuinely regenerating affected benchmark references with the correct key. Never edit a suite's engine SHA by hand to bypass compatibility checks. A documentation, visual, or diagnostic-only change must not silently alter production physics, scoring, or held-out tests.
 

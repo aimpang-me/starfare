@@ -15,11 +15,13 @@
 // unless --base says so.
 import { spawn, execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { stopWorkerProcess } from "../../connector/test/worker-process.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -59,21 +61,37 @@ async function startWorker() {
   if (!existsSync(join(CONNECTOR, "node_modules", "wrangler"))) throw new Error("connector/node_modules is missing: run `npm ci` in connector/ first");
   execFileSync(process.execPath, ["build.mjs"], { cwd: CONNECTOR, stdio: "ignore" });
   const port = await freePort(), persist = mkdtempSync(join(tmpdir(), "starfare-capture-")), log = [];
-  const child = spawn(process.execPath, [join(CONNECTOR, "node_modules", "wrangler", "bin", "wrangler.js"), "dev", "--port", String(port), "--ip", "127.0.0.1",
-    "--persist-to", persist, "--var", "STARFARE_OAUTH:off"], { cwd: CONNECTOR, detached: true, windowsHide: true, env: { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "1" } });
-  child.stdout.on("data", (c) => log.push(String(c))); child.stderr.on("data", (c) => log.push(String(c)));
-  let exited = false; child.on("exit", () => { exited = true; });
-  const base = `http://127.0.0.1:${port}`, deadline = Date.now() + 180_000;
-  for (;;) {
-    if (exited) throw new Error(`wrangler dev exited early:\n${log.join("").slice(-2000)}`);
-    if (Date.now() > deadline) throw new Error(`wrangler dev not ready:\n${log.join("").slice(-2000)}`);
-    try { await fetch(`${base}/`); break; } catch { await sleep(250); }
+  let child, stopping;
+  const interrupted = () => { void stop().then(() => process.exit(130), () => process.exit(1)); };
+  const stop = () => stopping ||= (async () => {
+    process.removeListener("SIGINT", interrupted);
+    process.removeListener("SIGTERM", interrupted);
+    try { if (child) await stopWorkerProcess(child); }
+    finally {
+      try { await rm(persist, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }); }
+      catch (error) { console.warn(`Capture Worker stopped; temporary storage retained at ${persist}: ${error.code}`); }
+    }
+  })();
+  try {
+    child = spawn(process.execPath, [join(CONNECTOR, "node_modules", "wrangler", "bin", "wrangler.js"), "dev", "--port", String(port), "--ip", "127.0.0.1",
+      "--persist-to", persist, "--var", "STARFARE_OAUTH:off"], { cwd: CONNECTOR, detached: true, windowsHide: true, env: { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "1" } });
+    process.once("SIGINT", interrupted);
+    process.once("SIGTERM", interrupted);
+    child.stdout.on("data", (c) => log.push(String(c))); child.stderr.on("data", (c) => log.push(String(c)));
+    let exited = false; child.on("exit", () => { exited = true; });
+    let startupError; child.once("error", error => { startupError = error; });
+    const base = `http://127.0.0.1:${port}`, deadline = Date.now() + 180_000;
+    for (;;) {
+      if (startupError) throw startupError;
+      if (exited) throw new Error(`wrangler dev exited early:\n${log.join("").slice(-2000)}`);
+      if (Date.now() > deadline) throw new Error(`wrangler dev not ready:\n${log.join("").slice(-2000)}`);
+      try { await fetch(`${base}/`, { signal: AbortSignal.timeout(1000) }); break; } catch { await sleep(250); }
+    }
+    return { base, stop };
+  } catch (error) {
+    await stop();
+    throw error;
   }
-  return { base, stop: async () => {
-    if (process.platform === "win32") execFileSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], { stdio: "ignore" });
-    else try { process.kill(-child.pid, "SIGKILL"); } catch { try { child.kill("SIGKILL"); } catch {} }
-    try { rmSync(persist, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch {}
-  } };
 }
 
 // cdnjs three.min.js and jsDelivr's three@0.128.0/<path> are both the npm package's files.
@@ -96,11 +114,12 @@ async function main() {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
   const out = o.out || join(HERE, "out", stamp);
   mkdirSync(out, { recursive: true });
-  const worker = o.base ? null : await startWorker();
-  const base = o.base || worker.base;
-  const browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
+  let worker, browser, base;
   const files = [], errors = [];
   try {
+    worker = o.base ? null : await startWorker();
+    base = o.base || worker.base;
+    browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
     for (const page of o.pages) {
       for (const size of o.sizes) {
         const [width, height] = SIZES[size];
@@ -134,13 +153,14 @@ async function main() {
       }
     }
   } finally {
-    await browser.close();
-    if (worker) await worker.stop();
+    try { if (browser) await browser.close(); }
+    finally { if (worker) await worker.stop(); }
   }
-  let engine = null, commit = null;
+  let engine = null, commit = null, workingTreeDirty = null;
   try { engine = JSON.parse(readFileSync(join(CONNECTOR, "src", "engine", "meta.json"), "utf8")).sha256; } catch {}
   try { commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT }).toString().trim(); } catch {}
-  const manifest = { made: new Date().toISOString(), base, commit, engine_sha256: engine, pages: o.pages, sizes: o.sizes,
+  try { workingTreeDirty = !!execFileSync("git", ["status", "--porcelain", "--untracked-files=normal"], { cwd: ROOT }).toString().trim(); } catch {}
+  const manifest = { made: new Date().toISOString(), base, commit, working_tree_dirty: workingTreeDirty, engine_sha256: engine, pages: o.pages, sizes: o.sizes,
     video_seconds: o.video, files, console_errors: errors,
     note: "Captured from the Starfare pages: the sky, fleet, bookings and flights are simulated. Label them so wherever they are posted." };
   writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
