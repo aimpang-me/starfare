@@ -36,3 +36,7 @@ The local test client is named `starfare-design-local-verification`; its runs/no
 [Reference lock and integration plan](../INTEGRATION-PLAN.md) records the actual Refero results, their bounded roles, the official ARK reference and the approved prototype direction. Existing art credits remain at `/assets/CREDITS.md`. No SpaceX, xAI or Star Citizen artwork, logos or affiliation claims were introduced.
 
 The earlier audit, prototype variants, image assets, motion recording and external preservation backup remain intact: [all 245 original artifact paths still exist and their backup bytes match](artifact-preservation.json). Future asset/renderer work should build on this merged contract and coordinate these two application HTML files; this integration does not represent a new Art GLB revision.
+
+## Follow-up repairs
+
+[Compact mobile flight details](MOBILE-DETAILS.md) preserves the canvas behind an expandable summary. [Flight geometry repair](FLIGHT-GEOMETRY.md) documents the later user-reported Ceres path failure: coordinate precision, parent-frame interpolation, continuous local projection and separate flight-only line segments. That repair supersedes the original statement above about retaining replay calculations unchanged; it preserves the physics engine and recorded timing, with strictly verified precision recovery for matching archived local arcs.

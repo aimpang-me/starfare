@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-10-18T02:07:54.611Z",
+  "origin": "Actual local Worker and MCP",
+  "archivedRun": "run_d2275ddf3493c65104a6",
+  "newRun": "run_4477e7d7a1b15bf5adbd",
+  "waypoints": 49,
+  "newArcMaxErrorKm": 0.00011544695456792176,
+  "archiveBeforeMaxErrorKm": 113.26695172732559,
+  "archiveRestoredMaxErrorKm": 0,
+  "archiveInputUnchanged": true,
+  "archiveStorageUnchanged": true,
+  "engineSha256": "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65",
+  "pass": true
+}

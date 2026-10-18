@@ -764,6 +764,7 @@ p{text-wrap:pretty}
     var legs = log.flown.map(function (f) {
       var a = f.arc !== undefined ? f.arc : arcs.filter(function (x) { return x.from === f.from && x.to === f.to; })[0];
       var arr = f.arr_jd != null ? f.arr_jd : jdOf(f.arrive);
+      if (system(f.from) === system(f.to) && root.StarfareView) a = root.StarfareView.preciseLocalArc(E, a, String(ride.record.score.car || "").toLowerCase() || null, SEASON_END);
       return { kind: f.leg, idle: !!f.idle, from: f.from, to: f.to, dep: f.dep_jd != null ? f.dep_jd : jdOf(f.depart), orb: f.orbit_jd != null ? f.orbit_jd : arr, arr: arr, kwh: f.kwh, gate: f.gate, arc: a,
         sys: system(f.from) === system(f.to) ? system(f.from) : null };
     });
@@ -787,7 +788,12 @@ p{text-wrap:pretty}
           var f = (jd - L.dep) / Math.max(1e-9, L.orb - L.dep);
           if (!L.arc || !L.arc.arc_au || !L.arc.arc_au.length) { var a0 = pos(L.from, L.dep), a1 = pos(L.to, L.orb); return { p: lerp(a0, a1, f), leg: L, i: i, f: f, phase: "flight" }; }
           var A = L.arc.arc_au, k = f * (A.length - 1), j = Math.min(A.length - 2, Math.floor(k)), p = lerp(A[j], A[j + 1], k - j);
-          if (L.sys) { var tp = L.arc.dep_jd + f * (L.arc.arr_jd - L.arc.dep_jd), s0 = pos(L.sys, tp), s1 = pos(L.sys, jd); p = [p[0] - s0[0] + s1[0], p[1] - s0[1] + s1[1], p[2] - s0[2] + s1[2]]; }
+          if (L.sys) {
+            // Interpolate in the parent's frame. Interpolating heliocentric points first adds the parent's
+            // curved solar motion to a tiny local hop, producing a kink at every stored waypoint.
+            var step = (L.arc.arr_jd - L.arc.dep_jd) / (A.length - 1);
+            p = add(lerp(sub(A[j], pos(L.sys, L.arc.dep_jd + j * step)), sub(A[j + 1], pos(L.sys, L.arc.dep_jd + (j + 1) * step)), k - j), pos(L.sys, jd));
+          }
           // Blend out the end errors so the car leaves exactly from, and lands exactly on, the place at the flown times.
           var e0 = ends(L), w0 = 1 - f;
           p = [p[0] + w0 * e0[0][0] + f * e0[1][0], p[1] + w0 * e0[0][1] + f * e0[1][1], p[2] + w0 * e0[0][2] + f * e0[1][2]];
@@ -927,7 +933,7 @@ function makeFlight(f) {
 }
 function addFlightObjs(F) {
   if (!GL) return;
-  F.full = lineOf([V(), V()], 0x5cc8ff, 0.45, true); F.flown = lineOf([V(), V()], 0x5cc8ff, 0.95, false);
+  F.full = lineOf([V(), V()], 0x5cc8ff, 0.45, true, true); F.flown = lineOf([V(), V()], 0x5cc8ff, 0.95, false, true);
   F.ship = window.SolArt ? SolArt.ship({ callsign: F.call }) : makeShip();
   F.halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(160,225,255,.9)", "rgba(92,200,255,.25)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
   scene.add(F.full); scene.add(F.flown); scene.add(F.halo); scene.add(F.ship);
@@ -1205,11 +1211,11 @@ function atmo(color, r) {
   s.scale.setScalar(r * 2.9); return s;
 }
 var DASHED = [];
-function lineOf(pts, color, opacity, dashed) {
+function lineOf(pts, color, opacity, dashed, segments) {
   var g = new THREE.BufferGeometry().setFromPoints(pts);
   var m = dashed ? new THREE.LineDashedMaterial({ color: color, transparent: true, opacity: opacity, dashSize: 0.35, gapSize: 0.3, depthWrite: false })
     : new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: opacity, depthWrite: false });
-  var l = new THREE.Line(g, m); if (dashed) { l.computeLineDistances(); DASHED.push(m); }
+  var l = segments ? new THREE.LineSegments(g, m) : new THREE.Line(g, m); if (dashed) { l.computeLineDistances(); DASHED.push(m); }
   return l;
 }
 function setLine(l, pts) {
@@ -1277,7 +1283,10 @@ function helioOf(v) { var L = v.length(); if (!L) return [0, 0, 0]; var k = rsIn
 function localOff(rel, par) {
   var au = Math.hypot(rel[0], rel[1], rel[2]); if (!au) return V();
   var P = SF.place(par), R = (P && P.radius_km) || 1000, km = au * AU;
-  return axes(rel, dispR(par) * (1.3 + 0.9 * Math.log10(1 + km / R)) / au);
+  // Surface places use the body's centre. Match both value and slope at its radius, without a jump at zero.
+  var t = km / R, edge = 1.3 + 0.9 * Math.log10(2), slope = 0.9 / (2 * Math.LN10);
+  var r = t < 1 ? (2 * edge - slope) * t + (slope - edge) * t * t : 1.3 + 0.9 * Math.log10(1 + t);
+  return axes(rel, dispR(par) * r / au);
 }
 function d3(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
 // Stations and moons that circle in under three days would spin many times a second at one sky day per second. On
@@ -1312,25 +1321,41 @@ function marker(id, jd) {
 function shipC(rp, jd, jdNow) {
   if (jdNow == null) jdNow = jd;
   var s = rp.at(jd), L = s.leg;
-  if (s.phase !== "flight") return { v: marker(s.phase === "arrived" ? L.to : L.from, jdNow).clone(), s: s };
-  var f = s.f, a0 = LIVEMAP ? jdNow : L.dep, a1 = LIVEMAP ? jdNow : L.arr;
+  if (s.phase !== "flight") return { v: marker(s.f >= 1 ? L.to : L.from, jdNow).clone(), s: s };
+  var f = s.f, a0 = LIVEMAP ? jdNow : L.dep, a1 = LIVEMAP ? jdNow : L.orb;
   if (L.sys) {
     // the arc rides with its planet; the end corrections are fixed per leg (from where the arc starts and ends)
     var sys = L.sys, an = marker(sys, jdNow), v = localOff(d3(s.p, SF.pos(sys, jd)), sys);
     var e0 = marker(L.from, a0).clone().sub(marker(sys, a0)).sub(offAt(L.from, sys, L.dep));
-    var e1 = marker(L.to, a1).clone().sub(marker(sys, a1)).sub(offAt(L.to, sys, L.arr));
+    var e1 = marker(L.to, a1).clone().sub(marker(sys, a1)).sub(offAt(L.to, sys, L.orb));
     return { v: v.add(e0.multiplyScalar(1 - f)).add(e1.multiplyScalar(f)).add(an), s: s };
   }
-  var w = S(s.p), c0 = marker(L.from, a0).clone().sub(S(SF.pos(L.from, L.dep))), c1 = marker(L.to, a1).clone().sub(S(SF.pos(L.to, L.arr)));
+  var w = S(s.p), c0 = marker(L.from, a0).clone().sub(S(SF.pos(L.from, L.dep))), c1 = marker(L.to, a1).clone().sub(S(SF.pos(L.to, L.orb)));
   return { v: w.add(c0.multiplyScalar(1 - f)).add(c1.multiplyScalar(f)), s: s };
 }
 function sampleRoute(rp, jdNow) {
   var out = [];
-  rp.legs.forEach(function (L) {
-    var n = L.sys ? 40 : 72;
-    for (var k = 0; k <= n; k++) { var j = L.dep + (L.arr - L.dep) * k / n; out.push({ j: j, v: shipC(rp, j, jdNow).v }); }
+  rp.legs.forEach(function (L, i) {
+    if (L.idle || !(L.orb > L.dep)) return;
+    var n = Math.max(L.sys ? 96 : 144, ((L.arc && L.arc.arc_au || []).length - 1) * 2);
+    for (var k = 0; k <= n; k++) { var j = L.dep + (L.orb - L.dep) * k / n; out.push({ j: j, leg: i, v: shipC(rp, j, jdNow).v }); }
   });
   return out;
+}
+// Independent pairs keep waits and changes of reference frame from drawing a fictitious connecting chord.
+function routePoints(samples, until, current) {
+  if (until == null) until = Infinity;
+  var pts = [];
+  for (var k = 1; k < samples.length; k++) {
+    var a = samples[k - 1], b = samples[k];
+    if (a.leg !== b.leg) continue;
+    if (b.j <= until) pts.push(a.v, b.v);
+    else {
+      if (a.j <= until && current && current.s.phase === "flight" && current.s.i === a.leg) pts.push(a.v, current.v);
+      break;
+    }
+  }
+  return pts;
 }
 
 /* ---------- labels, clamped to the map panel ---------- */
@@ -1538,12 +1563,12 @@ function rebuildRoutes() {
   routesDirty = false;
   FL.forEach(function (F) {
     F.samp = sampleRoute(F.rp, MAPJD);
-    setLine(F.full, F.samp.map(function (x) { return x.v; }));
+    setLine(F.full, routePoints(F.samp));
   });
   Object.keys(BK).forEach(function (id) {
     var B = BK[id]; if (!B.rp) { if (B.line) B.line.visible = false; return; }
-    if (!B.line) { B.line = lineOf([V(), V()], 0xffb65c, 0.5, true); scene.add(B.line); }
-    setLine(B.line, sampleRoute(B.rp, MAPJD).map(function (x) { return x.v; }));
+    if (!B.line) { B.line = lineOf([V(), V()], 0xffb65c, 0.5, true, true); scene.add(B.line); }
+    setLine(B.line, routePoints(sampleRoute(B.rp, MAPJD)));
   });
   var need = {};
   var rp = SEL.t === "f" ? FL[SEL.i] && FL[SEL.i].rp : SEL.t === "b" ? BK[SEL.id] && BK[SEL.id].rp : null;
@@ -1554,10 +1579,7 @@ function rebuildRoutes() {
 function updateFlown() {
   FL.forEach(function (F) {
     if (!F.samp || !F.sc) return;
-    var pts = [];
-    for (var k = 0; k < F.samp.length && F.samp[k].j <= F.jd; k++) pts.push(F.samp[k].v);
-    if (pts.length) pts.push(F.sc.v);
-    setLine(F.flown, pts);
+    setLine(F.flown, routePoints(F.samp, F.jd, F.sc));
   });
 }
 

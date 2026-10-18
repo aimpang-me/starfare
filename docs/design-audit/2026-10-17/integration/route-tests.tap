@@ -1,0 +1,564 @@
+TAP version 13
+# Subtest: the public booking desk admits seasonal rows and closes stale seasons until refreshed
+ok 1 - the public booking desk admits seasonal rows and closes stale seasons until refreshed
+  ---
+  duration_ms: 2.9975
+  type: 'test'
+  ...
+# Subtest: the flight passenger list follows recorded stops through diversions and repeated destinations
+ok 2 - the flight passenger list follows recorded stops through diversions and repeated destinations
+  ---
+  duration_ms: 1.8331
+  type: 'test'
+  ...
+# Subtest: replay selects the dispatched arc even when an unused alternative is closer to the delayed departure
+ok 3 - replay selects the dispatched arc even when an unused alternative is closer to the delayed departure
+  ---
+  duration_ms: 1.8303
+  type: 'test'
+  ...
+# Subtest: public flight records retain booking identity, cabin counts and segment stop mapping
+ok 4 - public flight records retain booking identity, cabin counts and segment stop mapping
+  ---
+  duration_ms: 13.5772
+  type: 'test'
+  ...
+# Subtest: cabin occupancy counts every person, while legacy missing numbers remain unknown
+ok 5 - cabin occupancy counts every person, while legacy missing numbers remain unknown
+  ---
+  duration_ms: 0.5169
+  type: 'test'
+  ...
+# Subtest: a live shared manifest shows future stops without boarding passengers at an open orbital hold
+ok 6 - a live shared manifest shows future stops without boarding passengers at an open orbital hold
+  ---
+  duration_ms: 0.2699
+  type: 'test'
+  ...
+# Subtest: the home map uses stored flight arcs and explicit booking identity, never the generic route planner
+ok 7 - the home map uses stored flight arcs and explicit booking identity, never the generic route planner
+  ---
+  duration_ms: 1.4579
+  type: 'test'
+  ...
+# Subtest: the home scoreboard uses the fresh board catalog, including a winner absent from the old page snapshot
+ok 8 - the home scoreboard uses the fresh board catalog, including a winner absent from the old page snapshot
+  ---
+  duration_ms: 4.3989
+  type: 'test'
+  ...
+# Subtest: shared dispatch feed shows each booking's quote and escapes agent-controlled content
+ok 9 - shared dispatch feed shows each booking's quote and escapes agent-controlled content
+  ---
+  duration_ms: 1.2112
+  type: 'test'
+  ...
+# Subtest: recorded time conflicts are detected without retiming the flight
+ok 10 - recorded time conflicts are detected without retiming the flight
+  ---
+  duration_ms: 0.2614
+  type: 'test'
+  ...
+# Subtest: replay timeline dates round-trip the recorded minute without slipping into the previous minute
+ok 11 - replay timeline dates round-trip the recorded minute without slipping into the previous minute
+  ---
+  duration_ms: 0.893
+  type: 'test'
+  ...
+# Subtest: the home map keeps a flight visible before launch and labels a held checkpoint as awaiting its agent
+ok 12 - the home map keeps a flight visible before launch and labels a held checkpoint as awaiting its agent
+  ---
+  duration_ms: 1.3584
+  type: 'test'
+  ...
+# Subtest: a completed replay is arrived at its exact final track time on both pages
+ok 13 - a completed replay is arrived at its exact final track time on both pages
+  ---
+  duration_ms: 3.4069
+  type: 'test'
+  ...
+# Subtest: a thousand-booking desk renders twenty cards, searches all rows, and keeps card nodes while its clock updates
+ok 14 - a thousand-booking desk renders twenty cards, searches all rows, and keeps card nodes while its clock updates
+  ---
+  duration_ms: 2.2234
+  type: 'test'
+  ...
+# Subtest: stored Ceres pickup arcs retain sub-metre coordinate precision
+ok 15 - stored Ceres pickup arcs retain sub-metre coordinate precision
+  ---
+  duration_ms: 6.7993
+  type: 'test'
+  ...
+# Subtest: site: archived six-decimal local arcs recover only the identical recorded transfer
+ok 16 - site: archived six-decimal local arcs recover only the identical recorded transfer
+  ---
+  duration_ms: 4.0253
+  type: 'test'
+  ...
+# Subtest: flight: archived six-decimal local arcs recover only the identical recorded transfer
+ok 17 - flight: archived six-decimal local arcs recover only the identical recorded transfer
+  ---
+  duration_ms: 3.3132
+  type: 'test'
+  ...
+# Subtest: main-map routes exclude orbit holds and idle legs
+ok 18 - main-map routes exclude orbit holds and idle legs
+  ---
+  duration_ms: 1.1786
+  type: 'test'
+  ...
+# Subtest: site: compressed local positions remain continuous at a body centre
+ok 19 - site: compressed local positions remain continuous at a body centre
+  ---
+  duration_ms: 1.2496
+  type: 'test'
+  ...
+# Subtest: flight: compressed local positions remain continuous at a body centre
+ok 20 - flight: compressed local positions remain continuous at a body centre
+  ---
+  duration_ms: 0.9593
+  type: 'test'
+  ...
+# Subtest: site: the local scale has no sharp bend at the surface radius
+ok 21 - site: the local scale has no sharp bend at the surface radius
+  ---
+  duration_ms: 1.2311
+  type: 'test'
+  ...
+# Subtest: flight: the local scale has no sharp bend at the surface radius
+ok 22 - flight: the local scale has no sharp bend at the surface radius
+  ---
+  duration_ms: 1.0898
+  type: 'test'
+  ...
+# Subtest: main map draws an arrival hold at the destination
+ok 23 - main map draws an arrival hold at the destination
+  ---
+  duration_ms: 0.9886
+  type: 'test'
+  ...
+# Subtest: site: interpolation stays in the local frame between stored waypoints
+ok 24 - site: interpolation stays in the local frame between stored waypoints
+  ---
+  duration_ms: 1.9622
+  type: 'test'
+  ...
+# Subtest: flight: interpolation stays in the local frame between stored waypoints
+ok 25 - flight: interpolation stays in the local frame between stored waypoints
+  ---
+  duration_ms: 1.4788
+  type: 'test'
+  ...
+# Subtest: route geometry never connects separate legs or a holding ship
+ok 26 - route geometry never connects separate legs or a holding ship
+  ---
+  duration_ms: 1.1843
+  type: 'test'
+  ...
+# Subtest: a delayed shared drop-off lands before the empty pickup departs
+ok 27 - a delayed shared drop-off lands before the empty pickup departs
+  ---
+  duration_ms: 2527.5977
+  type: 'test'
+  ...
+# Subtest: delays propagate through drop-offs and stops without passenger events
+ok 28 - delays propagate through drop-offs and stops without passenger events
+  ---
+  duration_ms: 0.3395
+  type: 'test'
+  ...
+# Subtest: a late interplanetary continuation asks before launch and keeps its correction burn
+ok 29 - a late interplanetary continuation asks before launch and keeps its correction burn
+  ---
+  duration_ms: 0.4913
+  type: 'test'
+  ...
+# Subtest: a diversion waits at its alternate and returns before the remaining stops continue
+ok 30 - a diversion waits at its alternate and returns before the remaining stops continue
+  ---
+  duration_ms: 0.5016
+  type: 'test'
+  ...
+# Subtest: a later scheduled departure is preserved after a delayed landing
+ok 31 - a later scheduled departure is preserved after a delayed landing
+  ---
+  duration_ms: 0.1482
+  type: 'test'
+  ...
+# list_hails bytes season 7 {"200":66816,"500":165779,"1000":331436}
+# list_hails bytes season 19 {"200":66684,"500":166056,"1000":331754}
+# Subtest: sky clock matches the page: 1 real second = 1 sky day, season resets
+ok 32 - sky clock matches the page: 1 real second = 1 sky day, season resets
+  ---
+  duration_ms: 1.1718
+  type: 'test'
+  ...
+# Subtest: isoJD rounds to the minute exactly like the engine; jdOfIso reads it back and rejects bad dates
+ok 33 - isoJD rounds to the minute exactly like the engine; jdOfIso reads it back and rejects bad dates
+  ---
+  duration_ms: 0.8598
+  type: 'test'
+  ...
+# Subtest: t0: quick hails 1 sky day ahead, long-haul hails LEAD days ahead; the hazard seed is the season number
+ok 34 - t0: quick hails 1 sky day ahead, long-haul hails LEAD days ahead; the hazard seed is the season number
+  ---
+  duration_ms: 1649.7415
+  type: 'test'
+  ...
+# Subtest: titan-home late in the season says the season ends too soon
+ok 35 - titan-home late in the season says the season ends too soon
+  ---
+  duration_ms: 674.751
+  type: 'test'
+  ...
+# Subtest: get_hail: each car is free or busy_until the engine's fleetState; the rules explain the hazards and the promise
+ok 36 - get_hail: each car is free or busy_until the engine's fleetState; the rules explain the hazards and the promise
+  ---
+  duration_ms: 150.9478
+  type: 'test'
+  ...
+# Subtest: dispatch scores from what actually happened: R.fly on the same legs, then R.score with ctx.flown
+ok 37 - dispatch scores from what actually happened: R.fly on the same legs, then R.score with ctx.flown
+  ---
+  duration_ms: 99.1794
+  type: 'test'
+  ...
+# Subtest: with nothing in the way, the par car's plan with an exact quote stays under half and fills no part
+ok 38 - with nothing in the way, the par car's plan with an exact quote stays under half and fills no part
+  ---
+  duration_ms: 41.154
+  type: 'test'
+  ...
+# Subtest: a ride leg with more kWh than the published set point loses throttle points
+ok 39 - a ride leg with more kWh than the published set point loses throttle points
+  ---
+  duration_ms: 38.9779
+  type: 'test'
+  ...
+# Subtest: a far car with the smaller tank is refused
+ok 40 - a far car with the smaller tank is refused
+  ---
+  duration_ms: 37.9675
+  type: 'test'
+  ...
+# Subtest: plan_ride flies the pickup's ship, not a Dawn stand-in
+ok 41 - plan_ride flies the pickup's ship, not a Dawn stand-in
+  ---
+  duration_ms: 1.5778
+  type: 'test'
+  ...
+# Subtest: the quoted arrival is a promise scored against the actual arrival; a wrong fare loses the fare points
+ok 42 - the quoted arrival is a promise scored against the actual arrival; a wrong fare loses the fare points
+  ---
+  duration_ms: 78.6569
+  type: 'test'
+  ...
+# Subtest: arriving late costs points on a sliding scale
+ok 43 - arriving late costs points on a sliding scale
+  ---
+  duration_ms: 39.3269
+  type: 'test'
+  ...
+# Subtest: busy cars: plan_pickup leaves no earlier than R.pickupStart + wait_days and says so; dispatch refuses an earlier pickup
+ok 44 - busy cars: plan_pickup leaves no earlier than R.pickupStart + wait_days and says so; dispatch refuses an earlier pickup
+  ---
+  duration_ms: 207.3089
+  type: 'test'
+  ...
+# Subtest: check_pad shows booked (scheduled) berths only, never the hidden unscheduled traffic
+ok 45 - check_pad shows booked (scheduled) berths only, never the hidden unscheduled traffic
+  ---
+  duration_ms: 72.0493
+  type: 'test'
+  ...
+# Subtest: space_weather shows flare odds at a place only, never the actual storms; far places get fewer storms, later
+ok 46 - space_weather shows flare odds at a place only, never the actual storms; far places get fewer storms, later
+  ---
+  duration_ms: 70.8139
+  type: 'test'
+  ...
+# Subtest: forecast tools validate input, are free (not plans) and are noted in the dispatch log
+ok 47 - forecast tools validate input, are free (not plans) and are noted in the dispatch log
+  ---
+  duration_ms: 68.3684
+  type: 'test'
+  ...
+# Subtest: hazards are deterministic per season: the same season replays the same, the next season differs
+ok 48 - hazards are deterministic per season: the same season replays the same, the next season differs
+  ---
+  duration_ms: 197.507
+  type: 'test'
+  ...
+# Subtest: long haul: the hail goes cold if the first interplanetary departure passes before dispatch
+ok 49 - long haul: the hail goes cold if the first interplanetary departure passes before dispatch
+  ---
+  duration_ms: 1209.3375
+  type: 'test'
+  ...
+# Subtest: long haul: Dawn and Deep Space 1 cannot hold the 2029-07-03 Ceres leg, and the RTG ship can
+ok 50 - long haul: Dawn and Deep Space 1 cannot hold the 2029-07-03 Ceres leg, and the RTG ship can
+  ---
+  duration_ms: 1658.724
+  type: 'test'
+  ...
+# Subtest: a long haul hailed after the last flight of the season can leave is refused with the season-end message
+ok 51 - a long haul hailed after the last flight of the season can leave is refused with the season-end message
+  ---
+  duration_ms: 396.0543
+  type: 'test'
+  ...
+# Subtest: wrong legs are refused; validation failures are not counted; the plan cap holds
+ok 52 - wrong legs are refused; validation failures are not counted; the plan cap holds
+  ---
+  duration_ms: 57.3322
+  type: 'test'
+  ...
+# Subtest: a pad closed on arrival stops the ride at a checkpoint; diverting to Phobos uses less than holding
+ok 53 - a pad closed on arrival stops the ride at a checkpoint; diverting to Phobos uses less than holding
+  ---
+  duration_ms: 4.8379
+  type: 'test'
+  ...
+# Subtest: decide is idempotent: the same answer returns where the ride stands, a different one is refused
+ok 54 - decide is idempotent: the same answer returns where the ride stands, a different one is refused
+  ---
+  duration_ms: 55.8605
+  type: 'test'
+  ...
+# Subtest: a flare at launch: replan is a plan and beats waiting; a leg the checker rejects leaves the checkpoint open
+ok 55 - a flare at launch: replan is a plan and beats waiting; a leg the checker rejects leaves the checkpoint open
+  ---
+  duration_ms: 1778.6271
+  type: 'test'
+  ...
+# Subtest: ask_after_hours is checked; "never" flies the defaults and arrives at once
+ok 56 - ask_after_hours is checked; "never" flies the defaults and arrives at once
+  ---
+  duration_ms: 2.4308
+  type: 'test'
+  ...
+# Subtest: leaving a ride at a checkpoint flies it on the defaults, so it still arrives and is scored
+ok 57 - leaving a ride at a checkpoint flies it on the defaults, so it still arrives and is scored
+  ---
+  duration_ms: 1.3107
+  type: 'test'
+  ...
+# Subtest: runs stored before phases existed keep working
+ok 58 - runs stored before phases existed keep working
+  ---
+  duration_ms: 119.534
+  type: 'test'
+  ...
+# Subtest: SEASON_END is the page's
+ok 59 - SEASON_END is the page's
+  ---
+  duration_ms: 0.0808
+  type: 'test'
+  ...
+# Subtest: ride history: a summary copies the score and log, and lists each checkpoint's hindsight options
+ok 60 - ride history: a summary copies the score and log, and lists each checkpoint's hindsight options
+  ---
+  duration_ms: 2.1636
+  type: 'test'
+  ...
+# Subtest: ride history: planning, abandoned (newer hail, cold) rows carry only what exists
+ok 61 - ride history: planning, abandoned (newer hail, cold) rows carry only what exists
+  ---
+  duration_ms: 515.7438
+  type: 'test'
+  ...
+# Subtest: ride history stats: per hail, sums and means over arrived rows (newest first), and the part lost most
+ok 62 - ride history stats: per hail, sums and means over arrived rows (newest first), and the part lost most
+  ---
+  duration_ms: 0.5651
+  type: 'test'
+  ...
+# Subtest: ride history cursor: base64url of created_ms and run_id, round trips, and rejects anything else
+ok 63 - ride history cursor: base64url of created_ms and run_id, round trips, and rejects anything else
+  ---
+  duration_ms: 0.4537
+  type: 'test'
+  ...
+# Subtest: shared flight: the run carries every booking, par from the pooled flight, and get_hail lists the bookings and seats
+ok 64 - shared flight: the run carries every booking, par from the pooled flight, and get_hail lists the bookings and seats
+  ---
+  duration_ms: 3279.9786
+  type: 'test'
+  ...
+# Subtest: shared flight: plan_leg chains one car's legs; the one-booking tools and stray legs are refused
+ok 65 - shared flight: plan_leg chains one car's legs; the one-booking tools and stray legs are refused
+  ---
+  duration_ms: 577.0961
+  type: 'test'
+  ...
+# Subtest: shared flight: dispatch with legs, stops and quotes scores each booking and lists the passengers stop by stop
+ok 66 - shared flight: dispatch with legs, stops and quotes scores each booking and lists the passengers stop by stop
+  ---
+  duration_ms: 604.0782
+  type: 'test'
+  ...
+# Subtest: shared flight: dispatch refuses the two-leg form, a booking left off the plan, a missing quote and a stranger
+ok 67 - shared flight: dispatch refuses the two-leg form, a booking left off the plan, a missing quote and a stranger
+  ---
+  duration_ms: 551.9554
+  type: 'test'
+  ...
+# Subtest: live: a season dispatch flies on the wall clock to its checkpoint and says when; decide extends the track from the answer
+ok 68 - live: a season dispatch flies on the wall clock to its checkpoint and says when; decide extends the track from the answer
+  ---
+  duration_ms: 71.0587
+  type: 'test'
+  ...
+# Subtest: live: the dispatcher log keeps each season call with its summary and the bot's trimmed note
+ok 69 - live: the dispatcher log keeps each season call with its summary and the bot's trimmed note
+  ---
+  duration_ms: 57.0826
+  type: 'test'
+  ...
+# Subtest: live: the dispatcher log keeps the newest 80 calls
+ok 70 - live: the dispatcher log keeps the newest 80 calls
+  ---
+  duration_ms: 73.9453
+  type: 'test'
+  ...
+# Subtest: live: the public record of a flight in the air has the legs flown so far, the hold and the log, and no player or seed
+ok 71 - live: the public record of a flight in the air has the legs flown so far, the hold and the log, and no player or seed
+  ---
+  duration_ms: 52.3589
+  type: 'test'
+  ...
+# Subtest: a pool hail plans, dispatches and scores like the engine
+ok 72 - a pool hail plans, dispatches and scores like the engine
+  ---
+  duration_ms: 3.1764
+  type: 'test'
+  ...
+# Subtest: list_hails JSON byte size at 200, 500 and 1000 rows
+ok 73 - list_hails JSON byte size at 200, 500 and 1000 rows
+  ---
+  duration_ms: 11.6321
+  type: 'test'
+  ...
+# Subtest: pool tiers are the placeholder table
+ok 74 - pool tiers are the placeholder table
+  ---
+  duration_ms: 0.223
+  type: 'test'
+  ...
+# Subtest: resolveHail takes a catalog id first, then this season's pool, and refuses the rest
+ok 75 - resolveHail takes a catalog id first, then this season's pool, and refuses the rest
+  ---
+  duration_ms: 0.6306
+  type: 'test'
+  ...
+# Subtest: the board keeps the higher score for one hail
+ok 76 - the board keeps the higher score for one hail
+  ---
+  duration_ms: 0.0672
+  type: 'test'
+  ...
+# Subtest: live: a bench task stays instant, with the same results less the playback fields, and keeps no track or log
+ok 77 - live: a bench task stays instant, with the same results less the playback fields, and keeps no track or log
+  ---
+  duration_ms: 97.2339
+  type: 'test'
+  ...
+# Subtest: the newest landed flight stays after the live map window
+ok 78 - the newest landed flight stays after the live map window
+  ---
+  duration_ms: 0.8972
+  type: 'test'
+  ...
+# Subtest: a landed flight inside the window stays, and an older one leaves
+ok 79 - a landed flight inside the window stays, and an older one leaves
+  ---
+  duration_ms: 0.1689
+  type: 'test'
+  ...
+# Subtest: a held flight leaves after the hold window
+ok 80 - a held flight leaves after the hold window
+  ---
+  duration_ms: 0.7244
+  type: 'test'
+  ...
+# Subtest: equal landing times keep the greater run id
+ok 81 - equal landing times keep the greater run id
+  ---
+  duration_ms: 0.1643
+  type: 'test'
+  ...
+# Subtest: a second pass drops nothing once the older landed flight is gone
+ok 82 - a second pass drops nothing once the older landed flight is gone
+  ---
+  duration_ms: 0.1322
+  type: 'test'
+  ...
+# Subtest: live output is byte-identical to the golden capture
+ok 83 - live output is byte-identical to the golden capture
+  ---
+  duration_ms: 3568.822
+  type: 'test'
+  ...
+# Subtest: the landing-page plan and pickup previews use the par ship and each candidate's own hull
+ok 84 - the landing-page plan and pickup previews use the par ship and each candidate's own hull
+  ---
+  duration_ms: 1.884
+  type: 'test'
+  ...
+# Subtest: a legacy flight without stored arcs recomputes its path with the recorded ship
+ok 85 - a legacy flight without stored arcs recomputes its path with the recorded ship
+  ---
+  duration_ms: 1.8214
+  type: 'test'
+  ...
+# Subtest: a stored seasonal booking can be read after its in-memory catalog is lost
+ok 86 - a stored seasonal booking can be read after its in-memory catalog is lost
+  ---
+  duration_ms: 5.3866
+  type: 'test'
+  ...
+# Subtest: older seasonal runs without a booking snapshot recover their original season's booking
+ok 87 - older seasonal runs without a booking snapshot recover their original season's booking
+  ---
+  duration_ms: 1.1136
+  type: 'test'
+  ...
+# Subtest: a new stored booking keeps its snapshot if the generator later changes
+ok 88 - a new stored booking keeps its snapshot if the generator later changes
+  ---
+  duration_ms: 0.6325
+  type: 'test'
+  ...
+# Subtest: overlapping plan calls preserve two different legs and both plan charges
+ok 89 - overlapping plan calls preserve two different legs and both plan charges
+  ---
+  duration_ms: 2.9208
+  type: 'test'
+  ...
+# Subtest: a persisted leg from a different engine is ignored and the current leg is cached
+ok 90 - a persisted leg from a different engine is ignored and the current leg is cached
+  ---
+  duration_ms: 0.7324
+  type: 'test'
+  ...
+# Subtest: a rejected operation does not block later calls in the run queue
+ok 91 - a rejected operation does not block later calls in the run queue
+  ---
+  duration_ms: 0.6715
+  type: 'test'
+  ...
+# Subtest: leaving a run during a pending plan preserves that leg and the abandoned state
+ok 92 - leaving a run during a pending plan preserves that leg and the abandoned state
+  ---
+  duration_ms: 1.7089
+  type: 'test'
+  ...
+1..92
+# tests 92
+# suites 0
+# pass 92
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14733.1418

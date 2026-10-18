@@ -1,0 +1,69 @@
+{
+  "capturedAt": "2026-10-18T02:08:16.753Z",
+  "method": "CUA interactions and read-only DOM observations of the actual local Worker. No fixtures or runtime mutation.",
+  "checks": [
+    {
+      "name": "Archived replay advances along the recorded passenger leg",
+      "pass": true,
+      "a": {
+        "labels": [
+          {
+            "position": "translate3d(491.8px, 279.7px, 0px)",
+            "text": "Ceres"
+          }
+        ],
+        "phase": "Starseeker SF-04flight · 1% of leg",
+        "time": "2039-04-18 07:33"
+      },
+      "b": {
+        "labels": [
+          {
+            "position": "translate3d(115.3px, 368.1px, 0px)",
+            "text": "Mars Base"
+          }
+        ],
+        "phase": "Starseeker SF-04flight · 33% of leg",
+        "time": "2040-09-28 03:55"
+      }
+    },
+    {
+      "name": "Corrected live map renders a close-up without browser errors",
+      "pass": true,
+      "details": {
+        "canvas": true,
+        "map": "Map time · following SF-042041-11-03 20:03 UTCLive flight (simulated). Other layers are hidden.",
+        "paused": "true",
+        "width": 1191
+      }
+    },
+    {
+      "name": "Mobile selected-flight summary stays compact with no overflow",
+      "pass": true,
+      "details": {
+        "detailsHidden": true,
+        "height": 844,
+        "infoHeight": 84.1875,
+        "overflow": false,
+        "width": 390
+      }
+    },
+    {
+      "name": "Mobile details expand within the bounded panel",
+      "pass": true,
+      "details": {
+        "expanded": "true",
+        "hidden": false,
+        "infoHeight": 340,
+        "overflow": false,
+        "viewportHeight": 844
+      }
+    }
+  ],
+  "passed": 4,
+  "failed": 0,
+  "homeErrors": [],
+  "replayErrors": [],
+  "visualReview": "Inspected the corrected Ceres close-up and mobile screenshots: continuous local curve; no jagged path scribble. The Ceres Port wireframe is a destination marker.",
+  "viewportRestored": true,
+  "appLeftPaused": true
+}

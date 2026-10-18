@@ -2,6 +2,18 @@
 // build.mjs publishes these same bytes as /assets/flight-view.js.
 (function (root) {
   "use strict";
+  // Recover old local arcs only when the unchanged engine reproduces EVERY recorded waypoint at its original
+  // six-decimal resolution and both exact plan times. Never substitute a different route or alter a stored run.
+  function preciseLocalArc(E, arc, ship, end) {
+    var A = arc && arc.arc_au;
+    if (!A || A.length < 2 || !A.every(function (p) { return p.length === 3 && p.every(function (n) { return Number.isFinite(n) && +n.toFixed(6) === n; }); })) return arc;
+    try {
+      var b = E.R.planLeg(arc.from, arc.to, arc.dep_jd, "energy", end, ship);
+      if (!b.local || b.dep_jd !== arc.dep_jd || b.arr_jd !== arc.arr_jd || b.arc_au.length !== A.length) return arc;
+      if (!b.arc_au.every(function (p, i) { return p.every(function (n, k) { return +n.toFixed(6) === A[i][k]; }); })) return arc;
+      return Object.assign({}, arc, { arc_au: b.arc_au });
+    } catch (_) { return arc; }
+  }
   function passengerList(rec, lg, hailOf) {
     var meta = rec.manifest || {}, live = rec.live;
     var flown = live ? live.flown : lg.flown || [];
@@ -62,7 +74,7 @@
       return i && ms(f.depart) < ms(legs[i - 1].arrive) ? [i + 1] : [];
     });
   }
-  var api = { passengerList: passengerList, aboardAt: aboardAt, seatCount: seatCount, seatsHtml: seatsHtml, timingConflicts: timingConflicts };
+  var api = { preciseLocalArc: preciseLocalArc, passengerList: passengerList, aboardAt: aboardAt, seatCount: seatCount, seatsHtml: seatsHtml, timingConflicts: timingConflicts };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.StarfareView = api;
 })(typeof window !== "undefined" ? window : globalThis);
