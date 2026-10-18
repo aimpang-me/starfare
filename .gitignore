@@ -1,6 +1,8 @@
 node_modules/
 .wrangler/
 .dev.vars
+.env
+.env.*
 *.zip
 __pycache__/
 output/playwright/

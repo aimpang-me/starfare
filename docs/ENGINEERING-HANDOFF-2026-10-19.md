@@ -84,7 +84,7 @@ node audit/propulsion-study-check.mjs
 # Optional: --out <new-summary.json>; do not overwrite historical evidence casually
 ```
 
-The runner preserves full outputs under a new ignored `connector/.wrangler/propulsion-handoff-check/<UTC>/` directory. It verifies numeric fingerprints against saved public-study baselines (6692/17052/34644 original/feed/thermal fields, excluding enriched mission metadata), independently reconciles mass to a maximum error of **4.55e-13 kg**, checks engine/suite hashes and halves the firing/cooldown step on the three selected proposals. Observed differences: peak power <0.036 W, rejection rating <0.057 W, total selected duty energy <0.000001 Wh, any individual case/phase energy <0.015 Wh, installed allocation <0.0025 kg. These measure resolution within the model, not real-world accuracy.
+The runner preserves full outputs under a new ignored `connector/.wrangler/propulsion-handoff-check/<UTC>/` directory. It verifies numeric fingerprints against saved public-study baselines (6692/17052/34644 original/feed/thermal fields, excluding enriched mission metadata), independently reconciles mass to a maximum error of **4.55e-13 kg**, checks engine/suite hashes and halves the firing/cooldown step on the three selected proposals. Observed differences: peak power <0.036 W, rejection rating <0.057 W, total selected duty energy <0.000001 Wh, any individual case/phase energy <0.015 Wh, installed allocation <0.0025 kg. These measure resolution within the model, not real-world accuracy. Exact fingerprints are runtime-sensitive; if a different JavaScript runtime/platform changes them, inspect the numerical differences rather than refreshing the baseline automatically.
 
 Run the latest budget directly:
 
@@ -119,6 +119,8 @@ Before fleet approval, obtain an installed engine heat/plume/soak map; supplier-
 - Preserved previous key: `C:\Users\PC-AIMPANG\starfare-private\bench-key.txt.previous-2026-10-17T22-48-39-589Z`.
 - Private selections/validation/trace: the same external directory, including `v1.test.selection.json`, its timestamped predecessor, `v1.timing.test.selection.json`, `v1.timing.validation.json`, `v1.timing.sample-test.trace.json` and generation logs. Do not put hidden seeds, strata or results in Git/PR text.
 - Local `.dev.vars`/`.env` files, caches, browser profiles, and all `.wrangler` contents remain excluded. There was no key rotation or hosted-key update in this scope.
+
+Packaging added explicit `.env` and `.env.*` ignore rules after checking that only `.dev.vars` had previously been protected by the repository's ignore file. No dotenv content was staged.
 
 The pre-publication scan compared both local key values against changed file contents and every Engineering branch commit, without displaying the values; no matches or credential/private/cache paths were found. Only explicit nonsecret files were staged. Do not replace this with adding all untracked/ignored files.
 
