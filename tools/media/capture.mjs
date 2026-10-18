@@ -9,6 +9,8 @@
 //   node capture.mjs --page /bench --sizes desktop,phone                     # other pages, other sizes
 //   node capture.mjs --video 12 --sizes og                                   # 12 s clip -> .mp4 and .gif (ffmpeg)
 //   node capture.mjs --base http://127.0.0.1:8787                            # use a Worker you already started
+//   node capture.mjs --base ... --page /flight/<run_id> --seek 0.2,0.6      # paused replay stills at fractions of the replay
+//   node capture.mjs --reduced                                               # emulate prefers-reduced-motion
 //
 // Output: tools/media/out/<stamp>/ (gitignored) with a manifest.json naming the engine sha, git commit and page
 // console errors, so a published asset can be traced back to the build that drew it. Never points at production
@@ -37,7 +39,7 @@ const SIZES = {
 };
 
 function args(argv) {
-  const o = { pages: [], sizes: ["og", "square", "story"], video: 0, wait: 6000, base: null, gif: true, out: null };
+  const o = { pages: [], sizes: ["og", "square", "story"], video: 0, wait: 6000, base: null, gif: true, out: null, seek: [], reduced: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i], v = () => argv[++i];
     if (a === "--page") o.pages.push(v());
@@ -47,9 +49,13 @@ function args(argv) {
     else if (a === "--base") o.base = v().replace(/\/$/, "");
     else if (a === "--out") o.out = v();
     else if (a === "--no-gif") o.gif = false;
+    else if (a === "--seek") o.seek = v().split(",").map(Number);
+    else if (a === "--reduced") o.reduced = true;
     else throw new Error(`unknown argument ${a}`);
   }
   if (!o.pages.length) o.pages = ["/"];
+  if (o.seek.some((f) => !(f >= 0 && f <= 1))) throw new Error("--seek takes fractions of the replay between 0 and 1");
+  if (o.seek.length && o.video) throw new Error("--seek makes stills; leave out --video");
   for (const s of o.sizes) if (!SIZES[s]) throw new Error(`unknown size ${s}; one of ${Object.keys(SIZES).join(", ")}`);
   return o;
 }
@@ -105,6 +111,36 @@ async function serveThreeLocally(context) {
   });
 }
 
+// Runs inside the page: pause through the play button, then move the replay scrubber as a viewer would.
+function seekReplay(at) {
+  const play = document.querySelector("#play"), range = document.querySelector("#srange");
+  if (!play || !range) throw new Error("--seek needs a flight replay page");
+  if (play.getAttribute("aria-label") === "Pause") play.click();
+  range.value = String(Math.round(at * 1000));
+  range.dispatchEvent(new Event("input"));
+}
+// Installed before page scripts: counts every WebGL draw, including post-processing passes, per frame that drew.
+function countDraws() {
+  const c = window.__draws = { calls: 0, triangles: 0, frames: 0, pending: 0 };
+  const tris = (mode, count) => mode === 4 ? count / 3 : mode === 5 || mode === 6 ? Math.max(0, count - 2) : 0;
+  for (const P of [window.WebGLRenderingContext, window.WebGL2RenderingContext].filter(Boolean).map((k) => k.prototype)) {
+    for (const [fn, ci, ii] of [["drawArrays", 2, -1], ["drawElements", 1, -1], ["drawArraysInstanced", 2, 3], ["drawElementsInstanced", 1, 4]]) {
+      const real = P[fn];
+      if (!real) continue;
+      P[fn] = function (...a) { c.pending++; c.calls++; c.triangles += tris(a[0], a[ci]) * (ii < 0 ? 1 : a[ii]); return real.apply(this, a); };
+    }
+  }
+  const tick = () => { if (c.pending) { c.frames++; c.pending = 0; } requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+}
+async function drawStats() {
+  const c = window.__draws, t0 = performance.now();
+  Object.assign(c, { calls: 0, triangles: 0, frames: 0, pending: 0 });
+  await new Promise((r) => setTimeout(r, 2000));
+  const s = (performance.now() - t0) / 1000;
+  return c.frames ? { calls: Math.round(c.calls / c.frames), triangles: Math.round(c.triangles / c.frames), fps: +(c.frames / s).toFixed(1) } : { calls: 0, triangles: 0, fps: 0 };
+}
+
 function slug(page) { return page === "/" ? "home" : page.replace(/^\//, "").replace(/[^\w-]+/g, "-"); }
 
 function ffmpeg(argv) { execFileSync("ffmpeg", ["-y", "-loglevel", "error", ...argv], { stdio: "inherit" }); }
@@ -115,7 +151,7 @@ async function main() {
   const out = o.out || join(HERE, "out", stamp);
   mkdirSync(out, { recursive: true });
   let worker, browser, base;
-  const files = [], errors = [];
+  const files = [], errors = [], stats = [];
   try {
     worker = o.base ? null : await startWorker();
     base = o.base || worker.base;
@@ -124,17 +160,23 @@ async function main() {
       for (const size of o.sizes) {
         const [width, height] = SIZES[size];
         const record = o.video > 0;
-        const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1,
+        const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, reducedMotion: o.reduced ? "reduce" : "no-preference",
           ...(record ? { recordVideo: { dir: out, size: { width, height } } } : {}) });
         await serveThreeLocally(context);
+        await context.addInitScript(countDraws);
         const tab = await context.newPage();
         tab.on("console", (m) => { if (m.type() === "error") errors.push({ page, size, text: m.text() }); });
         tab.on("pageerror", (e) => errors.push({ page, size, text: String(e) }));
         await tab.goto(base + page, { waitUntil: "load" });
         await sleep(o.wait);
         const name = `${slug(page)}-${size}`;
-        await tab.screenshot({ path: join(out, `${name}.png`) });
-        files.push(`${name}.png`);
+        for (const at of o.seek.length ? o.seek : [null]) {
+          const still = at == null ? name : `${name}-at${Math.round(at * 100)}`;
+          if (at != null) { await tab.evaluate(seekReplay, at); await sleep(1500); }
+          await tab.screenshot({ path: join(out, `${still}.png`) });
+          files.push(`${still}.png`);
+          stats.push({ page, size, at, ...await tab.evaluate(drawStats) });
+        }
         if (record) await sleep(o.video * 1000);
         const video = record ? tab.video() : null;
         await context.close();
@@ -161,7 +203,8 @@ async function main() {
   try { commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT }).toString().trim(); } catch {}
   try { workingTreeDirty = !!execFileSync("git", ["status", "--porcelain", "--untracked-files=normal"], { cwd: ROOT }).toString().trim(); } catch {}
   const manifest = { made: new Date().toISOString(), base, commit, working_tree_dirty: workingTreeDirty, engine_sha256: engine, pages: o.pages, sizes: o.sizes,
-    video_seconds: o.video, files, console_errors: errors,
+    video_seconds: o.video, files, console_errors: errors, render_stats: stats,
+    render_stats_note: "Per drawn frame over 2 s, post-processing passes included. fps is frames drawn per second under SwiftShader software rendering: a relative cost between captures, not a GPU frame rate.", reduced_motion: o.reduced,
     note: "Captured from the Starfare pages: the sky, fleet, bookings and flights are simulated. Label them so wherever they are posted." };
   writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
   console.log(`${files.length} files in ${out}${errors.length ? ` (${errors.length} console errors, see manifest.json)` : ""}`);
