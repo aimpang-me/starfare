@@ -1,0 +1,20 @@
+{
+  "format": "starfare.propulsion-study-baselines/1",
+  "basis": "Numeric fingerprints of locally preserved evaluated public offline study rows, compared unchanged at implementation commit 3e94ba3. Excludes mission objects enriched with phase metadata after original sizing; ignores no other numeric row fields. These are not private benchmark results.",
+  "engine_bundle_sha256": "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65",
+  "suite_sha256": "f77def45a0ea18821355e102a702593e7173492494a03fbdae610a6396597a1f",
+  "modes": {
+    "original": {
+      "numeric_fields": 6692,
+      "sha256": "f7c910a46296469fc0dc60f76994336d6c9af9f96a9c1738ed29eb661386acbe"
+    },
+    "feed": {
+      "numeric_fields": 17052,
+      "sha256": "38793628b735d05000210e131a4c2dfd5ddf6abecff7e3df7d849153a4899b17"
+    },
+    "thermal": {
+      "numeric_fields": 34644,
+      "sha256": "18dab383c5da09a2861ec81eacc0b322335dce260f02c75fedcee77d4a2da09e"
+    }
+  }
+}

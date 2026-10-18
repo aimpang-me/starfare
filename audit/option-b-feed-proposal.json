@@ -1,0 +1,84 @@
+{
+  "format": "starfare.option-b-feed-proposal/1",
+  "status": "requirements_only",
+  "sources": {
+    "engine": "https://www.ariane.group/app/uploads/2024/09/ArianeGroup_Chemical_Bipropellant_Thruster_Family.pdf",
+    "orifice_calibration": "https://www.space-propulsion.com/spacecraft-propulsion/apogee-motors/index.html",
+    "moog": "https://www.moog.com/products/propulsion/space-propulsion/spacecraft-propulsion/propulsion-components/helium-regulator-pneumatic-pressure-regulator.html",
+    "stanford_mu": "https://stanfordmu.com/feature-works/",
+    "helium_flow_density": "https://webbook.nist.gov/cgi/fluid.cgi?Action=Data&Wide=on&ID=C7440597&Digits=6&RefState=DEF&TUnit=K&PUnit=bar&DUnit=kg%2Fm3&Type=IsoTherm&T=283.15&PLow=18.35&PHigh=18.35&PInc=1"
+  },
+  "pressure_requirements": {
+    "reference": "all study pressures absolute; published gauge references are not silently reused",
+    "measured_tank_burn_min_bar": 15.5,
+    "measured_tank_burn_max_bar": 17.5,
+    "sensor_error_bound_bar": 0.1,
+    "burn_transient_bound_bar": 0.25,
+    "helium_regulator_count": 2,
+    "helium_regulator_inlet_min_bar": 30,
+    "helium_regulator_inlet_max_bar": 310,
+    "helium_regulator_control_min_bar": 16,
+    "helium_regulator_control_max_bar": 16.5,
+    "helium_regulator_lockup_max_bar": 16.5,
+    "helium_regulator_outlet_meop_min_bar": 22,
+    "helium_regulator_required_flow_g_s_each": 1.25,
+    "helium_flow_margin_fraction": 0.25,
+    "helium_density_flow_bound_kg_m3": 3.1,
+    "helium_flow_minimum_gas_temperature_k": 283.15,
+    "helium_flow_density_reference_pressure_bar": 18.35,
+    "helium_flow_density_reference_kg_m3": 3.09118,
+    "helium_density_flow_bound_basis": "NIST query gives 3.09118 kg/m3 at 18.35 bar and 10 C; 3.1 bound requires conditioned gas >=10 C and pressure <=18.35 bar. Inventory remains pinned to 2.78211 kg/m3 at 16.5 bar and 10 C.",
+    "minimum_pressure_loss_bar": 0
+  },
+  "hydraulics": {
+    "scope": "single-phase, steady preliminary model; geometry/friction/component limits are design assumptions",
+    "header_length_m": 2,
+    "header_internal_diameter_m": 0.014,
+    "header_minor_loss_k": 8,
+    "main_branch_length_m": 1,
+    "main_branch_internal_diameter_m": 0.006,
+    "main_branch_minor_loss_k": 4,
+    "rcs_branch_length_m": 2,
+    "rcs_branch_internal_diameter_m": 0.004,
+    "rcs_branch_minor_loss_k": 4,
+    "darcy_friction_factor_bound": 0.06,
+    "dynamic_viscosity_bound_pa_s": 0.002,
+    "fixed_pmd_filter_loss_bound_bar": 0.25,
+    "maximum_acceleration_head_length_m": 5,
+    "other_wet_component_volume_l_each_fluid": 0.1,
+    "additional_low_pressure_helium_volume_l": 1,
+    "additional_high_pressure_helium_volume_l": 0.1
+  },
+  "flow_catalog": {
+    "main_max_kg_s_each": 0.142,
+    "main_max_thrust_n_each": 450,
+    "main_of_min": 1.5,
+    "main_of_max": 1.8,
+    "rcs_max_kg_s_each": 0.0042,
+    "rcs_max_thrust_n_each": 12.5,
+    "rcs_of_min": 1.2,
+    "rcs_of_max": 2.1,
+    "basis": "manufacturer catalog pages 8 and 4; independent per-fluid extrema are conservative bounds, not a simultaneous mixture operating point"
+  },
+  "dry_additions": [
+    {"name": "two_custom_helium_regulators", "kg": 3.6, "basis": "estimate: two times published 1.8 kg Moog 50X1463 reference mass; that part does not meet this operating requirement"},
+    {"name": "feed_pressure_temperature_sensors_and_control", "kg": 1.4, "basis": "estimate"},
+    {"name": "larger_line_and_orifice_integration_upgrade", "kg": 3, "basis": "incremental estimate above existing branch/common-feed allocations"},
+    {"name": "additional_propellant_thermal_conditioning", "kg": 8, "basis": "estimate; cooling/heating capacity and electrical loads unverified"}
+  ],
+  "retained_common_feed_estimate_kg": {"cargo": 20, "passenger": 25},
+  "cargo_targets_kg": {
+    "phobos-pad-500kg": {"cargo": 40},
+    "phobos-pad-1000kg": {"cargo": 420},
+    "phobos-pad-2000kg": {"passenger": 150}
+  },
+  "missing_evidence": [
+    "Exact helium regulator configuration: absolute pressure reference, 30-310 bar inlet, 16-16.5 bar control and lockup, >=22 bar outlet MEOP, 1.25 g/s per path, mass, gas/vapor compatibility and temperature behavior",
+    "Actual pressure drops and single-phase delivery through PMDs, filters, valves, manifolds and branches; cold/hot viscosity and dissolved helium behavior",
+    "Continuous thermal/pressure envelope through scheduled departure and capture burns; interlock shutdown requires trajectory replanning",
+    "Fail-open isolation, restart/lockup transients, trapped-liquid expansion compliance and sensor/control response; no structural relief or mass venting assumed",
+    "Manufacturer calibrated mixture/thrust/Isp map and trimming orifices at the selected system pressure; 425 N/321 s not proved by pressure-band membership",
+    "Engine catalog lists pressure simply as bar; supplier must confirm absolute/gauge convention. Compare both conventional references provisionally.",
+    "Thermal equipment power and heat rejection; these hardware mass allocations do not establish an electrical/thermal energy budget"
+  ]
+}
