@@ -1,0 +1,69 @@
+{
+  "format": "starfare.option-b-thermal-hardware/1",
+  "status": "proposed_hardware_requirements_only",
+  "architecture": "external heated COPV jackets; independent external propellant-tank jackets and gas conditioners; sealed non-propellant coolant circuit; shielded engine bay",
+  "electrical": {"pump_w": 150, "controls_w": 15},
+  "engine": {
+    "maximum_hot_surface_k": 1873.15,
+    "radiation_allocation_w": 500,
+    "solid_conduction_allocation_w": 250,
+    "plume_penetration_other_allocation_w": 250,
+    "cooldown_time_constant_s": 600,
+    "post_capture_conditioning_s": 3600,
+    "basis": "1600 C catalog chamber-wall capability is an assumed radiation-source temperature, not a measured installation; 1000 W coupling and 600 s exponential cooldown are sensitivity requirements, not established bounds. Maintain onboard conditioning through one hour after capture, then require external service."
+  },
+  "bottle": {
+    "heater_source_k": 323.15,
+    "inner_wall_k": 313.15,
+    "catalog_maximum_k": 333.15,
+    "helium_k_w_m_k_diagnostic": 0.15,
+    "gas_nu_diagnostic_cases": [5.9, 50, 100, 200, 540],
+    "withdrawal_imbalance_factor": 1.2,
+    "basis": "Heater source 50 C, wall 40 C, bulk helium reference 20 C. Allocate 10 K to source/contact/wall and 20 K to inner-wall/gas; equal draw is nominal, +20% worst-bottle heat draw is an assumed sensitivity. Gas k and Nusselt examples are diagnostics, not PVG50 measured properties or correlations."
+  },
+  "loop": {
+    "design_heat_transport_w": 2000,
+    "supply_k": 279.15,
+    "return_k": 281.15,
+    "coolant_cp_min_j_kg_k": 3500,
+    "coolant_density_flow_kg_m3": 1043.85,
+    "coolant_fill_density_max_kg_l": 1.1,
+    "coolant_viscosity_design_pa_s": 0.008,
+    "transport_coolant_l": 4,
+    "nonpipe_transport_void_l": 1.5,
+    "pipe_id_m": 0.016,
+    "pipe_length_m": 10,
+    "minor_loss_k": 20,
+    "darcy_factor_floor": 0.06,
+    "all_nonpipe_pressure_allowance_pa": 40000,
+    "pressure_drop_ceiling_pa": 100000,
+    "minimum_wire_to_fluid_efficiency": 0.25,
+    "basis": "30% propylene-glycol/water class. Dow 10 C values: cp3756, density1043.85, viscosity0.0045068 SI. cp>=3500, viscosity<=0.008 and fill density<=1.1kg/L at 6-8 C are design assumptions requiring confirmation. Four litres includes all nonpanel lines, jackets/HX and accumulator working charge; panel charge stays inside filled panel mass. The 40kPa nonpipe allocation must include the complete radiator panel, parallel jacket branches, gas conditioners, balancing/isolation/bypass valves, manifolds and carried pad exchanger if in the flight flow path; this is not measured loss."
+  },
+  "components": [
+    {"name":"four_engine_heat_shield_kits","quantity_basis":"ship","kg_each":8,"basis":"4 x 2 kg installed allowance; ArianeGroup accessory class, actual kit mass and attenuation unavailable"},
+    {"name":"engine_bay_thermal_intercepts_and_support_integration","quantity_basis":"ship","kg_each":2,"basis":"additional thermal isolation and penetration allowance; no credit from existing load-bearing frame"},
+    {"name":"copv_heater_spreader_attachment","quantity_basis":"helium_bottle","kg_each":2,"basis":"custom segmented Minco space-heater class plus approved spreader/attachment; installed estimate, no vessel gas-side UA established"},
+    {"name":"separate_external_liquid_jacket_and_trim_heater","quantity_basis":"propellant_tank","kg_each":1,"basis":"external thermal rails and heater estimate; no propellant recirculation or internal vessel modification"},
+    {"name":"coolant_pump_package","quantity_basis":"ship","kg_each":2,"basis":"150 W custom space MPFL pump package requirement, AMETEK PDT class; no selected catalogue pump performance/mass"},
+    {"name":"coolant_accumulator","quantity_basis":"ship","kg_each":1,"basis":"dry accumulator and mounts estimate; working charge is in transport coolant row"},
+    {"name":"coolant_bypass_isolation_and_balancing","quantity_basis":"ship","kg_each":1.5,"basis":"dry valves/manifold estimate; branch isolation and cold-radiator bypass required"},
+    {"name":"nonpanel_thermal_transport_lines_and_fittings","quantity_basis":"ship","kg_each":3,"basis":"10 m nominal 16 mm ID circuit and fittings estimate; material compatibility, wall thickness and installation need selection"},
+    {"name":"nonpanel_retained_coolant","quantity_basis":"coolant_fill","kg_each":1.1,"basis":"kg/L fill upper design allocation; includes accumulator charge, excludes already-filled radiator panel"},
+    {"name":"two_isolated_helium_conditioners","quantity_basis":"ship","kg_each":2,"basis":"two low-pressure flowing-gas conditioners, custom 1 kg each; no HP bottle heat credit"},
+    {"name":"additional_thermal_sensors_and_control_harness","quantity_basis":"ship","kg_each":1,"basis":"additional temperature zones/control estimate; prior feed pressure sensors retained without subtraction"},
+    {"name":"onboard_pad_exchanger_and_disconnects","quantity_basis":"ship","kg_each":2,"basis":"dry carried interface estimate; external pad plant excluded and unqualified"},
+    {"name":"additional_thermal_blankets_and_attachment","quantity_basis":"ship","kg_each":1,"basis":"extra insulation estimate; prior tank/bus thermal allocations retained without credit"}
+  ],
+  "cargo_targets_kg": {"phobos-pad-500kg":{"cargo":0},"phobos-pad-1000kg":{"cargo":290},"phobos-pad-2000kg":{"passenger":0}},
+  "sources": {
+    "engine":"https://space-propulsion.com/brochures/bipropellant-thrusters/bipropellant-thrusters.pdf",
+    "engine_accessories":"https://space-propulsion.com/spacecraft-propulsion/apogee-motors/index.html",
+    "bottle":"https://www.mt-aerospace.de/files/mta/tankkatalog/Datenblatt_PVG-50.pdf",
+    "bottle_transfer":"https://ntrs.nasa.gov/api/citations/20205004021/downloads/ESM_HMT_Paper_Final.pdf",
+    "heater_class":"https://www.minco.com/catalog/?catalogpage=product&cid=satellite-heaters&id=HAP6749",
+    "pump_class":"https://www.pd-tech.com/markets/space",
+    "coolant":"https://www.dow.com/content/dam/dcc/documents/en-us/productdatasheet/180/180-01315-01-dowfrost-hd-tds.pdf?iframe=true",
+    "plume":"https://ntrs.nasa.gov/api/citations/19720018272/downloads/19720018272.pdf"
+  }
+}

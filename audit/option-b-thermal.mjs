@@ -1,4 +1,5 @@
 // Required heat along a controlled path, not a prediction of unchosen hardware.
+import {assessThermalHardware} from "./option-b-thermal-hardware.mjs";
 const SUM = values => values.reduce((a, b) => a + b, 0);
 const R = 8.31446261815324;
 const SIGMA = 5.670374419e-8;
@@ -38,7 +39,7 @@ function interpolate(table, value, column) {
   return a.map((v, i) => v + f * (b[i] - v));
 }
 
-export function sizeThermal(context, p, properties, feed, hardware) {
+export function sizeThermal(context, p, properties, feed, hardware, installed = null) {
   const {mission, liquids, tanks, helium, allocation, chemical} = context;
   const table = temperature => {
     const result = properties.helium_isotherms.find(t => Math.abs(t.temperature_k - temperature) < 1e-7);
@@ -53,13 +54,17 @@ export function sizeThermal(context, p, properties, feed, hardware) {
   const propellantRate = chemical.total_thrust_n / (9.80665 * chemical.isp_s);
   if (Math.abs(SUM(phases.filter(s => s.firing).map(s => s.seconds)) * propellantRate - mission.consumed_propellant_kg) > 1e-5)
     throw new Error("Thermal burn schedule changed the saved fuel consumption");
+  if (installed) phases.push({name: "post_capture", seconds: installed.engine.post_capture_conditioning_s, firing: false});
   const wetM3 = allocation.wet_volume_l_each_fluid / 1000;
   const hpM3 = helium.volume_l / 1000 + feed.hydraulics.additional_high_pressure_helium_volume_l / 1000;
   const hpMass0 = interpolate(hpTable, hardware.helium_eos.charge.pressure_bar, 0)[1] * hpM3;
   const lpLineMass = interpolate(lpTable, p.tank_total_pressure_bar, 0)[1] * feed.hydraulics.additional_low_pressure_helium_volume_l / 1000;
   const areas = tanks.map(t => t.equivalent_area_m2);
   const hpArea = helium.count * 1.2 * Math.cbrt(36 * Math.PI * (hardware.pressurant_bottle.volume_l / 1000) ** 2);
-  const rad = p.radiator, elec = p.electrical;
+  const rad = p.radiator, elec = {...p.electrical, ...(installed?.electrical ?? {})};
+  const installedParts = installed?.components.map(c => ({name: c.name,
+    kg: c.kg_each * ({ship: 1, helium_bottle: helium.count, propellant_tank: SUM(tanks.map(t => t.count)), coolant_fill: installed.loop.transport_coolant_l}[c.quantity_basis]),
+    basis: c.basis}));
   const radiatorEmission = rad.emissivity * SIGMA * rad.skin_temperature_k ** 4;
   const radiatorIncoming = rad.solar_absorptivity * rad.solar_flux_bound_w_m2
     + rad.planet_view_factor_max * (rad.emissivity * rad.planet_ir_bound_w_m2 + rad.solar_absorptivity * rad.planet_albedo_bound * rad.solar_flux_bound_w_m2);
@@ -89,11 +94,15 @@ export function sizeThermal(context, p, properties, feed, hardware) {
     let hpPeakHeat = 0, gasConditioningPeak = 0, liquidHeatPeak = 0, liquidCoolPeak = 0;
     const phaseResults = [];
     for (const phase of phases) {
-      const steps = phase.firing ? Math.ceil(phase.seconds / p.time_step_s) : 1;
+      const steps = phase.firing || installed ? Math.ceil(phase.seconds / p.time_step_s) : 1;
       const dt = phase.seconds / steps;
       const summary = {name: phase.name, seconds: phase.seconds, heater_peak_w: 0, electrical_peak_w: 0, electrical_wh: 0, rejection_peak_w: 0,
         start_hp_pressure_bar: interpolate(hpTable, hpMass / hpM3, 1)[0]};
       for (let j = 0; j < steps; j++) {
+        // Left-endpoint cooldown heat is conservative for this decreasing
+        // sensitivity. A new cutoff starts at the full declared firing load.
+        const engineToLiquid = phase.firing ? engineHeat : installed
+          ? engineHeat * Math.exp(-j * dt / installed.engine.cooldown_time_constant_s) : 0;
         const nextBurned = burned + (phase.firing ? propellantRate * dt : 0);
         const current = liquids.map((l, i) => state(i, l.loaded_kg - burned * l.burned_kg / mission.consumed_propellant_kg, p.liquid_target_k, vaporScale));
         const next = liquids.map((l, i) => state(i, l.loaded_kg - nextBurned * l.burned_kg / mission.consumed_propellant_kg, p.liquid_target_k, vaporScale));
@@ -109,7 +118,7 @@ export function sizeThermal(context, p, properties, feed, hardware) {
         // the remaining phase-change demand is h_fg * dm_vapor (not u_fg).
         // This uses additive partial-fluid enthalpies, neglecting mixture effects.
         const liquidDemand = next.map((s, i) => (s.vaporMass - current[i].vaporMass) / dt * properties.vapor[liquids[i].fluid].latent_heat_design_j_kg
-          - heatFlux * areas[i] - (phase.firing ? engineHeat / 2 : 0));
+          - heatFlux * areas[i] - engineToLiquid / 2);
         // Separate interfaces: no credit for transferring heat between nodes.
         const heat = Math.max(0, hpDemand) + SUM(conditioning.map(q => Math.max(0, -q))) + SUM(liquidDemand.map(q => Math.max(0, q)));
         const electric = (heat / elec.heater_efficiency + elec.pump_w + elec.controls_w) / elec.distribution_efficiency;
@@ -171,7 +180,7 @@ export function sizeThermal(context, p, properties, feed, hardware) {
       battery_energy_limited_kg: batteryEnergyKg, battery_power_limited_kg: batteryPowerKg,
       design_radiator_rejection_w: rejection * (1 + rad.capacity_margin_fraction), radiator_area_m2: area,
       components: [
-        {name: "thermal_heaters_exchangers_pump_transport_filled", kg: p.thermal_filled_fixed_kg, basis: p.thermal_fixed_basis},
+        ...(installedParts ?? [{name: "thermal_heaters_exchangers_pump_transport_filled", kg: p.thermal_filled_fixed_kg, basis: p.thermal_fixed_basis}]),
         {name: "dedicated_thermal_radiator_filled", kg: area * rad.assembly_kg_m2, basis: "estimated filled panel mass; unverified radiator environment/geometry"},
         {name: "dedicated_thermal_battery", kg: batteryKg, basis: "pack specific energy/rate/derating assumptions; no shared bus credit"},
         {name: "dedicated_thermal_power_conditioner", kg: conditionerKg, basis: "estimate"}]
@@ -187,8 +196,10 @@ export function sizeThermal(context, p, properties, feed, hardware) {
     return l.loaded_kg * (cp[0] * (p.pad_initial_hot_liquid_k - p.liquid_target_k)
       + cp[1] / 2 * (p.pad_initial_hot_liquid_k ** 2 - p.liquid_target_k ** 2));
   }));
-  return {status: "controlled_path_requirements_only", operational_thermal_continuity_established: false,
+  const result = {status: "controlled_path_requirements_only", operational_thermal_continuity_established: false,
     model: "phase-resolved controlled isothermal energy demand; not a transient wall/gas/actuator simulation",
+    electrical_energy_scope: installed ? "saved flight plus explicit post-capture conditioning; external service required thereafter" : "saved flight only",
+    aggregate_ua_scope: installed ? "inherited direct-to-radiator reference lower bounds only; use installed_hardware.loop for finite coolant-interface requirements" : "direct-to-radiator reference requirements",
     external_pad_conditioning_required: true,
     release_condition: "external pad service establishes liquid/tank equilibrium at LP target and helium at HP reference, and charges dedicated battery before lift; pad plant not carried or qualified",
     target_lp_k: p.liquid_target_k, target_hp_k: p.hp_reference_k, cases, sizing,
@@ -209,4 +220,6 @@ export function sizeThermal(context, p, properties, feed, hardware) {
     pad_liquid_only_cooldown_energy_wh: padEnergy / 3600,
     pad_liquid_only_average_cooling_w_over_alignment: padEnergy / mission.launch_wait_seconds,
     unresolved: p.unresolved};
+  if (installed) result.installed_hardware = assessThermalHardware(context, result, installed, p);
+  return result;
 }

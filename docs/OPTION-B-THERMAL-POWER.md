@@ -100,6 +100,8 @@ Inputs and property provenance are tracked; the generated JSON is ignored. For t
 
 **Next evidence:** establish engine-to-tank heat exposure and the actual bottle/loop conductance and transient response, then select radiator, battery, conditioning and pad-interface hardware against those requirements. Exact regulators and calibrated engine thrust/Isp are still open. M and Cabin close an estimated mass ledger; neither has demonstrated continuous pressure control or operational readiness.
 
+**Later follow-up:** the [installed hardware and heat-transfer investigation](OPTION-B-HEAT-TRANSFER.md) itemizes equipment and coolant, recalculates pump power and includes one hour of post-capture conditioning. Under those new allowances/duty, the medium proposal carries 290 kg cargo; the two-person cabin is 5.151 kg overweight even with zero cargo. The 350/60 kg figures above remain the earlier reference-path allocation, not the latest installed proposal. Exposure and transfer remain unproven.
+
 ## Sources
 
 - [NIST helium WebBook](https://webbook.nist.gov/cgi/fluid.cgi?ID=C7440597&Action=Page): four sourced isotherms with retrieval URLs and response hashes in `audit/option-b-thermal-properties.json`.

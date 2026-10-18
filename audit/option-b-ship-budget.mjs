@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { OPTION_B } from "./option-b-spec.mjs";
 import { validateFeedProposal, feedAllocation, assessFeed } from "./option-b-feed.mjs";
 import { validateThermalProposal, sizeThermal } from "./option-b-thermal.mjs";
+import { validateThermalHardware } from "./option-b-thermal-hardware.mjs";
 
 const read = path => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
 const hardware = read("./option-b-hardware.json");
@@ -57,7 +58,7 @@ for (const m of missions.missions) {
 
 const args = process.argv.slice(2), options = {};
 for (let i = 0; i < args.length; i += 2) {
-  if (!["--out", "--mission", "--role", "--feed-proposal", "--thermal-proposal"].includes(args[i]) || !args[i + 1]) throw new Error("Use --out <json>, --mission <id>, --role <cargo|passenger>, --feed-proposal <json>, --thermal-proposal <json>");
+  if (!["--out", "--mission", "--role", "--feed-proposal", "--thermal-proposal", "--thermal-hardware"].includes(args[i]) || !args[i + 1]) throw new Error("Use --out <json>, --mission <id>, --role <cargo|passenger>, --feed-proposal <json>, --thermal-proposal <json>, --thermal-hardware <json>");
   options[args[i]] = args[i + 1];
 }
 if (options["--mission"] && !missions.missions.some(m => m.id === options["--mission"])) throw new Error("Unknown mission");
@@ -71,6 +72,12 @@ const thermalProperties = thermalProposal ? read("./option-b-thermal-properties.
 if (thermalProposal) {
   if (!feedProposal) throw new Error("Thermal study requires --feed-proposal");
   validateThermalProposal(thermalProposal, thermalProperties);
+}
+const thermalHardwareRaw = options["--thermal-hardware"] ? readFileSync(options["--thermal-hardware"], "utf8") : null;
+const thermalHardware = thermalHardwareRaw ? JSON.parse(thermalHardwareRaw) : null;
+if (thermalHardware) {
+  if (!thermalProposal) throw new Error("Installed hardware requires --thermal-proposal");
+  validateThermalHardware(thermalHardware, thermalProposal);
 }
 
 function liquidInventory(mission, policy) {
@@ -182,7 +189,7 @@ function sizeShip(mission, role, policy, fixedCargo) {
       { name: "helium_bottle_shells", kg: helium.shell_kg, basis: "manufacturer" },
       { name: "helium_bottle_mounts_and_branch_feed", kg: helium.mount_kg + helium.branch_feed_kg, basis: "estimate" }
     ];
-    const thermal = thermalProposal ? sizeThermal({mission, liquids, tanks: selected, helium, allocation, chemical: OPTION_B}, thermalProposal, thermalProperties, feedProposal, hardware) : null;
+    const thermal = thermalProposal ? sizeThermal({mission, liquids, tanks: selected, helium, allocation, chemical: OPTION_B}, thermalProposal, thermalProperties, feedProposal, hardware, thermalHardware) : null;
     if (thermal) {
       helium.previous_assumed_total_retained_kg = helium.total_retained_kg;
       helium.total_retained_kg = thermal.retained_helium_kg;
@@ -199,7 +206,7 @@ function sizeShip(mission, role, policy, fixedCargo) {
   }
   if (!best) return { mission_id: mission.id, role, status: "no_catalog_assembly" };
   const available = mission.arrival_mass_kg - best.beforeCargo;
-  const cargo = fixedCargo ?? thermalProposal?.cargo_targets_kg[mission.id]?.[role] ?? feedProposal?.cargo_targets_kg[mission.id]?.[role]
+  const cargo = fixedCargo ?? thermalHardware?.cargo_targets_kg[mission.id]?.[role] ?? thermalProposal?.cargo_targets_kg[mission.id]?.[role] ?? feedProposal?.cargo_targets_kg[mission.id]?.[role]
     ?? assumptions.proposal_targets[mission.id]?.[role] ?? Math.max(0, Math.floor(available));
   const fits = available >= cargo;
   const trim = fits ? available - cargo : 0;
@@ -244,6 +251,11 @@ function sizeShip(mission, role, policy, fixedCargo) {
     result.thermal = best.thermal;
     result.pressure_status = "controlled_path_requirements_only_continuity_unverified";
     if (!best.thermal.residual_allocation_valid) result.status = "thermal_inventory_allocation_invalid";
+    if (best.thermal.installed_hardware) {
+      result.pressure_status = "installed_hardware_requirements_only_transfer_and_exposure_unproven";
+      if (!best.thermal.installed_hardware.loop.hydraulic_design_screen_pass || !best.thermal.installed_hardware.loop.heat_transport_capacity_screen_pass)
+        result.status = "installed_thermal_transport_screen_failed";
+    }
   }
   return result;
 }
@@ -267,9 +279,11 @@ const report = {format: "starfare.option-b-ship-budget/1", diagnostic_only: true
   feed_proposal_sha256: feedProposalRaw ? createHash("sha256").update(feedProposalRaw).digest("hex") : null,
   thermal_proposal: thermalProposal,
   thermal_proposal_sha256: thermalProposalRaw ? createHash("sha256").update(thermalProposalRaw).digest("hex") : null,
+  thermal_hardware: thermalHardware,
+  thermal_hardware_sha256: thermalHardwareRaw ? createHash("sha256").update(thermalHardwareRaw).digest("hex") : null,
   provenance, scenarios, rows,
   scope: "conditional conceptual mass budgets; no qualification, fleet update or reserve/docking trajectory claim",
-  source_hashes: Object.fromEntries(["option-b-ship-budget.mjs", "option-b-feed.mjs", "option-b-thermal.mjs", ...(thermalProposal ? ["option-b-thermal-properties.json"] : []), "option-b-hardware.json", "option-b-ship-assumptions.json", "option-b-ship-missions.json"].map(p =>
+  source_hashes: Object.fromEntries(["option-b-ship-budget.mjs", "option-b-feed.mjs", "option-b-thermal.mjs", "option-b-thermal-hardware.mjs", ...(thermalProposal ? ["option-b-thermal-properties.json"] : []), "option-b-hardware.json", "option-b-ship-assumptions.json", "option-b-ship-missions.json"].map(p =>
     [p, createHash("sha256").update(readFileSync(new URL(p, import.meta.url))).digest("hex")]))};
 if (options["--out"]) writeFileSync(options["--out"], JSON.stringify(report, null, 2) + "\n");
 console.log(JSON.stringify(rows.filter(r => ["baseline", "combined_conservative"].includes(r.scenario)).map(r => ({scenario: r.scenario, mission: r.mission_id, role: r.role,
