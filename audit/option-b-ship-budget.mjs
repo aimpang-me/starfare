@@ -2,6 +2,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { OPTION_B } from "./option-b-spec.mjs";
+import { validateFeedProposal, feedAllocation, assessFeed } from "./option-b-feed.mjs";
 
 const read = path => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
 const hardware = read("./option-b-hardware.json");
@@ -53,11 +54,14 @@ for (const m of missions.missions) {
 
 const args = process.argv.slice(2), options = {};
 for (let i = 0; i < args.length; i += 2) {
-  if (!["--out", "--mission", "--role"].includes(args[i]) || !args[i + 1]) throw new Error("Use --out <json>, --mission <id>, --role <cargo|passenger>");
+  if (!["--out", "--mission", "--role", "--feed-proposal"].includes(args[i]) || !args[i + 1]) throw new Error("Use --out <json>, --mission <id>, --role <cargo|passenger>, --feed-proposal <json>");
   options[args[i]] = args[i + 1];
 }
 if (options["--mission"] && !missions.missions.some(m => m.id === options["--mission"])) throw new Error("Unknown mission");
 if (options["--role"] && !Object.hasOwn(assumptions.roles, options["--role"])) throw new Error("Unknown role");
+const feedProposalRaw = options["--feed-proposal"] ? readFileSync(options["--feed-proposal"], "utf8") : null;
+const feedProposal = feedProposalRaw ? JSON.parse(feedProposalRaw) : null;
+if (feedProposal) validateFeedProposal(feedProposal);
 
 function liquidInventory(mission, policy) {
   const burned = mission.consumed_propellant_kg, mf = mission.arrival_mass_kg;
@@ -135,7 +139,12 @@ function heliumInventory(banks, liquids, policy) {
 
 function sizeShip(mission, role, policy, fixedCargo) {
   const liquids = liquidInventory(mission, policy);
-  const fixed = Object.entries(assumptions.roles[role].fixed_hardware_estimates_kg).map(([name, kg]) => ({name, kg, basis: "concept estimate"}));
+  const feedHardware = {...hardware, rcs_count: policy.rcs_engine_count};
+  const allocation = feedProposal ? feedAllocation(role, feedProposal, feedHardware, OPTION_B) : null;
+  const fixed = Object.entries(assumptions.roles[role].fixed_hardware_estimates_kg)
+    .filter(([name]) => !allocation || name !== "regulators_isolation_valves_common_feed")
+    .map(([name, kg]) => ({name, kg, basis: "concept estimate"}));
+  if (allocation) fixed.push(...allocation.components);
   fixed.push({name: "four_main_engines_with_valves", kg: OPTION_B.bare_engine_mass_kg, basis: "manufacturer"},
     {name: "twelve_rcs_engines_with_dual_seat_valves", kg: policy.rcs_engine_count * hardware.rcs_thruster.dry_kg, basis: "manufacturer mass; proposed count/layout"});
   const crewCount = role === "passenger" ? policy.crew_count : 0;
@@ -148,6 +157,10 @@ function sizeShip(mission, role, policy, fixedCargo) {
   let best;
   for (const fuel of banks[0]) for (const oxidizer of banks[1]) {
     const selected = [fuel, oxidizer], helium = heliumInventory(selected, liquids, policy);
+    if (allocation) {
+      helium.additional_retained_feed_and_ullage_kg = allocation.additional_retained_helium_kg;
+      helium.total_retained_kg += allocation.additional_retained_helium_kg;
+    }
     if (helium.count > policy.maximum_helium_bottles) continue;
     const dynamic = [
       { name: "propellant_tank_shells_and_pmd", kg: sum(selected.map(x => x.shells_kg)), basis: "manufacturer catalog/upper bounds" },
@@ -165,7 +178,8 @@ function sizeShip(mission, role, policy, fixedCargo) {
   }
   if (!best) return { mission_id: mission.id, role, status: "no_catalog_assembly" };
   const available = mission.arrival_mass_kg - best.beforeCargo;
-  const cargo = fixedCargo ?? assumptions.proposal_targets[mission.id]?.[role] ?? Math.max(0, Math.floor(available));
+  const cargo = fixedCargo ?? feedProposal?.cargo_targets_kg[mission.id]?.[role]
+    ?? assumptions.proposal_targets[mission.id]?.[role] ?? Math.max(0, Math.floor(available));
   const fits = available >= cargo;
   const trim = fits ? available - cargo : 0;
   const arrivalSum = sum(best.dryParts.map(x => x.kg)) + best.growth + retainedLiquids + best.helium.total_retained_kg + retainedCrewMass + cargo + trim;
@@ -188,9 +202,9 @@ function sizeShip(mission, role, policy, fixedCargo) {
   if (!checks.hot_tank_pressure_within_assumed_screen || !checks.hot_storage_pressure_within_meop || !checks.helium_delivery_capacity || !checks.separate_tank_volume
     || Math.abs(checks.inventory_closure_kg) > 1e-6 || (fits && (Math.abs(checks.arrival_closure_error_kg) > 1e-6 || Math.abs(checks.departure_closure_error_kg) > 1e-6)))
     throw new Error("Internal sizing invariant failed: " + mission.id + "/" + role);
-  return { mission_id: mission.id, role, status: fits ? "conditional_mass_budget_closes" : "mass_deficit",
-    pressure_status: "unclosed_engine_feed_and_propellant_properties",
-    pressure_limit: "MEOP screen assumes <=2 bar propellant vapor contribution, <=4% expansion and proportional fill. Feed regulator/loss/flow and actual fluid properties remain unverified; no operational pressure closure claimed.",
+  const result = { mission_id: mission.id, role, status: fits ? "conditional_mass_budget_closes" : "mass_deficit",
+    pressure_status: feedProposal ? "requirements_only_regulator_thermal_performance_unverified" : "unclosed_engine_feed_and_propellant_properties",
+    pressure_limit: "MEOP screen assumes <=2 bar propellant vapor contribution, <=4% expansion and proportional fill. Feed/regulator/thermal/performance requirements remain unverified; no operational pressure closure claimed.",
     cold_inlet_pressure_lower_screen_bar: nominalPressureLow, hot_unregulated_inlet_pressure_upper_screen_bar: nominalPressureHigh,
     mission, occupants: crewCount, provision_days: provisionDays, consumables, occupant_and_suit_kg: crewCount * policy.occupant_and_suit_kg_each,
     cargo_mass_capacity_kg: Math.max(0, Math.floor(available)), cargo_allocation_kg: cargo,
@@ -201,6 +215,11 @@ function sizeShip(mission, role, policy, fixedCargo) {
     nominal_departure_mass_kg: mission.departure_mass_kg, nominal_arrival_mass_kg: mission.arrival_mass_kg,
     component_ledger: [...best.dryParts, {name: "dry_hardware_growth_allocation", kg: best.growth, basis: "policy"}],
     liquids, tanks: best.tanks, helium: best.helium, checks };
+  if (feedProposal) {
+    result.feed = assessFeed(result, feedProposal, feedHardware, OPTION_B, policy);
+    if (!result.feed.conditional_inventory_allocation_valid) result.status = "feed_inventory_allocation_invalid";
+  }
+  return result;
 }
 
 const selectedMissions = missions.missions.filter(m => !options["--mission"] || m.id === options["--mission"]);
@@ -216,9 +235,11 @@ for (const [scenario, changes] of Object.entries(scenarios)) for (const mission 
   rows.push({scenario, ...result});
 }
 const report = {format: "starfare.option-b-ship-budget/1", diagnostic_only: true, source_engine_sha256: sourceHash,
-  completed_utc: new Date().toISOString(), chemical: OPTION_B, hardware, assumptions, provenance, scenarios, rows,
+  completed_utc: new Date().toISOString(), chemical: OPTION_B, hardware, assumptions, feed_proposal: feedProposal,
+  feed_proposal_sha256: feedProposalRaw ? createHash("sha256").update(feedProposalRaw).digest("hex") : null,
+  provenance, scenarios, rows,
   scope: "conditional conceptual mass budgets; no qualification, fleet update or reserve/docking trajectory claim",
-  source_hashes: Object.fromEntries(["option-b-ship-budget.mjs", "option-b-hardware.json", "option-b-ship-assumptions.json", "option-b-ship-missions.json"].map(p =>
+  source_hashes: Object.fromEntries(["option-b-ship-budget.mjs", "option-b-feed.mjs", "option-b-hardware.json", "option-b-ship-assumptions.json", "option-b-ship-missions.json"].map(p =>
     [p, createHash("sha256").update(readFileSync(new URL(p, import.meta.url))).digest("hex")]))};
 if (options["--out"]) writeFileSync(options["--out"], JSON.stringify(report, null, 2) + "\n");
 console.log(JSON.stringify(rows.filter(r => ["baseline", "combined_conservative"].includes(r.scenario)).map(r => ({scenario: r.scenario, mission: r.mission_id, role: r.role,

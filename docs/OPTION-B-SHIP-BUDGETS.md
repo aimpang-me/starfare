@@ -1,5 +1,7 @@
 # Option B: tank sizing, reserves and ship budgets
 
+Follow-up: the [feed-pressure proposal and revised budgets](OPTION-B-FEED-PRESSURE.md) add explicit feed/thermal hardware and reduce the courier cargo targets to 40/420 kg. This document retains the earlier 70/450 kg comparison baseline. Both studies remain conditional; no fleet change is approved.
+
 ## Decision for review
 
 **Three Phobos concepts close their conceptual mass budgets. None has a closed engine-feed pressure design. The lunar envelopes do not close.** Fleet and production physics are unchanged.

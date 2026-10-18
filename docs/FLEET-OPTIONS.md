@@ -16,6 +16,8 @@ The subsequent [Phobos → Mars Base study](OPTION-B-PHOBOS-EVALUATION.md) evalu
 
 The [tank, reserve and complete ship budgets](OPTION-B-SHIP-BUDGETS.md) propose two local cargo concepts and a two-person cabin concept. Their mass ledgers close under the stated conservative assumptions; engine feed pressure remains unresolved. The existing lunar mass envelopes are overweight with complete hardware/reserve budgets. These are conditional study proposals for review, with no fleet change.
 
+The [feed-pressure follow-up](OPTION-B-FEED-PRESSURE.md) proposes separate helium regulation, wider feed lines, calibrated orifices and a measured firing envelope. Updated mass allocations allow 40/420 kg courier cargo or two occupants plus 150 kg cargo; exact regulators, thermal continuity and delivered performance remain unverified. These proposed budgets do not authorize a fleet change.
+
 The four-engine alignment is a proposal, not a flown assembly. The chemical engine datasheet lists 4.30 kg bare mass with valve per engine (17.2 kg for four); this excludes tanks, piping, pressurization, mounting, thermal protection, cabin and passengers. No hull dry mass, tank capacity, electrical plant, reserve or passenger mass is silently assigned to an existing Starseeker. A hybrid must supply 2310 W **net at the ion burn location**, not merely have that solar rating at 1 AU.
 
 ## Quantified comparison: burn budget, not a new trajectory
