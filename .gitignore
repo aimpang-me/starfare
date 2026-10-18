@@ -5,3 +5,5 @@ node_modules/
 __pycache__/
 output/playwright/
 .playwright-cli/
+audit/propulsion-audit.json
+audit/propulsion-ledger.json
