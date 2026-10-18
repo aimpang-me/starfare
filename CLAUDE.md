@@ -5,6 +5,8 @@ Starfare (working title SOL) is Alvin Impang's passenger-flight game and agent p
 Current reliability and calculation findings: `docs/PLUMBING-AUDIT.md`.
 Latest timing correction, regenerated suite and key handoff: `docs/SHARED-FLIGHT-TIMING.md` and the current follow-up in `NEXT-STEPS.md`. Historical deployment notes below are earlier baselines.
 
+Tooling for development, marketing assets (images, motion, 3D, audio) and shipping, with the gaps: `docs/STACK.md`.
+
 Read first: `docs/HANDOFF.md` (state, decisions, next steps), `docs/OPEN-QUESTIONS.md`, `docs/WEBSITES.md`, `docs/DESIGN.md`, `docs/HISTORY.md`, `docs/SPEC.md`.
 
 ## Layout
@@ -12,6 +14,8 @@ Read first: `docs/HANDOFF.md` (state, decisions, next steps), `docs/OPEN-QUESTIO
 - `world/template.html` -> `python3 world/build.py` -> `world/open-sky.html` (the Open Sky page, published as a claude.ai artifact).
 - `connector/`: the Grok MCP connector, a Cloudflare Worker named `starfare`. `node build.mjs` copies the engine bundle into `src/engine/`. `GET /` is the public website (`src/site.html`): a live read-only sky map running the engine in the browser (served at `/engine.js`), the scoreboard and how to connect Grok. Docs: `DEPLOY.md`, `TEST.md`.
 - `day5/` (Stranded at Titan page), `site/` (Dispatch Desk page), `teaser/` (Ride to the Roadster page).
+- `tools/media/`: `capture.mjs` films and screenshots the real pages from a local `wrangler dev` (social sizes, MP4/GIF) for marketing and QA. Output goes to `tools/media/out/` (gitignored).
+- `.claude/hooks/session-start.sh`: cloud sessions install connector and Python test dependencies on start.
 - `code/`, `day1`-`day6/`, `audit/`, `receipts/`: the original Python planner, checker, evals.
 
 ## Tests

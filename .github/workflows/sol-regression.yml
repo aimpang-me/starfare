@@ -1,5 +1,9 @@
 name: sol-regression
-on: [push, pull_request]
+# Pushes to main, plus every pull request. Branch pushes with an open PR used to run everything twice.
+on:
+  push:
+    branches: [main]
+  pull_request:
 jobs:
   gate:
     runs-on: ubuntu-latest
@@ -12,3 +16,26 @@ jobs:
         run: python day3/run_regression.py
       - name: Self-test, a planted made-up number must turn the suite red
         run: "! python day3/run_regression.py --plant 2"
+  connector:
+    runs-on: ${{ matrix.os }}
+    # sim-policy.test.mjs alone takes about 6 min on 4 Linux cores and 10 to 18 min on the 2-core Windows runner.
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        working-directory: connector
+    env:
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: connector/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Connector unit and local MCP integration tests
+        run: npm test
