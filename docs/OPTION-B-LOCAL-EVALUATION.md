@@ -4,6 +4,8 @@
 
 Follow-up: the [Phobos → Mars Base evaluation](OPTION-B-PHOBOS-EVALUATION.md) now supplies finite-thrust flight/fuel results for two explicitly defined Phobos source conditions, with launch wait and remaining assumptions. The headline-booking gap below describes this earlier three-pair study; the follow-up does not validate the old parking orbit or change the fleet.
 
+The subsequent [ISS → Lunar Data Center evaluation](OPTION-B-LUNAR-EVALUATION.md) supplies four 3D rendezvous examples, including actual station clocks, chemical propellant and launch availability. The historical lunar gap below is superseded by that bounded study; fleet selection remains pending.
+
 ## Results to review
 
 For **1000 kg final nonburned mass**, four 425 N engines and 321 s Isp:
