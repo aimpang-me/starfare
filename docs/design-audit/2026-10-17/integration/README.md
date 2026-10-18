@@ -40,3 +40,5 @@ The earlier audit, prototype variants, image assets, motion recording and extern
 ## Follow-up repairs
 
 [Compact mobile flight details](MOBILE-DETAILS.md) preserves the canvas behind an expandable summary. [Flight geometry repair](FLIGHT-GEOMETRY.md) documents the later user-reported Ceres path failure: coordinate precision, parent-frame interpolation, continuous local projection and separate flight-only line segments. That repair supersedes the original statement above about retaining replay calculations unchanged; it preserves the physics engine and recorded timing, with strictly verified precision recovery for matching archived local arcs.
+
+[Ship heading repair](SHIP-HEADING.md) bounds direction sampling to the active leg, aligns each nose with the displayed route, orients parked/arrived ships with their location's orbital motion, and preserves stable roll through vertical tangents. The ship mesh, physical positions and recorded clock remain unchanged.

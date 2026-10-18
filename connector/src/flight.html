@@ -1083,12 +1083,18 @@ function rideFrame(dt, t) {
     RS.dl.position.copy(sd.clone().multiplyScalar(100)); RS.sun.position.copy(sd.clone().multiplyScalar(3000));
     if (window.SolArt) SolArt.setSun(RS.sun.position);
   }
-  var q = shipPos(Math.min(rp.end, jd + span / 900)), d = q.clone().sub(p);
+  var heading = window.StarfareView.flightDirection(rp, jd, function (time) { return shipPos(time).toArray(); });
+  if (!heading) {
+    var stop = st.f >= 1 ? L.to : L.from;
+    heading = window.StarfareView.orbitDirection(jd, function (time) { return (RS.local ? placeK(stop, time) : marker(stop, time)).toArray(); });
+  }
+  var d = heading ? V(heading[0], heading[1], heading[2]) : V();
   // Near a planet a parked Starseeker rides its station's orbit, often several laps per second of replay. The camera
   // then rides with it, locked to the orbit (ahead along the motion, up away from the planet), instead of chasing.
   var snap = reduced || jump || (RS.local && !fl);
   if (d.lengthSq() > 1e-12 && (fl || RS.local)) RS.fwd.lerp(d.normalize(), snap ? 1 : 1 - Math.exp(-dt * 6)).normalize();
-  RS.ship.position.copy(p); RS.ship.lookAt(p.clone().add(RS.fwd));
+  RS.ship.position.copy(p);
+  window.StarfareView.orientShip(RS.ship, window.StarfareView.headingFrame(heading, RS.local ? p.toArray() : [0, 1, 0], RS.ship.userData.headingSet ? RS.ship.up.toArray() : null));
   if (RS.ship.userData.update) RS.ship.userData.update(t, fl, reduced);
   else {
     RS.ship.userData.glow.material.opacity = fl ? 1 : 0.2;

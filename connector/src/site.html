@@ -1584,7 +1584,7 @@ function updateFlown() {
 }
 
 /* ---------- the render loop: paused when the tab is hidden or the map is off screen ---------- */
-var raf = 0, last = 0, MAPVIS = true, AIM = null;
+var raf = 0, last = 0, MAPVIS = true;
 function frame(t) {
   raf = requestAnimationFrame(frame);
   if (t - last < 1000 / (GW <= 760 ? 24 : 30)) return;
@@ -1596,7 +1596,6 @@ function glStart() { if (GL && !raf && !document.hidden && MAPVIS) { last = perf
 function glStop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
 function draw(dt, t) {
   var now = mapWallNow(), rep = FOLLOW && SEL.t === "f" && !!FL[SEL.i];
-  if (!AIM) AIM = new THREE.Object3D();
   LIVEJD = SF.sky(now).jd;
   FL.forEach(function (F) { F.jd = liveJd(F.f, now); });
   LIVEMAP = !rep;
@@ -1636,22 +1635,15 @@ function draw(dt, t) {
     F.full.visible = on && F.full.userData.has; F.flown.visible = on && F.flown.userData.has;
     F.full.material.opacity = (sel ? 0.6 : 0.28) * fa; F.flown.material.opacity = (sel ? 1 : 0.55) * fa;
     F.ship.visible = F.halo.visible = on && fa > 0.01;
-    if (!F.ship.visible) { F.aimed = false; return; }
+    if (!F.ship.visible) return;
     var v = F.sc.v, s = pxw(v) * fa;
     F.ship.position.copy(v); F.ship.scale.setScalar(s * (sel ? 38 : 30));
-    if (F.sc.s.phase !== "arrived") {
-      // heading eases toward the direction of travel (or of the next departure) instead of snapping each frame
-      var L = F.sc.s.leg, st = Math.max(1e-5, (L.arr - L.dep) / 300), ja = Math.min(Math.max(F.jd, L.dep), L.arr - st);
-      var pa = shipC(F.rp, ja, MAPJD).v, nx = shipC(F.rp, ja + st, MAPJD).v;
-      if (nx.distanceToSquared(pa) > 1e-12) {
-        AIM.position.copy(pa); AIM.lookAt(nx);
-        // a ship creeping under a pixel a frame turns slowly, so it never spins in place
-        var mv = F.aimed ? clamp(v.distanceTo(F.lastV) / s / 1.5, 0, 1) : 1;
-        if (F.aimed && !reduced) F.ship.quaternion.slerp(AIM.quaternion, (1 - Math.exp(-dt * 6)) * (0.2 + 0.8 * mv)); else F.ship.quaternion.copy(AIM.quaternion);
-        F.aimed = true;
-      }
+    var heading = window.StarfareView.flightDirection(F.rp, F.jd, function (jd) { return shipC(F.rp, jd, MAPJD).v.toArray(); });
+    if (!heading) {
+      var state = F.sc.s, stop = state.f >= 1 ? state.leg.to : state.leg.from;
+      heading = window.StarfareView.orbitDirection(MAPJD, function (jd) { return marker(stop, jd).toArray(); });
     }
-    (F.lastV || (F.lastV = V())).copy(v);
+    window.StarfareView.orientShip(F.ship, window.StarfareView.headingFrame(heading, [0, 1, 0], F.ship.userData.headingSet ? F.ship.up.toArray() : null));
     F.halo.position.copy(v); F.halo.scale.setScalar(s * (sel ? 34 : 24));
     F.halo.material.color.setScalar(sel ? 1.5 : 0.75); // over the bloom threshold only when selected
     if (F.ship.userData.update) F.ship.userData.update(t, F.sc.s.phase === "flight", reduced || MAP_PAUSED);
@@ -1675,6 +1667,8 @@ function draw(dt, t) {
     var ship = PARK_SHIPS[c.car];
     if (!ship) { ship = PARK_SHIPS[c.car] = SolArt.ship({callsign:c.car.toUpperCase()}); scene.add(ship); }
     var p = marker(c.at, MAPJD); ship.visible = true; ship.position.copy(p); ship.scale.setScalar(pxw(p) * 16);
+    var heading = window.StarfareView.orbitDirection(MAPJD, function (jd) { return marker(c.at, jd).toArray(); });
+    window.StarfareView.orientShip(ship, window.StarfareView.headingFrame(heading, [0, 1, 0], ship.userData.headingSet ? ship.up.toArray() : null));
     if (ship.userData.update) ship.userData.update(t, false, reduced || MAP_PAUSED);
   });
   setPts(PARK_R, window.SolArt ? [] : pr); setPts(PARK_B, window.SolArt ? [] : pb);

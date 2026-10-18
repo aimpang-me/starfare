@@ -2,6 +2,43 @@
 // build.mjs publishes these same bytes as /assets/flight-view.js.
 (function (root) {
   "use strict";
+  function directionBetween(a, b) {
+    var d = b.map(function (n, i) { return n - a[i]; });
+    return d.every(Number.isFinite) && Math.hypot.apply(null, d) > 1e-12 ? d : null;
+  }
+  // A heading is local to the active flight, not the duration of a whole replay or its landing hold.
+  function flightDirection(rp, jd, positionAt) {
+    var s = rp.at(jd), L = s.leg, span = L.orb - L.dep;
+    if (s.phase !== "flight" || L.idle || !(span > 0)) return null;
+    var eps = Math.min(1e-8, span * 1e-6), lo = L.dep + eps, hi = L.orb - eps;
+    var step = span / Math.max(768, ((L.arc && L.arc.arc_au || []).length - 1) * 16);
+    var t = Math.max(lo, Math.min(hi, jd)), a = Math.max(lo, t - step), b = Math.min(hi, t + step);
+    return b > a ? directionBetween(positionAt(a), positionAt(b)) : null;
+  }
+  function orbitDirection(jd, positionAt) {
+    return directionBetween(positionAt(jd - 1 / 1440), positionAt(jd + 1 / 1440));
+  }
+  function headingFrame(direction, up, previousUp) {
+    if (!direction || !direction.every(Number.isFinite)) return null;
+    var n = Math.hypot.apply(null, direction); if (!(n > 1e-12)) return null;
+    var f = direction.map(function (v) { return v / n; });
+    function dot(a, b) { return a.reduce(function (s, v, i) { return s + v * b[i]; }, 0); }
+    function project(a) { var d = dot(a, f); return a.map(function (v, i) { return v - d * f[i]; }); }
+    var u = project(up || [0, 1, 0]);
+    // LookAt's fixed world-up becomes singular at a vertical tangent. Carry roll through that pole.
+    if (Math.hypot.apply(null, u) < 1e-5 && previousUp) u = project(previousUp);
+    if (Math.hypot.apply(null, u) < 1e-5) u = project(Math.abs(f[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0]);
+    var un = Math.hypot.apply(null, u), sign = previousUp && dot(u, previousUp) < 0 ? -1 : 1;
+    return { forward: f, up: u.map(function (v) { return sign * v / un; }) };
+  }
+  function orientShip(ship, frame) {
+    if (!frame) return;
+    ship.up.set(frame.up[0], frame.up[1], frame.up[2]);
+    // SolArt and both fallback models point nose +Z and dorsal +Y. Object3D.lookAt uses those same axes.
+    var forward = ship.up.clone().set(frame.forward[0], frame.forward[1], frame.forward[2]);
+    ship.lookAt(ship.position.clone().add(forward));
+    if (ship.userData) ship.userData.headingSet = true;
+  }
   // Recover old local arcs only when the unchanged engine reproduces EVERY recorded waypoint at its original
   // six-decimal resolution and both exact plan times. Never substitute a different route or alter a stored run.
   function preciseLocalArc(E, arc, ship, end) {
@@ -74,7 +111,8 @@
       return i && ms(f.depart) < ms(legs[i - 1].arrive) ? [i + 1] : [];
     });
   }
-  var api = { preciseLocalArc: preciseLocalArc, passengerList: passengerList, aboardAt: aboardAt, seatCount: seatCount, seatsHtml: seatsHtml, timingConflicts: timingConflicts };
+  var api = { flightDirection: flightDirection, orbitDirection: orbitDirection, headingFrame: headingFrame, orientShip: orientShip,
+    preciseLocalArc: preciseLocalArc, passengerList: passengerList, aboardAt: aboardAt, seatCount: seatCount, seatsHtml: seatsHtml, timingConflicts: timingConflicts };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.StarfareView = api;
 })(typeof window !== "undefined" ? window : globalThis);
