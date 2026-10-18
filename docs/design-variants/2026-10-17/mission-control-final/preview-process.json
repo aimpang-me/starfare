@@ -1,0 +1,12 @@
+{
+  "owner": "Starfare Design",
+  "pid": 94164,
+  "purpose": "Mission Control final-look review",
+  "url": "http://127.0.0.1:8795",
+  "startedAt": "2026-10-17T23:43:51.542Z",
+  "status": "running",
+  "reason": "Retained for user review",
+  "updatedAt": "2026-10-17T23:43:51.556Z",
+  "idleTimeoutMinutes": 45,
+  "maximumLifetimeHours": 2
+}

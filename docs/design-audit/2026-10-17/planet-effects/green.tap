@@ -1,0 +1,15 @@
+✔ visual time advances slowly, freezes and resumes without catching up (1.0663ms)
+✔ seek/reset is deterministic and each page owns its clock (0.1772ms)
+✔ reduced-motion/static sampling never animates (0.0765ms)
+✔ detail has a smooth ramp and does not request texture layers at overview size (0.7799ms)
+✔ appearance changes only surface children, keeping root and external anchors intact (101.4088ms)
+✔ Moon is matte relief without atmosphere; unrelated worlds retain their existing renderer (0.4326ms)
+✔ asynchronous texture completion requests a redraw even when the map is paused (6.092ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 187.7528

@@ -1,0 +1,101 @@
+✖ visual time advances slowly, freezes and resumes without catching up (1.8423ms)
+✖ seek/reset is deterministic and each page owns its clock (0.2009ms)
+✖ reduced-motion/static sampling never animates (0.0888ms)
+✖ detail has a smooth ramp and does not request texture layers at overview size (0.1128ms)
+✖ appearance changes only surface children, keeping root and external anchors intact (1.1677ms)
+✖ Moon is matte relief without atmosphere; unrelated worlds retain their existing renderer (120.3962ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 0
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 248.7846
+
+✖ failing tests:
+
+test at test\planet-effects.test.mjs:11:1
+✖ visual time advances slowly, freezes and resumes without catching up (1.8423ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at TestContext.<anonymous> (file:///C:/Users/PC-AIMPANG/Documents/New%20project%203/.worktrees/starfare-design-audit/connector/test/planet-effects.test.mjs:12:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.start (node:internal/test_runner/test:1257:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\planet-effects.test.mjs:22:1
+✖ seek/reset is deterministic and each page owns its clock (0.2009ms)
+  TypeError: Effects.createClock is not a function
+      at TestContext.<anonymous> (file:///C:/Users/PC-AIMPANG/Documents/New%20project%203/.worktrees/starfare-design-audit/connector/test/planet-effects.test.mjs:23:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at test\planet-effects.test.mjs:29:1
+✖ reduced-motion/static sampling never animates (0.0888ms)
+  TypeError: Effects.createClock is not a function
+      at TestContext.<anonymous> (file:///C:/Users/PC-AIMPANG/Documents/New%20project%203/.worktrees/starfare-design-audit/connector/test/planet-effects.test.mjs:30:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+
+test at test\planet-effects.test.mjs:33:1
+✖ detail has a smooth ramp and does not request texture layers at overview size (0.1128ms)
+  TypeError: Effects.detailAmount is not a function
+      at TestContext.<anonymous> (file:///C:/Users/PC-AIMPANG/Documents/New%20project%203/.worktrees/starfare-design-audit/connector/test/planet-effects.test.mjs:34:24)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+
+test at test\planet-effects.test.mjs:57:1
+✖ appearance changes only surface children, keeping root and external anchors intact (1.1677ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at TestContext.<anonymous> (file:///C:/Users/PC-AIMPANG/Documents/New%20project%203/.worktrees/starfare-design-audit/connector/test/planet-effects.test.mjs:58:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\planet-effects.test.mjs:81:1
+✖ Moon is matte relief without atmosphere; unrelated worlds retain their existing renderer (120.3962ms)
+  TypeError: Effects.createBody is not a function
+      at TestContext.<anonymous> (file:///C:/Users/PC-AIMPANG/Documents/New%20project%203/.worktrees/starfare-design-audit/connector/test/planet-effects.test.mjs:83:24)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)

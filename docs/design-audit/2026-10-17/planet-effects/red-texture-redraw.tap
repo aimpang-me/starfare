@@ -1,0 +1,37 @@
+✔ visual time advances slowly, freezes and resumes without catching up (0.8354ms)
+✔ seek/reset is deterministic and each page owns its clock (0.1173ms)
+✔ reduced-motion/static sampling never animates (0.0644ms)
+✔ detail has a smooth ramp and does not request texture layers at overview size (0.0737ms)
+✔ appearance changes only surface children, keeping root and external anchors intact (141.2721ms)
+✔ Moon is matte relief without atmosphere; unrelated worlds retain their existing renderer (1.8267ms)
+✖ asynchronous texture completion requests a redraw even when the map is paused (13.4054ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 274.4067
+
+✖ failing tests:
+
+test at test\planet-effects.test.mjs:89:1
+✖ asynchronous texture completion requests a redraw even when the map is paused (13.4054ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at TestContext.<anonymous> (file:///C:/Users/PC-AIMPANG/Documents/New%20project%203/.worktrees/starfare-design-audit/connector/test/planet-effects.test.mjs:98:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

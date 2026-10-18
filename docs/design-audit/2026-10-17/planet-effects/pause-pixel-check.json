@@ -1,0 +1,26 @@
+{
+  "full_canvas_same": false,
+  "note": "The material clock is frozen; the map also contains polled route/label state. Do not represent these screenshots as a pixel-identical whole-map pause.",
+  "regions": [
+    {
+      "name": "earth_unobscured_upper_surface",
+      "rect": [
+        175,
+        315,
+        205,
+        334
+      ],
+      "same_pixels": true
+    },
+    {
+      "name": "moon_surface",
+      "rect": [
+        295,
+        333,
+        305,
+        343
+      ],
+      "same_pixels": true
+    }
+  ]
+}

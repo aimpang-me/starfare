@@ -29,10 +29,12 @@ Six new texture files total **2,596,641 bytes**. Source URLs, hashes, dimensions
 - `node build.mjs`: successful; engine bundle unchanged, SHA256 `13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65`.
 - Expanded targeted suite: **72/72 passed**, `tests-final.tap`. Includes actual Three r128/SRI transform checks; visual clock pause/reset/static/long-gap behavior; every profile; fixed-ring matrix; opposite-Sun shadow checks; failed-map and shared-disposal behavior; actual `loadRide` paused-rebuild regression; flight geometry, heading, route, timing, booking/replay and live-state checks.
 - Independent numeric renderer check: **15/15 headings passed**, `ship-heading-numeric.json`.
-- Earlier full suite before expanded profiles: **180/180 passed**, `full-unit.tap`. Expanded full run is recorded separately in `full-final.tap`; final handoff records its completed result.
+- Full expanded unit suite: **185/185 passed**, zero skipped/cancelled, 470.4 seconds, `full-final.tap`. Earlier benchmark-stage run: **180/180 passed**, `full-unit.tap`.
 - Fresh expanded-scope source review found no Critical/Important blocker; reviewer independently ran effects/map/heading/geometry subset **40/40 passed**. Earlier review's same-flight clock reset was reproduced RED and fixed GREEN.
 - Local browser: Earth cloud/terminator/night appearance, Moon relief, Jupiter and its moons, lit Saturn/rings, Mars, Venus and outer-planet focuses rendered. No captured shader errors. Captures in this directory record actual views, not generated mockups.
 - Actual local MCP booking/dispatch: `run_e8374be1e63e3ef02b36`, SF-01, Orbital Depot → ISS → Lunar Data Center. The flight page advanced across recorded leg progress, then replay seek returned to Earth. This is simulated local application state, not a hosted dispatch or a fabricated demo path. `seed-earth.mjs` reproduces the local flow.
+- Responsive checks: actual DOM viewports **390×844** and **360×740**, neither with document horizontal overflow. Collapsing Bookings exposed more of Saturn's system. `real-flight-mobile-390.png` shows the sourced Earth/cloud material in the perspective flight view.
+- Pause screenshot comparison: unobscured Earth and Moon surface regions were pixel-identical across settled captures (`pause-pixel-check.json`). The whole canvas was not pixel-identical because route/label polling can still update; do not call it a whole-map pixel freeze. Resumed frame pair with capture timestamps is in `motion-full-a.png` / `motion-full-b.png`; it is not a video or an isolated GPU performance measurement.
 
 ## Limits and deliberate choices
 

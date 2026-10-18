@@ -1,0 +1,166 @@
+{
+  "viewports": [
+    {
+      "variant": "a",
+      "width": 360,
+      "scrollWidth": 360,
+      "viewport": "width=device-width,initial-scale=1",
+      "pass": true
+    },
+    {
+      "variant": "a",
+      "width": 390,
+      "scrollWidth": 390,
+      "viewport": "width=device-width,initial-scale=1",
+      "pass": true
+    },
+    {
+      "variant": "a",
+      "width": 768,
+      "scrollWidth": 768,
+      "viewport": "width=device-width,initial-scale=1",
+      "pass": true
+    },
+    {
+      "variant": "a",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "viewport": "width=device-width,initial-scale=1",
+      "pass": true
+    },
+    {
+      "variant": "b",
+      "width": 360,
+      "scrollWidth": 360,
+      "viewport": "width=device-width,initial-scale=1",
+      "pass": true
+    },
+    {
+      "variant": "b",
+      "width": 390,
+      "scrollWidth": 390,
+      "viewport": "width=device-width,initial-scale=1",
+      "pass": true
+    },
+    {
+      "variant": "b",
+      "width": 768,
+      "scrollWidth": 768,
+      "viewport": "width=device-width,initial-scale=1",
+      "pass": true
+    },
+    {
+      "variant": "b",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "viewport": "width=device-width,initial-scale=1",
+      "pass": true
+    },
+    {
+      "variant": "c",
+      "width": 360,
+      "scrollWidth": 360,
+      "viewport": "width=device-width,initial-scale=1",
+      "pass": true
+    },
+    {
+      "variant": "c",
+      "width": 390,
+      "scrollWidth": 390,
+      "viewport": "width=device-width,initial-scale=1",
+      "pass": true
+    },
+    {
+      "variant": "c",
+      "width": 768,
+      "scrollWidth": 768,
+      "viewport": "width=device-width,initial-scale=1",
+      "pass": true
+    },
+    {
+      "variant": "c",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "viewport": "width=device-width,initial-scale=1",
+      "pass": true
+    }
+  ],
+  "interactions": [
+    {
+      "name": "Agent filter",
+      "pass": true
+    },
+    {
+      "name": "Simulation filter",
+      "pass": true
+    },
+    {
+      "name": "Pause state",
+      "pass": true
+    },
+    {
+      "name": "Booking selection",
+      "pass": true
+    },
+    {
+      "name": "Manifest selection",
+      "pass": true
+    },
+    {
+      "name": "Replay step",
+      "pass": true
+    },
+    {
+      "name": "Preview excluded from feed",
+      "pass": true
+    },
+    {
+      "name": "Dialog keyboard containment",
+      "pass": true
+    },
+    {
+      "name": "Dialog focus restoration",
+      "pass": true
+    },
+    {
+      "name": "Mobile booking disclosure",
+      "pass": true
+    },
+    {
+      "name": "Mobile activity disclosure",
+      "pass": true
+    },
+    {
+      "name": "Mobile map disclosure",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "pass": true,
+  "mobileEmulation": [
+    {
+      "variant": "a",
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "scale": 1,
+      "touch": 1,
+      "pass": true
+    },
+    {
+      "variant": "b",
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "scale": 1,
+      "touch": 1,
+      "pass": true
+    },
+    {
+      "variant": "c",
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "scale": 1,
+      "touch": 1,
+      "pass": true
+    }
+  ]
+}

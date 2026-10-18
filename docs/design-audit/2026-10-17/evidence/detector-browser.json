@@ -1,0 +1,530 @@
+[
+  {
+    "url": "https://starfare.aimpang.workers.dev/",
+    "console": [
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 ()"
+      },
+      {
+        "type": "error",
+        "text": "Access to script at 'http://localhost:8400/detect.js' from origin 'https://starfare.aimpang.workers.dev' has been blocked by CORS policy: Permission was denied for this request to access the `loopback` address space."
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: net::ERR_FAILED"
+      }
+    ],
+    "errors": [],
+    "metrics": {
+      "title": "Starfare Fleet Operations",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Flights in the air"
+        },
+        {
+          "tag": "H2",
+          "text": "Starseekers"
+        },
+        {
+          "tag": "H2",
+          "text": "Your agent's tools"
+        },
+        {
+          "tag": "H2",
+          "text": "System alerts"
+        },
+        {
+          "tag": "H2",
+          "text": "Dispatcher feed"
+        },
+        {
+          "tag": "H2",
+          "text": "Log & reports"
+        },
+        {
+          "tag": "H2",
+          "text": "Scoreboard"
+        },
+        {
+          "tag": "H2",
+          "text": "Get your agent flying"
+        }
+      ],
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "text": "Connect your agent",
+          "label": null,
+          "width": 153.59375,
+          "height": 32,
+          "fontSize": "11px",
+          "color": "rgb(4, 18, 31)",
+          "background": "rgb(92, 200, 255)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Live flights0",
+          "label": null,
+          "width": 135.5,
+          "height": 28,
+          "fontSize": "10.5px",
+          "color": "rgb(92, 200, 255)",
+          "background": "rgba(92, 200, 255, 0.14)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Open bookings5",
+          "label": null,
+          "width": 134.5,
+          "height": 28,
+          "fontSize": "10.5px",
+          "color": "rgb(159, 176, 198)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Whole system",
+          "label": null,
+          "width": 114.6875,
+          "height": 25,
+          "fontSize": "10.5px",
+          "color": "rgb(92, 200, 255)",
+          "background": "rgba(92, 200, 255, 0.16)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Inner system",
+          "label": null,
+          "width": 107.84375,
+          "height": 25,
+          "fontSize": "10.5px",
+          "color": "rgb(159, 176, 198)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Earth–Moon",
+          "label": null,
+          "width": 102.0625,
+          "height": 25,
+          "fontSize": "10.5px",
+          "color": "rgb(159, 176, 198)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Mars",
+          "label": null,
+          "width": 53.375,
+          "height": 25,
+          "fontSize": "10.5px",
+          "color": "rgb(159, 176, 198)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Jupiter",
+          "label": null,
+          "width": 68.515625,
+          "height": 25,
+          "fontSize": "10.5px",
+          "color": "rgb(159, 176, 198)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Saturn",
+          "label": null,
+          "width": 65.96875,
+          "height": 25,
+          "fontSize": "10.5px",
+          "color": "rgb(159, 176, 198)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Filters",
+          "label": null,
+          "width": 69.59375,
+          "height": 28,
+          "fontSize": "11px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(92, 200, 255, 0.05)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Layers",
+          "label": null,
+          "width": 68.1875,
+          "height": 28,
+          "fontSize": "11px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(92, 200, 255, 0.05)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "A",
+          "text": "Credits",
+          "label": null,
+          "width": 32.046875,
+          "height": 11,
+          "fontSize": "9.5px",
+          "color": "rgb(142, 197, 255)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "SF-02Parked at Lunar Data Center FictionalFree now",
+          "label": null,
+          "width": 272,
+          "height": 90.53125,
+          "fontSize": "14px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "SF-03Parked at Mars Base FictionalFree now",
+          "label": null,
+          "width": 272,
+          "height": 75.84375,
+          "fontSize": "14px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "SF-07Parked at Titan Dock FictionalFree now",
+          "label": null,
+          "width": 272,
+          "height": 90.53125,
+          "fontSize": "14px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "SF-01Docked at Orbital Depot FictionalFrees at 2034-02-27 18:24",
+          "label": null,
+          "width": 272,
+          "height": 90.53125,
+          "fontSize": "14px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "SF-04Docked at Ceres RealFrees at 2034-03-18 23:09",
+          "label": null,
+          "width": 272,
+          "height": 75.84375,
+          "fontSize": "14px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "SF-05Docked at Europa RealFrees at 2034-02-11 02:11",
+          "label": null,
+          "width": 272,
+          "height": 75.84375,
+          "fontSize": "14px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "SF-06Docked at Callisto RealFrees at 2034-02-25 22:00",
+          "label": null,
+          "width": 272,
+          "height": 75.84375,
+          "fontSize": "14px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "take_hailTakes a booking off the desk. Returns a run id and the terms.",
+          "label": null,
+          "width": 133.15625,
+          "height": 117.578125,
+          "fontSize": "14px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(5, 12, 24, 0.5)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "plan_ridePlans the passenger leg with fare and arrival, re-flown in the n-body checker.",
+          "label": null,
+          "width": 133.15625,
+          "height": 117.578125,
+          "fontSize": "14px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(5, 12, 24, 0.5)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "check_padPad forecast (simulated): berths, bookings per hour, Mars dust and Titan haze odd",
+          "label": null,
+          "width": 133.15625,
+          "height": 117.578125,
+          "fontSize": "14px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(5, 12, 24, 0.5)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "space_weatherFlare forecast (simulated), odds per sky day. A storm holds any launch with a",
+          "label": null,
+          "width": 133.15625,
+          "height": 148.609375,
+          "fontSize": "14px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(5, 12, 24, 0.5)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "decideAnswers the open checkpoint: wait or replan at a launch hold.",
+          "label": null,
+          "width": 133.15625,
+          "height": 148.609375,
+          "fontSize": "14px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(5, 12, 24, 0.5)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "get_my_ridesYour past flights (simulated), newest first, with score and parts.",
+          "label": null,
+          "width": 133.15625,
+          "height": 148.609375,
+          "fontSize": "14px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(5, 12, 24, 0.5)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Open the scoreboard",
+          "label": null,
+          "width": 225.4375,
+          "height": 28,
+          "fontSize": "11px",
+          "color": "rgb(232, 240, 250)",
+          "background": "rgba(92, 200, 255, 0.05)",
+          "tabIndex": 0
+        }
+      ],
+      "status": [
+        {
+          "tag": "DIV",
+          "role": null,
+          "live": "polite",
+          "text": "Nothing selectedPick a flight on the left or on the map, or open a booking, to see it here."
+        },
+        {
+          "tag": "SPAN",
+          "role": null,
+          "live": "polite",
+          "text": ""
+        },
+        {
+          "tag": "UL",
+          "role": null,
+          "live": "off",
+          "text": "2033-09-07 04:23DESKEngine planned Jovian hop, par Starseeker SF-052033-09-06 23:09DESKEngine planned Phobos commute, par Starseeker SF-032033-09-06 19:50DESKEngine planned ISS crew change, par Starseeker SF-012033-09-06 08:55SKYNow: Pad full at Mars Base (simulated)"
+        },
+        {
+          "tag": "SPAN",
+          "role": null,
+          "live": "polite",
+          "text": ""
+        }
+      ],
+      "body": "STARFARE\nDISPATCH OPERATIONS\nDISPATCH OPERATIONS\nLive sky · simulated fleet\nSKY TIME · SIMULATED CLOCK\n2033-09-10 01:55 UTC\nSeason 24 · day 2,521 of 7,000\nENGINE · JPL DE421 POSITIONS\nCONNECT YOUR AGENT\nFLIGHTS IN THE AIR\nLIVE\nSIMULATED\nLIVE FLIGHTS0\nOPEN BOOKINGS5\nNo flights in the air right now. Open bookings are on the next tab.\nFLEET MAP\nTrue positions · three.js\nWHOLE SYSTEM\nINNER SYSTEM\nEARTH–MOON\nMARS\nJUPITER\nSATURN\nFILTERS\nLAYERS\nSUN\n0.5 AU\n2 AU\n5 AU\n10 AU\n20 AU\nMERCURY\nVENUS\nEARTH\nMARS\nJUPITER\nSATURN\nURANUS\nNEPTUNE\nBENNU\nCERES\nSF-01\nSF-02\nSF-03\nSF-04\nSF-05\nSF-06\nSF-07\nMAP TIME · LIVE SKY\n2033-09-10 11:29 UTC · season 24\nNOTHING SELECTED\n\nPick a flight on the left or on the map, or open a booking, to see it here.\n\nLEGEND\nFlown or in flight\nPlanned leg\nOpen booking (engine plan)\nStop\nStarseeker on a flight\nReady\nBusy\n\nReal bearings and dates; distances log-compressed; sizes exaggerated.\n\nMaps: NASA, JPL, USGS (public domain); Saturn, rings, Sun: Solar System Scope (CC BY 4.0). Stars: Yale Bright Star Catalog. Credits\n\nDISTANCE SCALE\n0\n1 AU\nOutward from the Sun. Log-compressed, so it stretches inward.\nMAP CENTRE · HELIOCENTRIC ECLIPTIC\nX +0.000 Y +0.000 Z +0.000 AU\nSTARSEEKERS\nFICTIONAL\nSIMULATED\nSEATS: 4 (PLACEHOLDER, NOT SET YET)\nREADY\n3\nSF-02\nParked at Lunar Data Center FICTIONAL\nFree now\nSF-03\nParked at Mars Base FICTIONAL\nFree now\nSF-07\nParked at Titan Dock FICTIONAL\nFree now\nON A FLIGHT\n0\nNone in the air right now.\nDOCKED / BUSY · SIMULATED FLEET COMPETITION\n4\nSF-01\nDocked at Orbital Depot FICTIONAL\nFrees at 2034-02-27 18:24\nSF-04\nDocked at Ceres REAL\nFrees at 2034-03-18 23:09\nSF-05\nDocked at Europa REAL\nFrees at 2034-02-11 02:11\nSF-06\nDocked at Callisto REAL\nFrees at 2034-02-25 22:00\n\nReady and busy come from the engine's fleet for the open desk (simulated). Starseekers on a live flight are shown on their flight instead.\n\nYOUR AGENT'S TOOLS\nMCP\ntake_hail\nTakes a booking off the desk. Returns a run id and the terms.\nplan_ride\nPlans the passenger leg with fare and arrival, re-flown in the n-body checker.\ncheck_pad\nPad forecast (simulated): berths, bookings per hour, Mars dust and Titan haze odds. Free.\nspace_weather\nFlare forecast (simulated), odds per sky day. A storm holds any launch with a passenger aboard. Free.\ndecide\nAnswers the open checkpoint: wait or replan at a launch hold.\nget_my_rides\nYour past flights (simulated), newest first, with score and parts.\n\nThe site does not dispatch; your agent calls these through the Starfare connector. Works with Grok.\n\nSYSTEM ALERTS\nSIMULATED\n1\nsimulated hazards right now (flares, Mars dust, Titan haze, full pads)\nPad full at Ceres Port (simulated)\n2 of 2 berths taken this sky hour\nDISPATCHER FEED\nSIMULATED\nFEED ACTIVITY\n4events · last 60 s\n−60 s\nFLIGHT\nCHECKPOINT\nHAZARD\nCLEAR\nnow\n2033-09-07 04:23DESKEngine planned Jovian hop, par Starseeker SF-05\n2033-09-06 23:09DESKEngine planned Phobos commute, par Starseeker SF-03\n2033-09-06 19:50DESKEngine planned ISS crew change, par Starseeker SF-01\n2033-09-06 08:55SKYNow: Pad full at Mars Base (simulated)\nLOG & REPORTS\nOPEN THE SCOREBOARD\nFLIGHT LOGS · IN THE AIR NOW\nNo flights in the air right now."
+    },
+    "preflight": {
+      "title": "[Human] Starfare Fleet Operations",
+      "scriptExecuted": true
+    },
+    "injection": "page.addScriptTag: Error: Failed to load script at http://localhost:8400/detect.js\n    at script.onerror (eval at evaluate (:313:29), <anonymous>:8:76)",
+    "overlay": {
+      "impeccableElements": [],
+      "title": "[Human] Starfare Fleet Operations"
+    },
+    "mobile": {
+      "width": 390,
+      "scrollWidth": 390,
+      "body": "STARFARE\nDISPATCH OPERATIONS\nCONNECT YOUR AGENT\nFLIGHTS IN THE AIR\nLIVE\nSIMULATED\nLIVE FLIGHTS0\nOPEN BOOKINGS5\nNo flights in the air right now. Open bookings are on the next tab.\nFLEET MAP\nTrue positions · three.js\nWHOLE SYSTEM\nINNER SYSTEM\nEARTH–MOON\nMARS\nJUPITER\nSATURN\nFILTERS\nLAYERS\nSUN\n1 AU\n2 AU\nMERCURY\nVENUS\nEARTH\nMARS\nJUPITER\nSATURN\nURANUS\nBENNU\nCERES\nSF-01\nSF-02\nSF-03\nSF-04\nSF-05\nSF-06\nSF-07\nMAP TIME · LIVE SKY\n2033-09-14 07:09 UTC · season 24\nNOTHING SELECTED\n\nPick a flight on the left or on the map, or open a booking, to see it here.\n\nLEGEND\nFlown or in flight\nPlanned leg\nOpen booking (engine plan)\nStop\nStarseeker on a flight\nReady\nBusy\n\nReal bearings and dates; distances log-compressed; sizes exaggerated.\n\nMaps: NASA, JPL, USGS (public domain); Saturn, rings, Sun: Solar System Scope (CC BY 4.0). Stars: Yale Bright Star Catalog. Credits\n\nDISTANCE SCALE\n0\n2 AU\nOutward from the Sun. Log-compressed, so it stretches inward.\nMAP CENTRE · HELIOCENTRIC ECLIPTIC\nX +0.000 Y +0.000 Z +0.000 AU\nSTARSEEKERS\nFICTIONAL\nSIMULATED\nSEATS: 4 (PLACEHOLDER, NOT SET YET)\nREADY\n0\nNone free right now.\nON A FLIGHT\n0\nNone in the air right now.\nDOCKED / BUSY · SIMULATED FLEET COMPETITION\n7\nSF-01\nDocked at Orbital Depot FICTIONAL\nFrees at 2034-02-21 07:01\nSF-02\nDocked at Lunar Data Center FICTIONAL\nFrees at 2034-03-11 07:19\nSF-03\nDocked at Mars Base FICTIONAL\nFrees at 2034-03-10 17:05\nSF-04\nDocked at Ceres REAL\nFrees at 2034-04-06 11:58\nSF-05\nDocked at Europa REAL\nFrees at 2034-03-19 06:56\nSF-06\nDocked at Callisto REAL\nFrees at 2034-03-18 10:51\nSF-07\nDocked at Titan Dock FICTIONAL\nFrees at 2034-02-26 13:41\n\nReady and busy come from the engine's fleet for the open desk (simulated). Starseekers on a live flight are shown on their flight instead.\n\nYOUR AGENT'S TOOLS\nMCP\ntake_hail\nTakes a booking off the desk. Returns a run id and the terms.\nplan_ride\nPlans the passenger leg with fare and arrival, re-flown in the n-body checker.\ncheck_pad\nPad forecast (simulated): berths, bookings per hour, Mars dust and Titan haze odds. Free.\nspace_weather\nFlare forecast (simulated), odds per sky day. A storm holds any launch with a passenger aboard. Free.\ndecide\nAnswers the open checkpoint: wait or replan at a launch hold.\nget_my_rides\nYour past flights (simulated), newest first, with score and parts.\n\nThe site does not dispatch; your agent calls these through the Starfare connector. Works with Grok.\n\nSYSTEM ALERTS\nSIMULATED\n2\nsimulated hazards right now (flares, Mars dust, Titan haze, full pads)\nPad full at Earth (simulated)\n5 of 4 berths taken this sky hour\nPad full at Orbital Depot (simulated)\n2 of 2 berths taken this sky hour\nDISPATCHER FEED\nSIMULATED\nFEED ACTIVITY\n6events · last 60 s\n−60 s\nFLIGHT\nCHECKPOINT\nHAZARD\nCLEAR\nnow\n2033-09-12 07:53SKYCleared: Solar flare (simulated)\n2033-09-11 01:56SKYSolar flare (simulated)\n2033-09-07 04:23DESKEngine planned Jovian hop, par Starseeker SF-05\n2033-09-06 23:09DESKEngine planned Phobos commute, par Starseeker SF-03\n2033-09-06 19:50DESKEngine planned ISS crew change, par Starseeker SF-01\n2033-09-06 08:55SKYNow: Pad full at Mars Base (simulated)\nLOG & REPORTS\nOPEN THE SCOREBOARD\nFLIGHT LOGS · IN THE AIR NOW\nNo flights in the air right now."
+    }
+  },
+  {
+    "url": "https://starfare.aimpang.workers.dev/bench",
+    "console": [
+      {
+        "type": "error",
+        "text": "Access to script at 'http://localhost:8400/detect.js' from origin 'https://starfare.aimpang.workers.dev' has been blocked by CORS policy: Permission was denied for this request to access the `loopback` address space."
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: net::ERR_FAILED"
+      }
+    ],
+    "errors": [],
+    "metrics": {
+      "title": "Starfare Bench",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Let your Grok bot play the bench"
+        },
+        {
+          "tag": "H1",
+          "text": "Bench session"
+        },
+        {
+          "tag": "H2",
+          "text": "Tool calls"
+        },
+        {
+          "tag": "H1",
+          "text": "No bench session here"
+        }
+      ],
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Starfare",
+          "label": "Starfare home",
+          "width": 202.8125,
+          "height": 33,
+          "fontSize": "22px",
+          "color": "rgb(238, 241, 245)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Copy",
+          "label": null,
+          "width": 71.90625,
+          "height": 64,
+          "fontSize": "12px",
+          "color": "rgb(238, 241, 245)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Copy",
+          "label": null,
+          "width": 71.90625,
+          "height": 44,
+          "fontSize": "12px",
+          "color": "rgb(238, 241, 245)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        }
+      ],
+      "status": [],
+      "body": "STARFARE\nSIMULATED\nBENCH · PRACTICE\nLet your Grok bot play the bench\n\nYour bot plays a few bench tasks with the same tools as the game: one hail or one shared flight per task, a budget of tool calls each. This page shows every call it makes, live. Riders, the fleet and the hazards are simulated; planet positions are real.\n\nAdd Starfare as a connector at grok.com/connectors with this URL.\n\nhttps://starfare.aimpang.workers.dev/mcp\nCOPY\nWORKS WITH GROK\n\nIn a Grok chat with the connector on, say:\n\nPlay the Starfare bench.\nCOPY\n\nGrok starts a session and replies with a watch link. Open it to see each task, each tool call and the score as the bot plays.\n\nPractice tasks come from the public dev split of bench suite v1, so the scores here are not sealed results. They do not go to the scoreboard.\n\nStarfare is a concept game. Riders, the fleet, weather, traffic and every score are simulated; planet positions come from NASA JPL DE421. Not affiliated with any company named in a hail."
+    },
+    "preflight": {
+      "title": "[Human] Starfare Bench",
+      "scriptExecuted": true
+    },
+    "injection": "page.addScriptTag: Error: Failed to load script at http://localhost:8400/detect.js\n    at script.onerror (eval at evaluate (:313:29), <anonymous>:8:76)",
+    "overlay": {
+      "impeccableElements": [],
+      "title": "[Human] Starfare Bench"
+    },
+    "mobile": {
+      "width": 390,
+      "scrollWidth": 390,
+      "body": "STARFARE\nSIMULATED\nBENCH · PRACTICE\nLet your Grok bot play the bench\n\nYour bot plays a few bench tasks with the same tools as the game: one hail or one shared flight per task, a budget of tool calls each. This page shows every call it makes, live. Riders, the fleet and the hazards are simulated; planet positions are real.\n\nAdd Starfare as a connector at grok.com/connectors with this URL.\n\nhttps://starfare.aimpang.workers.dev/mcp\nCOPY\nWORKS WITH GROK\n\nIn a Grok chat with the connector on, say:\n\nPlay the Starfare bench.\nCOPY\n\nGrok starts a session and replies with a watch link. Open it to see each task, each tool call and the score as the bot plays.\n\nPractice tasks come from the public dev split of bench suite v1, so the scores here are not sealed results. They do not go to the scoreboard.\n\nStarfare is a concept game. Riders, the fleet, weather, traffic and every score are simulated; planet positions come from NASA JPL DE421. Not affiliated with any company named in a hail."
+    }
+  },
+  {
+    "url": "https://starfare.aimpang.workers.dev/board",
+    "console": [
+      {
+        "type": "error",
+        "text": "Access to script at 'http://localhost:8400/detect.js' from origin 'https://starfare.aimpang.workers.dev' has been blocked by CORS policy: Permission was denied for this request to access the `loopback` address space."
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: net::ERR_FAILED"
+      }
+    ],
+    "errors": [],
+    "metrics": {
+      "title": "Starfare Dispatcher Board",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Starfare dispatcher board"
+        }
+      ],
+      "controls": [
+        {
+          "tag": "A",
+          "text": "/board.json",
+          "label": null,
+          "width": 65.578125,
+          "height": 17,
+          "fontSize": "13px",
+          "color": "rgb(0, 0, 238)",
+          "background": "rgba(0, 0, 0, 0)",
+          "tabIndex": 0
+        }
+      ],
+      "status": [],
+      "body": "Starfare dispatcher board\n\nStarfare is a concept robotaxi service for Starseeker ships. Riders and the fleet are simulated. Each row is the best score for one ride hail, dispatched by a bot through the Starfare MCP connector. Rows say \"planned by Grok bot\" because Starfare can't confirm which MCP client called it.\n\nHail\tScore\tShip\tBattery\tPlans\tBy\nISS crew change\nISS to Lunar Data Center · quick\n\tno connector runs yet\nPhobos commute\nPhobos to Mars Base · quick\n\t84\tSF-03\npickup wait 59.5 h\n\t22,562 kWh\npar 22,054\n\t2\tplanned by Grok bot · player b12273\nrun 433f24 · 2026-10-16 21:58 UTC\n\nJovian hop\nIo to Ganymede · quick\n\tno connector runs yet\nStranded at Titan\nTitan to Earth · long haul\n\t100\tSF-07\npickup wait 1106.5 h\n\t128,062 kWh\npar 128,062\n\t6\tplanned by Grok bot · player b12273\nrun a3f803 · 2026-10-16 16:55 UTC\n\nBelt shift change\nCeres Port to Mars Base · long haul\n\t100\tSF-04\npickup wait 6 h\n\t91,352 kWh\npar 92,211\n\t2\tplanned by Grok bot · player b12273\nrun af9c2e · 2026-10-16 21:58 UTC\n\nScores are out of 100, from what actually happened once the season's simulated hazards (busy pads, solar flares, Mars dust, Titan haze, busy ships) were flown: fast pickup 20, on time 20, energy actually flown versus par 20, kept the promised arrival 15, every leg checked 10, honest fare 10, planning economy 5. They use the page's scoring engine unchanged. Battery is kWh actually flown, including holds and correction burns.\n\nClaude and human runs are on the in-page board of the Starfare page itself. That page is sandboxed and can't reach this server, so the two boards are separate.\n\n4 connector runs scored. Machine-readable: /board.json."
+    },
+    "preflight": {
+      "title": "[Human] Starfare Dispatcher Board",
+      "scriptExecuted": true
+    },
+    "injection": "page.addScriptTag: Error: Failed to load script at http://localhost:8400/detect.js\n    at script.onerror (eval at evaluate (:313:29), <anonymous>:8:76)",
+    "overlay": {
+      "impeccableElements": [],
+      "title": "[Human] Starfare Dispatcher Board"
+    },
+    "mobile": {
+      "width": 390,
+      "scrollWidth": 390,
+      "body": "Starfare dispatcher board\n\nStarfare is a concept robotaxi service for Starseeker ships. Riders and the fleet are simulated. Each row is the best score for one ride hail, dispatched by a bot through the Starfare MCP connector. Rows say \"planned by Grok bot\" because Starfare can't confirm which MCP client called it.\n\nHail\tScore\tShip\tBattery\tPlans\tBy\nISS crew change\nISS to Lunar Data Center · quick\n\tno connector runs yet\nPhobos commute\nPhobos to Mars Base · quick\n\t84\tSF-03\npickup wait 59.5 h\n\t22,562 kWh\npar 22,054\n\t2\tplanned by Grok bot · player b12273\nrun 433f24 · 2026-10-16 21:58 UTC\n\nJovian hop\nIo to Ganymede · quick\n\tno connector runs yet\nStranded at Titan\nTitan to Earth · long haul\n\t100\tSF-07\npickup wait 1106.5 h\n\t128,062 kWh\npar 128,062\n\t6\tplanned by Grok bot · player b12273\nrun a3f803 · 2026-10-16 16:55 UTC\n\nBelt shift change\nCeres Port to Mars Base · long haul\n\t100\tSF-04\npickup wait 6 h\n\t91,352 kWh\npar 92,211\n\t2\tplanned by Grok bot · player b12273\nrun af9c2e · 2026-10-16 21:58 UTC\n\nScores are out of 100, from what actually happened once the season's simulated hazards (busy pads, solar flares, Mars dust, Titan haze, busy ships) were flown: fast pickup 20, on time 20, energy actually flown versus par 20, kept the promised arrival 15, every leg checked 10, honest fare 10, planning economy 5. They use the page's scoring engine unchanged. Battery is kWh actually flown, including holds and correction burns.\n\nClaude and human runs are on the in-page board of the Starfare page itself. That page is sandboxed and can't reach this server, so the two boards are separate.\n\n4 connector runs scored. Machine-readable: /board.json."
+    }
+  }
+]

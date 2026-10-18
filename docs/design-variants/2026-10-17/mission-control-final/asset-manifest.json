@@ -1,0 +1,177 @@
+[
+  {
+    "path": "assets/Inter-OFL.txt",
+    "bytes": 4380,
+    "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+  },
+  {
+    "path": "assets/InterVariable.woff2",
+    "bytes": 352240,
+    "sha256": "693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3"
+  },
+  {
+    "path": "assets/SOLAR-CREDITS.md",
+    "bytes": 6042,
+    "sha256": "19366aa890f57b53df5848c0b0af706fdaeaec51451444e4cd8c50a49eb1f880"
+  },
+  {
+    "path": "assets/THREE-LICENSE.txt",
+    "bytes": 1081,
+    "sha256": "7dddf7c5b8fd10ee654db8857d75d104b5557889aa5a91fc4ca545ea7c07062f"
+  },
+  {
+    "path": "assets/design-version.json",
+    "bytes": 664,
+    "sha256": "96bbf2a46e671fba74dc0596529119dbab9554d4a95fcb469c0c871bd03fab8d"
+  },
+  {
+    "path": "assets/earth.jpg",
+    "bytes": 159915,
+    "sha256": "b476c28b3e2b96c4a1c10f2bc020ed8e561c178a928aa9c6aa77dbb43a022c93"
+  },
+  {
+    "path": "assets/kestrel.png",
+    "bytes": 1972367,
+    "sha256": "eb486782c0415389235710e773d902b908e2f4590629e6401e63a2ad6a9075cc"
+  },
+  {
+    "path": "assets/moon.png",
+    "bytes": 684323,
+    "sha256": "af0f9a0ded97fcc26b1a39636ed46a3c8e0f353674a52d941c316223bb1ea12b"
+  },
+  {
+    "path": "assets/sky-engine.js",
+    "bytes": 524087,
+    "sha256": "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65"
+  },
+  {
+    "path": "assets/sol-art.js",
+    "bytes": 25789,
+    "sha256": "cdc136fdc19d7bf4dbb93871ecba391c02f351226de8efd7fba121cc6ceebf25"
+  },
+  {
+    "path": "assets/stars-bsc5.json",
+    "bytes": 207685,
+    "sha256": "4909986a471140e214220cef4ac5ca445f21bfdf8835aa7a16a4df0dba7a7ad1"
+  },
+  {
+    "path": "assets/system-snapshot.json",
+    "bytes": 152890,
+    "sha256": "3dcd0c1e139e8967cb542e510a24deb10b764285f5f81f6088cdd93cae624588"
+  },
+  {
+    "path": "assets/tex/bennu_1k.jpg",
+    "bytes": 139187,
+    "sha256": "2d1c1abb1489d126134e38e29398f2e95773e9bccdb72475fc686dec92c4760b"
+  },
+  {
+    "path": "assets/tex/callisto_1k.jpg",
+    "bytes": 71913,
+    "sha256": "c7876895bdcf5b8ef525805b59ecc13db49bff4fa82196b84c55ba77134b6591"
+  },
+  {
+    "path": "assets/tex/ceres_1k.jpg",
+    "bytes": 144345,
+    "sha256": "014381b6eece188a4e85affdc6c63f1c77994ec144039b5a6545aa01097e08db"
+  },
+  {
+    "path": "assets/tex/earth_day_2k.jpg",
+    "bytes": 309272,
+    "sha256": "37577bad09c8f818ab7eb7ce81a93a270a98257e7ade914055e0ab7d4081aae1"
+  },
+  {
+    "path": "assets/tex/earth_lights_2k.jpg",
+    "bytes": 53152,
+    "sha256": "c80c5e956b22f53d416cb91565929aa77c7aa9db41532b80a45604100ada1a75"
+  },
+  {
+    "path": "assets/tex/enceladus_1k.jpg",
+    "bytes": 123875,
+    "sha256": "de11146eab93045dc9484e9759a1619b0a876d54651c265c65df1b1a8d472913"
+  },
+  {
+    "path": "assets/tex/europa_1k.jpg",
+    "bytes": 87090,
+    "sha256": "2277e0139711a947c1cf05d2c21448551f00767881cb25b54e0eea0e2a79ff36"
+  },
+  {
+    "path": "assets/tex/ganymede_1k.jpg",
+    "bytes": 115346,
+    "sha256": "1bf66f45b5a82f903144cbb4dc53050cc099d1cc4a0448d60f290b0bb1eb6742"
+  },
+  {
+    "path": "assets/tex/io_1k.jpg",
+    "bytes": 78635,
+    "sha256": "b5ef6c0cd4e4b7548a8e6ab94046609bc80e5ff896e0b944997fa4e5025b02b3"
+  },
+  {
+    "path": "assets/tex/jupiter_2k.jpg",
+    "bytes": 224665,
+    "sha256": "e5a41dd2875d7df09fb5a9013d46543e7b11ddd4fdca964fa3bc9dd5e9cde536"
+  },
+  {
+    "path": "assets/tex/mars_1k.jpg",
+    "bytes": 115767,
+    "sha256": "2bdcb98cf52155af135e404fbb55f8559f991de9ec33ed86ac18e6a23a1b083d"
+  },
+  {
+    "path": "assets/tex/mercury_1k.jpg",
+    "bytes": 103490,
+    "sha256": "5adab5fc0e1d40c98961ced753b34d47df3542c510d85e0f15f4e1474b8745ee"
+  },
+  {
+    "path": "assets/tex/moon_1k.jpg",
+    "bytes": 84828,
+    "sha256": "34f0778221ecda7f130488c38844d688e20d1280b2762685bb66c8f550066866"
+  },
+  {
+    "path": "assets/tex/neptune_1k.jpg",
+    "bytes": 15396,
+    "sha256": "e59c42801acfa3664d794182f8a5c1a4017913e0e8afeb0adcebbd53abe72fe9"
+  },
+  {
+    "path": "assets/tex/phobos_1k.jpg",
+    "bytes": 73204,
+    "sha256": "d9c6e123080d7886b9d5567608ba7c9ffbf67435d4a998437df4c5dc7fc68bdc"
+  },
+  {
+    "path": "assets/tex/saturn_1k.jpg",
+    "bytes": 27847,
+    "sha256": "64d9bbd861d09a33f6dc40efc1f7c061977697c5a1141a7c69726da3fd6c1075"
+  },
+  {
+    "path": "assets/tex/saturn_ring_1k.webp",
+    "bytes": 3056,
+    "sha256": "eacd635d805929032818ed11b180ff1e9e7baf1c9e49d94d0db2ec20941e402b"
+  },
+  {
+    "path": "assets/tex/sun_1k.jpg",
+    "bytes": 98812,
+    "sha256": "f6252d3effda6362b37ee85c40fe96db869abcca6063550ba3b8d7d468070706"
+  },
+  {
+    "path": "assets/tex/titan_1k.jpg",
+    "bytes": 25184,
+    "sha256": "9369e39049ee773136dfd033604dbd57ed0f7d8a622f3d15e25c68e163c3ffef"
+  },
+  {
+    "path": "assets/tex/triton_1k.jpg",
+    "bytes": 27275,
+    "sha256": "d876e9d5694b67b3c49f62730989a670114d9a9ddaaf78375f1508ed0f170e29"
+  },
+  {
+    "path": "assets/tex/uranus_1k.jpg",
+    "bytes": 8222,
+    "sha256": "6b91e1b066295cbe7474cd6b6c103d061fc1f3378dfe4e54ef3f4f53bf996cbd"
+  },
+  {
+    "path": "assets/tex/venus_1k.jpg",
+    "bytes": 32043,
+    "sha256": "7d697dd0a5f4142e1507bd7ff8e6f0742e2f2bf886791b8b7bea9c4a4043a789"
+  },
+  {
+    "path": "assets/three.min.js",
+    "bytes": 603445,
+    "sha256": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+  }
+]

@@ -1,0 +1,2187 @@
+{
+  "capturedAt": "2026-10-17T21:25:20.159Z",
+  "base": "http://127.0.0.1:8794",
+  "commit": "783986893d427e7963e0acf0d598d71d8772badb",
+  "cases": [
+    {
+      "id": "desktop",
+      "metrics": {
+        "url": "http://127.0.0.1:8794/",
+        "title": "Starfare Fleet Operations",
+        "lang": "",
+        "viewportMeta": null,
+        "width": 1440,
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "height": 1229,
+        "scale": 1,
+        "coarse": false,
+        "h1": [],
+        "feed": "2033-09-10 15:01DESKEngine planned Jovian hop, par Starseeker SF-05\n2033-09-10 11:57DESKEngine planned Phobos commute, par Starseeker SF-03\n2033-09-10 03:04DESKEngine planned ISS crew change, par Starseeker SF-01\n2033-09-09 15:17SKYNow: Pad full at Mars Base (simulated)",
+        "feedY": 842.84375,
+        "buttons": [
+          {
+            "id": "connectBtn",
+            "text": "Connect your agent",
+            "width": 153.59375,
+            "height": 32,
+            "color": "rgb(4, 18, 31)",
+            "bg": "rgb(92, 200, 255)",
+            "fontSize": "11px"
+          },
+          {
+            "id": "tabF",
+            "text": "Live flights0",
+            "width": 135.5,
+            "height": 28,
+            "color": "rgb(92, 200, 255)",
+            "bg": "rgba(92, 200, 255, 0.14)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "tabB",
+            "text": "Open bookings5",
+            "width": 134.5,
+            "height": 28,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Whole system",
+            "width": 114.6875,
+            "height": 25,
+            "color": "rgb(92, 200, 255)",
+            "bg": "rgba(92, 200, 255, 0.16)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Inner system",
+            "width": 107.84375,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Earth–Moon",
+            "width": 102.0625,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Mars",
+            "width": 53.375,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Jupiter",
+            "width": 68.515625,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Saturn",
+            "width": 65.96875,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "fBtn",
+            "text": "Filters",
+            "width": 69.59375,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(92, 200, 255, 0.05)",
+            "fontSize": "11px"
+          },
+          {
+            "id": "lBtn",
+            "text": "Layers",
+            "width": 68.1875,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(92, 200, 255, 0.05)",
+            "fontSize": "11px"
+          },
+          {
+            "id": "",
+            "text": "ISS crew change",
+            "width": 121.59375,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Phobos commute",
+            "width": 124.453125,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Jovian hop",
+            "width": 85.421875,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Stranded at Titan",
+            "width": 132.171875,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Belt shift change",
+            "width": 130.78125,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Credits",
+            "width": 32.046875,
+            "height": 11,
+            "color": "rgb(142, 197, 255)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "SF-01Docked at Orbital Depot FictionalFrees at 2034-03-",
+            "width": 272,
+            "height": 90.53125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-02Docked at Lunar Data Center FictionalFrees at 2034",
+            "width": 272,
+            "height": 90.53125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-03Docked at Mars Base FictionalFrees at 2033-09-11 0",
+            "width": 272,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-04Docked at Ceres RealFrees at 2033-09-11 20:15",
+            "width": 272,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-05Docked at Europa RealFrees at 2034-02-24 11:58",
+            "width": 272,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-06Docked at Callisto RealFrees at 2034-03-23 22:46",
+            "width": 272,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-07Docked at Titan Dock FictionalFrees at 2033-09-11 ",
+            "width": 272,
+            "height": 90.53125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "take_hailTakes a booking off the desk. Returns a run id",
+            "width": 133.15625,
+            "height": 117.578125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "plan_ridePlans the passenger leg with fare and arrival,",
+            "width": 133.15625,
+            "height": 117.578125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "check_padPad forecast (simulated): berths, bookings per",
+            "width": 133.15625,
+            "height": 117.578125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "space_weatherFlare forecast (simulated), odds per sky d",
+            "width": 133.15625,
+            "height": 148.609375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "decideAnswers the open checkpoint: wait or replan at a ",
+            "width": 133.15625,
+            "height": 148.609375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "get_my_ridesYour past flights (simulated), newest first",
+            "width": 133.15625,
+            "height": 148.609375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "boardBtn",
+            "text": "Open the scoreboard",
+            "width": 225.4375,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(92, 200, 255, 0.05)",
+            "fontSize": "11px"
+          }
+        ],
+        "headings": [
+          {
+            "tag": "H2",
+            "id": "flH",
+            "text": "Flights in the air"
+          },
+          {
+            "tag": "H2",
+            "id": "skH",
+            "text": "Starseekers"
+          },
+          {
+            "tag": "H2",
+            "id": "toolH",
+            "text": "Your agent's tools"
+          },
+          {
+            "tag": "H2",
+            "id": "alH",
+            "text": "System alerts"
+          },
+          {
+            "tag": "H2",
+            "id": "fdH",
+            "text": "Dispatcher feed"
+          },
+          {
+            "tag": "H2",
+            "id": "rpH",
+            "text": "Log & reports"
+          },
+          {
+            "tag": "H2",
+            "id": "logH",
+            "text": "Scoreboard"
+          },
+          {
+            "tag": "H2",
+            "id": "introH",
+            "text": "Get your agent flying"
+          }
+        ],
+        "canvas": [
+          {
+            "id": "",
+            "role": null,
+            "label": null
+          },
+          {
+            "id": "wave",
+            "role": "img",
+            "label": "Feed events per second over the last minute of real time, by kind"
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "id": "tablet",
+      "metrics": {
+        "url": "http://127.0.0.1:8794/",
+        "title": "Starfare Fleet Operations",
+        "lang": "",
+        "viewportMeta": null,
+        "width": 980,
+        "clientWidth": 980,
+        "scrollWidth": 980,
+        "height": 2006,
+        "scale": 0.7836734652519226,
+        "coarse": false,
+        "h1": [],
+        "feed": "2033-09-12 03:12DESKEngine planned Jovian hop, par Starseeker SF-05\n2033-09-12 00:12DESKEngine planned Phobos commute, par Starseeker SF-03\n2033-09-11 21:07DESKEngine planned ISS crew change, par Starseeker SF-01\n2033-09-11 12:59SKYNow: Pad full at Earth (simulated)\n2033-09-11 12:59SKYNow: Pad full at Mars Base (simulated)\n2033-09-11 12:59SKYNow: Solar flare (simulated)",
+        "feedY": 1658.796875,
+        "buttons": [
+          {
+            "id": "connectBtn",
+            "text": "Connect your agent",
+            "width": 147.09375,
+            "height": 32,
+            "color": "rgb(4, 18, 31)",
+            "bg": "rgb(92, 200, 255)",
+            "fontSize": "11px"
+          },
+          {
+            "id": "tabF",
+            "text": "Live flights0",
+            "width": 220,
+            "height": 28,
+            "color": "rgb(92, 200, 255)",
+            "bg": "rgba(92, 200, 255, 0.14)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "tabB",
+            "text": "Open bookings5",
+            "width": 219,
+            "height": 28,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Whole system",
+            "width": 114.6875,
+            "height": 25,
+            "color": "rgb(92, 200, 255)",
+            "bg": "rgba(92, 200, 255, 0.16)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Inner system",
+            "width": 107.84375,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Earth–Moon",
+            "width": 102.0625,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Mars",
+            "width": 53.375,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Jupiter",
+            "width": 68.515625,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Saturn",
+            "width": 65.96875,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "fBtn",
+            "text": "Filters",
+            "width": 69.59375,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(92, 200, 255, 0.05)",
+            "fontSize": "11px"
+          },
+          {
+            "id": "lBtn",
+            "text": "Layers",
+            "width": 68.1875,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(92, 200, 255, 0.05)",
+            "fontSize": "11px"
+          },
+          {
+            "id": "",
+            "text": "ISS crew change",
+            "width": 121.59375,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Phobos commute",
+            "width": 124.453125,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Jovian hop",
+            "width": 85.421875,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Stranded at Titan",
+            "width": 132.171875,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Belt shift change",
+            "width": 130.78125,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Credits",
+            "width": 32.046875,
+            "height": 11,
+            "color": "rgb(142, 197, 255)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "SF-01Docked at Orbital Depot FictionalFrees at 2034-04-",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-02Docked at Lunar Data Center FictionalFrees at 2034",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-03Docked at Mars Base FictionalFrees at 2033-09-13 1",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-04Docked at Ceres RealFrees at 2034-03-16 11:50",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-05Docked at Europa RealFrees at 2033-09-13 20:38",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-06Docked at Callisto RealFrees at 2034-03-28 06:23",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-07Docked at Titan Dock FictionalFrees at 2034-03-09 ",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "take_hailTakes a booking off the desk. Returns a run id",
+            "width": 141.65625,
+            "height": 117.578125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "plan_ridePlans the passenger leg with fare and arrival,",
+            "width": 141.671875,
+            "height": 117.578125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "check_padPad forecast (simulated): berths, bookings per",
+            "width": 141.671875,
+            "height": 117.578125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "space_weatherFlare forecast (simulated), odds per sky d",
+            "width": 141.65625,
+            "height": 133.09375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "decideAnswers the open checkpoint: wait or replan at a ",
+            "width": 141.671875,
+            "height": 133.09375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "get_my_ridesYour past flights (simulated), newest first",
+            "width": 141.671875,
+            "height": 133.09375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "boardBtn",
+            "text": "Open the scoreboard",
+            "width": 441,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(92, 200, 255, 0.05)",
+            "fontSize": "11px"
+          }
+        ],
+        "headings": [
+          {
+            "tag": "H2",
+            "id": "flH",
+            "text": "Flights in the air"
+          },
+          {
+            "tag": "H2",
+            "id": "skH",
+            "text": "Starseekers"
+          },
+          {
+            "tag": "H2",
+            "id": "toolH",
+            "text": "Your agent's tools"
+          },
+          {
+            "tag": "H2",
+            "id": "alH",
+            "text": "System alerts"
+          },
+          {
+            "tag": "H2",
+            "id": "fdH",
+            "text": "Dispatcher feed"
+          },
+          {
+            "tag": "H2",
+            "id": "rpH",
+            "text": "Log & reports"
+          },
+          {
+            "tag": "H2",
+            "id": "logH",
+            "text": "Scoreboard"
+          },
+          {
+            "tag": "H2",
+            "id": "introH",
+            "text": "Get your agent flying"
+          }
+        ],
+        "canvas": [
+          {
+            "id": "",
+            "role": null,
+            "label": null
+          },
+          {
+            "id": "wave",
+            "role": "img",
+            "label": "Feed events per second over the last minute of real time, by kind"
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "id": "phone",
+      "metrics": {
+        "url": "http://127.0.0.1:8794/",
+        "title": "Starfare Fleet Operations",
+        "lang": "",
+        "viewportMeta": null,
+        "width": 980,
+        "clientWidth": 980,
+        "scrollWidth": 980,
+        "height": 2120,
+        "scale": 0.3979591727256775,
+        "coarse": false,
+        "h1": [],
+        "feed": "2033-09-13 04:30DESKEngine planned Jovian hop, par Starseeker SF-05\n2033-09-13 01:30DESKEngine planned Phobos commute, par Starseeker SF-03\n2033-09-12 22:01DESKEngine planned ISS crew change, par Starseeker SF-01\n2033-09-12 16:13SKYNow: Pad full at Callisto (simulated)\n2033-09-12 16:13SKYNow: Pad full at Lunar Data Center (simulated)\n2033-09-12 16:13SKYNow: Pad full at ISS (simulated)",
+        "feedY": 1658.796875,
+        "buttons": [
+          {
+            "id": "connectBtn",
+            "text": "Connect your agent",
+            "width": 147.09375,
+            "height": 32,
+            "color": "rgb(4, 18, 31)",
+            "bg": "rgb(92, 200, 255)",
+            "fontSize": "11px"
+          },
+          {
+            "id": "tabF",
+            "text": "Live flights0",
+            "width": 220,
+            "height": 28,
+            "color": "rgb(92, 200, 255)",
+            "bg": "rgba(92, 200, 255, 0.14)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "tabB",
+            "text": "Open bookings5",
+            "width": 219,
+            "height": 28,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Whole system",
+            "width": 114.6875,
+            "height": 25,
+            "color": "rgb(92, 200, 255)",
+            "bg": "rgba(92, 200, 255, 0.16)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Inner system",
+            "width": 107.84375,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Earth–Moon",
+            "width": 102.0625,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Mars",
+            "width": 53.375,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Jupiter",
+            "width": 68.515625,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Saturn",
+            "width": 65.96875,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "fBtn",
+            "text": "Filters",
+            "width": 69.59375,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(92, 200, 255, 0.05)",
+            "fontSize": "11px"
+          },
+          {
+            "id": "lBtn",
+            "text": "Layers",
+            "width": 68.1875,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(92, 200, 255, 0.05)",
+            "fontSize": "11px"
+          },
+          {
+            "id": "",
+            "text": "ISS crew change",
+            "width": 121.59375,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Phobos commute",
+            "width": 124.453125,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Jovian hop",
+            "width": 85.421875,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Stranded at Titan",
+            "width": 132.171875,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Belt shift change",
+            "width": 130.78125,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Credits",
+            "width": 32.046875,
+            "height": 11,
+            "color": "rgb(142, 197, 255)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "SF-01Docked at Orbital Depot FictionalFrees at 2033-09-",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-02Docked at Lunar Data Center FictionalFrees at 2034",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-03Docked at Mars Base FictionalFrees at 2033-09-14 1",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-04Docked at Ceres RealFrees at 2034-02-24 04:58",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-05Docked at Europa RealFrees at 2034-03-24 12:28",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-06Docked at Callisto RealFrees at 2034-03-08 11:49",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-07Docked at Titan Dock FictionalFrees at 2033-09-14 ",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "take_hailTakes a booking off the desk. Returns a run id",
+            "width": 141.65625,
+            "height": 117.578125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "plan_ridePlans the passenger leg with fare and arrival,",
+            "width": 141.671875,
+            "height": 117.578125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "check_padPad forecast (simulated): berths, bookings per",
+            "width": 141.671875,
+            "height": 117.578125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "space_weatherFlare forecast (simulated), odds per sky d",
+            "width": 141.65625,
+            "height": 133.09375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "decideAnswers the open checkpoint: wait or replan at a ",
+            "width": 141.671875,
+            "height": 133.09375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "get_my_ridesYour past flights (simulated), newest first",
+            "width": 141.671875,
+            "height": 133.09375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "boardBtn",
+            "text": "Open the scoreboard",
+            "width": 441,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(92, 200, 255, 0.05)",
+            "fontSize": "11px"
+          }
+        ],
+        "headings": [
+          {
+            "tag": "H2",
+            "id": "flH",
+            "text": "Flights in the air"
+          },
+          {
+            "tag": "H2",
+            "id": "skH",
+            "text": "Starseekers"
+          },
+          {
+            "tag": "H2",
+            "id": "toolH",
+            "text": "Your agent's tools"
+          },
+          {
+            "tag": "H2",
+            "id": "alH",
+            "text": "System alerts"
+          },
+          {
+            "tag": "H2",
+            "id": "fdH",
+            "text": "Dispatcher feed"
+          },
+          {
+            "tag": "H2",
+            "id": "rpH",
+            "text": "Log & reports"
+          },
+          {
+            "tag": "H2",
+            "id": "logH",
+            "text": "Scoreboard"
+          },
+          {
+            "tag": "H2",
+            "id": "introH",
+            "text": "Get your agent flying"
+          }
+        ],
+        "canvas": [
+          {
+            "id": "",
+            "role": null,
+            "label": null
+          },
+          {
+            "id": "wave",
+            "role": "img",
+            "label": "Feed events per second over the last minute of real time, by kind"
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "id": "phone360",
+      "metrics": {
+        "url": "http://127.0.0.1:8794/",
+        "title": "Starfare Fleet Operations",
+        "lang": "",
+        "viewportMeta": null,
+        "width": 980,
+        "clientWidth": 980,
+        "scrollWidth": 980,
+        "height": 2177,
+        "scale": 0.36734694242477417,
+        "coarse": false,
+        "h1": [],
+        "feed": "2033-09-14 09:59DESKEngine planned Jovian hop, par Starseeker SF-05\n2033-09-14 07:00DESKEngine planned Phobos commute, par Starseeker SF-03\n2033-09-14 01:17DESKEngine planned ISS crew change, par Starseeker SF-01\n2033-09-13 17:48SKYNow: Pad full at Titan Dock (simulated)",
+        "feedY": 1658.796875,
+        "buttons": [
+          {
+            "id": "connectBtn",
+            "text": "Connect your agent",
+            "width": 147.09375,
+            "height": 32,
+            "color": "rgb(4, 18, 31)",
+            "bg": "rgb(92, 200, 255)",
+            "fontSize": "11px"
+          },
+          {
+            "id": "tabF",
+            "text": "Live flights0",
+            "width": 220,
+            "height": 28,
+            "color": "rgb(92, 200, 255)",
+            "bg": "rgba(92, 200, 255, 0.14)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "tabB",
+            "text": "Open bookings5",
+            "width": 219,
+            "height": 28,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Whole system",
+            "width": 114.6875,
+            "height": 25,
+            "color": "rgb(92, 200, 255)",
+            "bg": "rgba(92, 200, 255, 0.16)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Inner system",
+            "width": 107.84375,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Earth–Moon",
+            "width": 102.0625,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Mars",
+            "width": 53.375,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Jupiter",
+            "width": 68.515625,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "",
+            "text": "Saturn",
+            "width": 65.96875,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          },
+          {
+            "id": "fBtn",
+            "text": "Filters",
+            "width": 69.59375,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(92, 200, 255, 0.05)",
+            "fontSize": "11px"
+          },
+          {
+            "id": "lBtn",
+            "text": "Layers",
+            "width": 68.1875,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(92, 200, 255, 0.05)",
+            "fontSize": "11px"
+          },
+          {
+            "id": "",
+            "text": "ISS crew change",
+            "width": 121.59375,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Phobos commute",
+            "width": 124.453125,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Jovian hop",
+            "width": 85.421875,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Stranded at Titan",
+            "width": 132.171875,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Belt shift change",
+            "width": 130.78125,
+            "height": 15.5,
+            "color": "rgb(255, 207, 122)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "Credits",
+            "width": 32.046875,
+            "height": 11,
+            "color": "rgb(142, 197, 255)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "9.5px"
+          },
+          {
+            "id": "",
+            "text": "SF-01Docked at Orbital Depot FictionalFrees at 2033-09-",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-02Docked at Lunar Data Center FictionalFrees at 2034",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-03Docked at Mars Base FictionalFrees at 2034-03-31 0",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-04Docked at Ceres RealFrees at 2034-03-05 04:35",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-05Docked at Europa RealFrees at 2034-02-21 05:48",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-06Docked at Callisto RealFrees at 2034-04-06 19:10",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "SF-07Docked at Titan Dock FictionalFrees at 2034-03-07 ",
+            "width": 441,
+            "height": 75.84375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "take_hailTakes a booking off the desk. Returns a run id",
+            "width": 141.65625,
+            "height": 117.578125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "plan_ridePlans the passenger leg with fare and arrival,",
+            "width": 141.671875,
+            "height": 117.578125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "check_padPad forecast (simulated): berths, bookings per",
+            "width": 141.671875,
+            "height": 117.578125,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "space_weatherFlare forecast (simulated), odds per sky d",
+            "width": 141.65625,
+            "height": 133.09375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "decideAnswers the open checkpoint: wait or replan at a ",
+            "width": 141.671875,
+            "height": 133.09375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "",
+            "text": "get_my_ridesYour past flights (simulated), newest first",
+            "width": 141.671875,
+            "height": 133.09375,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(5, 12, 24, 0.5)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "boardBtn",
+            "text": "Open the scoreboard",
+            "width": 441,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(92, 200, 255, 0.05)",
+            "fontSize": "11px"
+          }
+        ],
+        "headings": [
+          {
+            "tag": "H2",
+            "id": "flH",
+            "text": "Flights in the air"
+          },
+          {
+            "tag": "H2",
+            "id": "skH",
+            "text": "Starseekers"
+          },
+          {
+            "tag": "H2",
+            "id": "toolH",
+            "text": "Your agent's tools"
+          },
+          {
+            "tag": "H2",
+            "id": "alH",
+            "text": "System alerts"
+          },
+          {
+            "tag": "H2",
+            "id": "fdH",
+            "text": "Dispatcher feed"
+          },
+          {
+            "tag": "H2",
+            "id": "rpH",
+            "text": "Log & reports"
+          },
+          {
+            "tag": "H2",
+            "id": "logH",
+            "text": "Scoreboard"
+          },
+          {
+            "tag": "H2",
+            "id": "introH",
+            "text": "Get your agent flying"
+          }
+        ],
+        "canvas": [
+          {
+            "id": "",
+            "role": null,
+            "label": null
+          },
+          {
+            "id": "wave",
+            "role": "img",
+            "label": "Feed events per second over the last minute of real time, by kind"
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "id": "board",
+      "status": 200,
+      "metrics": {
+        "url": "http://127.0.0.1:8794/board",
+        "title": "Starfare Dispatcher Board",
+        "lang": "en",
+        "viewportMeta": "width=device-width,initial-scale=1",
+        "width": 1440,
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "height": 1000,
+        "scale": 1,
+        "coarse": false,
+        "h1": [
+          "Starfare dispatcher board"
+        ],
+        "buttons": [
+          {
+            "id": "",
+            "text": "/board.json",
+            "width": 65.578125,
+            "height": 17,
+            "color": "rgb(0, 0, 238)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "13px"
+          }
+        ],
+        "headings": [
+          {
+            "tag": "H1",
+            "id": "",
+            "text": "Starfare dispatcher board"
+          }
+        ],
+        "canvas": []
+      },
+      "text": "Starfare dispatcher board\n\nStarfare is a concept robotaxi service for Starseeker ships. Riders and the fleet are simulated. Each row is the highest score for one ride hail, dispatched by a bot through the Starfare MCP connector. Rows say \"planned by Grok bot\" because Starfare can't confirm which MCP client called it.\n\nHail\tScore\tShip\tBattery\tPlans\tBy\nISS crew change\nISS to Lunar Data Center · quick\n\tno connector runs yet\nPhobos commute\nPhobos to Mars Base · quick\n\tno connector runs yet\nJovian hop\nIo to Ganymede · quick\n\tno connector runs yet\nStranded at Titan\nTitan to Earth · long haul\n\tno connector runs yet\nBelt shift change\nCeres Port to Mars Base · long haul\n\tno connector runs yet\n\nScores are out of 100000. The weights are placeholders. They come from what actually happened once the season's simulated hazards (busy pads, solar flares, Mars dust, Titan haze, busy ships) were flown. Each part except cruise dose earns at most 0.35 of its weight on the stated reference. That cap and the falloff steepness of 6 are simulated assumptions. fast pickup 22000, on time 16000, energy versus par 24000, kept the promised arrival 14000, every leg checked 4000, honest fare 4000, planning economy 3000, xenon tank 4000, distance throttle 3000, departure window 3000, checkpoint recovery 3000, cruise dose 0. Battery is kWh actually flown, including holds and correction burns.\n\nClaude and human runs are on the in-page board of the Starfare page itself. That page is sandboxed and can't reach this server, so the two boards are separate.\n\n0 connector runs scored. Machine-readable: /board.json."
+    },
+    {
+      "id": "bench",
+      "status": 200,
+      "metrics": {
+        "url": "http://127.0.0.1:8794/bench",
+        "title": "Starfare Bench",
+        "lang": "en",
+        "viewportMeta": "width=device-width, initial-scale=1",
+        "width": 1440,
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "height": 1000,
+        "scale": 1,
+        "coarse": false,
+        "h1": [
+          "Let your Grok bot play the bench",
+          "Bench session",
+          "No bench session here"
+        ],
+        "buttons": [
+          {
+            "id": "",
+            "text": "Starfare",
+            "width": 202.8125,
+            "height": 33,
+            "color": "rgb(238, 241, 245)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "22px"
+          },
+          {
+            "id": "",
+            "text": "Copy",
+            "width": 71.90625,
+            "height": 44,
+            "color": "rgb(238, 241, 245)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "12px"
+          },
+          {
+            "id": "",
+            "text": "Copy",
+            "width": 71.90625,
+            "height": 44,
+            "color": "rgb(238, 241, 245)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "12px"
+          }
+        ],
+        "headings": [
+          {
+            "tag": "H1",
+            "id": "",
+            "text": "Let your Grok bot play the bench"
+          },
+          {
+            "tag": "H1",
+            "id": "title",
+            "text": "Bench session"
+          },
+          {
+            "tag": "H2",
+            "id": "",
+            "text": "Tool calls"
+          },
+          {
+            "tag": "H1",
+            "id": "",
+            "text": "No bench session here"
+          }
+        ],
+        "canvas": []
+      },
+      "text": "STARFARE\nSIMULATED\nBENCH · PRACTICE\nLet your Grok bot play the bench\n\nYour bot plays a few bench tasks with the same tools as the game: one hail or one shared flight per task, a budget of tool calls each. This page shows every call it makes, live. Riders, the fleet and the hazards are simulated; planet positions are real.\n\nAdd Starfare as a connector at grok.com/connectors with this URL.\n\nhttp://127.0.0.1:8794/mcp\nCOPY\nWORKS WITH GROK\n\nIn a Grok chat with the connector on, say:\n\nPlay the Starfare bench.\nCOPY\n\nGrok starts a session and replies with a watch link. Open it to see each task, each tool call and the score as the bot plays.\n\nPractice tasks come from the public dev split of bench suite v1, so the scores here are not sealed results. They do not go to the scoreboard.\n\nStarfare is a concept game. Riders, the fleet, weather, traffic and every score are simulated; planet positions come from NASA JPL DE421. Not affiliated with any company named in a hail."
+    },
+    {
+      "id": "method",
+      "status": 200,
+      "metrics": {
+        "url": "http://127.0.0.1:8794/method",
+        "title": "How Starfare measures a flight",
+        "lang": "en",
+        "viewportMeta": "width=device-width, initial-scale=1",
+        "width": 1440,
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "height": 3437,
+        "scale": 1,
+        "coarse": false,
+        "h1": [
+          "How a flight is measured"
+        ],
+        "buttons": [
+          {
+            "id": "",
+            "text": "STARFAREMethod",
+            "width": 114.46875,
+            "height": 34,
+            "color": "rgb(142, 197, 255)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "18px"
+          }
+        ],
+        "headings": [
+          {
+            "tag": "H1",
+            "id": "",
+            "text": "How a flight is measured"
+          },
+          {
+            "tag": "H2",
+            "id": "",
+            "text": "The scale"
+          },
+          {
+            "tag": "H2",
+            "id": "",
+            "text": "Score parts"
+          },
+          {
+            "tag": "H2",
+            "id": "",
+            "text": "Stranded flights"
+          },
+          {
+            "tag": "H2",
+            "id": "",
+            "text": "Starseeker classes"
+          },
+          {
+            "tag": "H2",
+            "id": "",
+            "text": "Planet positions"
+          },
+          {
+            "tag": "H2",
+            "id": "",
+            "text": "Array power"
+          },
+          {
+            "tag": "H2",
+            "id": "",
+            "text": "Passengers and seasons"
+          },
+          {
+            "tag": "H2",
+            "id": "",
+            "text": "Held out seeds"
+          },
+          {
+            "tag": "H2",
+            "id": "",
+            "text": "Flight records"
+          }
+        ],
+        "canvas": []
+      },
+      "text": "STARFARE\nMETHOD\nSIMULATED\nHow a flight is measured\n\nStarfare scores an agent that maneuvers Starseeker starships carrying passengers in the solar system. Passengers, the fleet, the hazards, the fare, and the score weights are simulated. Planet positions in the baked table are real.\n\nTHE SCALE\n\nScore version 3 scores out of 100000. The weights are placeholders. They sum to 100000. The total is the sum of the part scores. Part scores are not rounded.\n\nEach part except cruise dose earns at most 0.35 of its weight when the flight is on the stated reference. That share is the headroom. The falloff steepness is 6. Both numbers are simulated assumptions. As the flight moves off the reference, the part falls and never reaches its weight. Doing better than the reference does not add points past the headroom.\n\nSCORE PARTS\n\nEach row is one part. Weight is the placeholder maximum. Unit is the plain unit. Engine unit is the string score() puts on the part.\n\nPART\tWEIGHT\tUNIT\tENGINE UNIT\tWHAT IT MEASURES\nFast pickup\t22000\tminutes\tmin\tMinutes the passengers wait beyond the quickest nearby Starseeker.\nArrived on time\t16000\tminutes\tmin\tMinutes late. The reference is 0 minutes late.\nEnergy versus par\t24000\tkWh\tkWh\tkWh flown above par. Holds and correction burns are included.\nKept the promise\t14000\tminutes\tmin\tMinutes off the quoted arrival. Late minutes are divided by 60. Early minutes are divided by 240. A missing arrival quote scores 0.\nEvery leg checked\t4000\tcount\tlegs\tCount of legs that did not pass the checker and were not local hops.\nHonest fare\t4000\tUSD\tUSD\tUSD off the flight fare. A missing fare quote scores 0.\nPlanning economy\t3000\tcount\tplans\tCount of plans past the 6 free plans.\nXenon tank\t4000\tkg\tkg\tkg of xenon over the tank. Over the tank scores 0. At or under the tank earns the reference share.\nDistance throttle\t3000\tkWh\tkWh\tkWh above the published set point the power on hand can feed.\nDeparture window\t3000\tkWh\tkWh\tkWh above the lowest energy departure in the search.\nCheckpoint recovery\t3000\tkWh\tkWh\tkWh above a hindsight option at a checkpoint. With no checkpoint, the excess is 0.\nCruise dose\t0\tmSv\tmSv\tmSv on the cruise. This part is a placeholder and scores 0.\n\nReported cruise dose uses 1.84 mSv per day. The engine comment cites Curiosity RAD, cruise to Mars, Zeitlin et al. 2013. The dose part scores 0.\n\nSTRANDED FLIGHTS\n\nIn the local report, a flight that does not arrive is stranded. The score cell is blank. The mean uses landed flights only. Stranded flights are counted beside it and are not folded in as 0.\n\nSTARSEEKER CLASSES\n\nThe catalog has Dawn class, Deep Space 1 class, RTG class, and Shuttle class. The first three are parked. Shuttle class is not parked. Seat counts on Dawn class and Deep Space 1 class are a simulated cabin. Those probes flew with no passengers.\n\nCLASS\tDRY KG\tXENON KG\tPOWER W AT 1 AU\tHOUSEKEEPING W\tSEATS\tPOWER\tPARKED\nDawn class\t747.1\t425\t10000\t0\t4\tarrays, 1/r^2\tSF-01\nDeep Space 1 class\t373\t82\t2500\t400\t4\tarrays, 1/r^2\tSF-02, SF-03\nRTG class\t747.1\t1085\t633\t0\t4\tconstant\tSF-04, SF-05, SF-06, SF-07\nShuttle class\t68000\t0\t0\t0\t7\tarrays, 1/r^2\tnot parked\n\nDawn class stores dry mass 747.1 kg, a xenon tank of 425 kg, and 10000 W at 1 AU. The engine comment calls that power a published lower bound, over 10000 W at 1 AU. The repository does not give a URL for Dawn.\n\nDeep Space 1 class stores dry mass 373 kg, a xenon tank of 82 kg, 2500 W at 1 AU, and housekeeping 400 W. The assumptions line says housekeeping near 400 W. The repository does not give a URL for Deep Space 1.\n\nRTG class is a simulated hull, not a flown ship. Dry mass 747.1 kg is the Dawn figure. The xenon tank is 1085 kg, Psyche's published load of up to 1085 kg (NASA JPL Psyche quick facts). Power is 633 W held constant, from Cassini at the end of the mission (NASA Cassini quick facts). The 633 W is treated as spare for the thruster. Housekeeping is not charged. The dry mass does not add tank structure for the larger xenon load. The repository does not give a URL for those quick facts.\n\nShuttle class stores dry mass 68000 kg and 7 seats. The engine comment calls the mass the published orbiter figure of about 68000 kg, and the seats the orbiter crew of 7. It has no xenon ion thruster. It is not parked. The repository does not give a URL.\n\nThe ion thruster uses two published NSTAR set points. 2310 W, specific impulse 3280 s, efficiency 0.64. 490 W, specific impulse 1950 s, efficiency 0.38. The engine keeps the highest point the spare power can feed. No set point is published below 0.49 kW. Standard gravity is 9.80665 m/s^2. The engine comment calls that NIST standard gravity.\n\nThe fare is simulated. It is $0.16 per kWh plus $0.35 per minute. The engine header for those rates says they are stated and made up on purpose. Landing, aerobraking, and life support are not priced.\n\nPLANET POSITIONS\n\nThe baked ephemeris source is JPL DE421 (skyfield-data 7.0.0 de421.bsp) via jplephem. Small bodies in that file are integrated n-body from Horizons states. The frame line is heliocentric J2000 ecliptic.\n\nThe Moon position is DE421. The engine comment labels the other moons as circular orbits and approximate. Bennu and Ceres use that n-body integration, not DE421 positions. Gravitational parameters used with the positions are DE440 values (Park et al. 2021), not DE421.\n\nSimulated stations, marked not real in the place table: Orbital Depot, Lunar Data Center, Mars Base, Ceres Port, Titan Dock.\n\nARRAY POWER\n\nThe engine does not use a solar constant of 1361 W/m2. docs/SOLAR-VARIABLES.md lists irradiance among the workbook rows the engine does not use. Solar array power is the class power at 1 AU divided by the square of the heliocentric distance. The RTG class generator does not fall off. It holds its watts at every distance.\n\nPASSENGERS AND SEASONS\n\nA season is 7000 sky days. One real second is one sky day. Hazards are seeded by the season number, so every player in that season meets the same simulated hazards. A season's passengers are a seeded pool of simulated passengers. The tier sizes are placeholders.\n\nThe pool size is frozen from the previous season's distinct signed-in players. The first season counts 0 players, so it uses the first tier. A later season keeps the size written for it.\n\nDISTINCT SIGNED-IN PLAYERS\tHAILS\n0\t200\n20\t500\n100\t1000\nHELD OUT SEEDS\n\nThe suite file stores no seeds. Practice tasks use the dev split. A dev seed is the prefix k1: and 128 bits from SHA-256 of a public string. The test split is held out. Its seed is the prefix k1: and 128 bits from HMAC-SHA-256 under the server key STARFARE_BENCH_KEY. That key is not in the repository. A split named train is refused. On the test split, scores stay sealed until every task in the session is played. The task list can name the booking and the sky day. The hazard world drawn from the keyed seed stays out of the suite file. Hidden test seeds stay out of training data. An episode export refuses a hidden test seed.\n\nFLIGHT RECORDS\n\nA download at /rides/export/<token>.jsonl is one starfare.ride/1 record per line. It holds the newest 500 arrived flights and lasts 24 hours. Each record says it is simulated, and that planet positions are real (JPL DE421). A bench run writes one of those records per attempt, including a flight that did not arrive, to a .rides.jsonl file. A bench session does not add those attempts to the player download.\n\nAn arrived flight also downloads at /flight/<run_id>/episode.jsonl. The file is starfare.episode/1 JSONL, one full episode per arrived flight. Each line is one step, and the file says it is simulated. A hidden test seed exports nothing. A public dev seed and a live season seed can. The engine also steps a flight with start and step. Each return is plain JSON, an open checkpoint or a finished flight."
+    },
+    {
+      "id": "flight",
+      "status": 404,
+      "metrics": {
+        "url": "http://127.0.0.1:8794/flight/run_00000000000000000000",
+        "title": "Starfare flight",
+        "lang": "en",
+        "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+        "width": 1440,
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "height": 1247,
+        "scale": 1,
+        "coarse": false,
+        "h1": [],
+        "buttons": [
+          {
+            "id": "",
+            "text": "Starfare",
+            "width": 172.78125,
+            "height": 26,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "20px"
+          },
+          {
+            "id": "",
+            "text": "Ride hails",
+            "width": 84.625,
+            "height": 17.390625,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "12px"
+          },
+          {
+            "id": "",
+            "text": "Scoreboard",
+            "width": 101.546875,
+            "height": 17.390625,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "12px"
+          },
+          {
+            "id": "",
+            "text": "Play",
+            "width": 38.125,
+            "height": 17.390625,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "12px"
+          },
+          {
+            "id": "",
+            "text": "Back to the sky",
+            "width": 108,
+            "height": 16,
+            "color": "rgb(142, 197, 255)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "12px"
+          },
+          {
+            "id": "",
+            "text": "← Back to the sky← Sky",
+            "width": 146.203125,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(92, 200, 255, 0.05)",
+            "fontSize": "11px"
+          },
+          {
+            "id": "play",
+            "text": "",
+            "width": 38,
+            "height": 38,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgba(255, 255, 255, 0.05)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "srange",
+            "text": "",
+            "width": 655.09375,
+            "height": 28,
+            "color": "rgb(232, 240, 250)",
+            "bg": "rgb(59, 59, 59)",
+            "fontSize": "14px"
+          },
+          {
+            "id": "cammode",
+            "text": "Overhead",
+            "width": 84.65625,
+            "height": 25,
+            "color": "rgb(159, 176, 198)",
+            "bg": "rgba(0, 0, 0, 0)",
+            "fontSize": "10.5px"
+          }
+        ],
+        "headings": [
+          {
+            "tag": "H2",
+            "id": "plH",
+            "text": "Passenger list"
+          },
+          {
+            "tag": "H3",
+            "id": "dlH",
+            "text": "Dispatcher log Written by the Grok botSimulated"
+          }
+        ],
+        "canvas": []
+      },
+      "text": "STARFARE\nRIDE HAILS\nSCOREBOARD\nPLAY\nSKY CLOCK\nSTARFARE FLIGHT\nNo flight with this run id yet. A flight appears here once it is dispatched.\nBack to the sky\n← BACK TO THE SKY\nFLIGHT REPLAY\nCONNECTOR RUN\nSIMULATED\nSPEED\n0.5×\n1×\n2×\n4×\nOVERHEAD\nPASSENGER LIST\nSIMULATED\n\nWho boards and who gets off at each stop, from the run log. It follows the replay.\n\nCABIN\nSIMULATED · PLACEHOLDER, NOT SET YET\nWORKS WITH GROK\n\nStarfare is a concept demo by Alvin Impang. It's a made-up robotaxi service with simulated passengers, a simulated fleet and simulated hazards, and it isn't affiliated with any real company. This flight was flown in the simulation through the Starfare connector; every number on this page comes from its run log or from the engine.\n\nPlanet positions: NASA JPL DE421. Sky time runs fast: one real second is one sky day, and the sky resets at the end of each season."
+    }
+  ],
+  "modalFocus": [
+    {
+      "id": "introClose",
+      "tag": "BUTTON",
+      "text": "Close",
+      "inside": true
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "✓01Connect your agentOpen",
+      "inside": true
+    },
+    {
+      "id": "grokLink",
+      "tag": "A",
+      "text": "grok.com/connectors",
+      "inside": true
+    },
+    {
+      "id": "mcpUrl",
+      "tag": "INPUT",
+      "text": "",
+      "inside": true
+    },
+    {
+      "id": "copyBtn",
+      "tag": "BUTTON",
+      "text": "Copy",
+      "inside": true
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Done, next check",
+      "inside": true
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "✓02Tell us who's flyingOpen",
+      "inside": true
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "✓03Know what's realOpen",
+      "inside": true
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "✓04Know how a flight is scoredOpen",
+      "inside": true
+    },
+    {
+      "id": "toOps",
+      "tag": "BUTTON",
+      "text": "Back to operations",
+      "inside": true
+    },
+    {
+      "id": "",
+      "tag": "BODY",
+      "text": "\n\n\n  STARFAREDispatch operations\n  DISPATCH OPERATIONSLive sky · ",
+      "inside": false
+    },
+    {
+      "id": "connectBtn",
+      "tag": "BUTTON",
+      "text": "Connect your agent",
+      "inside": false
+    },
+    {
+      "id": "tabF",
+      "tag": "BUTTON",
+      "text": "Live flights0",
+      "inside": false
+    },
+    {
+      "id": "tabB",
+      "tag": "BUTTON",
+      "text": "Open bookings5",
+      "inside": false
+    },
+    {
+      "id": "",
+      "tag": "BUTTON",
+      "text": "Whole system",
+      "inside": false
+    }
+  ],
+  "focusAfterEscape": "connectBtn",
+  "filterAfterEscape": "true",
+  "tabArrow": {
+    "focused": "tabB",
+    "active": "tabB"
+  },
+  "liveFailure": {
+    "url": "http://127.0.0.1:8794/",
+    "title": "Starfare Fleet Operations",
+    "lang": "",
+    "viewportMeta": null,
+    "width": 1440,
+    "clientWidth": 1440,
+    "scrollWidth": 1440,
+    "height": 1229,
+    "scale": 1,
+    "coarse": false,
+    "h1": [],
+    "feed": "2033-09-15 10:46DESKEngine planned Jovian hop, par Starseeker SF-05\n2033-09-15 07:42DESKEngine planned Phobos commute, par Starseeker SF-03\n2033-09-15 05:18SKYSolar flare (simulated)\n2033-09-15 04:35DESKEngine planned ISS crew change, par Starseeker SF-01",
+    "feedY": 842.84375,
+    "buttons": [
+      {
+        "id": "connectBtn",
+        "text": "Connect your agent",
+        "width": 153.59375,
+        "height": 32,
+        "color": "rgb(4, 18, 31)",
+        "bg": "rgb(92, 200, 255)",
+        "fontSize": "11px"
+      },
+      {
+        "id": "tabF",
+        "text": "Live flights0",
+        "width": 135.5,
+        "height": 28,
+        "color": "rgb(92, 200, 255)",
+        "bg": "rgba(92, 200, 255, 0.14)",
+        "fontSize": "10.5px"
+      },
+      {
+        "id": "tabB",
+        "text": "Open bookings5",
+        "width": 134.5,
+        "height": 28,
+        "color": "rgb(159, 176, 198)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "10.5px"
+      },
+      {
+        "id": "",
+        "text": "Whole system",
+        "width": 114.6875,
+        "height": 25,
+        "color": "rgb(92, 200, 255)",
+        "bg": "rgba(92, 200, 255, 0.16)",
+        "fontSize": "10.5px"
+      },
+      {
+        "id": "",
+        "text": "Inner system",
+        "width": 107.84375,
+        "height": 25,
+        "color": "rgb(159, 176, 198)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "10.5px"
+      },
+      {
+        "id": "",
+        "text": "Earth–Moon",
+        "width": 102.0625,
+        "height": 25,
+        "color": "rgb(159, 176, 198)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "10.5px"
+      },
+      {
+        "id": "",
+        "text": "Mars",
+        "width": 53.375,
+        "height": 25,
+        "color": "rgb(159, 176, 198)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "10.5px"
+      },
+      {
+        "id": "",
+        "text": "Jupiter",
+        "width": 68.515625,
+        "height": 25,
+        "color": "rgb(159, 176, 198)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "10.5px"
+      },
+      {
+        "id": "",
+        "text": "Saturn",
+        "width": 65.96875,
+        "height": 25,
+        "color": "rgb(159, 176, 198)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "10.5px"
+      },
+      {
+        "id": "fBtn",
+        "text": "Filters",
+        "width": 69.59375,
+        "height": 28,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(92, 200, 255, 0.05)",
+        "fontSize": "11px"
+      },
+      {
+        "id": "lBtn",
+        "text": "Layers",
+        "width": 68.1875,
+        "height": 28,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(92, 200, 255, 0.05)",
+        "fontSize": "11px"
+      },
+      {
+        "id": "",
+        "text": "ISS crew change",
+        "width": 121.59375,
+        "height": 15.5,
+        "color": "rgb(255, 207, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "9.5px"
+      },
+      {
+        "id": "",
+        "text": "Phobos commute",
+        "width": 124.453125,
+        "height": 15.5,
+        "color": "rgb(255, 207, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "9.5px"
+      },
+      {
+        "id": "",
+        "text": "Jovian hop",
+        "width": 85.421875,
+        "height": 15.5,
+        "color": "rgb(255, 207, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "9.5px"
+      },
+      {
+        "id": "",
+        "text": "Stranded at Titan",
+        "width": 132.171875,
+        "height": 15.5,
+        "color": "rgb(255, 207, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "9.5px"
+      },
+      {
+        "id": "",
+        "text": "Belt shift change",
+        "width": 130.78125,
+        "height": 15.5,
+        "color": "rgb(255, 207, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "9.5px"
+      },
+      {
+        "id": "",
+        "text": "Credits",
+        "width": 32.046875,
+        "height": 11,
+        "color": "rgb(142, 197, 255)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "9.5px"
+      },
+      {
+        "id": "",
+        "text": "SF-01Docked at Orbital Depot FictionalFrees at 2033-09-",
+        "width": 272,
+        "height": 90.53125,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "14px"
+      },
+      {
+        "id": "",
+        "text": "SF-02Docked at Lunar Data Center FictionalFrees at 2034",
+        "width": 272,
+        "height": 90.53125,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "14px"
+      },
+      {
+        "id": "",
+        "text": "SF-03Docked at Mars Base FictionalFrees at 2034-04-05 1",
+        "width": 272,
+        "height": 75.84375,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "14px"
+      },
+      {
+        "id": "",
+        "text": "SF-04Docked at Ceres RealFrees at 2034-02-23 17:13",
+        "width": 272,
+        "height": 75.84375,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "14px"
+      },
+      {
+        "id": "",
+        "text": "SF-05Docked at Europa RealFrees at 2034-04-05 11:20",
+        "width": 272,
+        "height": 75.84375,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "14px"
+      },
+      {
+        "id": "",
+        "text": "SF-06Docked at Callisto RealFrees at 2034-03-30 19:09",
+        "width": 272,
+        "height": 75.84375,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "14px"
+      },
+      {
+        "id": "",
+        "text": "SF-07Docked at Titan Dock FictionalFrees at 2034-04-05 ",
+        "width": 272,
+        "height": 90.53125,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "fontSize": "14px"
+      },
+      {
+        "id": "",
+        "text": "take_hailTakes a booking off the desk. Returns a run id",
+        "width": 133.15625,
+        "height": 117.578125,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(5, 12, 24, 0.5)",
+        "fontSize": "14px"
+      },
+      {
+        "id": "",
+        "text": "plan_ridePlans the passenger leg with fare and arrival,",
+        "width": 133.15625,
+        "height": 117.578125,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(5, 12, 24, 0.5)",
+        "fontSize": "14px"
+      },
+      {
+        "id": "",
+        "text": "check_padPad forecast (simulated): berths, bookings per",
+        "width": 133.15625,
+        "height": 117.578125,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(5, 12, 24, 0.5)",
+        "fontSize": "14px"
+      },
+      {
+        "id": "",
+        "text": "space_weatherFlare forecast (simulated), odds per sky d",
+        "width": 133.15625,
+        "height": 148.609375,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(5, 12, 24, 0.5)",
+        "fontSize": "14px"
+      },
+      {
+        "id": "",
+        "text": "decideAnswers the open checkpoint: wait or replan at a ",
+        "width": 133.15625,
+        "height": 148.609375,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(5, 12, 24, 0.5)",
+        "fontSize": "14px"
+      },
+      {
+        "id": "",
+        "text": "get_my_ridesYour past flights (simulated), newest first",
+        "width": 133.15625,
+        "height": 148.609375,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(5, 12, 24, 0.5)",
+        "fontSize": "14px"
+      },
+      {
+        "id": "boardBtn",
+        "text": "Open the scoreboard",
+        "width": 225.4375,
+        "height": 28,
+        "color": "rgb(232, 240, 250)",
+        "bg": "rgba(92, 200, 255, 0.05)",
+        "fontSize": "11px"
+      }
+    ],
+    "headings": [
+      {
+        "tag": "H2",
+        "id": "flH",
+        "text": "Flights in the air"
+      },
+      {
+        "tag": "H2",
+        "id": "skH",
+        "text": "Starseekers"
+      },
+      {
+        "tag": "H2",
+        "id": "toolH",
+        "text": "Your agent's tools"
+      },
+      {
+        "tag": "H2",
+        "id": "alH",
+        "text": "System alerts"
+      },
+      {
+        "tag": "H2",
+        "id": "fdH",
+        "text": "Dispatcher feed"
+      },
+      {
+        "tag": "H2",
+        "id": "rpH",
+        "text": "Log & reports"
+      },
+      {
+        "tag": "H2",
+        "id": "logH",
+        "text": "Scoreboard"
+      },
+      {
+        "tag": "H2",
+        "id": "introH",
+        "text": "Get your agent flying"
+      }
+    ],
+    "canvas": [
+      {
+        "id": "",
+        "role": null,
+        "label": null
+      },
+      {
+        "id": "wave",
+        "role": "img",
+        "label": "Feed events per second over the last minute of real time, by kind"
+      }
+    ]
+  },
+  "liveFailureText": "STARFARE\nDISPATCH OPERATIONS\nDISPATCH OPERATIONS\nLive sky · simulated fleet\nSKY TIME · SIMULATED CLOCK\n2033-09-15 05:16 UTC\nSeason 24 · day 2,526 of 7,000\nENGINE · JPL DE421 POSITIONS\nCONNECT YOUR AGENT\nFLIGHTS IN THE AIR\nLIVE\nSIMULATED\nLIVE FLIGHTS0\nOPEN BOOKINGS5\nNo flights in the air right now. Open bookings are on the next tab.\nFLEET MAP\nTrue positions · three.js\nWHOLE SYSTEM\nINNER SYSTEM\nEARTH–MOON\nMARS\nJUPITER\nSATURN\nFILTERS\nLAYERS\nSUN\n0.5 AU\n2 AU\n5 AU\n10 AU\n20 AU\nMERCURY\nVENUS\nEARTH\nMARS\nJUPITER\nSATURN\nURANUS\nNEPTUNE\nBENNU\nCERES\nSF-01\nSF-02\nSF-03\nSF-04\nSF-05\nSF-06\nSF-07\nMAP TIME · LIVE SKY\n2033-09-15 19:09 UTC · season 24\nNOTHING SELECTED\n\nPick a flight on the left or on the map, or open a booking, to see it here.\n\nLEGEND\nFlown or in flight\nPlanned leg\nOpen booking (engine plan)\nStop\nStarseeker on a flight\nReady\nBusy\n\nReal bearings and dates; distances log-compressed; sizes exaggerated.\n\nMaps: NASA, JPL, USGS (public domain); Saturn, rings, Sun: Solar System Scope (CC BY 4.0). Stars: Yale Bright Star Catalog. Credits\n\nDISTANCE SCALE\n0\n1 AU\nOutward from the Sun. Log-compressed, so it stretches inward.\nMAP CENTRE · HELIOCENTRIC ECLIPTIC\nX +0.000 Y +0.000 Z +0.000 AU\nSTARSEEKERS\nFICTIONAL\nSIMULATED\nSEATS: 4 (PLACEHOLDER, NOT SET YET)\nREADY\n0\nNone free right now.\nON A FLIGHT\n0\nNone in the air right now.\nDOCKED / BUSY · SIMULATED FLEET COMPETITION\n7\nSF-01\nDocked at Orbital Depot FICTIONAL\nFrees at 2033-09-16 23:56\nSF-02\nDocked at Lunar Data Center FICTIONAL\nFrees at 2034-04-06 13:27\nSF-03\nDocked at Mars Base FICTIONAL\nFrees at 2034-04-05 16:48\nSF-04\nDocked at Ceres REAL\nFrees at 2034-02-23 17:13\nSF-05\nDocked at Europa REAL\nFrees at 2034-04-05 11:20\nSF-06\nDocked at Callisto REAL\nFrees at 2034-03-30 19:09\nSF-07\nDocked at Titan Dock FICTIONAL\nFrees at 2034-04-05 14:20\n\nReady and busy come from the engine's fleet for the open desk (simulated). Starseekers on a live flight are shown on their flight instead.\n\nYOUR AGENT'S TOOLS\nMCP\ntake_hail\nTakes a booking off the desk. Returns a run id and the terms.\nplan_ride\nPlans the passenger leg with fare and arrival, re-flown in the n-body checker.\ncheck_pad\nPad forecast (simulated): berths, bookings per hour, Mars dust and Titan haze odds. Free.\nspace_weather\nFlare forecast (simulated), odds per sky day. A storm holds any launch with a passenger aboard. Free.\ndecide\nAnswers the open checkpoint: wait or replan at a launch hold.\nget_my_rides\nYour past flights (simulated), newest first, with score and parts.\n\nThe site does not dispatch; your agent calls these through the Starfare connector. Works with Grok.\n\nSYSTEM ALERTS\nSIMULATED\n2\nsimulated hazards right now (flares, Mars dust, Titan haze, full pads)\nSolar flare (simulated)\nNo launches with a passenger aboard until 2033-09-15 11:20\nPad full at Ceres Port (simulated)\n2 of 2 berths taken this sky hour\nDISPATCHER FEED\nSIMULATED\nFEED ACTIVITY\n4events · last 60 s\n−60 s\nFLIGHT\nCHECKPOINT\nHAZARD\nCLEAR\nnow\n2033-09-15 10:46DESKEngine planned Jovian hop, par Starseeker SF-05\n2033-09-15 07:42DESKEngine planned Phobos commute, par Starseeker SF-03\n2033-09-15 05:18SKYSolar flare (simulated)\n2033-09-15 04:35DESKEngine planned ISS crew change, par Starseeker SF-01\nLOG & REPORTS\nOPEN THE SCOREBOARD\nFLIGHT LOGS\nNo flights in the air right now.",
+  "reducedMotion": {
+    "reduced": true,
+    "animations": []
+  }
+}
