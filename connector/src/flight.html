@@ -615,8 +615,8 @@ function setPts(obj, pts) {
    a dorsal fin and one round aft nozzle, dark because runs record no burns. Nose along +z, length 1. Built from
    primitives; original design. */
 var SHIPMAT = null;
-function makeShip(callsign) {
-  if (window.SolArt) return SolArt.ship({ callsign: callsign });
+function makeShip(car) {
+  if (window.SolArt) return SolArt.ship({ callsign: car, car: car });
   if (!SHIPMAT) {
     var pts = [], N = 22;
     function rr(t) { return 0.15 * (t < 0.36 ? 0.6 + 0.4 * Math.sin(t / 0.36 * Math.PI / 2) : Math.pow(Math.cos((t - 0.36) / 0.64 * Math.PI / 2), 0.85)); }
@@ -1080,10 +1080,19 @@ function rideFrame(dt, t) {
     }
   });
   if (RS.local) {
-    var sd = axes(d3([0, 0, 0], SF.pos(rp.focus, jd)), 1); sd.normalize();
+    var sp = SF.pos(rp.focus, jd), sd = axes(d3([0, 0, 0], sp), 1); sd.normalize();
     RS.dl.position.copy(sd.clone().multiplyScalar(100)); RS.sun.position.copy(sd.clone().multiplyScalar(3000));
     if (window.SolArt) SolArt.setSun(RS.sun.position);
-  }
+    // Planet shadow on the ship: a cylinder of the planet's radius behind it, softened over the penumbra width the
+    // Sun's disc gives at this depth (IAU nominal solar radius 695,700 km; the umbra's taper is ignored). Parked in
+    // low orbit the ship laps its planet about once a second of replay, so the light eases over 0.3 s of real time
+    // instead of blinking; a scrub sets it at once.
+    var Rp = SF.place(rp.focus).radius_km / 1000, along = p.dot(sd), off = Math.sqrt(Math.max(0, p.lengthSq() - along * along));
+    var pen = Math.abs(along) * 695700 / (Math.hypot(sp[0], sp[1], sp[2]) * AU), lit = along >= 0 ? 1 : THREE.MathUtils.smoothstep(off, Rp - pen, Rp + pen);
+    RS.lit = jump || RS.lit == null ? lit : RS.lit + (lit - RS.lit) * (1 - Math.exp(-dt / 0.3));
+    RS.dl.intensity = 1.5 * RS.lit;
+    if (window.SolArt) SolArt.setSky({ sun: sd, planet: { id: rp.focus, dir: p.clone().negate().normalize(), size: Math.asin(Math.min(1, Rp / p.length())) }, lit: RS.lit });
+  } else if (window.SolArt) SolArt.setSky({ sun: p.clone().negate().normalize() });
   var heading = window.StarfareView.flightDirection(rp, jd, function (time) { return shipPos(time).toArray(); });
   if (!heading) {
     var stop = st.f >= 1 ? L.to : L.from;
@@ -1127,8 +1136,9 @@ function rideFrame(dt, t) {
   if (RS.planetClock && window.SolArt && SolArt.updatePlanet) {
     if (jump) RS.planetClock.reset(t);
     var effectsTime = RS.planetClock.sample(t, RS.playing && !reduced && !document.hidden);
-    if (RS.sun && SolArt.updateSun) SolArt.updateSun(RS.sun, { elapsedSeconds: effectsTime, camera: cam, radiusPx: 40, quality: GW <= 760 ? "mobile" : "desktop" });
-    RS.bodies.forEach(function (b) { if (b.m && b.m.userData.planetEffects) SolArt.updatePlanet(b.m, { elapsedSeconds: effectsTime, camera: cam, radiusPx: b.m.scale.x / pxw(cam, b.m.position, GH), quality: GW <= 760 ? "mobile" : "desktop" }); });
+    var maps = SolArt.quality().maps;
+    if (RS.sun && SolArt.updateSun) SolArt.updateSun(RS.sun, { elapsedSeconds: effectsTime, camera: cam, radiusPx: 40, quality: maps });
+    RS.bodies.forEach(function (b) { if (b.m && b.m.userData.planetEffects) SolArt.updatePlanet(b.m, { elapsedSeconds: effectsTime, camera: cam, radiusPx: b.m.scale.x / pxw(cam, b.m.position, GH), quality: maps }); });
   }
   RS.labels.update(cam, GW, GH);
   var tb = $("#rtbox"); tb.classList.toggle("alert", !!RS.alert);
@@ -1281,6 +1291,7 @@ var THREE_SRC = [
   ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js", "sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs"],
   ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js", "sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3"],
   ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js", "sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa"],
+  ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js", "sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E"],
   ["/assets/planet-effects.js"],
   ["/assets/sol-art.js"]
 ];

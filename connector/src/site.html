@@ -1624,7 +1624,7 @@ function updateFlown() {
 var raf = 0, last = 0, MAPVIS = true;
 function frame(t) {
   raf = requestAnimationFrame(frame);
-  if (t - last < 1000 / (GW <= 760 ? 24 : 30)) return;
+  if (t - last < 1000 / (window.SolArt ? SolArt.quality().fps : GW <= 760 ? 24 : 30)) return;
   var dt = Math.min(0.1, Math.max(0, (t - last) / 1000)); last = t; MEMO = {}; MEMON = 0;
   try { draw(dt, t); } catch (e) { if (!frame.err) { frame.err = 1; console.error(e); } }
   if (MAP_PAUSED && !RIG.fly) glStop();
@@ -1660,14 +1660,14 @@ function draw(dt, t) {
   SUN.visible = !DETAIL_SYS || DETAIL_SYS === "sun";
   // Surface animation is illustrative and independent of ephemerides and recorded flights.
   var effectSeconds = PLANET_CLOCK ? PLANET_CLOCK.sample(t, !MAP_PAUSED && !reduced && !document.hidden) : 0;
-  if (SUN.visible && window.SolArt && SolArt.updateSun) SolArt.updateSun(SUN, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: SIZE.sun * SUN.scale.x / pxw(), quality: GW <= 760 ? "mobile" : "desktop" });
+  if (SUN.visible && window.SolArt && SolArt.updateSun) SolArt.updateSun(SUN, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: SIZE.sun * SUN.scale.x / pxw(), quality: SolArt.quality().maps });
   // bodies
   for (var i = 0; i < BODIES.length; i++) {
     var b = BODIES[i], v = marker(b.id, MAPJD);
     b.obj.position.copy(v);
     b.obj.visible = (!DETAIL_SYS || SF.system(b.id) === DETAIL_SYS) && (b.kind === "planet" || b.kind === "small" || RIG.dist < (b.kind === "moon" ? 70 : 40));
     if (b.obj.visible) b.obj.scale.setScalar(Math.max(b.r, pxw(v) * b.min));
-    if (b.obj.visible && window.SolArt && SolArt.updatePlanet) SolArt.updatePlanet(b.obj, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: b.obj.scale.x / pxw(), quality: GW <= 760 ? "mobile" : "desktop" });
+    if (b.obj.visible && window.SolArt && SolArt.updatePlanet) SolArt.updatePlanet(b.obj, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: b.obj.scale.x / pxw(), quality: SolArt.quality().maps });
   }
   MOR.forEach(function (m) { m.g.position.copy(marker(m.par, MAPJD)); m.g.visible = LAY.moon && RIG.dist < 45 && (!DETAIL_SYS || SF.system(m.par) === DETAIL_SYS); });
   ORB.children.forEach(function (o) { o.material.opacity = o.userData.baseOpacity * (DETAIL_SYS ? .3 : 1); });

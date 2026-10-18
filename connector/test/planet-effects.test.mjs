@@ -147,3 +147,26 @@ test('asynchronous texture completion requests a redraw even when the map is pau
   callbacks[0].failed();
   assert.equal(callbacks[0].t.userData.failed,true);
 });
+test('quality drops a tier for frames that cost too much, not for idle time between cheap frames', async () => {
+  const T = await three(), src = readFileSync(new URL('../../design/assets/sol-art.js',import.meta.url),'utf8');
+  // The page's own work runs before it renders, so the frame's cost lands ahead of the render call. The next
+  // animation frame comes as soon as that work ends; a paused page then sits idle before it renders again.
+  function tierAfter(frameMs, idleMs) {
+    let start = 0, now = 0, next = null;
+    const window = { THREE:T, innerWidth:1280, requestAnimationFrame:f => { next = f; } };
+    const document = { currentScript:{src:'/assets/sol-art.js'}, body:null, addEventListener(){}, timeline:{ get currentTime() { return start; } } };
+    vm.runInNewContext(src, { window, document, console, performance:{ now:() => now }, fetch:async()=>({ok:true,json:async()=>({s:[]})}) });
+    const post = window.SolArt.composer({ render(){} });
+    for (let i = 0; i < 400; i++) {
+      now = start + frameMs;
+      post.render();
+      const f = next; next = null; if (f) f(now);
+      start = now + idleMs;
+    }
+    return window.SolArt.quality().name;
+  }
+  assert.equal(tierAfter(40,0),'high');
+  assert.equal(tierAfter(16.7,5000),'high');
+  assert.equal(tierAfter(100,0),'low');
+  assert.equal(tierAfter(400,0),'low');
+});

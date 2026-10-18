@@ -219,7 +219,7 @@
   function composer(renderer, opt) {
     opt = opt || {};
     var ok = THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass && THREE.ShaderPass;
-    var api = { bloom: !!ok, post: null, render: function (scene, cam) { renderer.render(scene, cam); }, setSize: function () {}, tick: function () {} };
+    var api = { bloom: !!ok, post: null, render: function (scene, cam) { pace(); renderer.render(scene, cam); }, setSize: function () {}, tick: function () {} };
     if (!ok) return api;
     var size = renderer.getSize(new THREE.Vector2()), pr = renderer.getPixelRatio(), rt;
     var w = Math.max(1, size.x * pr), h = Math.max(1, size.y * pr);
@@ -236,7 +236,11 @@
       C.addPass(vp);
     }
     api.post = vp; api.pass = bp; api.composer = C;
-    api.render = function (scene, cam) { rp.scene = scene; rp.camera = cam; C.render(); };
+    api.render = function (scene, cam) {
+      pace();
+      if (!quality().bloom) return renderer.render(scene, cam);
+      rp.scene = scene; rp.camera = cam; C.render();
+    };
     api.setSize = function (W, H) { C.setPixelRatio(renderer.getPixelRatio()); C.setSize(W, H); };
     // t in ms; a static grain when motion is reduced.
     api.tick = function (t, reduced) { if (vp) vp.uniforms.uTime.value = reduced ? 0.5 : (t / 1000) % 1000; };
@@ -306,35 +310,190 @@
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
     return t;
   }
+  // Nav lights: red port (+x), green starboard (-x), white beacon. At the procedural wingtips and fin, or at the
+  // mounts tools/models/build-lods.mjs records for a generated hull.
+  var NAV = [
+    { mount: "port_light", at: [0.475, -0.002, -0.27], col: 0xff5a4a, size: 0.13, opacity: 1 },
+    { mount: "starboard_light", at: [-0.475, -0.002, -0.27], col: 0x55f08a, size: 0.13, opacity: 1 },
+    { mount: "beacon", at: [0, 0.235, -0.44], col: 0xffffff, size: 0.11, opacity: 0.9 }
+  ];
+  // opt.car (an engine car id) picks the generated hull for that car's ship class; the procedural ship shows until
+  // it loads, and stays when it can't. The callsign decal belongs to the procedural wing, so it goes with it.
   function ship(opt) {
     opt = opt || {};
-    var K = shipKit(), g = new THREE.Group();
-    g.add(new THREE.Mesh(K.hull, K.hullM));
-    var can = new THREE.Mesh(K.canopy, K.canM); can.scale.set(0.085, 0.06, 0.2); can.position.set(0, 0.06, 0.15); g.add(can);
+    var K = shipKit(), g = new THREE.Group(), p = new THREE.Group(); g.add(p);
+    p.add(new THREE.Mesh(K.hull, K.hullM));
+    var can = new THREE.Mesh(K.canopy, K.canM); can.scale.set(0.085, 0.06, 0.2); can.position.set(0, 0.06, 0.15); p.add(can);
     [1, -1].forEach(function (s) {
-      var wm = new THREE.Mesh(K.wing, K.wingM); wm.scale.x = s; wm.position.y = -0.03; wm.rotation.z = s * 0.06; g.add(wm);
-      for (var i = 0; i < 5; i++) { var z = 0.12 - i * 0.06, wn = new THREE.Mesh(K.win, K.winM); wn.position.set(s * (K.halfW(z, 0.03) - 0.001), 0.03, z); g.add(wn); }
+      var wm = new THREE.Mesh(K.wing, K.wingM); wm.scale.x = s; wm.position.y = -0.03; wm.rotation.z = s * 0.06; p.add(wm);
+      for (var i = 0; i < 5; i++) { var z = 0.12 - i * 0.06, wn = new THREE.Mesh(K.win, K.winM); wn.position.set(s * (K.halfW(z, 0.03) - 0.001), 0.03, z); p.add(wn); }
       var st = [];
       for (var j = 0; j <= 16; j++) { var zz = -0.44 + j * 0.05; st.push(new THREE.Vector3(s * (K.halfW(zz, -0.012) + 0.002), -0.012, zz)); }
-      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(st), K.stripeM));
+      p.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(st), K.stripeM));
     });
-    var fin = new THREE.Mesh(K.fin, K.wingM); fin.position.set(0, 0.06, 0); g.add(fin);
-    var nac = new THREE.Mesh(K.nacelle, K.nacM); nac.position.z = -0.52; g.add(nac);
-    var throat = new THREE.Mesh(K.disc, K.throatM); throat.position.z = -0.53; throat.rotation.y = Math.PI; g.add(throat);
-    // nav lights at the wingtips: red port (+x), green starboard (-x), white beacon on the fin
-    function nav(x, y, z, col, size, opacity) {
-      var d = new THREE.Mesh(K.dot, new THREE.MeshBasicMaterial({ color: col })); d.position.set(x, y, z); g.add(d);
-      var s = additiveSprite(K.navG, col); s.position.copy(d.position); s.scale.setScalar(size); s.material.opacity = opacity; g.add(s);
-    }
-    nav(0.475, -0.002, -0.27, 0xff5a4a, 0.13, 1); nav(-0.475, -0.002, -0.27, 0x55f08a, 0.13, 1); nav(0, 0.235, -0.44, 0xffffff, 0.11, 0.9);
+    var fin = new THREE.Mesh(K.fin, K.wingM); fin.position.set(0, 0.06, 0); p.add(fin);
+    var nac = new THREE.Mesh(K.nacelle, K.nacM); nac.position.z = -0.52; p.add(nac);
+    var throat = new THREE.Mesh(K.disc, K.throatM); throat.position.z = -0.53; throat.rotation.y = Math.PI; p.add(throat);
+    var lights = NAV.map(function (n) {
+      var l = new THREE.Group(), s = additiveSprite(K.navG, n.col);
+      l.add(new THREE.Mesh(K.dot, new THREE.MeshBasicMaterial({ color: n.col })));
+      s.scale.setScalar(n.size); s.material.opacity = n.opacity; l.add(s);
+      l.position.fromArray(n.at); g.add(l);
+      return l;
+    });
     if (opt.callsign) {
       var dt = decalTex(String(opt.callsign).toUpperCase());
       var dm = new THREE.MeshStandardMaterial({ map: dt, transparent: true, metalness: 0.2, roughness: 0.6, depthWrite: false });
       [1, -1].forEach(function (s) {
-        var d = new THREE.Mesh(K.decal, dm); d.position.set(s * 0.27, 0.0, -0.21); d.rotation.z = s * 0.06; g.add(d); // on the wing top, with its dihedral
+        var d = new THREE.Mesh(K.decal, dm); d.position.set(s * 0.27, 0.0, -0.21); d.rotation.z = s * 0.06; p.add(d); // on the wing top, with its dihedral
       });
     }
+    var car = opt.car && root.SOLE && root.SOLE.R && root.SOLE.R.CAR[String(opt.car).toLowerCase()];
+    if (car && THREE.GLTFLoader) {
+      g.userData.hull = { cls: car.ship_class, proc: p, lights: lights, model: null, mounts: null, asked: false };
+      quality(); // settle the tier first: a change prunes ships not yet added to a scene
+      SHIPS.push(g); showHull(g);
+    }
     return g;
+  }
+
+  /* ---------- generated hulls ---------- */
+  // models/ holds the game versions of the generated meshes (tools/models/build-lods.mjs): bow +z, up +y, length 1,
+  // the procedural ship's frame. fleet.json maps each engine ship class to a hull. One load per class, cloned per
+  // ship, so every ship of a class shares its geometry and material.
+  var FLEET = null, HULLS = {}, SHIPS = [];
+  function loadHull(cls) {
+    FLEET = FLEET || fetch(BASE + "models/fleet.json").then(function (r) { if (!r.ok) throw new Error("fleet.json " + r.status); return r.json(); });
+    return HULLS[cls] || (HULLS[cls] = FLEET.then(function (f) {
+      var h = f.hulls[f.classes[cls]];
+      if (!h) throw new Error("no hull for ship class " + cls);
+      return new Promise(function (ok, bad) {
+        new THREE.GLTFLoader().load(BASE + "models/" + h.file, function (gl) {
+          gl.scene.traverse(function (o) {
+            if (!o.material) return;
+            // The pages render with no output encoding, so the planets' maps are read as stored; the hull's base
+            // colour, tagged sRGB by the loader, would otherwise come out darker than it was painted.
+            if (o.material.map) o.material.map.encoding = THREE.LinearEncoding;
+            if (ENV.rt) o.material.envMap = ENV.rt.texture;
+            o.material.needsUpdate = true; ENV.mats.push(o.material);
+          });
+          ok({ scene: gl.scene, mounts: h.mounts });
+        }, undefined, bad);
+      });
+    }));
+  }
+  function showHull(g) {
+    var h = g.userData.hull, want = quality().hulls;
+    if (want && !h.asked) {
+      h.asked = true;
+      loadHull(h.cls).then(function (m) { h.model = m.scene.clone(); h.mounts = m.mounts; g.add(h.model); showHull(g); },
+        function (e) { console.warn("SolArt: keeping the procedural ship for class " + h.cls + ":", e && e.message || e); });
+    }
+    var on = want && !!h.model;
+    h.proc.visible = !on;
+    if (h.model) h.model.visible = on;
+    NAV.forEach(function (n, i) { h.lights[i].position.fromArray(on ? h.mounts[n.mount] : n.at); });
+  }
+
+  /* ---------- hull reflections ---------- */
+  // The hull maps are mostly metal, and metal shows what it reflects. setSky renders a tiny sky (dark space, the Sun
+  // disc, the nearest planet lit by the Sun) into one PMREM cube shared by the hull materials, never the planets.
+  // It rebuilds only when the Sun or planet direction turns more than 4 degrees or the planet changes, at most four
+  // times a second. The disc is drawn 3 degrees across (the real Sun is 0.53 degrees across from 1 AU) so the cube's
+  // texels catch it. lit (0 to 1) dims the reflection in a planet's shadow. The low tier drops it.
+  var ENV = { gen: null, rt: null, sc: null, sun: null, planet: null, light: null, sd: null, pd: null, pid: null, col: false, t: -1e9, mats: [] };
+  var COS4 = Math.cos(4 * Math.PI / 180), MEAN = {};
+  function turned(a, b) { return !a !== !b || (!!a && a.dot(b) < COS4); }
+  // A planet's colour in the reflection: the mean of its map, once the map has loaded.
+  function meanColor(id) {
+    if (MEAN[id]) return MEAN[id];
+    var img = MAPS[id] && tex(MAPS[id]).image;
+    if (!img || !img.width) return null;
+    var c = document.createElement("canvas"); c.width = c.height = 16;
+    var x = c.getContext("2d"); x.drawImage(img, 0, 0, 16, 16);
+    var d = x.getImageData(0, 0, 16, 16).data, s = [0, 0, 0];
+    for (var i = 0; i < d.length; i += 4) { s[0] += d[i]; s[1] += d[i + 1]; s[2] += d[i + 2]; }
+    return (MEAN[id] = new THREE.Color(s[0] / 65280, s[1] / 65280, s[2] / 65280));
+  }
+  function skyScene() {
+    var sc = new THREE.Scene();
+    sc.add(new THREE.Mesh(new THREE.SphereGeometry(50, 16, 8), new THREE.MeshBasicMaterial({ color: 0x0b111b, side: THREE.BackSide })));
+    ENV.sun = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff1dc).multiplyScalar(6) }));
+    ENV.planet = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), new THREE.MeshLambertMaterial({ color: 0x808080 }));
+    ENV.light = new THREE.DirectionalLight(0xfff1dc, 1.6);
+    sc.add(ENV.sun); sc.add(ENV.planet); sc.add(ENV.light);
+    return sc;
+  }
+  // o.sun: unit vector from the ship toward the Sun, or none. o.planet: { id, dir (unit, toward its centre), size
+  // (angular radius, radians) }, or none. o.lit: 0 in full shadow to 1 in sunlight.
+  function setSky(o) {
+    o = o || {};
+    if (!R || !quality().hulls) return;
+    var lit = o.lit == null ? 1 : o.lit, pl = o.planet || null, col = pl && meanColor(pl.id);
+    ENV.mats.forEach(function (m) { m.envMapIntensity = 0.15 + 0.85 * lit; });
+    var stale = !ENV.rt || ENV.pid !== (pl && pl.id) || ENV.col !== !!col || turned(ENV.sd, o.sun) || turned(ENV.pd, pl && pl.dir);
+    var now = performance.now();
+    if (!stale || now - ENV.t < 250) return;
+    var sc = ENV.sc || (ENV.sc = skyScene());
+    ENV.sun.visible = ENV.light.visible = !!o.sun;
+    if (o.sun) { ENV.sun.position.copy(o.sun).multiplyScalar(40); ENV.sun.scale.setScalar(40 * Math.tan(1.5 * Math.PI / 180)); ENV.light.position.copy(o.sun); }
+    ENV.planet.visible = !!pl;
+    if (pl) {
+      var a = Math.min(pl.size, 1.3);
+      ENV.planet.position.copy(pl.dir).multiplyScalar(30); ENV.planet.scale.setScalar(30 * Math.sin(a));
+      ENV.planet.material.color.copy(col || new THREE.Color(0x808080));
+    }
+    var rt = (ENV.gen || (ENV.gen = new THREE.PMREMGenerator(R))).fromScene(sc, 0, 0.1, 100);
+    if (ENV.rt) ENV.rt.dispose();
+    ENV.rt = rt; ENV.t = now; ENV.sd = o.sun ? o.sun.clone() : null; ENV.pd = pl ? pl.dir.clone() : null; ENV.pid = pl && pl.id; ENV.col = !!col;
+    ENV.mats.forEach(function (m) { if (!m.envMap) m.needsUpdate = true; m.envMap = rt.texture; });
+  }
+  function dropSky() {
+    if (!ENV.rt) return;
+    ENV.rt.dispose(); ENV.rt = null;
+    ENV.mats.forEach(function (m) { m.envMap = null; m.needsUpdate = true; });
+  }
+
+  /* ---------- quality ---------- */
+  // One setting per page. high: generated hulls with reflections, 2k planet maps, 30 frames a second. medium (narrow
+  // screens): the same with 1k maps at 24 frames. low (Save-Data, or a page that keeps missing its frames): the
+  // procedural ship, no reflections, no bloom. ?quality=high|medium|low pins it. Otherwise, when frames cost over
+  // 1.5 times the tier's budget for about three seconds, the page drops one tier; it never climbs back.
+  var TIERS = {
+    high: { name: "high", maps: "desktop", fps: 30, hulls: true, bloom: true },
+    medium: { name: "medium", maps: "mobile", fps: 24, hulls: true, bloom: true },
+    low: { name: "low", maps: "mobile", fps: 24, hulls: false, bloom: false }
+  };
+  var ORDER = ["high", "medium", "low"];
+  var qp = root.location && new URLSearchParams(root.location.search).get("quality");
+  var Q = { pinned: TIERS[qp] ? qp : null, drop: 0, cur: null, t0: -1, vis: 0, vis0: 0, frames: 0, slow: 0 };
+  document.addEventListener("visibilitychange", function () { Q.vis++; });
+  var SAVE = !!(root.navigator && root.navigator.connection && root.navigator.connection.saveData);
+  function quality() {
+    var name = Q.pinned || (SAVE ? "low" : ORDER[Math.min(2, (root.innerWidth <= 760 ? 1 : 0) + Q.drop)]);
+    if (name !== Q.cur) {
+      Q.cur = name;
+      SHIPS = SHIPS.filter(function (g) { return g.parent; }); // a ship the page removed is gone for good
+      SHIPS.forEach(showHull);
+      if (!TIERS[name].hulls) dropSky();
+    }
+    return TIERS[name];
+  }
+  // Called as a frame renders, from inside its animation frame (both pages render only there). The cost of a frame
+  // that rendered is the time from its start to the next frame's start: it covers the page's work, the render and
+  // whatever the GPU still owes, and unlike the gap between rendered frames it does not grow while a paused map sits
+  // idle. A frame that spans the page being hidden is skipped, no one frame counts for more than half a second, and
+  // the first 30 frames after a tier change carry shader compiles and texture uploads.
+  function pace() {
+    if (Q.pinned || Q.t0 >= 0) return;
+    Q.t0 = document.timeline.currentTime; Q.vis0 = Q.vis;
+    root.requestAnimationFrame(paced);
+  }
+  function paced(ts) {
+    var dt = ts - Q.t0; Q.t0 = -1;
+    if (Q.vis !== Q.vis0 || ++Q.frames < 30) return;
+    Q.slow = dt > 1500 / quality().fps ? Q.slow + Math.min(dt, 500) : Math.max(0, Q.slow - dt);
+    if (Q.slow > 3000 && Q.drop < 2) { Q.drop++; Q.slow = 0; Q.frames = 0; }
   }
 
   /* ---------- HUD icon sprite: 24-unit stroke icons drawn in currentColor ---------- */
@@ -375,7 +534,7 @@
     updatePlanet: function (body, context) { if (root.StarfarePlanetEffects) root.StarfarePlanetEffects.update(body, context); },
     disposePlanet: function (body) { if (root.StarfarePlanetEffects && body) root.StarfarePlanetEffects.dispose(body.userData.solarSurface || body); },
     updateSun: function (body, context) { if (root.StarfarePlanetEffects && body.userData.solarSurface) root.StarfarePlanetEffects.update(body.userData.solarSurface, context); },
-    sun: sun, stars: stars, composer: composer, ship: ship, icon: icon, ICONS: Object.keys(ICONS),
+    sun: sun, stars: stars, composer: composer, ship: ship, setSky: setSky, quality: quality, icon: icon, ICONS: Object.keys(ICONS),
     CREDIT: "Maps: NASA, JPL, USGS (public domain); Earth effects, Saturn, rings, Sun: Solar System Scope (CC BY 4.0). Moon relief: NASA SVS / LRO LOLA. Stars: Yale Bright Star Catalog."
   };
 })(window);
