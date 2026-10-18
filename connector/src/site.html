@@ -1237,7 +1237,7 @@ function setPts(obj, pts) {
   for (var i = 0; i < n; i++) a.setXYZ(i, pts[i].x, pts[i].y, pts[i].z);
   a.needsUpdate = true; obj.geometry.setDrawRange(0, n); obj.geometry.computeBoundingSphere();
 }
-/* The Starseeker: lifting-body hull, window band, swept stub wings, a dorsal fin and one aft thruster. Nose along +z. */
+/* The Starseeker: lifting-body hull, window band, swept stub wings, a dorsal fin and one dark aft nozzle. Nose along +z. */
 var SHIPMAT = null;
 function makeShip() {
   if (!SHIPMAT) {
@@ -1256,9 +1256,7 @@ function makeShip() {
       hullM: new THREE.MeshStandardMaterial({ color: 0x3a4660, metalness: 0.5, roughness: 0.38, flatShading: true, emissive: 0x111a28 }),
       wingM: new THREE.MeshStandardMaterial({ color: 0x222b3a, metalness: 0.5, roughness: 0.5, flatShading: true, emissive: 0x0a0f18 }),
       winM: new THREE.MeshStandardMaterial({ color: 0x2a4266, emissive: 0x8ec5ff, emissiveIntensity: 0.7, metalness: 0.2, roughness: 0.15 }),
-      thrM: new THREE.MeshBasicMaterial({ color: 0xffcf7a }),
-      stripeM: new THREE.LineBasicMaterial({ color: 0x8ec5ff, transparent: true, opacity: 0.9 }),
-      glow: glowTex("rgba(255,230,180,1)", "rgba(255,182,92,.55)")
+      stripeM: new THREE.LineBasicMaterial({ color: 0x8ec5ff, transparent: true, opacity: 0.9 })
     };
   }
   var S_ = SHIPMAT, g = new THREE.Group();
@@ -1269,9 +1267,7 @@ function makeShip() {
     var st = new THREE.Line(new THREE.BufferGeometry().setFromPoints(S_.stripe.map(function (p) { return V(p.x * s, p.y, p.z); })), S_.stripeM); g.add(st);
   });
   var f = new THREE.Mesh(S_.finG, S_.wingM); f.position.set(0, 0.055, -0.42); g.add(f);
-  var tor = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.012, 8, 24), S_.thrM); tor.position.z = -0.5; g.add(tor);
-  var gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: S_.glow, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
-  gl.position.z = -0.58; gl.scale.setScalar(0.42); g.add(gl);
+  var tor = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.012, 8, 24), S_.wingM); tor.position.z = -0.5; g.add(tor);
   return g;
 }
 
@@ -1698,7 +1694,6 @@ function draw(dt, t) {
     window.StarfareView.orientShip(F.ship, window.StarfareView.headingFrame(heading, [0, 1, 0], F.ship.userData.headingSet ? F.ship.up.toArray() : null));
     F.halo.position.copy(v); F.halo.scale.setScalar(s * (sel ? 34 : 24));
     F.halo.material.color.setScalar(sel ? 1.5 : 0.75); // over the bloom threshold only when selected
-    if (F.ship.userData.update) F.ship.userData.update(t, F.sc.s.phase === "flight", reduced || MAP_PAUSED);
     if (F.lbl) F.lbl.el.classList.toggle("on", sel);
   });
   Object.keys(BK).forEach(function (id) {
@@ -1722,7 +1717,6 @@ function draw(dt, t) {
     var p = marker(c.at, MAPJD); ship.visible = true; ship.position.copy(p); ship.scale.setScalar(pxw(p) * 16);
     var heading = window.StarfareView.orbitDirection(MAPJD, function (jd) { return marker(c.at, jd).toArray(); });
     window.StarfareView.orientShip(ship, window.StarfareView.headingFrame(heading, [0, 1, 0], ship.userData.headingSet ? ship.up.toArray() : null));
-    if (ship.userData.update) ship.userData.update(t, false, reduced || MAP_PAUSED);
   });
   setPts(PARK_R, window.SolArt ? [] : pr); setPts(PARK_B, window.SolArt ? [] : pb);
   LBL.update(cam, GW, GH);

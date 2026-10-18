@@ -214,8 +214,8 @@
       " float n = h(gl_FragCoord.xy + fract(uTime) * 91.7) - 0.5;\n" +
       " gl_FragColor = vec4(c.rgb * v + n * uGrain, c.a); }"
   };
-  // A composer for one renderer: bloom always (threshold-based, so only the Sun, engine plumes, lights and lit markers
-  // pass), plus an optional vignette and grain pass. Without the example scripts it falls back to a plain render.
+  // A composer for one renderer: bloom always (threshold-based, so only the Sun, nav lights and lit markers pass),
+  // plus an optional vignette and grain pass. Without the example scripts it falls back to a plain render.
   function composer(renderer, opt) {
     opt = opt || {};
     var ok = THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass && THREE.ShaderPass;
@@ -245,9 +245,11 @@
 
   /* ---------- the Starseeker ---------- */
   /* An original short-hop passenger ship in the Starseeker look of the page SVGs: a flattened lifting-body hull,
-     a blue lit window band, swept wings with a little dihedral, one dorsal fin and a single aft thruster. Built here
+     a blue lit window band, swept wings with a little dihedral, one dorsal fin and a single aft nozzle. Built here
      from lathe and extrude geometry, flat-shaded and low-poly. Nose along +z, up +y, length 1. Port (+x) carries the
-     red nav light, starboard (-x) the green. Not modelled on any real or game vehicle. */
+     red nav light, starboard (-x) the green. Not modelled on any real or game vehicle.
+     The nozzle stays dark and the lights stay steady: runs record no burn intervals or light states
+     (art/2026-10-17/motion-spec.md), so the ship shows no thrust and has nothing to animate. */
   var SHIPK = null;
   function shipKit() {
     if (SHIPK) return SHIPK;
@@ -265,7 +267,6 @@
     var fin = new THREE.ExtrudeGeometry(f, { depth: 0.012, bevelEnabled: true, bevelThickness: 0.003, bevelSize: 0.004, bevelSegments: 1 });
     fin.translate(0, 0, -0.006); fin.rotateY(-Math.PI / 2); // shape x becomes z: root aft, tip swept back
     var canopy = new THREE.SphereGeometry(1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2);
-    var plume = new THREE.ConeGeometry(1, 1, 20, 1, true); plume.rotateX(-Math.PI / 2); plume.translate(0, 0, -0.5);
     // hull half-width at height y and station z, from the lathe profile
     function rAt(z) {
       var t = z + 0.5;
@@ -274,7 +275,7 @@
     }
     function halfW(z, y) { var r = rAt(z), k = y / (0.62 * r); return k >= 1 ? 0 : 1.3 * r * Math.sqrt(1 - k * k); }
     SHIPK = {
-      halfW: halfW, hull: hull, wing: wing, fin: fin, canopy: canopy, plume: plume,
+      halfW: halfW, hull: hull, wing: wing, fin: fin, canopy: canopy,
       nacelle: new THREE.CylinderGeometry(0.078, 0.092, 0.07, 12, 1, true).rotateX(Math.PI / 2),
       disc: new THREE.CircleGeometry(0.072, 20),
       win: new THREE.BoxGeometry(0.006, 0.02, 0.042),
@@ -285,30 +286,11 @@
       canM: new THREE.MeshStandardMaterial({ color: 0x1a2b44, emissive: 0x9cc3ff, emissiveIntensity: 0.28, metalness: 0.6, roughness: 0.12, flatShading: true }),
       winM: new THREE.MeshBasicMaterial({ color: 0xc4dbff }),
       nacM: new THREE.MeshStandardMaterial({ color: 0x1a202c, metalness: 0.6, roughness: 0.35, flatShading: true, side: THREE.DoubleSide }),
-      hotM: new THREE.MeshBasicMaterial({ color: 0xfff0d6 }),
+      throatM: new THREE.MeshBasicMaterial({ color: 0x07090d }),
       stripeM: new THREE.LineBasicMaterial({ color: 0x9cc3ff, transparent: true, opacity: 0.9 }),
-      glow: glow("rgba(255,236,200,1)", "rgba(255,182,92,.55)"),
       navG: glow("rgba(255,255,255,1)", "rgba(255,255,255,.35)", 0.18)
     };
     return SHIPK;
-  }
-  function plumeMat(k, inner) {
-    return new THREE.ShaderMaterial({
-      uniforms: { k: { value: k }, flick: { value: 1 }, inner: { value: inner ? 1 : 0 } },
-      vertexShader: VS_HEAD +
-        "varying float vA; varying vec3 vN; varying vec3 vV;\n" +
-        "void main(){ vA = uv.y; vN = normalize(normalMatrix * normal); vec4 mv = modelViewMatrix * vec4(position, 1.0); vV = normalize(-mv.xyz);\n" +
-        " gl_Position = projectionMatrix * mv;\n#include <logdepthbuf_vertex>\n}",
-      fragmentShader: FS_HEAD +
-        "uniform float k; uniform float flick; uniform float inner; varying float vA; varying vec3 vN; varying vec3 vV;\n" +
-        "void main(){\n#include <logdepthbuf_fragment>\n" +
-        " float along = 1.0 - vA; float edge = pow(abs(dot(normalize(vN), normalize(vV))), 1.3);\n" +
-        " vec3 hot = vec3(1.0, 0.96, 0.88), warm = vec3(1.0, 0.62, 0.26), cool = vec3(0.62, 0.78, 1.0);\n" +
-        " vec3 c = mix(warm, hot, smoothstep(0.35, 0.95, along)); c = mix(c, cool, inner * 0.35 * (1.0 - along));\n" +
-        " float a = pow(along, 1.7) * edge * k * flick;\n" +
-        " gl_FragColor = vec4(c * a, 1.0); }",
-      side: THREE.DoubleSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false
-    });
   }
   function decalTex(text) {
     var c = document.createElement("canvas"); c.width = 512; c.height = 128;
@@ -338,18 +320,13 @@
     });
     var fin = new THREE.Mesh(K.fin, K.wingM); fin.position.set(0, 0.06, 0); g.add(fin);
     var nac = new THREE.Mesh(K.nacelle, K.nacM); nac.position.z = -0.52; g.add(nac);
-    var disc = new THREE.Mesh(K.disc, K.hotM); disc.position.z = -0.53; disc.rotation.y = Math.PI; g.add(disc);
-    // plume: outer warm sheath and a hot core; length set per frame in update()
-    var pl = new THREE.Mesh(K.plume, plumeMat(1.0, false)); pl.scale.set(0.085, 0.085, 0.55); pl.position.z = -0.54; g.add(pl);
-    var core = new THREE.Mesh(K.plume, plumeMat(1.6, true)); core.scale.set(0.045, 0.045, 0.3); core.position.z = -0.54; g.add(core);
-    var gl = additiveSprite(K.glow); gl.position.z = -0.6; gl.scale.setScalar(0.42); g.add(gl);
+    var throat = new THREE.Mesh(K.disc, K.throatM); throat.position.z = -0.53; throat.rotation.y = Math.PI; g.add(throat);
     // nav lights at the wingtips: red port (+x), green starboard (-x), white beacon on the fin
-    function nav(x, y, z, col) {
+    function nav(x, y, z, col, size, opacity) {
       var d = new THREE.Mesh(K.dot, new THREE.MeshBasicMaterial({ color: col })); d.position.set(x, y, z); g.add(d);
-      var s = additiveSprite(K.navG, col); s.position.copy(d.position); s.scale.setScalar(0.11); g.add(s);
-      return { d: d, s: s };
+      var s = additiveSprite(K.navG, col); s.position.copy(d.position); s.scale.setScalar(size); s.material.opacity = opacity; g.add(s);
     }
-    var red = nav(0.475, -0.002, -0.27, 0xff5a4a), grn = nav(-0.475, -0.002, -0.27, 0x55f08a), bcn = nav(0, 0.235, -0.44, 0xffffff);
+    nav(0.475, -0.002, -0.27, 0xff5a4a, 0.13, 1); nav(-0.475, -0.002, -0.27, 0x55f08a, 0.13, 1); nav(0, 0.235, -0.44, 0xffffff, 0.11, 0.9);
     if (opt.callsign) {
       var dt = decalTex(String(opt.callsign).toUpperCase());
       var dm = new THREE.MeshStandardMaterial({ map: dt, transparent: true, metalness: 0.2, roughness: 0.6, depthWrite: false });
@@ -357,22 +334,6 @@
         var d = new THREE.Mesh(K.decal, dm); d.position.set(s * 0.27, 0.0, -0.21); d.rotation.z = s * 0.06; g.add(d); // on the wing top, with its dihedral
       });
     }
-    g.userData.glow = gl;
-    g.userData.plume = [pl, core];
-    // t in ms. Flying: plume on and flickering; parked: plume off, glow low. Nav lights double-flash unless reduced.
-    g.userData.update = function (t, flying, reduced) {
-      var fl = reduced ? 1 : 0.9 + 0.1 * Math.sin(t / 37) * Math.sin(t / 91 + 1.3);
-      pl.visible = core.visible = !!flying;
-      pl.material.uniforms.flick.value = fl; core.material.uniforms.flick.value = fl;
-      pl.scale.z = 0.55 * (reduced ? 1 : 0.95 + 0.08 * Math.sin(t / 53));
-      gl.material.opacity = flying ? 1 : 0.2;
-      gl.scale.setScalar(flying ? 0.42 + (reduced ? 0 : 0.05 * Math.sin(t / 45)) : 0.25);
-      var ph = (t % 1400) / 1400, on = reduced || ph < 0.07 || (ph > 0.14 && ph < 0.21);
-      red.s.material.opacity = grn.s.material.opacity = on ? 1 : 0.22;
-      red.s.scale.setScalar(on ? 0.13 : 0.08); grn.s.scale.setScalar(on ? 0.13 : 0.08);
-      var bon = reduced || ((t + 700) % 1400) / 1400 < 0.05;
-      bcn.s.material.opacity = bon ? 0.9 : 0.0;
-    };
     return g;
   }
 
