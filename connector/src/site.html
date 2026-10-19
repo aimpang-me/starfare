@@ -1614,6 +1614,7 @@ function bindPilot(host) {
     down = null;
   }
   host.addEventListener("pointerup", up); host.addEventListener("pointercancel", up);
+  host.addEventListener("contextmenu", function (e) { e.preventDefault(); });
   host.addEventListener("wheel", function (e) { e.preventDefault(); pilotDolly(Math.exp(clamp(e.deltaY, -240, 240) * 0.0015)); }, { passive: false });
 }
 // Click a ship to ride along or a body to jump to it; the nearest within 22 px wins.
