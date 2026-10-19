@@ -151,6 +151,15 @@ h1,h2,h3{margin:0;font-weight:600}
 .popm label{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12.5px;cursor:pointer}
 .popm input{accent-color:var(--cy);width:15px;height:15px}
 .popm .caps{margin-bottom:4px}
+.popm{max-height:min(70vh,520px);overflow-y:auto}
+.lay-size{display:flex;align-items:center;gap:8px;padding:3px 0 2px 23px;font-size:11px;color:var(--ink-3)}
+.lay-size .seg button{padding:4px 7px}
+.popm label.sub{padding-left:23px;font-size:12px;color:var(--ink-2)}
+.layact{display:flex;gap:6px;margin-top:10px}
+.layact kbd{font:600 9.5px var(--mono);opacity:.7;margin-left:4px}
+.layact .btn[aria-pressed="true"]{background:rgba(92,200,255,.16);color:var(--cy)}
+.mapbox.no-hud #hud{display:none}
+.mc-home .c-map:has(.popm:not([hidden])){z-index:9}
 .ctxm{position:fixed;z-index:30;min-width:200px;padding:6px;background:#081224;border:1px solid var(--line-2);border-radius:4px;box-shadow:0 18px 40px rgba(0,0,0,.5)}
 .ctxm .caps{padding:4px 10px 6px}
 .ctxm button,.ctxm a{display:block;width:100%;box-sizing:border-box;text-align:left;padding:7px 10px;font:inherit;font-size:12.5px;color:inherit;background:none;border:0;border-radius:3px;cursor:pointer;text-decoration:none}
@@ -161,7 +170,7 @@ h1,h2,h3{margin:0;font-weight:600}
 .gl-host{position:absolute;inset:0;touch-action:none;cursor:grab}
 .gl-host:active{cursor:grabbing}
 .gl-host canvas{display:block;width:100%;height:100%}
-.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;--ls:1}
 .lbl{position:absolute;left:0;top:0;white-space:nowrap;font:600 10.5px/1 Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);padding:3px 5px 3px 10px;border:0;background:none;visibility:hidden;will-change:transform}
 .lbl::before{content:"";position:absolute;left:0;top:50%;width:6px;height:1px;background:currentColor;opacity:.6}
 button.lbl{pointer-events:auto;cursor:pointer}
@@ -472,11 +481,20 @@ p{text-wrap:pretty}
           <label><input type="checkbox" data-filt="pk" checked> Starseekers parked</label>
         </div></div>
       <div class="pop"><button class="btn small" type="button" id="lBtn" aria-expanded="false" aria-controls="lMenu">Layers</button>
-        <div class="popm" id="lMenu" hidden><div class="caps">Layers</div>
-          <label><input type="checkbox" data-lay="orb" checked> Orbits</label>
+        <div class="popm" id="lMenu" hidden><div class="caps">Names</div>
+          <label><input type="checkbox" data-lay="pln" checked> Planet names</label>
+          <label><input type="checkbox" data-lay="plc" checked> Moon, station &amp; place names</label>
+          <label><input type="checkbox" data-lay="shp" checked> Starseeker names</label>
+          <div class="lay-size"><span>Size</span><div class="seg" id="sizeSeg" role="group" aria-label="Name size"><button type="button" data-size="s" aria-pressed="false">Small</button><button type="button" data-size="m" aria-pressed="true">Medium</button><button type="button" data-size="l" aria-pressed="false">Large</button></div></div>
+          <div class="caps" style="margin-top:8px">Lines</div>
+          <label><input type="checkbox" data-lay="orb" checked> Orbit lines</label>
+          <label><input type="checkbox" data-lay="moon" checked> Moon orbit rings</label>
+          <label><input type="checkbox" data-lay="rte" checked> Path lines (flights &amp; bookings)</label>
+          <label class="sub"><input type="checkbox" data-lay="rsel" id="rsel"> Only the selected one</label>
           <label><input type="checkbox" data-lay="ring"> Distance grid</label>
-          <label><input type="checkbox" data-lay="lbl" checked> Labels</label>
-          <label><input type="checkbox" data-lay="moon" checked> Moon orbits</label>
+          <div class="caps" style="margin-top:8px">Screen</div>
+          <label><input type="checkbox" data-lay="hud" checked> Time readout</label>
+          <div class="layact"><button type="button" class="btn small" id="cleanView" aria-pressed="false" title="Hide every name and line (H)">Clean view <kbd>H</kbd></button><button type="button" class="btn small" id="layReset">Reset</button></div>
           <div class="caps" style="margin-top:8px">Arrival framing</div>
           <div class="seg" id="frameSeg" role="group" aria-label="How far the camera stands off a body when it jumps there">
             <button type="button" data-frame="4" aria-pressed="false">Close</button><button type="button" data-frame="8" aria-pressed="true">Medium</button><button type="button" data-frame="16" aria-pressed="false">Far</button>
@@ -655,6 +673,7 @@ p{text-wrap:pretty}
 <script src="/assets/planet-effects.js"></script>
 <script src="/assets/flight-view.js"></script>
 <script src="/assets/sol-lines.js"></script>
+<script src="/assets/sol-layers.js"></script>
 <script src="/assets/vendor/gsap-3.15.0.min.js"></script>
 <script src="/assets/mission-control.js"></script>
 <script>
@@ -959,7 +978,7 @@ function addFlightObjs(F) {
   scene.add(F.halo); scene.add(F.ship);
   F.lbl = LBL.add({ html: esc(F.call), cls: "k-sample", hit: function () { var i = FL.indexOf(F); return i >= 0 ? { i: i } : null; }, pri: 90, click: function () { var i = FL.indexOf(F); if (i >= 0) select({ t: "f", i: i }); },
     dblclick: function () { var i = FL.indexOf(F); if (i >= 0) { select({ t: "f", i: i }); setFollow(true); } },
-    pos: function () { return F.sc ? F.sc.v : null; }, hide: function () { return !FILT.fl || PIL.lock === F || (FOLLOW && SEL.t === "f" && FL[SEL.i] !== F); } });
+    pos: function () { return F.sc ? F.sc.v : null; }, hide: function () { return !LAY.shp || !FILT.fl || PIL.lock === F || (FOLLOW && SEL.t === "f" && FL[SEL.i] !== F); } });
 }
 function removeFlightObjs(F) {
   if (!GL || !F.ship) return;
@@ -1396,6 +1415,8 @@ function LabelSet(root) {
       items.push(o); items.sort(function (a, b) { return b.pri - a.pri; }); return o;
     },
     remove: function (o) { var k = items.indexOf(o); if (k >= 0) items.splice(k, 1); o.el.remove(); },
+    // A new font size changes every label's width, so each is measured again on the next frame.
+    remeasure: function () { items.forEach(function (o) { o.w = 0; }); },
     update: function (cam, W, H) {
       pv = pv || V(); var g = gut(), R = [], d = "", i, o;
       for (i = 0; i < items.length; i++) {
@@ -1684,6 +1705,7 @@ function bindKeys() {
     var k = e.key.toLowerCase();
     if (MOVE[k]) { e.preventDefault(); KEYS[k] = 1; glStart(); }
     else if (k === "[" || k === "]") { PIL.mul = clamp(PIL.mul * (k === "]" ? 1.4 : 1 / 1.4), 0.02, 50); mapHud(); glStart(); }
+    else if (k === "h") { toggleClean(); }
     else if (k === "c" && PIL.lock) { PIL.view = PIL.view === "chase" ? "cockpit" : "chase"; PIL.cyaw = PIL.cpitch = 0; mapHud(); glStart(); }
   });
   document.addEventListener("keyup", function (e) { delete KEYS[e.key.toLowerCase()]; KEYS.shift = e.shiftKey ? 1 : 0; });
@@ -1799,8 +1821,8 @@ function stopSprite(id) {
 }
 function labels() {
   LBL = LabelSet($("#labels"));
-  var noLbl = function () { return !LAY.lbl; };
-  LBL.add({ html: "Sun", cls: "k-planet", hit: function () { return { id: "sun" }; }, pri: 60, radial: true, gap: function () { return Math.max(SUN.scale.x / pxAt(V0), 7) + 12; }, pos: function () { return V0; }, hide: noLbl, click: function () { focusBody("sol"); } });
+  var noPln = function () { return !LAY.pln; };
+  LBL.add({ html: "Sun", cls: "k-planet", hit: function () { return { id: "sun" }; }, pri: 60, radial: true, gap: function () { return Math.max(SUN.scale.x / pxAt(V0), 7) + 12; }, pos: function () { return V0; }, hide: noPln, click: function () { focusBody("sol"); } });
   RINGS.forEach(function (r) {
     var a = -0.62, p = V(Math.cos(a) * r, 0, Math.sin(a) * r);
     LBL.add({ html: (r < 1 ? r.toFixed(1) : String(r)) + " AU", cls: "k-ring", pri: 4, dot: false, pos: function () { return p; }, hide: function () { return !LAY.ring || GRIDF < .5; } });
@@ -1809,12 +1831,12 @@ function labels() {
     var pl = p.kind === "planet", sm = p.kind === "small", b = BID[p.id];
     LBL.add({ html: esc(SF.name(p.id)), cls: pl ? "k-planet" : "k-place", hit: function () { return BID[p.id] ? { id: p.id } : null; }, radial: pl, gap: pl ? function () { return Math.max(b.obj.scale.x / pxAt(b.obj.position), 4.5) + 12; } : 8, pri: pl ? 50 : sm ? 24 : p.kind === "moon" ? 18 : 14,
       pos: function () { return marker(p.id, MAPJD); }, click: function () { jumpToPlace(p.id); },
-      hide: function () { return !LAY.lbl || !b.obj.visible || (!pl && !sm && sepPx(p.id) <= 10); } });
+      hide: function () { return !(pl ? LAY.pln : LAY.plc) || !b.obj.visible || (!pl && !sm && sepPx(p.id) <= 10); } });
   });
   SF.SITE.fleet.forEach(function (c) {
     LBL.add({ html: esc(c.name), cls: "k-fleet", pri: 34,
       pos: function () { var L = LIVE.filter(function (x) { return x.car === c.car; })[0]; return L ? marker(L.at, MAPJD) : null; },
-      hide: function () { var L = LIVE.filter(function (x) { return x.car === c.car; })[0]; return !FILT.pk || FOLLOW || !L || (SF.place(L.at).parent !== "sun" && sepPx(L.at) <= 10); } });
+      hide: function () { var L = LIVE.filter(function (x) { return x.car === c.car; })[0]; return !LAY.shp || !FILT.pk || FOLLOW || !L || (SF.place(L.at).parent !== "sun" && sepPx(L.at) <= 10); } });
   });
   LBL.add({ html: "Selected booking", cls: "k-hail", pri: 40,
     pos: function () { var h = SEL.t === "b" && hailOf(SEL.id); return h ? marker(h.from.id, MAPJD) : null; },
@@ -1876,9 +1898,9 @@ function draw(dt, t) {
   SolLines.zoom(pxAt(PIL.lock && PIL.lock.sc ? PIL.lock.sc.v : PIL.anchor ? anchorPos(PIL.anchor) : V0));
   FL.forEach(function (F, j) {
     var on = FILT.fl && !(rep && SEL.i !== j), sel = SEL.t === "f" && SEL.i === j, lock = PIL.lock === F;
-    var g = syncRoute(F, 0x5cc8ff); g.visible = on;
+    var g = syncRoute(F, 0x5cc8ff); g.visible = on && SolLayers.showPath(LAY, sel);
     var v = F.sc.v;
-    if (on) aimRoute(g, MAPJD, F.jd, sel ? 0.6 : 0, sel ? 1 : 0.55, sel ? 0 : SolLines.TRAIL_PX * pxAt(v));
+    if (g.visible) aimRoute(g, MAPJD, F.jd, sel ? 0.6 : 0, sel ? 1 : 0.55, sel ? 0 : SolLines.TRAIL_PX * pxAt(v));
     F.ship.visible = on && !(lock && PIL.view === "cockpit"); F.halo.visible = on && !lock;
     if (!on) return;
     F.ship.position.copy(v).sub(EYE); F.ship.scale.setScalar(lock ? SHIP_D / 6 : Math.max(SHIP_D / 6, pxAt(v) * (sel ? 38 : 30)));
@@ -1895,7 +1917,7 @@ function draw(dt, t) {
   });
   Object.keys(BK).forEach(function (id) {
     var B = BK[id], g = syncRoute(B, 0xffb65c); if (!g) return;
-    g.visible = FILT.bk && !FOLLOW;
+    g.visible = FILT.bk && !FOLLOW && SolLayers.showPath(LAY, SEL.t === "b" && SEL.id === id);
     if (g.visible) aimRoute(g, MAPJD, -1e9, SEL.t === "b" && SEL.id === id ? 0.95 : 0.32, 0);
   });
   var need = {}, rp = SEL.t === "f" ? FL[SEL.i] && FL[SEL.i].rp : SEL.t === "b" ? BK[SEL.id] && BK[SEL.id].rp : null;
@@ -1950,7 +1972,24 @@ function mapHud() {
 var SEL = { t: "n" }, FOLLOW = false, INFO_OPEN = false;
 var INFO_MEDIA = matchMedia("(max-width:760px)");
 INFO_MEDIA.addEventListener("change", syncInfoDisclosure);
-var FILT = { fl: true, bk: true, pk: true }, LAY = { orb: true, ring: false, lbl: true, moon: true };
+var FILT = { fl: true, bk: true, pk: true }, LAY = SolLayers.normalize(store("sf-layers")), LAY_BEFORE_CLEAN = null;
+// Saves the layer switches, mirrors them into the menu and hides the time readout when asked.
+function syncLayers() {
+  store("sf-layers", LAY);
+  $$("[data-lay]").forEach(function (c) { c.checked = !!LAY[c.dataset.lay]; });
+  $$("[data-size]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.size === LAY.size)); });
+  $("#rsel").disabled = !LAY.rte;
+  $("#mapbox").classList.toggle("no-hud", !LAY.hud);
+  $("#cleanView").setAttribute("aria-pressed", String(SolLayers.isClean(LAY)));
+  var ls = SolLayers.SIZES[LAY.size], box = $("#labels");
+  if (box.style.getPropertyValue("--ls") !== String(ls)) { box.style.setProperty("--ls", ls); if (LBL) LBL.remeasure(); }
+}
+// Clean view hides every name and line at once; pressing it again brings back what was showing.
+function toggleClean() {
+  var r = SolLayers.toggleClean(LAY, LAY_BEFORE_CLEAN);
+  Object.assign(LAY, r.state); LAY_BEFORE_CLEAN = r.before;
+  syncLayers(); glStart();
+}
 function select(s) {
   if (s.t === "f" && !FL[s.i]) return;
   var same = s.t === SEL.t && (s.t === "f" ? s.i === SEL.i : s.id === SEL.id);
@@ -2420,7 +2459,11 @@ function start() {
       glStart();
     });
   });
-  $$("[data-lay]").forEach(function (c) { c.addEventListener("change", function () { LAY[c.dataset.lay] = c.checked; glStart(); }); });
+  $$("[data-lay]").forEach(function (c) { c.addEventListener("change", function () { LAY[c.dataset.lay] = c.checked; LAY_BEFORE_CLEAN = null; syncLayers(); glStart(); }); });
+  $$("[data-size]").forEach(function (b) { b.addEventListener("click", function () { LAY.size = b.dataset.size; syncLayers(); glStart(); }); });
+  $("#layReset").addEventListener("click", function () { Object.assign(LAY, SolLayers.DEFAULTS); LAY_BEFORE_CLEAN = null; syncLayers(); glStart(); });
+  $("#cleanView").addEventListener("click", toggleClean);
+  syncLayers();
   $("#connectBtn").addEventListener("click", openIntro);
   $("#askConnect").addEventListener("click", openIntro);
   $("#askCopy").addEventListener("click", function () { copyText($("#askQ").value, $("#askQ"), $("#askMsg")); });
