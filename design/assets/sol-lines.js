@@ -9,7 +9,7 @@
   'use strict';
   var TAU = Math.PI * 2;
   // An orbit is at full brightness just behind its body and at AHEAD of that just in front of it.
-  var AHEAD = 0.4, GAP_IN = 2, GAP_OUT = 10, DASH_PX = 12, MARKER_PX = 9, MAX_HOLES = 48;
+  var AHEAD = 0.4, GAP_IN = 2, GAP_OUT = 10, DASH_PX = 12, MARKER_PX = 9, HALO_PX = 22, MAX_HOLES = 48;
   // The line budget by zoom: each kind of line fades in over a range of one measure of the view. The distance grid
   // fades out as the camera closes on one system (camera distance in map units; the map shows one system from 35 in).
   // A moon ring fades in as it opens out round its planet (ring radius in CSS px). A flight that is not selected
@@ -274,7 +274,21 @@
     return new THREE.Points(g, new THREE.PointsMaterial({ color: color, size: MARKER_PX, sizeAttenuation: false, map: DOT, transparent: true, depthWrite: false }));
   }
 
+  // The outer ring a selected or hovered station gains: a single thin circle HALO_PX CSS px across at every zoom.
+  var HALO = null;
+  function halo(color) {
+    if (!HALO) {
+      var c = document.createElement('canvas'), x = c.getContext('2d'), k = 64 / HALO_PX;
+      c.width = c.height = 64; x.strokeStyle = '#fff'; x.lineWidth = 1.25 * k;
+      x.beginPath(); x.arc(32, 32, 32 - 1.25 * k, 0, TAU); x.stroke();
+      HALO = new THREE.CanvasTexture(c);
+    }
+    var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0], 3));
+    var o = new THREE.Points(g, new THREE.PointsMaterial({ color: color, size: HALO_PX, sizeAttenuation: false, map: HALO, transparent: true, depthWrite: false, depthTest: false }));
+    o.renderOrder = 6; o.visible = false; return o;
+  }
+
   return { elements: elements, conicAt: conicAt, osculate: osculate, crowd: crowd, conic: conic, aim: aim, axes: axes, STYLE: STYLE, AHEAD: AHEAD, TRAIL_PX: TRAIL_PX, trail: trail, gap: gap, dash: dash,
-    budget: budget, along: along, tails: tails, line: line, lines: lines, setPoints: setPoints, leg: leg, follow: follow, setHoles: setHoles, shared: shared, marker: marker,
+    budget: budget, along: along, tails: tails, line: line, lines: lines, setPoints: setPoints, leg: leg, follow: follow, setHoles: setHoles, shared: shared, marker: marker, halo: halo,
     resize: resize, zoom: zoom };
 });

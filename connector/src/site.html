@@ -1421,6 +1421,7 @@ function LabelSet(root) {
       el.className = "lbl " + (o.cls || ""); el.innerHTML = o.html; el.hit = o.hit;
       if (o.click) { el.type = "button"; el.addEventListener("click", o.click); }
       if (o.dblclick) el.addEventListener("dblclick", o.dblclick);
+      if (o.hover) { el.addEventListener("pointerenter", function () { o.hover(true); }); el.addEventListener("pointerleave", function () { o.hover(false); }); }
       root.appendChild(el); o.el = el; o.w = 0; o.on = false; o.slot = 0;
       items.push(o); items.sort(function (a, b) { return b.pri - a.pri; }); return o;
     },
@@ -1712,7 +1713,8 @@ function bindPilot(host) {
     glStart();
   });
   host.addEventListener("pointermove", function (e) {
-    var prev = ptrs[e.pointerId]; if (!prev) return;
+    var prev = ptrs[e.pointerId];
+    if (!prev) { if (e.pointerType === "mouse") { var hv = hitAt(e.clientX, e.clientY); setStn("hov", hv && hv.id || null); } return; }
     ptrs[e.pointerId] = [e.clientX, e.clientY];
     var ids = Object.keys(ptrs);
     if (ids.length === 2) {
@@ -1731,6 +1733,7 @@ function bindPilot(host) {
     down = null;
   }
   host.addEventListener("pointerup", up); host.addEventListener("pointercancel", up);
+  host.addEventListener("pointerleave", function () { setStn("hov", null); });
   // Labels sit above the canvas, so listen on the whole map and leave real controls alone.
   $("#mapbox").addEventListener("contextmenu", function (e) { if (RMB_DRAG) { RMB_DRAG = false; e.preventDefault(); return; } if (!e.target.closest("#labels") && e.target.closest("button,a,input,label,.popm,#ctxMenu")) return; e.preventDefault(); openCtx(e.clientX, e.clientY, e.target.closest("#labels .lbl")); });
   document.addEventListener("pointerdown", function (e) { if (!e.target.closest("#ctxMenu")) closeCtx(); });
@@ -1748,7 +1751,7 @@ function hitAt(cx, cy) {
     if (d < bd) { bd = d; best = hit; }
   }
   if (FILT.fl) FL.forEach(function (F, i) { if (F.ship && F.ship.visible) test(F.ship.position, { i: i }); });
-  BODIES.forEach(function (b) { if (b.obj.visible) test(PD.copy(b.obj.position).sub(EYE), { id: b.id }, b.obj.scale.x / pxAt(b.obj.position)); });
+  BODIES.forEach(function (b) { if (b.obj.visible) test(PD.copy(b.obj.position).sub(EYE), { id: b.id }, b.rKm ? b.obj.scale.x / pxAt(b.obj.position) : 0); });
   return best;
 }
 function pick(cx, cy) {
@@ -1817,18 +1820,18 @@ function focusBody(key, bodyOnly) {
   if (!GL) return;
   var pre = !bodyOnly && PRESET[key], T = pre ? presetTarget(key) : bodyTarget(key); if (!T) return;
   FOLLOW = false; select({ t: "n" });
-  pilotJump(T); markFocus(pre ? key : null, pre ? null : key);
+  setStn("sel", null); pilotJump(T); markFocus(pre ? key : null, pre ? null : key);
 }
 function jumpToPlace(id) {
   if (!GL) return;
   if (FOLLOW) { FOLLOW = false; renderInfo(); }
-  pilotJump(bodyTarget(id)); markFocus(null, id === "sun" ? "sol" : id);
+  setStn("sel", id); pilotJump(bodyTarget(id)); markFocus(null, id === "sun" ? "sol" : id);
 }
 function placeWhole() {
   var p = PRESET.sun;
   PIL.fly = PIL.lock = null; PIL.anchor = { b: BID.sun };
   PIL.off.copy(elAz(p.el, p.az)).multiplyScalar(p.d); PIL.pos.copy(PIL.off); EYE.copy(PIL.pos);
-  setLook(PT.copy(PIL.pos).negate()); markFocus("sun", null);
+  setLook(PT.copy(PIL.pos).negate()); setStn("sel", null); markFocus("sun", null);
 }
 function routePlaces(rp) {
   var out = [];
@@ -1898,6 +1901,7 @@ function buildScene(J0) {
   });
   BODIES.push(BID.sun = { id: "sun", kind: "sun", obj: SUN, rKm: 695700, min: 6 });
   PARK_R = glowPoints(16, 0x5cc8ff, 13); PARK_B = glowPoints(16, 0x7f8a99, 11); WORLD.add(PARK_R); WORLD.add(PARK_B);
+  ["sel", "hov"].forEach(function (k) { STN[k + "H"] = SolLines.halo(0xffffff); WORLD.add(STN[k + "H"]); });
   labels();
   FL.forEach(addFlightObjs);
 }
@@ -1906,6 +1910,16 @@ function relRadius(p) {
   var a = SF.E.placeState(p.id, LIVEJD), b = SF.E.placeState(p.parent, LIVEJD), mu = SF.place(p.parent).mu;
   var r = d3(a.r, b.r), v = d3(a.v, b.v), rm = Math.hypot(r[0], r[1], r[2]), v2 = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
   var sa = 1 / (2 / rm - v2 / mu); return sa > 0 ? TAU * Math.sqrt(sa * sa * sa / mu) / 86400 : 1;
+}
+// A station gains an outer ring when it is the place the camera jumped to (sel) or the pointer is over it (hov).
+var STN = { sel: null, hov: null };
+function setStn(k, id) { if (STN[k] !== id) { STN[k] = id; glStart(); } }
+function stationRing(k) {
+  var h = STN[k + "H"], b = STN[k] && BID[STN[k]];
+  if (!h) return;
+  h.visible = !!(b && b.kind === "station" && b.obj.visible);
+  if (!h.visible) return;
+  h.position.copy(b.obj.position); h.material.color.setHex(SF.place(b.id).real ? 0xdfe6ee : 0xffb65c); h.material.opacity = k === "sel" ? 1 : .55;
 }
 function stopSprite(id) {
   if (STOPS[id]) return STOPS[id];
@@ -1923,7 +1937,7 @@ function labels() {
   PLACES.forEach(function (p) {
     var pl = p.kind === "planet", sm = p.kind === "small", b = BID[p.id];
     LBL.add({ html: esc(SF.name(p.id)), cls: pl ? "k-planet" : "k-place", hit: function () { return BID[p.id] ? { id: p.id } : null; }, radial: pl, gap: pl ? function () { return Math.max(b.obj.scale.x / pxAt(b.obj.position), 4.5) + 12; } : 8, pri: pl ? 50 : sm ? 24 : p.kind === "moon" ? 18 : 14,
-      pos: function () { return marker(p.id, MAPJD); }, click: function () { jumpToPlace(p.id); },
+      pos: function () { return marker(p.id, MAPJD); }, click: function () { jumpToPlace(p.id); }, hover: function (on) { setStn("hov", on ? p.id : null); },
       hide: function () { return !(pl ? LAY.pln : LAY.plc) || !b.obj.visible || (!pl && !sm && sepPx(p.id) <= 10); } });
   });
   SF.SITE.fleet.forEach(function (c) {
@@ -1974,6 +1988,7 @@ function draw(dt, t) {
     b.obj.scale.setScalar(Math.max(b.rKm / AU, pxAt(v) * b.min));
     if (window.SolArt && SolArt.updatePlanet) SolArt.updatePlanet(b.obj, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: b.obj.scale.x / pxAt(v), quality: SolArt.quality().maps });
   }
+  stationRing("sel"); stationRing("hov");
   // A moon's ring draws with its moon, fading in as it opens out round the planet.
   MOR.forEach(function (m) {
     var b = BID[m.id], fade = SolLines.budget("moonRing", m.radius / pxAt(marker(m.par, MAPJD)));
