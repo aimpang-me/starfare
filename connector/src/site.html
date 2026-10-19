@@ -430,6 +430,7 @@ p{text-wrap:pretty}
 .btn:active,.chipb:active{transform:scale(.96)}
 @media (pointer:coarse){.btn,.btn.small,.chipb,.seg button,.tabs button{min-height:44px}}
 @media (pointer:coarse){.popm label{min-height:44px}}
+#mapSound svg{width:17px;height:17px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}#mapSound .w{display:none}#mapSound[aria-pressed=true] .w{display:inline}#mapSound[aria-pressed=true] .x{display:none}#mapSound[aria-pressed=true]{color:var(--ink)}
 </style>
 <link rel="stylesheet" href="/assets/mission-control.css">
 <body class="mc-home">
@@ -522,11 +523,12 @@ p{text-wrap:pretty}
           <li><span class="dt"></span>Ready <span class="dt b" style="margin-left:6px"></span>Busy</li>
         </ul>
         <p class="lgn">JPL positions at simulated sky dates. Orbit lines are two-body orbits at the sky date, simulated. Stored paths where available; straight route guides otherwise. True scale: real distances and sizes; bodies too small to see are drawn at a few pixels. Surface rotation and clouds are slowed for viewing.</p>
+        <p class="lgn">Sound is off until you turn it on with the speaker button. Space is silent, so every sound is stylized and simulated: a cabin bed in open space, hits on the hull where debris is (low Earth orbit, the geostationary belt, Saturn&rsquo;s rings, near small bodies, faintly in the asteroid belt), radio-style sonifications close to a planet or moon, and console beeps near a station. All of it is synthesized in the browser.</p>
         <p class="lgn cred" id="artCred" hidden></p>
         <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Ctrl down and Space up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Docks are placeholder art. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to ride along, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
       </div>
       <div class="mc-map-controls" role="group" aria-label="Map controls">
-        <button type="button" id="zoomIn" aria-label="Move closer">+</button><button type="button" id="zoomOut" aria-label="Move farther">−</button><button type="button" id="resetMap" aria-label="Whole system view">⊙</button><button type="button" id="mapHelp" class="mc-map-note" aria-expanded="false" aria-controls="legend">Map info</button>
+        <button type="button" id="zoomIn" aria-label="Move closer">+</button><button type="button" id="zoomOut" aria-label="Move farther">−</button><button type="button" id="resetMap" aria-label="Whole system view">⊙</button><button type="button" id="mapSound" aria-pressed="false" aria-label="Turn sound on" title="Sound off"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8h3l4-3.5v11L6 12H3z"/><path class="x" d="M13.5 8l4 4m0-4l-4 4"/><path class="w" d="M13 7.5a3.5 3.5 0 0 1 0 5M15.2 5.2a6.6 6.6 0 0 1 0 9.6"/></svg></button><button type="button" id="mapHelp" class="mc-map-note" aria-expanded="false" aria-controls="legend">Map info</button>
       </div>
       <div class="ov scale" id="scale">
         <div class="caps">Distance scale</div>
@@ -674,6 +676,7 @@ p{text-wrap:pretty}
 <script src="/assets/flight-view.js"></script>
 <script src="/assets/sol-lines.js"></script>
 <script src="/assets/sol-layers.js"></script>
+<script src="/assets/sol-audio.js"></script>
 <script src="/assets/vendor/gsap-3.15.0.min.js"></script>
 <script src="/assets/mission-control.js"></script>
 <script>
@@ -1962,6 +1965,32 @@ function frame(t) {
   try { draw(dt, t); } catch (e) { if (!frame.err) { frame.err = 1; console.error(e); } }
   if (MAP_PAUSED && !pilotMoving()) glStop();
 }
+// Sound (sol-audio.js): off until the visitor turns it on. Levels follow the camera, ten times a second while the map
+// draws, and it falls quiet when the tab or the map is out of view. Positions go over as ecliptic AU, z north.
+var SND = null, SND_T = 0;
+function soundScene() {
+  return { eye: [EYE.x, -EYE.z, EYE.y], bodies: BODIES.map(function (b) { var p = bodyPos(b); return { id: b.id, kind: b.kind, rKm: b.rKm, p: [p.x, -p.z, p.y] }; }) };
+}
+function soundSync() { if (SND) SND.pause(document.hidden || !MAPVIS); }
+function initSound() {
+  var btn = $("#mapSound"), ls = null;
+  try { ls = window.localStorage; } catch (e) { /* blocked site data */ }
+  if (!btn) return;
+  if (!window.SolAudio || !(SND = SolAudio.create()).supported) { SND = null; btn.hidden = true; return; }
+  function show(on) { btn.setAttribute("aria-pressed", String(on)); btn.setAttribute("aria-label", on ? "Turn sound off" : "Turn sound on"); btn.title = on ? "Sound on" : "Sound off"; }
+  function set(v) { SolAudio.save(ls, SND.setOn(v)); show(SND.on); if (SND.on) { SND.update(SolAudio.mix(soundScene())); soundSync(); } }
+  btn.addEventListener("click", function () { set(!SND.on); });
+  show(false);
+  if (!SolAudio.load(ls)) return;
+  // Left on last visit: browsers only start sound from a click or key press, so wait for the first one.
+  show(true);
+  var go = function (e) {
+    document.removeEventListener("pointerdown", go, true); document.removeEventListener("keydown", go, true);
+    if (e.target && e.target.closest && e.target.closest("#mapSound")) { show(false); return; } // its own click turns it on
+    if (!SND.on) set(true);
+  };
+  document.addEventListener("pointerdown", go, true); document.addEventListener("keydown", go, true);
+}
 function glStart() { if (GL && !raf && !document.hidden && MAPVIS) { last = performance.now(); raf = requestAnimationFrame(frame); } }
 function glStop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
 function draw(dt, t) {
@@ -1989,6 +2018,7 @@ function draw(dt, t) {
     if (window.SolArt && SolArt.updatePlanet) SolArt.updatePlanet(b.obj, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: b.obj.scale.x / pxAt(v), quality: SolArt.quality().maps });
   }
   stationRing("sel"); stationRing("hov");
+  if (SND && SND.on && t - SND_T > 100) { SND_T = t; SND.update(SolAudio.mix(soundScene())); }
   // A moon's ring draws with its moon, fading in as it opens out round the planet.
   MOR.forEach(function (m) {
     var b = BID[m.id], fade = SolLines.budget("moonRing", m.radius / pxAt(marker(m.par, MAPJD)));
@@ -2524,11 +2554,12 @@ function start() {
     bindPilot($("#glhost")); bindKeys();
     onResize();
     if (window.ResizeObserver) new ResizeObserver(onResize).observe($("#mapbox")); else addEventListener("resize", onResize);
-    if (window.IntersectionObserver) new IntersectionObserver(function (en) { MAPVIS = en[0].isIntersecting; if (MAPVIS) glStart(); else glStop(); }).observe($("#mapbox"));
-    document.addEventListener("visibilitychange", function () { if (PLANET_CLOCK) PLANET_CLOCK.sample(performance.now(), false); if (document.hidden) glStop(); else glStart(); });
+    if (window.IntersectionObserver) new IntersectionObserver(function (en) { MAPVIS = en[0].isIntersecting; soundSync(); if (MAPVIS) glStart(); else glStop(); }).observe($("#mapbox"));
+    document.addEventListener("visibilitychange", function () { if (PLANET_CLOCK) PLANET_CLOCK.sample(performance.now(), false); soundSync(); if (document.hidden) glStop(); else glStart(); });
     addEventListener("solart-texture-ready", glStart);
-    if (window.MutationObserver) new MutationObserver(function () { if (!$("#intro").hidden || !$("#logM").hidden) { MAPVIS = false; glStop(); } else { MAPVIS = true; glStart(); } }).observe(document.body, {subtree:true, attributes:true, attributeFilter:["hidden"]});
+    if (window.MutationObserver) new MutationObserver(function () { if (!$("#intro").hidden || !$("#logM").hidden) { MAPVIS = false; glStop(); } else { MAPVIS = true; glStart(); } soundSync(); }).observe(document.body, {subtree:true, attributes:true, attributeFilter:["hidden"]});
     placeWhole();
+    initSound();
     glStart();
   }
   loadLive();

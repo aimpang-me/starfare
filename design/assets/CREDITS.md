@@ -56,6 +56,19 @@ Mars has a thin warm limb; Venus uses its existing cloud-top map; Titan uses the
 
 Saturn reuses the existing alpha ring strip with analytic planet/ring shadows; no shadow-map asset is added. The Sun sharpens through the same 1K, 2K and 4K tiers as the planets and keeps its compact halo with subtle shader convection. Existing presentation tilt is retained. Slow appearance periods (180–720 seconds, with Venus/Uranus illustrated retrograde) are explicitly decorative, independent of ephemerides and replay timing; they are not scientific axial-orientation telemetry.
 
+## Audio (`sol-audio.js`)
+
+There are no audio files. Every map sound is synthesized in the browser with the Web Audio API from oscillators and generated noise, written for Starfare, so there is nothing to license or credit. No ElevenLabs credits and no samples were used.
+
+| Layer | What plays | Where | Based on |
+|---|---|---|---|
+| Space | Cabin bed: low hum, air handling, a rare console blip | Always, while sound is on; ducks near a body or station | Original. Space itself is silent |
+| Debris | Hits on the hull and fine dust hiss | Low Earth orbit (200 to 2,000 km), the geostationary belt, Saturn's main rings, near Bennu, Ceres and Phobos, faintly in the main asteroid belt | Where debris and dust are: [ESA Space Debris](https://www.esa.int/Space_Safety/Space_Debris), [NASA Saturn rings](https://science.nasa.gov/saturn/rings/), [NASA Bennu particle ejections](https://science.nasa.gov/missions/osiris-rex/) |
+| Planets and moons | One voice per body, fading in within 40 radii and full within 12 | The Sun, every planet, every moon in the engine, Ceres | Stylized after NASA's plasma-wave and radio sonifications: Earth's chorus and whistlers (Van Allen Probes), Jupiter's radio storms and Ganymede's flyby (Juno), Saturn's kilometric radiation (Cassini), Uranus (Voyager 2). Mars wind and Titan's haze nod to the Perseverance microphone and Huygens descent recordings. None of those recordings is used |
+| Stations | Mains hum, fans, console beep patterns, data blips, clanks | Within about 6,000 km of a station, full within 800 km | Original. The ISS and Tiangong get stylized sounds, not recordings |
+
+All of it is labelled on the map as stylized and simulated. Distances and positions come from the engine and the true-scale map camera.
+
 ## Original work
 
 The Starseeker ship model, its engine plume, nav lights and callsign decal, the Fresnel atmosphere rims, the bloom, vignette and grain settings, and the SVG icon sprite are all original. They were drawn in code in `sol-art.js` for Starfare. They are not modelled on any real vehicle, and Starfare is not affiliated with any real company.
