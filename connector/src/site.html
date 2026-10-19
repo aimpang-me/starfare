@@ -590,7 +590,7 @@ p{text-wrap:pretty}
   </aside>
 </main>
 <div class="mc-strip">
-  <div class="mc-sky"><button class="btn small" id="pauseMap" type="button" aria-pressed="false">Pause map</button><span id="mcClock"></span><span class="mc-season" id="mcSeason"></span><select class="btn small" id="mapRate" aria-label="Map speed"><option value="0.1">Calm 1 s = 0.1 day</option><option value="0.25">Slow 1 s = 0.25 day</option><option value="1">Live 1 s = 1 day</option></select><span class="mc-rate" id="mcRate">Map speed only; the game clock is unchanged · Simulated</span></div>
+  <div class="mc-sky"><button class="btn small" id="pauseMap" type="button" aria-pressed="false">Pause map</button><span id="mcClock"></span><span class="mc-season" id="mcSeason"></span><select class="btn small" id="mapRate" aria-label="Map speed"><option value="0.1">Calm 1 s = 0.1 day</option><option value="0.25">Slow 1 s = 0.25 day</option><option value="1" selected>Live 1 s = 1 day</option></select><span class="mc-rate" id="mcRate">1 s = 1 sky day · Simulated</span></div>
   <button class="btn small mc-operations-toggle" type="button" id="operationsMenu" aria-expanded="false" aria-controls="opsNav">Operations</button>
   <nav aria-label="Operations" id="opsNav"><button class="btn small" type="button" data-drawer="fleet" aria-expanded="false" aria-controls="opsDrawer">Fleet</button><button class="btn small" type="button" data-drawer="tools" aria-expanded="false" aria-controls="opsDrawer">Agent tools</button><button class="btn small" type="button" data-drawer="alerts" aria-expanded="false" aria-controls="opsDrawer">Alerts</button><button class="btn small" type="button" data-drawer="reports" aria-expanded="false" aria-controls="opsDrawer">Reports</button><button class="btn small" type="button" id="hidePanels" aria-pressed="false">Hide panels</button></nav>
 </div>
@@ -1138,8 +1138,9 @@ function parName(car) { var f = SF.SITE.fleet.filter(function (x) { return x.car
    THE 3D MAP (three.js r128): tilted ecliptic, log-compressed radius, true bearings and dates
    ========================================================= */
 var GL = null, scene, cam, GW = 1, GH = 1, MAPJD = 0, LIVEJD = 0, LIVEMAP = true;
-var MAP_PAUSED = reduced, MAP_TIME = Date.now(), MAP_RATE = 0.1, MAP_REAL = Date.now(), MAP_BASE = MAP_REAL;
+var MAP_PAUSED = reduced, MAP_TIME = Date.now(), MAP_RATE = 1, MAP_REAL = Date.now(), MAP_BASE = MAP_REAL;
 // The map plays the sky at MAP_RATE sky days per real second (the sky clock itself runs at 1). Ships, planets and moons all read this one clock, so they stay in step with each other.
+// It starts at 1 so the map shows the live sky; Calm and Slow fall behind it, and the readout then says map time instead of live sky.
 function mapAnchor(base) { MAP_REAL = Date.now(); MAP_BASE = base; }
 var PLANET_CLOCK = window.StarfarePlanetEffects ? StarfarePlanetEffects.createClock() : null;
 function mapWallNow() { return MAP_PAUSED ? MAP_TIME : MAP_BASE + (Date.now() - MAP_REAL) * MAP_RATE; }
@@ -1149,6 +1150,8 @@ function setMapRate(r) {
   $("#mcRate").textContent = r === 1 ? "1 s = 1 sky day \u00B7 Simulated" : "Map speed only; the game clock is unchanged \u00B7 Simulated";
   glStart(); slowTick(Date.now());
 }
+function mapLive() { return MAP_RATE === 1 && !MAP_PAUSED; }
+function mapTimeWords(jd) { return MAP_PAUSED ? "Map paused &middot; " + iso(jd) + " UTC" : MAP_RATE !== 1 ? "Map time &middot; slowed &middot; " + iso(jd) + " UTC" : "Live sky"; }
 function toggleMapPause() {
   if (PLANET_CLOCK) PLANET_CLOCK.sample(performance.now(), false);
   if (!MAP_PAUSED) MAP_TIME = mapWallNow(); else mapAnchor(MAP_RATE === 1 ? Date.now() : MAP_TIME);
@@ -1795,9 +1798,15 @@ function openCtx(cx, cy, lbl) {
 function bindKeys() {
   function typing(t) { return t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable); }
   function blocked() { return !$("#intro").hidden || !$("#logM").hidden; }
+  // Ctrl flies down only while the map has the pointer or focus, or a flight key is already held, so Ctrl+A, Ctrl+S
+  // and Ctrl+D keep their browser meaning everywhere else on the page.
+  var overMap = false, box = $("#mapbox");
+  box.addEventListener("pointerenter", function () { overMap = true; });
+  box.addEventListener("pointerleave", function () { overMap = false; });
+  function mapActive() { return overMap || box.contains(document.activeElement) || Object.keys(KEYS).some(function (k) { return MOVE[k]; }); }
   document.addEventListener("keydown", function (e) {
     var k = e.key.toLowerCase();
-    if (e.metaKey || e.altKey || typing(e.target) || blocked() || (e.ctrlKey && !MOVE[k])) return;
+    if (e.metaKey || e.altKey || typing(e.target) || blocked() || (e.ctrlKey && (!MOVE[k] || !mapActive()))) return;
     if (k === " " && e.target.closest && e.target.closest("button,a,summary,[role=button]")) return;
     KEYS.shift = e.shiftKey ? 1 : 0;
     if (MOVE[k]) { e.preventDefault(); KEYS[k] = 1; glStart(); }
@@ -2076,8 +2085,10 @@ function mapHud() {
   var rep = FOLLOW && SEL.t === "f" && !!FL[SEL.i], F = rep ? FL[SEL.i] : null, L = PIL.lock, A = PIL.anchor;
   var where = L ? esc(L.call) + " &middot; " + PIL.view + " view (C switches)" : PIL.fly ? "Jumping&hellip;" : A && A.b && A.b.kind !== "sun" ? "Near " + esc(SF.name(A.b.id)) + " &middot; " + fmtKm((bodyPos(A.b).distanceTo(PIL.pos) - A.b.rKm / AU) * AU) + " above the surface" : A && A.b && PIL.pos.length() < 0.5 ? "Near the Sun &middot; " + fmtKm(Math.max(0, PIL.pos.length() * AU - 695700)) + " above the surface" : "Interplanetary &middot; " + fmtKm(PIL.pos.length() * AU) + " from the Sun";
   var kms = PIL.speed * AU, speed = L ? "" : "<br>Camera speed " + (kms >= 1e5 ? SF.fmt(kms / 299792.458, kms < 3e6 ? 2 : 0) + " &times; light speed" : SF.fmt(kms, kms < 10 ? 2 : 0) + " km/s") + " &middot; throttle &times;" + SF.fmt(PIL.mul, PIL.mul < 1 ? 2 : 1);
-  $("#hud").innerHTML = '<span class="caps">' + (rep ? "Map time &middot; following " + esc(F.call) + "</span><br><b>" + iso(MAPJD) + "</b> UTC" : (MAP_PAUSED ? "Map paused &middot; " + iso(MAPJD) + " UTC" : "Live sky") + "</span>")
-    + "<br><span>True scale &middot; real distances and sizes &middot; simulated</span><br>" + where + speed;
+  // Phones show the scale note on the first line and drop the keyboard-only speed line, so the readout stays short above the planet dock.
+  var hm = '<span class="hud-m"> &middot; true scale &middot; simulated</span></span>';
+  $("#hud").innerHTML = '<span class="caps">' + (rep ? "Map time &middot; following " + esc(F.call) + hm + "<br><b>" + iso(MAPJD) + "</b> UTC" : mapTimeWords(MAPJD) + hm)
+    + '<span class="hud-scale"><br>True scale &middot; real distances and sizes &middot; simulated</span><br>' + where + (speed && '<span class="hud-speed">' + speed + "</span>");
   $("#liveBtn").hidden = !rep;
   // The bar holds at the distance of what the camera rides with; nearer things look larger in perspective.
   var ap = L && L.sc ? L.sc.v : A ? anchorPos(A) : V0, name = L ? L.call : A && A.F ? A.F.call : A && A.b.kind !== "sun" ? SF.name(A.b.id) : "the Sun";
@@ -2478,7 +2489,7 @@ function uiTick() {
 function slowTick(now) {
   var s = SF.sky(now), m = SF.sky(mapWallNow());
   $("#clk").textContent = iso(m.jd) + " UTC";
-  $("#clkS").textContent = (MAP_RATE === 1 && !MAP_PAUSED ? "" : "Sky date " + iso(s.jd) + " \u00B7 ") + "Season " + s.season + " \u00B7 day " + fmt(s.day) + " of " + fmt(SF.SKY.len_days);
+  $("#clkS").textContent = (mapLive() ? "" : "Sky date " + iso(s.jd) + " \u00B7 ") + "Season " + s.season + " \u00B7 day " + fmt(s.day) + " of " + fmt(SF.SKY.len_days);
   DESK = SF.desk(now); renderBookings();
   if (SF.SITE.season !== s.season && !POOL_LOADING && now >= POOL_RETRY) refreshPool();
   if (now - LIVE_T > 4000) { LIVE_T = now; LIVE = liveFleet(now); }
