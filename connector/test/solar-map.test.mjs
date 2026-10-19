@@ -25,6 +25,13 @@ test('collapsing mobile bookings gives the solar system more vertical room', () 
   const open = Map.frame(390, 742, {}), collapsed = Map.frame(390, 742, { collapsed: true });
   assert.ok(collapsed.height > open.height + 150);
 });
+test('a desktop selection centres the map between the flight rail and the details panel', () => {
+  const wide = Map.frame(1440, 790, { selection: true }), narrow = Map.frame(1000, 700, { selection: true });
+  assert.equal(wide.x + wide.width / 2, (300 + 1120) / 2);
+  assert.equal(narrow.x + narrow.width / 2, (286 + 710) / 2);
+  assert.equal(Map.frame(1440, 790, { selection: true, panelsHidden: true }).width, 1440 - 48);
+  assert.equal(Map.frame(390, 742, { selection: true }).width, 358);
+});
 test('hiding panels removes their reserved space', () => {
   const open = Map.frame(1440, 790, {}), hidden = Map.frame(1440, 790, { panelsHidden: true });
   assert.ok(hidden.width > open.width);
