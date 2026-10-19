@@ -1842,9 +1842,12 @@ function labels() {
 
 /* ---------- the render loop: paused when the tab is hidden or the map is off screen ---------- */
 var raf = 0, last = 0, MAPVIS = true;
+var tickMs = 1000 / 60, tickT = 0;
 function frame(t) {
   raf = requestAnimationFrame(frame);
-  if (t - last < 1000 / (pilotMoving() ? 60 : window.SolArt ? SolArt.quality().fps : GW <= 760 ? 24 : 30)) return;
+  // A frame is drawn when its target interval is within half a display tick: on a 240 Hz display a 60 fps cap would otherwise wait five ticks, not four.
+  if (tickT && t - tickT < 50) tickMs += (t - tickT - tickMs) * 0.05; tickT = t;
+  if (t - last < 1000 / (pilotMoving() ? 60 : window.SolArt ? SolArt.quality().fps : GW <= 760 ? 24 : 30) - tickMs / 2) return;
   var dt = Math.min(0.1, Math.max(0, (t - last) / 1000)); last = t; MEMO = {}; MEMON = 0;
   try { draw(dt, t); } catch (e) { if (!frame.err) { frame.err = 1; console.error(e); } }
   if (MAP_PAUSED && !pilotMoving()) glStop();
