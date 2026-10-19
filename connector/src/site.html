@@ -523,7 +523,7 @@ p{text-wrap:pretty}
         </ul>
         <p class="lgn">JPL positions at simulated sky dates. Orbit lines are two-body orbits at the sky date, simulated. Stored paths where available; straight route guides otherwise. True scale: real distances and sizes; bodies too small to see are drawn at a few pixels. Surface rotation and clouds are slowed for viewing.</p>
         <p class="lgn cred" id="artCred" hidden></p>
-        <p class="lgn">Drag to look. W A S D fly, Q / E down and up, Shift boosts. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to ride along, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
+        <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Q / E down and up, Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to ride along, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
       </div>
       <div class="mc-map-controls" role="group" aria-label="Map controls">
         <button type="button" id="zoomIn" aria-label="Move closer">+</button><button type="button" id="zoomOut" aria-label="Move farther">−</button><button type="button" id="resetMap" aria-label="Whole system view">⊙</button><button type="button" id="mapHelp" class="mc-map-note" aria-expanded="false" aria-controls="legend">Map info</button>
@@ -1637,14 +1637,15 @@ function pilotLook(dx, dy) {
 }
 function pilotTurn(key) { pilotLook(key === "ArrowLeft" ? -20 : key === "ArrowRight" ? 20 : 0, key === "ArrowUp" ? -20 : key === "ArrowDown" ? 20 : 0); glStart(); }
 // Drag looks around, a pinch moves closer or farther, the wheel zooms along the view, and a tap picks what is under it.
+var RMB_DRAG = false;
 function bindPilot(host) {
   var ptrs = {}, down = null, pinch = 0;
   host.addEventListener("pointerdown", function (e) {
-    if (e.pointerType === "mouse" && e.button !== 0) return;
+    if (e.pointerType === "mouse" && e.button !== 0 && e.button !== 2) return;
     ptrs[e.pointerId] = [e.clientX, e.clientY]; DRAG = true;
     try { host.setPointerCapture(e.pointerId); } catch (x) { /* capture is optional */ }
     var ids = Object.keys(ptrs);
-    down = ids.length === 1 ? { x: e.clientX, y: e.clientY, t: performance.now(), moved: false } : null;
+    down = ids.length === 1 ? { x: e.clientX, y: e.clientY, t: performance.now(), moved: false, right: e.button === 2 } : null;
     if (ids.length === 2) pinch = Math.hypot(ptrs[ids[0]][0] - ptrs[ids[1]][0], ptrs[ids[0]][1] - ptrs[ids[1]][1]);
     glStart();
   });
@@ -1657,20 +1658,24 @@ function bindPilot(host) {
       if (pinch && d) pilotDolly(pinch / d);
       pinch = d; return;
     }
-    if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) down.moved = true;
+    if (down && !down.moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) { down.moved = true; if (down.right) closeCtx(); }
     if (down && down.moved) { pilotLook(e.clientX - prev[0], e.clientY - prev[1]); glStart(); }
   });
   function up(e) {
     if (!ptrs[e.pointerId]) return;
     delete ptrs[e.pointerId]; DRAG = Object.keys(ptrs).length > 0; pinch = 0;
-    if (e.type === "pointerup" && down && !down.moved && performance.now() - down.t < 350) pick(e.clientX, e.clientY);
+    if (down && down.right) RMB_DRAG = down.moved;
+    else if (e.type === "pointerup" && down && !down.moved && performance.now() - down.t < 350) pick(e.clientX, e.clientY);
     down = null;
   }
   host.addEventListener("pointerup", up); host.addEventListener("pointercancel", up);
   // Labels sit above the canvas, so listen on the whole map and leave real controls alone.
-  $("#mapbox").addEventListener("contextmenu", function (e) { if (!e.target.closest("#labels") && e.target.closest("button,a,input,label,.popm,#ctxMenu")) return; e.preventDefault(); openCtx(e.clientX, e.clientY, e.target.closest("#labels .lbl")); });
+  $("#mapbox").addEventListener("contextmenu", function (e) { if (RMB_DRAG) { RMB_DRAG = false; e.preventDefault(); return; } if (!e.target.closest("#labels") && e.target.closest("button,a,input,label,.popm,#ctxMenu")) return; e.preventDefault(); openCtx(e.clientX, e.clientY, e.target.closest("#labels .lbl")); });
   document.addEventListener("pointerdown", function (e) { if (!e.target.closest("#ctxMenu")) closeCtx(); });
-  host.addEventListener("wheel", function (e) { e.preventDefault(); pilotDolly(Math.exp(clamp(e.deltaY, -240, 240) * 0.0015)); }, { passive: false });
+  host.addEventListener("wheel", function (e) {
+    e.preventDefault();
+    if (e.buttons & 2) { PIL.mul = clamp(PIL.mul * (e.deltaY < 0 ? 1.2 : 1 / 1.2), 0.02, 50); mapHud(); glStart(); return; }
+    pilotDolly(Math.exp(clamp(e.deltaY, -240, 240) * 0.0015)); }, { passive: false });
 }
 // Click a ship to ride along or a body to jump to it; the nearest within 22 px wins.
 function hitAt(cx, cy) {
@@ -1737,7 +1742,7 @@ function bindKeys() {
   document.addEventListener("keyup", function (e) { delete KEYS[e.key.toLowerCase()]; KEYS.shift = e.shiftKey ? 1 : 0; });
   // The browser swallows the keyup when a context menu opens or the tab hides, so a held key would fly on forever.
   function release() { KEYS = {}; }
-  addEventListener("blur", release); addEventListener("contextmenu", release);
+  addEventListener("blur", release); addEventListener("contextmenu", function (e) { if (!e.defaultPrevented) release(); });
   document.addEventListener("visibilitychange", release);
 }
 function markFocus(f, body) {
