@@ -1,0 +1,60 @@
+{
+  "default": "dock-orbital",
+  "generator": "tools/models/blender/build_models.py (Blender 5.2.2 LTS)",
+  "models": {
+    "cabin-4": {
+      "abreast": 2,
+      "bytes": 16524,
+      "file": "cabin-4.glb",
+      "seats": 4,
+      "sha256": "326133a8a6154bbf221880085f956da2ec0dcb14231276d9570fcc3b9b2d645a",
+      "triangles": 528
+    },
+    "dock-orbital": {
+      "bytes": 46368,
+      "file": "dock-orbital.glb",
+      "sha256": "dfb6487c11c8d8f55a171bfc4f9f6ca7f8f77fabe4749d491ce84ec2b2298646",
+      "triangles": 1452
+    },
+    "station-ceres-port": {
+      "bytes": 112564,
+      "file": "station-ceres-port.glb",
+      "sha256": "0bb3eb9e88bdba07996dbbcd1e5643b850b1e4f06f4b26997e86465be65355ea",
+      "triangles": 4396
+    },
+    "station-lunar-data-center": {
+      "bytes": 125964,
+      "file": "station-lunar-data-center.glb",
+      "sha256": "838e8c8ece4d1292cbe99c3d305503745debd02c9fac8281d57efef7a59ada24",
+      "triangles": 4868
+    },
+    "station-mars-base": {
+      "bytes": 125544,
+      "file": "station-mars-base.glb",
+      "sha256": "07fb6f09b71216010c4ab6387970a8eaa6b391168a3d017ea3224e0d950af044",
+      "triangles": 4884
+    },
+    "station-orbital-depot": {
+      "bytes": 161100,
+      "file": "station-orbital-depot.glb",
+      "sha256": "a5ca143a5074da44baff48dc6596cb19e72aa96ac81e77c90e732240c30cefa1",
+      "triangles": 7396
+    },
+    "station-titan-dock": {
+      "bytes": 135892,
+      "file": "station-titan-dock.glb",
+      "sha256": "2b43fc4dfe31b9b246ab03925c8545dda65f13c6efb52123563e5ee64d12021c",
+      "triangles": 5308
+    }
+  },
+  "note": "Fictional, original models built in code. berth_N and seat_N are named nodes; up +Y, longest side 1.",
+  "places": {
+    "ceres-port": "station-ceres-port",
+    "lunar-data-center": "station-lunar-data-center",
+    "mars-base": "station-mars-base",
+    "orbital-depot": "station-orbital-depot",
+    "titan-dock": "station-titan-dock"
+  },
+  "productionApproved": false,
+  "packed": "tools/models/pack-docks.mjs (weld, dedup, quantize)"
+}

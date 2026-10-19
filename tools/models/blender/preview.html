@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Starfare docks and cabin</title>
+<!-- Review page for the Blender models in design/assets/models (docks.json). Serve the repo root and open
+     /tools/models/blender/preview.html. Lighting copies the home map: dim ambient plus a warm light from the Sun. -->
+<style>
+  :root { --bg: #06080c; --ink: #eef1f5; --ink-2: #a3abb6; --line: rgba(255,255,255,.12); }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 Inter, system-ui, sans-serif; }
+  header { padding: 16px; border-bottom: 1px solid var(--line); }
+  header p { margin: 4px 0 0; color: var(--ink-2); font-size: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1px; background: var(--line); }
+  figure { margin: 0; background: var(--bg); }
+  canvas { display: block; width: 100%; aspect-ratio: 4 / 3; }
+  figcaption { padding: 8px 12px 12px; font-size: 12px; color: var(--ink-2); }
+  figcaption b { color: var(--ink); font-weight: 500; }
+  .tiny { display: flex; gap: 12px; align-items: center; }
+  .tiny canvas { width: 15px; height: 15px; aspect-ratio: auto; }
+</style>
+</head>
+<body>
+<header>
+  <strong>Docks, stations and cabin</strong>
+  <p>Fictional models, built in Blender from tools/models/blender/build_models.py. Not production-approved. The small square under each shows it at the map's 15 px dock size.</p>
+</header>
+<div class="grid" id="grid"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+(function () {
+  var BASE = "../../../design/assets/models/";
+  var still = /still/.test(location.search), berths = +(new URLSearchParams(location.search).get("berths") || 4);
+  var views = [];
+  function view(name, info) {
+    var fig = document.createElement("figure"), c = document.createElement("canvas"), t = document.createElement("canvas");
+    var cap = document.createElement("figcaption");
+    cap.innerHTML = '<b>' + name + '</b> · ' + info.triangles + ' triangles · ' + (info.bytes / 1024).toFixed(0) + ' KB' +
+      (info.seats ? ' · ' + info.seats + ' seats' : '') + '<div class="tiny">' + '</div>';
+    cap.querySelector(".tiny").appendChild(t);
+    fig.appendChild(c); fig.appendChild(cap); document.getElementById("grid").appendChild(fig);
+    var r = new THREE.WebGLRenderer({ canvas: c, antialias: true }), r2 = new THREE.WebGLRenderer({ canvas: t, antialias: true });
+    r.setPixelRatio(Math.min(2, devicePixelRatio)); r2.setPixelRatio(Math.min(2, devicePixelRatio));
+    var scene = new THREE.Scene(); scene.background = new THREE.Color(0x06080c);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.28));
+    var sun = new THREE.PointLight(0xfff1dc, 1.45, 0); sun.position.set(-4, 3, 5); scene.add(sun);
+    var cam = new THREE.PerspectiveCamera(32, 4 / 3, 0.01, 50);
+    var g = new THREE.Group(); g.rotation.x = 0.5; scene.add(g);
+    new THREE.GLTFLoader().load(BASE + info.file, function (gl) {
+      gl.scene.traverse(function (o) {
+        var m = /^berth_(\d)$/.exec(o.name); if (m && +m[1] > berths) o.visible = false;
+      });
+      g.add(gl.scene);
+    });
+    var v = { r: r, r2: r2, c: c, scene: scene, cam: cam, g: g, cabin: !!info.seats };
+    if (v.cabin) g.rotation.x = 0.9;
+    views.push(v);
+  }
+  function frame(t) {
+    views.forEach(function (v, i) {
+      var w = v.c.clientWidth, h = v.c.clientHeight;
+      if (v.c.width !== Math.round(w * v.r.getPixelRatio())) v.r.setSize(w, h, false);
+      v.r2.setSize(15, 15, false);
+      v.g.rotation.y = still ? 0.6 + i * 0.3 : t * 0.0003 + i;
+      v.cam.aspect = w / h; v.cam.updateProjectionMatrix();
+      v.cam.position.set(0, 0, 2.1); v.cam.lookAt(0, 0, 0);
+      v.r.render(v.scene, v.cam);
+      v.cam.aspect = 1; v.cam.updateProjectionMatrix(); v.r2.render(v.scene, v.cam);
+    });
+    if (!still) requestAnimationFrame(frame); else setTimeout(function () { frame(0); }, 400);
+  }
+  fetch(BASE + "docks.json").then(function (r) { return r.json(); }).then(function (m) {
+    Object.keys(m.models).sort().forEach(function (k) { view(k, m.models[k]); });
+    requestAnimationFrame(frame);
+  });
+})();
+</script>
+</body>
+</html>

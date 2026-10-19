@@ -429,6 +429,46 @@
     g.userData.engine.position.fromArray(on ? h.stern : STERN);
   }
 
+  /* ---------- docks and stations ---------- */
+  // models/docks.json (tools/models/blender/build_models.py) names a station model for each fictional station and a
+  // generic dock for every other place. dock() returns a group showing the page's own placeholder until the model
+  // loads, then the model, with its berth_N collars shown up to the place's berth count. One load per model, cloned
+  // per place. The low tier keeps the placeholder, as it keeps the procedural ship.
+  var DOCKMAN = null, DOCKM = {}, DOCKG = [];
+  function loadDock(id) {
+    DOCKMAN = DOCKMAN || fetch(BASE + "models/docks.json").then(function (r) { if (!r.ok) throw new Error("docks.json " + r.status); return r.json(); });
+    return DOCKMAN.then(function (m) {
+      var key = (m.places && m.places[id]) || m.default, info = m.models[key];
+      if (!info) throw new Error("no dock model for " + id);
+      return DOCKM[key] || (DOCKM[key] = new Promise(function (ok, bad) {
+        new THREE.GLTFLoader().load(BASE + "models/" + info.file, function (gl) { ok(gl.scene); }, undefined, bad);
+      }));
+    });
+  }
+  function showDock(g) {
+    var d = g.userData.dock, want = quality().hulls;
+    if (want && !d.asked) {
+      d.asked = true;
+      loadDock(d.id).then(function (sc) {
+        d.model = sc.clone();
+        d.model.traverse(function (n) { var b = /^berth_(\d+)$/.exec(n.name); if (b) n.visible = +b[1] <= d.berths; });
+        g.add(d.model); showDock(g);
+      }, function (e) { console.warn("SolArt: keeping the placeholder dock at " + d.id + ":", e && e.message || e); });
+    }
+    var on = want && !!d.model;
+    if (d.fallback) d.fallback.visible = !on;
+    if (d.model) d.model.visible = on;
+  }
+  // place: the engine place ({ id, kind }); berths: how many berths it has (SOLE.R.BERTHS); fallback: an Object3D.
+  function dock(place, berths, fallback) {
+    var g = new THREE.Group();
+    if (fallback) g.add(fallback);
+    if (!THREE.GLTFLoader || !place) return g;
+    g.userData.dock = { id: place.id, berths: berths == null ? 4 : berths, fallback: fallback, model: null, asked: false };
+    quality(); DOCKG.push(g); showDock(g);
+    return g;
+  }
+
   /* ---------- hull reflections ---------- */
   // The hull maps are mostly metal, and metal shows what it reflects. setSky renders a tiny sky (dark space, the Sun
   // disc, the nearest planet lit by the Sun) into one PMREM cube shared by the hull materials, never the planets.
@@ -509,6 +549,7 @@
       Q.cur = name;
       SHIPS = SHIPS.filter(function (g) { return g.parent; }); // a ship the page removed is gone for good
       SHIPS.forEach(showHull);
+      DOCKG = DOCKG.filter(function (g) { return g.parent; }); DOCKG.forEach(showDock);
       if (!TIERS[name].hulls) dropSky();
     }
     return TIERS[name];
@@ -568,7 +609,7 @@
     updatePlanet: function (body, context) { if (root.StarfarePlanetEffects) root.StarfarePlanetEffects.update(body, devicePixels(context)); },
     disposePlanet: function (body) { if (root.StarfarePlanetEffects && body) root.StarfarePlanetEffects.dispose(body.userData.solarSurface || body); },
     updateSun: function (body, context) { if (root.StarfarePlanetEffects && body.userData.solarSurface) root.StarfarePlanetEffects.update(body.userData.solarSurface, devicePixels(context)); },
-    sun: sun, stars: stars, composer: composer, ship: ship, setEngine: setEngine, setSky: setSky, quality: quality, icon: icon, ICONS: Object.keys(ICONS),
+    sun: sun, stars: stars, composer: composer, ship: ship, dock: dock, setEngine: setEngine, setSky: setSky, quality: quality, icon: icon, ICONS: Object.keys(ICONS),
     CREDIT: "Maps: NASA, JPL, USGS (public domain); Earth effects, Saturn, rings, Sun: Solar System Scope (CC BY 4.0). Moon relief: NASA SVS / LRO LOLA. Stars: Yale Bright Star Catalog."
   };
 })(window);
