@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Fleet Tripo comparison</title>
+<style>
+  body { margin: 0; background: #0b1020; color: #cfe3ff; font: 13px/1.4 system-ui, sans-serif; }
+  #out { position: relative; display: flex; }
+  #refs img { display: block; width: 320px; height: 220px; object-fit: contain; background: #141a2e; }
+  canvas { display: block; }
+  .label { position: absolute; left: 12px; font-weight: 600; text-shadow: 0 1px 2px #000; }
+  #note { padding: 6px 12px; opacity: 0.7; }
+</style>
+<script src="../../../2026-10-17/kestrel-game-art-v4/vendor/three.min.js"></script>
+<script src="../../../2026-10-17/kestrel-game-art-v4/vendor/GLTFLoader.js"></script>
+</head>
+<body>
+<div id="note">Tripo H3.1 image-to-3D, one 3/4 view each. Every model is scaled to unit size: not to scale with each other.</div>
+<div id="out"><div id="refs"></div></div>
+<script>
+// [label, reference, url, yaw that turns the bow to +Z]
+const MODELS = [
+  ['Kestrel', '../../../2026-10-17/kestrel-higgsfield-v1/source/kestrel-isolated-reference.png', '../../../2026-10-17/kestrel-higgsfield-v1/models/kestrel-tripo-h3_1.glb', 0],
+  ['Tandem', '../source/tandem-isolated-reference.png', '../models/tandem-tripo-h3_1.glb', 0],
+  ['Lantern', '../source/lantern-isolated-reference.png', '../models/lantern-tripo-h3_1.glb', 0],
+  ['Wayfarer', '../source/wayfarer-isolated-reference.png', '../models/wayfarer-tripo-h3_1.glb', 0],
+];
+const VIEWS = [
+  ['3/4 front', [1.1, 0.7, 1.4]],
+  ['top', [0.001, 2.2, 0.0]],
+  ['side', [2.2, 0.05, 0.0]],
+  ['rear 3/4', [-1.1, 0.6, -1.4]],
+  ['under', [0.6, -1.6, 0.8]],
+];
+const W = 320, H = 220;
+const out = document.getElementById('out');
+const refs = document.getElementById('refs');
+MODELS.forEach(([name, ref], i) => {
+  const img = document.createElement('img');
+  img.src = ref; img.alt = name + ' reference';
+  refs.appendChild(img);
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.style.top = (i * H + 8) + 'px';
+  label.textContent = name;
+  out.appendChild(label);
+});
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W * VIEWS.length, H * MODELS.length);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.setScissorTest(true);
+out.appendChild(renderer.domElement);
+
+const loader = new THREE.GLTFLoader();
+const scenes = [];
+Promise.all(MODELS.map(([, , url]) => new Promise((res, rej) => loader.load(url, g => res(g), undefined, rej)))).then(gltfs => {
+  gltfs.forEach((g, i) => {
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b1020);
+    scene.add(new THREE.HemisphereLight(0xdde8ff, 0x202030, 0.9));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(2, 3, 2); scene.add(sun);
+    const rim = new THREE.DirectionalLight(0x88aaff, 0.6); rim.position.set(-2, 1, -3); scene.add(rim);
+    const obj = g.scene;
+    obj.rotation.y = MODELS[i][3];
+    const box = new THREE.Box3().setFromObject(obj);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const s = 1 / Math.max(size.x, size.y, size.z);
+    obj.position.sub(center).multiplyScalar(s);
+    obj.scale.setScalar(s);
+    scene.add(obj);
+    scenes.push(scene);
+  });
+  const cam = new THREE.PerspectiveCamera(30, W / H, 0.01, 100);
+  scenes.forEach((scene, r) => VIEWS.forEach(([, p], c) => {
+    const x = c * W, y = (MODELS.length - 1 - r) * H;
+    renderer.setViewport(x, y, W, H); renderer.setScissor(x, y, W, H);
+    cam.position.set(...p); cam.up.set(0, 1, 0);
+    if (p[1] > 2 || p[1] < -1.5) cam.up.set(0, 0, -1);
+    cam.lookAt(0, 0, 0);
+    renderer.render(scene, cam);
+  }));
+  document.title = 'ready';
+}).catch(e => { document.title = 'error: ' + e.message; console.error(e); });
+</script>
+</body>
+</html>

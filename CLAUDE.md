@@ -18,6 +18,7 @@ Read first: `docs/HANDOFF.md` (state, decisions, next steps), `docs/OPEN-QUESTIO
 - `day5/` (Stranded at Titan page), `site/` (Dispatch Desk page), `teaser/` (Ride to the Roadster page).
 - `tools/media/`: `capture.mjs` films and screenshots the real pages from a local `wrangler dev` (social sizes, MP4/GIF) for marketing and QA. Output goes to `tools/media/out/` (gitignored).
 - `.claude/hooks/session-start.sh`: cloud sessions install connector and Python test dependencies on start.
+- `.claude/skills/`: `create-game-vfx`, `optimize-threejs-games`, `build-mobile-threejs-games`, `test-playable-web-games`, copied unchanged from github.com/MengTo/Skills at 398cd41 (MIT, licence in each folder). They are method checklists written for combat games. Our pages still use three.js r128 globals (`THREE.*`, `examples/js`) with `logarithmicDepthBuffer`, and `art/2026-10-17/motion-spec.md` overrides the skills: no camera shake or star streaks, and no flame plume. The one engine effect is a faint ion glow labelled illustrative (Alvin's call, 2026-10-18; `docs/VFX-PLAN.md`).
 - `code/`, `day1`-`day6/`, `audit/`, `receipts/`: the original Python planner, checker, evals.
 
 ## Tests

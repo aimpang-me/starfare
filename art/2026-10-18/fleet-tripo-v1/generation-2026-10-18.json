@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-18",
+  "provider": "Higgsfield MCP connector (claude.ai), starter workspace",
+  "authorization": "User asked for Tripo meshes of the other ships after the Kestrel comparison; quoted about 27 credits (9 each) in this session.",
+  "model": "tripo_h3_1_image_to_3d",
+  "params": { "texture": true, "pbr": true, "face_limit": 60000, "texture_alignment": "original_image" },
+  "source_preparation": "Hero 3/4 view cropped from each concept sheet in art/2026-10-17, labels blanked, background removed locally with rembg isnet-general-use, largest shape kept and trimmed. Wayfarer: starfield inside the ring cleared with a seeded dark-region flood limited to the ring interior.",
+  "credits": { "before": 218, "after": 191, "spent": 27 },
+  "jobs": [
+    {
+      "ship": "Tandem",
+      "concept": "../../2026-10-17/starseeker-02-tandem.png",
+      "source": { "path": "source/tandem-isolated-reference.png", "sha256": "9394e0419631277d06506c763a00d3e8eef0dc2a4168c6b2f612acf48cd314b8", "higgsfield_media_id": "880f6e72-c368-4189-a898-529d027e7b79" },
+      "job_id": "e1969b74-846c-4577-af3a-a025e20100e0",
+      "credits": 9,
+      "output": "models/tandem-tripo-h3_1.glb",
+      "sha256": "3f594d9721f4f3552f84c14fd28e740c5ce8b06f2ce3bac13533dc17a79845bd",
+      "bytes": 4882628,
+      "triangles": 55360,
+      "maps": ["baseColor", "metallicRoughness", "normal"],
+      "bounds_normalized": [0.4483, 0.1375, 1.0],
+      "orientation": "bow on +Z, up +Y (matches the engine convention)"
+    },
+    {
+      "ship": "Lantern",
+      "concept": "../../2026-10-17/starseeker-03-lantern.png",
+      "source": { "path": "source/lantern-isolated-reference.png", "sha256": "c15bac1faebe36476516464250f9088a96b36c3b134d2dab18f263f3478ffba5", "higgsfield_media_id": "f848629c-fa31-41b1-91b7-1e5b47f31cea" },
+      "job_id": "23d06359-a052-4df8-bf10-ffbcc8833950",
+      "credits": 9,
+      "output": "models/lantern-tripo-h3_1.glb",
+      "sha256": "c2b41a3b860ed51a280ad1c73ccfe788c8ce0bcb571542a65457f6c965373687",
+      "bytes": 5332672,
+      "triangles": 59080,
+      "maps": ["baseColor", "metallicRoughness", "normal"],
+      "bounds_normalized": [0.4157, 0.3107, 1.0],
+      "orientation": "bow on +Z, up +Y (matches the engine convention)"
+    },
+    {
+      "ship": "Wayfarer",
+      "concept": "../../2026-10-17/wayfarer-station.png",
+      "source": { "path": "source/wayfarer-isolated-reference.png", "sha256": "b242e68c4904b81bbe59c0182c5bfa02a60a6938de893a93b9799e42e258d886", "higgsfield_media_id": "c934f19d-1e17-45fc-ba5d-13d9ad7057af" },
+      "job_id": "36825b35-7640-4444-a557-486007084606",
+      "credits": 9,
+      "output": "models/wayfarer-tripo-h3_1.glb",
+      "sha256": "3dbf4c6d6922f25a8625c1f3c1ebc37e5eb89f92d7d3a7effb75dc76813d2110",
+      "bytes": 6559136,
+      "triangles": 55967,
+      "maps": ["baseColor", "metallicRoughness", "normal"],
+      "bounds_normalized": [0.7722, 0.1713, 1.0],
+      "orientation": "up +Y; engine block on +Z with nozzles facing +Z and the ring opening on -Z. A station has no bow; rotate 180 degrees about Y only if a scene needs its nozzles to face aft like the ships."
+    }
+  ],
+  "review": {
+    "renders": ["review/compare.png", "review/hero.png"],
+    "page": "review/compare.html (serve art/ over http; uses 2026-10-17/kestrel-game-art-v4/vendor three.js; includes the Kestrel Tripo mesh as the fleet's first row)",
+    "finding": "All three keep their concept silhouettes and the navy, titanium and amber palette at game-ready size. Tandem: twin hulls, H-frame bridge with the central cabin, and aft nozzles on both hulls. Lantern: glazed forward cabin, side pods and the aft triangular frame. Wayfarer: open C-ring with segmented amber window bands and a three-nozzle engine block. Each mesh is inferred from one 3/4 view, so the far sides, underside and stern are the generator's guess.",
+    "not_checked": ["engine home and replay import", "mobile GPU cost", "physical scale and relative scale between ships", "texture resolution at close range", "decision on whether these replace the procedural ship in sol-art.js"],
+    "productionApproved": false
+  }
+}

@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Kestrel Higgsfield comparison</title>
+<style>
+  body { margin: 0; background: #0b1020; color: #cfe3ff; font: 13px/1.4 system-ui, sans-serif; }
+  #ref { display: block; width: 600px; margin: 12px auto 0; }
+  canvas { display: block; }
+  #out { position: relative; }
+  .label { position: absolute; left: 12px; font-weight: 600; }
+</style>
+<script src="../../kestrel-game-art-v4/vendor/three.min.js"></script>
+<script src="../../kestrel-game-art-v4/vendor/GLTFLoader.js"></script>
+</head>
+<body>
+<img id="ref" src="../source/kestrel-isolated-reference.png" alt="reference">
+<div id="out"></div>
+<script>
+// [label, url, yaw that turns the bow to +Z]
+const MODELS = [
+  ['Tripo H3.1 (9 cr)', '../models/kestrel-tripo-h3_1.glb', 0],
+  ['Meshy 7 (38 cr)', '../models/kestrel-meshy-v7.glb', Math.PI / 2],
+  ['Hunyuan 3D v3 (15 cr)', '../models/kestrel-hunyuan3d-v3.glb', Math.PI / 2],
+];
+const VIEWS = [
+  ['3/4 front', [1.1, 0.7, 1.4]],
+  ['top', [0.001, 2.2, 0.0]],
+  ['side', [2.2, 0.05, 0.0]],
+  ['rear 3/4', [-1.1, 0.6, -1.4]],
+  ['under', [0.6, -1.6, 0.8]],
+];
+const W = 320, H = 220;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W * VIEWS.length, H * MODELS.length);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.setScissorTest(true);
+document.getElementById('out').appendChild(renderer.domElement);
+
+const loader = new THREE.GLTFLoader();
+const scenes = [];
+Promise.all(MODELS.map(([name, url]) => new Promise((res, rej) => loader.load(url, g => res(g), undefined, rej)))).then(gltfs => {
+  gltfs.forEach((g, i) => {
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b1020);
+    scene.add(new THREE.HemisphereLight(0xdde8ff, 0x202030, 0.9));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(2, 3, 2); scene.add(sun);
+    const rim = new THREE.DirectionalLight(0x88aaff, 0.6); rim.position.set(-2, 1, -3); scene.add(rim);
+    const obj = g.scene;
+    obj.rotation.y = MODELS[i][2];
+    const box = new THREE.Box3().setFromObject(obj);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const s = 1 / Math.max(size.x, size.y, size.z);
+    obj.position.sub(center).multiplyScalar(s);
+    obj.scale.setScalar(s);
+    scene.add(obj);
+    scenes.push(scene);
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.style.top = (i * H + 8) + 'px';
+    label.textContent = MODELS[i][0];
+    document.getElementById('out').appendChild(label);
+  });
+  const cam = new THREE.PerspectiveCamera(30, W / H, 0.01, 100);
+  scenes.forEach((scene, r) => VIEWS.forEach(([, p], c) => {
+    const x = c * W, y = (MODELS.length - 1 - r) * H;
+    renderer.setViewport(x, y, W, H); renderer.setScissor(x, y, W, H);
+    cam.position.set(...p); cam.up.set(0, 1, 0);
+    if (p[1] > 2 || p[1] < -1.5) cam.up.set(0, 0, -1);
+    cam.lookAt(0, 0, 0);
+    renderer.render(scene, cam);
+  }));
+  document.title = 'ready';
+}).catch(e => { document.title = 'error: ' + e.message; console.error(e); });
+</script>
+</body>
+</html>

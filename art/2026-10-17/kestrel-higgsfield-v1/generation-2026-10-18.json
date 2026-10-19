@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-18",
+  "provider": "Higgsfield MCP connector (claude.ai), starter workspace",
+  "authorization": "User approved a Kestrel image-to-3D comparison of about 62 credits in this session.",
+  "source": {
+    "path": "source/kestrel-isolated-reference.png",
+    "sha256": "d3eee0a4a8a709d42f236b5f6781b9876df1ade0b6981020f384509300a65a20",
+    "higgsfield_media_id": "27b1042d-a1b9-4f7d-b8d1-2fb0c21767d2"
+  },
+  "credits": { "before": 280, "after": 218, "spent": 62 },
+  "jobs": [
+    {
+      "model": "tripo_h3_1_image_to_3d",
+      "job_id": "ca3832b8-b74d-43be-a052-0d6522127bb4",
+      "credits": 9,
+      "params": { "texture": true, "pbr": true, "face_limit": 60000, "texture_alignment": "original_image" },
+      "output": "models/kestrel-tripo-h3_1.glb",
+      "sha256": "7cb2c4e648f2658353acc879e9df2cd08f3b4af4f989bdae91271e58f857e4fc",
+      "bytes": 5713636,
+      "triangles": 57140,
+      "maps": ["baseColor", "metallicRoughness", "normal"],
+      "bounds_normalized": [0.8765, 0.2475, 1.0],
+      "orientation": "bow on +Z, up +Y (matches the engine convention)"
+    },
+    {
+      "model": "meshy_v7_image_to_3d",
+      "job_id": "85cae4d9-27e5-4320-9121-966b612a3b83",
+      "credits": 38,
+      "params": { "should_texture": true, "enable_pbr": true, "should_remesh": true, "target_polycount": 60000, "topology": "triangle", "symmetry_mode": "on", "model_type": "standard", "ultra_mode": false, "texture_prompt": "Fictional Starfare Kestrel passenger spacecraft. Fine fitted deep navy coated-metal hull panels with recessed seams, pale satin brushed titanium perimeter armor, graphite recessed cooling louvers and service hatches, smoked panoramic lounge glazing with warm amber cabin seats, thin cyan trim lines. PBR: varied roughness and metalness, subtle wear. No sky, stars, text, logos, background, floor, exhaust or engine glow." },
+      "output": "models/kestrel-meshy-v7.glb",
+      "sha256": "4689f8530d12eeb684b8e73949bbe1046f5e43b550f1fa710c9bc1761f349d26",
+      "bytes": 15208948,
+      "triangles": 60133,
+      "maps": ["baseColor", "metallicRoughness", "normal"],
+      "bounds": [1.9039, 0.3066, 1.0626],
+      "orientation": "bow on -X; needs +90 degrees about Y to face +Z"
+    },
+    {
+      "model": "hunyuan3d_v3_image_to_3d",
+      "job_id": "eaff82d2-1eb2-49d6-9b97-f60c6987d639",
+      "credits": 15,
+      "params": { "enable_pbr": true, "generate_type": "Normal" },
+      "note": "First attempt was denied by the Claude Code auto-mode permission classifier; resubmitted after the user asked for it.",
+      "output": "models/kestrel-hunyuan3d-v3.glb",
+      "sha256": "962ea0ef039feeb90a07d3df4599982f938ac0e109d111cb69466b3dea2dd672",
+      "bytes": 60048408,
+      "triangles": 499822,
+      "maps": ["baseColor", "metallicRoughness", "normal"],
+      "extensions": ["KHR_materials_specular"],
+      "orientation": "root node rotates +90 degrees about X so up is +Y; bow on -X; needs +90 degrees about Y to face +Z"
+    }
+  ],
+  "review": {
+    "renders": ["review/compare.png", "review/hero.png"],
+    "page": "review/compare.html (serve art/2026-10-17 over http; uses kestrel-game-art-v4/vendor three.js; applies each model's yaw so all bows face +Z)",
+    "finding": "Tripo keeps the broad low delta, twin aft shrouds, bow intake and the painting's dark navy/titanium/cyan/amber palette at a game-ready size. Its lounge reads shorter than the painting's and its rear edges are slightly lumpy. Hunyuan has the cleanest geometry, the longest lounge glazing and the most coherent stern, but its navy is brighter and more saturated than the painting, panel detail is lighter, and at 499,822 triangles and 60 MB it needs reduction before game use. Meshy elongates the hull into a narrow dart and washes out the navy. All three infer the underside and stern from one 3/4 view.",
+    "not_checked": ["engine home and replay import", "mobile GPU cost", "physical scale", "texture resolution at close range"],
+    "productionApproved": false
+  }
+}
