@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { runInNewContext } from "node:vm";
+import { evalSlice, pageSF } from "./page-slice.mjs";
 import { test } from "node:test";
 import * as game from "../src/game.js";
 
@@ -9,11 +9,7 @@ const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const View = createRequire(import.meta.url)("../src/flight-view.cjs");
 const html = (name) => readFileSync(new URL(`../src/${name}.html`, import.meta.url), "utf8");
 function browserApi(name, SITE) {
-  const source = html(name), start = source.indexOf(name === "site" ? "(function (root) {" : "var SF = (function () {");
-  const end = name === "site" ? source.indexOf("</script>", start) : source.indexOf("})();", start) + 5;
-  const window = { SITE, SOLE: E };
-  const SF = runInNewContext(source.slice(start, end) + (name === "site" ? "\nwindow.SF;" : "\nSF;"), { window });
-  return SF;
+  return pageSF(html(name), name === "site", { SITE, SOLE: E });
 }
 
 test("the public booking desk admits seasonal rows and closes stale seasons until refreshed", async () => {
@@ -42,11 +38,11 @@ const record = {
 };
 
 test("the flight passenger list follows recorded stops through diversions and repeated destinations", () => {
-  const source = html("flight"), start = source.indexOf("function passengerList("), end = source.indexOf("function renderPlist", start);
+  const source = html("flight");
   const SF = { SHIP: "Starseeker", fmt: String };
   // A shared helper, if loaded by the page, is supplied exactly as the browser asset does.
   const ctx = { RIDE: { record, lg: record.log }, SF, window: { StarfareView: View }, hailOf: () => null };
-  const P = runInNewContext(source.slice(start, end) + "\npassengerList();", ctx);
+  const P = evalSlice(source, "function passengerList(", "function renderPlist", "passengerList()", ctx);
   assert.equal(P.bookings.length, 2);
   assert.deepEqual(Array.from(P.bookings, (b) => [b.id, b.party, b.b, b.a]), [["a", 2, 1, 4], ["b", 3, 5, 6]]);
   assert.equal(P.stops[2].alight.length, 0, "reaching orbit must not drop passengers before landing");
@@ -116,12 +112,12 @@ test("a live shared manifest shows future stops without boarding passengers at a
 });
 
 test("the home map uses stored flight arcs and explicit booking identity, never the generic route planner", () => {
-  const source = html("site"), start = source.indexOf("function liveArc("), end = source.indexOf("function makeFlight", start);
+  const source = html("site");
   const arc = { from: "ceres", to: "ceres-port", dep_jd: 2461700, arr_jd: 2461701, arc_au: [[1, 0, 0], [1, 1, 0]] };
   const f = { run_id: "run_0123456789abcdef0123", hail_id: "a", title: "Same title", ship: "SF-04", manifest: record.manifest,
     legs: [{ kind: "pickup", car: "sf-04", leg_id: "chosen", stop: 1, from: arc.from, to: arc.to, dep_jd: 2461700, arr_jd: 2461701 }],
     arcs: { chosen: arc }, track: [[0, 2461700], [1000, 2461701]] };
-  const out = runInNewContext(source.slice(start, end) + "\nliveRide(f).ride;", { f, SF: {}, iso: String });
+  const out = evalSlice(source, "function liveArc(", "function makeFlight", "liveRide(f).ride", { f, SF: {}, iso: String });
   assert.equal(out.record.log.hail, "a");
   assert.equal(out.record.log.flown[0].arc, arc);
   assert.equal(out.record.log.flown[0].leg, "pickup");
@@ -129,14 +125,14 @@ test("the home map uses stored flight arcs and explicit booking identity, never 
 });
 
 test("the home scoreboard uses the fresh board catalog, including a winner absent from the old page snapshot", async () => {
-  const source = html("site"), start = source.indexOf("function openBoard()"), end = source.indexOf("function closeBoard()", start);
+  const source = html("site");
   const nodes = new Map(), $ = (s) => {
     if (!nodes.has(s)) nodes.set(s, { innerHTML: "", insertAdjacentHTML(_where, text) { this.innerHTML += text; } });
     return nodes.get(s);
   };
   const j = { season: 2, pool_size: 1, hails: [{ hail_id: "s2-0", title: "Seasonal winner" }], legacy_hails: [],
     best: { "s2-0": { points: 12, car: "sf-03", run_id: "run_0123456789abcdef0123", run_tag: "012345" } }, stats: { runs_scored: 1 } };
-  runInNewContext(source.slice(start, end) + "\nopenBoard();", { $, $$: () => [], PILOT: {}, document: {}, setTimeout() {},
+  evalSlice(source, "function openBoard()", "function closeBoard()", "openBoard()", { $, $$: () => [], PILOT: {}, document: {}, setTimeout() {},
     fetch: async () => ({ ok: true, json: async () => j }), SF: { SITE: { hails: [], fleet: [] }, SCORE_PARTS: [["pickup", "Pickup", 100]] },
     fmt: String, esc: String, RUN_ID: /^run_[0-9a-f]{20}$/ });
   await new Promise((resolve) => setImmediate(resolve));
@@ -145,10 +141,10 @@ test("the home scoreboard uses the fresh board catalog, including a winner absen
 });
 
 test("shared dispatch feed shows each booking's quote and escapes agent-controlled content", () => {
-  const source = html("flight"), start = source.indexOf("function dlogText("), end = source.indexOf("function renderDlog", start);
+  const source = html("flight");
   const t = { tool: "dispatch", route: ["leg1"], car: "SF-04", status: "arrived", quotes: {
     "a<script>": { fare_usd: 20, arrival: "2030-01-01 00:00" }, b: { fare_usd: 30, arrival: "2030-01-02 00:00" } } };
-  const out = runInNewContext(source.slice(start, end) + "\ndlogText(t);", { t, money: String, esc: (s) => String(s).replace(/</g, "&lt;") });
+  const out = evalSlice(source, "function dlogText(", "function renderDlog", "dlogText(t)", { t, money: String, esc: (s) => String(s).replace(/</g, "&lt;") });
   assert.match(out, /a&lt;script>/);
   assert.match(out, /fare 20/);
   assert.match(out, /fare 30/);
@@ -172,15 +168,14 @@ test("replay timeline dates round-trip the recorded minute without slipping into
 });
 
 test("the home map keeps a flight visible before launch and labels a held checkpoint as awaiting its agent", () => {
-  const source = html("site"), start = source.indexOf("function liveArc("), end = source.indexOf("function makeFlight", start);
+  const source = html("site");
   const f = { run_id: "run_0123456789abcdef0123", home: "ceres", legs: [], track: [[0, 2461700]], hold: { kind: "launch_hold", place: "ceres" } };
   const SF = { place: () => ({ id: "ceres" }) };
-  const cleaned = runInNewContext(source.slice(start, end) + "\nliveClean(f);", { f, SF });
+  const cleaned = evalSlice(source, "function liveArc(", "function makeFlight", "liveClean(f)", { f, SF });
   assert.equal(cleaned.legs[0].idle, true);
   assert.equal(cleaned.legs[0].from, "ceres");
-  const a = source.indexOf("function statusOf("), b = source.indexOf("/* ---------- passenger list", a);
   const flight = { f, rp: { at: () => ({ phase: "arrived" }), record: { score: { incidents: [] } }, legs: [{ arr: 2461700 }] } };
-  const result = runInNewContext(source.slice(a, b) + "\n[statusOf(flight, 2461700).k, etaOf(flight, 2461700), arrOf(flight)];", { flight, SF });
+  const result = evalSlice(source, "function statusOf(", "/* ---------- passenger list", "[statusOf(flight, 2461700).k, etaOf(flight, 2461700), arrOf(flight)]", { flight, SF });
   assert.deepEqual(Array.from(result), ["hold", "awaiting agent", "Pending agent decision"]);
 });
 
@@ -197,7 +192,7 @@ test("a completed replay is arrived at its exact final track time on both pages"
 });
 
 test("a thousand-booking desk renders twenty cards, searches all rows, and keeps card nodes while its clock updates", () => {
-  const source = html("site"), start = source.indexOf("function renderBookings()"), end = source.indexOf("function startPlan(", start);
+  const source = html("site");
   const nodes = new Map(), ready = []; let writes = 0, markup = "";
   const list = { get innerHTML() { return markup; }, set innerHTML(s) {
     writes++; markup = s; ready.length = 0;
@@ -207,9 +202,8 @@ test("a thousand-booking desk renders twenty cards, searches all rows, and keeps
   const DESK = Array.from({ length: 1000 }, (_, i) => ({ id: `s1-${i}`, title: "Booking", kind: "quick", rider: "Passenger", party: 1, from: "a", to: "b", open: true, ready_jd: 100 }));
   const ctx = { $, $$: () => ready, DESK, BK: {}, BOOKING_PAGE: 0, BOOKING_PAGE_SIZE: 20, SEL: { t: "n" }, SF: { name: String },
     esc: String, W: String, ic: () => "", placeH: String, iso: String };
-  const code = source.slice(start, end);
   // Keep the same function object, as in the page, including its cached last markup.
-  const render = runInNewContext(code + "\nrenderBookings;", ctx);
+  const render = evalSlice(source, "function renderBookings()", "function startPlan(", "renderBookings", ctx);
   render(); assert.equal(ready.length, 20); assert.equal($("#bkPage").textContent, "1–20 of 1000");
   DESK.forEach((d) => d.ready_jd++); render();
   assert.equal(writes, 1, "clock updates must not replace buttons and discard keyboard focus or click targets");

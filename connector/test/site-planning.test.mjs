@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { runInNewContext } from "node:vm";
+import { pageSF } from "./page-slice.mjs";
 import { test } from "node:test";
 import { SKY } from "../src/game.js";
 
@@ -27,11 +27,7 @@ function fixture() {
 test("the landing-page plan and pickup previews use the par ship and each candidate's own hull", async () => {
   const { E, SITE, calls } = fixture();
   const html = readFileSync(new URL("../src/site.html", import.meta.url), "utf8");
-  const start = html.indexOf("(function (root) {");
-  const end = html.indexOf("</script>", start);
-  const window = { SITE, SOLE: E };
-  runInNewContext(html.slice(start, end), { window });
-  const api = await window.SF.loadEngine();
+  const api = await pageSF(html, true, { SITE, SOLE: E }).loadEngine();
   const plan = api.plan("titan-home", SKY.t0_ms + 1000);
   assert.equal(plan.cars[0].pickup.kwh, 20);
   assert.equal(calls.length, 2);
@@ -40,9 +36,7 @@ test("the landing-page plan and pickup previews use the par ship and each candid
 test("a legacy flight without stored arcs recomputes its path with the recorded ship", () => {
   const { E, SITE, calls, t } = fixture();
   const html = readFileSync(new URL("../src/flight.html", import.meta.url), "utf8");
-  const start = html.indexOf("var SF = (function () {");
-  const end = html.indexOf("})();", start) + 5;
-  const api = runInNewContext(html.slice(start, end) + "\nSF;", { window: { SITE } });
+  const api = pageSF(html, false, { SITE });
   api.init(E);
   const iso = (jd) => new Date((jd - 2440587.5) * 864e5).toISOString().slice(0, 16).replace("T", " ");
   const live = { car: "SF-07", hold: null, track: [[0, t], [1000, t + 1]], planned: [], incidents: [], checkpoints: [],

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { runInNewContext } from "node:vm";
+import { evalSlice } from "./page-slice.mjs";
 import { test } from "node:test";
 import { SEASON_END, isoJD } from "../src/game.js";
 
@@ -11,8 +11,7 @@ const source = readFileSync(new URL("./e2e.mjs", import.meta.url), "utf8");
 test("the checkpoint parity oracle includes the simulated reply delay in its flown result", () => {
   const fixtures = JSON.parse(readFileSync(new URL("../../world/engine/fixtures/fly-baseline.json", import.meta.url), "utf8"));
   const fixture = fixtures.rides.find((r) => r.hail === "ceres-shift" && r.seed === "17" && r.kind === "par");
-  const start = source.indexOf("function nodeScore("), end = source.indexOf("/** take_hail,", start);
-  const nodeScore = runInNewContext(source.slice(start, end) + "\nnodeScore;", {
+  const nodeScore = evalSlice(source, "function nodeScore(", "/** take_hail,", "nodeScore", {
     E, R: E.R, SEASON_END, isoJD,
     jdOf: (s) => Date.parse(s.replace(" ", "T") + ":00Z") / 864e5 + 2440587.5,
     computeLeg: (_E, from, to) => fixture.legs.find((L) => L.from === from && L.to === to),
@@ -27,8 +26,7 @@ test("the checkpoint parity oracle includes the simulated reply delay in its flo
 });
 
 function quickPicker(call) {
-  const start = source.indexOf("async function takeBookableQuick("), end = source.indexOf("function assertSeasonPool", start);
-  return runInNewContext(source.slice(start, end) + "\ntakeBookableQuick;", { call, assert });
+  return evalSlice(source, "async function takeBookableQuick(", "function assertSeasonPool", "takeBookableQuick", { call, assert });
 }
 
 test("the pool integration check tries another quick booking after a physical tank refusal", async () => {

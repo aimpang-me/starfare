@@ -109,7 +109,7 @@ test("dispatch scores from what actually happened: R.fly on the same legs, then 
     out.incidents.forEach((x, i) => {
       const f = F.incidents[i];
       assert.equal(x.kind, f.kind); assert.equal(x.leg, f.leg); assert.equal(x.kwh, f.kwh); assert.equal(x.at, isoJD(f.at_jd)); assert.equal(x.hours, Math.round(f.hours * 10) / 10);
-      assert.equal(typeof x.place, "string"); assert.ok(x.note);
+      assert.equal(typeof x.place, "string"); assert.equal(typeof x.note, "string"); assert.notEqual(x.note, "");
     });
     // the run log
     assert.equal(out.log.hail, h); assert.equal(out.log.season, +run.seed); assert.deepEqual(out.log.dispatched, [p.leg_id, r.leg_id]);
@@ -728,7 +728,7 @@ test("a pool hail plans, dispatches and scores like the engine", async () => {
     const row = resolveHail(E, "s" + season + "-" + i, season, 200);
     if (row.kind === "quick") id = row.id;
   }
-  assert.ok(id);
+  assert.match(id, /^s\d+-\d+$/, "no quick seasonal hail in the first 30 slots");
   const { run, p, r, out } = await play(id);
   assert.equal(out.ok, true, JSON.stringify(out));
   const { F, s } = engineScore(run, p, r, { fare_usd: r.fare, arrival: isoJD(r.arr_jd) });
@@ -773,7 +773,9 @@ test("resolveHail takes a catalog id first, then this season's pool, and refuses
   assert.equal(row.id, "s" + season + "-0");
   assert.ok(row.party >= 1 && row.party <= 3);
   assert.notEqual(row.from, row.to);
-  assert.ok(R.nearCars(row).length > 0);
+  const near = R.nearCars(row);
+  assert.ok(near.length > 0, "a pool hail needs at least one ship nearby");
+  assert.ok(near.every((c) => typeof c.id === "string" && typeof c.name === "string"));
   const listed = seasonHails(E, season, cap);
   assert.equal(listed.length, cap);
   assert.equal(listed.some((h) => R.HAILS.some((c) => c.id === h.hail_id)), false);

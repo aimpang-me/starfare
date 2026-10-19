@@ -46,7 +46,7 @@ async function three() {
   if (!threePromise) threePromise = (async () => {
     const html = readFileSync(new URL('../src/site.html', import.meta.url), 'utf8');
     const tag = html.match(/<script src="([^"]*three\.min\.js)"[^>]*integrity="(sha384|sha512)-([^"]+)"/);
-    const response = await fetch(tag[1], { signal: AbortSignal.timeout(20000) }); assert.ok(response.ok);
+    const response = await fetch(tag[1], { signal: AbortSignal.timeout(20000) }); assert.equal(response.status, 200, tag[1]);
     const bytes = Buffer.from(await response.arrayBuffer());
     assert.equal(createHash(tag[2]).update(bytes).digest('base64'), tag[3]);
     const module = { exports: {} }; vm.runInNewContext(bytes.toString(), { module, exports: module.exports });
@@ -76,7 +76,7 @@ test('appearance changes only surface children, keeping root and external anchor
   assert.equal(body.userData.planetEffects.uniforms.normalReady.value, 0, 'missing image uses base lighting');
   const sibling = Effects.createBody(T, 'earth', { texture, sun: { value: new T.Vector3() } });
   const shared = textures.get('earth_day_2k.jpg'); let disposed = false; shared.addEventListener('dispose', () => { disposed = true; });
-  Effects.dispose(body); assert.equal(disposed, false); assert.ok(sibling.children.length);
+  Effects.dispose(body); assert.equal(disposed, false); assert.ok(sibling.children.length > 0, 'a sibling body keeps its meshes after the first is disposed');
 });
 test('Moon is matte relief without atmosphere; unknown bodies use the existing fallback', async () => {
   const T = await three(), texture = () => new T.Texture();

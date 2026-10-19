@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { runInNewContext } from "node:vm";
+import { evalSlice, pageSF } from "./page-slice.mjs";
 import { test } from "node:test";
 import { computeLeg, SEASON_END, SKY } from "../src/game.js";
 
@@ -9,11 +9,9 @@ const require = createRequire(import.meta.url), E = require("../src/engine/sol-p
 const AU = 149597870.7, dep = 2465874.4472131357;
 const source = (page) => readFileSync(new URL(`../src/${page}.html`, import.meta.url), "utf8");
 async function api(page) {
-  const html = source(page), home = page === "site";
-  const start = html.indexOf(home ? "(function (root) {" : "var SF = (function () {");
-  const end = home ? html.indexOf("</script>", start) : html.indexOf("})();", start) + 5;
+  const home = page === "site";
   const window = { SITE: { sky: SKY, hails: [], look: {} }, SOLE: E, StarfareView: View };
-  const SF = runInNewContext(html.slice(start, end) + (home ? "\nwindow.SF;" : "\nSF;"), { window });
+  const SF = pageSF(source(page), home, window);
   if (home) await SF.loadEngine(); else SF.init(E);
   return SF;
 }
@@ -32,8 +30,7 @@ const distanceKm = (a, b) => Math.hypot(...a.map((n, i) => n - b[i])) * AU;
 // The home map's route lines for a replay: each drawn leg's point positions, with legBase passing the replayed point
 // through and a place standing in for its own position.
 function routeLines(rp) {
-  const html = source("site"), start = html.indexOf("function routeOf("), end = html.indexOf("function dropRoute(", start);
-  return JSON.parse(runInNewContext(html.slice(start, end) + "\nJSON.stringify(routeOf(rp, 0).children.map((m) => m.pts.map((q) => q.v)));", {
+  return JSON.parse(evalSlice(source("site"), "function routeOf(", "function dropRoute(", "JSON.stringify(routeOf(rp, 0).children.map((m) => m.pts.map((q) => q.v)))", {
     rp, legBase: (_L, p) => p, SF: { pos: (id) => id }, SolLines: { leg: (pts) => ({ pts, userData: {} }) },
     THREE: { Group: function () { this.children = []; this.add = (m) => this.children.push(m); } },
   }));
@@ -70,16 +67,14 @@ test("main-map routes exclude orbit holds and idle legs", () => {
 });
 
 for (const page of ["site", "flight"]) test(`${page}: compressed local positions remain continuous at a body centre`, () => {
-  const html = source(page), start = html.indexOf("function localOff("), end = html.indexOf("function d3(", start);
-  const off = runInNewContext(html.slice(start, end) + "\nlocalOff([1e-12, 0, 0], 'ceres');", {
+  const off = evalSlice(source(page), "function localOff(", "function d3(", "localOff([1e-12, 0, 0], 'ceres')", {
     AU, SF: { place: () => ({ radius_km: 469.7 }) }, dispR: () => 0.4, axes: (p, k) => p.map((x) => x * k), V: () => [0, 0, 0],
   });
   assert.ok(Math.hypot(...off) < 0.000001, "a tiny displacement must not jump to a full planet radius");
 });
 
 for (const page of ["site", "flight"]) test(`${page}: the local scale has no sharp bend at the surface radius`, () => {
-  const html = source(page), start = html.indexOf("function localOff("), end = html.indexOf("function d3(", start);
-  const off = runInNewContext(html.slice(start, end) + "\nlocalOff;", {
+  const off = evalSlice(source(page), "function localOff(", "function d3(", "localOff", {
     AU, SF: { place: () => ({ radius_km: 469.7 }) }, dispR: () => 0.4, axes: (p, k) => p.map((x) => x * k), V: () => [0, 0, 0],
   });
   const r = 469.7 / AU, h = 0.00001, at = (t) => off([r * t, 0, 0], "ceres")[0];
@@ -87,8 +82,7 @@ for (const page of ["site", "flight"]) test(`${page}: the local scale has no sha
 });
 
 test("main map draws an arrival hold at the destination", () => {
-  const html = source("site"), start = html.indexOf("function shipC("), end = html.indexOf("function routeOf(", start);
-  const result = runInNewContext(html.slice(start, end) + "\nshipC(rp, 11, 20).v;", {
+  const result = evalSlice(source("site"), "function shipC(", "function routeOf(", "shipC(rp, 11, 20).v", {
     rp: { at: () => ({ phase: "orbit", f: 1, leg: { from: "earth", to: "iss" } }) }, marker: (id) => ({ clone: () => id }),
   });
   assert.equal(result, "iss");

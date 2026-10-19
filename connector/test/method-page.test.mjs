@@ -131,7 +131,7 @@ test("the page quotes the ephemeris and does not treat 1361 as an engine constan
   assert.match(ephemPy, /DE440/);
   assert.match(html, /DE440 values \(Park et al\. 2021\)/);
   const simulated = E.PLACES.filter((p) => p.real === false).map((p) => p.name);
-  assert.ok(simulated.length > 0);
+  assert.ok(simulated.length > 0, "the engine lists no simulated places, so the page check below would pass empty");
   for (const name of simulated) assert.ok(html.includes(name), name);
 });
 
@@ -191,7 +191,7 @@ test("the page states the ride record and the episode export", () => {
   assert.match(episodeSrc, /if \(!world\) return null/);
   const rides = readFileSync(new URL("world/engine/sol-rides.js", repo), "utf8");
   const free = rides.match(/\(ctx\.plan_calls \|\| 0\) - (\d+)/);
-  assert.ok(free);
+  assert.ok(free, "sol-rides.js no longer states the free plan count the page quotes");
   assert.ok(html.includes(free[1] + " free plans"));
 });
 
