@@ -47,7 +47,6 @@ picks.forEach((ride, j) => {
   const F = ride.flown, ev = [];
   ev.push([F.pickup_jd, "boarded at " + L.PLACE[h.from].name, { moment: "boarding", where: h.from }]);
   ev.push([F.ride_depart_jd, "left " + L.PLACE[h.from].name, { moment: "departure", where: h.from }]);
-  if (h.kind === "long") ev.push([(F.ride_depart_jd + F.arrive_jd) / 2, "cruise", { moment: "cruise", where: h.to }]);
   for (const inc of F.incidents) ev.push([inc.at_jd, inc.kind.replace(/_/g, " ") + " at " + L.PLACE[inc.where].name + " (" + inc.leg + " leg)", { incident: inc.kind, leg: inc.leg, where: inc.where }]);
   const late = (F.delay_hours || 0) > 0.05;
   ev.push([F.arrive_jd, "landed at " + L.PLACE[last.to].name + (late ? ", later than planned" : ""), { moment: late ? "arrival_late" : "arrival", where: last.to }]);

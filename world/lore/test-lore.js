@@ -96,6 +96,38 @@ ok("place notes are tagged by the engine's real flag; facts use only engine numb
   assert.strictEqual(L.placeFact(P["mars-base"], "Mars"), null);
 });
 
+ok("the booking desk's row and the engine's row get the same story", () => {
+  for (const h of seasonal.slice(0, 200)) {
+    const desk = { id: h.id, rider: h.rider + " (simulated)", party: h.party, from: h.from, to: h.to, kind: h.kind === "long" ? "long haul" : h.kind };
+    assert.deepStrictEqual(L.booking(desk), L.booking(h), h.id);
+  }
+});
+
+ok("flight moments speak for whoever is aboard, waiting or arriving, and only for recorded events", () => {
+  const A = { id: "a", lead: "Noor", party: 1 }, B = { id: "b", lead: "Ren", party: 2 };
+  // Parked at Orbital Depot; pick up A at the ISS; pick up B at Mars Base; A gets off at Phobos, B at Ceres Port.
+  const legs = [["pickup", "orbital-depot", "iss", 1, 2], ["ride", "iss", "mars-base", 3, 90], ["ride", "mars-base", "phobos", 91, 92], ["ride", "phobos", "ceres-port", 93, 300]]
+    .map(([kind, from, to, dep, arr]) => ({ kind, from, to, dep, arr }));
+  const stops = [{ at: "orbital-depot", board: [], alight: [] }, { at: "iss", board: [A], alight: [] }, { at: "mars-base", board: [B], alight: [] },
+    { at: "phobos", board: [], alight: [A] }, { at: "ceres-port", board: [], alight: [B] }];
+  const events = [{ kind: "depart", leg: 0 }, { kind: "incident", cause: "pad_busy", jd: 2, where: "ISS" }, { kind: "arrive", leg: 0 }, { kind: "depart", leg: 1 },
+    { kind: "incident", cause: "correction_burn", jd: 3, where: "ISS" }, { kind: "arrive", leg: 1 }, { kind: "checkpoint", cause: "pad_closed", jd: 92, where: "phobos" },
+    { kind: "arrive", leg: 2 }, { kind: "arrive", leg: 3 }, { kind: "incident", cause: "checkpoint_cap", jd: 200, where: "Ceres Port" }];
+  const f = { key: "run_test", late: true, legs, stops, events }, m = L.flight(f);
+  assert.deepStrictEqual(m, L.flight(JSON.parse(JSON.stringify(f))), "deterministic");
+  assert.deepStrictEqual(m.map((x) => x && x.moment),
+    [null, "waiting", "boarding", "departure", "correction", "boarding_group", "hold", "arrival", "arrival_late", null]);
+  assert(m[1].text.includes("Noor") && m[1].text.includes("ISS"), "a pickup-leg hold is Noor waiting at the ISS: " + m[1].text);
+  assert(m[5].text.includes("Ren"), "Ren's group boards at Mars Base: " + m[5].text);
+  assert(m[7].text.includes("Noor") && m[8].text.includes("Ren"), "each arrival names who gets off there");
+  for (const x of m.filter(Boolean)) { assert.strictEqual(x.tag, "Fictional"); assert(!/\{\w+\}|\d/.test(x.text), x.text); }
+  // A live flight held before it ever left: the passenger is waiting at the first planned stop, not where the ship is parked.
+  const held = L.flight({ key: "run_hold", legs: [{ kind: "pickup", from: "orbital-depot", to: "orbital-depot", dep: 1, arr: 1, idle: true }],
+    stops: [{ at: "orbital-depot", board: [], alight: [] }, { at: "iss", board: [A], alight: [] }], events: [{ kind: "checkpoint", cause: "launch_hold", jd: 1, where: "orbital-depot" }] });
+  assert.strictEqual(held[0].moment, "waiting"); assert(held[0].text.includes("ISS"), held[0].text);
+  assert.strictEqual(L.idOf("Moon"), "moon"); assert.strictEqual(L.idOf("Mars Base"), "mars-base"); assert.strictEqual(L.idOf("iss"), "iss");
+});
+
 ok("the engine bundle never includes lore, so lore edits cannot move the engine sha", () => {
   const bundle = fs.readFileSync(path.join(__dirname, "../engine/sol-page.js"), "utf8");
   assert(!bundle.includes("SOL_LORE") && !bundle.includes(L.VERSION));

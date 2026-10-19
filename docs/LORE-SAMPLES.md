@@ -154,8 +154,7 @@ Each line is a recorded event from the fixture flight, in time order, with the m
 
 - *boarded at Ceres Port*: Ana is the first aboard and the last to stop looking out.
 - *left Ceres Port*: A soft chime, a long push, and Ceres Port begins to shrink.
-- *cruise*: Ana starts a letter home and keeps adding to it.
-- *dust storm at Mars Base (ride leg)*: Ana uses the hold to finish a book.
+- *dust storm at Mars Base (ride leg)*: The ship waits its turn above Mars Base. Someone starts a card game.
 - *landed at Mars Base, later than planned*: Ana reaches Mars Base later than promised and is gracious about it, mostly.
 
 **ISS crew change**, SF-02, fixture seed 2
@@ -177,7 +176,6 @@ Each line is a recorded event from the fixture flight, in time order, with the m
 
 - *boarded at Ceres Port*: The cabin lights warm as Ana settles in.
 - *left Ceres Port*: Ceres Port falls away below the window.
-- *cruise*: Ana starts a letter home and keeps adding to it.
 - *pad busy at Mars Base (ride leg)*: Ana uses the hold to finish a book.
 - *landed at Mars Base, later than planned*: Late into Mars Base. Ana has already forgiven the ship and is working on the schedule.
 
@@ -187,7 +185,6 @@ Each line is a recorded event from the fixture flight, in time order, with the m
 - *boarded at Ceres Port*: Ana is the first aboard and the last to stop looking out.
 - *left Ceres Port*: Ceres Port falls away below the window.
 - *correction burn at Ceres Port (ride leg)*: The engines run long. Cups stay in their holders.
-- *cruise*: On the long cruise, Ana learns the names of the stars in the window.
 - *landed at Mars Base, later than planned*: Ana reaches Mars Base later than promised and is gracious about it, mostly.
 
 **Stranded at Titan**, SF-07, fixture seed 10
@@ -196,7 +193,6 @@ Each line is a recorded event from the fixture flight, in time order, with the m
 - *titan haze at Titan (ride leg)*: Sam uses the hold to finish a book.
 - *left Titan*: A soft chime, a long push, and Titan begins to shrink.
 - *correction burn at Titan (ride leg)*: A longer push than planned. Sam feels it in the seat and grins.
-- *cruise*: Sam starts a letter home and keeps adding to it.
 - *landed at Earth, later than planned*: Sam reaches Earth later than promised and is gracious about it, mostly.
 
 ## Real facts from engine numbers

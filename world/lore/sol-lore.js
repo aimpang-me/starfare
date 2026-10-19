@@ -40,6 +40,13 @@
     "titan-dock": { name: "Titan Dock", real: false }
   };
   function placeName(id) { return PLACE[id] ? PLACE[id].name : id; }
+  // A place id from an id or a display name: run logs name their incident places ("Mars Base", "Moon").
+  function idOf(x) {
+    if (PLACE[x]) return x;
+    var bare = String(x || "").replace(/^the /i, "").toLowerCase();
+    for (var id in PLACE) if (PLACE[id].name.replace(/^the /, "").toLowerCase() === bare) return id;
+    return x;
+  }
   // "at Mars Base", "on Earth", "around Saturn": planets and the Moon take "on", gas giants "around", the rest "at".
   var ON = { earth: 1, mars: 1, moon: 1 }, AROUND = { jupiter: 1, saturn: 1 };
   function placeAt(id) { return (ON[id] ? "on " : AROUND[id] ? "around " : "at ") + placeName(id); }
@@ -258,6 +265,8 @@
    *  Returns { tag: "Fictional", version, headline, story, overheard|null, place_note, source }. */
   function booking(b) {
     var r = parseRider(b.rider), party = b.party | 0 || 1, k = VERSION + "|" + b.id + "|";
+    // The booking desk says "long haul" where the engine says "long".
+    var kind = /^long/.test(b.kind) ? "long" : b.kind;
     var v = { lead: r.lead, from: placeName(b.from), to: placeName(b.to), at_from: placeAt(b.from), at_to: placeAt(b.to), party: party };
     var out = { tag: "Fictional", version: VERSION, headline: null, story: null, overheard: null,
       place_note: PLACE_NOTE[b.to] ? { tag: PLACE[b.to] && PLACE[b.to].real ? "Real" : "Fictional", text: PLACE_NOTE[b.to] } : null, source: null };
@@ -267,7 +276,7 @@
       out.headline = c[0]; out.story = sentence(fill(c[1], v)); out.source = "crew";
       return out;
     }
-    var fits = FEATURES.filter(function (f) { return f.when({ from: b.from, to: b.to, party: party, kind: b.kind }); });
+    var fits = FEATURES.filter(function (f) { return f.when({ from: b.from, to: b.to, party: party, kind: kind }); });
     if (fits.length && unit(k + "feature?") < 0.2) {
       var f = pick(fits, k + "feature");
       out.headline = f.headline; out.story = sentence(fill(f.story, v)); out.source = "feature:" + f.id;
@@ -288,18 +297,58 @@
   }
 
   /** A flight-log moment for an event the run log recorded. b: the booking row. ev: { moment }, { incident: kind } or
-   *  { checkpoint: kind }, plus leg ("pickup" or "ride", from the log) and where (a place id).
+   *  { checkpoint: kind }, plus leg ("pickup" or "ride", from the log) and where (a place id or name).
    *  key: something unique to this run and event, e.g. run_id + "|" + index.
    *  Returns { tag: "Fictional", version, moment, text } or null when the event has no moment. */
   function moment(b, ev, key) {
     var name = ev.moment || INCIDENT[ev.incident] || CHECKPOINT[ev.checkpoint];
-    // On a pickup leg the passengers are not aboard yet: they wait at the dock while the ship is held.
-    if (ev.leg === "pickup" && name && name.indexOf("arrival") !== 0 && name !== "boarding" && name !== "departure") name = "waiting";
+    // On a pickup leg the passengers are not aboard yet: whatever holds the ship, they wait at the dock until it comes.
+    if (ev.leg === "pickup" && name && name !== "boarding") name = "waiting";
     if (name === "boarding" && (b.party | 0) > 1) name = "boarding_group";
     if (!name || !MOMENT[name]) return null;
     var r = parseRider(b.rider);
-    var text = sentence(fill(pick(MOMENT[name], VERSION + "|" + key + "|" + name), { lead: r.lead, where: placeName(ev.where) }));
+    var text = sentence(fill(pick(MOMENT[name], VERSION + "|" + key + "|" + name), { lead: r.lead, where: placeName(idOf(ev.where)) }));
     return { tag: "Fictional", version: VERSION, moment: name, text: text };
+  }
+
+  /** Moments for one recorded flight, one entry (a moment or null) per event, in the order given.
+   *  f: { key: the run id, late: true when the last arrival was later than planned,
+   *       legs: [{ kind: "pickup" | "ride", from, to, dep, arr, idle }] as flown (jd days),
+   *       stops: [{ at, board: [booking], alight: [booking] }], stop i being where legs[i - 1] ends,
+   *       events: [{ kind: "depart" | "arrive", leg: i } | { kind: "checkpoint" | "incident", cause, jd, where }] }.
+   *  A booking is { id, rider or lead, party }. Departures and arrivals speak for whoever boards, rides or alights;
+   *  a hold speaks for whoever is aboard, or for the passengers waiting at the next stop when nobody is. */
+  function flight(f) {
+    var legs = f.legs || [], stops = f.stops || [], last = stops.length - 1;
+    function who(b) { return { id: b.id, rider: b.rider || b.lead, party: b.party }; }
+    function aboard(i) { // bookings in the cabin on leg i: boarded at stop i or earlier, alighting after it
+      var on = [];
+      for (var s = 0; s <= i && s < stops.length; s++) (stops[s].board || []).forEach(function (b) {
+        for (var t = s + 1; t <= i; t++) if ((stops[t].alight || []).indexOf(b) >= 0) return;
+        on.push(b);
+      });
+      return on;
+    }
+    function legAt(jd) {
+      for (var i = 0; i < legs.length; i++) if (!legs[i].idle && jd <= legs[i].arr + 1 / 1440) return i;
+      return legs.length - 1;
+    }
+    return (f.events || []).map(function (e, n) {
+      var key = f.key + "|" + n + "|" + e.kind;
+      if (e.kind === "depart" || e.kind === "arrive") {
+        var L = legs[e.leg]; if (!L || L.idle) return null;
+        if (e.kind === "depart") { var on = aboard(e.leg); return on.length ? moment(who(on[0]), { moment: "departure", where: L.from }, key) : null; }
+        var S = stops[e.leg + 1] || {}, off = S.alight || [], up = S.board || [];
+        if (off.length) return moment(who(off[0]), { moment: f.late && e.leg + 1 === last ? "arrival_late" : "arrival", where: L.to }, key);
+        return up.length ? moment(who(up[0]), { moment: "boarding", where: L.to }, key) : null;
+      }
+      var i = legAt(e.jd), ride = i >= 0 ? aboard(i) : [], S2 = i >= 0 ? stops[i + 1] : null, next = S2 ? S2.board || [] : [];
+      var ev = e.kind === "checkpoint" ? { checkpoint: e.cause } : { incident: e.cause };
+      if (ride.length) { ev.leg = "ride"; ev.where = e.where; return moment(who(ride[0]), ev, key); }
+      // Nobody aboard yet: the passengers who board at the next stop are waiting there.
+      if (next.length) { ev.leg = "pickup"; ev.where = S2.at; return moment(who(next[0]), ev, key); }
+      return null;
+    });
   }
 
   /** A short place line: { tag: "Real" | "Fictional", text }. */
@@ -322,7 +371,7 @@
     return null;
   }
 
-  return { VERSION: VERSION, booking: booking, moment: moment, placeNote: placeNote, placeFact: placeFact, parseRider: parseRider,
+  return { VERSION: VERSION, booking: booking, moment: moment, flight: flight, idOf: idOf, placeNote: placeNote, placeFact: placeFact, parseRider: parseRider,
     PLACE: PLACE, MOMENTS: Object.keys(MOMENT), _company: COMPANY, INCIDENT: INCIDENT, CHECKPOINT: CHECKPOINT,
     counts: function () { var n = MOTIVE_ANY.length + MOTIVE_STATION.length + MOTIVE_ORBIT.length; Object.keys(MOTIVE_BY_JOB).forEach(function (j) { n += MOTIVE_BY_JOB[j].length; });
       return { motives: n, details: DETAIL.length, overheard: OVERHEARD.length, features: FEATURES.length, crew: CREW.length, catalog: Object.keys(CATALOG).length,
