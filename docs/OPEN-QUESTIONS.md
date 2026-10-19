@@ -5,7 +5,7 @@
 Decisions only Alvin can make. Ask them one at a time, with the options below and the recommendation marked; carry on with the recommended option where the work allows, and record each answer here (move it to "Answered" with the date).
 
 ## Waiting
-None waiting. Everything asked on 2026-10-16 is under Answered.
+- Station markers on the maps (docs/LINES-PLAN.md step 5): (a, recommended) a screen-space dot with a thin ring, white for real places and amber for fictional ones, with route stops keeping their diamond; (b) a small filled diamond, with route stops given a different marker.
 
 ## Answered
 - Name: Starfare (2026-10-16).
@@ -27,3 +27,4 @@ None waiting. Everything asked on 2026-10-16 is under Answered.
 - Repo visibility (2026-10-16): make aimpang-me/starfare private until launch. Done 2026-10-16.
 - Clean-up (2026-10-16): delete the old `sol-connector` Worker, the duplicate repo `aimpang/starfare` and `Documents\starfare-mine`. Chosen over waiting and over deleting only the Worker.
 - Old scores (2026-10-16): let them go with the `sol-connector` Worker; no copy and no "old rules" table.
+- Orbit rings (2026-10-19): fade them and feather their edges. Each orbit and moon ring is full brightness just behind its body and 40% just ahead, with soft edges and a gap around the body. Chosen over uniform rings with only the gap.

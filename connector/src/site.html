@@ -644,6 +644,7 @@ p{text-wrap:pretty}
 <script src="/assets/planet-effects.js"></script>
 <script src="/assets/flight-view.js"></script>
 <script src="/assets/solar-map.js"></script>
+<script src="/assets/sol-lines.js"></script>
 <script src="/assets/vendor/gsap-3.15.0.min.js"></script>
 <script src="/assets/mission-control.js"></script>
 <script>
@@ -1143,6 +1144,7 @@ function onResize() {
   if (!GL) return;
   var host = $("#mapbox"), w = host.clientWidth || 1, h = host.clientHeight || 1;
   GL.r.setSize(w, h); if (GL.post) GL.post.setSize(w, h);
+  SolLines.resize(GL.r);
   GW = w; GH = h; GUT = null;
   if (FOCKEY && FOCI[FOCKEY] && !FOLLOW) { cancelFly(); RIG.dist = focusDistance(FOCI[FOCKEY], FOCKEY); }
   updateProjection();
@@ -1529,9 +1531,16 @@ function renderPlanetNav() {
 }
 
 /* ---------- scene objects ---------- */
-var BODIES = [], DETAIL_SYS = null, SKY, SUN, GRID, ORB, MOR = [], LBL, STOPS = {}, PARK_R, PARK_B, PARK_SHIPS = {}, routesDirty = true, lastRoute = 0, lastFlown = 0, lastHud = 0;
+var BODIES = [], BID = {}, DETAIL_SYS = null, SKY, SUN, GRID, ORB, MOR = [], LBL, STOPS = {}, PARK_R, PARK_B, PARK_SHIPS = {}, routesDirty = true, lastRoute = 0, lastFlown = 0, lastHud = 0;
 var ATMO = { earth: "rgba(120,180,255,.55)", venus: "rgba(255,220,160,.4)", mars: "rgba(255,140,90,.35)", jupiter: "rgba(255,210,170,.3)", saturn: "rgba(255,230,180,.28)", uranus: "rgba(150,230,240,.35)", neptune: "rgba(110,150,255,.38)", titan: "rgba(255,190,110,.45)" };
 var RINGS = [0.5, 1, 2, 5, 10, 20, 30];
+// A moon's ring is the path it flew over its last period, so the seam sits under the moon. The Moon's real orbit
+// precesses, so a ring sampled once would leave it behind; rings are resampled every few sky days.
+function moonRing(m, jd) {
+  m.epoch = jd;
+  SolLines.setPoints(m.line, SF.orbit(m.id, jd - m.period, 120).map(function (rel) { return localOff(rel, m.par); }));
+}
+function aimRing(line, id, centre) { var b = BID[id]; if (b) SolLines.follow(line, b.obj.position, centre, b.obj.visible ? b.obj.scale.x / pxw() : 0); }
 function buildScene(J0) {
   SKY = stars(); scene.add(SKY);
   scene.add(new THREE.AmbientLight(0xffffff, 0.28));
@@ -1541,22 +1550,22 @@ function buildScene(J0) {
   GRID = new THREE.Group();
   RINGS.forEach(function (r) {
     var pts = []; for (var k = 0; k <= 200; k++) { var a = k / 200 * TAU; pts.push(V(Math.cos(a) * rs(r), 0, Math.sin(a) * rs(r))); }
-    GRID.add(lineOf(pts, 0x5cc8ff, r === 1 ? 0.22 : 0.11));
+    GRID.add(SolLines.line(pts, { color: 0x5cc8ff, opacity: r === 1 ? 0.16 : 0.08, width: 1 }));
   });
-  for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; GRID.add(lineOf([V(Math.cos(a) * rs(0.12), 0, Math.sin(a) * rs(0.12)), V(Math.cos(a) * rs(34), 0, Math.sin(a) * rs(34))], 0x5cc8ff, 0.063)); }
+  for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; GRID.add(SolLines.line([V(Math.cos(a) * rs(0.12), 0, Math.sin(a) * rs(0.12)), V(Math.cos(a) * rs(34), 0, Math.sin(a) * rs(34))], { color: 0x5cc8ff, opacity: 0.045, width: 1 })); }
   scene.add(GRID);
   ORB = new THREE.Group();
   PLACES.filter(function (p) {
     return p.parent === "sun" && (p.kind === "planet" || p.kind === "small");
   }).forEach(function (p) {
-    try { var pts = SF.orbit(p.id, J0, 360).map(S), color = new THREE.Color(0xada79c).lerp(new THREE.Color(SF.color(p.id)), p.id === "earth" ? .6 : .16), o = lineOf(pts, color, p.kind === "planet" ? 0.42 : 0.17); o.userData.baseOpacity = o.material.opacity; ORB.add(o); } catch (e) { /* no orbit */ }
+    try { var pts = SF.orbit(p.id, J0, 360).map(S), color = new THREE.Color(0xada79c).lerp(new THREE.Color(SF.color(p.id)), p.id === "earth" ? .6 : .16), o = SolLines.line(pts, { color: color, opacity: p.kind === "planet" ? 0.42 : 0.17, width: 1.25, ahead: SolLines.AHEAD }); o.userData = { id: p.id, baseOpacity: o.material.uniforms.opacity.value }; ORB.add(o); } catch (e) { /* no orbit */ }
   });
   scene.add(ORB);
   PLACES.forEach(function (p) {
     if (p.kind === "moon") {
       try {
-        var pts = SF.orbit(p.id, J0, 120).map(function (rel) { return localOff(rel, p.parent); });
-        if (pts.length > 1) { var g = new THREE.Group(); g.add(lineOf(pts, new THREE.Color(SF.color(p.id)), 0.27)); scene.add(g); MOR.push({ g: g, par: p.parent }); }
+        var m = { g: new THREE.Group(), id: p.id, par: p.parent, period: p.period_days, line: SolLines.line([], { color: SF.color(p.id), opacity: 0.27, width: 1.25, ahead: SolLines.AHEAD }) };
+        m.line.userData.id = p.id; moonRing(m, J0); m.g.add(m.line); scene.add(m.g); MOR.push(m);
       } catch (e) { /* no orbit */ }
     }
     var o, r, min;
@@ -1565,7 +1574,7 @@ function buildScene(J0) {
     else { o = new THREE.Mesh(GEO.oc || (GEO.oc = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: 0x5cc8ff, wireframe: true, transparent: true, opacity: 0.85 })); r = 0.06; min = 3.2; }
     if (ATMO[p.id] && !(window.SolArt && SolArt.hasRim(p.id))) o.add(atmo(ATMO[p.id], 1));
     scene.add(o);
-    BODIES.push({ id: p.id, kind: p.kind, obj: o, r: r, min: min });
+    BODIES.push(BID[p.id] = { id: p.id, kind: p.kind, obj: o, r: r, min: min });
     if (p.kind === "station" || p.kind === "moon") {
       var period = p.period_days;
       if (!period) { try { var st = relRadius(p); period = st; } catch (e) { period = 1; } }
@@ -1683,8 +1692,13 @@ function draw(dt, t) {
     if (b.obj.visible) b.obj.scale.setScalar(Math.max(b.r, pxw(v) * b.min));
     if (b.obj.visible && window.SolArt && SolArt.updatePlanet) SolArt.updatePlanet(b.obj, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: b.obj.scale.x / pxw(), quality: SolArt.quality().maps });
   }
-  MOR.forEach(function (m) { m.g.position.copy(marker(m.par, MAPJD)); m.g.visible = LAY.moon && RIG.dist < 45 && (!DETAIL_SYS || SF.system(m.par) === DETAIL_SYS); });
-  ORB.children.forEach(function (o) { o.material.opacity = o.userData.baseOpacity * (DETAIL_SYS ? .3 : 1); });
+  MOR.forEach(function (m) {
+    m.g.position.copy(marker(m.par, MAPJD)); m.g.visible = LAY.moon && RIG.dist < 45 && (!DETAIL_SYS || SF.system(m.par) === DETAIL_SYS);
+    if (!m.g.visible) return;
+    if (SolLines.stale(m.epoch, MAPJD)) moonRing(m, MAPJD);
+    aimRing(m.line, m.id, m.g.position);
+  });
+  ORB.children.forEach(function (o) { o.material.uniforms.opacity.value = o.userData.baseOpacity * (DETAIL_SYS ? .3 : 1); aimRing(o, o.userData.id, ORB.position); });
   GRID.visible = LAY.ring; ORB.visible = LAY.orb;
   // routes
   if (routesDirty || t - lastRoute > 200) { lastRoute = t; rebuildRoutes(); }

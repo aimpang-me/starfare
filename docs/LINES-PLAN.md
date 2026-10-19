@@ -1,6 +1,6 @@
 # Lines plan: orbits, routes and station markers
 
-Status: proposed, 2026-10-18. Covers the home map (`connector/src/site.html`) first, then the flight page (`connector/src/flight.html`).
+Status: steps 1 and 2 built 2026-10-19; steps 3 to 6 proposed. Covers the home map (`connector/src/site.html`) first, then the flight page (`connector/src/flight.html`).
 
 ## What Alvin reported
 
@@ -80,8 +80,8 @@ The pure parts get unit tests the way `solar-map.js` does. These are the ring sa
 
 Each step ends in a check. Alvin eyeballs each one in his own browser before the next starts.
 
-1. **Resample moon rings around the map time.** Sample each ring over half a period either side of `MAPJD`, so the seam sits opposite the moon. Resample when `MAPJD` moves more than 5 sky days from the ring's epoch (at 7 days the Moon's drift is still 0.0%). This costs 120 position calls per ring per 5 seconds. Check: the drift probe reads at most 0.5% at every time out to 3000 sky days.
-2. **Build `sol-lines.js` and move orbits and grid onto it.** Each orbit line and moon ring gets a gap around its own body: alpha 0 out to the disc radius plus 2 px, ramping to full by the disc radius plus 10 px. A ring sampled around `MAPJD` gets a gentle trail fade, full behind the body and 40% ahead. Widths are 1 px for the grid, 1.25 px for orbits and 1.5 px for routes, at every DPR. Check: the probe still reads at most 1 px from each body to its line, and the line's alpha is 0 inside the gap.
+1. **Resample moon rings around the map time.** Sample each ring over the period that ends at `MAPJD`, so the seam, where the Moon's precessing orbit does not quite close, sits under the moon inside its gap. Resample when `MAPJD` moves more than 5 sky days from the ring's epoch (at 7 days the Moon's drift is still 0.0%). This costs 120 position calls per ring per 5 seconds. Check: the drift probe reads at most 0.5% at every time out to 3000 sky days. Built 2026-10-19: the Moon reads at most 0.35% out to 3000 sky days, down from 7.9%.
+2. **Build `sol-lines.js` and move orbits and grid onto it.** Each orbit line and moon ring gets a gap around its own body: alpha 0 out to the disc radius plus 2 px, ramping to full by the disc radius plus 10 px. Every orbit and moon ring gets a trail fade, full behind the body and 40% ahead, computed per pixel from the body's position each frame. Edges are feathered over 1 CSS px. Widths are 1 px for the grid, 1.25 px for orbits and 1.5 px for routes, at every DPR. Check: the probe still reads at most 1 px from each body to its line, and the line's alpha is 0 inside the gap. Built 2026-10-19: every body is within 0.43 px of its line, every line reads alpha 0 over its body, and the fade reads 0.38 to 0.48 ahead over behind.
 3. **Move routes onto it.** Build one geometry per flight when its plan changes. Split flown from planned with `now = F.jd` in the shader. Drive the end corrections and the anchor with per-leg uniforms every frame. Anchor dashes to sky time, with the period snapped to zoom octaves. Then delete `rebuildRoutes`'s 200 ms timer, `updateFlown`, `setLine`, `DASHED` and the per-frame dash update. Check: the jitter probe finds no frame where a route vertex is still and then jumps more than 1.5 px, and the trail tip is within 1 px of the ship.
 4. **Set a line budget by zoom.** Grid rings and spokes fade out above a set zoom into one system. Moon rings fade in between 12 px and 40 px ring radius. Unselected flights show a short trail behind the ship; only the selected flight shows its whole route. The table lives in `sol-lines.js` with a unit test. Check: count the lines drawn at the whole-system, Earth focus and Jupiter focus views before and after.
 5. **Replace the station wireframes.** Use a screen-space dot with a thin ring, about 8 px, white for real places and amber for fictional ones, as the flight page already colours them. Stops on a selected route keep their diamond, so the two stay distinct. Selection and hover add an outer ring. Check: no `OctahedronGeometry` in either scene.
@@ -89,11 +89,12 @@ Each step ends in a check. Alvin eyeballs each one in his own browser before the
 
 ## Verification lever
 
-Commit the probes as `tools/media/probe-lines.mjs`, next to `capture.mjs`. One run against `wrangler dev` reports:
+`tools/media/probe-lines.mjs`, next to `capture.mjs`, runs against `wrangler dev` (`node probe-lines.mjs http://127.0.0.1:<port>` from `tools/media`). It reports:
 
 - the distance from each body to its line at the whole-system view and four focus views;
+- each line's alpha over its body, at its far side, and just ahead over just behind its body, read back from an offscreen render of that line alone;
 - the moon ring drift out to 3000 sky days;
-- frame-to-frame route and trail continuity, and the gap from the trail tip to the ship.
+- frame-to-frame route and trail continuity, and the gap from the trail tip to the ship (to add with step 3).
 
 Each step's check is a threshold on this report, so a reviewer can rerun it.
 
@@ -105,5 +106,5 @@ Each step's check is a threshold on this report, so a reviewer can rerun it.
 
 ## Decisions for Alvin
 
-- The trail fade on orbit rings in step 2 is a look change. The alternative is uniform rings with only the gap around the body.
+- Decided 2026-10-19: orbit rings fade and their edges are feathered (step 2). Uniform rings with only the gap were the alternative.
 - The station marker in step 5 is a proposal. The alternative is a small filled diamond, which would then need a different stop marker.
