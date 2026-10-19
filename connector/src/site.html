@@ -790,12 +790,13 @@ p{text-wrap:pretty}
         if (jd <= L.arr) {
           var f = (jd - L.dep) / Math.max(1e-9, L.orb - L.dep);
           if (!L.arc || !L.arc.arc_au || !L.arc.arc_au.length) { var a0 = pos(L.from, L.dep), a1 = pos(L.to, L.orb); return { p: lerp(a0, a1, f), leg: L, i: i, f: f, phase: "flight" }; }
-          var A = L.arc.arc_au, k = f * (A.length - 1), j = Math.min(A.length - 2, Math.floor(k)), p = lerp(A[j], A[j + 1], k - j);
-          if (L.sys) {
+          var A = L.arc.arc_au, k = f * (A.length - 1), p;
+          if (!L.sys) p = spline(function (j) { return A[j]; }, A.length, k);
+          else {
             // Interpolate in the parent's frame. Interpolating heliocentric points first adds the parent's
             // curved solar motion to a tiny local hop, producing a kink at every stored waypoint.
             var step = (L.arc.arr_jd - L.arc.dep_jd) / (A.length - 1);
-            p = add(lerp(sub(A[j], pos(L.sys, L.arc.dep_jd + j * step)), sub(A[j + 1], pos(L.sys, L.arc.dep_jd + (j + 1) * step)), k - j), pos(L.sys, jd));
+            p = add(spline(function (j) { return sub(A[j], pos(L.sys, L.arc.dep_jd + j * step)); }, A.length, k), pos(L.sys, jd));
           }
           // Blend out the end errors so the car leaves exactly from, and lands exactly on, the place at the flown times.
           var e0 = ends(L), w0 = 1 - f;
@@ -826,6 +827,12 @@ p{text-wrap:pretty}
   function sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
   function add(a, b) { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
   function lerp(a, b, f) { return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]; }
+  // Catmull-Rom through n points P(0)..P(n-1) at k in [0, n-1]: the path and the nose turn smoothly at each stored
+  // sample instead of kinking there. It still passes through every sample.
+  function spline(P, n, k) {
+    var j = Math.min(n - 2, Math.floor(k)), t = k - j, a = P(Math.max(0, j - 1)), b = P(j), c = P(j + 1), d = P(Math.min(n - 1, j + 2));
+    return b.map(function (_, x) { return b[x] + 0.5 * t * (c[x] - a[x] + t * (2 * a[x] - 5 * b[x] + 4 * c[x] - d[x] + t * (3 * (b[x] - c[x]) + d[x] - a[x]))); });
+  }
 
   var api = {
     AU: AU, SITE: SITE, RIDES: RIDES, SKY: SKY, SEASON_END: SEASON_END,

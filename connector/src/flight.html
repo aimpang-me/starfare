@@ -384,29 +384,39 @@ var SF = (function () {
     var end = Math.max(lastArr, hold || 0, plan.length ? plan[plan.length - 1].arr : 0);
     var start = legs[0].dep - 0.25 * (lastArr - legs[0].dep) / Math.max(1, legs.length);
     start = Math.min(start, legs[0].dep - 1 / 24);
+    var keys = [start, end].concat(hold != null ? [hold] : [], legs.concat(plan).flatMap(function (L) { return [L.dep, L.orb, L.arr]; }))
+      .filter(Number.isFinite).sort(function (a, b) { return a - b; });
+    // Moons and stations as the replay draws them: true at every key, slowed between (StarfareView.slowOrbit).
+    function seen(id, jd) {
+      var P = PID[id], V = window.StarfareView;
+      if (!V || !P || !P.parent || P.parent === "sun") return pos(id, jd);
+      var o = V.slowOrbit(function (t) { var a = E.placeState(id, t), b = E.placeState(P.parent, t); return { r: sub(a.r, b.r), v: sub(a.v, b.v) }; }, keys, jd);
+      return add(seen(P.parent, jd), [o[0] / AU, o[1] / AU, o[2] / AU]);
+    }
     function ends(L) { // the arc's start and end offsets from the real places at the flown departure and arrival
       if (L.err) return L.err;
       var A = L.arc.arc_au, a0 = A[0], a1 = A[A.length - 1];
       if (L.sys) { var d0 = sub(pos(L.sys, L.dep), pos(L.sys, L.arc.dep_jd)), d1 = sub(pos(L.sys, L.orb), pos(L.sys, L.arc.arr_jd)); a0 = add(a0, d0); a1 = add(a1, d1); }
-      return (L.err = [sub(pos(L.from, L.dep), a0), sub(pos(L.to, L.orb), a1)]);
+      return (L.err = [sub(seen(L.from, L.dep), a0), sub(seen(L.to, L.orb), a1)]);
     }
     // Phases: parked, flight, orbit (at the destination, before landing), dwell (between legs), holding (a checkpoint
     // waits on the bot), arrived. f >= 1 means the Starseeker is at the leg's destination.
     function at(jd) {
       var final = legs[legs.length - 1];
-      if (!final.idle && !final.open && jd >= final.arr) return { p: pos(final.to, jd), leg: final, i: legs.length - 1, f: 1, phase: hold != null ? "holding" : "arrived" };
+      if (!final.idle && !final.open && jd >= final.arr) return { p: seen(final.to, jd), leg: final, i: legs.length - 1, f: 1, phase: hold != null ? "holding" : "arrived" };
       for (var i = 0; i < legs.length; i++) {
         var L = legs[i];
-        if (L.idle) return { p: pos(L.from, jd), leg: L, i: i, f: 0, phase: "holding" };
-        if (jd < L.dep) return { p: pos(L.from, jd), leg: L, i: i, f: 0, phase: i ? "dwell" : "parked" };
-        if (jd <= L.arr && jd > L.orb) return { p: pos(L.to, jd), leg: L, i: i, f: 1, phase: L.open ? "holding" : "orbit" };
+        if (L.idle) return { p: seen(L.from, jd), leg: L, i: i, f: 0, phase: "holding" };
+        if (jd < L.dep) return { p: seen(L.from, jd), leg: L, i: i, f: 0, phase: i ? "dwell" : "parked" };
+        if (jd <= L.arr && jd > L.orb) return { p: seen(L.to, jd), leg: L, i: i, f: 1, phase: L.open ? "holding" : "orbit" };
         if (jd <= L.orb) {
           var f = (jd - L.dep) / Math.max(1e-9, L.orb - L.dep);
-          if (!L.arc || !L.arc.arc_au || !L.arc.arc_au.length) { var a0 = pos(L.from, L.dep), a1 = pos(L.to, L.orb); return { p: lerp(a0, a1, f), leg: L, i: i, f: f, phase: "flight" }; }
-          var A = L.arc.arc_au, k = f * (A.length - 1), j = Math.min(A.length - 2, Math.floor(k)), p = lerp(A[j], A[j + 1], k - j);
-          if (L.sys) {
+          if (!L.arc || !L.arc.arc_au || !L.arc.arc_au.length) { var a0 = seen(L.from, L.dep), a1 = seen(L.to, L.orb); return { p: lerp(a0, a1, f), leg: L, i: i, f: f, phase: "flight" }; }
+          var A = L.arc.arc_au, k = f * (A.length - 1), p;
+          if (!L.sys) p = spline(function (j) { return A[j]; }, A.length, k);
+          else {
             var step = (L.arc.arr_jd - L.arc.dep_jd) / (A.length - 1);
-            p = add(lerp(sub(A[j], pos(L.sys, L.arc.dep_jd + j * step)), sub(A[j + 1], pos(L.sys, L.arc.dep_jd + (j + 1) * step)), k - j), pos(L.sys, jd));
+            p = add(spline(function (j) { return sub(A[j], pos(L.sys, L.arc.dep_jd + j * step)); }, A.length, k), pos(L.sys, jd));
           }
           // Blend out the end errors so the car leaves exactly from, and lands exactly on, the place at the flown times.
           var e0 = ends(L), w0 = 1 - f;
@@ -439,7 +449,7 @@ var SF = (function () {
     });
     ev.sort(function (a, b) { return a.jd - b.jd; });
     var focus = legs.every(function (L) { return L.sys; }) && legs.every(function (L) { return L.sys === legs[0].sys; }) ? legs[0].sys : "sun";
-    return { legs: legs, plan: plan, hold: hold, start: start, end: end, at: at, events: ev, focus: focus, record: ride.record, pub: ride.legs,
+    return { legs: legs, plan: plan, hold: hold, start: start, end: end, at: at, pos: seen, events: ev, focus: focus, record: ride.record, pub: ride.legs,
       car: live ? live.car : ride.record.score.car };
   }
   // A decide answer in words, from the stored decision.
@@ -452,6 +462,12 @@ var SF = (function () {
   function sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
   function add(a, b) { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
   function lerp(a, b, f) { return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]; }
+  // Catmull-Rom through n points P(0)..P(n-1) at k in [0, n-1]: the path and the nose turn smoothly at each stored
+  // sample instead of kinking there. It still passes through every sample.
+  function spline(P, n, k) {
+    var j = Math.min(n - 2, Math.floor(k)), t = k - j, a = P(Math.max(0, j - 1)), b = P(j), c = P(j + 1), d = P(Math.min(n - 1, j + 2));
+    return b.map(function (_, x) { return b[x] + 0.5 * t * (c[x] - a[x] + t * (2 * a[x] - 5 * b[x] + 4 * c[x] - d[x] + t * (3 * (b[x] - c[x]) + d[x] - a[x]))); });
+  }
 
   return {
     AU: AU, SITE: SITE, init: init, sky: sky, iso: iso, jdOf: jdOf, fmt: fmt, esc: esc, dur: dur,
@@ -675,7 +691,7 @@ function marker(id, jd) {
   var P = SF.place(id), v;
   if (id === "sun" || !P) v = V();
   else if (P.parent === "sun") v = S(SF.pos(id, jd));
-  else v = marker(P.parent, jd).clone().add(localOff(d3(SF.pos(id, jd), SF.pos(P.parent, jd)), P.parent));
+  else v = marker(P.parent, jd).clone().add(localOff(d3(RS.rp.pos(id, jd), RS.rp.pos(P.parent, jd)), P.parent));
   return (MEMO[k] = v);
 }
 // Where a replayed Starseeker is drawn in the compressed scene. Local hops are drawn around their planet at jdNow.
@@ -687,12 +703,12 @@ function shipC(rp, jd, jdNow) {
   if (L.sys) {
     var sys = L.sys, base = function (p) { return localOff(d3(p, SF.pos(sys, jd)), sys); }, an = marker(sys, jdNow);
     var v = base(s.p);
-    var e0 = marker(L.from, jdNow).clone().sub(an).sub(base(SF.pos(L.from, jd)));
-    var e1 = marker(L.to, jdNow).clone().sub(an).sub(base(SF.pos(L.to, jd)));
+    var e0 = marker(L.from, jdNow).clone().sub(an).sub(base(rp.pos(L.from, jd)));
+    var e1 = marker(L.to, jdNow).clone().sub(an).sub(base(rp.pos(L.to, jd)));
     return { v: v.add(e0.multiplyScalar(1 - f)).add(e1.multiplyScalar(f)).add(an), s: s };
   }
   // Moon and station offsets are exaggerated in the scene; take them at departure and arrival, so a moon's orbit doesn't wobble the path.
-  var w = S(s.p), c0 = marker(L.from, L.dep).clone().sub(S(SF.pos(L.from, L.dep))), c1 = marker(L.to, L.orb).clone().sub(S(SF.pos(L.to, L.orb)));
+  var w = S(s.p), c0 = marker(L.from, L.dep).clone().sub(S(rp.pos(L.from, L.dep))), c1 = marker(L.to, L.orb).clone().sub(S(rp.pos(L.to, L.orb)));
   return { v: w.add(c0.multiplyScalar(1 - f)).add(c1.multiplyScalar(f)), s: s };
 }
 // Osculating orbit ring from a state vector (km, km/s): points relative to the attractor, in km.
@@ -943,7 +959,7 @@ function loadRide(keep) {
     if (!(keep && old) && d0.lengthSq() > 1e-12) RS.fwd.copy(d0.normalize());
   }
 }
-function placeK(id, jd) { var b = SF.pos(RS.rp.focus, jd); return axes(d3(SF.pos(id, jd), b), AU / 1000); }
+function placeK(id, jd) { var b = SF.pos(RS.rp.focus, jd); return axes(d3(RS.rp.pos(id, jd), b), AU / 1000); }
 function placeAt(id, jd) { return RS.local ? placeK(id, jd) : marker(id, jd); }
 // Flight time flown by jd, summed over the legs: the trail's parameter, so a dwell between legs adds nothing.
 function flownBy(jd) {
@@ -1064,6 +1080,8 @@ function buildRideScene() {
     sc.add(lineOf(seg, 0xffcf7a, 0.5, true));
   });
   RS.ship = makeShip(rp.car); sc.add(RS.ship);
+  var cls = SF.E.SHIP_CLASSES[(SF.E.R.CAR[String(rp.car).toLowerCase()] || {}).ship_class];
+  RS.ion = !!(cls && cls.ion); RS.glow = 0;
   RS.shipScale = local ? 0.14 : 0.55;
   RS.ship.scale.setScalar(RS.shipScale);
   onResize();
@@ -1105,12 +1123,12 @@ function rideFrame(dt, t) {
     $("#tcode").textContent = iso(jd);
     plistTick(st);
     var P = RS.pl, on = aboardAt(P, stopOf(st, P.stops.length - 1));
-    var dkm = Math.hypot.apply(null, d3(SF.pos(L.to, jd), st.p)) * AU;
+    var dkm = Math.hypot.apply(null, d3(SF.pos(L.to, jd), fl ? st.p : SF.pos(st.f >= 1 ? L.to : L.from, jd))) * AU; // true places, not the slowed ones
     var where = L.idle ? "parked" : st.phase === "arrived" ? "arrived" : st.f >= 1 ? "in orbit" : dist(dkm);
     var rateTx = er > 0 ? "1 s = <b>" + SF.dur(er) + "</b>" + (RS.live && RS.follow ? " (live)" : er < RS.rate * RS.speed - 1e-9 ? " (slowed while waiting)" : "") : "<b>Held</b> until the Grok bot decides";
     $("#rtele").innerHTML = '<div class="hudbox"><div class="caps">Sky time \u00B7 UTC \u00B7 simulated</div><div class="big">' + iso(jd) + "</div>" + rateTx + "<br>" +
       esc(SF.SHIP) + " <b>" + esc(rp.car) + "</b><br>Leg <b>" + (st.i + 1) + "/" + (rp.legs.length + rp.plan.length) + "</b> \u00B7 " + esc(on.length || fl && L.kind !== "pickup" ? "passenger" : legKind(L.kind)) + " \u00B7 <b>" + esc(st.phase) + "</b><br>" +
-      esc(SF.name(L.from)) + " \u2192 " + esc(SF.name(L.to)) + "<br>To " + esc(SF.name(L.to)) + " <b>" + where + "</b><br>Propulsion telemetry unavailable<br>" +
+      esc(SF.name(L.from)) + " \u2192 " + esc(SF.name(L.to)) + "<br>To " + esc(SF.name(L.to)) + " <b>" + where + "</b><br>" + (RS.ion ? "Ion glow illustrative: thrust not recorded" : "Propulsion telemetry unavailable") + "<br>Moon and station orbits slowed between stops<br>" +
       (on.length ? "Aboard <b>" + on.map(function (b) { return esc(b.lead || b.id); }).join(", ") + "</b>" : "Cabin empty") + "<br>Passengers <b>" + esc(window.StarfareView.seatCount(on) ?? "unknown") + "</b> / <b>" + esc(P.seats ?? "not recorded") + "</b> seats (simulated)</div>";
     var win = er * 6, vis = rp.events.filter(function (e) { return e.jd <= jd + 1 / 1440 && jd - e.jd <= Math.max(win, span * 0.02); }).slice(held ? -2 : -3);
     var key = (held ? "H" : "") + vis.map(function (e) { return e.jd + e.kind; }).join();
@@ -1143,9 +1161,9 @@ function rideFrame(dt, t) {
     RS.dl.position.copy(sd.clone().multiplyScalar(100)); RS.sun.position.copy(sd.clone().multiplyScalar(3000));
     if (window.SolArt) SolArt.setSun(RS.sun.position);
     // Planet shadow on the ship: a cylinder of the planet's radius behind it, softened over the penumbra width the
-    // Sun's disc gives at this depth (IAU nominal solar radius 695,700 km; the umbra's taper is ignored). Parked in
-    // low orbit the ship laps its planet about once a second of replay, so the light eases over 0.3 s of real time
-    // instead of blinking; a scrub sets it at once.
+    // Sun's disc gives at this depth (IAU nominal solar radius 695,700 km; the umbra's taper is ignored). A parked
+    // ship can still cross the shadow within a fraction of a second of replay, so the light eases over 0.3 s of real
+    // time instead of blinking; a scrub sets it at once.
     var Rp = SF.place(rp.focus).radius_km / 1000, along = p.dot(sd), off = Math.sqrt(Math.max(0, p.lengthSq() - along * along));
     var pen = Math.abs(along) * 695700 / (Math.hypot(sp[0], sp[1], sp[2]) * AU), lit = along >= 0 ? 1 : THREE.MathUtils.smoothstep(off, Rp - pen, Rp + pen);
     RS.lit = jump || RS.lit == null ? lit : RS.lit + (lit - RS.lit) * (1 - Math.exp(-dt / 0.3));
@@ -1158,12 +1176,15 @@ function rideFrame(dt, t) {
     heading = window.StarfareView.orbitDirection(jd, function (time) { return (RS.local ? placeK(stop, time) : marker(stop, time)).toArray(); });
   }
   var d = heading ? V(heading[0], heading[1], heading[2]) : V();
-  // Near a planet a parked Starseeker rides its station's orbit, often several laps per second of replay. The camera
-  // then rides with it, locked to the orbit (ahead along the motion, up away from the planet), instead of chasing.
+  // Near a planet a parked Starseeker rides its station's orbit. The camera rides with it, locked to the orbit
+  // (ahead along the motion, up away from the planet), instead of chasing.
   var snap = reduced || jump || (RS.local && !fl);
   if (d.lengthSq() > 1e-12 && (fl || RS.local)) RS.fwd.lerp(d.normalize(), snap ? 1 : 1 - Math.exp(-dt * 6)).normalize();
   RS.ship.position.copy(p);
   window.StarfareView.orientShip(RS.ship, window.StarfareView.headingFrame(heading, RS.local ? p.toArray() : [0, 1, 0], RS.ship.userData.headingSet ? RS.ship.up.toArray() : null));
+  var thrust = fl && RS.ion ? 1 : 0;
+  RS.glow = jump || reduced ? thrust : RS.glow + (thrust - RS.glow) * (1 - Math.exp(-dt / 0.4));
+  if (window.SolArt) SolArt.setEngine(RS.ship, RS.glow);
   if (RS.trail) {
     var tu = TRAILMAT.uniforms; tu.now.value = flownBy(jd); tu.dpr.value = GL.r.getPixelRatio();
     GL.r.getDrawingBufferSize(tu.res.value).multiplyScalar(0.5);

@@ -128,6 +128,16 @@
     g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
     return (GLOW[key] = new THREE.CanvasTexture(c));
   }
+  // A small light seen through a lens: a hot centre with a 1/(1 + (r/r0)^2) falloff, not a flat disc. The stops
+  // crowd toward the centre, where the falloff is steepest.
+  function pointGlow() {
+    if (GLOW.point) return GLOW.point;
+    var c = document.createElement("canvas"); c.width = c.height = 128; var g = c.getContext("2d");
+    var gr = g.createRadialGradient(64, 64, 0, 64, 64, 64), floor = 1 / 401;
+    for (var i = 0; i <= 16; i++) { var r = i * i / 256; gr.addColorStop(r, "rgba(255,255,255," + ((1 / (1 + 400 * r * r) - floor) / (1 - floor)).toFixed(4) + ")"); }
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    return (GLOW.point = new THREE.CanvasTexture(c));
+  }
   function additiveSprite(map, color) {
     return new THREE.Sprite(new THREE.SpriteMaterial({ map: map, color: color || 0xffffff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
   }
@@ -283,7 +293,6 @@
       nacelle: new THREE.CylinderGeometry(0.078, 0.092, 0.07, 12, 1, true).rotateX(Math.PI / 2),
       disc: new THREE.CircleGeometry(0.072, 20),
       win: new THREE.BoxGeometry(0.006, 0.02, 0.042),
-      dot: new THREE.SphereGeometry(0.011, 8, 6),
       decal: new THREE.PlaneGeometry(0.22, 0.055).rotateX(-Math.PI / 2).rotateY(Math.PI), // flat, reads from behind
       hullM: new THREE.MeshStandardMaterial({ color: 0x5d6a7e, metalness: 0.35, roughness: 0.42, flatShading: true, emissive: 0x0b0f16 }),
       wingM: new THREE.MeshStandardMaterial({ color: 0x2a3344, metalness: 0.4, roughness: 0.5, flatShading: true }),
@@ -292,7 +301,7 @@
       nacM: new THREE.MeshStandardMaterial({ color: 0x1a202c, metalness: 0.6, roughness: 0.35, flatShading: true, side: THREE.DoubleSide }),
       throatM: new THREE.MeshBasicMaterial({ color: 0x07090d }),
       stripeM: new THREE.LineBasicMaterial({ color: 0x9cc3ff, transparent: true, opacity: 0.9 }),
-      navG: glow("rgba(255,255,255,1)", "rgba(255,255,255,.35)", 0.18)
+      navG: pointGlow()
     };
     return SHIPK;
   }
@@ -316,7 +325,13 @@
     { mount: "port_light", at: [0.475, -0.002, -0.27], col: 0xff5a4a, size: 0.13, opacity: 1 },
     { mount: "starboard_light", at: [-0.475, -0.002, -0.27], col: 0x55f08a, size: 0.13, opacity: 1 },
     { mount: "beacon", at: [0, 0.235, -0.44], col: 0xffffff, size: 0.11, opacity: 0.9 }
-  ];
+  ], STERN = [0, 0, -0.55];
+  // k from 0 (off) to 1. Runs record no thrust timing, so the flight page calls this glow illustrative.
+  function setEngine(g, k) {
+    var e = g.userData.engine;
+    e.visible = k > 0.002;
+    e.children.forEach(function (s) { s.material.opacity = s.userData.o * k; });
+  }
   // opt.car (an engine car id) picks the generated hull for that car's ship class; the procedural ship shows until
   // it loads, and stays when it can't. The callsign decal belongs to the procedural wing, so it goes with it.
   function ship(opt) {
@@ -335,12 +350,18 @@
     var nac = new THREE.Mesh(K.nacelle, K.nacM); nac.position.z = -0.52; p.add(nac);
     var throat = new THREE.Mesh(K.disc, K.throatM); throat.position.z = -0.53; throat.rotation.y = Math.PI; p.add(throat);
     var lights = NAV.map(function (n) {
-      var l = new THREE.Group(), s = additiveSprite(K.navG, n.col);
-      l.add(new THREE.Mesh(K.dot, new THREE.MeshBasicMaterial({ color: n.col })));
-      s.scale.setScalar(n.size); s.material.opacity = n.opacity; l.add(s);
+      var l = new THREE.Group(), halo = additiveSprite(K.navG, n.col), core = additiveSprite(K.navG, 0xffffff);
+      halo.scale.setScalar(n.size * 1.6); core.scale.setScalar(n.size * 0.35);
+      halo.material.opacity = core.material.opacity = n.opacity; l.add(halo, core);
       l.position.fromArray(n.at); g.add(l);
       return l;
     });
+    // Ion engine glow: a blue-white core at the grid in a faint xenon-blue halo. Off until the page sets it.
+    var engine = new THREE.Group();
+    [[0xc8d8ff, 0.1, 0.9], [0x4f74ff, 0.45, 0.55]].forEach(function (e) {
+      var s = additiveSprite(K.navG, e[0]); s.scale.setScalar(e[1]); s.userData.o = e[2]; engine.add(s);
+    });
+    engine.position.fromArray(STERN); engine.visible = false; g.add(engine); g.userData.engine = engine;
     if (opt.callsign) {
       var dt = decalTex(String(opt.callsign).toUpperCase());
       var dm = new THREE.MeshStandardMaterial({ map: dt, transparent: true, metalness: 0.2, roughness: 0.6, depthWrite: false });
@@ -375,9 +396,14 @@
             // colour, tagged sRGB by the loader, would otherwise come out darker than it was painted.
             if (o.material.map) o.material.map.encoding = THREE.LinearEncoding;
             if (ENV.rt) o.material.envMap = ENV.rt.texture;
+            // As painted, the maps read as polished chrome under the sky reflection and the normal map's dents as
+            // crumpled foil. Less metal, rougher (the factor scales the roughness map; the shader caps it at 1),
+            // shallower dents.
+            o.material.metalness = 0.6; o.material.roughness = 1.35; o.material.normalScale.multiplyScalar(0.6);
             o.material.needsUpdate = true; ENV.mats.push(o.material);
           });
-          ok({ scene: gl.scene, mounts: h.mounts });
+          var box = new THREE.Box3().setFromObject(gl.scene);
+          ok({ scene: gl.scene, mounts: h.mounts, stern: [0, (box.min.y + box.max.y) / 2, box.min.z - 0.01] });
         }, undefined, bad);
       });
     }));
@@ -386,13 +412,14 @@
     var h = g.userData.hull, want = quality().hulls;
     if (want && !h.asked) {
       h.asked = true;
-      loadHull(h.cls).then(function (m) { h.model = m.scene.clone(); h.mounts = m.mounts; g.add(h.model); showHull(g); },
+      loadHull(h.cls).then(function (m) { h.model = m.scene.clone(); h.mounts = m.mounts; h.stern = m.stern; g.add(h.model); showHull(g); },
         function (e) { console.warn("SolArt: keeping the procedural ship for class " + h.cls + ":", e && e.message || e); });
     }
     var on = want && !!h.model;
     h.proc.visible = !on;
     if (h.model) h.model.visible = on;
     NAV.forEach(function (n, i) { h.lights[i].position.fromArray(on ? h.mounts[n.mount] : n.at); });
+    g.userData.engine.position.fromArray(on ? h.stern : STERN);
   }
 
   /* ---------- hull reflections ---------- */
@@ -534,7 +561,7 @@
     updatePlanet: function (body, context) { if (root.StarfarePlanetEffects) root.StarfarePlanetEffects.update(body, context); },
     disposePlanet: function (body) { if (root.StarfarePlanetEffects && body) root.StarfarePlanetEffects.dispose(body.userData.solarSurface || body); },
     updateSun: function (body, context) { if (root.StarfarePlanetEffects && body.userData.solarSurface) root.StarfarePlanetEffects.update(body.userData.solarSurface, context); },
-    sun: sun, stars: stars, composer: composer, ship: ship, setSky: setSky, quality: quality, icon: icon, ICONS: Object.keys(ICONS),
+    sun: sun, stars: stars, composer: composer, ship: ship, setEngine: setEngine, setSky: setSky, quality: quality, icon: icon, ICONS: Object.keys(ICONS),
     CREDIT: "Maps: NASA, JPL, USGS (public domain); Earth effects, Saturn, rings, Sun: Solar System Scope (CC BY 4.0). Moon relief: NASA SVS / LRO LOLA. Stars: Yale Bright Star Catalog."
   };
 })(window);

@@ -2,6 +2,8 @@
 
 Scope: asset effects only. This is an art specification, not an implementation or a verified production telemetry schema. Design owns UI transitions and accessibility. Engineering owns flight state, coordinate frames, route interpolation, event timing and replay.
 
+Override, 2026-10-18: at Alvin's request the flight page shows a faint ion glow on ion ships through each flight stretch, labelled "Ion glow illustrative: thrust not recorded", and slows moon and station orbits between replay keys. See `docs/VFX-PLAN.md`.
+
 **Default to an unlit, stationary asset when the required information is absent.** Never infer thrust from velocity, a departure label, distance covered or a plotted line. Never infer docking from arrival. All isolated demonstrations must say “CONCEPT PREVIEW — SYNTHETIC STATE — NOT A RECORDED FLIGHT” and stay out of activity feeds and counts.
 
 ## Effect decisions

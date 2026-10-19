@@ -146,9 +146,32 @@
     }
     return k;
   }
+  // A moon's or station's offset from its parent as the replay draws it. A replay squeezes years into seconds, which
+  // spins the ISS hundreds of laps a second. state(jd) gives the true offset r (km) and velocity v (km/s). At every
+  // key (the replay's departures, orbits, landings, hold and ends) the body is where it really was. Between two keys
+  // more than one of its laps apart it turns forward at an even rate from the first key's offset to the second's,
+  // under one lap, about its orbit's normal, with its distance eased between theirs. Closer keys keep the true motion.
+  function slowOrbit(state, keys, jd) {
+    var i = 0;
+    while (i < keys.length && keys[i] <= jd) i++;
+    if (!i || i === keys.length) return state(jd).r;
+    var t0 = keys[i - 1], t1 = keys[i], a = state(t0);
+    var n = cross(a.r, a.v), r0 = len(a.r), lap = 2 * Math.PI * r0 * r0 / len(n) / 86400;
+    if (!(t1 - t0 > lap)) return state(jd).r;
+    var b = state(t1).r, e0 = unit(a.r), e1 = unit(b), c = Math.max(-1, Math.min(1, dot(e0, e1)));
+    var w = e1.map(function (x, k) { return x - c * e0[k]; }), turn = Math.acos(c);
+    if (len(w) < 1e-9) w = unit(cross(n, e0));
+    else { w = unit(w); if (dot(cross(e0, e1), n) < 0) { turn = 2 * Math.PI - turn; w = w.map(function (x) { return -x; }); } }
+    var u = (jd - t0) / (t1 - t0), g = u * turn, d = r0 + (len(b) - r0) * u;
+    return e0.map(function (x, k) { return d * (Math.cos(g) * x + Math.sin(g) * w[k]); });
+  }
+  function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+  function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+  function len(a) { return Math.hypot(a[0], a[1], a[2]); }
+  function unit(a) { var n = len(a); return [a[0] / n, a[1] / n, a[2] / n]; }
   var api = { flightDirection: flightDirection, orbitDirection: orbitDirection, headingFrame: headingFrame, orientShip: orientShip,
     preciseLocalArc: preciseLocalArc, passengerList: passengerList, aboardAt: aboardAt, seatCount: seatCount, seatsHtml: seatsHtml, timingConflicts: timingConflicts,
-    weatherWindows: weatherWindows, weatherAt: weatherAt };
+    weatherWindows: weatherWindows, weatherAt: weatherAt, slowOrbit: slowOrbit };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.StarfareView = api;
 })(typeof window !== "undefined" ? window : globalThis);

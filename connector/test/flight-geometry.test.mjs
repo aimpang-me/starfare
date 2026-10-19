@@ -91,8 +91,9 @@ for (const page of ["site", "flight"]) test(`${page}: interpolation stays in the
   const rp = SF.replay(ride(arc)), L = rp.legs[0], f = 0.431, j = L.dep + (L.orb - L.dep) * f;
   const relative = (p, time) => p.map((n, axis) => n - SF.pos("earth", time)[axis]);
   const blend = (a, z, frac) => a.map((n, axis) => n + (z[axis] - n) * frac);
-  const k = f * (arc.arc_au.length - 1), i = Math.floor(k), dt = (arc.arr_jd - arc.dep_jd) / (arc.arc_au.length - 1);
-  const local = blend(relative(arc.arc_au[i], arc.dep_jd + dt * i), relative(arc.arc_au[i + 1], arc.dep_jd + dt * (i + 1)), k - i);
+  const last = arc.arc_au.length - 1, k = f * last, i = Math.floor(k), t = k - i, dt = (arc.arr_jd - arc.dep_jd) / last;
+  const [a, p, c, d] = [Math.max(0, i - 1), i, i + 1, Math.min(last, i + 2)].map((n) => relative(arc.arc_au[n], arc.dep_jd + dt * n));
+  const local = p.map((v, x) =>0.5 * (2 * v + (c[x] - a[x]) * t + (2 * a[x] - 5 * v + 4 * c[x] - d[x]) * t * t + (3 * v - a[x] - 3 * c[x] + d[x]) * t * t * t));
   const corrections = [[arc.from, L.dep, 0, arc.dep_jd], [arc.to, L.orb, arc.arc_au.length - 1, arc.arr_jd]].map(([id, t, n, tPlan]) => {
     const target = relative(SF.pos(id, t), t), stored = relative(arc.arc_au[n], tPlan);
     return target.map((v, axis) => v - stored[axis]);

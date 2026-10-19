@@ -12,6 +12,23 @@ over the MengTo skills in `.claude/skills/`.
 | 1 | Game LODs of the generated hulls, loader, hull table, linear textures, environment fill, planet shadow on the ship | 6094c73, 6bc0324 |
 | 2 | Hold ring, checkpoint outline, Mars dust and Titan haze, flown-trail ribbon, arrival state | this branch |
 | 3 | Quality tiers with an adaptive drop | 6bc0324 |
+| 4 | Fixes after Alvin's first look: slowed moon and station orbits, smooth steering, ion glow, point nav lights, less chrome | this branch |
+
+## Phase 4 fixes
+
+- **Orbits.** A replay squeezes years into about 28 s, so the ISS ran hundreds of laps a second. `StarfareView.slowOrbit`
+  draws a moon or station at its true place at every key (each leg's departure, orbit and arrival, the hold and the
+  ends) and, between keys more than one lap apart, turns it forward evenly from one key's place to the next, under
+  one lap. `rp.pos` gives these places, and the scene, the path ends and the ship use them. The HUD distance uses
+  true places. The HUD says "Moon and station orbits slowed between stops". Tests: `connector/test/slow-orbit.test.mjs`.
+- **Steering.** The ship and its nose follow a Catmull-Rom curve through the stored arc samples instead of straight
+  segments, on the flight page and the home map. The curve still passes through every sample.
+- **Ion glow.** Ion ships (dawn, ds1, rtg) show a faint blue-white glow at the stern during flight, eased over 0.4 s.
+  Runs record no thrust, so the HUD says "Ion glow illustrative: thrust not recorded". The shuttle class shows none.
+- **Nav lights** are a hot core in a coloured halo with a 1/(1 + (r/r0)^2) falloff, not a sphere under a disc.
+- **Hull materials.** As painted, the hulls read as chrome foil. The loader sets metalness 0.6, roughness 1.35 and
+  normal strength 0.6. The meshes themselves (lumpy panels, painted-on detail) come from image-to-3D; clean hulls
+  need modelling, for example a Blender script.
 
 ## Phase 2 effects
 
@@ -34,7 +51,9 @@ The trail's parameter is flight time, not sky time, so a long dwell between legs
 
 ## Defaults and their alternatives
 
-1. Plume off, because runs record no burns. Alternative: a plume driven by recorded burn telemetry, once runs log it.
+1. Ion glow through every flight stretch, labelled illustrative (Alvin asked for engine effects on 2026-10-18; this
+   overrides the propulsion row of `motion-spec.md`). Alternative: a glow driven by recorded burn telemetry, once
+   runs log it, or no glow.
 2. Hull mapping: dawn (sf-01) is Kestrel, ds1 (sf-02, sf-03) is Tandem, rtg (sf-04 to sf-07) is Lantern.
    Alternative: any other mapping in the hull table in `design/assets/sol-art.js`.
 3. Game LODs committed in `design/assets/models/`, about 0.8 MB each. Alternative: fetch them at build time from a
@@ -60,11 +79,16 @@ The trail's parameter is flight time, not sky time, so a long dwell between legs
 
 ## Not doing
 
-Plume or burn flashes, docking, station rotation, camera shake, star streaks, travel bob.
+Flame plumes or burn flashes (ion drives have none), docking, station rotation, camera shake, star streaks, travel bob.
 
 ## Verification
 
-Unit tests 246 of 246 and engine hazards 8 of 8 pass on this branch.
+Unit tests 249 of 249 and engine hazards 8 of 8 pass on this branch.
+
+Phase 4, headless Chromium (SwiftShader) on three local demo runs (weather, arrival, live hold): no console errors or
+warnings; the hull loads and the engine sits at its stern; each of the 4 nav lights is a halo and a core sprite;
+scrubbing in steps of 4% shows the glow off while parked, on through flight and off on arrival; the HUD shows both
+new lines. Visual look not yet reviewed by Alvin.
 
 Not yet checked in a browser:
 - the Phase 2 effects at 1280x800, 390x844 and with reduced motion
