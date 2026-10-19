@@ -1409,8 +1409,10 @@ function gut() {
 // takes the first that overlaps no placed label and no visible anchor. A label away from its right-hand slot gets a
 // leader line to its anchor. A label with no free slot is hidden.
 var LSLOT = [[1, 0], [-1, 0], [0, -1], [0, 1], [1, -1], [1, 1], [-1, -1], [-1, 1]];
+// Labels keep clear of the panels that float over the map.
+var KEEP = ["#hud", "#planetNav", "#info", "#legend", ".c-fl", "#activityDock", ".mtool"];
 function LabelSet(root) {
-  var items = [], pv = null, svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"), path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  var items = [], pv = null, keep = [], keepAt = -1e9, svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"), path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   svg.setAttribute("class", "leaders"); svg.setAttribute("aria-hidden", "true"); svg.appendChild(path); root.appendChild(svg);
   function hit(R, x, y, w, h) { for (var j = 0; j < R.length; j++) { var r = R[j]; if (x < r[2] && x + w > r[0] && y < r[3] && y + h > r[1]) return true; } return false; }
   return {
@@ -1426,7 +1428,12 @@ function LabelSet(root) {
     // A new font size changes every label's width, so each is measured again on the next frame.
     remeasure: function () { items.forEach(function (o) { o.w = 0; }); },
     update: function (cam, W, H) {
-      pv = pv || V(); var g = gut(), R = [], d = "", i, o;
+      pv = pv || V(); var g = gut(), R = [], d = "", i, o, now = performance.now();
+      if (now - keepAt > 400) {
+        keepAt = now; keep = []; var rb = root.getBoundingClientRect();
+        KEEP.forEach(function (q) { var e = document.querySelector(q), r = e && e.offsetWidth ? e.getBoundingClientRect() : null; if (r) keep.push([r.left - rb.left - 4, r.top - rb.top - 4, r.right - rb.left + 4, r.bottom - rb.top + 4]); });
+      }
+      R = keep.slice();
       for (i = 0; i < items.length; i++) {
         o = items[i]; o.ax = null;
         var p = o.hide && o.hide() ? null : o.pos();
@@ -1793,11 +1800,12 @@ function markFocus(f, body) {
   $$("#focus [data-f]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.f === f ? "true" : "false"); });
   $$("#planetNav [data-body]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.body === body ? "true" : "false"); });
 }
-function focusBody(key) {
+// The Earth-Moon preset frames both; the planet bar's Earth button frames the planet alone.
+function focusBody(key, bodyOnly) {
   if (!GL) return;
-  var T = PRESET[key] ? presetTarget(key) : bodyTarget(key); if (!T) return;
+  var pre = !bodyOnly && PRESET[key], T = pre ? presetTarget(key) : bodyTarget(key); if (!T) return;
   FOLLOW = false; select({ t: "n" });
-  pilotJump(T); markFocus(PRESET[key] ? key : null, PRESET[key] ? null : key);
+  pilotJump(T); markFocus(pre ? key : null, pre ? null : key);
 }
 function jumpToPlace(id) {
   if (!GL) return;
@@ -1824,6 +1832,7 @@ function renderPlanetNav() {
 }
 
 /* ---------- scene objects ---------- */
+var AMB, AMB_FREE = 0.28, AMB_CHASE = 0.75;
 var BODIES = [], BID = {}, SKY, SUN, GRID, ORB, MOR = [], LBL, STOPS = {}, PARK_R, PARK_B, PARK_SHIPS = {}, lastHud = 0, GRIDF = 1;
 var ATMO = { earth: "rgba(120,180,255,.55)", venus: "rgba(255,220,160,.4)", mars: "rgba(255,140,90,.35)", jupiter: "rgba(255,210,170,.3)", saturn: "rgba(255,230,180,.28)", uranus: "rgba(150,230,240,.35)", neptune: "rgba(110,150,255,.38)", titan: "rgba(255,190,110,.45)" };
 var RINGS = [0.5, 1, 2, 5, 10, 20, 30];
@@ -1837,7 +1846,7 @@ function aimRing(line, id) { var b = BID[id]; if (b) SolLines.follow(line, AW.co
 function sepPx(id) { var P = SF.place(id), v = marker(id, MAPJD); return v.distanceTo(marker(P.parent, MAPJD)) / pxAt(v); }
 function buildScene(J0) {
   SKY = stars(); scene.add(SKY);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.28));
+  AMB = new THREE.AmbientLight(0xffffff, AMB_FREE); scene.add(AMB);
   WORLD.add(new THREE.PointLight(0xfff1dc, 1.45, 0));
   SUN = sunObj(1); WORLD.add(SUN);
   GRID = new THREE.Group();
@@ -2026,6 +2035,7 @@ function draw(dt, t) {
   });
   drawDocks();
   setPts(PARK_R, window.SolArt ? [] : pr); setPts(PARK_B, window.SolArt ? [] : pb);
+  AMB.intensity = PIL.lock ? AMB_CHASE : AMB_FREE;
   LBL.update(cam, GW, GH);
   var tb = $("#tbox");
   if (SEL.t === "f" && FILT.fl && FL[SEL.i] && FL[SEL.i].ship && FL[SEL.i].ship.visible && PIL.lock !== FL[SEL.i]) { var F0 = FL[SEL.i]; tb.className = "tbox " + (F0.st ? F0.st.k : ""); tbox(tb, F0.sc.v, 34); }
@@ -2036,8 +2046,8 @@ function draw(dt, t) {
 /* ---------- map HUD: map time, where the camera is, the scale bar and the camera position ---------- */
 function mapHud() {
   var rep = FOLLOW && SEL.t === "f" && !!FL[SEL.i], F = rep ? FL[SEL.i] : null, L = PIL.lock, A = PIL.anchor;
-  var where = L ? esc(L.call) + " &middot; " + PIL.view + " view (C switches)" : PIL.fly ? "Jumping&hellip;" : A && A.b && A.b.kind !== "sun" ? "Near " + esc(SF.name(A.b.id)) + " &middot; " + fmtKm((bodyPos(A.b).distanceTo(PIL.pos) - A.b.rKm / AU) * AU) + " above the surface" : "Interplanetary &middot; " + fmtKm(PIL.pos.length() * AU) + " from the Sun";
-  var kms = PIL.speed * AU, speed = L ? "" : "<br>Camera speed " + (kms >= 1e5 ? SF.fmt(kms / 299792.458, kms < 3e6 ? 2 : 0) + " c" : SF.fmt(kms, kms < 10 ? 2 : 0) + " km/s") + " &middot; throttle &times;" + SF.fmt(PIL.mul, PIL.mul < 1 ? 2 : 1);
+  var where = L ? esc(L.call) + " &middot; " + PIL.view + " view (C switches)" : PIL.fly ? "Jumping&hellip;" : A && A.b && A.b.kind !== "sun" ? "Near " + esc(SF.name(A.b.id)) + " &middot; " + fmtKm((bodyPos(A.b).distanceTo(PIL.pos) - A.b.rKm / AU) * AU) + " above the surface" : A && A.b && PIL.pos.length() < 0.5 ? "Near the Sun &middot; " + fmtKm(Math.max(0, PIL.pos.length() * AU - 695700)) + " above the surface" : "Interplanetary &middot; " + fmtKm(PIL.pos.length() * AU) + " from the Sun";
+  var kms = PIL.speed * AU, speed = L ? "" : "<br>Camera speed " + (kms >= 1e5 ? SF.fmt(kms / 299792.458, kms < 3e6 ? 2 : 0) + " &times; light speed" : SF.fmt(kms, kms < 10 ? 2 : 0) + " km/s") + " &middot; throttle &times;" + SF.fmt(PIL.mul, PIL.mul < 1 ? 2 : 1);
   $("#hud").innerHTML = '<span class="caps">' + (rep ? "Map time &middot; following " + esc(F.call) + "</span><br><b>" + iso(MAPJD) + "</b> UTC" : (MAP_PAUSED ? "Map paused &middot; " + iso(MAPJD) + " UTC" : "Live sky") + "</span>")
     + "<br><span>True scale &middot; real distances and sizes &middot; simulated</span><br>" + where + speed;
   $("#liveBtn").hidden = !rep;
@@ -2511,7 +2521,7 @@ function start() {
     var b = e.target.closest("[data-f]"); if (!b || !GL) return;
     focusBody(b.dataset.f);
   });
-  $("#planetNav").addEventListener("click", function (e) { var b = e.target.closest("[data-body]"); if (b) focusBody(b.dataset.body); });
+  $("#planetNav").addEventListener("click", function (e) { var b = e.target.closest("[data-body]"); if (b) focusBody(b.dataset.body, true); });
   [$("#sheetCollapse"), $("#hidePanels")].forEach(function (b) { b.addEventListener("click", function () { if (GL) glStart(); }); });
   $("#liveBtn").addEventListener("click", function () { setFollow(false); });
   $("#info").addEventListener("click", function (e) {
