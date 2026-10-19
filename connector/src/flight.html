@@ -71,14 +71,14 @@ h1,h2,h3{margin:0;font-weight:600;letter-spacing:.01em}
 .gl-host{position:absolute;inset:0;touch-action:none;cursor:grab}
 .gl-host:active{cursor:grabbing}
 .gl-host canvas{display:block;width:100%;height:100%}
-.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-.lbl{position:absolute;left:0;top:0;white-space:nowrap;font:600 10.5px/1 Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);padding:3px 5px 3px 10px;border:0;background:none;visibility:hidden;will-change:transform}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;--ls:1}
+.lbl{position:absolute;left:0;top:0;white-space:nowrap;font:600 calc(10.5px * var(--ls, 1))/1 Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);padding:3px 5px 3px 10px;border:0;background:none;visibility:hidden;will-change:transform}
 .lbl::before{content:"";position:absolute;left:0;top:50%;width:6px;height:1px;background:currentColor;opacity:.6}
 button.lbl{pointer-events:auto;cursor:pointer}
 button.lbl:hover{color:var(--ink)}
-.lbl.k-planet{color:#d8dde4;font-size:11px}
-.lbl.k-place{color:var(--ink-3);font-size:9.5px}
-.lbl.k-fleet,.lbl.k-ghost{color:var(--ride);font-size:9.5px}
+.lbl.k-planet{color:#d8dde4;font-size:calc(11px * var(--ls, 1))}
+.lbl.k-place{color:var(--ink-3);font-size:calc(9.5px * var(--ls, 1))}
+.lbl.k-fleet,.lbl.k-ghost{color:var(--ride);font-size:calc(9.5px * var(--ls, 1))}
 .lbl.k-hail{color:var(--me)}
 .lbl.k-wx{color:var(--sun)}.lbl.k-ok{color:var(--ok)}
 .tbox{position:absolute;left:0;top:0;pointer-events:none;width:40px;height:40px;visibility:hidden}
@@ -112,6 +112,19 @@ button.lbl:hover{color:var(--ink)}
 .scrub .tick.checkpoint{background:var(--me)}.scrub .tick.incident{background:var(--bad)}.scrub .tick.note{background:var(--ok)}
 .scrub .ahead{position:absolute;top:13px;right:0;height:2px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.35) 0 4px,transparent 4px 8px);pointer-events:none}
 .ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pop{position:relative}
+.popm{position:absolute;right:0;bottom:calc(100% + 8px);z-index:8;width:230px;max-height:min(60vh,420px);overflow-y:auto;padding:10px 12px;background:#081224;border:1px solid var(--line-2);border-radius:4px;box-shadow:0 -18px 40px rgba(0,0,0,.5)}
+.popm label{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12.5px;cursor:pointer}
+.popm label[hidden]{display:none}
+.popm input{accent-color:var(--cy);width:15px;height:15px}
+.popm .caps{margin-bottom:4px}
+.lay-size{display:flex;align-items:center;gap:8px;padding:3px 0 2px 23px;font-size:11px;color:var(--ink-3)}
+.lay-size .seg button{padding:4px 7px}
+.layact{display:flex;gap:6px;margin-top:10px}
+.layact kbd{font:600 9.5px var(--mono);opacity:.7;margin-left:4px}
+.layact .btn[aria-pressed="true"]{background:rgba(92,200,255,.16);color:var(--cy)}
+.stage.no-hud .r-tele,.stage.no-hud .tbox{display:none}
+@media (pointer:coarse){.popm label{min-height:44px}}
 .ctl select{background:#030407;border:1px solid var(--line-2);border-radius:4px;padding:5px 6px;font:500 12px var(--mono)}
 .tcode{font:500 12.5px var(--mono);color:var(--ink);min-width:118px}
 .r-tele{position:absolute;z-index:2;right:12px;top:calc(clamp(52px,9vh,76px) + 12px);text-align:right;pointer-events:none;font:500 10.5px/1.55 var(--mono);color:var(--ink-2);max-width:calc(100% - 24px)}
@@ -293,6 +306,19 @@ footer p{margin:0;max-width:100ch}
           <select id="speed"><option value="0.5">0.5&#xD7;</option><option value="1" selected>1&#xD7;</option><option value="2">2&#xD7;</option><option value="4">4&#xD7;</option></select>
           <div class="seg" role="group" aria-label="Camera"><button type="button" id="cammode" aria-pressed="false">Overhead</button></div>
           <div class="seg" id="liveseg" hidden><button type="button" id="golive" aria-pressed="true" title="Follow the flight as it flies now">Live</button></div>
+          <div class="pop"><button class="btn small" type="button" id="lBtn" aria-expanded="false" aria-controls="lMenu">Layers</button>
+            <div class="popm" id="lMenu" hidden><div class="caps">Names</div>
+              <label><input type="checkbox" data-lay="pln" checked> Planet names</label>
+              <label><input type="checkbox" data-lay="plc" checked> Moon, station &amp; place names</label>
+              <div class="lay-size"><span>Size</span><div class="seg" role="group" aria-label="Name size"><button type="button" data-size="s" aria-pressed="false">Small</button><button type="button" data-size="m" aria-pressed="true">Medium</button><button type="button" data-size="l" aria-pressed="false">Large</button></div></div>
+              <div class="caps" style="margin-top:8px">Lines</div>
+              <label id="layOrb"><input type="checkbox" data-lay="orb" checked> Orbit lines</label>
+              <label id="layMoon" hidden><input type="checkbox" data-lay="moon" checked> Moon orbit rings</label>
+              <label><input type="checkbox" data-lay="rte" checked> Flight path</label>
+              <div class="caps" style="margin-top:8px">Screen</div>
+              <label><input type="checkbox" data-lay="hud" checked> Time readout &amp; target box</label>
+              <div class="layact"><button type="button" class="btn small" id="cleanView" aria-pressed="false" title="Hide every name and line (H)">Clean view <kbd>H</kbd></button><button type="button" class="btn small" id="layReset">Reset</button></div>
+            </div></div>
         </div>
       </div>
     </div>
@@ -325,6 +351,7 @@ footer p{margin:0;max-width:100ch}
 <script src="__ENGINE_URL__" defer></script>
 <script src="/assets/flight-view.js"></script>
 <script src="/assets/sol-lines.js"></script>
+<script src="/assets/sol-layers.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () { // after the deferred engine script
 "use strict";
@@ -617,9 +644,10 @@ function atmo(color, r) {
   s.scale.setScalar(r * 2.9); return s;
 }
 // An orbit ring on sol-lines, kept in RS.rings so each frame its gap and trail follow its body.
-function ringOf(pts, body, id, opacity) {
-  var line = SolLines.line(pts, { color: 0xffffff, opacity: opacity, width: 1.25, ahead: SolLines.AHEAD });
-  line.userData.id = id; RS.rings.push({ line: line, body: body }); return line;
+// k scales the engine's km to the scene, compress the Sun's scene radial compression (0 for none).
+function ringOf(n, body, id, opacity, layer, k, compress) {
+  var line = SolLines.conic(n, { color: SolLines.STYLE.ring.color, opacity: opacity, width: SolLines.STYLE.ring.width, ahead: SolLines.AHEAD, compress: compress });
+  RS.rings.push({ line: line, body: body, id: id, layer: layer, k: k, compress: !!compress }); return line;
 }
 // A body's drawn radius in CSS px: a station marker's half width, or a sphere's radius at its distance.
 function discPx(m, cam, H) { return m.isPoints ? m.material.size / 2 : m.scale.x / pxw(cam, m.position, H); }
@@ -713,23 +741,37 @@ function shipC(rp, jd, jdNow) {
   var w = S(s.p), c0 = marker(L.from, L.dep).clone().sub(S(rp.pos(L.from, L.dep))), c1 = marker(L.to, L.orb).clone().sub(S(rp.pos(L.to, L.orb)));
   return { v: w.add(c0.multiplyScalar(1 - f)).add(c1.multiplyScalar(f)), s: s };
 }
-// Osculating orbit ring from a state vector (km, km/s): points relative to the attractor, in km.
-function kring(r, v, mu, n) {
-  function cr(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
-  function ln(a) { return Math.hypot(a[0], a[1], a[2]); }
-  function sc(a, k) { return [a[0] * k, a[1] * k, a[2] * k]; }
-  var h = cr(r, v), hm = ln(h), rm = ln(r), vh = cr(v, h);
-  var ev = [vh[0] / mu - r[0] / rm, vh[1] / mu - r[1] / rm, vh[2] / mu - r[2] / rm], e = ln(ev);
-  if (e >= 0.98 || !hm) return [];
-  var p = hm * hm / mu, P = e > 1e-6 ? sc(ev, 1 / e) : sc(r, 1 / rm), W = sc(h, 1 / hm), Q = cr(W, P), out = [];
-  for (var i = 0; i <= n; i++) { var nu = 2 * Math.PI * i / n, rad = p / (1 + e * Math.cos(nu)), c = Math.cos(nu) * rad, s = Math.sin(nu) * rad; out.push([P[0] * c + Q[0] * s, P[1] * c + Q[1] * s, P[2] * c + Q[2] * s]); }
-  return out;
+/* ---------- layers: names, lines and the readout, shared with the sky map through localStorage ---------- */
+var LAY = SolLayers.load(window.localStorage), LAY_BEFORE_CLEAN = null;
+function nameOff(o) { return o.cls === "k-planet" ? !LAY.pln : o.cls === "k-place" ? !LAY.plc : false; }
+function syncLayers() {
+  SolLayers.save(window.localStorage, LAY);
+  document.querySelectorAll("#lMenu [data-lay]").forEach(function (c) { c.checked = !!LAY[c.getAttribute("data-lay")]; });
+  document.querySelectorAll("#lMenu [data-size]").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-size") === LAY.size ? "true" : "false"); });
+  // Orbit lines apply to the heliocentric scene, moon rings to a planet's local scene.
+  var local = !!(RS && RS.local);
+  $("#layOrb").hidden = local; $("#layMoon").hidden = !local;
+  $("#rstage").classList.toggle("no-hud", !LAY.hud);
+  $("#cleanView").setAttribute("aria-pressed", SolLayers.isClean(LAY) ? "true" : "false");
+  var ls = String(SolLayers.SIZES[LAY.size]), lab = $("#rlabels");
+  if (lab.style.getPropertyValue("--ls") !== ls) { lab.style.setProperty("--ls", ls); if (RS && RS.labels) RS.labels.remeasure(); }
 }
-function relState(id, jd) {
-  var P = SF.place(id), a = SF.E.placeState(id, jd), mu, r = a.r, v = a.v;
-  if (P.parent === "sun") mu = SF.E.MU_SUN;
-  else { var b = SF.E.placeState(P.parent, jd); r = d3(a.r, b.r); v = d3(a.v, b.v); mu = SF.place(P.parent).mu; }
-  return { r: r, v: v, mu: mu };
+function toggleClean() { var r = SolLayers.toggleClean(LAY, LAY_BEFORE_CLEAN); LAY = r.state; LAY_BEFORE_CLEAN = r.before; syncLayers(); }
+function bindLayers() {
+  var btn = $("#lBtn"), menu = $("#lMenu");
+  function close() { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); }
+  btn.addEventListener("click", function (e) { e.stopPropagation(); menu.hidden = !menu.hidden; btn.setAttribute("aria-expanded", menu.hidden ? "false" : "true"); });
+  menu.addEventListener("click", function (e) { e.stopPropagation(); });
+  document.addEventListener("click", close);
+  menu.addEventListener("change", function (e) { var k = e.target.getAttribute("data-lay"); if (k) { LAY[k] = e.target.checked; LAY_BEFORE_CLEAN = null; syncLayers(); } });
+  menu.querySelectorAll("[data-size]").forEach(function (b) { b.addEventListener("click", function () { LAY.size = b.getAttribute("data-size"); syncLayers(); }); });
+  $("#cleanView").addEventListener("click", toggleClean);
+  $("#layReset").addEventListener("click", function () { Object.assign(LAY, SolLayers.DEFAULTS); LAY_BEFORE_CLEAN = null; syncLayers(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !menu.hidden) { close(); btn.focus(); return; }
+    if ((e.key === "h" || e.key === "H") && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName || "")) toggleClean();
+  });
+  syncLayers();
 }
 
 /* ---------- labels and the target box ---------- */
@@ -744,11 +786,12 @@ function LabelSet(root) {
       items.push(o); items.sort(function (a, b) { return b.pri - a.pri; }); return o;
     },
     clear: function () { items.forEach(function (o) { o.el.remove(); }); items = []; },
+    remeasure: function () { items.forEach(function (o) { o.w = 0; }); },
     remove: function (o) { o.el.remove(); items = items.filter(function (x) { return x !== o; }); },
     update: function (cam, W, H) {
       pv = pv || V(); var placed = [];
       for (var i = 0; i < items.length; i++) {
-        var o = items[i], p = o.hide && o.hide() ? null : o.pos(), show = false;
+        var o = items[i], p = nameOff(o) || (o.hide && o.hide()) ? null : o.pos(), show = false;
         if (p) {
           pv.copy(p).project(cam);
           if (pv.z < 1 && pv.z > -1 && Math.abs(pv.x) < 1.05 && Math.abs(pv.y) < 1.05) {
@@ -890,6 +933,7 @@ function bindRide() {
   $("#speed").addEventListener("change", function () { if (RS) RS.speed = +this.value; });
   $("#cammode").addEventListener("click", function () { if (!RS) return; RS.over = !RS.over; this.setAttribute("aria-pressed", String(RS.over)); });
   bindRig($("#rhost"), { set az(v) { if (RS) RS.yaw = v; }, get az() { return RS ? RS.yaw : 0; }, set el(v) { if (RS) RS.pitch = v; }, get el() { return RS ? RS.pitch : 0; }, zoom: function (k) { if (RS) RS.zf = Math.max(0.25, Math.min(8, RS.zf * k)); } });
+  bindLayers();
 }
 function playIcon() {
   $("#playicon").innerHTML = RS && RS.playing ? '<path d="M3 2h4v12H3zM9 2h4v12H9z"/>' : '<path d="M4 2l10 6-10 6z"/>';
@@ -946,8 +990,8 @@ function loadRide(keep) {
   $("#rwho").textContent = rec.player_tag ? "Player run" : "Connector run";
   $("#rwho").className = "tag " + (rec.player_tag ? "me" : "sim");
   $("#rtitle").textContent = (RIDE.record.manifest ? RIDE.record.manifest.bookings.map(function (b) { return b.title; }).join(" + ") : shipWords(h.title || rec.hail_id));
-  $("#rnote").textContent = local ? "Centred on " + SF.name(rp.focus) + ", distances in km. Not to scale: the " + SF.SHIP + " and small moons are enlarged. The flight is simulated."
-    : "Distances compressed; sizes exaggerated. Positions from JPL ephemerides at simulated sky dates; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet." : "");
+  $("#rnote").textContent = local ? "Centred on " + SF.name(rp.focus) + ", distances in km. Not to scale: the " + SF.SHIP + " and small moons are enlarged. Orbit lines are two-body orbits at the sky date. The flight is simulated."
+    : "Distances compressed; sizes exaggerated. Positions from JPL ephemerides at simulated sky dates. Orbit lines are two-body orbits at the sky date; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet, straight guides between the planned places." : "");
   if (GL && window.SolArt) $("#rnote").insertAdjacentHTML("beforeend", '<span class="cred cred-l">' + esc(SolArt.CREDIT) + ' <a href="/assets/CREDITS.md">Credits</a></span><span class="cred cred-s">Maps: NASA, JPL, USGS; Solar System Scope (CC BY 4.0). <a href="/assets/CREDITS.md">Credits</a></span>');
   $("#sticks").innerHTML = rp.events.map(function (e) { return '<span class="tick ' + e.kind + '" style="left:' + ((e.jd - rp.start) / span * 100).toFixed(2) + '%" title="' + W(e.title) + '"></span>'; }).join("");
   $("#callouts").innerHTML = ""; RS.ckey = null; RS.lvst = null;
@@ -973,7 +1017,7 @@ function flownBy(jd) {
 var TRAILMAT = null;
 function trailOf(seg) {
   TRAILMAT = TRAILMAT || new THREE.ShaderMaterial({
-    uniforms: { color: { value: new THREE.Color(0x9cc3ff) }, now: { value: 0 }, res: { value: new THREE.Vector2(1, 1) }, dpr: { value: 1 } },
+    uniforms: { color: { value: new THREE.Color(SolLines.STYLE.route.color) }, now: { value: 0 }, res: { value: new THREE.Vector2(1, 1) }, dpr: { value: 1 } },
     transparent: true, depthWrite: false,
     vertexShader: "#include <common>\n#include <logdepthbuf_pars_vertex>\n" +
       "attribute vec3 a;attribute vec3 b;attribute vec2 flown;uniform vec2 res;uniform float dpr;uniform float now;varying float vS;varying float vSide;varying float vHw;\n" +
@@ -1006,7 +1050,7 @@ function buildRideScene() {
   var cam = new THREE.PerspectiveCamera(50, (GL.W || 1) / (GL.H || 1), local ? 0.002 : 0.02, 9000);
   if (RS.labels) RS.labels.clear();
   $("#rlabels").textContent = ""; // drop the last flight's labels
-  var labels = LabelSet($("#rlabels")); RS.labels = labels; RS.sc = sc; RS.cam = cam; RS.bodies = []; RS.rings = [];
+  var labels = LabelSet($("#rlabels")); RS.labels = labels; RS.sc = sc; RS.cam = cam; RS.bodies = []; RS.rings = []; RS.paths = [];
   var live = RIDE.live;
   RS.wx = window.StarfareView.weatherWindows(live ? live.incidents : rp.record.score.incidents, live && live.hold, SF.E.PLACES);
   sc.add(stars());
@@ -1024,8 +1068,7 @@ function buildRideScene() {
       if (Q.kind === "moon") { r = Math.max(0.05, Q.radius_km / 1000); m = planetMesh(id); m.scale.setScalar(r); }
       else { r = 0.03; m = SolLines.marker(Q.real ? 0xdfe6ee : 0xffb65c); }
       sc.add(m); RS.bodies.push({ id: id, m: m, r: r });
-      var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 160).map(function (q) { return axes(q, 1 / 1000); });
-      if (ring.length) { var g = new THREE.Group(); g.add(ringOf(ring, m, id, 0.14)); sc.add(g); RS.bodies.push({ id: Q.parent, ringOf: id, m: g, r: 0 }); }
+      var g = new THREE.Group(); g.add(ringOf(256, m, id, SolLines.STYLE.ring.moon, "moon", 1 / 1000, 0)); sc.add(g); RS.bodies.push({ id: Q.parent, ringOf: id, m: g, r: 0 });
       labels.add({ html: esc(SF.name(id)), cls: Q.kind === "moon" ? "k-planet" : "k-place", pri: Q.kind === "moon" ? 40 : 30, pos: function () { return placeK(id, RS.cur); } });
     });
   } else {
@@ -1037,8 +1080,7 @@ function buildRideScene() {
       var id = Q.id, m, minPx = 2;
       if (Q.kind === "planet" || (Q.kind === "small" && Q.mu)) {
         m = planetMesh(id); minPx = 2.6;
-        var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 180).map(function (q) { return S([q[0] / AU, q[1] / AU, q[2] / AU]); });
-        if (ring.length) sc.add(ringOf(ring, m, id, 0.12));
+        sc.add(ringOf(1024, m, id, SolLines.STYLE.ring.orbit, "orb", 1 / AU, K));
       } else if (Q.kind === "moon" && used[id]) m = planetMesh(id);
       else if (used[id]) m = SolLines.marker(Q.real ? 0xdfe6ee : 0xffb65c);
       else return;
@@ -1070,21 +1112,22 @@ function buildRideScene() {
       var j = L.dep + (L.orb - L.dep) * k / n, point = shipPos(j), s = s0 + j - L.dep;
       pts.push(point); seg.push(previous.x, previous.y, previous.z, point.x, point.y, point.z, ps, s); previous = point; ps = s;
     }
-    sc.add(SolLines.line(pts, { color: 0x9cc3ff, opacity: 0.22, width: 1 }));
+    var flown = SolLines.line(pts, SolLines.STYLE.flown); RS.paths.push(flown); sc.add(flown);
     s0 += L.orb - L.dep;
   });
   RS.trail = seg.length ? trailOf(seg) : null;
-  if (RS.trail) sc.add(RS.trail);
+  if (RS.trail) { RS.paths.push(RS.trail); sc.add(RS.trail); }
   // Legs still to fly in a live flight: dashed, straight between the places at the planned times. They can change at a checkpoint.
   rp.plan.forEach(function (Q) {
     var a = local ? placeK(Q.from, Q.dep) : marker(Q.from, Q.dep), b = local ? placeK(Q.to, Q.arr) : marker(Q.to, Q.arr);
-    sc.add(SolLines.leg([{ v: a, f: 0, s: 0 }, { v: b, f: 1, s: 1 }], { color: 0xffcf7a, opacity: 0.5, width: 1.5 }));
+    var planned = SolLines.leg([{ v: a, f: 0, s: 0 }, { v: b, f: 1, s: 1 }], SolLines.STYLE.plan); RS.paths.push(planned); sc.add(planned);
   });
   RS.ship = makeShip(rp.car); sc.add(RS.ship);
   var cls = SF.E.SHIP_CLASSES[(SF.E.R.CAR[String(rp.car).toLowerCase()] || {}).ship_class];
   RS.ion = !!(cls && cls.ion); RS.glow = 0;
-  RS.shipScale = local ? 0.14 : 0.55;
+  RS.shipScale = local ? 0.14 : 0.3;
   RS.ship.scale.setScalar(RS.shipScale);
+  syncLayers();
   onResize();
 }
 var NEAR = 0.06;
@@ -1216,7 +1259,12 @@ function rideFrame(dt, t) {
   if (RS.camp.distanceTo(p) > D * 30 && !RS.over && !hold) { RS.camp.copy(want); RS.look.copy(look); }
   cam.up.copy(RS.local && !RS.over && !hold && RS.up ? RS.up : V(0, 1, 0));
   cam.position.copy(RS.camp); cam.lookAt(RS.look);
-  RS.rings.forEach(function (o) { SolLines.follow(o.line, o.body.position, o.line.parent.position, discPx(o.body, cam, GH)); });
+  RS.rings.forEach(function (o) {
+    var el = SolLines.osculate(SF, o.id, jd, o.k, SolLines.axes);
+    o.line.visible = !!LAY[o.layer] && !!el;
+    if (el) { SolLines.aim(o.line, el); if (!o.compress) o.line.position.copy(o.body.position).sub(o.line.parent.position); SolLines.follow(o.line, o.body.position, discPx(o.body, cam, GH)); }
+  });
+  RS.paths.forEach(function (o) { o.visible = SolLayers.showPath(LAY, true); });
   SolLines.zoom(pxw(cam, RS.look, GH));
   if (RS.planetClock && window.SolArt && SolArt.updatePlanet) {
     if (jump) RS.planetClock.reset(t);

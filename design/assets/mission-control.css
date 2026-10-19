@@ -79,10 +79,10 @@ button,input,select,textarea{font-family:inherit}
 .mc-home .hud .hudbox .caps{font-size:10px}
 .mc-home #liveBtn{pointer-events:auto;margin-top:6px}
 .mc-home .mapbox .nogl-msg{z-index:4;inset:25% 33%;font-size:14px;background:#0d151f;padding:20px}
-.mc-home .lbl{font-size:10px;letter-spacing:.02em;font-weight:500}
-.mc-home .lbl.k-planet{opacity:1;color:#e1e8ef;font-size:11px;text-shadow:0 1px 4px #000}
+.mc-home .lbl{font-size:calc(10px * var(--ls, 1));letter-spacing:.02em;font-weight:500}
+.mc-home .lbl.k-planet{opacity:1;color:#e1e8ef;font-size:calc(11px * var(--ls, 1));text-shadow:0 1px 4px #000}
 .mc-home .lbl.k-place{opacity:1;color:#a8b6c6}
-.mc-home .lbl.k-sample{font:600 11px Inter,sans-serif;letter-spacing:0;background:rgba(6,9,13,.8);border-color:#42607a}
+.mc-home .lbl.k-sample{font:600 calc(11px * var(--ls, 1)) Inter,sans-serif;letter-spacing:0;background:rgba(6,9,13,.8);border-color:#42607a}
 .mc-home .lbl.k-fleet{color:#bdd5e9}
 .mc-home button.lbl.k-planet{border:0;padding:3px 5px;background:rgba(5,9,12,.5);border-radius:2px;cursor:pointer;pointer-events:auto;font-family:Inter,sans-serif;font-weight:500;letter-spacing:.06em}
 .mc-home button.lbl.k-planet:hover{background:#17232d;color:#fff}
@@ -185,7 +185,7 @@ button,input,select,textarea{font-family:inherit}
  .mc-home .legend{left:12px;bottom:calc(31% + 64px);width:calc(100% - 24px);max-height:42%}
  .mc-home .mc-drawer{inset:112px 12px 12px;width:auto;max-width:none;z-index:20}.mc-strip{height:46px;padding:0 10px;gap:4px}.mc-strip .mc-sky{font-size:10px;gap:5px;flex:1}.mc-strip .mc-rate{display:none}.mc-strip .btn{font-size:11px;min-height:40px;padding:4px 8px}.mc-strip .mc-operations-toggle{display:flex}.mc-strip nav{display:none;position:absolute;bottom:48px;right:12px;width:240px;max-width:calc(100vw - 24px);padding:8px;border:1px solid var(--line-2);border-radius:4px;background:#0c151f;box-shadow:0 12px 24px #0007}.mc-strip nav.mc-open{display:grid;grid-template-columns:1fr 1fr}.mc-strip nav .btn{min-height:44px;justify-content:flex-start}.mc-strip #hidePanels{display:none}
  .mc-home:has(.c-fl.mc-collapsed) .mc-activity{bottom:44px}.mc-home:has(.c-fl.mc-collapsed) .mc-map-controls,.mc-home:has(.c-fl.mc-collapsed) .hud{bottom:58px}.mc-home:has(.c-fl.mc-collapsed) .info{bottom:110px}
- .mc-home .mapbox .nogl-msg{inset:29% 5% auto;font-size:12px;padding:12px}.mc-home .lbl.k-planet{font-size:10px}.mc-home .lbl.k-sample{font-size:10px}.mc-home .lbl.k-fleet{font-size:9px}
+ .mc-home .mapbox .nogl-msg{inset:29% 5% auto;font-size:12px;padding:12px}.mc-home .lbl.k-planet{font-size:calc(10px * var(--ls, 1))}.mc-home .lbl.k-sample{font-size:calc(10px * var(--ls, 1))}.mc-home .lbl.k-fleet{font-size:9px}
  .mc-flight .fdeck{display:flex;flex-direction:column;padding-inline:12px}.mc-flight .stage{min-height:420px;height:62dvh}.mc-flight .plist{width:auto}.mc-flight .nav .links{gap:10px}.mc-flight .nav .links a{font-size:11px}.mc-flight .pill{display:none}
 }
 @media(prefers-reduced-motion:reduce){.mc-home *, .mc-flight *{scroll-behavior:auto!important}}

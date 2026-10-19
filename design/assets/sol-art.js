@@ -269,6 +269,9 @@
      The nozzle stays dark and the lights stay steady: runs record no burn intervals or light states
      (art/2026-10-17/motion-spec.md), so the ship shows no thrust and has nothing to animate. */
   var SHIPK = null;
+  // Faces get real normals. flatShading derives them in the fragment shader from screen-space derivatives of the view
+  // position, which underflow on a ship drawn at map scale and leave the whole hull black.
+  function facet(g) { if (g.index) g = g.toNonIndexed(); g.computeVertexNormals(); return g; }
   function shipKit() {
     if (SHIPK) return SHIPK;
     var prof = [[0.0, 0.07], [0.04, 0.095], [0.14, 0.122], [0.34, 0.132], [0.56, 0.122], [0.74, 0.096], [0.87, 0.062], [0.95, 0.03], [1.0, 0.001]];
@@ -293,16 +296,16 @@
     }
     function halfW(z, y) { var r = rAt(z), k = y / (0.62 * r); return k >= 1 ? 0 : 1.3 * r * Math.sqrt(1 - k * k); }
     SHIPK = {
-      halfW: halfW, hull: hull, wing: wing, fin: fin, canopy: canopy,
-      nacelle: new THREE.CylinderGeometry(0.078, 0.092, 0.07, 12, 1, true).rotateX(Math.PI / 2),
+      halfW: halfW, hull: facet(hull), wing: facet(wing), fin: facet(fin), canopy: facet(canopy),
+      nacelle: facet(new THREE.CylinderGeometry(0.078, 0.092, 0.07, 12, 1, true).rotateX(Math.PI / 2)),
       disc: new THREE.CircleGeometry(0.072, 20),
       win: new THREE.BoxGeometry(0.006, 0.02, 0.042),
       decal: new THREE.PlaneGeometry(0.22, 0.055).rotateX(-Math.PI / 2).rotateY(Math.PI), // flat, reads from behind
-      hullM: new THREE.MeshStandardMaterial({ color: 0x5d6a7e, metalness: 0.35, roughness: 0.42, flatShading: true, emissive: 0x0b0f16 }),
-      wingM: new THREE.MeshStandardMaterial({ color: 0x2a3344, metalness: 0.4, roughness: 0.5, flatShading: true }),
-      canM: new THREE.MeshStandardMaterial({ color: 0x1a2b44, emissive: 0x9cc3ff, emissiveIntensity: 0.28, metalness: 0.6, roughness: 0.12, flatShading: true }),
+      hullM: new THREE.MeshStandardMaterial({ color: 0x5d6a7e, metalness: 0.35, roughness: 0.42, flatShading: false, emissive: 0x0b0f16 }),
+      wingM: new THREE.MeshStandardMaterial({ color: 0x2a3344, metalness: 0.4, roughness: 0.5, flatShading: false }),
+      canM: new THREE.MeshStandardMaterial({ color: 0x1a2b44, emissive: 0x9cc3ff, emissiveIntensity: 0.28, metalness: 0.6, roughness: 0.12, flatShading: false }),
       winM: new THREE.MeshBasicMaterial({ color: 0xc4dbff }),
-      nacM: new THREE.MeshStandardMaterial({ color: 0x1a202c, metalness: 0.6, roughness: 0.35, flatShading: true, side: THREE.DoubleSide }),
+      nacM: new THREE.MeshStandardMaterial({ color: 0x1a202c, metalness: 0.6, roughness: 0.35, flatShading: false, side: THREE.DoubleSide }),
       throatM: new THREE.MeshBasicMaterial({ color: 0x07090d }),
       stripeM: new THREE.LineBasicMaterial({ color: 0x9cc3ff, transparent: true, opacity: 0.9 }),
       navG: pointGlow()
