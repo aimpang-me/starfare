@@ -523,7 +523,7 @@ p{text-wrap:pretty}
         </ul>
         <p class="lgn">JPL positions at simulated sky dates. Orbit lines are two-body orbits at the sky date, simulated. Stored paths where available; straight route guides otherwise. True scale: real distances and sizes; bodies too small to see are drawn at a few pixels. Surface rotation and clouds are slowed for viewing.</p>
         <p class="lgn cred" id="artCred" hidden></p>
-        <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Ctrl down and Space up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to ride along, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
+        <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Ctrl down and Space up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Docks are placeholder art. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to ride along, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
       </div>
       <div class="mc-map-controls" role="group" aria-label="Map controls">
         <button type="button" id="zoomIn" aria-label="Move closer">+</button><button type="button" id="zoomOut" aria-label="Move farther">−</button><button type="button" id="resetMap" aria-label="Whole system view">⊙</button><button type="button" id="mapHelp" class="mc-map-note" aria-expanded="false" aria-controls="legend">Map info</button>
@@ -1495,12 +1495,38 @@ function shipPx(v, base) {
   }
   return cap;
 }
-var CR = V(), CU = V(), PO = V(), SLOT = {};
-// A ship at rest at a planet or moon shares its centre. Draw it just clear of the disc, a pixel offset on screen, one slot per ship.
+var CR = V(), CU = V(), PO = V(), SLOT = {}, DP = {}, DOCKS = {}, DOCKNEED = {}, DOCK_PX = 34;
+// Placeholder dock for a place: a ring on a hub. The Blender models replace this one function. Map art only; no engine place is added.
+function makeDock(P) {
+  var g = new THREE.Group(), lit = new THREE.MeshBasicMaterial({ color: P && P.real ? 0xdfe6ee : 0xffb65c }), dim = new THREE.MeshBasicMaterial({ color: 0x5b6672 });
+  var hub = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.7, 12), dim); hub.rotation.x = Math.PI / 2; g.add(hub);
+  g.add(new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.09, 6, 28), lit));
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.03, 0.03), dim)); g.add(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.84, 0.03), dim));
+  return g;
+}
+// A station's dock is at the station. A planet's or moon's dock sits clear of its disc, a pixel offset on screen. Ships berth round it, one slot each.
+function dockCentre(id, v) {
+  var b = BID[id]; if (!b || !b.obj.visible) return null;
+  if (!b.rKm) return v;
+  var px = pxAt(v), d = (b.obj.scale.x / px + DOCK_PX * 0.5 + 48) * px;
+  return (DP[id] || (DP[id] = V())).copy(v).addScaledVector(CR, Math.cos(0.8) * d).addScaledVector(CU, Math.sin(0.8) * d);
+}
 function parkOff(id, v, sp) {
-  var b = BID[id]; if (!b || !b.rKm || !b.obj.visible) return v;
-  var px = pxAt(v), a = 0.8 + 1.1 * (SLOT[id] = (SLOT[id] || 0) + 1), d = (b.obj.scale.x / px + sp * 0.6 + 2) * px;
-  return PO.copy(v).addScaledVector(CR, Math.cos(a) * d).addScaledVector(CU, Math.sin(a) * d);
+  var c = dockCentre(id, v); if (!c) return v;
+  DOCKNEED[id] = 1;
+  var px = pxAt(v), n = SLOT[id] = (SLOT[id] || 0) + 1, a = 0.6 + 1.3 * n, d = (DOCK_PX * 0.5 + sp * 0.6 + 3) * px;
+  return PO.copy(c).addScaledVector(CR, Math.cos(a) * d).addScaledVector(CU, Math.sin(a) * d);
+}
+function drawDocks() {
+  Object.keys(DOCKS).forEach(function (id) { DOCKS[id].visible = false; });
+  PLACES.forEach(function (p) { if (p.kind === "station" && LAY.plc && sepPx(p.id) > 10) DOCKNEED[p.id] = 1; });
+  Object.keys(DOCKNEED).forEach(function (id) {
+    var v = marker(id, MAPJD), c = dockCentre(id, v); if (!c) return;
+    var D = DOCKS[id]; if (!D) { D = DOCKS[id] = makeDock(SF.place(id)); scene.add(D); }
+    D.visible = true; D.position.copy(c).sub(EYE); D.scale.setScalar(Math.max(SHIP_D / 6, pxAt(v) * DOCK_PX));
+    D.rotation.set(0.5, reduced ? 0.6 : IDLE_T * 0.15 + idlePhase(id), 0);
+  });
+  DOCKNEED = {};
 }
 // A ship at rest drifts: a slow bob and sway of a few pixels, out of step per ship. Frozen with the map pause and for reduced motion.
 var IDLE_T = 0, IDLE_PH = {};
@@ -1998,6 +2024,7 @@ function draw(dt, t) {
     window.StarfareView.orientShip(ship, window.StarfareView.headingFrame(heading, [0, 1, 0], ship.userData.headingSet ? ship.up.toArray() : null));
     idleSway(c.car, ship);
   });
+  drawDocks();
   setPts(PARK_R, window.SolArt ? [] : pr); setPts(PARK_B, window.SolArt ? [] : pb);
   LBL.update(cam, GW, GH);
   var tb = $("#tbox");
