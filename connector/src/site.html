@@ -1502,6 +1502,22 @@ function parkOff(id, v, sp) {
   var px = pxAt(v), a = 0.8 + 1.1 * (SLOT[id] = (SLOT[id] || 0) + 1), d = (b.obj.scale.x / px + sp * 0.6 + 2) * px;
   return PO.copy(v).addScaledVector(CR, Math.cos(a) * d).addScaledVector(CU, Math.sin(a) * d);
 }
+// A ship at rest drifts: a slow bob and sway of a few pixels, out of step per ship. Frozen with the map pause and for reduced motion.
+var IDLE_T = 0, IDLE_PH = {};
+function idlePhase(key) {
+  if (IDLE_PH[key] == null) { for (var h = 7, i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 6283; IDLE_PH[key] = h / 1000; }
+  return IDLE_PH[key];
+}
+function idleBob(key, pos, px, sp) {
+  if (reduced) return pos;
+  var a = IDLE_T * 0.9 + idlePhase(key), amp = Math.max(1.5, sp * 0.14) * px;
+  return pos.addScaledVector(CU, Math.sin(a) * amp).addScaledVector(CR, Math.sin(a * 0.63 + 1.7) * amp * 0.5);
+}
+function idleSway(key, ship) {
+  if (reduced) return;
+  var a = IDLE_T * 0.9 + idlePhase(key);
+  ship.rotateZ(Math.sin(a * 0.77 + 0.4) * 0.07); ship.rotateX(Math.sin(a * 0.55) * 0.04);
+}
 function pxAt(p) { return p.distanceTo(EYE) * 2 * Math.tan(PIL_FOV * Math.PI / 360) / GH; }
 function pilotDir(out) { var cp = Math.cos(PIL.pitch); return out.set(-Math.sin(PIL.yaw) * cp, Math.sin(PIL.pitch), -Math.cos(PIL.yaw) * cp); }
 function setLook(d) { var L = d.length(); if (L) { PIL.yaw = Math.atan2(-d.x, -d.z); PIL.pitch = Math.asin(clamp(d.y / L, -1, 1)); } }
@@ -1880,7 +1896,7 @@ function frame(t) {
   // A frame is drawn when its target interval is within half a display tick: on a 240 Hz display a 60 fps cap would otherwise wait five ticks, not four.
   if (tickT && t - tickT < 50) tickMs += (t - tickT - tickMs) * 0.05; tickT = t;
   if (t - last < 1000 / (pilotMoving() ? 60 : window.SolArt ? SolArt.quality().fps : GW <= 760 ? 24 : 30) - tickMs / 2) return;
-  var dt = Math.min(0.1, Math.max(0, (t - last) / 1000)); last = t; MEMO = {}; MEMON = 0;
+  var dt = Math.min(0.1, Math.max(0, (t - last) / 1000)); last = t; MEMO = {}; MEMON = 0; IDLE_T = t / 1000;
   try { draw(dt, t); } catch (e) { if (!frame.err) { frame.err = 1; console.error(e); } }
   if (MAP_PAUSED && !pilotMoving()) glStop();
 }
@@ -1942,7 +1958,8 @@ function draw(dt, t) {
     F.ship.visible = on && !(lock && PIL.view === "cockpit"); F.halo.visible = on && !lock;
     if (!on) return;
     var sp = shipPx(v, sel ? 38 : 30), st0 = F.sc.s, pv = st0.phase !== "flight" && !lock ? parkOff(st0.f >= 1 ? st0.leg.to : st0.leg.from, v, sp) : v;
-    F.ship.position.copy(pv).sub(EYE); F.ship.scale.setScalar(lock ? SHIP_D / 6 : Math.max(SHIP_D / 6, pxAt(v) * sp));
+    var rest = pv !== v;
+    F.ship.position.copy(pv).sub(EYE); if (rest) idleBob(F.key, F.ship.position, pxAt(v), sp); F.ship.scale.setScalar(lock ? SHIP_D / 6 : Math.max(SHIP_D / 6, pxAt(v) * sp));
     var heading = window.StarfareView.flightDirection(F.rp, F.jd, function (jd) { return shipC(F.rp, jd, MAPJD).v.toArray(); });
     if (!heading) {
       var state = F.sc.s, stop = state.f >= 1 ? state.leg.to : state.leg.from;
@@ -1950,6 +1967,7 @@ function draw(dt, t) {
     }
     window.StarfareView.orientShip(F.ship, window.StarfareView.headingFrame(heading, [0, 1, 0], F.ship.userData.headingSet ? F.ship.up.toArray() : null));
     PF.set(0, 0, 1).applyQuaternion(F.ship.quaternion); F.hd = F.hd ? F.hd.lerp(PF, 1 - Math.exp(-dt / 0.25)).normalize() : PF.clone();
+    if (rest) idleSway(F.key, F.ship);
     F.halo.position.copy(F.ship.position); F.halo.scale.setScalar(pxAt(v) * sp * (sel ? 0.9 : 0.8));
     F.halo.material.color.setScalar(sel ? 1.5 : 0.75); // over the bloom threshold only when selected
     if (F.lbl) F.lbl.el.classList.toggle("on", sel);
@@ -1974,9 +1992,10 @@ function draw(dt, t) {
   if (window.SolArt && FILT.pk && !FOLLOW) LIVE.forEach(function (c) {
     var ship = PARK_SHIPS[c.car];
     if (!ship) { ship = PARK_SHIPS[c.car] = SolArt.ship({callsign:c.car.toUpperCase()}); scene.add(ship); }
-    var p = marker(c.at, MAPJD), sp = shipPx(p, 16); ship.visible = true; ship.position.copy(parkOff(c.at, p, sp)).sub(EYE); ship.scale.setScalar(Math.max(SHIP_D / 6, pxAt(p) * sp));
+    var p = marker(c.at, MAPJD), sp = shipPx(p, 16); ship.visible = true; ship.position.copy(parkOff(c.at, p, sp)).sub(EYE); idleBob(c.car, ship.position, pxAt(p), sp); ship.scale.setScalar(Math.max(SHIP_D / 6, pxAt(p) * sp));
     var heading = window.StarfareView.orbitDirection(MAPJD, function (jd) { return marker(c.at, jd).toArray(); });
     window.StarfareView.orientShip(ship, window.StarfareView.headingFrame(heading, [0, 1, 0], ship.userData.headingSet ? ship.up.toArray() : null));
+    idleSway(c.car, ship);
   });
   setPts(PARK_R, window.SolArt ? [] : pr); setPts(PARK_B, window.SolArt ? [] : pb);
   LBL.update(cam, GW, GH);
