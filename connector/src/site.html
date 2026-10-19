@@ -1524,6 +1524,18 @@ function parkOff(id, v, sp) {
   var px = pxAt(v), n = SLOT[id] = (SLOT[id] || 0) + 1, a = 0.6 + 1.3 * n, d = (DOCK_PX * 0.5 + sp * 0.6 + 3) * px;
   return PO.copy(c).addScaledVector(CR, Math.cos(a) * d).addScaledVector(CU, Math.sin(a) * d);
 }
+// Orbit and route lines fade out, with padding, round every disc, ship and dock on screen. A ship counts as half its drawn size across.
+var HOLES = [], HOLE_PX = Math.tan(PIL_FOV * Math.PI / 360) * 2;
+function holeAt(q, scale, k) { HOLES.push({ p: q, r: Math.max(2, scale / (q.length() * HOLE_PX / GH) * k) }); }
+function drawHoles() {
+  HOLES.length = 0;
+  holeAt(WORLD.position, SUN.scale.x, 1);
+  BODIES.forEach(function (b) { if (b.kind !== "sun" && b.rKm && b.obj.visible) holeAt(AW.copy(b.obj.position).sub(EYE).clone(), b.obj.scale.x, 1); });
+  FL.forEach(function (F) { if (F.ship && F.ship.visible) holeAt(F.ship.position, F.ship.scale.x, 0.5); });
+  Object.keys(PARK_SHIPS).forEach(function (id) { var o = PARK_SHIPS[id]; if (o.visible) holeAt(o.position, o.scale.x, 0.5); });
+  Object.keys(DOCKS).forEach(function (id) { var o = DOCKS[id]; if (o.visible) holeAt(o.position, o.scale.x, 0.5); });
+  SolLines.setHoles(cam, HOLES);
+}
 function drawDocks() {
   Object.keys(DOCKS).forEach(function (id) { DOCKS[id].visible = false; });
   PLACES.forEach(function (p) { if (p.kind === "station" && LAY.plc && sepPx(p.id) > 10) DOCKNEED[p.id] = 1; });
@@ -2036,6 +2048,7 @@ function draw(dt, t) {
   drawDocks();
   setPts(PARK_R, window.SolArt ? [] : pr); setPts(PARK_B, window.SolArt ? [] : pb);
   AMB.intensity = PIL.lock ? AMB_CHASE : AMB_FREE;
+  drawHoles();
   LBL.update(cam, GW, GH);
   var tb = $("#tbox");
   if (SEL.t === "f" && FILT.fl && FL[SEL.i] && FL[SEL.i].ship && FL[SEL.i].ship.visible && PIL.lock !== FL[SEL.i]) { var F0 = FL[SEL.i]; tb.className = "tbox " + (F0.st ? F0.st.k : ""); tbox(tb, F0.sc.v, 34); }

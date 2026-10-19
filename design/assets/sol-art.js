@@ -271,7 +271,7 @@
   var SHIPK = null;
   // Faces get real normals. flatShading derives them in the fragment shader from screen-space derivatives of the view
   // position, which underflow on a ship drawn at map scale and leave the whole hull black.
-  function facet(g) { g = g.toNonIndexed(); g.computeVertexNormals(); return g; }
+  function facet(g) { if (g.index) g = g.toNonIndexed(); g.computeVertexNormals(); return g; }
   function shipKit() {
     if (SHIPK) return SHIPK;
     var prof = [[0.0, 0.07], [0.04, 0.095], [0.14, 0.122], [0.34, 0.132], [0.56, 0.122], [0.74, 0.096], [0.87, 0.062], [0.95, 0.03], [1.0, 0.001]];

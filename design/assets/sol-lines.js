@@ -9,7 +9,7 @@
   'use strict';
   var TAU = Math.PI * 2;
   // An orbit is at full brightness just behind its body and at AHEAD of that just in front of it.
-  var AHEAD = 0.4, GAP_IN = 2, GAP_OUT = 10, DASH_PX = 12, MARKER_PX = 9;
+  var AHEAD = 0.4, GAP_IN = 2, GAP_OUT = 10, DASH_PX = 12, MARKER_PX = 9, MAX_HOLES = 48;
   // The line budget by zoom: each kind of line fades in over a range of one measure of the view. The distance grid
   // fades out as the camera closes on one system (camera distance in map units; the map shows one system from 35 in).
   // A moon ring fades in as it opens out round its planet (ring radius in CSS px). A flight that is not selected
@@ -95,7 +95,8 @@
   function crowd(n) { var u = []; for (var k = 0; k <= n; k++) u.push((1 - Math.cos(Math.PI * k / n)) / 2); return u; }
 
   var SHARED = null;
-  function shared() { return SHARED || (SHARED = { res: { value: new THREE.Vector2(1, 1) }, dpr: { value: 1 }, dash: { value: new THREE.Vector2(1, 0) } }); }
+  function shared() { return SHARED || (SHARED = { res: { value: new THREE.Vector2(1, 1) }, dpr: { value: 1 }, dash: { value: new THREE.Vector2(1, 0) },
+    holes: { value: Array.from({ length: MAX_HOLES }, function () { return new THREE.Vector3(); }) }, nh: { value: 0 } }); }
   function resize(renderer) { var U = shared(); renderer.getDrawingBufferSize(U.res.value); U.dpr.value = renderer.getPixelRatio(); }
   function zoom(pxw) { var d = dash(pxw); shared().dash.value.set(d.period, d.t); }
 
@@ -133,6 +134,7 @@
   var FRAG = '#include <common>\n#include <logdepthbuf_pars_fragment>\n' +
     'uniform vec3 color;uniform float opacity;uniform float dpr;uniform float hw;uniform float feather;uniform float ahead;' +
     'uniform vec2 gapR;varying vec3 vP;varying float vSide;varying vec2 vGap;\n' +
+    '#ifdef HOLES\nuniform vec3 holes[' + MAX_HOLES + '];uniform float nh;\n#endif\n' +
     '#ifdef CONIC\nvarying float vU;\n#endif\n' +
     '#ifdef ROUTE\nuniform float now;uniform float flown;uniform vec2 dash;uniform vec2 tail;varying float vS;varying float vD;\n' +
     'float dashOn(float x){x=fract(x);return smoothstep(0.,.06,x)*(1.-smoothstep(.5,.56,x));}\n#endif\n' +
@@ -141,7 +143,9 @@
     'if(tail.y>0.)al*=1.-smoothstep(0.,tail.y,tail.x-vD);\n#endif\n' +
     'float e=clamp((1.-abs(vSide))*hw/feather,0.,1.);al*=e*e*(3.-2.*e);' +
     '\n#ifdef CONIC\nal*=1.+(ahead-1.)*vU;\n#endif\n' +
-    'al*=smoothstep(gapR.x,gapR.y,length(gl_FragCoord.xy-vGap)/dpr);if(al<.002)discard;gl_FragColor=vec4(color,al);}';
+    'al*=smoothstep(gapR.x,gapR.y,length(gl_FragCoord.xy-vGap)/dpr);\n' +
+    '#ifdef HOLES\nfor(int i=0;i<' + MAX_HOLES + ';i++){if(float(i)>=nh)break;vec3 h=holes[i];al*=smoothstep(h.z+' + GAP_IN.toFixed(1) + ',h.z+' + GAP_OUT.toFixed(1) + ',length(gl_FragCoord.xy-h.xy)/dpr);}\n#endif\n' +
+    'if(al<.002)discard;gl_FragColor=vec4(color,al);}';
 
   function material(o, kind) {
     var U = shared(), feather = o.feather == null ? 1 : o.feather, u = {
@@ -153,6 +157,7 @@
     if (route) { u.e0 = { value: new THREE.Vector3() }; u.e1 = { value: new THREE.Vector3() }; u.now = { value: -1 }; u.flown = { value: 1 }; u.dash = U.dash; u.tail = { value: new THREE.Vector2() }; }
     if (kind === 'CONIC') { u.cP = { value: new THREE.Vector3(1, 0, 0) }; u.cQ = { value: new THREE.Vector3(0, 1, 0) }; u.cE = { value: new THREE.Vector2(1, 0) }; u.nu0 = { value: 0 }; u.cK = { value: o.compress || 0 }; u.cA = { value: new THREE.Vector3(1, 0, 0) }; u.cB = { value: new THREE.Vector3(0, 1, 0) }; }
     var defines = {}; if (kind) defines[kind] = 1;
+    if (kind === 'CONIC' || kind === 'ROUTE') { defines.HOLES = 1; u.holes = U.holes; u.nh = U.nh; }
     return new THREE.ShaderMaterial({
       uniforms: u, defines: defines,
       vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, side: THREE.DoubleSide
@@ -240,6 +245,21 @@
     u.gapR.value.set(disc + GAP_IN, disc + GAP_OUT);
   }
 
+  // Orbit and route lines fade out round every body, ship and dock on screen, whichever is in front. list is
+  // [{ p, r }]: p the thing's place relative to the camera's origin (as for follow), r its drawn radius in CSS px.
+  var HV = null;
+  function setHoles(cam, list) {
+    var U = shared(), n = 0, v = HV || (HV = new THREE.Vector3()), res = U.res.value, dpr = U.dpr.value;
+    for (var i = 0; i < list.length && n < MAX_HOLES; i++) {
+      var h = list[i]; v.copy(h.p).applyMatrix4(cam.matrixWorldInverse).applyMatrix4(cam.projectionMatrix);
+      if (v.z >= 1 || v.z < -1) continue;
+      var mx = (h.r + GAP_OUT) * dpr * 2 / res.x, my = (h.r + GAP_OUT) * dpr * 2 / res.y;
+      if (Math.abs(v.x) - 1 > mx || Math.abs(v.y) - 1 > my) continue;
+      U.holes.value[n++].set((v.x * .5 + .5) * res.x, (v.y * .5 + .5) * res.y, h.r);
+    }
+    U.nh.value = n;
+  }
+
   // A station: a dot in a thin ring, MARKER_PX CSS px across at every zoom, hidden behind nearer bodies.
   var DOT = null;
   function marker(color) {
@@ -255,6 +275,6 @@
   }
 
   return { elements: elements, conicAt: conicAt, osculate: osculate, crowd: crowd, conic: conic, aim: aim, axes: axes, STYLE: STYLE, AHEAD: AHEAD, TRAIL_PX: TRAIL_PX, trail: trail, gap: gap, dash: dash,
-    budget: budget, along: along, tails: tails, line: line, lines: lines, setPoints: setPoints, leg: leg, follow: follow, marker: marker,
+    budget: budget, along: along, tails: tails, line: line, lines: lines, setPoints: setPoints, leg: leg, follow: follow, setHoles: setHoles, shared: shared, marker: marker,
     resize: resize, zoom: zoom };
 });

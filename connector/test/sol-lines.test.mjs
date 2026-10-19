@@ -157,3 +157,15 @@ test('a float32 orbit line is off in proportion to its distance from the body, n
     assert.ok(off < 4e-7 * dist, `${off} km off at ${dist} km from the body`);
   }
 });
+
+test('every disc, ship and dock on screen becomes a fade-out hole for orbit and route lines, in framebuffer pixels', () => {
+  class V { constructor(x = 0, y = 0, z = 0) { this.x = x; this.y = y; this.z = z; }
+    set(x, y, z) { this.x = x; this.y = y; this.z = z === undefined ? this.z : z; return this; }
+    copy(o) { return this.set(o.x, o.y, o.z); } applyMatrix4(m) { m.map(this); return this; } }
+  globalThis.THREE = { Vector2: V, Vector3: V };
+  const cam = { matrixWorldInverse: { map() {} }, projectionMatrix: { map(v) { v.x /= 10; v.y /= 10; v.z = v.z > 50 ? 2 : 0; } } };
+  Lines.resize({ getDrawingBufferSize: v => v.set(200, 100), getPixelRatio: () => 1 });
+  const holes = (list) => { Lines.setHoles(cam, list); const m = Lines.shared(); return m.holes.value.slice(0, m.nh.value).map(h => [h.x, h.y, h.z]); };
+  assert.deepEqual(holes([{ p: new V(5, 0, 0), r: 7 }, { p: new V(-5, -5, 0), r: 3 }]), [[150, 50, 7], [50, 25, 3]]);
+  assert.deepEqual(holes([{ p: new V(500, 0, 0), r: 9 }, { p: new V(0, 0, 60), r: 9 }, { p: new V(0, 0, 0), r: 9 }]), [[100, 50, 9]]);
+});
