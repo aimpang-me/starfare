@@ -9,7 +9,8 @@
     state = state || {};
     var mobile = width <= 760, hidden = state.panelsHidden;
     var left = mobile ? 16 : hidden ? 24 : width <= 1100 ? 286 : 300;
-    var right = mobile ? 16 : 24, top = mobile ? 126 : 100;
+    // A selection opens the details panel on the right (mission-control.css .info: 300 px, 270 px up to 1100, 20 px in).
+    var right = mobile ? 16 : hidden || !state.selection ? 24 : width <= 1100 ? 290 : 320, top = mobile ? 126 : 100;
     var sheet = hidden ? 0 : state.collapsed ? 44 : Math.max(142, height * .31);
     var bottom = mobile ? sheet + (state.selection ? 166 : 140) : 116;
     return { x: left, y: top, width: Math.max(1, width - left - right), height: Math.max(1, height - top - bottom) };

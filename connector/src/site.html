@@ -948,6 +948,7 @@ function addFlightObjs(F) {
   F.halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(160,225,255,.9)", "rgba(92,200,255,.25)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
   scene.add(F.full); scene.add(F.flown); scene.add(F.halo); scene.add(F.ship);
   F.lbl = LBL.add({ html: esc(F.call), cls: "k-sample", pri: 90, click: function () { var i = FL.indexOf(F); if (i >= 0) select({ t: "f", i: i }); },
+    dblclick: function () { var i = FL.indexOf(F); if (i >= 0) { select({ t: "f", i: i }); setFollow(true); } },
     pos: function () { return F.sc ? F.sc.v : null; }, hide: function () { return !FILT.fl || (FOLLOW && SEL.t === "f" && FL[SEL.i] !== F); } });
 }
 function removeFlightObjs(F) {
@@ -1390,6 +1391,7 @@ function LabelSet(root) {
       var el = document.createElement(o.click ? "button" : "div");
       el.className = "lbl " + (o.cls || ""); el.innerHTML = o.html;
       if (o.click) { el.type = "button"; el.addEventListener("click", o.click); }
+      if (o.dblclick) el.addEventListener("dblclick", o.dblclick);
       root.appendChild(el); o.el = el; o.w = 0; o.on = false; o.slot = 0;
       items.push(o); items.sort(function (a, b) { return b.pri - a.pri; }); return o;
     },
@@ -1454,10 +1456,15 @@ function focusDistance(f, key) {
   if (key === "sun" || key === "inner") return StarfareMap.fitDistance(key === "sun" ? 65 : 30, f.el, GW, GH, mapFrame());
   return f.d / Math.min(1, GW / GH);
 }
-function updateProjection() {
+var VIEW_OFF = null;
+function updateProjection(dt) {
   var p = StarfareMap.projection(RIG.dist, GW, GH, mapFrame());
   cam.left = p.left; cam.right = p.right; cam.top = p.top; cam.bottom = p.bottom;
-  cam.setViewOffset(GW, GH, p.offsetX, p.offsetY, GW, GH);
+  // The frame moves when the details panel opens or closes; slide the view there instead of jumping.
+  var k = VIEW_OFF && dt != null && !reduced ? 1 - Math.exp(-dt / 0.12) : 1;
+  VIEW_OFF = VIEW_OFF ? [VIEW_OFF[0] + (p.offsetX - VIEW_OFF[0]) * k, VIEW_OFF[1] + (p.offsetY - VIEW_OFF[1]) * k] : [p.offsetX, p.offsetY];
+  VIEW_OFF.settled = Math.abs(p.offsetX - VIEW_OFF[0]) + Math.abs(p.offsetY - VIEW_OFF[1]) < 0.5;
+  cam.setViewOffset(GW, GH, VIEW_OFF[0], VIEW_OFF[1], GW, GH);
   cam.updateProjectionMatrix();
 }
 
@@ -1634,7 +1641,7 @@ function frame(t) {
   if (t - last < 1000 / (window.SolArt ? SolArt.quality().fps : GW <= 760 ? 24 : 30)) return;
   var dt = Math.min(0.1, Math.max(0, (t - last) / 1000)); last = t; MEMO = {}; MEMON = 0;
   try { draw(dt, t); } catch (e) { if (!frame.err) { frame.err = 1; console.error(e); } }
-  if (MAP_PAUSED && !RIG.fly) glStop();
+  if (MAP_PAUSED && !RIG.fly && (!VIEW_OFF || VIEW_OFF.settled)) glStop();
 }
 function glStart() { if (GL && !raf && !document.hidden && MAPVIS) { last = performance.now(); raf = requestAnimationFrame(frame); } }
 function glStop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
@@ -1656,7 +1663,7 @@ function draw(dt, t) {
   } else RIG.tgt.copy(want);
   // Keep the observer's camera steady. Only user intent moves the view.
   var ce = Math.cos(RIG.el);
-  updateProjection();
+  updateProjection(dt);
   cam.position.set(RIG.tgt.x + 500 * ce * Math.sin(RIG.az), RIG.tgt.y + 500 * Math.sin(RIG.el), RIG.tgt.z + 500 * ce * Math.cos(RIG.az));
   cam.lookAt(RIG.tgt);
   cam.updateMatrixWorld();
