@@ -1495,7 +1495,7 @@ function shipPx(v, base) {
   }
   return cap;
 }
-var CR = V(), CU = V(), PO = V(), SLOT = {}, DP = {}, DOCKS = {}, DOCKNEED = {}, DOCK_PX = 34;
+var CR = V(), CU = V(), PO = V(), SLOT = {}, DP = {}, DOCKS = {}, DOCKNEED = {}, DOCK_PX = 15;
 // Placeholder dock for a place: a ring on a hub. The Blender models replace this one function. Map art only; no engine place is added.
 function makeDock(P) {
   var g = new THREE.Group(), lit = new THREE.MeshBasicMaterial({ color: P && P.real ? 0xdfe6ee : 0xffb65c }), dim = new THREE.MeshBasicMaterial({ color: 0x5b6672 });
