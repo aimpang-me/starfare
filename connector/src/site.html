@@ -183,17 +183,7 @@ button.lbl:hover{color:var(--ink)}
 .tbox.hold i{border-color:var(--sun)}.tbox.closed i{border-color:var(--bad)}
 .nogl-msg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;background:radial-gradient(ellipse at 50% 40%,#0e1a30,var(--bg) 70%)}
 .nogl-msg p{max-width:420px;color:var(--ink-2)}
-#plabels,#pilotHud,#pilotBtn[aria-pressed=false]~*{}
-#plabels{display:none;position:absolute;inset:0;pointer-events:none;overflow:hidden}
-#pilotHud{display:none;top:12px;right:12px;text-align:right}
-body.pilot-on #plabels{display:block}
-body.pilot-on #pilotHud{display:block}
-body.pilot-on #labels,body.pilot-on .mc-map-controls{display:none}
-.pl{position:absolute;left:0;top:0;visibility:hidden;font:10.5px var(--mono);color:var(--ink-2);white-space:nowrap}
-.pl i{position:absolute;left:-2px;top:-2px;width:4px;height:4px;border-radius:50%;background:#dfe6ee}
-.pl.k-st i{background:#dfe6ee}.pl.k-sh i{background:#5cc8ff}
-.pl span{position:absolute;left:9px;top:-7px}
-.pl.big i{opacity:0}.pl.big span{left:0;top:18px;transform:translateX(-50%)}
+
 .hud{position:absolute;font-family:var(--mono);font-size:10.5px;color:var(--ink-2);line-height:1.5;pointer-events:none}
 .hud.tl{top:10px;right:12px;max-width:calc(100% - 300px);text-align:right}
 .hud.tl .hudbox{border-left:0;border-right:2px solid var(--cy)}
@@ -470,7 +460,6 @@ p{text-wrap:pretty}
       <div class="seg" id="focus" role="group" aria-label="Focus the map">
         <button type="button" data-f="sun" aria-pressed="true">Whole system</button><button type="button" data-f="inner" aria-pressed="false">Inner system</button><button type="button" data-f="earth" aria-pressed="false">Earth&ndash;Moon</button>
       </div>
-      <button class="btn small" type="button" id="pilotBtn" aria-pressed="false">Pilot view</button>
       <div class="pop"><button class="btn small" type="button" id="fBtn" aria-expanded="false" aria-controls="fMenu">Filters</button>
         <div class="popm" id="fMenu" hidden><div class="caps">Show on the map</div>
           <label><input type="checkbox" data-filt="fl" checked> Live flights</label>
@@ -487,9 +476,7 @@ p{text-wrap:pretty}
     </div>
     <div class="mapwrap">
       <div class="mapbox" id="mapbox">
-        <div class="gl-host" id="glhost" tabindex="0" role="region" aria-label="Solar system map. Arrow keys orbit; plus and minus zoom; Home resets."></div>
-        <div class="labels" id="plabels"></div>
-        <div class="hud tr pilot-hud" id="pilotHud" aria-live="off"></div>
+        <div class="gl-host" id="glhost" tabindex="0" role="region" aria-label="Solar system at true scale. Drag or arrow keys look; W A S D fly; plus and minus move closer or farther; Home shows the whole system."></div>
         <div class="labels" id="labels"><div class="tbox" id="tbox"><i></i><i></i><i></i><i></i></div></div>
         <div class="nogl-msg" id="nogl" hidden><p>This browser has no WebGL, so the 3D map is off. The flights, Starseekers, alerts and the feed below still run from the engine.</p></div>
         <div class="hud tl"><div class="hudbox" id="hud"></div><button class="btn small" type="button" id="liveBtn" hidden>Back to live sky</button></div>
@@ -506,17 +493,17 @@ p{text-wrap:pretty}
           <li><span class="sh" id="lgShip"></span>Starseeker on a flight</li>
           <li><span class="dt"></span>Ready <span class="dt b" style="margin-left:6px"></span>Busy</li>
         </ul>
-        <p class="lgn">JPL positions at simulated sky dates. Stored paths where available; straight route guides otherwise. Distances compressed; sizes exaggerated. Surface rotation and clouds are slowed for viewing.</p>
+        <p class="lgn">JPL positions at simulated sky dates. Stored paths where available; straight route guides otherwise. True scale: real distances and sizes; bodies too small to see are drawn at a few pixels. Surface rotation and clouds are slowed for viewing.</p>
         <p class="lgn cred" id="artCred" hidden></p>
-        <p class="lgn">Arrow keys orbit. + / − zoom. Home resets. Drag to orbit; pinch or scroll to zoom. <a href="/method">Models &amp; assumptions</a>.</p>
+        <p class="lgn">Drag to look. W A S D fly, Q / E down and up, Shift boosts. Scroll sets throttle. Click a body to jump; click a ship to ride along, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
       </div>
       <div class="mc-map-controls" role="group" aria-label="Map controls">
-        <button type="button" id="zoomIn" aria-label="Zoom in">+</button><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="resetMap" aria-label="Reset system view">⊙</button><button type="button" id="mapHelp" class="mc-map-note" aria-expanded="false" aria-controls="legend">Map info</button>
+        <button type="button" id="zoomIn" aria-label="Move closer">+</button><button type="button" id="zoomOut" aria-label="Move farther">−</button><button type="button" id="resetMap" aria-label="Whole system view">⊙</button><button type="button" id="mapHelp" class="mc-map-note" aria-expanded="false" aria-controls="legend">Map info</button>
       </div>
       <div class="ov scale" id="scale">
         <div class="caps">Distance scale</div>
         <div id="sBar"></div>
-        <div class="caps" style="margin-top:6px">Map centre &middot; heliocentric ecliptic</div>
+        <div class="caps" style="margin-top:6px">Camera &middot; heliocentric ecliptic</div>
         <div class="sct" id="cTxt">&nbsp;</div>
       </div>
     </div>
@@ -657,7 +644,6 @@ p{text-wrap:pretty}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js" integrity="sha384-nhO9toQuMo5osCuA0l+YFpSqscZWxDu251Bnho2gD3kSPv1neEwHg0LyEmrA+mPj" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js" integrity="sha384-mY+ii969jnDCI2HjRHftH2NZVkIO5ZGUkcnGCg3oVJ3kVstWQXwerYWBg+nbUG4R" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js" integrity="sha384-GkidzTYmQg24v13sa3xhBBbvOLbVLO1QxfyKLdOWweQqNqS/iWwUst2T1fER2Xrg" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js" integrity="sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js" integrity="sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js" integrity="sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa" crossorigin="anonymous"></script><script src="/assets/sol-art.js"></script>
 <script src="/assets/planet-effects.js"></script>
 <script src="/assets/flight-view.js"></script>
-<script src="/assets/solar-map.js"></script>
 <script src="/assets/sol-lines.js"></script>
 <script src="/assets/vendor/gsap-3.15.0.min.js"></script>
 <script src="/assets/mission-control.js"></script>
@@ -963,11 +949,12 @@ function addFlightObjs(F) {
   scene.add(F.halo); scene.add(F.ship);
   F.lbl = LBL.add({ html: esc(F.call), cls: "k-sample", pri: 90, click: function () { var i = FL.indexOf(F); if (i >= 0) select({ t: "f", i: i }); },
     dblclick: function () { var i = FL.indexOf(F); if (i >= 0) { select({ t: "f", i: i }); setFollow(true); } },
-    pos: function () { return F.sc ? F.sc.v : null; }, hide: function () { return !FILT.fl || (FOLLOW && SEL.t === "f" && FL[SEL.i] !== F); } });
+    pos: function () { return F.sc ? F.sc.v : null; }, hide: function () { return !FILT.fl || PIL.lock === F || (FOLLOW && SEL.t === "f" && FL[SEL.i] !== F); } });
 }
 function removeFlightObjs(F) {
   if (!GL || !F.ship) return;
   [F.halo, F.ship].forEach(function (o) { scene.remove(o); });
+  if (PIL.lock === F) PIL.lock = null; if (PIL.anchor && PIL.anchor.F === F) PIL.anchor = null;
   F.halo.material.dispose(); dropRoute(F);
   if (F.lbl) LBL.remove(F.lbl);
 }
@@ -1147,7 +1134,7 @@ function initGL() {
     if (window.SolArt) { SolArt.init(r); GL.post = SolArt.composer(r, { threshold: 0.9 }); } // bloom only on the ops map
     $("#glhost").appendChild(r.domElement);
     scene = new THREE.Scene();
-    cam = new THREE.OrthographicCamera(-100, 100, 100, -100, 0.005, 12000);
+    cam = new THREE.PerspectiveCamera(PIL_FOV, 1, 1e-11, 3e5); WORLD = new THREE.Group(); scene.add(WORLD);
   } catch (e) { return fail(); }
 }
 function onResize() {
@@ -1156,8 +1143,7 @@ function onResize() {
   GL.r.setSize(w, h); if (GL.post) GL.post.setSize(w, h);
   SolLines.resize(GL.r);
   GW = w; GH = h; GUT = null;
-  if (FOCKEY && FOCI[FOCKEY] && !FOLLOW) { cancelFly(); setDist(focusDistance(FOCI[FOCKEY], FOCKEY)); }
-  updateProjection();
+  cam.aspect = GW / GH; cam.updateProjectionMatrix();
   glStart();
 }
 /* ---------- textures and meshes ---------- */
@@ -1200,10 +1186,10 @@ function planetTex(id) {
 var GEO = {};
 function sphereGeo() { return GEO.s || (GEO.s = new THREE.SphereGeometry(1, 40, 20)); }
 function stars() {
-  if (window.SolArt) return SolArt.stars(3600, { backdrop: true });
+  if (window.SolArt) return SolArt.stars(1e5);
   var n = 2600, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), rnd = prng(7);
   for (var i = 0; i < n; i++) {
-    var u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, s = Math.sqrt(1 - u * u), R = 3600;
+    var u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, s = Math.sqrt(1 - u * u), R = 1e5;
     pos[i * 3] = R * s * Math.cos(th); pos[i * 3 + 1] = R * u; pos[i * 3 + 2] = R * s * Math.sin(th);
     var b = 0.35 + rnd() * 0.65, w = rnd(); col[i * 3] = b * (w > 0.85 ? 1 : 0.85); col[i * 3 + 1] = b * 0.9; col[i * 3 + 2] = b * (w < 0.2 ? 1 : 0.95);
   }
@@ -1278,24 +1264,9 @@ function makeShip() {
   return g;
 }
 
-/* ---------- log-compressed radius: r_scene = 30 log10(1 + r / 0.25 AU); bearings and ecliptic latitude are true ---------- */
-var R0 = 0.25, KS = 30;
-function rs(r) { return KS * Math.log10(1 + r / R0); }
-function rsInv(x) { return R0 * (Math.pow(10, x / KS) - 1); }
-var SIZE = { sun: 1.25, mercury: 0.4, venus: 0.8, earth: 0.85, mars: 0.55, jupiter: 1.8, saturn: 1.5, uranus: 1.1, neptune: 1.1, ceres: 0.3, bennu: 0.1, moon: 0.25, phobos: 0.12, io: 0.2, europa: 0.2, ganymede: 0.25, callisto: 0.22, enceladus: 0.12, titan: 0.3, triton: 0.18 };
-function dispR(id) { return SIZE[id] || 0.08; }
 function axes(v, s) { return V(v[0] * s, v[2] * s, -v[1] * s); }
-function S(p) { var r = Math.hypot(p[0], p[1], p[2]); return r ? axes(p, rs(r) / r) : V(); }
-function helioOf(v) { var L = v.length(); if (!L) return [0, 0, 0]; var k = rsInv(L) / L; return [v.x * k, -v.z * k, v.y * k]; }
-// Moons and stations sit around their planet on their own log scale (true direction, exaggerated distance).
-function localOff(rel, par) {
-  var au = Math.hypot(rel[0], rel[1], rel[2]); if (!au) return V();
-  var P = SF.place(par), R = (P && P.radius_km) || 1000, km = au * AU;
-  // Surface places use the body's centre. Match both value and slope at its radius, without a jump at zero.
-  var t = km / R, edge = 1.3 + 0.9 * Math.log10(2), slope = 0.9 / (2 * Math.LN10);
-  var r = t < 1 ? (2 * edge - slope) * t + (slope - edge) * t * t : 1.3 + 0.9 * Math.log10(1 + t);
-  return axes(rel, dispR(par) * r / au);
-}
+function S(p) { return axes(p, 1); }
+function localOff(rel) { return axes(rel, 1); }
 function d3(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
 // Stations and moons that circle in under three days would spin many times a second at one sky day per second. On
 // the live map they glide from each whole sky day's true position to the next the short way round (a strobe of the
@@ -1364,7 +1335,7 @@ function routeOf(rp, color) {
 }
 function dropRoute(o) {
   if (!o.route) return;
-  scene.remove(o.route);
+  WORLD.remove(o.route);
   o.route.children.forEach(function (m) { m.geometry.dispose(); m.material.dispose(); });
   o.route = null;
 }
@@ -1372,7 +1343,7 @@ function dropRoute(o) {
 function syncRoute(o, color) {
   if (o.route && o.route.userData.rp === o.rp) return o.route;
   dropRoute(o);
-  if (o.rp) scene.add(o.route = routeOf(o.rp, color));
+  if (o.rp) WORLD.add(o.route = routeOf(o.rp, color));
   return o.route;
 }
 // Each frame: move every leg with its ends, and cut flown from planned at sky time now. A trail (world units) limits
@@ -1421,7 +1392,7 @@ function LabelSet(root) {
         o = items[i]; o.ax = null;
         var p = o.hide && o.hide() ? null : o.pos();
         if (!p) continue;
-        pv.copy(p).project(cam);
+        pv.copy(p).sub(EYE).project(cam);
         if (pv.z < 1 && pv.z > -1 && Math.abs(pv.x) < 1.05 && Math.abs(pv.y) < 1.05) {
           o.ax = (pv.x + 1) / 2 * W; o.ay = (1 - pv.y) / 2 * H;
           if (o.dot !== false) R.push([o.ax - 3, o.ay - 3, o.ax + 3, o.ay + 3]);
@@ -1460,427 +1431,239 @@ function LabelSet(root) {
 var TV = null;
 function tbox(el, p, minPx) {
   if (!p) { el.style.visibility = "hidden"; return; }
-  TV = TV || V(); TV.copy(p).project(cam);
+  TV = TV || V(); TV.copy(p).sub(EYE).project(cam);
   if (TV.z >= 1 || Math.abs(TV.x) > 1.05 || Math.abs(TV.y) > 1.05) { el.style.visibility = "hidden"; return; }
   var s = minPx, x = (TV.x + 1) / 2 * GW, y = (1 - TV.y) / 2 * GH;
   el.style.width = el.style.height = s + "px";
   el.style.transform = "translate3d(" + (x - s / 2).toFixed(1) + "px," + (y - s / 2).toFixed(1) + "px,0)";
   el.style.visibility = "visible";
 }
-function pxw() { return (cam.top - cam.bottom) / GH; }
-function mapFrame() {
-  return StarfareMap.frame(GW, GH, { panelsHidden: document.body.classList.contains("mc-panels-hidden"), collapsed: $(".c-fl").classList.contains("mc-collapsed"), selection: SEL.t !== "n" });
+/* ---------- the pilot camera. True scale with a floating origin: the camera stays at the scene origin and WORLD
+   moves by -EYE, so nearby geometry keeps float precision at any distance from the Sun. ---------- */
+var PIL_FOV = 60, SHIP_D = 2e-8, UP = V(0, 1, 0), V0 = V(), KEYS = {}, MOVE = { w: 1, a: 1, s: 1, d: 1, q: 1, e: 1 }, DRAG = false;
+var WORLD, EYE = V();
+var PIL = { pos: V(), off: V(), anchor: null, yaw: 0, pitch: -0.2, mul: 1, vel: V(), lock: null, view: "chase", cyaw: 0, cpitch: 0, cd: 1, fly: null, dolly: 0, speed: 0, near: null, nearD: 0 };
+var PD = V(), PF = V(), PRT = V(), PT = V();
+var PRESET = { sun: { d: 57, el: 0.62, az: 0.25 }, inner: { d: 3.2, el: 0.72, az: 0.25 }, earth: { id: "earth", d: 0.00411, el: 0.62 } };
+function pxAt(p) { return p.distanceTo(EYE) * 2 * Math.tan(PIL_FOV * Math.PI / 360) / GH; }
+function pilotDir(out) { var cp = Math.cos(PIL.pitch); return out.set(-Math.sin(PIL.yaw) * cp, Math.sin(PIL.pitch), -Math.cos(PIL.yaw) * cp); }
+function setLook(d) { var L = d.length(); if (L) { PIL.yaw = Math.atan2(-d.x, -d.z); PIL.pitch = Math.asin(clamp(d.y / L, -1, 1)); } }
+function wrapPi(a) { return a - TAU * Math.floor((a + Math.PI) / TAU); }
+function rightOf(d, out) { out.crossVectors(d, UP); if (out.lengthSq() < 1e-12) out.set(1, 0, 0); return out.normalize(); }
+function elAz(el, az) { return V(Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az)); }
+function bodyPos(b) { return b.kind === "sun" ? V0 : marker(b.id, MAPJD); }
+function anchorPos(A) { return A.F ? (A.F.sc ? A.F.sc.v : V0) : bodyPos(A.b); }
+function keysDown() { for (var k in MOVE) if (KEYS[k]) return true; return false; }
+function pilotMoving() { return !!(PIL.fly || PIL.dolly || DRAG || keysDown() || PIL.vel.lengthSq()); }
+// Sphere of influence, d (mu / mu_parent)^(2/5); 60 radii for a body with no mass on record. Stations get none.
+function soiOf(b) {
+  var P = SF.place(b.id); if (!P || b.kind === "sun" || !b.rKm) return 0;
+  var muP = P.parent === "sun" ? SF.E.MU_SUN : (SF.place(P.parent) || {}).mu;
+  return P.mu && muP ? bodyPos(b).distanceTo(P.parent === "sun" ? V0 : marker(P.parent, MAPJD)) * Math.pow(P.mu / muP, 0.4) : 60 * b.rKm / AU;
 }
-// Points a focus must keep in frame: centre on their box and fit the farthest one.
-function ptsCentre(pts) {
-  var c = V(), lo = pts[0].clone(), hi = pts[0].clone();
-  pts.forEach(function (p) { lo.min(p); hi.max(p); });
-  return c.copy(lo).add(hi).multiplyScalar(0.5);
+// The camera rides with the smallest body whose sphere of influence holds it, so a planet doesn't run off at one sky
+// day per second. It lets go at twice the sphere, so crossing the edge doesn't flicker.
+function autoAnchor() {
+  var A = PIL.anchor;
+  if (A && A.F) { if (FL.indexOf(A.F) >= 0 && PIL.off.length() < 1e-4) return; A = null; }
+  var best = null, bs = Infinity;
+  BODIES.forEach(function (b) { var s = soiOf(b); if (!s || s >= bs) return; if (bodyPos(b).distanceTo(PIL.pos) < s * (A && A.b === b ? 2 : 1)) { best = b; bs = s; } });
+  best = best || BID.sun;
+  if (!A || A.b !== best) { PIL.anchor = { b: best }; PIL.off.copy(PIL.pos).sub(bodyPos(best)); }
 }
-function focusDistance(f, key) {
-  if (f.pts) { var ps = f.pts(), c = ptsCentre(ps), r = 10; ps.forEach(function (p) { r = Math.max(r, p.distanceTo(c) * 1.3); }); return StarfareMap.fitDistance(r, f.el != null ? f.el : .62, GW, GH, mapFrame()); }
-  if (key === "sun" || key === "inner") return StarfareMap.fitDistance(key === "sun" ? 65 : 30, f.el, GW, GH, mapFrame());
-  return f.d / Math.min(1, GW / GH);
+// Free-flight speed is half the height above the nearest surface per second, so an approach slows near a body.
+function pilotSpeed() {
+  var best = Infinity, near = null;
+  BODIES.forEach(function (b) { if (!b.rKm) return; var d = bodyPos(b).distanceTo(PIL.pos) - b.rKm / AU; if (d < best) { best = d; near = b; } });
+  PIL.near = near; PIL.nearD = best;
+  return clamp(best * 0.5, 2e-8, 10) * PIL.mul;
 }
-var VIEW_OFF = null;
-function updateProjection(dt) {
-  var p = StarfareMap.projection(RIG.dist, GW, GH, mapFrame());
-  cam.left = p.left; cam.right = p.right; cam.top = p.top; cam.bottom = p.bottom;
-  // The frame moves when the details panel opens or closes; slide the view there instead of jumping.
-  var k = VIEW_OFF && dt != null && !reduced ? 1 - Math.exp(-dt / 0.12) : 1;
-  VIEW_OFF = VIEW_OFF ? [VIEW_OFF[0] + (p.offsetX - VIEW_OFF[0]) * k, VIEW_OFF[1] + (p.offsetY - VIEW_OFF[1]) * k] : [p.offsetX, p.offsetY];
-  VIEW_OFF.settled = Math.abs(p.offsetX - VIEW_OFF[0]) + Math.abs(p.offsetY - VIEW_OFF[1]) < 0.5;
-  cam.setViewOffset(GW, GH, VIEW_OFF[0], VIEW_OFF[1], GW, GH);
-  cam.updateProjectionMatrix();
+// Jumps end on the Sun side at three quarters, so the body is lit.
+function litDir(tp) { var L = tp.length(); if (!L) return null; var s = tp.clone().divideScalar(-L); return s.add(V().crossVectors(UP, s).normalize().multiplyScalar(0.7)).addScaledVector(UP, 0.35).normalize(); }
+function bodyTarget(id) {
+  var b = BID[id === "sol" ? "sun" : id]; if (!b) return null;
+  var stand = b.rKm ? 4 * b.rKm / AU : 3e-7, lit = b.rKm && b.kind !== "sun";
+  return { b: b, stand: stand, pos: function () { return bodyPos(b); }, off: function (tp) { var d = lit && litDir(tp); return d ? d.multiplyScalar(stand) : null; } };
 }
-
-/* ---------- camera rig: user-controlled orbit, zoom and GSAP focus ---------- */
-// Stopping mid-fly keeps the camera where it is: the gap to the focus becomes the pan offset, so nothing jumps.
-function cancelFly() {
-  if (window.StarfareMotion) StarfareMotion.stopCamera();
-  if (RIG.fly) { RIG.pan.copy(RIG.tgt).sub(focusTarget()); RIG.fly = null; }
+function presetTarget(key) {
+  var p = PRESET[key], T = bodyTarget(p.id || "sun");
+  T.off = p.id ? function (tp) { var d = litDir(tp); d.y = 0; return d.normalize().multiplyScalar(Math.cos(p.el)).setY(Math.sin(p.el)).multiplyScalar(p.d); }
+    : function () { return elAz(p.el, p.az).multiplyScalar(p.d); };
+  return T;
 }
-var EL_MIN = 0.15, EL_MAX = 1.45;
-var RIG = { az: 0.25, el: 0.72, dist: 150, zt: null, tgt: V(), pan: V(), vpan: V(), vaz: 0, vel: 0, keys: {}, touched: -1e9, fly: null,
-  moving: function () { return RIG.zt != null || Math.abs(RIG.vaz) + Math.abs(RIG.vel) > 1e-4 || RIG.vpan.lengthSq() > 1e-8 || Object.keys(RIG.keys).length > 0; },
-  zoom: function (f) { cancelFly(); RIG.zt = clamp((RIG.zt != null ? RIG.zt : RIG.dist) * f, 1.2, 1200); glStart(); } };
-function setDist(d) { RIG.zt = null; RIG.dist = d; }
-var FOCI = { sun: { id: "sun", d: 150, el: 0.62 }, inner: { id: "sun", d: 58, el: 0.72 }, sol: { id: "sun", d: 8 }, mercury: { id: "mercury", d: 5 }, venus: { id: "venus", d: 7 }, earth: { id: "earth", d: 9 }, moon: { id: "moon", d: 3.5 }, mars: { id: "mars", d: 6.5 }, ceres: { id: "ceres", d: 5 }, jupiter: { id: "jupiter", d: 14 }, saturn: { id: "saturn", d: 16 }, uranus: { id: "uranus", d: 9 }, neptune: { id: "neptune", d: 9 } };
-var FOC = FOCI.sun, FOCKEY = "sun";
-function bindRig(host) {
-  var ptrs = {}, pinch = 0, down = null, lastMove = 0;
-  host.addEventListener("pointerdown", function (e) {
-    ptrs[e.pointerId] = [e.clientX, e.clientY];
-    down = Object.keys(ptrs).length === 1 ? { x: e.clientX, y: e.clientY, t: performance.now(), moved: false } : null;
-    try { host.setPointerCapture(e.pointerId); } catch (x) { /* ok */ }
-    RIG.touched = performance.now(); RIG.vaz = RIG.vel = 0; cancelFly(); glStart();
-  });
-  function pilotMove(dx, dy) {
-    if (PIL.lock >= 0) { PIL.cyaw -= dx * 0.005; PIL.cpitch = clamp(PIL.cpitch + dy * 0.004, -1.2, 1.2); }
-    else { PIL.fly = null; PIL.yaw -= dx * 0.004; PIL.pitch = clamp(PIL.pitch - dy * 0.004, -1.5, 1.5); }
+function shipTarget(F) {
+  return { F: F, stand: SHIP_D, pos: function () { return F.sc ? F.sc.v : V0; },
+    off: function () { return F.hd ? F.hd.clone().negate().addScaledVector(UP, 0.3).multiplyScalar(SHIP_D) : null; },
+    look: function () { return F.sc.v.clone().addScaledVector(F.hd || V0, SHIP_D * 0.6); } };
+}
+function routeTarget(ids) {
+  var sys = ids.map(function (id) { return SF.system(id); }), b = sys.every(function (s) { return s === sys[0]; }) && BID[sys[0]] || BID.sun;
+  var pts = function () { return ids.map(function (id) { return marker(id, MAPJD); }); };
+  return { b: b, stand: 2e-5,
+    pos: function () { var P = pts(), lo = P[0].clone(), hi = P[0].clone(); P.forEach(function (p) { lo.min(p); hi.max(p); }); return lo.add(hi).multiplyScalar(0.5); },
+    off: function (tp) { var r = 0, t = Math.tan(PIL_FOV * Math.PI / 360) * Math.min(1, GW / GH); pts().forEach(function (p) { r = Math.max(r, p.distanceTo(tp)); }); return elAz(0.62, 0.25).multiplyScalar(Math.max(r / t * 1.2, 2e-5)); } };
+}
+function lockShip(F) { PIL.lock = F; PIL.view = "chase"; PIL.cyaw = PIL.cpitch = 0; PIL.cd = 1; PIL.anchor = null; }
+// Letting go of a ship keeps the camera riding along until it flies off.
+function releaseShip() { if (!PIL.lock) return; PIL.anchor = { F: PIL.lock }; PIL.off.copy(PIL.pos).sub(PIL.lock.sc.v); PIL.lock = null; }
+// A jump glides on a log-distance path toward its target, so each order of magnitude gets equal time.
+function pilotJump(T) {
+  if (!T) return;
+  var tp = T.pos(), d0 = Math.max(PIL.pos.distanceTo(tp), 1e-12), u0 = PIL.pos.clone().sub(tp).divideScalar(d0);
+  if (u0.lengthSq() < 0.5) u0.set(0, 0.5, 1).normalize();
+  var end = T.off(tp) || u0.clone().multiplyScalar(T.stand);
+  PIL.lock = PIL.anchor = null; PIL.vel.set(0, 0, 0); PIL.dolly = 0;
+  PIL.fly = { T: T, u0: u0, d0: d0, x: 0, y0: PIL.yaw, p0: PIL.pitch, dur: reduced ? 1e-3 : clamp(0.8 + 0.3 * Math.abs(Math.log10(d0 / end.length())), 0.8, 3.2) };
+  glStart();
+}
+function flyStep(dt) {
+  var f = PIL.fly, T = f.T, tp = T.pos(), end = T.off(tp) || f.u0.clone().multiplyScalar(T.stand), d1 = end.length();
+  f.x = Math.min(1, f.x + dt / f.dur);
+  var x = f.x, e = x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  var u = f.u0.clone().lerp(end.divideScalar(d1), e); if (u.lengthSq() < 1e-6) u.add(UP); u.normalize();
+  PIL.pos.copy(tp).addScaledVector(u, f.d0 * Math.pow(d1 / f.d0, e));
+  PD.copy(T.look ? T.look() : tp).sub(PIL.pos);
+  var yT = Math.atan2(-PD.x, -PD.z), pT = Math.asin(clamp(PD.y / PD.length(), -1, 1)), k = Math.min(1, x * 1.6), sk = k * k * (3 - 2 * k);
+  PIL.yaw = f.y0 + wrapPi(yT - f.y0) * sk; PIL.pitch = f.p0 + (pT - f.p0) * sk;
+  if (x >= 1) { PIL.fly = null; if (T.F) lockShip(T.F); else { PIL.anchor = { b: T.b }; PIL.off.copy(PIL.pos).sub(bodyPos(T.b)); } }
+}
+function pilotDolly(f) { PIL.dolly += Math.log(f); glStart(); }
+function dollyStep(dt) {
+  if (!PIL.dolly) return;
+  var k = Math.abs(PIL.dolly) < 1e-3 || reduced ? PIL.dolly : PIL.dolly * (1 - Math.exp(-dt / 0.12)), s = Math.exp(k);
+  PIL.dolly -= k;
+  if (PIL.lock) { PIL.cd = clamp(PIL.cd * s, 0.6, 5e3); return; }
+  var A = PIL.anchor, min = A.F ? SHIP_D * 0.5 : A.b.rKm / AU * 1.05 || 1e-7;
+  PIL.off.multiplyScalar(s); if (PIL.off.length() < min) PIL.off.setLength(min);
+}
+function shipView(F) {
+  var sp = F.sc.v, h = F.hd || PF.set(0, 0, 1);
+  if (PIL.view === "cockpit") {
+    PIL.pos.copy(sp).addScaledVector(h, SHIP_D * 0.35);
+    PIL.yaw = Math.atan2(-h.x, -h.z) + PIL.cyaw; PIL.pitch = clamp(Math.asin(clamp(h.y, -1, 1)) - PIL.cpitch, -1.5, 1.5);
+    return;
   }
-  host.addEventListener("pointermove", function (e) {
-    if (!ptrs[e.pointerId]) return;
-    var prev = ptrs[e.pointerId]; ptrs[e.pointerId] = [e.clientX, e.clientY];
+  PD.copy(h).negate().applyAxisAngle(UP, PIL.cyaw); rightOf(PD, PRT); PD.applyAxisAngle(PRT, PIL.cpitch);
+  PIL.pos.copy(sp).addScaledVector(PD, SHIP_D * PIL.cd).addScaledVector(UP, SHIP_D * 0.3 * PIL.cd);
+  setLook(PT.copy(sp).addScaledVector(h, SHIP_D * 0.6).sub(PIL.pos));
+}
+function freeStep(dt) {
+  var fw = (KEYS.w ? 1 : 0) - (KEYS.s ? 1 : 0), rt = (KEYS.d ? 1 : 0) - (KEYS.a ? 1 : 0), up = (KEYS.e ? 1 : 0) - (KEYS.q ? 1 : 0);
+  rightOf(pilotDir(PF), PRT);
+  PT.copy(PF).multiplyScalar(fw).addScaledVector(PRT, rt).addScaledVector(UP, up);
+  if (PT.lengthSq() > 1) PT.normalize();
+  PT.multiplyScalar(PIL.speed * (KEYS.shift ? 4 : 1));
+  PIL.vel.lerp(PT, reduced ? 1 : 1 - Math.exp(-dt / 0.18));
+  if (!fw && !rt && !up && PIL.vel.length() < PIL.speed * 1e-3) PIL.vel.set(0, 0, 0);
+  PIL.off.addScaledVector(PIL.vel, dt);
+}
+function pilotStep(dt) {
+  if (PIL.lock && FL.indexOf(PIL.lock) < 0) PIL.lock = null;
+  PIL.speed = pilotSpeed();
+  if (keysDown() && PIL.lock) releaseShip();
+  else if (keysDown()) PIL.fly = null;
+  if (PIL.fly) flyStep(dt);
+  else if (PIL.lock) { dollyStep(dt); shipView(PIL.lock); }
+  else {
+    autoAnchor(); freeStep(dt); dollyStep(dt);
+    var ap = anchorPos(PIL.anchor), n = PIL.near;
+    PIL.pos.copy(ap).add(PIL.off);
+    if (n) { var c = bodyPos(n), r = n.rKm / AU * 1.0005; if (PIL.pos.distanceTo(c) < r) { PIL.pos.sub(c).setLength(r).add(c); PIL.off.copy(PIL.pos).sub(ap); } }
+    if (PIL.pos.length() > 400) { PIL.pos.setLength(400); PIL.off.copy(PIL.pos).sub(ap); }
+  }
+  EYE.copy(PIL.pos);
+  cam.position.set(0, 0, 0); cam.rotation.set(PIL.pitch, PIL.yaw, 0, "YXZ"); cam.updateMatrixWorld();
+}
+function pilotLook(dx, dy) {
+  if (PIL.lock) { PIL.cyaw -= dx * 0.005; PIL.cpitch = clamp(PIL.cpitch + dy * 0.004, -1.2, 1.2); }
+  else { PIL.fly = null; PIL.yaw -= dx * 0.004; PIL.pitch = clamp(PIL.pitch - dy * 0.004, -1.5, 1.5); }
+}
+function pilotTurn(key) { pilotLook(key === "ArrowLeft" ? -20 : key === "ArrowRight" ? 20 : 0, key === "ArrowUp" ? -20 : key === "ArrowDown" ? 20 : 0); glStart(); }
+// Drag looks around, a pinch moves closer or farther, the wheel sets the throttle, and a tap picks what is under it.
+function bindPilot(host) {
+  var ptrs = {}, down = null, pinch = 0;
+  host.addEventListener("pointerdown", function (e) {
+    ptrs[e.pointerId] = [e.clientX, e.clientY]; DRAG = true;
+    try { host.setPointerCapture(e.pointerId); } catch (x) { /* capture is optional */ }
     var ids = Object.keys(ptrs);
-    if (PIL.on) {
-      if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) down.moved = true;
-      if (down && down.moved) pilotMove(e.clientX - prev[0], e.clientY - prev[1]);
-      glStart(); return;
-    }
-    if (ids.length === 2) {
-      var a = ptrs[ids[0]], b = ptrs[ids[1]], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
-      if (pinch) RIG.zoom(pinch / d); pinch = d;
-    } else {
-      var now = performance.now(), dts = Math.max(0.008, (now - (lastMove || now - 16)) / 1000), dx = e.clientX - prev[0], dy = e.clientY - prev[1];
-      RIG.az -= dx * 0.006; RIG.el = clamp(RIG.el + dy * 0.005, EL_MIN, EL_MAX);
-      RIG.vaz = clamp(-dx * 0.006 / dts, -4, 4); RIG.vel = clamp(dy * 0.005 / dts, -3, 3); lastMove = now;
-      if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) down.moved = true;
-    }
-    RIG.touched = performance.now();
+    down = ids.length === 1 ? { x: e.clientX, y: e.clientY, t: performance.now(), moved: false } : null;
+    if (ids.length === 2) pinch = Math.hypot(ptrs[ids[0]][0] - ptrs[ids[1]][0], ptrs[ids[0]][1] - ptrs[ids[1]][1]);
     glStart();
   });
+  host.addEventListener("pointermove", function (e) {
+    var prev = ptrs[e.pointerId]; if (!prev) return;
+    ptrs[e.pointerId] = [e.clientX, e.clientY];
+    var ids = Object.keys(ptrs);
+    if (ids.length === 2) {
+      var d = Math.hypot(ptrs[ids[0]][0] - ptrs[ids[1]][0], ptrs[ids[0]][1] - ptrs[ids[1]][1]);
+      if (pinch && d) pilotDolly(pinch / d);
+      pinch = d; return;
+    }
+    if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) down.moved = true;
+    if (down && down.moved) { pilotLook(e.clientX - prev[0], e.clientY - prev[1]); glStart(); }
+  });
   function up(e) {
-    delete ptrs[e.pointerId]; pinch = 0;
-    var now = performance.now();
-    // a release that was not a flick leaves no spin
-    if (now - lastMove > 80 || reduced) RIG.vaz = RIG.vel = 0;
-    lastMove = 0;
-    if (e.type === "pointerup" && down && !down.moved && now - down.t < 350) { if (PIL.on) pilotPick(e.clientX, e.clientY); else pickAt(e.clientX, e.clientY); }
-    down = null; glStart();
+    if (!ptrs[e.pointerId]) return;
+    delete ptrs[e.pointerId]; DRAG = Object.keys(ptrs).length > 0; pinch = 0;
+    if (e.type === "pointerup" && down && !down.moved && performance.now() - down.t < 350) pick(e.clientX, e.clientY);
+    down = null;
   }
   host.addEventListener("pointerup", up); host.addEventListener("pointercancel", up);
-  host.addEventListener("wheel", function (e) { e.preventDefault(); if (PIL.on) { PIL.mul = clamp(PIL.mul * Math.exp(-e.deltaY * 0.0015), 0.02, 50); return; } RIG.zoom(Math.exp(e.deltaY * 0.0012)); RIG.touched = performance.now(); }, { passive: false });
+  host.addEventListener("wheel", function (e) { e.preventDefault(); PIL.mul = clamp(PIL.mul * Math.exp(-e.deltaY * 0.0015), 0.02, 50); mapHud(); glStart(); }, { passive: false });
 }
-// Per-frame user motion: spin with inertia, eased zoom, and WASD/QE panning that eases in and out.
-var PAN_V = V(), PAN_R = V();
-function stepRig(dt) {
-  dt = dt || 0.016;
-  if (RIG.vaz || RIG.vel) {
-    RIG.az += RIG.vaz * dt; RIG.el = clamp(RIG.el + RIG.vel * dt, EL_MIN, EL_MAX);
-    var k = Math.exp(-dt / 0.3); RIG.vaz *= k; RIG.vel *= k;
-    if (Math.abs(RIG.vaz) + Math.abs(RIG.vel) < 1e-3) RIG.vaz = RIG.vel = 0;
+// Click a ship to ride along or a body to jump to it; the nearest within 22 px wins.
+function pick(cx, cy) {
+  var r = $("#glhost").getBoundingClientRect(), x = cx - r.left, y = cy - r.top, best = null, bd = 22;
+  function test(rel, hit) {
+    PT.copy(rel).project(cam); if (PT.z >= 1 || PT.z <= -1) return;
+    var d = Math.hypot((PT.x + 1) / 2 * GW - x, (1 - PT.y) / 2 * GH - y);
+    if (d < bd) { bd = d; best = hit; }
   }
-  if (RIG.zt != null) {
-    var z = 1 - Math.exp(-dt / (reduced ? 0.001 : 0.09));
-    RIG.dist *= Math.pow(RIG.zt / RIG.dist, z);
-    if (Math.abs(Math.log(RIG.zt / RIG.dist)) < 0.002) { RIG.dist = RIG.zt; RIG.zt = null; }
-  }
-  var K = RIG.keys, fw = (K.w ? 1 : 0) - (K.s ? 1 : 0), rt = (K.d ? 1 : 0) - (K.a ? 1 : 0), up = (K.e ? 1 : 0) - (K.q ? 1 : 0);
-  var sp = RIG.dist * 0.7 * (K.shift ? 3 : 1), sa = Math.sin(RIG.az), ca = Math.cos(RIG.az);
-  PAN_V.set((-sa * fw + ca * rt), up, (-ca * fw - sa * rt));
-  if (PAN_V.lengthSq() > 1) PAN_V.normalize();
-  PAN_V.multiplyScalar(sp);
-  var a = 1 - Math.exp(-dt / 0.12);
-  RIG.vpan.lerp(PAN_V, a);
-  if (RIG.vpan.lengthSq() < 1e-8 && PAN_V.lengthSq() === 0) RIG.vpan.set(0, 0, 0);
-  if (RIG.vpan.lengthSq() > 0) { RIG.pan.add(PAN_R.copy(RIG.vpan).multiplyScalar(dt)); if (RIG.pan.length() > 1500) RIG.pan.setLength(1500); }
+  if (FILT.fl) FL.forEach(function (F, i) { if (F.ship && F.ship.visible) test(F.ship.position, { i: i }); });
+  BODIES.forEach(function (b) { if (b.obj.visible) test(PD.copy(b.obj.position).sub(EYE), { id: b.id }); });
+  if (!best) return;
+  if (best.id) jumpToPlace(best.id); else select({ t: "f", i: best.i });
 }
-var PAN_KEYS = { w: 1, a: 1, s: 1, d: 1, q: 1, e: 1 };
 function bindKeys() {
   function typing(t) { return t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable); }
   function blocked() { return !$("#intro").hidden || !$("#logM").hidden; }
   document.addEventListener("keydown", function (e) {
     if (e.ctrlKey || e.metaKey || e.altKey || typing(e.target) || blocked()) return;
+    KEYS.shift = e.shiftKey ? 1 : 0;
     var k = e.key.toLowerCase();
-    if (!PAN_KEYS[k]) return;
-    e.preventDefault(); cancelFly(); RIG.keys[k] = 1; RIG.keys.shift = e.shiftKey ? 1 : 0; if (!e.shiftKey) delete RIG.keys.shift; RIG.touched = performance.now(); glStart();
+    if (MOVE[k]) { e.preventDefault(); KEYS[k] = 1; glStart(); }
+    else if (k === "c" && PIL.lock) { PIL.view = PIL.view === "chase" ? "cockpit" : "chase"; PIL.cyaw = PIL.cpitch = 0; mapHud(); glStart(); }
   });
-  document.addEventListener("keyup", function (e) {
-    var k = e.key.toLowerCase(); delete RIG.keys[k];
-    if (e.key === "Shift") delete RIG.keys.shift;
-  });
-  addEventListener("blur", function () { RIG.keys = {}; });
-  document.addEventListener("keydown", function (e) {
-    if (!PIL.on || typing(e.target) || blocked() || e.ctrlKey || e.metaKey || e.altKey) return;
-    if (e.key === "Escape") pilotExit();
-    else if (e.key.toLowerCase() === "c" && PIL.lock >= 0) PIL.view = PIL.view === "chase" ? "cockpit" : "chase";
-  });
+  document.addEventListener("keyup", function (e) { delete KEYS[e.key.toLowerCase()]; KEYS.shift = e.shiftKey ? 1 : 0; });
+  addEventListener("blur", function () { KEYS = {}; });
 }
-/* ---------- pilot view: a perspective free-fly camera on a true-scale sky ----------
-   Positions are the engine's true heliocentric AU (no log compression, no enlarged bodies). The camera sits at the
-   scene origin and every object is placed relative to it in double precision (floating origin), so float32 never
-   sees an AU-sized number next to a kilometre-sized one. Near a body the camera rides with it, because the sky runs
-   one sky day per second and a planet would otherwise leave at about 0.02 AU per second. */
-var PIL = { on: false, sc: null, cam: null, pos: V(), off: V(), anchor: null, yaw: 0, pitch: -0.2, mul: 1, vel: V(), lock: -1, view: "chase", cyaw: 0, cpitch: 0, fly: null, B: [], BY: {}, SE: {}, speed: 0, near: null, nearD: 0, hudAt: 0 };
-var PIL_FOV = 60, SHIP_D = 2e-8, UP = V(0, 1, 0);
-var PW = V(), PR = V(), PD = V(), PF = V(), PRT = V(), PT = V();
-function truePos(id, jd) { return id === "sun" ? V() : axes(SF.pos(id, jd), 1); }
-function pilotPlanet(id) {
-  var m = new THREE.Mesh(sphereGeo(), new THREE.MeshLambertMaterial({ map: planetTex(id), emissive: new THREE.Color(SF.color(id)).multiplyScalar(0.06) }));
-  if (id === "saturn") {
-    var ring = new THREE.Mesh(new THREE.RingGeometry(1.35, 2.3, 64), new THREE.MeshBasicMaterial({ color: 0xd9c79a, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false }));
-    ring.rotation.x = -Math.PI / 2 + 0.47; m.add(ring);
-  }
-  m.rotation.z = 0.35;
-  return m;
+function markFocus(f, body) {
+  $$("#focus [data-f]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.f === f ? "true" : "false"); });
+  $$("#planetNav [data-body]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.body === body ? "true" : "false"); });
 }
-function pilotLabel(text, cls) {
-  var el = document.createElement("div"); el.className = "pl " + (cls || ""); el.innerHTML = "<i></i><span>" + esc(text) + "</span>";
-  $("#plabels").appendChild(el); return el;
+function focusBody(key) {
+  if (!GL) return;
+  var T = PRESET[key] ? presetTarget(key) : bodyTarget(key); if (!T) return;
+  FOLLOW = false; select({ t: "n" });
+  pilotJump(T); markFocus(PRESET[key] ? key : null, PRESET[key] ? null : key);
 }
-function pilotStars() {
-  var n = 2600, pos = new Float32Array(n * 3), rnd = prng(7);
-  for (var i = 0; i < n; i++) { var u = rnd() * 2 - 1, th = rnd() * TAU, q = Math.sqrt(1 - u * u); pos[i * 3] = 1e5 * q * Math.cos(th); pos[i * 3 + 1] = 1e5 * u; pos[i * 3 + 2] = 1e5 * q * Math.sin(th); }
-  var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  return new THREE.Points(g, new THREE.PointsMaterial({ size: 1.5, sizeAttenuation: false, color: 0xdde6f0, depthWrite: false }));
-}
-function pilotInit() {
-  if (PIL.sc) return;
-  var sc = PIL.sc = new THREE.Scene();
-  PIL.cam = new THREE.PerspectiveCamera(PIL_FOV, 1, 1e-11, 3e5);
-  sc.add(new THREE.AmbientLight(0xffffff, 0.2));
-  PIL.light = new THREE.PointLight(0xfff1dc, 1.7, 0); sc.add(PIL.light);
-  PIL.stars = pilotStars(); sc.add(PIL.stars);
-  var sun = new THREE.Group(), core = new THREE.Mesh(sphereGeo(), new THREE.MeshBasicMaterial({ color: 0xffe2b0 }));
-  sun.add(core);
-  var g1 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(255,236,200,1)", "rgba(255,170,80,.45)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
-  g1.scale.setScalar(4.6); sun.add(g1); sc.add(sun);
-  PIL.B = [{ id: "sun", kind: "sun", name: "Sun", rKm: 695700, obj: sun, w: V(), el: pilotLabel("Sun", "") }];
-  PLACES.forEach(function (p) {
-    var mesh = p.kind === "planet" || p.kind === "moon" || p.kind === "small" || p.id === "ceres" ? pilotPlanet(p.id) : null;
-    if (mesh) sc.add(mesh);
-    PIL.B.push({ id: p.id, kind: p.kind, name: SF.name(p.id), rKm: p.radius_km || 0, obj: mesh, w: V(), el: pilotLabel(SF.name(p.id), p.kind === "station" ? "k-st" : "") });
-  });
-  PIL.B.forEach(function (b) { PIL.BY[b.id] = b; });
-}
-function pilotShip(F) {
-  var o = PIL.SE[F.key];
-  if (o) return o;
-  var m = makeShip(); PIL.sc.add(m);
-  return (PIL.SE[F.key] = { obj: m, el: pilotLabel(F.call, "k-sh"), hd: V(0, 0, 1) });
-}
-function shipWorld(F, out) {
-  var s = F.sc && F.sc.s; if (!s) return null;
-  if (s.phase === "flight") return out.copy(axes(s.p, 1));
-  return out.copy(truePos(s.f >= 1 ? s.leg.to : s.leg.from, MAPJD));
-}
-function anchorPos(A, out) {
-  if (A.b) return out.copy(A.b.w);
-  return A.F.pw ? out.copy(A.F.pw) : out.set(0, 0, 0);
-}
-function pilotDir() {
-  var cp = Math.cos(PIL.pitch);
-  return V(-Math.sin(PIL.yaw) * cp, Math.sin(PIL.pitch), -Math.cos(PIL.yaw) * cp);
-}
-function setLook(dir) { PIL.yaw = Math.atan2(-dir.x, -dir.z); PIL.pitch = Math.asin(clamp(dir.y / (dir.length() || 1), -1, 1)); }
-function wrapPi(a) { return a - TAU * Math.round(a / TAU); }
-// T is { b: body } or { F: flight }. The camera glides to a standoff point and then rides with the target.
-function pilotJump(T) {
-  PIL.lock = -1; PIL.cyaw = PIL.cpitch = 0;
-  var tp = T.b ? T.b.w : (T.F.pw || V()), from = PIL.pos.clone();
-  var dirU = from.clone().sub(tp); if (dirU.lengthSq() < 1e-30) dirU.set(0, 0.3, 1); dirU.normalize();
-  var stand = T.b ? Math.max(T.b.rKm / AU * 4, 2e-8) : SHIP_D * 3;
-  var D = from.distanceTo(tp.clone().addScaledVector(dirU, stand));
-  PIL.fly = { t: 0, dur: clamp(0.9 + 0.8 * Math.log10(1 + D / 2e-6), 1, 4.5), T: T, dirU: dirU, stand: stand, from: from, y0: PIL.yaw, p0: PIL.pitch, ship: !!T.F };
-  PIL.anchor = null; glStart();
-}
-// AU per second: half the gap to the nearest surface each second, so a planet neither rushes up nor crawls.
-function pilotSpeed() {
-  var best = 1e9;
-  for (var i = 0; i < PIL.B.length; i++) { var b = PIL.B[i]; if (!b.rKm || b.kind === "station") continue; var d = b.w.distanceTo(PIL.pos) - b.rKm / AU; if (d < best) { best = d; PIL.near = b; PIL.nearD = d; } }
-  return clamp(best * 0.5, 2e-8, 4) * PIL.mul;
-}
-function pilotFrame(dt, t) {
-  var cam = PIL.cam, jd = LIVEJD, i, b;
-  dt = dt || 0.016;
-  cam.aspect = GW / GH; cam.fov = PIL_FOV; cam.updateProjectionMatrix();
-  for (i = 0; i < PIL.B.length; i++) { b = PIL.B[i]; b.w.copy(truePos(b.id, jd)); }
-  FL.forEach(function (F) {
-    var o = pilotShip(F), p = F.pw || (F.pw = V()), s = F.sc && F.sc.s;
-    if (!shipWorld(F, p)) return;
-    if (s.phase === "flight") {
-      var a = F.rp.at(F.jd + 0.05);
-      if (a && a.phase === "flight") { PD.copy(axes(a.p, 1)).sub(p); if (PD.lengthSq() > 0) o.hd.lerp(PD.normalize(), 1 - Math.exp(-dt / 0.25)).normalize(); }
-    }
-  });
-  var K = RIG.keys, fw = (K.w ? 1 : 0) - (K.s ? 1 : 0), rt = (K.d ? 1 : 0) - (K.a ? 1 : 0), up = (K.e ? 1 : 0) - (K.q ? 1 : 0);
-  var lockF = PIL.lock >= 0 ? FL[PIL.lock] : null;
-  if (lockF && !(lockF.pw && PIL.SE[lockF.key])) lockF = null;
-  if (lockF && (fw || rt || up)) {
-    // flying by hand leaves the ship
-    PIL.anchor = { F: lockF }; PIL.off.copy(PIL.pos).sub(lockF.pw); PIL.lock = -1; lockF = null;
-  }
-  if (PIL.fly) {
-    var f = PIL.fly; f.t += dt;
-    var x = clamp(f.t / f.dur, 0, 1), e = x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-    var tp = f.T.b ? f.T.b.w : (f.T.F.pw || PT.set(0, 0, 0));
-    PD.copy(tp).addScaledVector(f.dirU, f.stand);
-    PIL.pos.copy(f.from).lerp(PD, e);
-    PD.copy(tp).sub(PIL.pos);
-    if (PD.lengthSq() > 0) {
-      var yT = Math.atan2(-PD.x, -PD.z), pT = Math.asin(clamp(PD.y / PD.length(), -1, 1)), k = Math.min(1, x * 1.6), ke = k * k * (3 - 2 * k);
-      PIL.yaw = f.y0 + wrapPi(yT - f.y0) * ke; PIL.pitch = f.p0 + (pT - f.p0) * ke;
-    }
-    if (x >= 1) {
-      PIL.fly = null;
-      if (f.ship) { PIL.lock = FL.indexOf(f.T.F); PIL.view = "chase"; PIL.cyaw = PIL.cpitch = 0; }
-      else { PIL.anchor = { b: f.T.b }; PIL.off.copy(PIL.pos).sub(f.T.b.w); }
-    }
-  } else if (lockF) {
-    var h = PIL.SE[lockF.key].hd, sp = lockF.pw;
-    PRT.copy(h).cross(UP); if (PRT.lengthSq() < 1e-12) PRT.set(1, 0, 0); PRT.normalize();
-    if (PIL.view === "cockpit") {
-      PIL.pos.copy(sp).addScaledVector(h, SHIP_D * 0.35);
-      PIL.yaw = Math.atan2(-h.x, -h.z) + PIL.cyaw; PIL.pitch = clamp(Math.asin(clamp(h.y, -1, 1)) + PIL.cpitch, -1.5, 1.5);
-    } else {
-      PD.copy(h).negate().applyAxisAngle(UP, PIL.cyaw).applyAxisAngle(PRT, PIL.cpitch);
-      PIL.pos.copy(sp).addScaledVector(PD, SHIP_D).addScaledVector(UP, SHIP_D * 0.3);
-      PF.copy(sp).addScaledVector(h, SHIP_D * 0.6).sub(PIL.pos); setLook(PF);
-    }
-  } else {
-    var A = PIL.anchor, base = A ? anchorPos(A, PW) : PW.set(0, 0, 0), spd = pilotSpeed();
-    var dir = pilotDir(); PRT.copy(dir).cross(UP).normalize();
-    PD.set(0, 0, 0).addScaledVector(dir, fw).addScaledVector(PRT, rt).addScaledVector(UP, up);
-    if (PD.lengthSq() > 1) PD.normalize();
-    PD.multiplyScalar(spd * (K.shift ? 4 : 1));
-    PIL.vel.lerp(PD, 1 - Math.exp(-dt / 0.18));
-    if (PIL.vel.lengthSq() < 1e-30 && PD.lengthSq() === 0) PIL.vel.set(0, 0, 0);
-    PIL.off.addScaledVector(PIL.vel, dt);
-    PIL.pos.copy(base).add(PIL.off);
-    // ride with a body the camera is close to; let go when far from it
-    var n = PIL.near;
-    if (n && n.rKm > 0) {
-      var rn = n.rKm / AU, dn = n.w.distanceTo(PIL.pos);
-      if (dn < rn * 30 && !(A && A.b === n)) { PIL.anchor = { b: n }; PIL.off.copy(PIL.pos).sub(n.w); A = PIL.anchor; }
-    }
-    if (A && A.b && A.b.w.distanceTo(PIL.pos) > A.b.rKm / AU * 60) { PIL.anchor = null; PIL.off.copy(PIL.pos); }
-  }
-  PIL.speed = PIL.fly || lockF ? 0 : PIL.vel.length();
-  PIL.pitch = clamp(PIL.pitch, -1.5, 1.5);
-  cam.position.set(0, 0, 0); cam.rotation.set(PIL.pitch, PIL.yaw, 0, "YXZ"); cam.updateMatrixWorld();
-  PIL.light.position.copy(PIL.B[0].w).sub(PIL.pos);
-  var pxr = (GH / 2) / Math.tan(PIL_FOV * Math.PI / 360);
-  function placeLabel(el, rel, show, pxDiam) {
-    PR.copy(rel).project(cam);
-    var vis = show && PR.z < 1 && PR.z > -1 && Math.abs(PR.x) < 1.05 && Math.abs(PR.y) < 1.05;
-    if (!vis) { if (el._v !== 0) { el.style.visibility = "hidden"; el._v = 0; } return; }
-    el.style.transform = "translate3d(" + ((PR.x + 1) / 2 * GW).toFixed(1) + "px," + ((1 - PR.y) / 2 * GH).toFixed(1) + "px,0)";
-    if (el._v !== 1) { el.style.visibility = "visible"; el._v = 1; }
-    var big = pxDiam >= 7; if (el._d !== big) { el.classList.toggle("big", big); el._d = big; }
-  }
-  for (i = 0; i < PIL.B.length; i++) {
-    b = PIL.B[i]; PD.copy(b.w).sub(PIL.pos);
-    var d = PD.length() || 1e-12, r = b.rKm / AU, px = r / d * pxr * 2;
-    if (b.obj) { b.obj.position.copy(PD); b.obj.scale.setScalar(Math.max(r, 1e-12)); b.obj.visible = px > 0.4; }
-    var show = b.kind === "planet" || b.kind === "sun" || b.kind === "small" || b.id === "ceres" || (b.kind === "moon" && d < 0.03) || (b.kind === "station" && d < 0.004);
-    placeLabel(b.el, PD, show, px);
-  }
-  FL.forEach(function (F) {
-    var o = PIL.SE[F.key]; if (!o) return;
-    if (!F.pw) { o.obj.visible = false; placeLabel(o.el, PD.set(0, 0, 0), false, 0); return; }
-    PD.copy(F.pw).sub(PIL.pos);
-    var d = PD.length() || 1e-12, isLock = lockF === F;
-    o.obj.position.copy(PD); o.obj.scale.setScalar(isLock ? SHIP_D / 6 : Math.max(SHIP_D / 6, d * 0.004));
-    o.obj.quaternion.setFromUnitVectors(PF.set(0, 0, 1), o.hd);
-    o.obj.visible = FILT.fl && !(isLock && PIL.view === "cockpit");
-    placeLabel(o.el, PD, FILT.fl && !isLock, 0);
-  });
-  if (t - PIL.hudAt > 200) { PIL.hudAt = t; pilotHud(); }
-  GL.r.render(PIL.sc, cam);
-}
-function fmtKm(km) { return km >= 1.5e6 ? SF.fmt(km / AU, 3) + " AU" : SF.fmt(km, km < 10 ? 1 : 0) + " km"; }
-function pilotHud() {
-  var n = PIL.near, lockF = PIL.lock >= 0 ? FL[PIL.lock] : null, kms = PIL.speed * AU;
-  var where = lockF ? esc(lockF.call) + " &middot; " + (PIL.view === "chase" ? "chase" : "cockpit") + " view (C switches)" : PIL.fly ? "Jumping&hellip;" : n ? "Near " + esc(n.name) + " &middot; " + fmtKm(Math.max(0, PIL.nearD) * AU) + " above the surface" : "";
-  $("#pilotHud").innerHTML = '<span class="caps">Pilot view &middot; true scale &middot; simulated</span><br>' + where +
-    (lockF ? "" : "<br>Speed <b>" + (kms >= 1e5 ? SF.fmt(kms / 299792.458, 2) + " c" : SF.fmt(kms, kms < 10 ? 2 : 0) + " km/s") + "</b> &middot; throttle &times;" + PIL.mul.toFixed(PIL.mul < 1 ? 2 : 1));
-}
-function pilotEnter() {
-  if (!GL || PIL.on) return;
-  pilotInit();
-  var k = FOCI[FOCKEY] && !/^(sun|inner|sol)$/.test(FOCKEY) ? PIL.BY[FOCI[FOCKEY].id] : PIL.BY.earth;
-  PIL.on = true; document.body.classList.add("pilot-on");
-  $("#pilotBtn").setAttribute("aria-pressed", "true"); $("#pilotBtn").textContent = "Map view";
-  PIL.B.forEach(function (b) { b.w.copy(truePos(b.id, LIVEJD)); });
-  PIL.anchor = null; PIL.lock = -1; PIL.fly = null; PIL.vel.set(0, 0, 0);
-  PIL.pos.copy(k.w).add(V(0.0008, 0.0004, 0.0012)); PIL.off.copy(PIL.pos);
-  setLook(k.w.clone().sub(PIL.pos));
-  pilotJump({ b: k });
-}
-function pilotExit() {
-  if (!PIL.on) return;
-  PIL.on = false; PIL.lock = -1; PIL.fly = null; FOLLOW = false; RIG.keys = {};
-  document.body.classList.remove("pilot-on");
-  $("#pilotBtn").setAttribute("aria-pressed", "false"); $("#pilotBtn").textContent = "Pilot view";
-  renderInfo(); glStart();
-}
-function pilotPick(cx, cy) {
-  var r = $("#glhost").getBoundingClientRect(), x = cx - r.left, y = cy - r.top, best = null, bd = 22;
-  function test(w, hit) { PR.copy(w).sub(PIL.pos).project(PIL.cam); if (PR.z >= 1 || PR.z <= -1) return; var d = Math.hypot((PR.x + 1) / 2 * GW - x, (1 - PR.y) / 2 * GH - y); if (d < bd) { bd = d; best = hit; } }
-  PIL.B.forEach(function (b) { if (b.el._v === 1) test(b.w, { b: b }); });
-  if (FILT.fl) FL.forEach(function (F, i) { if (F.pw) test(F.pw, { F: F, i: i }); });
-  if (!best) return;
-  if (best.F) return select({ t: "f", i: best.i });
-  pilotJump(best);
-}
-// Click a body or a ship in the scene to focus it.
-function pickAt(cx, cy) {
-  var r = $("#glhost").getBoundingClientRect(), x = cx - r.left, y = cy - r.top, best = null, bd = 20;
-  function test(p, hit) {
-    TV = TV || V(); TV.copy(p).project(cam);
-    if (TV.z >= 1) return;
-    var d = Math.hypot((TV.x + 1) / 2 * GW - x, (1 - TV.y) / 2 * GH - y);
-    if (d < bd) { bd = d; best = hit; }
-  }
-  if (FILT.fl && !FOLLOW) FL.forEach(function (F, i) { if (F.sc) test(F.sc.v, { t: "f", i: i }); });
-  BODIES.forEach(function (b) { if (b.obj.visible && b.id !== "sun") test(b.obj.position, { t: "b", id: b.id, rpx: b.obj.scale.x / pxw() }); });
-  if (SUN.visible) test(SUN.position, { t: "b", id: "sun", rpx: 0 });
-  if (!best) return;
-  if (best.t === "f") return select({ t: "f", i: best.i });
-  var key = best.id === "sun" ? "sun" : FOCI[best.id] ? best.id : null;
+function jumpToPlace(id) {
+  if (!GL) return;
   if (FOLLOW) { FOLLOW = false; renderInfo(); }
-  if (key) return focusBody(key === "sun" ? "sol" : key);
-  select({ t: "n" });
-  flyTo({ id: best.id, d: 4 }, null);
+  pilotJump(bodyTarget(id)); markFocus(null, id === "sun" ? "sol" : id);
 }
-function flyTo(f, key) {
-  cancelFly();
-  FOC = f; FOCKEY = key || null;
-  $$("#focus [data-f]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.f === key ? "true" : "false"); });
-  $$("#planetNav [data-body]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.body === key ? "true" : "false"); });
-  RIG.zt = null; RIG.pan.set(0, 0, 0); RIG.vpan.set(0, 0, 0); RIG.vaz = RIG.vel = 0;
-  RIG.fly = { value: 0, p0: RIG.tgt.clone(), d0: RIG.dist, d1: focusDistance(f, key), el0: RIG.el, el1: f.el != null ? f.el : .62 };
-  if (window.StarfareMotion) StarfareMotion.camera(RIG.fly); else RIG.fly.value = 1;
-  glStart();
-}
-// Follow keeps a cruise ship readable: the frame scales with how long the leg is, not a fixed distance.
-function followFocus() {
-  var F = FL[SEL.i], L = F && F.sc && F.sc.s.leg;
-  if (!L || L.sys) return { id: "sun", d: 7 };
-  var len = marker(L.from, MAPJD).distanceTo(marker(L.to, MAPJD));
-  return { id: "sun", d: clamp(len * 0.8, 14, 70) };
-}
-// Frame the whole route when its ends are in different systems.
-function routeFocus(places) {
-  return { id: "sun", d: 58, el: .62, pts: function () { return places.map(function (id) { return marker(id, MAPJD); }); } };
+function placeWhole() {
+  var p = PRESET.sun;
+  PIL.fly = PIL.lock = null; PIL.anchor = { b: BID.sun };
+  PIL.off.copy(elAz(p.el, p.az)).multiplyScalar(p.d); PIL.pos.copy(PIL.off); EYE.copy(PIL.pos);
+  setLook(PT.copy(PIL.pos).negate()); markFocus("sun", null);
 }
 function routePlaces(rp) {
   var out = [];
   rp.legs.forEach(function (L) { if (out.indexOf(L.from) < 0) out.push(L.from); if (out.indexOf(L.to) < 0) out.push(L.to); });
   return out;
 }
-function sysFocus(id) { var s = SF.system(id); return FOCI[s] ? s : null; }
-function focusTarget() {
-  if (FOLLOW && SEL.t === "f" && FL[SEL.i].sc) return FL[SEL.i].sc.v;
-  if (FOC.pts) return ptsCentre(FOC.pts());
-  return marker(FOC.id, MAPJD);
-}
-function detailSystem() {
-  if (RIG.dist > 35) return null;
-  if (FOLLOW && SEL.t === "f" && FL[SEL.i] && FL[SEL.i].sc) {
-    var s = FL[SEL.i].sc.s;
-    if (s.phase === "flight") return s.leg.sys || null;
-    return SF.system(s.f >= 1 ? s.leg.to : s.leg.from);
-  }
-  return FOCKEY === "sol" ? "sun" : FOC.id !== "sun" ? SF.system(FOC.id) : null;
-}
-function focusBody(key) {
-  if (!GL || !FOCI[key]) return;
-  if (PIL.on) { var pb = PIL.BY[FOCI[key].id]; if (pb) pilotJump({ b: pb }); return; }
-  FOLLOW = false; select({ t: "n" });
-  flyTo(FOCI[key], key);
-}
+function fmtKm(km) { return km >= 1.5e6 ? SF.fmt(km / AU, 3) + " AU" : SF.fmt(km, km < 10 ? 1 : 0) + " km"; }
 function renderPlanetNav() {
   $("#planetNav").innerHTML = ["sol", "mercury", "venus", "earth", "moon", "mars", "ceres", "jupiter", "saturn", "uranus", "neptune"].map(function (key) {
     var id = key === "sol" ? "sun" : key, name = id === "sun" ? "Sun" : SF.name(id), size = id === "earth" ? "day_2k" : id === "jupiter" ? "2k" : "1k";
@@ -1889,59 +1672,62 @@ function renderPlanetNav() {
 }
 
 /* ---------- scene objects ---------- */
-var BODIES = [], BID = {}, DETAIL_SYS = null, SKY, SUN, GRID, ORB, MOR = [], LBL, STOPS = {}, PARK_R, PARK_B, PARK_SHIPS = {}, lastHud = 0;
+var BODIES = [], BID = {}, SKY, SUN, GRID, ORB, MOR = [], LBL, STOPS = {}, PARK_R, PARK_B, PARK_SHIPS = {}, lastHud = 0, GRIDF = 1;
 var ATMO = { earth: "rgba(120,180,255,.55)", venus: "rgba(255,220,160,.4)", mars: "rgba(255,140,90,.35)", jupiter: "rgba(255,210,170,.3)", saturn: "rgba(255,230,180,.28)", uranus: "rgba(150,230,240,.35)", neptune: "rgba(110,150,255,.38)", titan: "rgba(255,190,110,.45)" };
 var RINGS = [0.5, 1, 2, 5, 10, 20, 30];
 // A moon's ring is the path it flew over its last period, so the seam sits under the moon. The Moon's real orbit
 // precesses, so a ring sampled once would leave it behind; rings are resampled every few sky days.
 function moonRing(m, jd) {
-  var pts = SF.orbit(m.id, jd - m.period, 120).map(function (rel) { return localOff(rel, m.par); });
+  var pts = SF.orbit(m.id, jd - m.period, 120).map(localOff);
   m.epoch = jd; m.radius = pts.reduce(function (s, p) { return s + p.length(); }, 0) / pts.length;
   SolLines.setPoints(m.line, pts);
 }
-function aimRing(line, id, centre) { var b = BID[id]; if (b) SolLines.follow(line, b.obj.position, centre, b.obj.visible ? b.obj.scale.x / pxw() : 0); }
+var AW = V(), AC = V();
+function aimRing(line, id, centre) { var b = BID[id]; if (b) SolLines.follow(line, AW.copy(b.obj.position).sub(EYE), AC.copy(centre).sub(EYE), b.obj.visible ? b.obj.scale.x / pxAt(b.obj.position) : 0); }
+// How far a moon or station sits from its planet, in pixels at the camera's distance.
+function sepPx(id) { var P = SF.place(id), v = marker(id, MAPJD); return v.distanceTo(marker(P.parent, MAPJD)) / pxAt(v); }
 function buildScene(J0) {
   SKY = stars(); scene.add(SKY);
   scene.add(new THREE.AmbientLight(0xffffff, 0.28));
-  scene.add(new THREE.PointLight(0xfff1dc, 1.45, 0));
-  SUN = sunObj(SIZE.sun); scene.add(SUN);
-  if (window.SolArt) SolArt.setSun(V());
+  WORLD.add(new THREE.PointLight(0xfff1dc, 1.45, 0));
+  SUN = sunObj(1); WORLD.add(SUN);
   GRID = new THREE.Group();
   var gridLine = function (pts, opacity) { var o = SolLines.line(pts, { color: 0x5cc8ff, opacity: opacity, width: 1 }); o.userData.baseOpacity = opacity; GRID.add(o); };
   RINGS.forEach(function (r) {
-    var pts = []; for (var k = 0; k <= 200; k++) { var a = k / 200 * TAU; pts.push(V(Math.cos(a) * rs(r), 0, Math.sin(a) * rs(r))); }
+    var pts = []; for (var k = 0; k <= 200; k++) { var a = k / 200 * TAU; pts.push(V(Math.cos(a) * r, 0, Math.sin(a) * r)); }
     gridLine(pts, r === 1 ? 0.16 : 0.08);
   });
-  for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; gridLine([V(Math.cos(a) * rs(0.12), 0, Math.sin(a) * rs(0.12)), V(Math.cos(a) * rs(34), 0, Math.sin(a) * rs(34))], 0.045); }
-  scene.add(GRID);
+  for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; gridLine([V(Math.cos(a) * 0.12, 0, Math.sin(a) * 0.12), V(Math.cos(a) * 34, 0, Math.sin(a) * 34)], 0.045); }
+  WORLD.add(GRID);
   ORB = new THREE.Group();
   PLACES.filter(function (p) {
     return p.parent === "sun" && (p.kind === "planet" || p.kind === "small");
   }).forEach(function (p) {
-    try { var pts = SF.orbit(p.id, J0, 360).map(S), color = new THREE.Color(0xada79c).lerp(new THREE.Color(SF.color(p.id)), p.id === "earth" ? .6 : .16), o = SolLines.line(pts, { color: color, opacity: p.kind === "planet" ? 0.42 : 0.17, width: 1.25, ahead: SolLines.AHEAD }); o.userData = { id: p.id, baseOpacity: o.material.uniforms.opacity.value }; ORB.add(o); } catch (e) { /* no orbit */ }
+    try { var pts = SF.orbit(p.id, J0, 720).map(S), color = new THREE.Color(0xada79c).lerp(new THREE.Color(SF.color(p.id)), p.id === "earth" ? .6 : .16), o = SolLines.line(pts, { color: color, opacity: p.kind === "planet" ? 0.42 : 0.17, width: 1.25, ahead: SolLines.AHEAD }); o.userData = { id: p.id, baseOpacity: o.material.uniforms.opacity.value }; ORB.add(o); } catch (e) { /* no orbit */ }
   });
-  scene.add(ORB);
+  WORLD.add(ORB);
   PLACES.forEach(function (p) {
     if (p.kind === "moon") {
       try {
         var m = { g: new THREE.Group(), id: p.id, par: p.parent, period: p.period_days, line: SolLines.line([], { color: SF.color(p.id), opacity: 0.27, width: 1.25, ahead: SolLines.AHEAD }) };
-        m.line.userData = { id: p.id, baseOpacity: m.line.material.uniforms.opacity.value }; moonRing(m, J0); m.g.add(m.line); scene.add(m.g); MOR.push(m);
+        m.line.userData = { id: p.id, baseOpacity: m.line.material.uniforms.opacity.value }; moonRing(m, J0); m.g.add(m.line); WORLD.add(m.g); MOR.push(m);
       } catch (e) { /* no orbit */ }
     }
-    var o, r, min;
-    if (p.kind === "planet" || p.kind === "moon" || p.id === "ceres") { o = planetMesh(p.id); r = dispR(p.id); min = p.kind === "moon" ? 2.2 : 4.5; }
-    else if (p.kind === "small") { o = planetMesh(p.id); r = dispR(p.id); min = 1.6; }
-    else { o = SolLines.marker(p.real ? 0xdfe6ee : 0xffb65c); r = 0; min = 4.5; }
+    var o, rKm = p.radius_km || 0, min;
+    if (p.kind === "planet" || p.kind === "moon" || p.id === "ceres") { o = planetMesh(p.id); min = p.kind === "moon" ? 2 : 3; }
+    else if (p.kind === "small") { o = planetMesh(p.id); min = 1.5; }
+    else { o = SolLines.marker(p.real ? 0xdfe6ee : 0xffb65c); rKm = 0; }
     if (ATMO[p.id] && !(window.SolArt && SolArt.hasRim(p.id))) o.add(atmo(ATMO[p.id], 1));
-    scene.add(o);
-    BODIES.push(BID[p.id] = { id: p.id, kind: p.kind, obj: o, r: r, min: min });
+    WORLD.add(o);
+    BODIES.push(BID[p.id] = { id: p.id, kind: p.kind, obj: o, rKm: rKm, min: min });
     if (p.kind === "station" || p.kind === "moon") {
       var period = p.period_days;
       if (!period) { try { var st = relRadius(p); period = st; } catch (e) { period = 1; } }
       if (period < 3) FAST[p.id] = 1;
     }
   });
-  PARK_R = glowPoints(16, 0x5cc8ff, 13); PARK_B = glowPoints(16, 0x7f8a99, 11); scene.add(PARK_R); scene.add(PARK_B);
+  BODIES.push(BID.sun = { id: "sun", kind: "sun", obj: SUN, rKm: 695700, min: 3 });
+  PARK_R = glowPoints(16, 0x5cc8ff, 13); PARK_B = glowPoints(16, 0x7f8a99, 11); WORLD.add(PARK_R); WORLD.add(PARK_B);
   labels();
   FL.forEach(addFlightObjs);
 }
@@ -1954,26 +1740,26 @@ function relRadius(p) {
 function stopSprite(id) {
   if (STOPS[id]) return STOPS[id];
   var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: diamondTex(), depthWrite: false, transparent: true, depthTest: false }));
-  s.renderOrder = 5; scene.add(s); return (STOPS[id] = s);
+  s.renderOrder = 5; WORLD.add(s); return (STOPS[id] = s);
 }
 function labels() {
   LBL = LabelSet($("#labels"));
-  var noLbl = function () { return !LAY.lbl || (DETAIL_SYS && DETAIL_SYS !== "sun"); };
-  LBL.add({ html: "Sun", cls: "k-planet", pri: 60, radial: true, gap: function () { return Math.max(SIZE.sun / pxw(), 7) + 12; }, pos: function () { return V(); }, hide: noLbl, click: function () { focusBody("sol"); } });
+  var noLbl = function () { return !LAY.lbl; };
+  LBL.add({ html: "Sun", cls: "k-planet", pri: 60, radial: true, gap: function () { return Math.max(SUN.scale.x / pxAt(V0), 7) + 12; }, pos: function () { return V0; }, hide: noLbl, click: function () { focusBody("sol"); } });
   RINGS.forEach(function (r) {
-    var a = -0.62, p = V(Math.cos(a) * rs(r), 0, Math.sin(a) * rs(r));
-    LBL.add({ html: (r < 1 ? r.toFixed(1) : String(r)) + " AU", cls: "k-ring", pri: 4, dot: false, pos: function () { return p; }, hide: function () { return !LAY.ring || SolLines.budget("grid", RIG.dist) < .5; } });
+    var a = -0.62, p = V(Math.cos(a) * r, 0, Math.sin(a) * r);
+    LBL.add({ html: (r < 1 ? r.toFixed(1) : String(r)) + " AU", cls: "k-ring", pri: 4, dot: false, pos: function () { return p; }, hide: function () { return !LAY.ring || GRIDF < .5; } });
   });
   PLACES.forEach(function (p) {
-    var pl = p.kind === "planet", sm = p.kind === "small";
-    LBL.add({ html: esc(SF.name(p.id)), cls: pl ? "k-planet" : "k-place", radial: pl, gap: pl ? function () { return Math.max(dispR(p.id) / pxw(), 4.5) + 12; } : 8, pri: pl ? 50 : sm ? 24 : p.kind === "moon" ? 18 : 14,
-      pos: function () { return marker(p.id, MAPJD); }, click: FOCI[p.id] ? function () { focusBody(p.id); } : null,
-      hide: function () { return !LAY.lbl || (DETAIL_SYS && SF.system(p.id) !== DETAIL_SYS) || (!pl && !sm && RIG.dist > (p.kind === "moon" ? 40 : 22)); } });
+    var pl = p.kind === "planet", sm = p.kind === "small", b = BID[p.id];
+    LBL.add({ html: esc(SF.name(p.id)), cls: pl ? "k-planet" : "k-place", radial: pl, gap: pl ? function () { return Math.max(b.obj.scale.x / pxAt(b.obj.position), 4.5) + 12; } : 8, pri: pl ? 50 : sm ? 24 : p.kind === "moon" ? 18 : 14,
+      pos: function () { return marker(p.id, MAPJD); }, click: function () { jumpToPlace(p.id); },
+      hide: function () { return !LAY.lbl || !b.obj.visible || (!pl && !sm && sepPx(p.id) <= 10); } });
   });
   SF.SITE.fleet.forEach(function (c) {
     LBL.add({ html: esc(c.name), cls: "k-fleet", pri: 34,
       pos: function () { var L = LIVE.filter(function (x) { return x.car === c.car; })[0]; return L ? marker(L.at, MAPJD) : null; },
-      hide: function () { var L = LIVE.filter(function (x) { return x.car === c.car; })[0]; return !FILT.pk || FOLLOW || RIG.dist > 55 || (DETAIL_SYS && L && SF.system(L.at) !== DETAIL_SYS); } });
+      hide: function () { var L = LIVE.filter(function (x) { return x.car === c.car; })[0]; return !FILT.pk || FOLLOW || !L || (SF.place(L.at).parent !== "sun" && sepPx(L.at) <= 10); } });
   });
   LBL.add({ html: "Selected booking", cls: "k-hail", pri: 40,
     pos: function () { var h = SEL.t === "b" && hailOf(SEL.id); return h ? marker(h.from.id, MAPJD) : null; },
@@ -1984,10 +1770,10 @@ function labels() {
 var raf = 0, last = 0, MAPVIS = true;
 function frame(t) {
   raf = requestAnimationFrame(frame);
-  if (t - last < 1000 / (PIL.on ? 60 : window.SolArt ? SolArt.quality().fps : GW <= 760 ? 24 : 30)) return;
+  if (t - last < 1000 / (pilotMoving() ? 60 : window.SolArt ? SolArt.quality().fps : GW <= 760 ? 24 : 30)) return;
   var dt = Math.min(0.1, Math.max(0, (t - last) / 1000)); last = t; MEMO = {}; MEMON = 0;
   try { draw(dt, t); } catch (e) { if (!frame.err) { frame.err = 1; console.error(e); } }
-  if (MAP_PAUSED && !RIG.fly && !RIG.moving() && (!VIEW_OFF || VIEW_OFF.settled)) glStop();
+  if (MAP_PAUSED && !pilotMoving()) glStop();
 }
 function glStart() { if (GL && !raf && !document.hidden && MAPVIS) { last = performance.now(); raf = requestAnimationFrame(frame); } }
 function glStop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
@@ -1998,72 +1784,57 @@ function draw(dt, t) {
   LIVEMAP = !rep;
   MAPJD = rep ? FL[SEL.i].jd : LIVEJD;
   FL.forEach(function (F) { F.sc = shipC(F.rp, F.jd, MAPJD); });
-  if (PIL.on) return pilotFrame(dt, t);
-  // camera
-  var want = focusTarget();
-  if (RIG.fly) {
-    var e = RIG.fly.value;
-    RIG.tgt.copy(RIG.fly.p0).lerp(want, e);
-    RIG.dist = RIG.fly.d0 * Math.pow(RIG.fly.d1 / RIG.fly.d0, e);
-    RIG.el = RIG.fly.el0 + (RIG.fly.el1 - RIG.fly.el0) * e;
-    if (e >= 1) RIG.fly = null;
-  } else {
-    stepRig(dt);
-    RIG.tgt.copy(want).add(RIG.pan);
-  }
-  // Keep the observer's camera steady. Only user intent moves the view.
-  var ce = Math.cos(RIG.el);
-  updateProjection(dt);
-  cam.position.set(RIG.tgt.x + 500 * ce * Math.sin(RIG.az), RIG.tgt.y + 500 * Math.sin(RIG.el), RIG.tgt.z + 500 * ce * Math.cos(RIG.az));
-  cam.lookAt(RIG.tgt);
-  cam.updateMatrixWorld();
-  // Catalog bearings stay angular; the strategic projection only applies to the map.
-  if (SKY.material.uniforms && SKY.material.uniforms.skyAspect) SKY.material.uniforms.skyAspect.value = GW / GH;
-  SUN.scale.setScalar(Math.max(1, pxw() * 7 / SIZE.sun));
-  DETAIL_SYS = detailSystem();
-  SUN.visible = !DETAIL_SYS || DETAIL_SYS === "sun";
+  pilotStep(dt);
+  WORLD.position.copy(EYE).negate();
+  if (window.SolArt) SolArt.setSun(WORLD.position);
+  SUN.scale.setScalar(Math.max(695700 / AU, pxAt(V0) * 3));
   // Surface animation is illustrative and independent of ephemerides and recorded flights.
   var effectSeconds = PLANET_CLOCK ? PLANET_CLOCK.sample(t, !MAP_PAUSED && !reduced && !document.hidden) : 0;
-  if (SUN.visible && window.SolArt && SolArt.updateSun) SolArt.updateSun(SUN, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: SIZE.sun * SUN.scale.x / pxw(), quality: SolArt.quality().maps });
-  // bodies
+  if (window.SolArt && SolArt.updateSun) SolArt.updateSun(SUN, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: SUN.scale.x / pxAt(V0), quality: SolArt.quality().maps });
+  // bodies: true size, or a few pixels when that is smaller. A moon or station shows once it stands clear of its planet.
   for (var i = 0; i < BODIES.length; i++) {
-    var b = BODIES[i], v = marker(b.id, MAPJD);
+    var b = BODIES[i]; if (b.kind === "sun") continue;
+    var v = marker(b.id, MAPJD);
     b.obj.position.copy(v);
-    b.obj.visible = (!DETAIL_SYS || SF.system(b.id) === DETAIL_SYS) && (b.kind === "planet" || b.kind === "small" || RIG.dist < (b.kind === "moon" ? 70 : 40));
-    if (b.obj.visible) b.obj.scale.setScalar(Math.max(b.r, pxw(v) * b.min));
-    if (b.obj.visible && window.SolArt && SolArt.updatePlanet) SolArt.updatePlanet(b.obj, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: b.obj.scale.x / pxw(), quality: SolArt.quality().maps });
+    b.obj.visible = b.kind === "planet" || b.kind === "small" || sepPx(b.id) > (b.rKm ? 4 : 8);
+    if (!b.obj.visible || !b.rKm) continue;
+    b.obj.scale.setScalar(Math.max(b.rKm / AU, pxAt(v) * b.min));
+    if (window.SolArt && SolArt.updatePlanet) SolArt.updatePlanet(b.obj, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: b.obj.scale.x / pxAt(v), quality: SolArt.quality().maps });
   }
   // A moon's ring draws with its moon, fading in as it opens out round the planet.
   MOR.forEach(function (m) {
-    var b = BID[m.id], fade = SolLines.budget("moonRing", m.radius / pxw());
+    var b = BID[m.id], fade = SolLines.budget("moonRing", m.radius / pxAt(marker(m.par, MAPJD)));
     m.g.position.copy(marker(m.par, MAPJD)); m.g.visible = LAY.moon && fade > 0 && b.obj.visible;
     if (!m.g.visible) return;
     m.line.material.uniforms.opacity.value = m.line.userData.baseOpacity * fade;
     if (SolLines.stale(m.epoch, MAPJD)) moonRing(m, MAPJD);
     aimRing(m.line, m.id, m.g.position);
   });
-  ORB.children.forEach(function (o) { o.material.uniforms.opacity.value = o.userData.baseOpacity * (DETAIL_SYS ? .3 : 1); aimRing(o, o.userData.id, ORB.position); });
-  var gridFade = SolLines.budget("grid", RIG.dist);
-  GRID.visible = LAY.ring && gridFade > 0; ORB.visible = LAY.orb;
-  GRID.children.forEach(function (o) { o.material.uniforms.opacity.value = o.userData.baseOpacity * gridFade; });
+  // The AU grid fades out inside four spheres of influence of a planet, and a planet's own orbit dims as you near it.
+  var near = Infinity, own = {};
+  BODIES.forEach(function (b) { if (b.kind !== "planet") return; var s = soiOf(b), q = b.obj.position.distanceTo(EYE) / s; own[b.id] = clamp(q / 2, 0.35, 1); near = Math.min(near, q); });
+  GRIDF = clamp((near - 1) / 3, 0, 1);
+  ORB.children.forEach(function (o) { o.material.uniforms.opacity.value = o.userData.baseOpacity * (own[o.userData.id] || 1); aimRing(o, o.userData.id, V0); });
+  GRID.visible = LAY.ring && GRIDF > 0; ORB.visible = LAY.orb;
+  GRID.children.forEach(function (o) { o.material.uniforms.opacity.value = o.userData.baseOpacity * GRIDF; });
   // routes
-  SolLines.zoom(pxw());
+  SolLines.zoom(pxAt(PIL.lock && PIL.lock.sc ? PIL.lock.sc.v : PIL.anchor ? anchorPos(PIL.anchor) : V0));
   FL.forEach(function (F, j) {
-    var on = FILT.fl && !(rep && SEL.i !== j), sel = SEL.t === "f" && SEL.i === j;
-    var fa = 1;
+    var on = FILT.fl && !(rep && SEL.i !== j), sel = SEL.t === "f" && SEL.i === j, lock = PIL.lock === F;
     var g = syncRoute(F, 0x5cc8ff); g.visible = on;
-    if (on) aimRoute(g, MAPJD, F.jd, sel ? 0.6 * fa : 0, (sel ? 1 : 0.55) * fa, sel ? 0 : SolLines.TRAIL_PX * pxw());
-    F.ship.visible = F.halo.visible = on && fa > 0.01;
-    if (!F.ship.visible) return;
-    var v = F.sc.v, s = pxw(v) * fa;
-    F.ship.position.copy(v); F.ship.scale.setScalar(s * (sel ? 38 : 30));
+    var v = F.sc.v;
+    if (on) aimRoute(g, MAPJD, F.jd, sel ? 0.6 : 0, sel ? 1 : 0.55, sel ? 0 : SolLines.TRAIL_PX * pxAt(v));
+    F.ship.visible = on && !(lock && PIL.view === "cockpit"); F.halo.visible = on && !lock;
+    if (!on) return;
+    F.ship.position.copy(v).sub(EYE); F.ship.scale.setScalar(lock ? SHIP_D / 6 : Math.max(SHIP_D / 6, pxAt(v) * (sel ? 38 : 30)));
     var heading = window.StarfareView.flightDirection(F.rp, F.jd, function (jd) { return shipC(F.rp, jd, MAPJD).v.toArray(); });
     if (!heading) {
       var state = F.sc.s, stop = state.f >= 1 ? state.leg.to : state.leg.from;
       heading = window.StarfareView.orbitDirection(MAPJD, function (jd) { return marker(stop, jd).toArray(); });
     }
     window.StarfareView.orientShip(F.ship, window.StarfareView.headingFrame(heading, [0, 1, 0], F.ship.userData.headingSet ? F.ship.up.toArray() : null));
-    F.halo.position.copy(v); F.halo.scale.setScalar(s * (sel ? 34 : 24));
+    PF.set(0, 0, 1).applyQuaternion(F.ship.quaternion); F.hd = F.hd ? F.hd.lerp(PF, 1 - Math.exp(-dt / 0.25)).normalize() : PF.clone();
+    F.halo.position.copy(F.ship.position); F.halo.scale.setScalar(pxAt(v) * (sel ? 34 : 24));
     F.halo.material.color.setScalar(sel ? 1.5 : 0.75); // over the bloom threshold only when selected
     if (F.lbl) F.lbl.el.classList.toggle("on", sel);
   });
@@ -2077,7 +1848,7 @@ function draw(dt, t) {
   Object.keys(STOPS).forEach(function (id) { STOPS[id].visible = !!need[id]; });
   Object.keys(need).forEach(function (id) {
     var s = stopSprite(id); s.visible = true;
-    var v = marker(id, MAPJD); s.position.copy(v); s.scale.setScalar(pxw(v) * 15);
+    var v = marker(id, MAPJD); s.position.copy(v); s.scale.setScalar(pxAt(v) * 15);
     s.material.color.setRGB(1.3, 1.25, 1.15); // the selected route's stops glow
   });
   // parked Starseekers
@@ -2085,41 +1856,37 @@ function draw(dt, t) {
   Object.keys(PARK_SHIPS).forEach(function (id) { PARK_SHIPS[id].visible = false; });
   if (FILT.pk && !FOLLOW) LIVE.forEach(function (c) { (c.busy && c.busy > LIVEJD ? pb : pr).push(marker(c.at, MAPJD)); });
   if (window.SolArt && FILT.pk && !FOLLOW) LIVE.forEach(function (c) {
-    if (DETAIL_SYS && SF.system(c.at) !== DETAIL_SYS) return;
     var ship = PARK_SHIPS[c.car];
     if (!ship) { ship = PARK_SHIPS[c.car] = SolArt.ship({callsign:c.car.toUpperCase()}); scene.add(ship); }
-    var p = marker(c.at, MAPJD); ship.visible = true; ship.position.copy(p); ship.scale.setScalar(pxw(p) * 16);
+    var p = marker(c.at, MAPJD); ship.visible = true; ship.position.copy(p).sub(EYE); ship.scale.setScalar(Math.max(SHIP_D / 6, pxAt(p) * 16));
     var heading = window.StarfareView.orbitDirection(MAPJD, function (jd) { return marker(c.at, jd).toArray(); });
     window.StarfareView.orientShip(ship, window.StarfareView.headingFrame(heading, [0, 1, 0], ship.userData.headingSet ? ship.up.toArray() : null));
   });
   setPts(PARK_R, window.SolArt ? [] : pr); setPts(PARK_B, window.SolArt ? [] : pb);
   LBL.update(cam, GW, GH);
   var tb = $("#tbox");
-  if (SEL.t === "f" && FILT.fl && FL[SEL.i] && FL[SEL.i].ship && FL[SEL.i].ship.visible) { var F0 = FL[SEL.i]; tb.className = "tbox " + (F0.st ? F0.st.k : ""); tbox(tb, F0.sc.v, 34); }
+  if (SEL.t === "f" && FILT.fl && FL[SEL.i] && FL[SEL.i].ship && FL[SEL.i].ship.visible && PIL.lock !== FL[SEL.i]) { var F0 = FL[SEL.i]; tb.className = "tbox " + (F0.st ? F0.st.k : ""); tbox(tb, F0.sc.v, 34); }
   else tbox(tb, null);
   if (t - lastHud > 250) { lastHud = t; mapHud(); }
   if (GL.post) GL.post.render(scene, cam); else GL.r.render(scene, cam);
 }
-/* ---------- map HUD: map time, the scale bar and the map centre ---------- */
-var NICE = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20];
+/* ---------- map HUD: map time, where the camera is, the scale bar and the camera position ---------- */
 function mapHud() {
-  var rep = FOLLOW && SEL.t === "f" && !!FL[SEL.i], F = rep ? FL[SEL.i] : null;
-  $("#hud").innerHTML = rep
-    ? '<span class="caps">Map time &middot; following ' + esc(F.call) + '</span><br><b>' + iso(MAPJD) + "</b> UTC<br>Live flight (simulated). Other layers are hidden."
-    : '<span class="caps">' + (MAP_PAUSED ? 'Map paused · ' + iso(MAPJD) + ' UTC' : 'Live sky') + '</span><br><span>' + (PIL.on ? 'True scale · real distances and sizes' : 'Distances compressed · bodies enlarged') + '</span>';
+  var rep = FOLLOW && SEL.t === "f" && !!FL[SEL.i], F = rep ? FL[SEL.i] : null, L = PIL.lock, A = PIL.anchor;
+  var where = L ? esc(L.call) + " &middot; " + PIL.view + " view (C switches)" : PIL.fly ? "Jumping&hellip;" : A && A.b && A.b.kind !== "sun" ? "Near " + esc(SF.name(A.b.id)) + " &middot; " + fmtKm((bodyPos(A.b).distanceTo(PIL.pos) - A.b.rKm / AU) * AU) + " above the surface" : "Interplanetary &middot; " + fmtKm(PIL.pos.length() * AU) + " from the Sun";
+  var kms = PIL.speed * AU, speed = L ? "" : "<br>Camera speed " + (kms >= 1e5 ? SF.fmt(kms / 299792.458, kms < 3e6 ? 2 : 0) + " c" : SF.fmt(kms, kms < 10 ? 2 : 0) + " km/s") + " &middot; throttle &times;" + SF.fmt(PIL.mul, PIL.mul < 1 ? 2 : 1);
+  $("#hud").innerHTML = '<span class="caps">' + (rep ? "Map time &middot; following " + esc(F.call) + "</span><br><b>" + iso(MAPJD) + "</b> UTC" : (MAP_PAUSED ? "Map paused &middot; " + iso(MAPJD) + " UTC" : "Live sky") + "</span>")
+    + "<br><span>True scale &middot; real distances and sizes &middot; simulated</span><br>" + where + speed;
   $("#liveBtn").hidden = !rep;
-  var sysf = (FOC.id !== "sun" && !rep) || (rep && F.sc && F.sc.s.leg.sys && F.sc.s.phase === "flight") || (rep && F.sc && F.sc.s.phase !== "flight" && RIG.dist < 30);
-  if (sysf) $("#sBar").innerHTML = '<p class="note" style="margin:4px 0 0">Offsets around the planet are log-scaled; no single scale.</p>';
-  else {
-    var ppu = 1 / pxw(), a = rsInv(RIG.tgt.length()), best = null;
-    NICE.forEach(function (n) { var x = (rs(a + n) - rs(a)) * ppu; if (x <= 190 && (!best || Math.abs(x - 110) < Math.abs(best.x - 110))) best = { n: n, x: x }; });
-    if (best && best.x > 8) {
-      var w = Math.round(best.x);
-      $("#sBar").innerHTML = '<div class="sbar" style="width:' + (w + 30) + 'px"><span class="ln" style="width:' + w + 'px"></span><span class="tk" style="left:0"></span><span class="tk" style="left:' + w + 'px"></span><span class="t2" style="left:0">0</span><span class="t2" style="left:' + w + 'px">' + best.n + ' AU</span></div><div class="note">' + (a < 0.01 ? "Outward from the Sun" : "Outward from " + fmt(a, a < 1 ? 2 : 1) + " AU, at the map centre") + ". Log-compressed, so it stretches inward.</div>";
-    } else $("#sBar").innerHTML = '<p class="note" style="margin:4px 0 0">Zoom in for a scale.</p>';
-  }
-  var c = helioOf(RIG.tgt);
-  $("#cTxt").innerHTML = "X <b>" + sgn(c[0], 3) + "</b> Y <b>" + sgn(c[1], 3) + "</b> Z <b>" + sgn(c[2], 3) + "</b> AU" + (FOC.id !== "sun" && !rep ? '<br><span class="dim">' + esc(SF.name(FOC.id)) + " at the centre</span>" : "");
+  // The bar holds at the distance of what the camera rides with; nearer things look larger in perspective.
+  var ap = L && L.sc ? L.sc.v : A ? anchorPos(A) : V0, name = L ? L.call : A && A.F ? A.F.call : A && A.b.kind !== "sun" ? SF.name(A.b.id) : "the Sun";
+  var tgt = pxAt(ap) * AU * 110, unit = tgt >= 1.5e6 ? AU : 1, x = tgt / unit, p = Math.pow(10, Math.floor(Math.log10(x))), best = null;
+  [1, 2, 5, 10].forEach(function (m) { var w = m * p * unit / (pxAt(ap) * AU); if (w <= 190 && (!best || Math.abs(w - 110) < Math.abs(best.w - 110))) best = { n: +(m * p).toPrecision(1), w: w }; });
+  if (best && best.w > 8) {
+    var w = Math.round(best.w);
+    $("#sBar").innerHTML = '<div class="sbar" style="width:' + (w + 30) + 'px"><span class="ln" style="width:' + w + 'px"></span><span class="tk" style="left:0"></span><span class="tk" style="left:' + w + 'px"></span><span class="t2" style="left:0">0</span><span class="t2" style="left:' + w + 'px">' + best.n + (unit === AU ? " AU" : " km") + '</span></div><div class="note">At the distance of ' + esc(name) + ".</div>";
+  } else $("#sBar").innerHTML = "";
+  $("#cTxt").innerHTML = "X <b>" + sgn(EYE.x, 3) + "</b> Y <b>" + sgn(-EYE.z, 3) + "</b> Z <b>" + sgn(EYE.y, 3) + "</b> AU";
 }
 
 /* =========================================================
@@ -2139,24 +1906,16 @@ function select(s) {
   if (s.t === "b") { FOLLOW = false; showTab("b"); var B = BK[s.id]; if (!B || (!B.rp && !B.err && !B.busy)) startPlan(s.id); }
   else if (s.t === "f") { showTab("f"); if (FOLLOW && !same) FOLLOW = true; }
   renderCardsSel(); renderBookings(); renderInfo();
-  if (PIL.on) { if (s.t === "f" && FL[s.i]) pilotJump({ F: FL[s.i] }); return; }
-  if (GL && !same && s.t !== "n") {
-    var rp = s.t === "f" ? FL[s.i].rp : BK[s.id] && BK[s.id].rp, hail = s.t === "b" ? hailOf(s.id) : null;
-    var fid = s.t === "f" ? (rp.focus !== "sun" ? sysFocus(rp.focus) : null) : (sysFocus(hail.from.id) === sysFocus(hail.to.id) ? sysFocus(hail.from.id) : null);
-    if (FOLLOW && s.t === "f") flyTo(followFocus(), null);
-    else if (fid) flyTo(FOCI[fid], fid);
-    else if (rp && rp.legs && rp.legs.length) flyTo(routeFocus(routePlaces(rp)), null);
-    else if (hail) flyTo(routeFocus([hail.from.id, hail.to.id]), null);
-    else flyTo(FOCI.inner, "inner");
-  }
+  if (!GL) return;
+  if (s.t === "f") { if (PIL.lock !== FL[s.i]) pilotJump(shipTarget(FL[s.i])); }
+  else if (s.t === "b" && !same) { var rp = BK[s.id] && BK[s.id].rp, h = hailOf(s.id); pilotJump(routeTarget(rp && rp.legs && rp.legs.length ? routePlaces(rp) : [h.from.id, h.to.id])); }
+  else if (s.t === "n") releaseShip();
 }
 function setFollow(on) {
   if (SEL.t !== "f" || !FL[SEL.i]) return;
-  FOLLOW = on;
-  if (PIL.on) { if (on) { PIL.view = "chase"; pilotJump({ F: FL[SEL.i] }); } else PIL.lock = -1; renderInfo(); return; }
-  var rp = FL[SEL.i].rp;
-  if (on) flyTo(followFocus(), null);
-  else { var fid = rp.focus !== "sun" ? sysFocus(rp.focus) : null; flyTo(fid ? FOCI[fid] : routeFocus(routePlaces(rp)), fid || null); }
+  FOLLOW = on; var F = FL[SEL.i];
+  if (on) { if (PIL.lock !== F) pilotJump(shipTarget(F)); }
+  else releaseShip();
   renderInfo();
 }
 function showTab(t) {
@@ -2530,10 +2289,10 @@ function start() {
   renderCards(); renderBookings(); renderTools(); renderReports(); initIntro();
   renderPlanetNav();
   StarfareMotion.mount({
-    zoom: function (f) { if (GL) RIG.zoom(f); },
+    zoom: function (f) { if (GL) pilotDolly(f); },
     reset: function () { if (GL) focusBody("sun"); },
     pause: toggleMapPause,
-    orbit: function (key) { if (!GL) return; cancelFly(); RIG.az += key === "ArrowLeft" ? .12 : key === "ArrowRight" ? -.12 : 0; RIG.el = clamp(RIG.el + (key === "ArrowUp" ? .08 : key === "ArrowDown" ? -.08 : 0), EL_MIN, EL_MAX); glStart(); }
+    orbit: function (key) { if (GL) pilotTurn(key); }
   });
   $("#pauseMap").textContent = MAP_PAUSED ? "Resume live" : "Pause map";
   $("#pauseMap").setAttribute("aria-pressed", String(MAP_PAUSED));
@@ -2543,15 +2302,14 @@ function start() {
   initGL();
   if (GL) {
     buildScene(LIVEJD);
-    bindRig($("#glhost")); bindKeys();
-    $("#pilotBtn").addEventListener("click", function () { if (PIL.on) pilotExit(); else pilotEnter(); });
+    bindPilot($("#glhost")); bindKeys();
     onResize();
     if (window.ResizeObserver) new ResizeObserver(onResize).observe($("#mapbox")); else addEventListener("resize", onResize);
     if (window.IntersectionObserver) new IntersectionObserver(function (en) { MAPVIS = en[0].isIntersecting; if (MAPVIS) glStart(); else glStop(); }).observe($("#mapbox"));
     document.addEventListener("visibilitychange", function () { if (PLANET_CLOCK) PLANET_CLOCK.sample(performance.now(), false); if (document.hidden) glStop(); else glStart(); });
     addEventListener("solart-texture-ready", glStart);
     if (window.MutationObserver) new MutationObserver(function () { if (!$("#intro").hidden || !$("#logM").hidden) { MAPVIS = false; glStop(); } else { MAPVIS = true; glStart(); } }).observe(document.body, {subtree:true, attributes:true, attributeFilter:["hidden"]});
-    cancelFly(); setDist(focusDistance(FOCI.sun, "sun")); RIG.el = FOCI.sun.el;
+    placeWhole();
     glStart();
   }
   loadLive();
@@ -2573,7 +2331,7 @@ function start() {
     focusBody(b.dataset.f);
   });
   $("#planetNav").addEventListener("click", function (e) { var b = e.target.closest("[data-body]"); if (b) focusBody(b.dataset.body); });
-  [$("#sheetCollapse"), $("#hidePanels")].forEach(function (b) { b.addEventListener("click", function () { if (GL) { if (FOCKEY === "sun" && !FOLLOW) setDist(focusDistance(FOCI.sun, "sun")); glStart(); } }); });
+  [$("#sheetCollapse"), $("#hidePanels")].forEach(function (b) { b.addEventListener("click", function () { if (GL) glStart(); }); });
   $("#liveBtn").addEventListener("click", function () { setFollow(false); });
   $("#info").addEventListener("click", function (e) {
     var b = e.target.closest("[data-act]"); if (!b) return;
@@ -2588,9 +2346,7 @@ function start() {
     var b = e.target.closest("[data-sf],[data-park]"); if (!b) return;
     if (b.dataset.sf != null) return select({ t: "f", i: +b.dataset.sf });
     if (!GL) return;
-    if (FOLLOW) { FOLLOW = false; renderInfo(); }
-    var id = b.dataset.park, P = SF.place(id), fk = sysFocus(id);
-    flyTo({ id: id, d: P && P.parent === "sun" ? (fk ? FOCI[fk].d : 8) : 4 }, null);
+    jumpToPlace(b.dataset.park);
   });
   function pop(btn, menu) {
     $(btn).addEventListener("click", function (e) { e.stopPropagation(); var open = $(menu).hidden; $$(".popm").forEach(function (m) { m.hidden = true; }); $$("#fBtn,#lBtn").forEach(function (x) { x.setAttribute("aria-expanded", "false"); }); $(menu).hidden = !open; $(btn).setAttribute("aria-expanded", open ? "true" : "false"); });
