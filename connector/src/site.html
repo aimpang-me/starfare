@@ -1756,8 +1756,8 @@ var RINGS = [0.5, 1, 2, 5, 10, 20, 30];
 // meets its body at every zoom and follows its elements as the date runs. It is not a track of the real path, which
 // perturbations bend. Null (no line) for an orbit that is open.
 function conicOf(id, jd) { try { return SolLines.osculate(SF, id, jd, 1 / AU, SolLines.axes); } catch (e) { return null; } }
-var AW = V(), AC = V();
-function aimRing(line, id, centre) { var b = BID[id]; if (b) SolLines.follow(line, AW.copy(b.obj.position).sub(EYE), AC.copy(centre).sub(EYE), b.obj.visible ? b.obj.scale.x / pxAt(b.obj.position) : 0); }
+var AW = V();
+function aimRing(line, id) { var b = BID[id]; if (b) SolLines.follow(line, AW.copy(b.obj.position).sub(EYE), b.obj.visible ? b.obj.scale.x / pxAt(b.obj.position) : 0); }
 // How far a moon or station sits from its planet, in pixels at the camera's distance.
 function sepPx(id) { var P = SF.place(id), v = marker(id, MAPJD); return v.distanceTo(marker(P.parent, MAPJD)) / pxAt(v); }
 function buildScene(J0) {
@@ -1766,12 +1766,12 @@ function buildScene(J0) {
   WORLD.add(new THREE.PointLight(0xfff1dc, 1.45, 0));
   SUN = sunObj(1); WORLD.add(SUN);
   GRID = new THREE.Group();
-  var gridLine = function (pts, opacity) { var o = SolLines.line(pts, { color: SolLines.STYLE.grid.color, opacity: opacity, width: SolLines.STYLE.grid.width }); o.userData.baseOpacity = opacity; GRID.add(o); };
-  RINGS.forEach(function (r) {
-    var pts = []; for (var k = 0; k <= 200; k++) { var a = k / 200 * TAU; pts.push(V(Math.cos(a) * r, 0, Math.sin(a) * r)); }
-    gridLine(pts, r === 1 ? 0.16 : 0.08);
-  });
-  for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; gridLine([V(Math.cos(a) * 0.12, 0, Math.sin(a) * 0.12), V(Math.cos(a) * 34, 0, Math.sin(a) * 34)], 0.045); }
+  var gridLines = function (list, opacity) { var o = SolLines.lines(list, { color: SolLines.STYLE.grid.color, opacity: opacity, width: SolLines.STYLE.grid.width }); o.userData.baseOpacity = opacity; GRID.add(o); };
+  var circle = function (r) { var pts = []; for (var k = 0; k <= 200; k++) { var a = k / 200 * TAU; pts.push(V(Math.cos(a) * r, 0, Math.sin(a) * r)); } return pts; };
+  gridLines(RINGS.filter(function (r) { return r === 1; }).map(circle), 0.16);
+  gridLines(RINGS.filter(function (r) { return r !== 1; }).map(circle), 0.08);
+  var spokes = []; for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; spokes.push([V(Math.cos(a) * 0.12, 0, Math.sin(a) * 0.12), V(Math.cos(a) * 34, 0, Math.sin(a) * 34)]); }
+  gridLines(spokes, 0.045);
   WORLD.add(GRID);
   ORB = new THREE.Group();
   PLACES.filter(function (p) {
@@ -1883,7 +1883,7 @@ function draw(dt, t) {
     var el = conicOf(m.id, MAPJD); m.g.visible = !!el; if (!el) return;
     m.radius = el.a; SolLines.aim(m.line, el); m.line.position.copy(b.obj.position).sub(m.g.position);
     m.line.material.uniforms.opacity.value = m.line.userData.baseOpacity * fade;
-    aimRing(m.line, m.id, m.g.position);
+    aimRing(m.line, m.id);
   });
   // The AU grid fades out inside four spheres of influence of a planet, and a planet's own orbit dims as you near it.
   var near = Infinity, own = {};
@@ -1892,7 +1892,7 @@ function draw(dt, t) {
   ORB.children.forEach(function (o) {
     var el = conicOf(o.userData.id, MAPJD); o.visible = !!el; if (!el) return;
     o.userData.radius = el.a; SolLines.aim(o, el); o.position.copy(BID[o.userData.id].obj.position);
-    o.material.uniforms.opacity.value = o.userData.baseOpacity * (own[o.userData.id] || 1) * SolLines.budget("orbit", o.userData.radius / pxAt(V0)); aimRing(o, o.userData.id, V0);
+    o.material.uniforms.opacity.value = o.userData.baseOpacity * (own[o.userData.id] || 1) * SolLines.budget("orbit", o.userData.radius / pxAt(V0)); aimRing(o, o.userData.id);
   });
   GRID.visible = LAY.ring && GRIDF > 0; ORB.visible = LAY.orb;
   GRID.children.forEach(function (o) { o.material.uniforms.opacity.value = o.userData.baseOpacity * GRIDF; });
