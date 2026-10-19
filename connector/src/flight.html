@@ -543,7 +543,7 @@ function onResize() {
   if (!GL) return;
   var host = GL.r.domElement.parentNode; if (!host || !host.clientWidth) return;
   var w = host.clientWidth || 1, h = host.clientHeight || 1;
-  GL.r.setSize(w, h); if (GL.post) GL.post.setSize(w, h);
+  GL.r.setSize(w, h); if (GL.post) GL.post.setSize(w, h); SolLines.resize(GL.r);
   if (RS && RS.cam) { RS.cam.aspect = w / h; RS.cam.updateProjectionMatrix(); }
   GL.W = w; GL.H = h; GUT = null;
 }
@@ -616,12 +616,13 @@ function atmo(color, r) {
   var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(0,0,0,0)", color), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
   s.scale.setScalar(r * 2.9); return s;
 }
-function lineOf(pts, color, opacity, dashed, segments) {
-  var g = new THREE.BufferGeometry().setFromPoints(pts);
-  var m = dashed ? new THREE.LineDashedMaterial({ color: color, transparent: true, opacity: opacity, dashSize: 1.2, gapSize: 1.2, depthWrite: false })
-    : new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: opacity, depthWrite: false });
-  var l = segments ? new THREE.LineSegments(g, m) : new THREE.Line(g, m); if (dashed) l.computeLineDistances(); return l;
+// An orbit ring on sol-lines, kept in RS.rings so each frame its gap and trail follow its body.
+function ringOf(pts, body, id, opacity) {
+  var line = SolLines.line(pts, { color: 0xffffff, opacity: opacity, width: 1.25, ahead: SolLines.AHEAD });
+  line.userData.id = id; RS.rings.push({ line: line, body: body }); return line;
 }
+// A body's drawn radius in CSS px: a station marker's half width, or a sphere's radius at its distance.
+function discPx(m, cam, H) { return m.isPoints ? m.material.size / 2 : m.scale.x / pxw(cam, m.position, H); }
 function glowPoints(n, color, size) {
   var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
   return new THREE.Points(g, new THREE.PointsMaterial({ size: size, sizeAttenuation: false, map: glowTex("rgba(255,255,255,1)", "rgba(142,197,255,.5)"), color: color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
@@ -663,7 +664,7 @@ function makeShip(car) {
   var band = new THREE.Mesh(sphereGeo(), S_.winM); band.scale.set(0.07, 0.034, 0.3); band.position.set(0, 0.052, 0.07); g.add(band);
   [1, -1].forEach(function (s) {
     var w = new THREE.Mesh(S_.wingG, S_.wingM); w.position.set(s * 0.22, -0.04, -0.1); w.rotation.y = s * 0.5; w.rotation.z = s * -0.08; g.add(w);
-    var st = lineOf(S_.stripe.map(function (p) { return V(p.x * s, p.y, p.z); }), 0x9cc3ff, 0.9); st.material = S_.stripeM; g.add(st);
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(S_.stripe.map(function (p) { return V(p.x * s, p.y, p.z); })), S_.stripeM));
   });
   var f = new THREE.Mesh(S_.finG, S_.wingM); f.position.set(0, 0.055, -0.42); g.add(f);
   var tor = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.012, 8, 24), S_.wingM); tor.position.z = -0.5; g.add(tor);
@@ -1005,7 +1006,7 @@ function buildRideScene() {
   var cam = new THREE.PerspectiveCamera(50, (GL.W || 1) / (GL.H || 1), local ? 0.002 : 0.02, 9000);
   if (RS.labels) RS.labels.clear();
   $("#rlabels").textContent = ""; // drop the last flight's labels
-  var labels = LabelSet($("#rlabels")); RS.labels = labels; RS.sc = sc; RS.cam = cam; RS.bodies = [];
+  var labels = LabelSet($("#rlabels")); RS.labels = labels; RS.sc = sc; RS.cam = cam; RS.bodies = []; RS.rings = [];
   var live = RIDE.live;
   RS.wx = window.StarfareView.weatherWindows(live ? live.incidents : rp.record.score.incidents, live && live.hold, SF.E.PLACES);
   sc.add(stars());
@@ -1024,7 +1025,7 @@ function buildRideScene() {
       else { r = 0.03; m = SolLines.marker(Q.real ? 0xdfe6ee : 0xffb65c); }
       sc.add(m); RS.bodies.push({ id: id, m: m, r: r });
       var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 160).map(function (q) { return axes(q, 1 / 1000); });
-      if (ring.length) { var g = new THREE.Group(); g.add(lineOf(ring, 0xffffff, 0.14)); sc.add(g); RS.bodies.push({ id: Q.parent, ringOf: id, m: g, r: 0 }); }
+      if (ring.length) { var g = new THREE.Group(); g.add(ringOf(ring, m, id, 0.14)); sc.add(g); RS.bodies.push({ id: Q.parent, ringOf: id, m: g, r: 0 }); }
       labels.add({ html: esc(SF.name(id)), cls: Q.kind === "moon" ? "k-planet" : "k-place", pri: Q.kind === "moon" ? 40 : 30, pos: function () { return placeK(id, RS.cur); } });
     });
   } else {
@@ -1037,7 +1038,7 @@ function buildRideScene() {
       if (Q.kind === "planet" || (Q.kind === "small" && Q.mu)) {
         m = planetMesh(id); minPx = 2.6;
         var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 180).map(function (q) { return S([q[0] / AU, q[1] / AU, q[2] / AU]); });
-        if (ring.length) sc.add(lineOf(ring, 0xffffff, 0.12));
+        if (ring.length) sc.add(ringOf(ring, m, id, 0.12));
       } else if (Q.kind === "moon" && used[id]) m = planetMesh(id);
       else if (used[id]) m = SolLines.marker(Q.real ? 0xdfe6ee : 0xffb65c);
       else return;
@@ -1057,28 +1058,27 @@ function buildRideScene() {
   labels.add({ html: esc(SF.name(RS.dest)) + " · reached", cls: "k-ok", pri: 70, hide: function () { return RS.phase !== "arrived"; }, pos: function () { return placeAt(RS.dest, RS.cur); } });
   var hd = RS.live && RIDE.live.hold;
   RS.cpBody = hd ? RS.bodies.find(function (b) { return b.id === hd.place && !b.ringOf; }) : null;
-  // The flown path, dim in full and as a ribbon up to now. Only the flights are drawn: a parked Starseeker rides its
-  // moon or station around the planet, and months of that sampled coarsely would scribble zigzags over the scene.
-  var pts = [], seg = [], fly = rp.legs.reduce(function (a, L) { return a + (L.orb - L.dep); }, 0) || 1, s0 = 0;
+  // The flown path, dim in full (one line per leg) and as a ribbon up to now. Only the flights are drawn: a parked
+  // Starseeker rides its moon or station around the planet, and months of that sampled coarsely would scribble
+  // zigzags over the scene.
+  var seg = [], fly = rp.legs.reduce(function (a, L) { return a + (L.orb - L.dep); }, 0) || 1, s0 = 0;
   rp.legs.forEach(function (L) {
     if (L.idle || !(L.orb > L.dep)) return;
     var n = Math.max(L.sys ? 96 : 8, Math.round(600 * (L.orb - L.dep) / fly));
-    var previous = shipPos(L.dep), ps = s0;
+    var previous = shipPos(L.dep), ps = s0, pts = [previous];
     for (var k = 1; k <= n; k++) {
       var j = L.dep + (L.orb - L.dep) * k / n, point = shipPos(j), s = s0 + j - L.dep;
-      pts.push(previous, point); seg.push(previous.x, previous.y, previous.z, point.x, point.y, point.z, ps, s); previous = point; ps = s;
+      pts.push(point); seg.push(previous.x, previous.y, previous.z, point.x, point.y, point.z, ps, s); previous = point; ps = s;
     }
+    sc.add(SolLines.line(pts, { color: 0x9cc3ff, opacity: 0.22, width: 1 }));
     s0 += L.orb - L.dep;
   });
-  if (!pts.length) pts.push(shipPos(rp.start));
-  RS.path = lineOf(pts, 0x9cc3ff, 0.22, false, true); sc.add(RS.path);
   RS.trail = seg.length ? trailOf(seg) : null;
   if (RS.trail) sc.add(RS.trail);
   // Legs still to fly in a live flight: dashed, straight between the places at the planned times. They can change at a checkpoint.
   rp.plan.forEach(function (Q) {
-    var a = local ? placeK(Q.from, Q.dep) : marker(Q.from, Q.dep), b = local ? placeK(Q.to, Q.arr) : marker(Q.to, Q.arr), seg = [];
-    for (var k = 0; k <= 24; k++) seg.push(a.clone().lerp(b, k / 24));
-    sc.add(lineOf(seg, 0xffcf7a, 0.5, true));
+    var a = local ? placeK(Q.from, Q.dep) : marker(Q.from, Q.dep), b = local ? placeK(Q.to, Q.arr) : marker(Q.to, Q.arr);
+    sc.add(SolLines.leg([{ v: a, f: 0, s: 0 }, { v: b, f: 1, s: 1 }], { color: 0xffcf7a, opacity: 0.5, width: 1.5 }));
   });
   RS.ship = makeShip(rp.car); sc.add(RS.ship);
   var cls = SF.E.SHIP_CLASSES[(SF.E.R.CAR[String(rp.car).toLowerCase()] || {}).ship_class];
@@ -1216,6 +1216,8 @@ function rideFrame(dt, t) {
   if (RS.camp.distanceTo(p) > D * 30 && !RS.over && !hold) { RS.camp.copy(want); RS.look.copy(look); }
   cam.up.copy(RS.local && !RS.over && !hold && RS.up ? RS.up : V(0, 1, 0));
   cam.position.copy(RS.camp); cam.lookAt(RS.look);
+  RS.rings.forEach(function (o) { SolLines.follow(o.line, o.body.position, o.line.parent.position, discPx(o.body, cam, GH)); });
+  SolLines.zoom(pxw(cam, RS.look, GH));
   if (RS.planetClock && window.SolArt && SolArt.updatePlanet) {
     if (jump) RS.planetClock.reset(t);
     var effectsTime = RS.planetClock.sample(t, RS.playing && !reduced && !document.hidden);

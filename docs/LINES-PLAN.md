@@ -1,6 +1,6 @@
 # Lines plan: orbits, routes and station markers
 
-Status: steps 1 to 5 built 2026-10-19; step 6 proposed. Covers the home map (`connector/src/site.html`) first, then the flight page (`connector/src/flight.html`).
+Status: steps 1 to 6 built 2026-10-19; the flight page has no probe yet. Covers the home map (`connector/src/site.html`) first, then the flight page (`connector/src/flight.html`).
 
 ## What Alvin reported
 
@@ -92,7 +92,7 @@ Each step ends in a check. Alvin eyeballs each one in his own browser before the
 
    The line counts at the whole-system view are unchanged, since every one of those lines still carries meaning there. The two live flights each lose their planned route and keep a short trail, which is where the ink goes. Earth and Jupiter rings already pass 40 px at their focus views, so they draw at full strength as before.
 5. **Replace the station wireframes.** Use a screen-space dot with a thin ring, about 8 px, white for real places and amber for fictional ones, as the flight page already colours them. Stops on a selected route keep their diamond, so the two stay distinct. Selection and hover add an outer ring. Check: no `OctahedronGeometry` in either scene. Built 2026-10-19 on both maps as a 9 px point sprite (`SolLines.marker`). Neither map has station selection or hover yet, so there is no outer ring.
-6. **Move the flight page onto `sol-lines.js`.** Its path, trail, planned legs and rings switch over. Its station markers already use step 5's marker. Check: the same probes, run on `/flight`.
+6. **Move the flight page onto `sol-lines.js`.** Its path, trail, planned legs and rings switch over. Its station markers already use step 5's marker. Check: the same probes, run on `/flight`. Built 2026-10-19: orbit rings, the dim flown path (one line per leg) and the dashed planned legs draw through `SolLines`, and `lineOf` is gone. The shader now trims a segment end that falls behind a perspective camera's near plane, so the chase camera can pass lines. The home-map probe still passes after that shader change, and `/flight` loads with no page errors. `trailOf` stays: its width and brightness taper toward the ship are specific to the flight page. Not yet done: a `/flight` mode for `probe-lines.mjs`, so the offset-from-body and gap checks have not been measured there.
 
 ## Verification lever
 

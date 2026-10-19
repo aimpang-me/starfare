@@ -66,16 +66,24 @@
 
   // ROUTE adds per point (f, s, d): the share of the leg flown, sky time and distance along the leg. The leg's end
   // corrections e0 and e1 are blended by f, as the map blends them for the ship, so the line meets the ship.
+  // Under a perspective camera a segment end behind the near plane moves along the segment onto it (ka, kb), as the
+  // flight page's chase camera passes lines that run behind it.
   var VERT = '#include <common>\n#include <logdepthbuf_pars_vertex>\n' +
     'attribute vec3 a;attribute vec3 b;uniform vec2 res;uniform float dpr;uniform float hw;uniform vec3 gapC;' +
     'varying vec3 vP;varying float vSide;varying vec2 vGap;\n' +
     '#ifdef ROUTE\nattribute vec3 ra;attribute vec3 rb;uniform vec3 e0;uniform vec3 e1;varying float vS;varying float vD;\n#endif\n' +
     'void main(){vec3 pa=a,pb=b;\n' +
-    '#ifdef ROUTE\npa+=mix(e0,e1,ra.x);pb+=mix(e0,e1,rb.x);vec3 r=position.y<.5?ra:rb;vS=r.y;vD=r.z;\n#endif\n' +
-    'vec4 ca=projectionMatrix*modelViewMatrix*vec4(pa,1.),cb=projectionMatrix*modelViewMatrix*vec4(pb,1.);' +
+    '#ifdef ROUTE\npa+=mix(e0,e1,ra.x);pb+=mix(e0,e1,rb.x);\n#endif\n' +
+    'vec4 va=modelViewMatrix*vec4(pa,1.),vb=modelViewMatrix*vec4(pb,1.);float ka=0.,kb=1.;' +
+    'if(projectionMatrix[3][3]<.5){float n=1.01*projectionMatrix[3][2]/(projectionMatrix[2][2]-1.);' +
+    'if(va.z>-n&&vb.z>-n){gl_Position=vec4(0.,0.,2.,1.);return;}' +
+    'if(va.z>-n)ka=(va.z+n)/(va.z-vb.z);else if(vb.z>-n)kb=1.-(vb.z+n)/(vb.z-va.z);' +
+    'vec4 v0=mix(va,vb,ka);vb=mix(va,vb,kb);va=v0;}' +
+    'vec4 ca=projectionMatrix*va,cb=projectionMatrix*vb;' +
     'vec2 d=(cb.xy/cb.w-ca.xy/ca.w)*res;float l=length(d);vec2 nr=l>1e-6?vec2(-d.y,d.x)/l:vec2(0.,1.);' +
-    'vec4 c=position.y<.5?ca:cb;c.xy+=nr*position.x*hw*dpr*2./res*c.w;gl_Position=c;' +
-    'vP=position.y<.5?a:b;vSide=position.x;vec4 g=projectionMatrix*viewMatrix*vec4(gapC,1.);vGap=(g.xy/g.w*.5+.5)*res;\n' +
+    'vec4 c=position.y<.5?ca:cb;c.xy+=nr*position.x*hw*dpr*2./res*c.w;gl_Position=c;float k=position.y<.5?ka:kb;\n' +
+    '#ifdef ROUTE\nvec3 r=mix(ra,rb,k);vS=r.y;vD=r.z;\n#endif\n' +
+    'vP=mix(a,b,k);vSide=position.x;vec4 g=projectionMatrix*viewMatrix*vec4(gapC,1.);vGap=g.w>0.?(g.xy/g.w*.5+.5)*res:vec2(-1e5);\n' +
     '#include <logdepthbuf_vertex>\n}';
   // A route is solid at flown opacity up to now (sky time) and dashed at opacity after it. A trail fades out over tail.y
   // (world units) behind the ship, which is tail.x along this leg.
