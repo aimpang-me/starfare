@@ -590,7 +590,7 @@ p{text-wrap:pretty}
   </aside>
 </main>
 <div class="mc-strip">
-  <div class="mc-sky"><button class="btn small" id="pauseMap" type="button" aria-pressed="false">Pause map</button><span id="mcClock"></span><span class="mc-season" id="mcSeason"></span><span class="mc-rate">1 s = 1 sky day · Simulated</span></div>
+  <div class="mc-sky"><button class="btn small" id="pauseMap" type="button" aria-pressed="false">Pause map</button><span id="mcClock"></span><span class="mc-season" id="mcSeason"></span><select class="btn small" id="mapRate" aria-label="Map speed"><option value="0.1">Calm 1 s = 0.1 day</option><option value="0.25">Slow 1 s = 0.25 day</option><option value="1">Live 1 s = 1 day</option></select><span class="mc-rate" id="mcRate">Map speed only; the game clock is unchanged · Simulated</span></div>
   <button class="btn small mc-operations-toggle" type="button" id="operationsMenu" aria-expanded="false" aria-controls="opsNav">Operations</button>
   <nav aria-label="Operations" id="opsNav"><button class="btn small" type="button" data-drawer="fleet" aria-expanded="false" aria-controls="opsDrawer">Fleet</button><button class="btn small" type="button" data-drawer="tools" aria-expanded="false" aria-controls="opsDrawer">Agent tools</button><button class="btn small" type="button" data-drawer="alerts" aria-expanded="false" aria-controls="opsDrawer">Alerts</button><button class="btn small" type="button" data-drawer="reports" aria-expanded="false" aria-controls="opsDrawer">Reports</button><button class="btn small" type="button" id="hidePanels" aria-pressed="false">Hide panels</button></nav>
 </div>
@@ -1138,14 +1138,22 @@ function parName(car) { var f = SF.SITE.fleet.filter(function (x) { return x.car
    THE 3D MAP (three.js r128): tilted ecliptic, log-compressed radius, true bearings and dates
    ========================================================= */
 var GL = null, scene, cam, GW = 1, GH = 1, MAPJD = 0, LIVEJD = 0, LIVEMAP = true;
-var MAP_PAUSED = reduced, MAP_TIME = Date.now();
+var MAP_PAUSED = reduced, MAP_TIME = Date.now(), MAP_RATE = 0.1, MAP_REAL = Date.now(), MAP_BASE = MAP_REAL;
+// The map plays the sky at MAP_RATE sky days per real second (the sky clock itself runs at 1). Ships, planets and moons all read this one clock, so they stay in step with each other.
+function mapAnchor(base) { MAP_REAL = Date.now(); MAP_BASE = base; }
 var PLANET_CLOCK = window.StarfarePlanetEffects ? StarfarePlanetEffects.createClock() : null;
-function mapWallNow() { return MAP_PAUSED ? MAP_TIME : Date.now(); }
+function mapWallNow() { return MAP_PAUSED ? MAP_TIME : MAP_BASE + (Date.now() - MAP_REAL) * MAP_RATE; }
+function setMapRate(r) {
+  var at = MAP_PAUSED ? MAP_TIME : mapWallNow();
+  MAP_RATE = r; mapAnchor(r === 1 ? Date.now() : at); if (MAP_PAUSED) MAP_TIME = r === 1 ? Date.now() : at;
+  $("#mcRate").textContent = r === 1 ? "1 s = 1 sky day \u00B7 Simulated" : "Map speed only; the game clock is unchanged \u00B7 Simulated";
+  glStart(); slowTick(Date.now());
+}
 function toggleMapPause() {
   if (PLANET_CLOCK) PLANET_CLOCK.sample(performance.now(), false);
-  if (!MAP_PAUSED) MAP_TIME = Date.now();
+  if (!MAP_PAUSED) MAP_TIME = mapWallNow(); else mapAnchor(MAP_RATE === 1 ? Date.now() : MAP_TIME);
   MAP_PAUSED = !MAP_PAUSED;
-  $("#pauseMap").textContent = MAP_PAUSED ? "Resume live" : "Pause map";
+  $("#pauseMap").textContent = MAP_PAUSED ? "Resume map" : "Pause map";
   $("#pauseMap").setAttribute("aria-pressed", String(MAP_PAUSED)); glStart();
 }
 function V(x, y, z) { return new THREE.Vector3(x || 0, y || 0, z || 0); }
@@ -2368,9 +2376,9 @@ function uiTick() {
   if (now - lastSlow >= 1000) { lastSlow = now; slowTick(now); }
 }
 function slowTick(now) {
-  var s = SF.sky(now);
-  $("#clk").textContent = iso(s.jd) + " UTC";
-  $("#clkS").textContent = "Season " + s.season + " \u00B7 day " + fmt(s.day) + " of " + fmt(SF.SKY.len_days);
+  var s = SF.sky(now), m = SF.sky(mapWallNow());
+  $("#clk").textContent = iso(m.jd) + " UTC";
+  $("#clkS").textContent = (MAP_RATE === 1 && !MAP_PAUSED ? "" : "Sky date " + iso(s.jd) + " \u00B7 ") + "Season " + s.season + " \u00B7 day " + fmt(s.day) + " of " + fmt(SF.SKY.len_days);
   DESK = SF.desk(now); renderBookings();
   if (SF.SITE.season !== s.season && !POOL_LOADING && now >= POOL_RETRY) refreshPool();
   if (now - LIVE_T > 4000) { LIVE_T = now; LIVE = liveFleet(now); }
@@ -2404,8 +2412,9 @@ function start() {
     pause: toggleMapPause,
     orbit: function (key) { if (GL) pilotTurn(key); }
   });
-  $("#pauseMap").textContent = MAP_PAUSED ? "Resume live" : "Pause map";
+  $("#pauseMap").textContent = MAP_PAUSED ? "Resume map" : "Pause map";
   $("#pauseMap").setAttribute("aria-pressed", String(MAP_PAUSED));
+  $("#mapRate").addEventListener("change", function (e) { setMapRate(+e.target.value); });
   if (RM && RM.addEventListener) RM.addEventListener("change", function (e) { if (e.matches && !MAP_PAUSED) toggleMapPause(); });
   LIVE = liveFleet(Date.now()); LIVE_T = Date.now();
   slowTick(Date.now()); renderInfo();
