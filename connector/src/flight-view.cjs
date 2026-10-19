@@ -111,8 +111,44 @@
       return i && ms(f.depart) < ms(legs[i - 1].arrive) ? [i + 1] : [];
     });
   }
+  // Pad weather a flight's record shows: each dust storm or Titan haze incident over its booked hours, and a live
+  // checkpoint that weather holds, from its time on (when it clears is not known yet). Run seeds never reach the page,
+  // so the record is all it knows of the weather. Incidents name their place; a station's weather is its body's.
+  // Back-to-back holds join into one window: their times are rounded to the minute and hours to a tenth.
+  var WEATHER = { dust_storm: 1, titan_haze: 1 };
+  function weatherWindows(incidents, hold, places) {
+    var at = {};
+    places.forEach(function (p) { at[p.id] = at[p.name] = p; });
+    function jd(s) { return Date.parse(s.replace(" ", "T") + ":00Z") / 864e5 + 2440587.5; }
+    function on(kind, place, from, to) {
+      var p = at[place];
+      return WEATHER[kind] && p ? [{ kind: kind, body: p.kind === "station" ? p.parent : p.id, from: from, to: to }] : [];
+    }
+    var list = incidents.flatMap(function (x) { return x.hours > 0 ? on(x.kind, x.place, jd(x.at), jd(x.at) + x.hours / 24) : []; })
+      .concat(hold ? on(hold.cause, hold.place, jd(hold.at), Infinity) : []);
+    list.sort(function (a, b) { return a.body < b.body ? -1 : a.body > b.body ? 1 : a.from - b.from; });
+    return list.reduce(function (out, w) {
+      var last = out[out.length - 1];
+      if (last && last.kind === w.kind && last.body === w.body && w.from <= last.to + 0.1 / 24) last.to = Math.max(last.to, w.to);
+      else out.push(w);
+      return out;
+    }, []);
+  }
+  // How thick a body's weather is at jd, 0 to 1. It builds over a window's first hour (its first quarter if shorter)
+  // and clears over the last.
+  function weatherAt(windows, body, jd) {
+    var k = 0;
+    for (var i = 0; i < windows.length; i++) {
+      var w = windows[i];
+      if (w.body !== body || jd < w.from || jd > w.to) continue;
+      var edge = Math.min(1 / 24, (w.to - w.from) / 4), x = Math.min(1, (jd - w.from) / edge, (w.to - jd) / edge);
+      k = Math.max(k, x * x * (3 - 2 * x));
+    }
+    return k;
+  }
   var api = { flightDirection: flightDirection, orbitDirection: orbitDirection, headingFrame: headingFrame, orientShip: orientShip,
-    preciseLocalArc: preciseLocalArc, passengerList: passengerList, aboardAt: aboardAt, seatCount: seatCount, seatsHtml: seatsHtml, timingConflicts: timingConflicts };
+    preciseLocalArc: preciseLocalArc, passengerList: passengerList, aboardAt: aboardAt, seatCount: seatCount, seatsHtml: seatsHtml, timingConflicts: timingConflicts,
+    weatherWindows: weatherWindows, weatherAt: weatherAt };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.StarfareView = api;
 })(typeof window !== "undefined" ? window : globalThis);

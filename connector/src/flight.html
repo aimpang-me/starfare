@@ -80,6 +80,7 @@ button.lbl:hover{color:var(--ink)}
 .lbl.k-place{color:var(--ink-3);font-size:9.5px}
 .lbl.k-fleet,.lbl.k-ghost{color:var(--ride);font-size:9.5px}
 .lbl.k-hail{color:var(--me)}
+.lbl.k-wx{color:var(--sun)}.lbl.k-ok{color:var(--ok)}
 .tbox{position:absolute;left:0;top:0;pointer-events:none;width:40px;height:40px;visibility:hidden}
 .tbox i{position:absolute;width:10px;height:10px;border:1.5px solid var(--me)}
 .tbox i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}.tbox i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
@@ -87,6 +88,8 @@ button.lbl:hover{color:var(--ink)}
 .tbox .ti{position:absolute;left:calc(100% + 10px);top:0;font:500 10.5px/1.45 var(--mono);color:var(--ink-2);white-space:nowrap;text-shadow:0 1px 6px #000}
 .tbox .ti b{display:block;font:600 11px/1.3 Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--me)}
 .tbox.alert i{border-color:var(--bad)}
+.ring{position:absolute;left:0;top:0;pointer-events:none;visibility:hidden;border:1.5px solid var(--me);border-radius:50%}
+.ring.cp{border-style:dashed}.ring.ok{border-color:var(--ok)}
 .nogl-msg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;background:radial-gradient(ellipse at 50% 40%,#121826,var(--bg) 70%)}
 .nogl-msg p{max-width:420px;color:var(--ink-2)}
 .lbar{position:absolute;left:0;right:0;z-index:3;background:rgba(3,4,7,.92);padding:0 14px;display:flex;align-items:center;gap:10px}
@@ -272,6 +275,7 @@ footer p{margin:0;max-width:100ch}
       <div class="gl-host" id="rhost" aria-hidden="true"></div>
       <div class="labels" id="rlabels"></div>
       <div class="tbox" id="rtbox"><i></i><i></i><i></i><i></i><div class="ti" id="rti"></div></div>
+      <div class="ring" id="rhold"></div><div class="ring cp" id="rcp"></div><div class="ring ok" id="rarr"></div>
       <div class="nogl-msg" id="rnogl" hidden><p><b>The 3D replay needs WebGL, which is off in this browser.</b><br>The timeline, callouts, passenger list and the receipt below still work.</p></div>
       <div class="lbar t">
         <a class="btn small back" href="/" aria-label="Back to the sky"><span class="l">&#x2190; Back to the sky</span><span class="s">&#x2190; Sky</span></a>
@@ -904,13 +908,14 @@ function loadRide(keep) {
   var old = RS, live = RIDE.live, rp = SF.replay(RIDE, live), rec = rp.record, h = hailOf(rec.hail_id) || {};
   if (old && old.bodies && window.SolArt && SolArt.disposePlanet) old.bodies.forEach(function (b) { SolArt.disposePlanet(b.m); });
   if (old && old.sun && window.SolArt && SolArt.disposePlanet) SolArt.disposePlanet(old.sun);
+  if (old && old.trail) old.trail.geometry.dispose();
   var span = rp.end - rp.start, local = rp.focus !== "sun";
   // Local scenes open further out and higher, so the planet frames the shot instead of filling it.
   RS = { pax: (h.rider || "").split(",")[0] || "passenger", rp: rp, cur: rp.start, playing: !reduced, speed: +$("#speed").value, rate: span / 28, over: false,
     yaw: 0, pitch: local ? 0.55 : 0.3, zf: rp.focus === "earth" ? 2.6 : local ? 1.6 : 1, fwd: window.THREE ? V(0, 0, 1) : null, camp: null, local: local, live: !!live, follow: !!live && !reduced };
   RS.planetClock = keep && old && old.planetClock ? old.planetClock : window.StarfarePlanetEffects ? StarfarePlanetEffects.createClock() : null;
   if (keep && old && old.local === local) {
-    ["cur", "playing", "follow", "over", "yaw", "pitch", "zf", "fwd", "camp", "look", "up"].forEach(function (k) { RS[k] = old[k]; });
+    ["cur", "playing", "follow", "over", "yaw", "pitch", "zf", "fwd", "camp", "look", "up", "arrT"].forEach(function (k) { RS[k] = old[k]; });
     RS.cur = Math.max(rp.start, Math.min(rp.end, RS.cur)); RS.follow = RS.follow && RS.live;
   }
   if (RS.live && (!keep || RS.follow)) RS.cur = Math.max(rp.start, liveJd());
@@ -939,6 +944,44 @@ function loadRide(keep) {
   }
 }
 function placeK(id, jd) { var b = SF.pos(RS.rp.focus, jd); return axes(d3(SF.pos(id, jd), b), AU / 1000); }
+function placeAt(id, jd) { return RS.local ? placeK(id, jd) : marker(id, jd); }
+// Flight time flown by jd, summed over the legs: the trail's parameter, so a dwell between legs adds nothing.
+function flownBy(jd) {
+  for (var s = 0, i = 0, legs = RS.rp.legs; i < legs.length; i++) { var L = legs[i]; if (L.orb > L.dep) s += Math.min(Math.max(jd - L.dep, 0), L.orb - L.dep); }
+  return s;
+}
+// The flown part of the path: a ribbon of screen-space quads, one per path segment, cut at the ship. It widens and
+// brightens toward the ship. Segment ends behind the camera are trimmed to the near plane before projecting.
+var TRAILMAT = null;
+function trailOf(seg) {
+  TRAILMAT = TRAILMAT || new THREE.ShaderMaterial({
+    uniforms: { color: { value: new THREE.Color(0x9cc3ff) }, now: { value: 0 }, res: { value: new THREE.Vector2(1, 1) }, dpr: { value: 1 } },
+    transparent: true, depthWrite: false,
+    vertexShader: "#include <common>\n#include <logdepthbuf_pars_vertex>\n" +
+      "attribute vec3 a;attribute vec3 b;attribute vec2 flown;uniform vec2 res;uniform float dpr;uniform float now;varying float vS;varying float vSide;varying float vHw;\n" +
+      "void main(){vec4 va=modelViewMatrix*vec4(a,1.),vb=modelViewMatrix*vec4(b,1.);" +
+      "float n=1.01*projectionMatrix[3][2]/(projectionMatrix[2][2]-1.),sa=flown.x,sb=flown.y;" +
+      "if(va.z>-n&&vb.z>-n){gl_Position=vec4(0.,0.,2.,1.);return;}" +
+      "if(va.z>-n){float k=(va.z+n)/(va.z-vb.z);va=mix(va,vb,k);sa=mix(sa,sb,k);}" +
+      "else if(vb.z>-n){float k=(vb.z+n)/(vb.z-va.z);vb=mix(vb,va,k);sb=mix(sb,sa,k);}" +
+      "vec4 ca=projectionMatrix*va,cb=projectionMatrix*vb;vec2 d=(cb.xy/cb.w-ca.xy/ca.w)*res;float l=length(d);" +
+      "vec2 nr=l>1e-5?vec2(-d.y,d.x)/l:vec2(0.,1.);vS=mix(sa,sb,position.y);float u=clamp(vS/max(now,1e-9),0.,1.);" +
+      "vHw=(.6+1.1*u)*dpr+.75;vSide=position.x;vec4 c=position.y<.5?ca:cb;c.xy+=nr*position.x*vHw/res*c.w;gl_Position=c;\n" +
+      "#include <logdepthbuf_vertex>\n}",
+    fragmentShader: "#include <common>\n#include <logdepthbuf_pars_fragment>\n" +
+      "uniform vec3 color;uniform float now;varying float vS;varying float vSide;varying float vHw;\n" +
+      "void main(){if(vS>now)discard;\n#include <logdepthbuf_fragment>\n" +
+      "float u=clamp(vS/max(now,1e-9),0.,1.);gl_FragColor=vec4(color,(.25+.75*u*u)*clamp((1.-abs(vSide))*vHw,0.,1.));}"
+  });
+  var g = new THREE.InstancedBufferGeometry(), ib = new THREE.InstancedInterleavedBuffer(new Float32Array(seg), 8);
+  g.setIndex([0, 1, 2, 2, 1, 3]);
+  g.setAttribute("position", new THREE.Float32BufferAttribute([-1, 0, 0, 1, 0, 0, -1, 1, 0, 1, 1, 0], 3));
+  g.setAttribute("a", new THREE.InterleavedBufferAttribute(ib, 3, 0));
+  g.setAttribute("b", new THREE.InterleavedBufferAttribute(ib, 3, 3));
+  g.setAttribute("flown", new THREE.InterleavedBufferAttribute(ib, 2, 6));
+  g.instanceCount = seg.length / 8;
+  var m = new THREE.Mesh(g, TRAILMAT); m.frustumCulled = false; return m;
+}
 function buildRideScene() {
   if (RS.sc) return;
   var rp = RS.rp, focus = rp.focus, sc = new THREE.Scene(), local = focus !== "sun";
@@ -946,6 +989,8 @@ function buildRideScene() {
   if (RS.labels) RS.labels.clear();
   $("#rlabels").textContent = ""; // drop the last flight's labels
   var labels = LabelSet($("#rlabels")); RS.labels = labels; RS.sc = sc; RS.cam = cam; RS.bodies = [];
+  var live = RIDE.live;
+  RS.wx = window.StarfareView.weatherWindows(live ? live.incidents : rp.record.score.incidents, live && live.hold, SF.E.PLACES);
   sc.add(stars());
   if (local) {
     sc.add(new THREE.AmbientLight(0x2c3442, 0.7));
@@ -969,6 +1014,7 @@ function buildRideScene() {
     sc.add(new THREE.AmbientLight(0x3a4252, 0.6)); sc.add(new THREE.PointLight(0xfff1dc, 1.7, 0)); RS.sun = sunObj(SIZE.sun); sc.add(RS.sun);
     if (window.SolArt) SolArt.setSun(V());
     var used = {}; rp.legs.concat(rp.plan).forEach(function (L) { used[L.from] = used[L.to] = 1; });
+    RS.wx.forEach(function (w) { used[w.body] = 1; });
     SF.E.PLACES.forEach(function (Q) {
       var id = Q.id, m, minPx = 2;
       if (Q.kind === "planet" || (Q.kind === "small" && Q.mu)) {
@@ -983,21 +1029,34 @@ function buildRideScene() {
       labels.add({ html: esc(SF.name(id)), cls: Q.kind === "planet" ? "k-planet" : "k-place", pri: used[id] ? 60 : 40, pos: function () { return marker(id, RS.cur); } });
     });
   }
-  // The flown path, dim in full and bright up to now. Only the flights are drawn: a parked Starseeker rides its moon
-  // or station around the planet, and months of that sampled coarsely would scribble zigzags over the scene.
-  var pts = [], ts = [], fly = rp.legs.reduce(function (a, L) { return a + (L.orb - L.dep); }, 0) || 1;
+  // Pad weather from the record, and the destination once the flight has arrived. Each outranks the name label there.
+  var WX = { dust_storm: "dust storm", titan_haze: "haze" };
+  RS.wx.forEach(function (w, i) {
+    if (RS.wx.findIndex(function (x) { return x.body === w.body; }) !== i || !RS.bodies.some(function (b) { return b.id === w.body && !b.ringOf; })) return;
+    labels.add({ html: esc(SF.name(w.body)) + " · " + WX[w.kind] + " · simulated", cls: "k-wx", pri: 70,
+      hide: function () { return !window.StarfareView.weatherAt(RS.wx, w.body, RS.cur); }, pos: function () { return placeAt(w.body, RS.cur); } });
+  });
+  RS.dest = rp.legs[rp.legs.length - 1].to;
+  labels.add({ html: esc(SF.name(RS.dest)) + " · reached", cls: "k-ok", pri: 70, hide: function () { return RS.phase !== "arrived"; }, pos: function () { return placeAt(RS.dest, RS.cur); } });
+  var hd = RS.live && RIDE.live.hold;
+  RS.cpBody = hd ? RS.bodies.find(function (b) { return b.id === hd.place && !b.ringOf; }) : null;
+  // The flown path, dim in full and as a ribbon up to now. Only the flights are drawn: a parked Starseeker rides its
+  // moon or station around the planet, and months of that sampled coarsely would scribble zigzags over the scene.
+  var pts = [], seg = [], fly = rp.legs.reduce(function (a, L) { return a + (L.orb - L.dep); }, 0) || 1, s0 = 0;
   rp.legs.forEach(function (L) {
     if (L.idle || !(L.orb > L.dep)) return;
     var n = Math.max(L.sys ? 96 : 8, Math.round(600 * (L.orb - L.dep) / fly));
-    var previous = shipPos(L.dep), previousJd = L.dep;
+    var previous = shipPos(L.dep), ps = s0;
     for (var k = 1; k <= n; k++) {
-      var j = L.dep + (L.orb - L.dep) * k / n, point = shipPos(j);
-      ts.push(previousJd, j); pts.push(previous, point); previous = point; previousJd = j;
+      var j = L.dep + (L.orb - L.dep) * k / n, point = shipPos(j), s = s0 + j - L.dep;
+      pts.push(previous, point); seg.push(previous.x, previous.y, previous.z, point.x, point.y, point.z, ps, s); previous = point; ps = s;
     }
+    s0 += L.orb - L.dep;
   });
-  if (!pts.length) { ts.push(rp.start); pts.push(shipPos(rp.start)); }
-  RS.path = lineOf(pts, 0x9cc3ff, 0.22, false, true); RS.done = lineOf(pts, 0x9cc3ff, 1, false, true); RS.done.geometry.setDrawRange(0, 0); RS.ts = ts;
-  sc.add(RS.path); sc.add(RS.done);
+  if (!pts.length) pts.push(shipPos(rp.start));
+  RS.path = lineOf(pts, 0x9cc3ff, 0.22, false, true); sc.add(RS.path);
+  RS.trail = seg.length ? trailOf(seg) : null;
+  if (RS.trail) sc.add(RS.trail);
   // Legs still to fly in a live flight: dashed, straight between the places at the planned times. They can change at a checkpoint.
   rp.plan.forEach(function (Q) {
     var a = local ? placeK(Q.from, Q.dep) : marker(Q.from, Q.dep), b = local ? placeK(Q.to, Q.arr) : marker(Q.to, Q.arr), seg = [];
@@ -1105,8 +1164,10 @@ function rideFrame(dt, t) {
   if (d.lengthSq() > 1e-12 && (fl || RS.local)) RS.fwd.lerp(d.normalize(), snap ? 1 : 1 - Math.exp(-dt * 6)).normalize();
   RS.ship.position.copy(p);
   window.StarfareView.orientShip(RS.ship, window.StarfareView.headingFrame(heading, RS.local ? p.toArray() : [0, 1, 0], RS.ship.userData.headingSet ? RS.ship.up.toArray() : null));
-  var nd = 0; while (nd < RS.ts.length && RS.ts[nd] <= jd) nd++;
-  RS.done.geometry.setDrawRange(0, Math.floor(nd / 2) * 2);
+  if (RS.trail) {
+    var tu = TRAILMAT.uniforms; tu.now.value = flownBy(jd); tu.dpr.value = GL.r.getPixelRatio();
+    GL.r.getDrawingBufferSize(tu.res.value).multiplyScalar(0.5);
+  }
   // Camera: chase (behind and above) or overhead. In the heliocentric scene a parked or waiting Starseeker circles
   // its moon fast, so the camera holds on that planet's system instead of chasing the ship around it.
   var D = (RS.local ? 0.75 : 3.2) * RS.zf, want, look, hold = null;
@@ -1138,11 +1199,23 @@ function rideFrame(dt, t) {
     var effectsTime = RS.planetClock.sample(t, RS.playing && !reduced && !document.hidden);
     var maps = SolArt.quality().maps;
     if (RS.sun && SolArt.updateSun) SolArt.updateSun(RS.sun, { elapsedSeconds: effectsTime, camera: cam, radiusPx: 40, quality: maps });
-    RS.bodies.forEach(function (b) { if (b.m && b.m.userData.planetEffects) SolArt.updatePlanet(b.m, { elapsedSeconds: effectsTime, camera: cam, radiusPx: b.m.scale.x / pxw(cam, b.m.position, GH), quality: maps }); });
+    RS.bodies.forEach(function (b) { if (b.m && b.m.userData.planetEffects) SolArt.updatePlanet(b.m, { elapsedSeconds: effectsTime, camera: cam, radiusPx: b.m.scale.x / pxw(cam, b.m.position, GH), quality: maps, veil: window.StarfareView.weatherAt(RS.wx, b.id, jd) }); });
   }
+  // Arrival: one soft ring on the destination as playback crosses into arrived. After a scrub, or with reduced
+  // motion, only the reached label shows.
+  RS.phase = st.phase;
+  if (st.phase !== "arrived") RS.arrT = null;
+  else if (RS.arrT == null) RS.arrT = jump || reduced ? -Infinity : t;
+  var ra = RS.arrT == null ? 1 : (t - RS.arrT) / 1200, ae = $("#rarr"), ak = 1 + 0.6 * (1 - (1 - ra) * (1 - ra));
+  if (ra < 1) ae.style.opacity = (0.9 * (1 - ra)).toFixed(3);
+  tbox(ae, cam, GW, GH, ra < 1 ? placeAt(RS.dest, jd) : null, RS.shipScale * 0.6 * ak, 48 * ak);
   RS.labels.update(cam, GW, GH);
   var tb = $("#rtbox"); tb.classList.toggle("alert", !!RS.alert);
   tbox(tb, cam, GW, GH, p, RS.shipScale * 0.6, 44);
+  // A live checkpoint: a dashed outline on the place it will hold at, then a steady ring on the held ship.
+  var hd = RS.live && RIDE.live.hold;
+  tbox($("#rhold"), cam, GW, GH, held ? p : null, RS.shipScale * 0.8, 60);
+  tbox($("#rcp"), cam, GW, GH, hd && !held ? placeAt(hd.place, jd) : null, RS.cpBody ? RS.cpBody.m.scale.x : 0, 40);
   if (t - (RS.tt || 0) > 150) { RS.tt = t; $("#rti").innerHTML = "<b>" + esc(SF.SHIP) + " " + esc(rp.car) + "</b>" + esc(st.phase) + " \u00B7 " + (fl ? Math.round(st.f * 100) + "% of leg" : esc(SF.name(st.f >= 1 ? L.to : L.from))); }
   if (GL.post) { if (GL.post.post) GL.post.post.enabled = !RS.over; GL.post.tick(t, reduced); GL.post.render(RS.sc, cam); }
   else GL.r.render(RS.sc, cam);

@@ -7,12 +7,13 @@
   var TAU = Math.PI * 2, geometries = new WeakMap(), ringGeometries = new WeakMap();
   // Seconds below are deliberately slow illustration periods, not astronomical spin telemetry.
   // Retain the map's existing .35-radian presentation tilt; anchors live outside that frame.
+  // veil: the colour a recorded dust storm or haze lays over the body; the page passes how thick, 0 to 1.
   var PROFILES = {
     earth: { map:'earth_day_2k.jpg', period:180, air:[.1,.34,.8], shell:1.035, airStrength:.35 },
     moon: { map:'moon_1k.jpg', period:420, rough:1 },
     mercury: { map:'mercury_1k.jpg', period:540, rough:1 },
     venus: { map:'venus_1k.jpg', period:-540, air:[.65,.42,.18], shell:1.045, airStrength:.32, haze:.25 },
-    mars: { map:'mars_1k.jpg', period:300, air:[.48,.18,.08], shell:1.022, airStrength:.2 },
+    mars: { map:'mars_1k.jpg', period:300, air:[.48,.18,.08], shell:1.022, airStrength:.2, veil:[.6,.36,.17] },
     phobos: { map:'phobos_1k.jpg', period:480, rough:1 },
     ceres: { map:'ceres_1k.jpg', period:420, rough:1 },
     bennu: { map:'bennu_1k.jpg', period:480, rough:1 },
@@ -22,7 +23,7 @@
     ganymede: { map:'ganymede_1k.jpg', period:540, ice:.035 },
     callisto: { map:'callisto_1k.jpg', period:600, rough:1 },
     saturn: { map:'saturn_1k.jpg', period:300, gas:.006, air:[.3,.24,.13], shell:1.018, airStrength:.17, ring:true },
-    titan: { map:'titan_1k.jpg', period:600, air:[.65,.31,.065], shell:1.07, airStrength:.45, haze:.5 },
+    titan: { map:'titan_1k.jpg', period:600, air:[.65,.31,.065], shell:1.07, airStrength:.45, haze:.5, veil:[.7,.4,.12] },
     enceladus: { map:'enceladus_1k.jpg', period:480, ice:.1 },
     uranus: { map:'uranus_1k.jpg', period:-420, gas:.002, air:[.09,.32,.36], shell:1.025, airStrength:.2 },
     neptune: { map:'neptune_1k.jpg', period:360, gas:.004, air:[.07,.15,.46], shell:1.025, airStrength:.2 },
@@ -55,7 +56,7 @@
   var SURFACE = HEAD +
     'uniform sampler2D day;uniform sampler2D night;uniform sampler2D relief;uniform sampler2D ocean;uniform sampler2D clouds;' +
     'uniform float normalReady;uniform float oceanReady;uniform float cloudReady;uniform float cloudShift;' +
-    'uniform float time;uniform float gas;uniform float ice;uniform float rough;uniform float haze;uniform vec3 airColor;' +
+    'uniform float time;uniform float gas;uniform float ice;uniform float rough;uniform float haze;uniform vec3 airColor;uniform float veil;uniform vec3 veilColor;' +
     '\n#ifdef RINGS\nuniform sampler2D ringMap;uniform float ringReady;uniform vec3 ringNormal;uniform vec3 center;uniform float bodyRadius;\n#endif\n' +
     'void main(){\n#include <logdepthbuf_fragment>\n' +
     'vec3 N=normalize(vN),L=normalize(lightDirection),V=viewRay();vec3 n=texture2D(relief,vUv).xyz*2.-1.;' +
@@ -86,6 +87,7 @@
     'float edge=pow(1.-max(dot(normalize(vN),V),0.),3.);' +
     'col+=airColor*edge*smoothstep(-.15,.55,d)*detail*.22;' +
     'col=mix(col,airColor*(.025+.65*sun),haze*edge*detail*.45);' +
+    'col=mix(col,veilColor*(.02+.8*sun),veil*(.62+.38*edge));col+=veilColor*edge*smoothstep(-.15,.55,d)*veil*.35;' +
     'col+=vec3(.65,.78,.85)*pow(max(dot(N,normalize(L+V)),0.),24.)*ice*sun*detail;' +
     '\n#endif\n' +
     'gl_FragColor=vec4(displayColor(col),1.);}';
@@ -94,10 +96,10 @@
     'float a=smoothstep(.12,.88,texture2D(clouds,vUv).r)*.91*cloudReady*detail;' +
     'float d=dot(normalize(vN),normalize(lightDirection));vec3 col=displayColor(vec3(.012+max(d,0.)*.95));' +
     'gl_FragColor=vec4(col,a);}';
-  var ATMOSPHERE = HEAD + 'uniform vec3 airColor;uniform float airStrength;\nvoid main(){\n#include <logdepthbuf_fragment>\n' +
+  var ATMOSPHERE = HEAD + 'uniform vec3 airColor;uniform float airStrength;uniform float veil;\nvoid main(){\n#include <logdepthbuf_fragment>\n' +
     'vec3 N=normalize(vN),V=viewRay();float edge=pow(clamp(-dot(N,V)*3.,0.,1.),2.);' +
     'float lit=.025+.975*smoothstep(-.3,.55,dot(N,normalize(lightDirection)));' +
-    'gl_FragColor=vec4(airColor*edge*lit,edge*airStrength*detail);}';
+    'gl_FragColor=vec4(airColor*edge*lit*(1.+veil),edge*(airStrength+veil*.4)*detail);}';
   var RING = HEAD + 'uniform sampler2D ringMap;uniform vec3 center;uniform float bodyRadius;uniform vec3 ringNormal;\n' +
     'void main(){\n#include <logdepthbuf_fragment>\n' +
     'vec4 map=texture2D(ringMap,vUv);vec3 p=(vW-center)/bodyRadius,L=normalize(lightDirection);' +
@@ -125,6 +127,7 @@
       orthographic: { value: 0 }, detail: { value: 0 }, time: { value: 0 },
       gas: { value: profile.gas || 0 }, ice: { value: profile.ice || 0 }, rough: { value: profile.rough || 0 }, haze: { value: profile.haze || 0 },
       airColor: { value: new T.Vector3().fromArray(profile.air || [0,0,0]) }, airStrength: { value: profile.airStrength || 0 },
+      veil: { value: 0 }, veilColor: { value: new T.Vector3().fromArray(profile.veil || [0,0,0]) },
       ringMap: { value: profile.ring ? services.texture('saturn_ring_1k.webp') : null },
       ringReady: { value: 0 },
       ringNormal: { value: new T.Vector3(0,1,0) }, center: { value: new T.Vector3() }, bodyRadius: { value: 1 }
@@ -171,6 +174,7 @@
     }
     u.detail.value = detailAmount(radius);
     if(e.id==='sun') return;
+    u.veil.value = e.profile.veil ? context.veil || 0 : 0;
     if (e.cloud) { e.cloud.rotation.y = sec * TAU / 240; u.cloudShift.value = sec * (1 / 180 - 1 / 240); }
     e.wanted = wantsDetail(e.wanted, radius);
     var tier = context.quality === 'desktop' ? '2k' : '1k';
