@@ -1125,7 +1125,7 @@ function buildRideScene() {
   RS.ship = makeShip(rp.car); sc.add(RS.ship);
   var cls = SF.E.SHIP_CLASSES[(SF.E.R.CAR[String(rp.car).toLowerCase()] || {}).ship_class];
   RS.ion = !!(cls && cls.ion); RS.glow = 0;
-  RS.shipScale = local ? 0.14 : 0.55;
+  RS.shipScale = local ? 0.14 : 0.3;
   RS.ship.scale.setScalar(RS.shipScale);
   syncLayers();
   onResize();

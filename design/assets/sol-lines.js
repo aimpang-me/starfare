@@ -23,7 +23,7 @@
     booking: { color: 0xffb65c, width: 1.5 }, plan: { color: 0xffcf7a, opacity: 0.5, width: 1.5 },
     orbit: { color: 0xada79c, planet: 0.42, small: 0.17, tint: 0.16, tintEarth: 0.6, width: 1.25 },
     moon: { opacity: 0.27, width: 1.25 }, grid: { color: 0x5cc8ff, width: 1 },
-    ring: { color: 0xffffff, orbit: 0.12, moon: 0.14, width: 1.25 }
+    ring: { color: 0xffffff, orbit: 0.12, moon: 0.14, width: 1 }
   };
 
   // u is the share of one revolution back from the body to a point on its orbit: 0 just behind, 1 just ahead.

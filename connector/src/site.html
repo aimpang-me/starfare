@@ -1476,6 +1476,17 @@ var WORLD, EYE = V();
 var PIL = { pos: V(), off: V(), anchor: null, yaw: 0, pitch: -0.2, mul: 1, vel: V(), lock: null, view: "chase", cyaw: 0, cpitch: 0, cd: 1, fly: null, dolly: 0, speed: 0, near: null, nearD: 0 };
 var PD = V(), PF = V(), PRT = V(), PT = V();
 var PRESET = { sun: { d: 57, el: 0.62, az: 0.25 }, inner: { d: 3.2, el: 0.72, az: 0.25 }, earth: { id: "earth", d: 0.00411, el: 0.62 } };
+var SHIP_FLOOR = 8;
+// A ship never draws wider than half the disc of a body it overlaps, down to a floor that keeps it legible.
+function shipPx(v, base) {
+  var px = pxAt(v), cap = base;
+  for (var i = 0; i < BODIES.length; i++) {
+    var b = BODIES[i]; if (!b.rKm || !b.obj.visible) continue;
+    var disc = b.obj.scale.x / pxAt(b.obj.position);
+    if (v.distanceTo(b.obj.position) / px < disc + base) cap = Math.min(cap, Math.max(SHIP_FLOOR, disc * 0.5));
+  }
+  return cap;
+}
 function pxAt(p) { return p.distanceTo(EYE) * 2 * Math.tan(PIL_FOV * Math.PI / 360) / GH; }
 function pilotDir(out) { var cp = Math.cos(PIL.pitch); return out.set(-Math.sin(PIL.yaw) * cp, Math.sin(PIL.pitch), -Math.cos(PIL.yaw) * cp); }
 function setLook(d) { var L = d.length(); if (L) { PIL.yaw = Math.atan2(-d.x, -d.z); PIL.pitch = Math.asin(clamp(d.y / L, -1, 1)); } }
@@ -1788,7 +1799,7 @@ function buildScene(J0) {
       m.line.userData = { id: p.id, baseOpacity: m.line.material.uniforms.opacity.value }; m.g.add(m.line); WORLD.add(m.g); MOR.push(m);
     }
     var o, rKm = p.radius_km || 0, min;
-    if (p.kind === "planet" || p.kind === "moon" || p.id === "ceres") { o = planetMesh(p.id); min = p.kind === "moon" ? 2 : 3; }
+    if (p.kind === "planet" || p.kind === "moon" || p.id === "ceres") { o = planetMesh(p.id); min = p.kind === "moon" ? 2.5 : 4; }
     else if (p.kind === "small") { o = planetMesh(p.id); min = 1.5; }
     else { o = SolLines.marker(p.real ? 0xdfe6ee : 0xffb65c); rKm = 0; }
     if (ATMO[p.id] && !(window.SolArt && SolArt.hasRim(p.id))) o.add(atmo(ATMO[p.id], 1));
@@ -1800,7 +1811,7 @@ function buildScene(J0) {
       if (period < 3) FAST[p.id] = 1;
     }
   });
-  BODIES.push(BID.sun = { id: "sun", kind: "sun", obj: SUN, rKm: 695700, min: 3 });
+  BODIES.push(BID.sun = { id: "sun", kind: "sun", obj: SUN, rKm: 695700, min: 6 });
   PARK_R = glowPoints(16, 0x5cc8ff, 13); PARK_B = glowPoints(16, 0x7f8a99, 11); WORLD.add(PARK_R); WORLD.add(PARK_B);
   labels();
   FL.forEach(addFlightObjs);
@@ -1864,7 +1875,7 @@ function draw(dt, t) {
   pilotStep(dt);
   WORLD.position.copy(EYE).negate();
   if (window.SolArt) SolArt.setSun(WORLD.position);
-  SUN.scale.setScalar(Math.max(695700 / AU, pxAt(V0) * 3));
+  SUN.scale.setScalar(Math.max(695700 / AU, pxAt(V0) * 6));
   // Surface animation is illustrative and independent of ephemerides and recorded flights.
   var effectSeconds = PLANET_CLOCK ? PLANET_CLOCK.sample(t, !MAP_PAUSED && !reduced && !document.hidden) : 0;
   if (window.SolArt && SolArt.updateSun) SolArt.updateSun(SUN, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: SUN.scale.x / pxAt(V0), quality: SolArt.quality().maps });
@@ -1908,7 +1919,7 @@ function draw(dt, t) {
     if (g.visible) aimRoute(g, MAPJD, F.jd, sel ? 0.6 : 0, sel ? 1 : 0.55, sel ? 0 : SolLines.TRAIL_PX * pxAt(v));
     F.ship.visible = on && !(lock && PIL.view === "cockpit"); F.halo.visible = on && !lock;
     if (!on) return;
-    F.ship.position.copy(v).sub(EYE); F.ship.scale.setScalar(lock ? SHIP_D / 6 : Math.max(SHIP_D / 6, pxAt(v) * (sel ? 38 : 30)));
+    F.ship.position.copy(v).sub(EYE); var sp = shipPx(v, sel ? 38 : 30); F.ship.scale.setScalar(lock ? SHIP_D / 6 : Math.max(SHIP_D / 6, pxAt(v) * sp));
     var heading = window.StarfareView.flightDirection(F.rp, F.jd, function (jd) { return shipC(F.rp, jd, MAPJD).v.toArray(); });
     if (!heading) {
       var state = F.sc.s, stop = state.f >= 1 ? state.leg.to : state.leg.from;
@@ -1916,7 +1927,7 @@ function draw(dt, t) {
     }
     window.StarfareView.orientShip(F.ship, window.StarfareView.headingFrame(heading, [0, 1, 0], F.ship.userData.headingSet ? F.ship.up.toArray() : null));
     PF.set(0, 0, 1).applyQuaternion(F.ship.quaternion); F.hd = F.hd ? F.hd.lerp(PF, 1 - Math.exp(-dt / 0.25)).normalize() : PF.clone();
-    F.halo.position.copy(F.ship.position); F.halo.scale.setScalar(pxAt(v) * (sel ? 34 : 24));
+    F.halo.position.copy(F.ship.position); F.halo.scale.setScalar(pxAt(v) * sp * (sel ? 0.9 : 0.8));
     F.halo.material.color.setScalar(sel ? 1.5 : 0.75); // over the bloom threshold only when selected
     if (F.lbl) F.lbl.el.classList.toggle("on", sel);
   });
@@ -1940,7 +1951,7 @@ function draw(dt, t) {
   if (window.SolArt && FILT.pk && !FOLLOW) LIVE.forEach(function (c) {
     var ship = PARK_SHIPS[c.car];
     if (!ship) { ship = PARK_SHIPS[c.car] = SolArt.ship({callsign:c.car.toUpperCase()}); scene.add(ship); }
-    var p = marker(c.at, MAPJD); ship.visible = true; ship.position.copy(p).sub(EYE); ship.scale.setScalar(Math.max(SHIP_D / 6, pxAt(p) * 16));
+    var p = marker(c.at, MAPJD); ship.visible = true; ship.position.copy(p).sub(EYE); ship.scale.setScalar(Math.max(SHIP_D / 6, pxAt(p) * shipPx(p, 16)));
     var heading = window.StarfareView.orbitDirection(MAPJD, function (jd) { return marker(c.at, jd).toArray(); });
     window.StarfareView.orientShip(ship, window.StarfareView.headingFrame(heading, [0, 1, 0], ship.userData.headingSet ? ship.up.toArray() : null));
   });
