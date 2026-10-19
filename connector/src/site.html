@@ -944,19 +944,17 @@ function makeFlight(f) {
 }
 function addFlightObjs(F) {
   if (!GL) return;
-  F.full = lineOf([V(), V()], 0x5cc8ff, 0.45, true, true); F.flown = lineOf([V(), V()], 0x5cc8ff, 0.95, false, true);
   F.ship = window.SolArt ? SolArt.ship({ callsign: F.call }) : makeShip();
   F.halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(160,225,255,.9)", "rgba(92,200,255,.25)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
-  scene.add(F.full); scene.add(F.flown); scene.add(F.halo); scene.add(F.ship);
+  scene.add(F.halo); scene.add(F.ship);
   F.lbl = LBL.add({ html: esc(F.call), cls: "k-sample", pri: 90, click: function () { var i = FL.indexOf(F); if (i >= 0) select({ t: "f", i: i }); },
     dblclick: function () { var i = FL.indexOf(F); if (i >= 0) { select({ t: "f", i: i }); setFollow(true); } },
     pos: function () { return F.sc ? F.sc.v : null; }, hide: function () { return !FILT.fl || (FOLLOW && SEL.t === "f" && FL[SEL.i] !== F); } });
 }
 function removeFlightObjs(F) {
   if (!GL || !F.ship) return;
-  [F.full, F.flown, F.halo, F.ship].forEach(function (o) { scene.remove(o); });
-  F.full.geometry.dispose(); F.flown.geometry.dispose(); F.full.material.dispose(); F.flown.material.dispose(); F.halo.material.dispose();
-  DASHED = DASHED.filter(function (m) { return m !== F.full.material; });
+  [F.halo, F.ship].forEach(function (o) { scene.remove(o); });
+  F.halo.material.dispose(); dropRoute(F);
   if (F.lbl) LBL.remove(F.lbl);
 }
 function setFlights(list) {
@@ -980,7 +978,6 @@ function setFlights(list) {
     // Seed the feed with each flight's last two events so far.
     FL.forEach(function (F) { F.rp.events.filter(function (e) { return e.jd <= F.jd; }).slice(-2).forEach(function (e) { pushFeed({ jd: e.jd, who: F.call, kind: e.kind, txt: e.title + ". " + e.text }); }); });
   }
-  routesDirty = true;
   renderCards(); renderReports(); renderSk(); renderInfo(); glStart();
 }
 function loadLive() {
@@ -1102,7 +1099,6 @@ function planBooking(id, ms) {
     if (P.closed) { B.err = P.closed; }
     else { B.rp = SF.replay(bookingRide(P, P.hail)); }
   } catch (e) { B.err = "The engine could not plan this booking (" + (e && e.message) + ")."; }
-  B.samp = null; routesDirty = true;
   // A local route preview is not agent/flight activity and never enters the dispatcher feed.
   renderBookings(); if (SEL.t === "b" && SEL.id === id) renderInfo();
 }
@@ -1225,19 +1221,6 @@ function atmo(color, r) {
   var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(0,0,0,0)", color), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
   s.scale.setScalar(r * 2.9); return s;
 }
-var DASHED = [];
-function lineOf(pts, color, opacity, dashed, segments) {
-  var g = new THREE.BufferGeometry().setFromPoints(pts);
-  var m = dashed ? new THREE.LineDashedMaterial({ color: color, transparent: true, opacity: opacity, dashSize: 0.35, gapSize: 0.3, depthWrite: false })
-    : new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: opacity, depthWrite: false });
-  var l = segments ? new THREE.LineSegments(g, m) : new THREE.Line(g, m); if (dashed) { l.computeLineDistances(); DASHED.push(m); }
-  return l;
-}
-function setLine(l, pts) {
-  l.geometry.dispose(); l.geometry = new THREE.BufferGeometry().setFromPoints(pts.length > 1 ? pts : [V(), V()]);
-  if (l.material.isLineDashedMaterial) l.computeLineDistances();
-  l.visible = l.userData.has = pts.length > 1;
-}
 function glowPoints(n, color, size) {
   var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
   return new THREE.Points(g, new THREE.PointsMaterial({ size: size, sizeAttenuation: false, map: glowTex("rgba(255,255,255,1)", "rgba(142,197,255,.5)"), color: color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
@@ -1329,44 +1312,62 @@ function marker(id, jd) {
 }
 // Where a replayed Starseeker is drawn. Hops inside one planet's system are drawn around that planet at jdNow. On the
 // live map, cruises bend to meet their ends where the map draws them now, so a ship never jumps between pad and leg.
+// A cruise point is a fixed shape (legBase) plus what moves it each frame (legFrame): the end corrections e0 and e1,
+// blended by the share of the leg flown, and for a hop the planet it rides with. Route lines use the same split.
+function legBase(L, p, jd) { return L.sys ? localOff(d3(p, SF.pos(L.sys, jd)), L.sys) : S(p); }
+function legFrame(L, jdNow) {
+  var a0 = LIVEMAP ? jdNow : L.dep, a1 = LIVEMAP ? jdNow : L.orb, sys = L.sys;
+  // the arc rides with its planet; the end corrections are fixed per leg (from where the arc starts and ends)
+  if (sys) return { e0: marker(L.from, a0).clone().sub(marker(sys, a0)).sub(offAt(L.from, sys, L.dep)),
+    e1: marker(L.to, a1).clone().sub(marker(sys, a1)).sub(offAt(L.to, sys, L.orb)), an: marker(sys, jdNow) };
+  return { e0: marker(L.from, a0).clone().sub(S(SF.pos(L.from, L.dep))), e1: marker(L.to, a1).clone().sub(S(SF.pos(L.to, L.orb))), an: V() };
+}
 function shipC(rp, jd, jdNow) {
   if (jdNow == null) jdNow = jd;
   var s = rp.at(jd), L = s.leg;
   if (s.phase !== "flight") return { v: marker(s.f >= 1 ? L.to : L.from, jdNow).clone(), s: s };
-  var f = s.f, a0 = LIVEMAP ? jdNow : L.dep, a1 = LIVEMAP ? jdNow : L.orb;
-  if (L.sys) {
-    // the arc rides with its planet; the end corrections are fixed per leg (from where the arc starts and ends)
-    var sys = L.sys, an = marker(sys, jdNow), v = localOff(d3(s.p, SF.pos(sys, jd)), sys);
-    var e0 = marker(L.from, a0).clone().sub(marker(sys, a0)).sub(offAt(L.from, sys, L.dep));
-    var e1 = marker(L.to, a1).clone().sub(marker(sys, a1)).sub(offAt(L.to, sys, L.orb));
-    return { v: v.add(e0.multiplyScalar(1 - f)).add(e1.multiplyScalar(f)).add(an), s: s };
-  }
-  var w = S(s.p), c0 = marker(L.from, a0).clone().sub(S(SF.pos(L.from, L.dep))), c1 = marker(L.to, a1).clone().sub(S(SF.pos(L.to, L.orb)));
-  return { v: w.add(c0.multiplyScalar(1 - f)).add(c1.multiplyScalar(f)), s: s };
+  var k = legFrame(L, jdNow);
+  return { v: legBase(L, s.p, jd).add(k.e0.multiplyScalar(1 - s.f)).add(k.e1.multiplyScalar(s.f)).add(k.an), s: s };
 }
-function sampleRoute(rp, jdNow) {
-  var out = [];
-  rp.legs.forEach(function (L, i) {
+// One line per cruise leg, built once per replay. Separate legs keep waits and changes of reference frame from drawing
+// a fictitious connecting chord. Sky time is kept from the route's start so it fits a 32-bit float.
+function routeOf(rp, color) {
+  var g = new THREE.Group(); g.userData = { rp: rp, t0: rp.start };
+  rp.legs.forEach(function (L) {
     if (L.idle || !(L.orb > L.dep)) return;
-    var n = Math.max(L.sys ? 96 : 144, ((L.arc && L.arc.arc_au || []).length - 1) * 2);
-    for (var k = 0; k <= n; k++) { var j = L.dep + (L.orb - L.dep) * k / n; out.push({ j: j, leg: i, v: shipC(rp, j, jdNow).v }); }
-  });
-  return out;
-}
-// Independent pairs keep waits and changes of reference frame from drawing a fictitious connecting chord.
-function routePoints(samples, until, current) {
-  if (until == null) until = Infinity;
-  var pts = [];
-  for (var k = 1; k < samples.length; k++) {
-    var a = samples[k - 1], b = samples[k];
-    if (a.leg !== b.leg) continue;
-    if (b.j <= until) pts.push(a.v, b.v);
-    else {
-      if (a.j <= until && current && current.s.phase === "flight" && current.s.i === a.leg) pts.push(a.v, current.v);
-      break;
+    // Samples crowd toward both ends, where focus views zoom in and the arc curls onto its place; the pi/2 keeps the
+    // middle as dense as even spacing would.
+    var n = Math.ceil(Math.PI / 2 * Math.max(L.sys ? 96 : 144, ((L.arc && L.arc.arc_au || []).length - 1) * 2)), pts = [];
+    for (var k = 0; k <= n; k++) {
+      var f = (1 - Math.cos(Math.PI * k / n)) / 2, j = L.dep + (L.orb - L.dep) * f, s = rp.at(j);
+      // at a leg's first and last instant at() can report the leg before it; the arc is blended onto these places there
+      var p = s.leg === L && s.phase === "flight" ? s.p : k ? SF.pos(L.to, L.orb) : SF.pos(L.from, L.dep);
+      pts.push({ v: legBase(L, p, j), f: f, s: j - rp.start });
     }
-  }
-  return pts;
+    var m = SolLines.leg(pts, { color: color, width: 1.5 }); m.userData.L = L; g.add(m);
+  });
+  return g;
+}
+function dropRoute(o) {
+  if (!o.route) return;
+  scene.remove(o.route);
+  o.route.children.forEach(function (m) { m.geometry.dispose(); m.material.dispose(); });
+  o.route = null;
+}
+// A flight's or booking's route, rebuilt only when its replay changes.
+function syncRoute(o, color) {
+  if (o.route && o.route.userData.rp === o.rp) return o.route;
+  dropRoute(o);
+  if (o.rp) scene.add(o.route = routeOf(o.rp, color));
+  return o.route;
+}
+// Each frame: move every leg with its ends, and cut flown from planned at sky time now.
+function aimRoute(g, jdNow, now, planned, flown) {
+  g.children.forEach(function (m) {
+    var k = legFrame(m.userData.L, jdNow), u = m.material.uniforms;
+    m.position.copy(k.an); u.e0.value.copy(k.e0); u.e1.value.copy(k.e1);
+    u.now.value = now - g.userData.t0; u.opacity.value = planned; u.flown.value = flown;
+  });
 }
 
 /* ---------- labels, clamped to the map panel ---------- */
@@ -1520,7 +1521,7 @@ function detailSystem() {
 }
 function focusBody(key) {
   if (!GL || !FOCI[key]) return;
-  FOLLOW = false; routesDirty = true; select({ t: "n" });
+  FOLLOW = false; select({ t: "n" });
   flyTo(FOCI[key], key);
 }
 function renderPlanetNav() {
@@ -1531,7 +1532,7 @@ function renderPlanetNav() {
 }
 
 /* ---------- scene objects ---------- */
-var BODIES = [], BID = {}, DETAIL_SYS = null, SKY, SUN, GRID, ORB, MOR = [], LBL, STOPS = {}, PARK_R, PARK_B, PARK_SHIPS = {}, routesDirty = true, lastRoute = 0, lastFlown = 0, lastHud = 0;
+var BODIES = [], BID = {}, DETAIL_SYS = null, SKY, SUN, GRID, ORB, MOR = [], LBL, STOPS = {}, PARK_R, PARK_B, PARK_SHIPS = {}, lastHud = 0;
 var ATMO = { earth: "rgba(120,180,255,.55)", venus: "rgba(255,220,160,.4)", mars: "rgba(255,140,90,.35)", jupiter: "rgba(255,210,170,.3)", saturn: "rgba(255,230,180,.28)", uranus: "rgba(150,230,240,.35)", neptune: "rgba(110,150,255,.38)", titan: "rgba(255,190,110,.45)" };
 var RINGS = [0.5, 1, 2, 5, 10, 20, 30];
 // A moon's ring is the path it flew over its last period, so the seam sits under the moon. The Moon's real orbit
@@ -1571,7 +1572,7 @@ function buildScene(J0) {
     var o, r, min;
     if (p.kind === "planet" || p.kind === "moon" || p.id === "ceres") { o = planetMesh(p.id); r = dispR(p.id); min = p.kind === "moon" ? 2.2 : 4.5; }
     else if (p.kind === "small") { o = planetMesh(p.id); r = dispR(p.id); min = 1.6; }
-    else { o = new THREE.Mesh(GEO.oc || (GEO.oc = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: 0x5cc8ff, wireframe: true, transparent: true, opacity: 0.85 })); r = 0.06; min = 3.2; }
+    else { o = SolLines.marker(p.real ? 0xdfe6ee : 0xffb65c); r = 0; min = 4.5; }
     if (ATMO[p.id] && !(window.SolArt && SolArt.hasRim(p.id))) o.add(atmo(ATMO[p.id], 1));
     scene.add(o);
     BODIES.push(BID[p.id] = { id: p.id, kind: p.kind, obj: o, r: r, min: min });
@@ -1618,29 +1619,6 @@ function labels() {
   LBL.add({ html: "Selected booking", cls: "k-hail", pri: 40,
     pos: function () { var h = SEL.t === "b" && hailOf(SEL.id); return h ? marker(h.from.id, MAPJD) : null; },
     hide: function () { var B = SEL.t === "b" && BK[SEL.id]; return !FILT.bk || FOLLOW || !B || !B.rp; } });
-}
-function rebuildRoutes() {
-  routesDirty = false;
-  FL.forEach(function (F) {
-    F.samp = sampleRoute(F.rp, MAPJD);
-    setLine(F.full, routePoints(F.samp));
-  });
-  Object.keys(BK).forEach(function (id) {
-    var B = BK[id]; if (!B.rp) { if (B.line) B.line.visible = false; return; }
-    if (!B.line) { B.line = lineOf([V(), V()], 0xffb65c, 0.5, true, true); scene.add(B.line); }
-    setLine(B.line, routePoints(sampleRoute(B.rp, MAPJD)));
-  });
-  var need = {};
-  var rp = SEL.t === "f" ? FL[SEL.i] && FL[SEL.i].rp : SEL.t === "b" ? BK[SEL.id] && BK[SEL.id].rp : null;
-  if (rp && !(SEL.t === "b" && FOLLOW)) rp.legs.forEach(function (L) { need[L.from] = 1; need[L.to] = 1; });
-  Object.keys(STOPS).forEach(function (id) { STOPS[id].visible = !!need[id]; });
-  Object.keys(need).forEach(function (id) { stopSprite(id).visible = true; });
-}
-function updateFlown() {
-  FL.forEach(function (F) {
-    if (!F.samp || !F.sc) return;
-    setLine(F.flown, routePoints(F.samp, F.jd, F.sc));
-  });
 }
 
 /* ---------- the render loop: paused when the tab is hidden or the map is off screen ---------- */
@@ -1701,15 +1679,12 @@ function draw(dt, t) {
   ORB.children.forEach(function (o) { o.material.uniforms.opacity.value = o.userData.baseOpacity * (DETAIL_SYS ? .3 : 1); aimRing(o, o.userData.id, ORB.position); });
   GRID.visible = LAY.ring; ORB.visible = LAY.orb;
   // routes
-  if (routesDirty || t - lastRoute > 200) { lastRoute = t; rebuildRoutes(); }
-  if (t - lastFlown > 100) { lastFlown = t; updateFlown(); }
-  var dash = RIG.dist * 0.012;
-  DASHED.forEach(function (m) { m.dashSize = dash; m.gapSize = dash * 0.8; });
+  SolLines.zoom(pxw());
   FL.forEach(function (F, j) {
     var on = FILT.fl && !(rep && SEL.i !== j), sel = SEL.t === "f" && SEL.i === j;
     var fa = 1;
-    F.full.visible = on && F.full.userData.has; F.flown.visible = on && F.flown.userData.has;
-    F.full.material.opacity = (sel ? 0.6 : 0.28) * fa; F.flown.material.opacity = (sel ? 1 : 0.55) * fa;
+    var g = syncRoute(F, 0x5cc8ff); g.visible = on;
+    if (on) aimRoute(g, MAPJD, F.jd, (sel ? 0.6 : 0.28) * fa, (sel ? 1 : 0.55) * fa);
     F.ship.visible = F.halo.visible = on && fa > 0.01;
     if (!F.ship.visible) return;
     var v = F.sc.v, s = pxw(v) * fa;
@@ -1725,12 +1700,15 @@ function draw(dt, t) {
     if (F.lbl) F.lbl.el.classList.toggle("on", sel);
   });
   Object.keys(BK).forEach(function (id) {
-    var B = BK[id]; if (!B.line) return;
-    B.line.visible = !!B.rp && FILT.bk && !FOLLOW;
-    B.line.material.opacity = SEL.t === "b" && SEL.id === id ? 0.95 : 0.32;
+    var B = BK[id], g = syncRoute(B, 0xffb65c); if (!g) return;
+    g.visible = FILT.bk && !FOLLOW;
+    if (g.visible) aimRoute(g, MAPJD, -1e9, SEL.t === "b" && SEL.id === id ? 0.95 : 0.32, 0);
   });
-  Object.keys(STOPS).forEach(function (id) {
-    var s = STOPS[id]; if (!s.visible) return;
+  var need = {}, rp = SEL.t === "f" ? FL[SEL.i] && FL[SEL.i].rp : SEL.t === "b" ? BK[SEL.id] && BK[SEL.id].rp : null;
+  if (rp && !(SEL.t === "b" && FOLLOW)) rp.legs.forEach(function (L) { need[L.from] = 1; need[L.to] = 1; });
+  Object.keys(STOPS).forEach(function (id) { STOPS[id].visible = !!need[id]; });
+  Object.keys(need).forEach(function (id) {
+    var s = stopSprite(id); s.visible = true;
     var v = marker(id, MAPJD); s.position.copy(v); s.scale.setScalar(pxw(v) * 15);
     s.material.color.setRGB(1.3, 1.25, 1.15); // the selected route's stops glow
   });
@@ -1792,7 +1770,6 @@ function select(s) {
   LIVE_T = 0;
   if (s.t === "b") { FOLLOW = false; showTab("b"); var B = BK[s.id]; if (!B || (!B.rp && !B.err && !B.busy)) startPlan(s.id); }
   else if (s.t === "f") { showTab("f"); if (FOLLOW && !same) FOLLOW = true; }
-  routesDirty = true;
   renderCardsSel(); renderBookings(); renderInfo();
   if (GL && !same && s.t !== "n") {
     var rp = s.t === "f" ? FL[s.i].rp : BK[s.id] && BK[s.id].rp, hail = s.t === "b" ? hailOf(s.id) : null;
@@ -1803,7 +1780,7 @@ function select(s) {
 }
 function setFollow(on) {
   if (SEL.t !== "f" || !FL[SEL.i]) return;
-  FOLLOW = on; routesDirty = true;
+  FOLLOW = on;
   var rp = FL[SEL.i].rp;
   if (on) flyTo({ id: "sun", d: rp.focus === "sun" ? 70 : 7 }, null);
   else { var fid = rp.focus !== "sun" ? sysFocus(rp.focus) : null; flyTo(fid ? FOCI[fid] : FOCI.inner, fid || "inner"); }
@@ -2161,10 +2138,10 @@ function refreshPool() {
   POOL_LOADING = true;
   fetch("/hails.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (pool) {
     SF.setPool(pool);
-    Object.keys(BK).forEach(function (id) { if (BK[id].line && GL) { scene.remove(BK[id].line); BK[id].line.geometry.dispose(); BK[id].line.material.dispose(); } });
+    if (GL) Object.keys(BK).forEach(function (id) { dropRoute(BK[id]); });
     BK = {}; BOOKING_PAGE = 0;
     if (SEL.t === "b") SEL = { t: "n" };
-    DESK = SF.desk(); routesDirty = true; LIVE_T = 0; renderBookings(); renderInfo();
+    DESK = SF.desk(); LIVE_T = 0; renderBookings(); renderInfo();
   }).catch(function () { $("#bkPage").textContent = "Booking refresh failed; retrying shortly"; }).finally(function () { POOL_LOADING = false; POOL_RETRY = Date.now() + 5000; });
 }
 
@@ -2237,7 +2214,7 @@ function start() {
     var b = e.target.closest("[data-sf],[data-park]"); if (!b) return;
     if (b.dataset.sf != null) return select({ t: "f", i: +b.dataset.sf });
     if (!GL) return;
-    if (FOLLOW) { FOLLOW = false; routesDirty = true; renderInfo(); }
+    if (FOLLOW) { FOLLOW = false; renderInfo(); }
     var id = b.dataset.park, P = SF.place(id), fk = sysFocus(id);
     flyTo({ id: id, d: P && P.parent === "sun" ? (fk ? FOCI[fk].d : 8) : 4 }, null);
   });
@@ -2247,7 +2224,7 @@ function start() {
   }
   pop("#fBtn", "#fMenu"); pop("#lBtn", "#lMenu");
   document.addEventListener("click", function () { $$(".popm").forEach(function (m) { m.hidden = true; }); $$("#fBtn,#lBtn").forEach(function (x) { x.setAttribute("aria-expanded", "false"); }); });
-  $$("[data-filt]").forEach(function (c) { c.addEventListener("change", function () { FILT[c.dataset.filt] = c.checked; routesDirty = true; glStart(); }); });
+  $$("[data-filt]").forEach(function (c) { c.addEventListener("change", function () { FILT[c.dataset.filt] = c.checked; glStart(); }); });
   $$("[data-lay]").forEach(function (c) { c.addEventListener("change", function () { LAY[c.dataset.lay] = c.checked; glStart(); }); });
   $("#connectBtn").addEventListener("click", openIntro);
   $("#askConnect").addEventListener("click", openIntro);

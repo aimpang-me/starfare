@@ -324,6 +324,7 @@ footer p{margin:0;max-width:100ch}
 <script>window.SITE = __SITE__; window.FLIGHT = __RUN__;</script>
 <script src="__ENGINE_URL__" defer></script>
 <script src="/assets/flight-view.js"></script>
+<script src="/assets/sol-lines.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () { // after the deferred engine script
 "use strict";
@@ -1020,7 +1021,7 @@ function buildRideScene() {
       if (Q.id === focus || SF.system(Q.id) !== focus) return;
       var id = Q.id, m, r;
       if (Q.kind === "moon") { r = Math.max(0.05, Q.radius_km / 1000); m = planetMesh(id); m.scale.setScalar(r); }
-      else { r = 0.03; m = new THREE.Mesh(GEO.oct || (GEO.oct = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: Q.real ? 0xdfe6ee : 0xffb65c, wireframe: true })); m.scale.setScalar(r); }
+      else { r = 0.03; m = SolLines.marker(Q.real ? 0xdfe6ee : 0xffb65c); }
       sc.add(m); RS.bodies.push({ id: id, m: m, r: r });
       var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 160).map(function (q) { return axes(q, 1 / 1000); });
       if (ring.length) { var g = new THREE.Group(); g.add(lineOf(ring, 0xffffff, 0.14)); sc.add(g); RS.bodies.push({ id: Q.parent, ringOf: id, m: g, r: 0 }); }
@@ -1038,7 +1039,7 @@ function buildRideScene() {
         var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 180).map(function (q) { return S([q[0] / AU, q[1] / AU, q[2] / AU]); });
         if (ring.length) sc.add(lineOf(ring, 0xffffff, 0.12));
       } else if (Q.kind === "moon" && used[id]) m = planetMesh(id);
-      else if (used[id]) m = new THREE.Mesh(GEO.oct || (GEO.oct = new THREE.OctahedronGeometry(1, 0)), new THREE.MeshBasicMaterial({ color: Q.real ? 0xdfe6ee : 0xffb65c, wireframe: true }));
+      else if (used[id]) m = SolLines.marker(Q.real ? 0xdfe6ee : 0xffb65c);
       else return;
       m.scale.setScalar(dispR(id)); sc.add(m);
       RS.bodies.push({ id: id, m: m, r: Q.kind === "station" ? 0.05 : dispR(id), minPx: minPx, helio: true });

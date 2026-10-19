@@ -29,6 +29,15 @@ function localArc() {
   return { from: "ceres", to: "ceres-port", dep_jd: b.dep_jd, arr_jd: b.arr_jd, arc_au: b.arc_au };
 }
 const distanceKm = (a, b) => Math.hypot(...a.map((n, i) => n - b[i])) * AU;
+// The home map's route lines for a replay: each drawn leg's point positions, with legBase passing the replayed point
+// through and a place standing in for its own position.
+function routeLines(rp) {
+  const html = source("site"), start = html.indexOf("function routeOf("), end = html.indexOf("function dropRoute(", start);
+  return JSON.parse(runInNewContext(html.slice(start, end) + "\nJSON.stringify(routeOf(rp, 0).children.map((m) => m.pts.map((q) => q.v)));", {
+    rp, legBase: (_L, p) => p, SF: { pos: (id) => id }, SolLines: { leg: (pts) => ({ pts, userData: {} }) },
+    THREE: { Group: function () { this.children = []; this.add = (m) => this.children.push(m); } },
+  }));
+}
 
 test("stored Ceres pickup arcs retain sub-metre coordinate precision", () => {
   const expected = localArc(), saved = computeLeg(E, "ceres", "ceres-port", dep, "energy", SEASON_END, "sf-04");
@@ -52,12 +61,12 @@ for (const page of ["site", "flight"]) test(`${page}: archived six-decimal local
 });
 
 test("main-map routes exclude orbit holds and idle legs", () => {
-  const html = source("site"), start = html.indexOf("function sampleRoute("), end = html.indexOf("/* ---------- labels", start);
-  const rp = { legs: [{ dep: 10, orb: 11, arr: 100, sys: "earth" }, { dep: 110, orb: 110, arr: 200, idle: true }] };
-  const samples = runInNewContext(html.slice(start, end) + "\nsampleRoute(rp, 100);", { rp, shipC: (_rp, j) => ({ v: j }) });
-  assert.ok(samples.length > 1);
-  assert.ok(samples.every((s) => s.j >= 10 && s.j <= 11), "only flight time belongs in the route; sampled station orbits make false zigzags");
-  assert.equal(samples.at(-1).j, 11);
+  const legs = [{ dep: 10, orb: 11, arr: 100, sys: "earth" }, { dep: 110, orb: 110, arr: 200, idle: true }];
+  const lines = routeLines({ start: 10, legs, at: (j) => ({ leg: legs[0], phase: "flight", p: j }) });
+  assert.equal(lines.length, 1, "an idle leg draws no line");
+  assert.ok(lines[0].length > 1);
+  assert.ok(lines[0].every((j) => j >= 10 && j <= 11), "only flight time belongs in the route; sampled station orbits make false zigzags");
+  assert.deepEqual([lines[0][0], lines[0].at(-1)], [10, 11]);
 });
 
 for (const page of ["site", "flight"]) test(`${page}: compressed local positions remain continuous at a body centre`, () => {
@@ -78,7 +87,7 @@ for (const page of ["site", "flight"]) test(`${page}: the local scale has no sha
 });
 
 test("main map draws an arrival hold at the destination", () => {
-  const html = source("site"), start = html.indexOf("function shipC("), end = html.indexOf("function sampleRoute(", start);
+  const html = source("site"), start = html.indexOf("function shipC("), end = html.indexOf("function routeOf(", start);
   const result = runInNewContext(html.slice(start, end) + "\nshipC(rp, 11, 20).v;", {
     rp: { at: () => ({ phase: "orbit", f: 1, leg: { from: "earth", to: "iss" } }) }, marker: (id) => ({ clone: () => id }),
   });
@@ -103,11 +112,12 @@ for (const page of ["site", "flight"]) test(`${page}: interpolation stays in the
 });
 
 test("route geometry never connects separate legs or a holding ship", () => {
-  const html = source("site"), start = html.indexOf("function sampleRoute("), end = html.indexOf("/* ---------- labels", start);
-  const samples = [{ j: 1, leg: 0, v: "a" }, { j: 2, leg: 0, v: "b" }, { j: 5, leg: 1, v: "c" }, { j: 6, leg: 1, v: "d" }];
-  const context = { samples, active: { v: "ship", s: { i: 1, phase: "flight" } }, held: { v: "pad", s: { i: 1, phase: "orbit" } } };
-  const result = runInNewContext(html.slice(start, end) + "\n[routePoints(samples), routePoints(samples, 5.5, active), routePoints(samples, 7, held)];", context);
-  assert.deepEqual(Array.from(result[0]), ["a", "b", "c", "d"]);
-  assert.deepEqual(Array.from(result[1]), ["a", "b", "c", "ship"]);
-  assert.deepEqual(Array.from(result[2]), ["a", "b", "c", "d"]);
+  // At a leg's ends at() reports the ship holding at a pad; at the second leg's start, on the leg before it.
+  const legs = [{ dep: 1, orb: 2, from: "a", to: "b" }, { dep: 5, orb: 6, from: "b", to: "c" }];
+  const at = (j) => (j >= 1 && j < 2 ? { leg: legs[0], phase: "flight", p: j } : j > 5 && j < 6 ? { leg: legs[1], phase: "flight", p: j }
+    : { leg: j <= 5 ? legs[0] : legs[1], phase: "orbit", p: "ship" });
+  const lines = routeLines({ start: 1, legs, at });
+  assert.equal(lines.length, 2, "each cruise leg is its own line");
+  assert.deepEqual([lines[0][0], lines[0].at(-1), lines[1][0], lines[1].at(-1)], [1, "b", "b", "c"], "leg ends sit on their places, never on a holding ship");
+  assert.ok(lines[0].slice(1, -1).every((j) => j > 1 && j < 2) && lines[1].slice(1, -1).every((j) => j > 5 && j < 6), "no point from another leg");
 });

@@ -44,3 +44,15 @@ test('a moon ring is resampled once the map moves more than 5 sky days from its 
   assert.equal(Lines.stale(2461330, 2461335.5), true);
   assert.equal(Lines.stale(2461330, 2461324.5), true);
 });
+
+test('the dash period steps by octaves of zoom and blends toward the next', () => {
+  for (const [pxw, period] of [[0.125, 1], [0.25, 2], [0.5, 4]]) {
+    const d = Lines.dash(pxw);
+    assert.equal(d.period, period);
+    near(d.t, Math.log2(1.5), 1e-12);
+  }
+  for (const pxw of [0.003, 0.07, 0.4, 2.9]) {
+    const d = Lines.dash(pxw);
+    near(d.period * 2 ** d.t, 12 * pxw, 1e-12);
+  }
+});
