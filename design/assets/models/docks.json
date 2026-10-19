@@ -29,10 +29,10 @@
       "triangles": 4868
     },
     "station-mars-base": {
-      "bytes": 125544,
+      "bytes": 1405456,
       "file": "station-mars-base.glb",
-      "sha256": "07fb6f09b71216010c4ab6387970a8eaa6b391168a3d017ea3224e0d950af044",
-      "triangles": 4884
+      "sha256": "1e3bdc632611a964d00f6339f5b1e8d966253799b11b807148cfd437d4cd7fd4",
+      "triangles": 25484
     },
     "station-orbital-depot": {
       "bytes": 161100,
@@ -47,7 +47,7 @@
       "triangles": 5308
     }
   },
-  "note": "Fictional, original models built in code. berth_N and seat_N are named nodes; up +Y, longest side 1.",
+  "note": "Fictional, original models built and surfaced in code. berth_N and seat_N are named nodes; up +Y, longest side 1.",
   "places": {
     "ceres-port": "station-ceres-port",
     "lunar-data-center": "station-lunar-data-center",
@@ -55,6 +55,5 @@
     "orbital-depot": "station-orbital-depot",
     "titan-dock": "station-titan-dock"
   },
-  "productionApproved": false,
-  "packed": "tools/models/pack-docks.mjs (weld, dedup, quantize)"
+  "productionApproved": false
 }
