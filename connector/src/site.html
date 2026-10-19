@@ -183,6 +183,17 @@ button.lbl:hover{color:var(--ink)}
 .tbox.hold i{border-color:var(--sun)}.tbox.closed i{border-color:var(--bad)}
 .nogl-msg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;background:radial-gradient(ellipse at 50% 40%,#0e1a30,var(--bg) 70%)}
 .nogl-msg p{max-width:420px;color:var(--ink-2)}
+#plabels,#pilotHud,#pilotBtn[aria-pressed=false]~*{}
+#plabels{display:none;position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#pilotHud{display:none;top:12px;right:12px;text-align:right}
+body.pilot-on #plabels{display:block}
+body.pilot-on #pilotHud{display:block}
+body.pilot-on #labels,body.pilot-on .mc-map-controls{display:none}
+.pl{position:absolute;left:0;top:0;visibility:hidden;font:10.5px var(--mono);color:var(--ink-2);white-space:nowrap}
+.pl i{position:absolute;left:-2px;top:-2px;width:4px;height:4px;border-radius:50%;background:#dfe6ee}
+.pl.k-st i{background:#dfe6ee}.pl.k-sh i{background:#5cc8ff}
+.pl span{position:absolute;left:9px;top:-7px}
+.pl.big i{opacity:0}.pl.big span{left:0;top:18px;transform:translateX(-50%)}
 .hud{position:absolute;font-family:var(--mono);font-size:10.5px;color:var(--ink-2);line-height:1.5;pointer-events:none}
 .hud.tl{top:10px;right:12px;max-width:calc(100% - 300px);text-align:right}
 .hud.tl .hudbox{border-left:0;border-right:2px solid var(--cy)}
@@ -459,6 +470,7 @@ p{text-wrap:pretty}
       <div class="seg" id="focus" role="group" aria-label="Focus the map">
         <button type="button" data-f="sun" aria-pressed="true">Whole system</button><button type="button" data-f="inner" aria-pressed="false">Inner system</button><button type="button" data-f="earth" aria-pressed="false">Earth&ndash;Moon</button>
       </div>
+      <button class="btn small" type="button" id="pilotBtn" aria-pressed="false">Pilot view</button>
       <div class="pop"><button class="btn small" type="button" id="fBtn" aria-expanded="false" aria-controls="fMenu">Filters</button>
         <div class="popm" id="fMenu" hidden><div class="caps">Show on the map</div>
           <label><input type="checkbox" data-filt="fl" checked> Live flights</label>
@@ -476,6 +488,8 @@ p{text-wrap:pretty}
     <div class="mapwrap">
       <div class="mapbox" id="mapbox">
         <div class="gl-host" id="glhost" tabindex="0" role="region" aria-label="Solar system map. Arrow keys orbit; plus and minus zoom; Home resets."></div>
+        <div class="labels" id="plabels"></div>
+        <div class="hud tr pilot-hud" id="pilotHud" aria-live="off"></div>
         <div class="labels" id="labels"><div class="tbox" id="tbox"><i></i><i></i><i></i><i></i></div></div>
         <div class="nogl-msg" id="nogl" hidden><p>This browser has no WebGL, so the 3D map is off. The flights, Starseekers, alerts and the feed below still run from the engine.</p></div>
         <div class="hud tl"><div class="hudbox" id="hud"></div><button class="btn small" type="button" id="liveBtn" hidden>Back to live sky</button></div>
@@ -1501,10 +1515,19 @@ function bindRig(host) {
     try { host.setPointerCapture(e.pointerId); } catch (x) { /* ok */ }
     RIG.touched = performance.now(); RIG.vaz = RIG.vel = 0; cancelFly(); glStart();
   });
+  function pilotMove(dx, dy) {
+    if (PIL.lock >= 0) { PIL.cyaw -= dx * 0.005; PIL.cpitch = clamp(PIL.cpitch + dy * 0.004, -1.2, 1.2); }
+    else { PIL.fly = null; PIL.yaw -= dx * 0.004; PIL.pitch = clamp(PIL.pitch - dy * 0.004, -1.5, 1.5); }
+  }
   host.addEventListener("pointermove", function (e) {
     if (!ptrs[e.pointerId]) return;
     var prev = ptrs[e.pointerId]; ptrs[e.pointerId] = [e.clientX, e.clientY];
     var ids = Object.keys(ptrs);
+    if (PIL.on) {
+      if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) down.moved = true;
+      if (down && down.moved) pilotMove(e.clientX - prev[0], e.clientY - prev[1]);
+      glStart(); return;
+    }
     if (ids.length === 2) {
       var a = ptrs[ids[0]], b = ptrs[ids[1]], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
       if (pinch) RIG.zoom(pinch / d); pinch = d;
@@ -1523,11 +1546,11 @@ function bindRig(host) {
     // a release that was not a flick leaves no spin
     if (now - lastMove > 80 || reduced) RIG.vaz = RIG.vel = 0;
     lastMove = 0;
-    if (e.type === "pointerup" && down && !down.moved && now - down.t < 350) pickAt(e.clientX, e.clientY);
+    if (e.type === "pointerup" && down && !down.moved && now - down.t < 350) { if (PIL.on) pilotPick(e.clientX, e.clientY); else pickAt(e.clientX, e.clientY); }
     down = null; glStart();
   }
   host.addEventListener("pointerup", up); host.addEventListener("pointercancel", up);
-  host.addEventListener("wheel", function (e) { e.preventDefault(); RIG.zoom(Math.exp(e.deltaY * 0.0012)); RIG.touched = performance.now(); }, { passive: false });
+  host.addEventListener("wheel", function (e) { e.preventDefault(); if (PIL.on) { PIL.mul = clamp(PIL.mul * Math.exp(-e.deltaY * 0.0015), 0.02, 50); return; } RIG.zoom(Math.exp(e.deltaY * 0.0012)); RIG.touched = performance.now(); }, { passive: false });
 }
 // Per-frame user motion: spin with inertia, eased zoom, and WASD/QE panning that eases in and out.
 var PAN_V = V(), PAN_R = V();
@@ -1568,6 +1591,228 @@ function bindKeys() {
     if (e.key === "Shift") delete RIG.keys.shift;
   });
   addEventListener("blur", function () { RIG.keys = {}; });
+  document.addEventListener("keydown", function (e) {
+    if (!PIL.on || typing(e.target) || blocked() || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === "Escape") pilotExit();
+    else if (e.key.toLowerCase() === "c" && PIL.lock >= 0) PIL.view = PIL.view === "chase" ? "cockpit" : "chase";
+  });
+}
+/* ---------- pilot view: a perspective free-fly camera on a true-scale sky ----------
+   Positions are the engine's true heliocentric AU (no log compression, no enlarged bodies). The camera sits at the
+   scene origin and every object is placed relative to it in double precision (floating origin), so float32 never
+   sees an AU-sized number next to a kilometre-sized one. Near a body the camera rides with it, because the sky runs
+   one sky day per second and a planet would otherwise leave at about 0.02 AU per second. */
+var PIL = { on: false, sc: null, cam: null, pos: V(), off: V(), anchor: null, yaw: 0, pitch: -0.2, mul: 1, vel: V(), lock: -1, view: "chase", cyaw: 0, cpitch: 0, fly: null, B: [], BY: {}, SE: {}, speed: 0, near: null, nearD: 0, hudAt: 0 };
+var PIL_FOV = 60, SHIP_D = 2e-8, UP = V(0, 1, 0);
+var PW = V(), PR = V(), PD = V(), PF = V(), PRT = V(), PT = V();
+function truePos(id, jd) { return id === "sun" ? V() : axes(SF.pos(id, jd), 1); }
+function pilotPlanet(id) {
+  var m = new THREE.Mesh(sphereGeo(), new THREE.MeshLambertMaterial({ map: planetTex(id), emissive: new THREE.Color(SF.color(id)).multiplyScalar(0.06) }));
+  if (id === "saturn") {
+    var ring = new THREE.Mesh(new THREE.RingGeometry(1.35, 2.3, 64), new THREE.MeshBasicMaterial({ color: 0xd9c79a, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false }));
+    ring.rotation.x = -Math.PI / 2 + 0.47; m.add(ring);
+  }
+  m.rotation.z = 0.35;
+  return m;
+}
+function pilotLabel(text, cls) {
+  var el = document.createElement("div"); el.className = "pl " + (cls || ""); el.innerHTML = "<i></i><span>" + esc(text) + "</span>";
+  $("#plabels").appendChild(el); return el;
+}
+function pilotStars() {
+  var n = 2600, pos = new Float32Array(n * 3), rnd = prng(7);
+  for (var i = 0; i < n; i++) { var u = rnd() * 2 - 1, th = rnd() * TAU, q = Math.sqrt(1 - u * u); pos[i * 3] = 1e5 * q * Math.cos(th); pos[i * 3 + 1] = 1e5 * u; pos[i * 3 + 2] = 1e5 * q * Math.sin(th); }
+  var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  return new THREE.Points(g, new THREE.PointsMaterial({ size: 1.5, sizeAttenuation: false, color: 0xdde6f0, depthWrite: false }));
+}
+function pilotInit() {
+  if (PIL.sc) return;
+  var sc = PIL.sc = new THREE.Scene();
+  PIL.cam = new THREE.PerspectiveCamera(PIL_FOV, 1, 1e-11, 3e5);
+  sc.add(new THREE.AmbientLight(0xffffff, 0.2));
+  PIL.light = new THREE.PointLight(0xfff1dc, 1.7, 0); sc.add(PIL.light);
+  PIL.stars = pilotStars(); sc.add(PIL.stars);
+  var sun = new THREE.Group(), core = new THREE.Mesh(sphereGeo(), new THREE.MeshBasicMaterial({ color: 0xffe2b0 }));
+  sun.add(core);
+  var g1 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(255,236,200,1)", "rgba(255,170,80,.45)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  g1.scale.setScalar(4.6); sun.add(g1); sc.add(sun);
+  PIL.B = [{ id: "sun", kind: "sun", name: "Sun", rKm: 695700, obj: sun, w: V(), el: pilotLabel("Sun", "") }];
+  PLACES.forEach(function (p) {
+    var mesh = p.kind === "planet" || p.kind === "moon" || p.kind === "small" || p.id === "ceres" ? pilotPlanet(p.id) : null;
+    if (mesh) sc.add(mesh);
+    PIL.B.push({ id: p.id, kind: p.kind, name: SF.name(p.id), rKm: p.radius_km || 0, obj: mesh, w: V(), el: pilotLabel(SF.name(p.id), p.kind === "station" ? "k-st" : "") });
+  });
+  PIL.B.forEach(function (b) { PIL.BY[b.id] = b; });
+}
+function pilotShip(F) {
+  var o = PIL.SE[F.key];
+  if (o) return o;
+  var m = makeShip(); PIL.sc.add(m);
+  return (PIL.SE[F.key] = { obj: m, el: pilotLabel(F.call, "k-sh"), hd: V(0, 0, 1) });
+}
+function shipWorld(F, out) {
+  var s = F.sc && F.sc.s; if (!s) return null;
+  if (s.phase === "flight") return out.copy(axes(s.p, 1));
+  return out.copy(truePos(s.f >= 1 ? s.leg.to : s.leg.from, MAPJD));
+}
+function anchorPos(A, out) {
+  if (A.b) return out.copy(A.b.w);
+  return A.F.pw ? out.copy(A.F.pw) : out.set(0, 0, 0);
+}
+function pilotDir() {
+  var cp = Math.cos(PIL.pitch);
+  return V(-Math.sin(PIL.yaw) * cp, Math.sin(PIL.pitch), -Math.cos(PIL.yaw) * cp);
+}
+function setLook(dir) { PIL.yaw = Math.atan2(-dir.x, -dir.z); PIL.pitch = Math.asin(clamp(dir.y / (dir.length() || 1), -1, 1)); }
+function wrapPi(a) { return a - TAU * Math.round(a / TAU); }
+// T is { b: body } or { F: flight }. The camera glides to a standoff point and then rides with the target.
+function pilotJump(T) {
+  PIL.lock = -1; PIL.cyaw = PIL.cpitch = 0;
+  var tp = T.b ? T.b.w : (T.F.pw || V()), from = PIL.pos.clone();
+  var dirU = from.clone().sub(tp); if (dirU.lengthSq() < 1e-30) dirU.set(0, 0.3, 1); dirU.normalize();
+  var stand = T.b ? Math.max(T.b.rKm / AU * 4, 2e-8) : SHIP_D * 3;
+  var D = from.distanceTo(tp.clone().addScaledVector(dirU, stand));
+  PIL.fly = { t: 0, dur: clamp(0.9 + 0.8 * Math.log10(1 + D / 2e-6), 1, 4.5), T: T, dirU: dirU, stand: stand, from: from, y0: PIL.yaw, p0: PIL.pitch, ship: !!T.F };
+  PIL.anchor = null; glStart();
+}
+// AU per second: half the gap to the nearest surface each second, so a planet neither rushes up nor crawls.
+function pilotSpeed() {
+  var best = 1e9;
+  for (var i = 0; i < PIL.B.length; i++) { var b = PIL.B[i]; if (!b.rKm || b.kind === "station") continue; var d = b.w.distanceTo(PIL.pos) - b.rKm / AU; if (d < best) { best = d; PIL.near = b; PIL.nearD = d; } }
+  return clamp(best * 0.5, 2e-8, 4) * PIL.mul;
+}
+function pilotFrame(dt, t) {
+  var cam = PIL.cam, jd = LIVEJD, i, b;
+  dt = dt || 0.016;
+  cam.aspect = GW / GH; cam.fov = PIL_FOV; cam.updateProjectionMatrix();
+  for (i = 0; i < PIL.B.length; i++) { b = PIL.B[i]; b.w.copy(truePos(b.id, jd)); }
+  FL.forEach(function (F) {
+    var o = pilotShip(F), p = F.pw || (F.pw = V()), s = F.sc && F.sc.s;
+    if (!shipWorld(F, p)) return;
+    if (s.phase === "flight") {
+      var a = F.rp.at(F.jd + 0.05);
+      if (a && a.phase === "flight") { PD.copy(axes(a.p, 1)).sub(p); if (PD.lengthSq() > 0) o.hd.lerp(PD.normalize(), 1 - Math.exp(-dt / 0.25)).normalize(); }
+    }
+  });
+  var K = RIG.keys, fw = (K.w ? 1 : 0) - (K.s ? 1 : 0), rt = (K.d ? 1 : 0) - (K.a ? 1 : 0), up = (K.e ? 1 : 0) - (K.q ? 1 : 0);
+  var lockF = PIL.lock >= 0 ? FL[PIL.lock] : null;
+  if (lockF && !(lockF.pw && PIL.SE[lockF.key])) lockF = null;
+  if (lockF && (fw || rt || up)) {
+    // flying by hand leaves the ship
+    PIL.anchor = { F: lockF }; PIL.off.copy(PIL.pos).sub(lockF.pw); PIL.lock = -1; lockF = null;
+  }
+  if (PIL.fly) {
+    var f = PIL.fly; f.t += dt;
+    var x = clamp(f.t / f.dur, 0, 1), e = x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    var tp = f.T.b ? f.T.b.w : (f.T.F.pw || PT.set(0, 0, 0));
+    PD.copy(tp).addScaledVector(f.dirU, f.stand);
+    PIL.pos.copy(f.from).lerp(PD, e);
+    PD.copy(tp).sub(PIL.pos);
+    if (PD.lengthSq() > 0) {
+      var yT = Math.atan2(-PD.x, -PD.z), pT = Math.asin(clamp(PD.y / PD.length(), -1, 1)), k = Math.min(1, x * 1.6), ke = k * k * (3 - 2 * k);
+      PIL.yaw = f.y0 + wrapPi(yT - f.y0) * ke; PIL.pitch = f.p0 + (pT - f.p0) * ke;
+    }
+    if (x >= 1) {
+      PIL.fly = null;
+      if (f.ship) { PIL.lock = FL.indexOf(f.T.F); PIL.view = "chase"; PIL.cyaw = PIL.cpitch = 0; }
+      else { PIL.anchor = { b: f.T.b }; PIL.off.copy(PIL.pos).sub(f.T.b.w); }
+    }
+  } else if (lockF) {
+    var h = PIL.SE[lockF.key].hd, sp = lockF.pw;
+    PRT.copy(h).cross(UP); if (PRT.lengthSq() < 1e-12) PRT.set(1, 0, 0); PRT.normalize();
+    if (PIL.view === "cockpit") {
+      PIL.pos.copy(sp).addScaledVector(h, SHIP_D * 0.35);
+      PIL.yaw = Math.atan2(-h.x, -h.z) + PIL.cyaw; PIL.pitch = clamp(Math.asin(clamp(h.y, -1, 1)) + PIL.cpitch, -1.5, 1.5);
+    } else {
+      PD.copy(h).negate().applyAxisAngle(UP, PIL.cyaw).applyAxisAngle(PRT, PIL.cpitch);
+      PIL.pos.copy(sp).addScaledVector(PD, SHIP_D).addScaledVector(UP, SHIP_D * 0.3);
+      PF.copy(sp).addScaledVector(h, SHIP_D * 0.6).sub(PIL.pos); setLook(PF);
+    }
+  } else {
+    var A = PIL.anchor, base = A ? anchorPos(A, PW) : PW.set(0, 0, 0), spd = pilotSpeed();
+    var dir = pilotDir(); PRT.copy(dir).cross(UP).normalize();
+    PD.set(0, 0, 0).addScaledVector(dir, fw).addScaledVector(PRT, rt).addScaledVector(UP, up);
+    if (PD.lengthSq() > 1) PD.normalize();
+    PD.multiplyScalar(spd * (K.shift ? 4 : 1));
+    PIL.vel.lerp(PD, 1 - Math.exp(-dt / 0.18));
+    if (PIL.vel.lengthSq() < 1e-30 && PD.lengthSq() === 0) PIL.vel.set(0, 0, 0);
+    PIL.off.addScaledVector(PIL.vel, dt);
+    PIL.pos.copy(base).add(PIL.off);
+    // ride with a body the camera is close to; let go when far from it
+    var n = PIL.near;
+    if (n && n.rKm > 0) {
+      var rn = n.rKm / AU, dn = n.w.distanceTo(PIL.pos);
+      if (dn < rn * 30 && !(A && A.b === n)) { PIL.anchor = { b: n }; PIL.off.copy(PIL.pos).sub(n.w); A = PIL.anchor; }
+    }
+    if (A && A.b && A.b.w.distanceTo(PIL.pos) > A.b.rKm / AU * 60) { PIL.anchor = null; PIL.off.copy(PIL.pos); }
+  }
+  PIL.speed = PIL.fly || lockF ? 0 : PIL.vel.length();
+  PIL.pitch = clamp(PIL.pitch, -1.5, 1.5);
+  cam.position.set(0, 0, 0); cam.rotation.set(PIL.pitch, PIL.yaw, 0, "YXZ"); cam.updateMatrixWorld();
+  PIL.light.position.copy(PIL.B[0].w).sub(PIL.pos);
+  var pxr = (GH / 2) / Math.tan(PIL_FOV * Math.PI / 360);
+  function placeLabel(el, rel, show, pxDiam) {
+    PR.copy(rel).project(cam);
+    var vis = show && PR.z < 1 && PR.z > -1 && Math.abs(PR.x) < 1.05 && Math.abs(PR.y) < 1.05;
+    if (!vis) { if (el._v !== 0) { el.style.visibility = "hidden"; el._v = 0; } return; }
+    el.style.transform = "translate3d(" + ((PR.x + 1) / 2 * GW).toFixed(1) + "px," + ((1 - PR.y) / 2 * GH).toFixed(1) + "px,0)";
+    if (el._v !== 1) { el.style.visibility = "visible"; el._v = 1; }
+    var big = pxDiam >= 7; if (el._d !== big) { el.classList.toggle("big", big); el._d = big; }
+  }
+  for (i = 0; i < PIL.B.length; i++) {
+    b = PIL.B[i]; PD.copy(b.w).sub(PIL.pos);
+    var d = PD.length() || 1e-12, r = b.rKm / AU, px = r / d * pxr * 2;
+    if (b.obj) { b.obj.position.copy(PD); b.obj.scale.setScalar(Math.max(r, 1e-12)); b.obj.visible = px > 0.4; }
+    var show = b.kind === "planet" || b.kind === "sun" || b.kind === "small" || b.id === "ceres" || (b.kind === "moon" && d < 0.03) || (b.kind === "station" && d < 0.004);
+    placeLabel(b.el, PD, show, px);
+  }
+  FL.forEach(function (F) {
+    var o = PIL.SE[F.key]; if (!o) return;
+    if (!F.pw) { o.obj.visible = false; placeLabel(o.el, PD.set(0, 0, 0), false, 0); return; }
+    PD.copy(F.pw).sub(PIL.pos);
+    var d = PD.length() || 1e-12, isLock = lockF === F;
+    o.obj.position.copy(PD); o.obj.scale.setScalar(isLock ? SHIP_D / 6 : Math.max(SHIP_D / 6, d * 0.004));
+    o.obj.quaternion.setFromUnitVectors(PF.set(0, 0, 1), o.hd);
+    o.obj.visible = FILT.fl && !(isLock && PIL.view === "cockpit");
+    placeLabel(o.el, PD, FILT.fl && !isLock, 0);
+  });
+  if (t - PIL.hudAt > 200) { PIL.hudAt = t; pilotHud(); }
+  GL.r.render(PIL.sc, cam);
+}
+function fmtKm(km) { return km >= 1.5e6 ? SF.fmt(km / AU, 3) + " AU" : SF.fmt(km, km < 10 ? 1 : 0) + " km"; }
+function pilotHud() {
+  var n = PIL.near, lockF = PIL.lock >= 0 ? FL[PIL.lock] : null, kms = PIL.speed * AU;
+  var where = lockF ? esc(lockF.call) + " &middot; " + (PIL.view === "chase" ? "chase" : "cockpit") + " view (C switches)" : PIL.fly ? "Jumping&hellip;" : n ? "Near " + esc(n.name) + " &middot; " + fmtKm(Math.max(0, PIL.nearD) * AU) + " above the surface" : "";
+  $("#pilotHud").innerHTML = '<span class="caps">Pilot view &middot; true scale &middot; simulated</span><br>' + where +
+    (lockF ? "" : "<br>Speed <b>" + (kms >= 1e5 ? SF.fmt(kms / 299792.458, 2) + " c" : SF.fmt(kms, kms < 10 ? 2 : 0) + " km/s") + "</b> &middot; throttle &times;" + PIL.mul.toFixed(PIL.mul < 1 ? 2 : 1));
+}
+function pilotEnter() {
+  if (!GL || PIL.on) return;
+  pilotInit();
+  var k = FOCI[FOCKEY] && !/^(sun|inner|sol)$/.test(FOCKEY) ? PIL.BY[FOCI[FOCKEY].id] : PIL.BY.earth;
+  PIL.on = true; document.body.classList.add("pilot-on");
+  $("#pilotBtn").setAttribute("aria-pressed", "true"); $("#pilotBtn").textContent = "Map view";
+  PIL.B.forEach(function (b) { b.w.copy(truePos(b.id, LIVEJD)); });
+  PIL.anchor = null; PIL.lock = -1; PIL.fly = null; PIL.vel.set(0, 0, 0);
+  PIL.pos.copy(k.w).add(V(0.0008, 0.0004, 0.0012)); PIL.off.copy(PIL.pos);
+  setLook(k.w.clone().sub(PIL.pos));
+  pilotJump({ b: k });
+}
+function pilotExit() {
+  if (!PIL.on) return;
+  PIL.on = false; PIL.lock = -1; PIL.fly = null; FOLLOW = false; RIG.keys = {};
+  document.body.classList.remove("pilot-on");
+  $("#pilotBtn").setAttribute("aria-pressed", "false"); $("#pilotBtn").textContent = "Pilot view";
+  renderInfo(); glStart();
+}
+function pilotPick(cx, cy) {
+  var r = $("#glhost").getBoundingClientRect(), x = cx - r.left, y = cy - r.top, best = null, bd = 22;
+  function test(w, hit) { PR.copy(w).sub(PIL.pos).project(PIL.cam); if (PR.z >= 1 || PR.z <= -1) return; var d = Math.hypot((PR.x + 1) / 2 * GW - x, (1 - PR.y) / 2 * GH - y); if (d < bd) { bd = d; best = hit; } }
+  PIL.B.forEach(function (b) { if (b.el._v === 1) test(b.w, { b: b }); });
+  if (FILT.fl) FL.forEach(function (F, i) { if (F.pw) test(F.pw, { F: F, i: i }); });
+  if (!best) return;
+  if (best.F) return select({ t: "f", i: best.i });
+  pilotJump(best);
 }
 // Click a body or a ship in the scene to focus it.
 function pickAt(cx, cy) {
@@ -1632,6 +1877,7 @@ function detailSystem() {
 }
 function focusBody(key) {
   if (!GL || !FOCI[key]) return;
+  if (PIL.on) { var pb = PIL.BY[FOCI[key].id]; if (pb) pilotJump({ b: pb }); return; }
   FOLLOW = false; select({ t: "n" });
   flyTo(FOCI[key], key);
 }
@@ -1738,7 +1984,7 @@ function labels() {
 var raf = 0, last = 0, MAPVIS = true;
 function frame(t) {
   raf = requestAnimationFrame(frame);
-  if (t - last < 1000 / (window.SolArt ? SolArt.quality().fps : GW <= 760 ? 24 : 30)) return;
+  if (t - last < 1000 / (PIL.on ? 60 : window.SolArt ? SolArt.quality().fps : GW <= 760 ? 24 : 30)) return;
   var dt = Math.min(0.1, Math.max(0, (t - last) / 1000)); last = t; MEMO = {}; MEMON = 0;
   try { draw(dt, t); } catch (e) { if (!frame.err) { frame.err = 1; console.error(e); } }
   if (MAP_PAUSED && !RIG.fly && !RIG.moving() && (!VIEW_OFF || VIEW_OFF.settled)) glStop();
@@ -1752,6 +1998,7 @@ function draw(dt, t) {
   LIVEMAP = !rep;
   MAPJD = rep ? FL[SEL.i].jd : LIVEJD;
   FL.forEach(function (F) { F.sc = shipC(F.rp, F.jd, MAPJD); });
+  if (PIL.on) return pilotFrame(dt, t);
   // camera
   var want = focusTarget();
   if (RIG.fly) {
@@ -1859,7 +2106,7 @@ function mapHud() {
   var rep = FOLLOW && SEL.t === "f" && !!FL[SEL.i], F = rep ? FL[SEL.i] : null;
   $("#hud").innerHTML = rep
     ? '<span class="caps">Map time &middot; following ' + esc(F.call) + '</span><br><b>' + iso(MAPJD) + "</b> UTC<br>Live flight (simulated). Other layers are hidden."
-    : '<span class="caps">' + (MAP_PAUSED ? 'Map paused · ' + iso(MAPJD) + ' UTC' : 'Live sky') + '</span><br><span>Distances compressed · bodies enlarged</span>';
+    : '<span class="caps">' + (MAP_PAUSED ? 'Map paused · ' + iso(MAPJD) + ' UTC' : 'Live sky') + '</span><br><span>' + (PIL.on ? 'True scale · real distances and sizes' : 'Distances compressed · bodies enlarged') + '</span>';
   $("#liveBtn").hidden = !rep;
   var sysf = (FOC.id !== "sun" && !rep) || (rep && F.sc && F.sc.s.leg.sys && F.sc.s.phase === "flight") || (rep && F.sc && F.sc.s.phase !== "flight" && RIG.dist < 30);
   if (sysf) $("#sBar").innerHTML = '<p class="note" style="margin:4px 0 0">Offsets around the planet are log-scaled; no single scale.</p>';
@@ -1892,6 +2139,7 @@ function select(s) {
   if (s.t === "b") { FOLLOW = false; showTab("b"); var B = BK[s.id]; if (!B || (!B.rp && !B.err && !B.busy)) startPlan(s.id); }
   else if (s.t === "f") { showTab("f"); if (FOLLOW && !same) FOLLOW = true; }
   renderCardsSel(); renderBookings(); renderInfo();
+  if (PIL.on) { if (s.t === "f" && FL[s.i]) pilotJump({ F: FL[s.i] }); return; }
   if (GL && !same && s.t !== "n") {
     var rp = s.t === "f" ? FL[s.i].rp : BK[s.id] && BK[s.id].rp, hail = s.t === "b" ? hailOf(s.id) : null;
     var fid = s.t === "f" ? (rp.focus !== "sun" ? sysFocus(rp.focus) : null) : (sysFocus(hail.from.id) === sysFocus(hail.to.id) ? sysFocus(hail.from.id) : null);
@@ -1905,6 +2153,7 @@ function select(s) {
 function setFollow(on) {
   if (SEL.t !== "f" || !FL[SEL.i]) return;
   FOLLOW = on;
+  if (PIL.on) { if (on) { PIL.view = "chase"; pilotJump({ F: FL[SEL.i] }); } else PIL.lock = -1; renderInfo(); return; }
   var rp = FL[SEL.i].rp;
   if (on) flyTo(followFocus(), null);
   else { var fid = rp.focus !== "sun" ? sysFocus(rp.focus) : null; flyTo(fid ? FOCI[fid] : routeFocus(routePlaces(rp)), fid || null); }
@@ -2295,6 +2544,7 @@ function start() {
   if (GL) {
     buildScene(LIVEJD);
     bindRig($("#glhost")); bindKeys();
+    $("#pilotBtn").addEventListener("click", function () { if (PIL.on) pilotExit(); else pilotEnter(); });
     onResize();
     if (window.ResizeObserver) new ResizeObserver(onResize).observe($("#mapbox")); else addEventListener("resize", onResize);
     if (window.IntersectionObserver) new IntersectionObserver(function (en) { MAPVIS = en[0].isIntersecting; if (MAPVIS) glStart(); else glStop(); }).observe($("#mapbox"));
