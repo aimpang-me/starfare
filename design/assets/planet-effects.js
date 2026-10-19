@@ -8,27 +8,28 @@
   // Seconds below are deliberately slow illustration periods, not astronomical spin telemetry.
   // Retain the map's existing .35-radian presentation tilt; anchors live outside that frame.
   // veil: the colour a recorded dust storm or haze lays over the body; the page passes how thick, 0 to 1.
-  // A * in a map or relief file stands for the tier, 1k until the body is shown large on the desktop tier, then 2k.
+  // A map layer names its file, * standing for the tier, then the tiers it ships in when not all of 1k, 2k and 4k.
+  // A body shows its smallest map until drawn large; then the desktop sharpens it to 2K and, close up, to 4K.
   var PROFILES = {
-    earth: { map:'earth_day_2k.jpg', relief:'earth_normal_*.png', period:180, air:[.1,.34,.8], shell:1.035, airStrength:.35 },
-    moon: { map:'moon_1k.jpg', relief:'moon_normal_1k.png', period:420, rough:1 },
-    mercury: { map:'mercury_1k.jpg', period:540, rough:1 },
-    venus: { map:'venus_1k.jpg', period:-540, air:[.65,.42,.18], shell:1.045, airStrength:.32, haze:.25 },
-    mars: { map:'mars_*.jpg', relief:'mars_normal_1k.png', period:300, air:[.48,.18,.08], shell:1.022, airStrength:.2, veil:[.6,.36,.17] },
-    phobos: { map:'phobos_1k.jpg', period:480, rough:1 },
-    ceres: { map:'ceres_1k.jpg', period:420, rough:1 },
-    bennu: { map:'bennu_1k.jpg', period:480, rough:1 },
-    jupiter: { map:'jupiter_2k.jpg', period:240, gas:.009, air:[.28,.22,.16], shell:1.014, airStrength:.14 },
-    io: { map:'io_1k.jpg', period:420, rough:1 },
-    europa: { map:'europa_1k.jpg', period:480, ice:.08 },
-    ganymede: { map:'ganymede_1k.jpg', period:540, ice:.035 },
-    callisto: { map:'callisto_1k.jpg', period:600, rough:1 },
-    saturn: { map:'saturn_1k.jpg', period:300, gas:.006, air:[.3,.24,.13], shell:1.018, airStrength:.17, ring:true },
-    titan: { map:'titan_1k.jpg', period:600, air:[.65,.31,.065], shell:1.07, airStrength:.45, haze:.5, veil:[.7,.4,.12] },
-    enceladus: { map:'enceladus_1k.jpg', period:480, ice:.1 },
-    uranus: { map:'uranus_1k.jpg', period:-420, gas:.002, air:[.09,.32,.36], shell:1.025, airStrength:.2 },
-    neptune: { map:'neptune_1k.jpg', period:360, gas:.004, air:[.07,.15,.46], shell:1.025, airStrength:.2 },
-    triton: { map:'triton_1k.jpg', period:540, ice:.07 }
+    earth: { day:'earth_day_*.jpg 2k 4k', relief:'earth_normal_*.png 1k 2k', clouds:'earth_clouds_*.webp 1k 2k', ocean:'earth_ocean_1k.png', period:180, air:[.1,.34,.8], shell:1.035, airStrength:.35 },
+    moon: { day:'moon_*.jpg', relief:'moon_normal_*.png 1k 2k', period:420, rough:1 },
+    mercury: { day:'mercury_*.jpg', period:540, rough:1 },
+    venus: { day:'venus_*.jpg', period:-540, air:[.65,.42,.18], shell:1.045, airStrength:.32, haze:.25 },
+    mars: { day:'mars_*.jpg', relief:'mars_normal_1k.png', period:300, air:[.48,.18,.08], shell:1.022, airStrength:.2, veil:[.6,.36,.17] },
+    phobos: { day:'phobos_*.jpg', period:480, rough:1 },
+    ceres: { day:'ceres_*.jpg', period:420, rough:1 },
+    bennu: { day:'bennu_*.jpg', period:480, rough:1 },
+    jupiter: { day:'jupiter_*.jpg 2k 4k', period:240, gas:.009, air:[.28,.22,.16], shell:1.014, airStrength:.14 },
+    io: { day:'io_*.jpg', period:420, rough:1 },
+    europa: { day:'europa_*.jpg', period:480, ice:.08 },
+    ganymede: { day:'ganymede_*.jpg', period:540, ice:.035 },
+    callisto: { day:'callisto_*.jpg', period:600, rough:1 },
+    saturn: { day:'saturn_*.jpg', period:300, gas:.006, air:[.3,.24,.13], shell:1.018, airStrength:.17, ring:true },
+    titan: { day:'titan_1k.jpg', period:600, air:[.65,.31,.065], shell:1.07, airStrength:.45, haze:.5, veil:[.7,.4,.12] },
+    enceladus: { day:'enceladus_*.jpg', period:480, ice:.1 },
+    uranus: { day:'uranus_*.jpg 1k 2k', period:-420, gas:.002, air:[.09,.32,.36], shell:1.025, airStrength:.2 },
+    neptune: { day:'neptune_*.jpg 1k 2k', period:360, gas:.004, air:[.07,.15,.46], shell:1.025, airStrength:.2 },
+    triton: { day:'triton_*.jpg', period:540, ice:.07 }
   };
   function createClock() {
     var last = null, active = false, elapsed = 0;
@@ -43,6 +44,15 @@
   }
   function detailAmount(radius) { var x = Math.max(0, Math.min(1, (radius - 24) / 40)); return x * x * (3 - 2 * x); }
   function wantsDetail(previous, radius) { return radius >= 32 || (!!previous && radius > 16); }
+  // A 2K map runs out of texels on a disc past 2048/2pi, about 326 device pixels in radius; 4K takes over before that.
+  function wantsClose(previous, devicePx) { return devicePx >= 300 || (!!previous && devicePx > 240); }
+  var LAYERS = ['day', 'relief', 'clouds', 'ocean'], TIERS = ['1k', '2k', '4k'];
+  // The file a layer shows for a wanted tier: its sharpest at or below that tier, else its smallest.
+  function pick(layer, want) {
+    var parts = layer.split(' '), have = parts.length > 1 ? parts.slice(1) : TIERS, best = have[0];
+    have.forEach(function (t) { if (TIERS.indexOf(t) <= TIERS.indexOf(want)) best = t; });
+    return parts[0].replace('*', best);
+  }
   var VS = '#include <common>\n#include <logdepthbuf_pars_vertex>\n' +
     'varying vec2 vUv; varying vec3 vN; varying vec3 vT; varying vec3 vB; varying vec3 vW;\n' +
     'void main(){vUv=uv; vec3 t=abs(normal.y)>.9999?vec3(1.,0.,0.):normalize(vec3(normal.z,0.,-normal.x));' +
@@ -120,7 +130,7 @@
     if (!geo) { geo = new T.SphereGeometry(1, 64, 32); geometries.set(T, geo); }
     var root = new T.Group(), tilt = new T.Group(); tilt.rotation.z = .35; root.add(tilt);
     var uniforms = {
-      day: { value: services.texture(profile.map.replace('*', '1k')) },
+      day: { value: services.texture(pick(profile.day, '1k')) },
       night: { value: id === 'earth' ? services.texture('earth_lights_2k.jpg') : null },
       relief: { value: null }, ocean: { value: null }, clouds: { value: null },
       normalReady: { value: 0 }, oceanReady: { value: 0 }, cloudReady: { value: 0 }, cloudShift: { value: 0 },
@@ -156,14 +166,15 @@
       ring.rotation.x=-Math.PI/2+.47; ring.renderOrder=1; tilt.add(ring);
     }
     root.userData.textured = true;
-    root.userData.planetEffects = { id: id, profile:profile, uniforms: uniforms, surface: surface, cloud: cloud, atmosphere: atmosphere, ring:ring, services: services, wanted: false, tier: null, day: null, center: new T.Vector3(), scale:new T.Vector3(), disposed: false };
+    root.userData.planetEffects = { id: id, profile:profile, uniforms: uniforms, surface: surface, cloud: cloud, atmosphere: atmosphere, ring:ring, services: services, wanted: false, close: false, tier: null, shown: { day: pick(profile.day, '1k') }, next: {}, center: new T.Vector3(), scale:new T.Vector3(), disposed: false };
     return root;
   }
   function createSun(T, services) {
     var geo=geometries.get(T); if(!geo){geo=new T.SphereGeometry(1,64,32);geometries.set(T,geo);}
-    var u={day:{value:services.texture('sun_1k.jpg')},time:{value:0},detail:{value:0},viewDirection:{value:new T.Vector3(0,0,1)},orthographic:{value:0}};
+    var profile={day:'sun_*.jpg',period:720};
+    var u={day:{value:services.texture(pick(profile.day,'1k'))},time:{value:0},detail:{value:0},viewDirection:{value:new T.Vector3(0,0,1)},orthographic:{value:0}};
     var root=new T.Group(), surface=new T.Mesh(geo,new T.ShaderMaterial({uniforms:u,vertexShader:VS,fragmentShader:SOLAR}));root.add(surface);
-    root.userData.planetEffects={id:'sun',uniforms:u,surface:surface,profile:{period:720},disposed:false}; return root;
+    root.userData.planetEffects={id:'sun',uniforms:u,surface:surface,profile:profile,services:services,wanted:false,close:false,tier:null,shown:{day:pick(profile.day,'1k')},next:{},disposed:false}; return root;
   }
   function update(body, context) {
     var e = body && body.userData.planetEffects; if (!e || e.disposed) return;
@@ -174,19 +185,10 @@
       u.orthographic.value = context.camera.isOrthographicCamera ? 1 : 0;
     }
     u.detail.value = detailAmount(radius);
+    sharpen(e, context, radius);
     if(e.id==='sun') return;
     u.veil.value = e.profile.veil ? context.veil || 0 : 0;
     if (e.cloud) { e.cloud.rotation.y = sec * TAU / 240; u.cloudShift.value = sec * (1 / 180 - 1 / 240); }
-    e.wanted = wantsDetail(e.wanted, radius);
-    var tier = context.quality === 'desktop' ? '2k' : '1k', p = e.profile;
-    if (e.wanted && e.tier !== tier && (p.relief || p.map.indexOf('*') >= 0)) {
-      e.tier = tier;
-      if (p.relief) u.relief.value = e.services.texture(p.relief.replace('*', tier));
-      e.day = e.services.texture(p.map.replace('*', tier));
-      if (e.id === 'earth') { u.clouds.value = e.services.texture('earth_clouds_' + tier + '.webp'); u.ocean.value = e.services.texture('earth_ocean_1k.png'); }
-    }
-    // The sharper map replaces the shown one only once loaded, so the body never draws blank meanwhile.
-    if (e.day && imageReady(e.day)) { u.day.value = e.day; e.day = null; }
     u.normalReady.value = imageReady(u.relief.value) ? 1 : 0;
     u.oceanReady.value = imageReady(u.ocean.value) ? 1 : 0;
     u.cloudReady.value = imageReady(u.clouds.value) ? 1 : 0;
@@ -196,6 +198,29 @@
     if (e.cloud) e.cloud.visible = !!(u.cloudReady.value && u.detail.value);
     if (e.atmosphere) e.atmosphere.visible = u.detail.value > 0;
   }
+  // A new map replaces the shown one only once loaded, so a body never draws blank meanwhile; an empty layer takes
+  // its map at once, its ready flag holding it back until loaded.
+  function sharpen(e, context, radius) {
+    var desk = context.quality === 'desktop', u = e.uniforms;
+    e.wanted = wantsDetail(e.wanted, radius);
+    e.close = desk && wantsClose(e.close, radius * (context.pixelRatio || 1));
+    var tier = !desk ? '1k' : e.close ? '4k' : '2k';
+    if ((e.wanted || e.tier) && e.tier !== tier) {
+      e.tier = tier;
+      LAYERS.forEach(function (key) {
+        if (!e.profile[key]) return;
+        var file = pick(e.profile[key], tier);
+        if (e.next[key] !== file) { letGo(e, e.next[key]); e.next[key] = file === e.shown[key] ? null : file; }
+      });
+    }
+    LAYERS.forEach(function (key) {
+      var file = e.next[key], t = file && e.services.texture(file);
+      if (!file || (e.shown[key] && !imageReady(t))) return;
+      letGo(e, e.shown[key]); u[key].value = t; e.shown[key] = file; e.next[key] = null;
+    });
+  }
+  // Only 4K maps are freed when let go; the smaller ones stay in the page's bounded cache for other views.
+  function letGo(e, file) { if (file && file.indexOf('_4k.') > 0 && e.services.release) e.services.release(file); }
   // CPU counterpart of the analytic planet-on-ring shadow, for opposite-Sun regression checks.
   function ringShadowAt(p,l) {
     var len=Math.hypot(l[0],l[1],l[2]),d=l.map(function(v){return v/len;}),t=-(p[0]*d[0]+p[1]*d[1]+p[2]*d[2]);
@@ -205,7 +230,8 @@
     var e = body && body.userData.planetEffects; if (!e || e.disposed) return;
     e.disposed = true;
     body.traverse(function (o) { if (o.material) o.material.dispose(); });
-    // Geometry and loaded maps are shared, bounded page-lifetime caches, never owned by an instance.
+    LAYERS.forEach(function (key) { letGo(e, e.shown[key]); letGo(e, e.next[key]); });
+    // Geometry and maps up to 2K are shared, bounded page-lifetime caches, never owned by an instance.
   }
   return { createClock: createClock, createBody: createBody, createSun:createSun, update: update, dispose: dispose, detailAmount: detailAmount, wantsDetail: wantsDetail, ringShadowAt:ringShadowAt };
 });

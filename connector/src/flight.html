@@ -1220,7 +1220,7 @@ function rideFrame(dt, t) {
     if (jump) RS.planetClock.reset(t);
     var effectsTime = RS.planetClock.sample(t, RS.playing && !reduced && !document.hidden);
     var maps = SolArt.quality().maps;
-    if (RS.sun && SolArt.updateSun) SolArt.updateSun(RS.sun, { elapsedSeconds: effectsTime, camera: cam, radiusPx: 40, quality: maps });
+    if (RS.sun && SolArt.updateSun) SolArt.updateSun(RS.sun, { elapsedSeconds: effectsTime, camera: cam, radiusPx: RS.sun.userData.solarSurface.scale.x / pxw(cam, RS.sun.position, GH), quality: maps });
     RS.bodies.forEach(function (b) { if (b.m && b.m.userData.planetEffects) SolArt.updatePlanet(b.m, { elapsedSeconds: effectsTime, camera: cam, radiusPx: b.m.scale.x / pxw(cam, b.m.position, GH), quality: maps, veil: window.StarfareView.weatherAt(RS.wx, b.id, jd) }); });
   }
   // Arrival: one soft ring on the destination as playback crosses into arrived. After a scrub, or with reduced

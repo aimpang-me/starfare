@@ -21,6 +21,10 @@
     t.anisotropy = ANISO;
     return (TEX[file] = t);
   }
+  // A failed map stays cached, so a missing file (a 4K release asset not installed) is requested once, not every zoom.
+  function release(file) { var t = TEX[file]; if (t && !(t.userData && t.userData.failed)) { delete TEX[file]; t.dispose(); } }
+  // Map tiers are chosen in device pixels; the pages measure bodies in CSS pixels.
+  function devicePixels(context) { context.pixelRatio = R ? R.getPixelRatio() : 1; return context; }
   function setSun(v) { SUN.value.copy(v); }
 
   // Each custom shader carries the log-depth chunks: the pages render with logarithmicDepthBuffer on.
@@ -101,7 +105,7 @@
   function planet(id) {
     if (!MAPS[id]) return null;
     if (root.StarfarePlanetEffects) {
-      var enhanced = root.StarfarePlanetEffects.createBody(THREE, id, { texture: tex, sun: SUN, maxTextures: R && R.capabilities.maxTextures });
+      var enhanced = root.StarfarePlanetEffects.createBody(THREE, id, { texture: tex, release: release, sun: SUN, maxTextures: R && R.capabilities.maxTextures });
       if (enhanced) return enhanced;
     }
     var mat = id === "earth" ? earthMat() : new THREE.MeshLambertMaterial({ map: tex(MAPS[id]) });
@@ -143,7 +147,7 @@
   }
   function sun(r, wide) {
     var g = new THREE.Group();
-    var ball = root.StarfarePlanetEffects ? root.StarfarePlanetEffects.createSun(THREE, {texture:tex}) : new THREE.Mesh(sphere(), new THREE.MeshBasicMaterial({ map: tex("sun_1k.jpg"), color: new THREE.Color(1.6, 1.35, 1.05) }));
+    var ball = root.StarfarePlanetEffects ? root.StarfarePlanetEffects.createSun(THREE, { texture: tex, release: release }) : new THREE.Mesh(sphere(), new THREE.MeshBasicMaterial({ map: tex("sun_1k.jpg"), color: new THREE.Color(1.6, 1.35, 1.05) }));
     ball.scale.setScalar(r); g.add(ball);
     g.userData.solarSurface = ball;
     var s1 = additiveSprite(glow("rgba(255,240,210,1)", "rgba(255,180,92,.5)", 0.22)); s1.scale.setScalar(r * 4.4); g.add(s1);
@@ -558,9 +562,9 @@
 
   root.SolArt = {
     BASE: BASE, init: init, setSun: setSun, planet: planet, hasRim: function (id) { return !!RIMS[id] || !!(root.StarfarePlanetEffects && MAPS[id]); },
-    updatePlanet: function (body, context) { if (root.StarfarePlanetEffects) root.StarfarePlanetEffects.update(body, context); },
+    updatePlanet: function (body, context) { if (root.StarfarePlanetEffects) root.StarfarePlanetEffects.update(body, devicePixels(context)); },
     disposePlanet: function (body) { if (root.StarfarePlanetEffects && body) root.StarfarePlanetEffects.dispose(body.userData.solarSurface || body); },
-    updateSun: function (body, context) { if (root.StarfarePlanetEffects && body.userData.solarSurface) root.StarfarePlanetEffects.update(body.userData.solarSurface, context); },
+    updateSun: function (body, context) { if (root.StarfarePlanetEffects && body.userData.solarSurface) root.StarfarePlanetEffects.update(body.userData.solarSurface, devicePixels(context)); },
     sun: sun, stars: stars, composer: composer, ship: ship, setEngine: setEngine, setSky: setSky, quality: quality, icon: icon, ICONS: Object.keys(ICONS),
     CREDIT: "Maps: NASA, JPL, USGS (public domain); Earth effects, Saturn, rings, Sun: Solar System Scope (CC BY 4.0). Moon relief: NASA SVS / LRO LOLA. Stars: Yale Bright Star Catalog."
   };

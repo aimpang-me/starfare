@@ -124,6 +124,69 @@ test('Mars shows its 2K colour map only once loaded, on the desktop tier, with M
   assert.equal(phone.u.relief.value, phone.textures.get('mars_normal_1k.png'));
   assert.deepEqual([...phone.textures.keys()].sort(), ['mars_1k.jpg', 'mars_normal_1k.png']);
 });
+function loader(T) {
+  const textures = new Map(), released = [];
+  return { textures, released, sun: { value: new T.Vector3() },
+    texture: f => { if (!textures.has(f)) textures.set(f, new T.Texture()); return textures.get(f); },
+    release: f => { released.push(f); textures.delete(f); },
+    loaded: f => { textures.get(f).image = { width: 1, height: 1 }; } };
+}
+test('close up on the desktop a body shows its 4K map once loaded and lets it go when the view pulls back', async () => {
+  const T = await three(), s = loader(T), body = Effects.createBody(T, 'europa', s), u = body.userData.planetEffects.uniforms;
+  const frame = (radiusPx, pixelRatio = 1) => Effects.update(body, { elapsedSeconds: 0, radiusPx, pixelRatio, quality: 'desktop' });
+  frame(100); s.loaded('europa_2k.jpg'); frame(100);
+  assert.equal(u.day.value, s.textures.get('europa_2k.jpg'));
+  frame(250);
+  assert.equal(s.textures.has('europa_4k.jpg'), false, 'a 2K map still has a texel per pixel on a 250 px disc');
+  frame(160, 2);
+  assert.equal(u.day.value, s.textures.get('europa_2k.jpg'), 'the 4K map is still loading');
+  s.loaded('europa_4k.jpg'); frame(160, 2);
+  assert.equal(u.day.value, s.textures.get('europa_4k.jpg'));
+  frame(130, 2);
+  assert.equal(u.day.value, s.textures.get('europa_4k.jpg'), 'hysteresis holds the 4K map just under the threshold');
+  frame(100, 2);
+  assert.equal(u.day.value, s.textures.get('europa_2k.jpg'));
+  assert.deepEqual(s.released, ['europa_4k.jpg']);
+});
+test('a 4K map still loading when the view pulls back is dropped, never shown', async () => {
+  const T = await three(), s = loader(T), body = Effects.createBody(T, 'saturn', s), u = body.userData.planetEffects.uniforms;
+  const frame = radiusPx => Effects.update(body, { elapsedSeconds: 0, radiusPx, quality: 'desktop' });
+  frame(400); frame(100); s.loaded('saturn_2k.jpg'); frame(100);
+  assert.deepEqual(s.released, ['saturn_4k.jpg']);
+  assert.equal(u.day.value, s.textures.get('saturn_2k.jpg'));
+  Effects.dispose(body);
+  assert.deepEqual(s.released, ['saturn_4k.jpg'], 'maps up to 2K stay cached for other bodies');
+});
+test('each body asks only for tiers it has: Earth and Jupiter never drop below 2K, Uranus tops out at 2K, Titan stays 1K', async () => {
+  const T = await three(), asked = id => {
+    const s = loader(T), body = Effects.createBody(T, id, s);
+    for (const quality of ['mobile', 'desktop']) for (const r of [100, 400]) Effects.update(body, { elapsedSeconds: 0, radiusPx: r, quality });
+    return [...s.textures.keys()].filter(f => !/normal|cloud|ocean|lights|ring/.test(f)).sort();
+  };
+  assert.deepEqual(asked('earth'), ['earth_day_2k.jpg', 'earth_day_4k.jpg']);
+  assert.deepEqual(asked('jupiter'), ['jupiter_2k.jpg', 'jupiter_4k.jpg']);
+  assert.deepEqual(asked('uranus'), ['uranus_1k.jpg', 'uranus_2k.jpg']);
+  assert.deepEqual(asked('titan'), ['titan_1k.jpg']);
+  assert.deepEqual(asked('callisto'), ['callisto_1k.jpg', 'callisto_2k.jpg', 'callisto_4k.jpg']);
+});
+test('every map a body can ask for up to 2K ships in design/assets/tex', async () => {
+  const T = await three(), tex = new URL('../../design/assets/tex/', import.meta.url), missing = [];
+  const ids = ['earth', 'moon', 'mercury', 'venus', 'mars', 'phobos', 'ceres', 'bennu', 'jupiter', 'io', 'europa', 'ganymede', 'callisto', 'saturn', 'titan', 'enceladus', 'uranus', 'neptune', 'triton'];
+  const bodies = [...ids.map(id => [id, s => Effects.createBody(T, id, s)]), ['sun', s => Effects.createSun(T, s)]];
+  for (const [id, create] of bodies) {
+    const s = loader(T), body = create(s);
+    for (const quality of ['mobile', 'desktop']) Effects.update(body, { elapsedSeconds: 0, radiusPx: 100, quality });
+    for (const f of s.textures.keys()) { try { readFileSync(new URL(f, tex)); } catch { missing.push(id + ': ' + f); } }
+  }
+  assert.deepEqual(missing, []);
+});
+test('the Sun sharpens on the desktop like a planet', async () => {
+  const T = await three(), s = loader(T), body = Effects.createSun(T, s), u = body.userData.planetEffects.uniforms;
+  assert.equal(u.day.value, s.textures.get('sun_1k.jpg'));
+  Effects.update(body, { elapsedSeconds: 0, radiusPx: 400, quality: 'desktop' }); s.loaded('sun_4k.jpg');
+  Effects.update(body, { elapsedSeconds: 0, radiusPx: 400, quality: 'desktop' });
+  assert.equal(u.day.value, s.textures.get('sun_4k.jpg'));
+});
 test('Saturn casts opposite ring shadows as the Sun moves, with a clear light-facing side', () => {
   assert.equal(typeof Effects.ringShadowAt,'function');
   assert.ok(Effects.ringShadowAt([-1.5,0,0],[1,.1,0])>.95);
