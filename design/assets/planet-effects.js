@@ -8,12 +8,13 @@
   // Seconds below are deliberately slow illustration periods, not astronomical spin telemetry.
   // Retain the map's existing .35-radian presentation tilt; anchors live outside that frame.
   // veil: the colour a recorded dust storm or haze lays over the body; the page passes how thick, 0 to 1.
+  // A * in a map or relief file stands for the tier, 1k until the body is shown large on the desktop tier, then 2k.
   var PROFILES = {
-    earth: { map:'earth_day_2k.jpg', period:180, air:[.1,.34,.8], shell:1.035, airStrength:.35 },
-    moon: { map:'moon_1k.jpg', period:420, rough:1 },
+    earth: { map:'earth_day_2k.jpg', relief:'earth_normal_*.png', period:180, air:[.1,.34,.8], shell:1.035, airStrength:.35 },
+    moon: { map:'moon_1k.jpg', relief:'moon_normal_1k.png', period:420, rough:1 },
     mercury: { map:'mercury_1k.jpg', period:540, rough:1 },
     venus: { map:'venus_1k.jpg', period:-540, air:[.65,.42,.18], shell:1.045, airStrength:.32, haze:.25 },
-    mars: { map:'mars_1k.jpg', period:300, air:[.48,.18,.08], shell:1.022, airStrength:.2, veil:[.6,.36,.17] },
+    mars: { map:'mars_*.jpg', relief:'mars_normal_1k.png', period:300, air:[.48,.18,.08], shell:1.022, airStrength:.2, veil:[.6,.36,.17] },
     phobos: { map:'phobos_1k.jpg', period:480, rough:1 },
     ceres: { map:'ceres_1k.jpg', period:420, rough:1 },
     bennu: { map:'bennu_1k.jpg', period:480, rough:1 },
@@ -119,7 +120,7 @@
     if (!geo) { geo = new T.SphereGeometry(1, 64, 32); geometries.set(T, geo); }
     var root = new T.Group(), tilt = new T.Group(); tilt.rotation.z = .35; root.add(tilt);
     var uniforms = {
-      day: { value: services.texture(profile.map) },
+      day: { value: services.texture(profile.map.replace('*', '1k')) },
       night: { value: id === 'earth' ? services.texture('earth_lights_2k.jpg') : null },
       relief: { value: null }, ocean: { value: null }, clouds: { value: null },
       normalReady: { value: 0 }, oceanReady: { value: 0 }, cloudReady: { value: 0 }, cloudShift: { value: 0 },
@@ -155,7 +156,7 @@
       ring.rotation.x=-Math.PI/2+.47; ring.renderOrder=1; tilt.add(ring);
     }
     root.userData.textured = true;
-    root.userData.planetEffects = { id: id, profile:profile, uniforms: uniforms, surface: surface, cloud: cloud, atmosphere: atmosphere, ring:ring, services: services, wanted: false, tier: null, center: new T.Vector3(), scale:new T.Vector3(), disposed: false };
+    root.userData.planetEffects = { id: id, profile:profile, uniforms: uniforms, surface: surface, cloud: cloud, atmosphere: atmosphere, ring:ring, services: services, wanted: false, tier: null, day: null, center: new T.Vector3(), scale:new T.Vector3(), disposed: false };
     return root;
   }
   function createSun(T, services) {
@@ -177,12 +178,15 @@
     u.veil.value = e.profile.veil ? context.veil || 0 : 0;
     if (e.cloud) { e.cloud.rotation.y = sec * TAU / 240; u.cloudShift.value = sec * (1 / 180 - 1 / 240); }
     e.wanted = wantsDetail(e.wanted, radius);
-    var tier = context.quality === 'desktop' ? '2k' : '1k';
-    if (e.wanted && e.tier !== tier && (e.id==='earth'||e.id==='moon')) {
+    var tier = context.quality === 'desktop' ? '2k' : '1k', p = e.profile;
+    if (e.wanted && e.tier !== tier && (p.relief || p.map.indexOf('*') >= 0)) {
       e.tier = tier;
-      u.relief.value = e.services.texture(e.id === 'earth' ? 'earth_normal_' + tier + '.png' : 'moon_normal_1k.png');
+      if (p.relief) u.relief.value = e.services.texture(p.relief.replace('*', tier));
+      e.day = e.services.texture(p.map.replace('*', tier));
       if (e.id === 'earth') { u.clouds.value = e.services.texture('earth_clouds_' + tier + '.webp'); u.ocean.value = e.services.texture('earth_ocean_1k.png'); }
     }
+    // The sharper map replaces the shown one only once loaded, so the body never draws blank meanwhile.
+    if (e.day && imageReady(e.day)) { u.day.value = e.day; e.day = null; }
     u.normalReady.value = imageReady(u.relief.value) ? 1 : 0;
     u.oceanReady.value = imageReady(u.ocean.value) ? 1 : 0;
     u.cloudReady.value = imageReady(u.clouds.value) ? 1 : 0;

@@ -103,6 +103,27 @@ test('all mapped worlds have bounded, distinct profiles and preserve their exter
     Effects.dispose(b); Effects.dispose(b);
   }
 });
+test('Mars shows its 2K colour map only once loaded, on the desktop tier, with MOLA relief on every tier', async () => {
+  const T = await three(), sun = { value: new T.Vector3(20, 3, 4) };
+  function mars(quality) {
+    const textures = new Map(), texture = f => { if (!textures.has(f)) textures.set(f, new T.Texture()); return textures.get(f); };
+    const body = Effects.createBody(T, 'mars', { texture, sun }), u = body.userData.planetEffects.uniforms;
+    const frame = () => Effects.update(body, { elapsedSeconds: 0, camera: new T.PerspectiveCamera(), radiusPx: 100, quality });
+    return { textures, u, frame };
+  }
+  const desk = mars('desktop');
+  assert.equal(desk.u.day.value, desk.textures.get('mars_1k.jpg'));
+  desk.frame();
+  assert.equal(desk.u.relief.value, desk.textures.get('mars_normal_1k.png'));
+  assert.equal(desk.u.day.value, desk.textures.get('mars_1k.jpg'), 'the 2K map is still loading');
+  desk.textures.get('mars_2k.jpg').image = { width: 2048, height: 1024 };
+  desk.frame();
+  assert.equal(desk.u.day.value, desk.textures.get('mars_2k.jpg'));
+  const phone = mars('mobile');
+  phone.frame();
+  assert.equal(phone.u.relief.value, phone.textures.get('mars_normal_1k.png'));
+  assert.deepEqual([...phone.textures.keys()].sort(), ['mars_1k.jpg', 'mars_normal_1k.png']);
+});
 test('Saturn casts opposite ring shadows as the Sun moves, with a clear light-facing side', () => {
   assert.equal(typeof Effects.ringShadowAt,'function');
   assert.ok(Effects.ringShadowAt([-1.5,0,0],[1,.1,0])>.95);

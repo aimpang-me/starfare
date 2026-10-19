@@ -84,6 +84,48 @@
       "registration": "Equirectangular; north up; zero longitude at image center; same UV convention as existing color maps.",
       "conversion": "LOLA 0.5m unsigned heights converted to km; geodesic slopes, 4x relief shading, normal-map encoding. No geometric displacement.",
       "credit": "NASA SVS / LRO LOLA"
+    },
+    {
+      "body": "mars",
+      "layer": "color",
+      "file": "mars_1k.jpg",
+      "width": 1024,
+      "height": 512,
+      "encoding": "sRGB color",
+      "source": "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/3/{row}/{col}.jpg",
+      "source_sha256": "a35eb8225043cbce72c301acd901c8a2ed3a26caf915c08e8256c75d0843e3e0",
+      "sha256": "28266083042695b8afd68a637f3c3b46bfba42de24e0d6fce844308b87cc450f",
+      "registration": "Equirectangular; north up; zero longitude at image center; same UV convention as existing color maps.",
+      "conversion": "Zoom-3 WMTS tiles (4096x2048) stitched, Lanczos resize, JPEG quality 90.",
+      "credit": "USGS Astrogeology / NASA Trek, public domain"
+    },
+    {
+      "body": "mars",
+      "layer": "color",
+      "file": "mars_2k.jpg",
+      "width": 2048,
+      "height": 1024,
+      "encoding": "sRGB color",
+      "source": "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/3/{row}/{col}.jpg",
+      "source_sha256": "a35eb8225043cbce72c301acd901c8a2ed3a26caf915c08e8256c75d0843e3e0",
+      "sha256": "8f9b06c20e4f746796716f5abebc7e4a45f7558798b0a81f11dd23fba29441ce",
+      "registration": "Equirectangular; north up; zero longitude at image center; same UV convention as existing color maps.",
+      "conversion": "Zoom-3 WMTS tiles (4096x2048) stitched, Lanczos resize, JPEG quality 90.",
+      "credit": "USGS Astrogeology / NASA Trek, public domain"
+    },
+    {
+      "body": "mars",
+      "layer": "normal",
+      "file": "mars_normal_1k.png",
+      "width": 1024,
+      "height": 512,
+      "encoding": "linear tangent-space RGB",
+      "source": "https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg016/megt90n000eb.img",
+      "source_sha256": "d18d9b9ab8c5516d02e157dd2cde0f1d0d160c21940e953ba22391269a545e7b",
+      "sha256": "bbef542997de4341afe7b5fb979ee7ec71555962ceea40b8c64ccbe576cba353",
+      "registration": "Equirectangular; north up; zero longitude at image center; same UV convention as existing color maps.",
+      "conversion": "MOLA MEGDR 16 px/deg heights averaged 2x2, converted to km on the 3396 km reference sphere; geodesic slopes, 8x relief shading, normal-map encoding. No geometric displacement.",
+      "credit": "NASA / MGS MOLA Science Team (PDS Geosciences Node), public domain"
     }
   ]
 }
