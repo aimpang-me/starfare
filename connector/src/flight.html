@@ -644,9 +644,10 @@ function atmo(color, r) {
   s.scale.setScalar(r * 2.9); return s;
 }
 // An orbit ring on sol-lines, kept in RS.rings so each frame its gap and trail follow its body.
-function ringOf(pts, body, id, opacity, layer) {
-  var line = SolLines.line(pts, { color: 0xffffff, opacity: opacity, width: 1.25, ahead: SolLines.AHEAD });
-  line.userData.id = id; RS.rings.push({ line: line, body: body, layer: layer }); return line;
+// k scales the engine's km to the scene, compress the Sun's scene radial compression (0 for none).
+function ringOf(n, body, id, opacity, layer, k, compress) {
+  var line = SolLines.conic(n, { color: SolLines.STYLE.ring.color, opacity: opacity, width: SolLines.STYLE.ring.width, ahead: SolLines.AHEAD, compress: compress });
+  RS.rings.push({ line: line, body: body, id: id, layer: layer, k: k, compress: !!compress }); return line;
 }
 // A body's drawn radius in CSS px: a station marker's half width, or a sphere's radius at its distance.
 function discPx(m, cam, H) { return m.isPoints ? m.material.size / 2 : m.scale.x / pxw(cam, m.position, H); }
@@ -740,25 +741,6 @@ function shipC(rp, jd, jdNow) {
   var w = S(s.p), c0 = marker(L.from, L.dep).clone().sub(S(rp.pos(L.from, L.dep))), c1 = marker(L.to, L.orb).clone().sub(S(rp.pos(L.to, L.orb)));
   return { v: w.add(c0.multiplyScalar(1 - f)).add(c1.multiplyScalar(f)), s: s };
 }
-// Osculating orbit ring from a state vector (km, km/s): points relative to the attractor, in km.
-function kring(r, v, mu, n) {
-  function cr(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
-  function ln(a) { return Math.hypot(a[0], a[1], a[2]); }
-  function sc(a, k) { return [a[0] * k, a[1] * k, a[2] * k]; }
-  var h = cr(r, v), hm = ln(h), rm = ln(r), vh = cr(v, h);
-  var ev = [vh[0] / mu - r[0] / rm, vh[1] / mu - r[1] / rm, vh[2] / mu - r[2] / rm], e = ln(ev);
-  if (e >= 0.98 || !hm) return [];
-  var p = hm * hm / mu, P = e > 1e-6 ? sc(ev, 1 / e) : sc(r, 1 / rm), W = sc(h, 1 / hm), Q = cr(W, P), out = [];
-  for (var i = 0; i <= n; i++) { var nu = 2 * Math.PI * i / n, rad = p / (1 + e * Math.cos(nu)), c = Math.cos(nu) * rad, s = Math.sin(nu) * rad; out.push([P[0] * c + Q[0] * s, P[1] * c + Q[1] * s, P[2] * c + Q[2] * s]); }
-  return out;
-}
-function relState(id, jd) {
-  var P = SF.place(id), a = SF.E.placeState(id, jd), mu, r = a.r, v = a.v;
-  if (P.parent === "sun") mu = SF.E.MU_SUN;
-  else { var b = SF.E.placeState(P.parent, jd); r = d3(a.r, b.r); v = d3(a.v, b.v); mu = SF.place(P.parent).mu; }
-  return { r: r, v: v, mu: mu };
-}
-
 /* ---------- layers: names, lines and the readout, shared with the sky map through localStorage ---------- */
 var LAY = SolLayers.load(window.localStorage), LAY_BEFORE_CLEAN = null;
 function nameOff(o) { return o.cls === "k-planet" ? !LAY.pln : o.cls === "k-place" ? !LAY.plc : false; }
@@ -1008,8 +990,8 @@ function loadRide(keep) {
   $("#rwho").textContent = rec.player_tag ? "Player run" : "Connector run";
   $("#rwho").className = "tag " + (rec.player_tag ? "me" : "sim");
   $("#rtitle").textContent = (RIDE.record.manifest ? RIDE.record.manifest.bookings.map(function (b) { return b.title; }).join(" + ") : shipWords(h.title || rec.hail_id));
-  $("#rnote").textContent = local ? "Centred on " + SF.name(rp.focus) + ", distances in km. Not to scale: the " + SF.SHIP + " and small moons are enlarged. The flight is simulated."
-    : "Distances compressed; sizes exaggerated. Positions from JPL ephemerides at simulated sky dates; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet." : "");
+  $("#rnote").textContent = local ? "Centred on " + SF.name(rp.focus) + ", distances in km. Not to scale: the " + SF.SHIP + " and small moons are enlarged. Orbit lines are two-body orbits at the sky date. The flight is simulated."
+    : "Distances compressed; sizes exaggerated. Positions from JPL ephemerides at simulated sky dates. Orbit lines are two-body orbits at the sky date; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet." : "");
   if (GL && window.SolArt) $("#rnote").insertAdjacentHTML("beforeend", '<span class="cred cred-l">' + esc(SolArt.CREDIT) + ' <a href="/assets/CREDITS.md">Credits</a></span><span class="cred cred-s">Maps: NASA, JPL, USGS; Solar System Scope (CC BY 4.0). <a href="/assets/CREDITS.md">Credits</a></span>');
   $("#sticks").innerHTML = rp.events.map(function (e) { return '<span class="tick ' + e.kind + '" style="left:' + ((e.jd - rp.start) / span * 100).toFixed(2) + '%" title="' + W(e.title) + '"></span>'; }).join("");
   $("#callouts").innerHTML = ""; RS.ckey = null; RS.lvst = null;
@@ -1035,7 +1017,7 @@ function flownBy(jd) {
 var TRAILMAT = null;
 function trailOf(seg) {
   TRAILMAT = TRAILMAT || new THREE.ShaderMaterial({
-    uniforms: { color: { value: new THREE.Color(0x9cc3ff) }, now: { value: 0 }, res: { value: new THREE.Vector2(1, 1) }, dpr: { value: 1 } },
+    uniforms: { color: { value: new THREE.Color(SolLines.STYLE.route.color) }, now: { value: 0 }, res: { value: new THREE.Vector2(1, 1) }, dpr: { value: 1 } },
     transparent: true, depthWrite: false,
     vertexShader: "#include <common>\n#include <logdepthbuf_pars_vertex>\n" +
       "attribute vec3 a;attribute vec3 b;attribute vec2 flown;uniform vec2 res;uniform float dpr;uniform float now;varying float vS;varying float vSide;varying float vHw;\n" +
@@ -1086,8 +1068,7 @@ function buildRideScene() {
       if (Q.kind === "moon") { r = Math.max(0.05, Q.radius_km / 1000); m = planetMesh(id); m.scale.setScalar(r); }
       else { r = 0.03; m = SolLines.marker(Q.real ? 0xdfe6ee : 0xffb65c); }
       sc.add(m); RS.bodies.push({ id: id, m: m, r: r });
-      var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 160).map(function (q) { return axes(q, 1 / 1000); });
-      if (ring.length) { var g = new THREE.Group(); g.add(ringOf(ring, m, id, 0.14, "moon")); sc.add(g); RS.bodies.push({ id: Q.parent, ringOf: id, m: g, r: 0 }); }
+      var g = new THREE.Group(); g.add(ringOf(256, m, id, SolLines.STYLE.ring.moon, "moon", 1 / 1000, 0)); sc.add(g); RS.bodies.push({ id: Q.parent, ringOf: id, m: g, r: 0 });
       labels.add({ html: esc(SF.name(id)), cls: Q.kind === "moon" ? "k-planet" : "k-place", pri: Q.kind === "moon" ? 40 : 30, pos: function () { return placeK(id, RS.cur); } });
     });
   } else {
@@ -1099,8 +1080,7 @@ function buildRideScene() {
       var id = Q.id, m, minPx = 2;
       if (Q.kind === "planet" || (Q.kind === "small" && Q.mu)) {
         m = planetMesh(id); minPx = 2.6;
-        var st = relState(id, rp.start), ring = kring(st.r, st.v, st.mu, 180).map(function (q) { return S([q[0] / AU, q[1] / AU, q[2] / AU]); });
-        if (ring.length) sc.add(ringOf(ring, m, id, 0.12, "orb"));
+        sc.add(ringOf(1024, m, id, SolLines.STYLE.ring.orbit, "orb", 1 / AU, K));
       } else if (Q.kind === "moon" && used[id]) m = planetMesh(id);
       else if (used[id]) m = SolLines.marker(Q.real ? 0xdfe6ee : 0xffb65c);
       else return;
@@ -1132,7 +1112,7 @@ function buildRideScene() {
       var j = L.dep + (L.orb - L.dep) * k / n, point = shipPos(j), s = s0 + j - L.dep;
       pts.push(point); seg.push(previous.x, previous.y, previous.z, point.x, point.y, point.z, ps, s); previous = point; ps = s;
     }
-    var flown = SolLines.line(pts, { color: 0x9cc3ff, opacity: 0.22, width: 1 }); RS.paths.push(flown); sc.add(flown);
+    var flown = SolLines.line(pts, SolLines.STYLE.flown); RS.paths.push(flown); sc.add(flown);
     s0 += L.orb - L.dep;
   });
   RS.trail = seg.length ? trailOf(seg) : null;
@@ -1140,7 +1120,7 @@ function buildRideScene() {
   // Legs still to fly in a live flight: dashed, straight between the places at the planned times. They can change at a checkpoint.
   rp.plan.forEach(function (Q) {
     var a = local ? placeK(Q.from, Q.dep) : marker(Q.from, Q.dep), b = local ? placeK(Q.to, Q.arr) : marker(Q.to, Q.arr);
-    var planned = SolLines.leg([{ v: a, f: 0, s: 0 }, { v: b, f: 1, s: 1 }], { color: 0xffcf7a, opacity: 0.5, width: 1.5 }); RS.paths.push(planned); sc.add(planned);
+    var planned = SolLines.leg([{ v: a, f: 0, s: 0 }, { v: b, f: 1, s: 1 }], SolLines.STYLE.plan); RS.paths.push(planned); sc.add(planned);
   });
   RS.ship = makeShip(rp.car); sc.add(RS.ship);
   var cls = SF.E.SHIP_CLASSES[(SF.E.R.CAR[String(rp.car).toLowerCase()] || {}).ship_class];
@@ -1279,7 +1259,11 @@ function rideFrame(dt, t) {
   if (RS.camp.distanceTo(p) > D * 30 && !RS.over && !hold) { RS.camp.copy(want); RS.look.copy(look); }
   cam.up.copy(RS.local && !RS.over && !hold && RS.up ? RS.up : V(0, 1, 0));
   cam.position.copy(RS.camp); cam.lookAt(RS.look);
-  RS.rings.forEach(function (o) { o.line.visible = !!LAY[o.layer]; SolLines.follow(o.line, o.body.position, o.line.parent.position, discPx(o.body, cam, GH)); });
+  RS.rings.forEach(function (o) {
+    var el = SolLines.osculate(SF, o.id, jd, o.k, SolLines.axes);
+    o.line.visible = !!LAY[o.layer] && !!el;
+    if (el) { SolLines.aim(o.line, el); if (!o.compress) o.line.position.copy(o.body.position).sub(o.line.parent.position); SolLines.follow(o.line, o.body.position, o.line.parent.position, discPx(o.body, cam, GH)); }
+  });
   RS.paths.forEach(function (o) { o.visible = SolLayers.showPath(LAY, true); });
   SolLines.zoom(pxw(cam, RS.look, GH));
   if (RS.planetClock && window.SolArt && SolArt.updatePlanet) {
