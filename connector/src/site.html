@@ -151,6 +151,11 @@ h1,h2,h3{margin:0;font-weight:600}
 .popm label{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12.5px;cursor:pointer}
 .popm input{accent-color:var(--cy);width:15px;height:15px}
 .popm .caps{margin-bottom:4px}
+.ctxm{position:fixed;z-index:30;min-width:200px;padding:6px;background:#081224;border:1px solid var(--line-2);border-radius:4px;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+.ctxm .caps{padding:4px 10px 6px}
+.ctxm button,.ctxm a{display:block;width:100%;box-sizing:border-box;text-align:left;padding:7px 10px;font:inherit;font-size:12.5px;color:inherit;background:none;border:0;border-radius:3px;cursor:pointer;text-decoration:none}
+.ctxm button:hover,.ctxm a:hover,.ctxm button:focus-visible,.ctxm a:focus-visible{background:rgba(255,255,255,.09);outline:0}
+@media (pointer:coarse){.ctxm button,.ctxm a{min-height:44px}}
 .mapwrap{position:relative;flex:1;min-height:0}
 .mapbox{position:absolute;inset:0;overflow:hidden;background:radial-gradient(110% 90% at 50% 45%, #0b1730 0%, #050a14 70%);border-bottom-left-radius:var(--r);border-bottom-right-radius:var(--r)}
 .gl-host{position:absolute;inset:0;touch-action:none;cursor:grab}
@@ -478,6 +483,7 @@ p{text-wrap:pretty}
           </div>
         </div></div>
     </div>
+    <div class="ctxm" id="ctxMenu" role="menu" aria-label="Map actions" hidden></div>
     <div class="mapwrap">
       <div class="mapbox" id="mapbox">
         <div class="gl-host" id="glhost" tabindex="0" role="region" aria-label="Solar system at true scale. Drag or arrow keys look; W A S D fly; plus and minus move closer or farther; Home shows the whole system."></div>
@@ -951,7 +957,7 @@ function addFlightObjs(F) {
   F.ship = window.SolArt ? SolArt.ship({ callsign: F.call }) : makeShip();
   F.halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(160,225,255,.9)", "rgba(92,200,255,.25)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
   scene.add(F.halo); scene.add(F.ship);
-  F.lbl = LBL.add({ html: esc(F.call), cls: "k-sample", pri: 90, click: function () { var i = FL.indexOf(F); if (i >= 0) select({ t: "f", i: i }); },
+  F.lbl = LBL.add({ html: esc(F.call), cls: "k-sample", hit: function () { var i = FL.indexOf(F); return i >= 0 ? { i: i } : null; }, pri: 90, click: function () { var i = FL.indexOf(F); if (i >= 0) select({ t: "f", i: i }); },
     dblclick: function () { var i = FL.indexOf(F); if (i >= 0) { select({ t: "f", i: i }); setFollow(true); } },
     pos: function () { return F.sc ? F.sc.v : null; }, hide: function () { return !FILT.fl || PIL.lock === F || (FOLLOW && SEL.t === "f" && FL[SEL.i] !== F); } });
 }
@@ -1383,7 +1389,7 @@ function LabelSet(root) {
   return {
     add: function (o) {
       var el = document.createElement(o.click ? "button" : "div");
-      el.className = "lbl " + (o.cls || ""); el.innerHTML = o.html;
+      el.className = "lbl " + (o.cls || ""); el.innerHTML = o.html; el.hit = o.hit;
       if (o.click) { el.type = "button"; el.addEventListener("click", o.click); }
       if (o.dblclick) el.addEventListener("dblclick", o.dblclick);
       root.appendChild(el); o.el = el; o.w = 0; o.on = false; o.slot = 0;
@@ -1614,21 +1620,60 @@ function bindPilot(host) {
     down = null;
   }
   host.addEventListener("pointerup", up); host.addEventListener("pointercancel", up);
-  host.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+  // Labels sit above the canvas, so listen on the whole map and leave real controls alone.
+  $("#mapbox").addEventListener("contextmenu", function (e) { if (!e.target.closest("#labels") && e.target.closest("button,a,input,label,.popm,#ctxMenu")) return; e.preventDefault(); openCtx(e.clientX, e.clientY, e.target.closest("#labels .lbl")); });
+  document.addEventListener("pointerdown", function (e) { if (!e.target.closest("#ctxMenu")) closeCtx(); });
   host.addEventListener("wheel", function (e) { e.preventDefault(); pilotDolly(Math.exp(clamp(e.deltaY, -240, 240) * 0.0015)); }, { passive: false });
 }
 // Click a ship to ride along or a body to jump to it; the nearest within 22 px wins.
-function pick(cx, cy) {
+function hitAt(cx, cy) {
   var r = $("#glhost").getBoundingClientRect(), x = cx - r.left, y = cy - r.top, best = null, bd = 22;
-  function test(rel, hit) {
+  function test(rel, hit, rpx) {
     PT.copy(rel).project(cam); if (PT.z >= 1 || PT.z <= -1) return;
-    var d = Math.hypot((PT.x + 1) / 2 * GW - x, (1 - PT.y) / 2 * GH - y);
+    var d = Math.max(0, Math.hypot((PT.x + 1) / 2 * GW - x, (1 - PT.y) / 2 * GH - y) - (rpx || 0));
     if (d < bd) { bd = d; best = hit; }
   }
   if (FILT.fl) FL.forEach(function (F, i) { if (F.ship && F.ship.visible) test(F.ship.position, { i: i }); });
-  BODIES.forEach(function (b) { if (b.obj.visible) test(PD.copy(b.obj.position).sub(EYE), { id: b.id }); });
-  if (!best) return;
+  BODIES.forEach(function (b) { if (b.obj.visible) test(PD.copy(b.obj.position).sub(EYE), { id: b.id }, b.obj.scale.x / pxAt(b.obj.position)); });
+  return best;
+}
+function pick(cx, cy) {
+  var best = hitAt(cx, cy); if (!best) return;
   if (best.id) jumpToPlace(best.id); else select({ t: "f", i: best.i });
+}
+// Right-click menu over the map. Every item repeats something reachable elsewhere, plus a way to copy a position.
+function xyz(v) { return "X " + sgn(v.x, 3) + " Y " + sgn(-v.z, 3) + " Z " + sgn(v.y, 3) + " AU"; }
+var ctxTimer = 0;
+function closeCtx() { clearTimeout(ctxTimer); $("#ctxMenu").hidden = true; }
+function openCtx(cx, cy, lbl) {
+  if (!GL) return;
+  var m = $("#ctxMenu"), hit = lbl && lbl.hit ? lbl.hit() : hitAt(cx, cy), items = [], title;
+  function copy(txt) { return function (btn) { var ok = function () { btn.textContent = "Copied."; ctxTimer = setTimeout(closeCtx, 600); }, no = function () { btn.textContent = "Copy blocked by the browser."; }; try { navigator.clipboard.writeText(txt).then(ok, no); } catch (x) { no(); } return true; }; }
+  if (hit && hit.id) {
+    var b = BID[hit.id], bk = DESK.find(function (d) { return d.to === hit.id; });
+    title = hit.id === "sun" ? "Sun" : SF.name(hit.id);
+    items.push(["Jump to " + title, function () { jumpToPlace(hit.id); }]);
+    if (bk) items.push(["Show booking route here", function () { select({ t: "b", id: bk.id }); }]);
+    items.push(["Copy position", copy(title + ", heliocentric ecliptic: " + xyz(bodyPos(b)))]);
+  } else if (hit) {
+    var F = FL[hit.i]; title = F.call;
+    items.push(["Ride along", function () { select({ t: "f", i: hit.i }); }]);
+    items.push(["Follow", function () { select({ t: "f", i: hit.i }); setFollow(true); }]);
+    if (RUN_ID.test(F.run_id)) items.push(["View flight page", "/flight/" + F.run_id]);
+  } else {
+    title = "Camera";
+    items.push(["Whole system view", function () { focusBody("sun"); }]);
+    items.push(["Copy camera position", copy("Camera, heliocentric ecliptic: " + xyz(EYE))]);
+  }
+  m.innerHTML = '<div class="caps">' + esc(title) + "</div>" + items.map(function (it, i) { return typeof it[1] === "string" ? '<a role="menuitem" href="' + esc(it[1]) + '">' + esc(it[0]) + "</a>" : '<button type="button" role="menuitem" data-i="' + i + '">' + esc(it[0]) + "</button>"; }).join("");
+  m.onclick = function (e) {
+    var t = e.target.closest("button[data-i]"); if (!t) return;
+    var keep = items[+t.dataset.i][1](t); if (keep !== true) closeCtx();
+  };
+  m.hidden = false;
+  m.style.left = Math.max(4, Math.min(cx, innerWidth - m.offsetWidth - 4)) + "px";
+  m.style.top = Math.max(4, Math.min(cy, innerHeight - m.offsetHeight - 4)) + "px";
+  var first = m.querySelector("button,a"); if (first) first.focus();
 }
 function bindKeys() {
   function typing(t) { return t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable); }
@@ -1755,14 +1800,14 @@ function stopSprite(id) {
 function labels() {
   LBL = LabelSet($("#labels"));
   var noLbl = function () { return !LAY.lbl; };
-  LBL.add({ html: "Sun", cls: "k-planet", pri: 60, radial: true, gap: function () { return Math.max(SUN.scale.x / pxAt(V0), 7) + 12; }, pos: function () { return V0; }, hide: noLbl, click: function () { focusBody("sol"); } });
+  LBL.add({ html: "Sun", cls: "k-planet", hit: function () { return { id: "sun" }; }, pri: 60, radial: true, gap: function () { return Math.max(SUN.scale.x / pxAt(V0), 7) + 12; }, pos: function () { return V0; }, hide: noLbl, click: function () { focusBody("sol"); } });
   RINGS.forEach(function (r) {
     var a = -0.62, p = V(Math.cos(a) * r, 0, Math.sin(a) * r);
     LBL.add({ html: (r < 1 ? r.toFixed(1) : String(r)) + " AU", cls: "k-ring", pri: 4, dot: false, pos: function () { return p; }, hide: function () { return !LAY.ring || GRIDF < .5; } });
   });
   PLACES.forEach(function (p) {
     var pl = p.kind === "planet", sm = p.kind === "small", b = BID[p.id];
-    LBL.add({ html: esc(SF.name(p.id)), cls: pl ? "k-planet" : "k-place", radial: pl, gap: pl ? function () { return Math.max(b.obj.scale.x / pxAt(b.obj.position), 4.5) + 12; } : 8, pri: pl ? 50 : sm ? 24 : p.kind === "moon" ? 18 : 14,
+    LBL.add({ html: esc(SF.name(p.id)), cls: pl ? "k-planet" : "k-place", hit: function () { return BID[p.id] ? { id: p.id } : null; }, radial: pl, gap: pl ? function () { return Math.max(b.obj.scale.x / pxAt(b.obj.position), 4.5) + 12; } : 8, pri: pl ? 50 : sm ? 24 : p.kind === "moon" ? 18 : 14,
       pos: function () { return marker(p.id, MAPJD); }, click: function () { jumpToPlace(p.id); },
       hide: function () { return !LAY.lbl || !b.obj.visible || (!pl && !sm && sepPx(p.id) <= 10); } });
   });
@@ -2384,6 +2429,7 @@ function start() {
   $("#logM").addEventListener("click", function (e) { if (e.target === $("#logM")) closeBoard(); });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
+    closeCtx();
     if (!$("#intro").hidden) closeIntro();
     else if (!$("#logM").hidden) closeBoard();
     else $$(".popm").forEach(function (m) { m.hidden = true; });
