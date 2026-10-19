@@ -1539,6 +1539,7 @@ function soiOf(b) {
 function autoAnchor() {
   var A = PIL.anchor;
   if (A && A.F) { if (FL.indexOf(A.F) >= 0 && PIL.off.length() < 1e-4) return; A = null; }
+  if (A && A.b && !A.b.rKm && A.b.kind !== "sun" && PIL.off.length() < 3e-5) return; // a station has no sphere of its own: the camera stays with it until it is about 4,500 km off
   var best = null, bs = Infinity;
   BODIES.forEach(function (b) { var s = soiOf(b); if (!s || s >= bs) return; if (bodyPos(b).distanceTo(PIL.pos) < s * (A && A.b === b ? 2 : 1)) { best = b; bs = s; } });
   best = best || BID.sun;
