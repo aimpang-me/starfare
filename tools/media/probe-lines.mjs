@@ -1,5 +1,6 @@
 // Measure the home map's orbit lines in the live scene against a running Worker (wrangler dev):
 //   node probe-lines.mjs [base]        # base defaults to http://127.0.0.1:8787
+//   node probe-lines.mjs base counts   # only count the lines drawn and their inked pixels, with the grid off and on
 // At the whole-system view and four focus views it reports, for each orbit and moon ring:
 //   offPx      how far the body is drawn from its line, in pixels (fail above 1);
 //   centre     the line's alpha over the body, rendering that line alone (fail above 0, the gap must hide it);
@@ -113,6 +114,35 @@ const measure = (label) => page.evaluate((label) => {
   return out;
 }, label);
 
+// The lines a view draws, by kind, and their ink: the pixels any line covers when the lines render alone.
+const count = (label) => page.evaluate((label) => {
+  const cam = window.__cam, scene = window.__scene, lines = [], kinds = { grid: 0, orbits: 0, moonRings: 0, routes: 0, trails: 0 };
+  scene.updateMatrixWorld(true);
+  scene.traverseVisible((o) => {
+    const u = o.isMesh && o.material.uniforms;
+    if (!u || !u.hw) return;
+    const route = !!(o.material.defines && o.material.defines.ROUTE);
+    if (Math.max(u.opacity.value, route ? u.flown.value : 0) < 0.002) return;
+    lines.push(o);
+    kinds[route ? (u.tail && u.tail.value.y > 0 ? "trails" : "routes") : u.ahead.value === 1 ? "grid" : SF.place(o.userData.id).kind === "moon" ? "moonRings" : "orbits"]++;
+  });
+  const size = lines.length ? lines[0].material.uniforms.res.value : { x: 1, y: 1 };
+  const r = window.__probeR || (window.__probeR = new THREE.WebGLRenderer({ logarithmicDepthBuffer: true }));
+  const rt = new THREE.WebGLRenderTarget(size.x, size.y), hidden = [];
+  scene.traverse((o) => { if ((o.isMesh || o.isLine || o.isPoints || o.isSprite) && o.visible && !lines.includes(o)) { hidden.push(o); o.visible = false; } });
+  const bg = scene.background;
+  scene.background = null; r.setClearColor(0x000000, 0);
+  r.setRenderTarget(rt); r.clear(); r.render(scene, cam); r.setRenderTarget(null);
+  const px = new Uint8Array(size.x * size.y * 4);
+  r.readRenderTargetPixels(rt, 0, 0, size.x, size.y, px);
+  let ink = 0;
+  for (let i = 3; i < px.length; i += 4) if (px[i] > 2) ink++;
+  hidden.forEach((o) => { o.visible = true; });
+  scene.background = bg; rt.dispose();
+  const dist = cam.top / StarfareMap.projection(1, 1, 1, { x: 0, y: 0, width: 1, height: 1 }).top;
+  return { label, dist: +dist.toFixed(1), total: lines.length, ...kinds, inkPx: ink };
+}, label);
+
 // Samples once per drawn frame (the page caps its frame rate), from the scene's onBeforeRender.
 const trackRoutes = (label, frames = 90) => page.evaluate(({ label, frames }) => new Promise((done) => {
   const cam = window.__cam, scene = window.__scene, prev = scene.onBeforeRender;
@@ -172,9 +202,9 @@ const routeChecks = (r) => {
   if (r.maxTipPx > 1) fails.push(`${r.label}: trail tip ${r.maxTipPx} px from its ship`);
 };
 
-// "whole" is the whole-system view (the reset button); other ids are the planet buttons.
+// "whole" is the whole-system view (the reset button), "inner" the inner-system button; other ids are the planet buttons.
 const focus = (id) => page.evaluate((id) => {
-  const b = id === "whole" ? document.querySelector("#resetMap") : [...document.querySelectorAll("#planetNav [data-body]")].find((x) => x.dataset.body === id);
+  const b = id === "whole" ? document.querySelector("#resetMap") : id === "inner" ? document.querySelector('#focus [data-f="inner"]') : [...document.querySelectorAll("#planetNav [data-body]")].find((x) => x.dataset.body === id);
   if (b) b.click();
   return !!b;
 }, id);
@@ -188,6 +218,18 @@ const lineChecks = (l) => [
   l.far === 0 && "does not draw",
   l.fade != null && (l.fade < 0.3 || l.fade > 0.55) && `fade ${l.fade}`
 ].filter(Boolean);
+const grid = (on) => page.evaluate((on) => { const c = document.querySelector('[data-lay="ring"]'); c.checked = on; c.dispatchEvent(new Event("change")); }, on);
+for (const on of [false, true]) {
+  await grid(on);
+  for (const id of ["whole", "inner", "earth", "jupiter"]) {
+    await focus(id); await page.waitForTimeout(3500);
+    console.log(JSON.stringify(await count(`lines drawn, ${id === "whole" ? "whole system" : "focus " + id}${on ? ", grid on" : ""}`)));
+  }
+}
+await grid(false);
+if (process.argv[3] === "counts") { await browser.close(); process.exit(errors.length ? 1 : 0); }
+await focus("whole");
+await page.waitForTimeout(3500);
 report(await measure("whole system"), lineChecks);
 for (const id of ["earth", "mars", "jupiter", "saturn"]) {
   if (!(await focus(id))) { fails.push(`no focus button for ${id}`); continue; }

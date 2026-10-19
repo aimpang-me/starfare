@@ -1361,13 +1361,15 @@ function syncRoute(o, color) {
   if (o.rp) scene.add(o.route = routeOf(o.rp, color));
   return o.route;
 }
-// Each frame: move every leg with its ends, and cut flown from planned at sky time now.
-function aimRoute(g, jdNow, now, planned, flown) {
+// Each frame: move every leg with its ends, and cut flown from planned at sky time now. A trail (world units) limits
+// the flown part to that length behind the ship; 0 draws it whole.
+function aimRoute(g, jdNow, now, planned, flown, trail) {
   g.children.forEach(function (m) {
     var k = legFrame(m.userData.L, jdNow), u = m.material.uniforms;
     m.position.copy(k.an); u.e0.value.copy(k.e0); u.e1.value.copy(k.e1);
     u.now.value = now - g.userData.t0; u.opacity.value = planned; u.flown.value = flown;
   });
+  SolLines.tails(g.children, now - g.userData.t0, trail || 0);
 }
 
 /* ---------- labels, clamped to the map panel ---------- */
@@ -1538,8 +1540,9 @@ var RINGS = [0.5, 1, 2, 5, 10, 20, 30];
 // A moon's ring is the path it flew over its last period, so the seam sits under the moon. The Moon's real orbit
 // precesses, so a ring sampled once would leave it behind; rings are resampled every few sky days.
 function moonRing(m, jd) {
-  m.epoch = jd;
-  SolLines.setPoints(m.line, SF.orbit(m.id, jd - m.period, 120).map(function (rel) { return localOff(rel, m.par); }));
+  var pts = SF.orbit(m.id, jd - m.period, 120).map(function (rel) { return localOff(rel, m.par); });
+  m.epoch = jd; m.radius = pts.reduce(function (s, p) { return s + p.length(); }, 0) / pts.length;
+  SolLines.setPoints(m.line, pts);
 }
 function aimRing(line, id, centre) { var b = BID[id]; if (b) SolLines.follow(line, b.obj.position, centre, b.obj.visible ? b.obj.scale.x / pxw() : 0); }
 function buildScene(J0) {
@@ -1549,11 +1552,12 @@ function buildScene(J0) {
   SUN = sunObj(SIZE.sun); scene.add(SUN);
   if (window.SolArt) SolArt.setSun(V());
   GRID = new THREE.Group();
+  var gridLine = function (pts, opacity) { var o = SolLines.line(pts, { color: 0x5cc8ff, opacity: opacity, width: 1 }); o.userData.baseOpacity = opacity; GRID.add(o); };
   RINGS.forEach(function (r) {
     var pts = []; for (var k = 0; k <= 200; k++) { var a = k / 200 * TAU; pts.push(V(Math.cos(a) * rs(r), 0, Math.sin(a) * rs(r))); }
-    GRID.add(SolLines.line(pts, { color: 0x5cc8ff, opacity: r === 1 ? 0.16 : 0.08, width: 1 }));
+    gridLine(pts, r === 1 ? 0.16 : 0.08);
   });
-  for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; GRID.add(SolLines.line([V(Math.cos(a) * rs(0.12), 0, Math.sin(a) * rs(0.12)), V(Math.cos(a) * rs(34), 0, Math.sin(a) * rs(34))], { color: 0x5cc8ff, opacity: 0.045, width: 1 })); }
+  for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; gridLine([V(Math.cos(a) * rs(0.12), 0, Math.sin(a) * rs(0.12)), V(Math.cos(a) * rs(34), 0, Math.sin(a) * rs(34))], 0.045); }
   scene.add(GRID);
   ORB = new THREE.Group();
   PLACES.filter(function (p) {
@@ -1566,7 +1570,7 @@ function buildScene(J0) {
     if (p.kind === "moon") {
       try {
         var m = { g: new THREE.Group(), id: p.id, par: p.parent, period: p.period_days, line: SolLines.line([], { color: SF.color(p.id), opacity: 0.27, width: 1.25, ahead: SolLines.AHEAD }) };
-        m.line.userData.id = p.id; moonRing(m, J0); m.g.add(m.line); scene.add(m.g); MOR.push(m);
+        m.line.userData = { id: p.id, baseOpacity: m.line.material.uniforms.opacity.value }; moonRing(m, J0); m.g.add(m.line); scene.add(m.g); MOR.push(m);
       } catch (e) { /* no orbit */ }
     }
     var o, r, min;
@@ -1603,7 +1607,7 @@ function labels() {
   LBL.add({ html: "Sun", cls: "k-planet", pri: 60, radial: true, gap: function () { return Math.max(SIZE.sun / pxw(), 7) + 12; }, pos: function () { return V(); }, hide: noLbl, click: function () { focusBody("sol"); } });
   RINGS.forEach(function (r) {
     var a = -0.62, p = V(Math.cos(a) * rs(r), 0, Math.sin(a) * rs(r));
-    LBL.add({ html: (r < 1 ? r.toFixed(1) : String(r)) + " AU", cls: "k-ring", pri: 4, dot: false, pos: function () { return p; }, hide: function () { return !LAY.ring; } });
+    LBL.add({ html: (r < 1 ? r.toFixed(1) : String(r)) + " AU", cls: "k-ring", pri: 4, dot: false, pos: function () { return p; }, hide: function () { return !LAY.ring || SolLines.budget("grid", RIG.dist) < .5; } });
   });
   PLACES.forEach(function (p) {
     var pl = p.kind === "planet", sm = p.kind === "small";
@@ -1670,21 +1674,26 @@ function draw(dt, t) {
     if (b.obj.visible) b.obj.scale.setScalar(Math.max(b.r, pxw(v) * b.min));
     if (b.obj.visible && window.SolArt && SolArt.updatePlanet) SolArt.updatePlanet(b.obj, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: b.obj.scale.x / pxw(), quality: SolArt.quality().maps });
   }
+  // A moon's ring draws with its moon, fading in as it opens out round the planet.
   MOR.forEach(function (m) {
-    m.g.position.copy(marker(m.par, MAPJD)); m.g.visible = LAY.moon && RIG.dist < 45 && (!DETAIL_SYS || SF.system(m.par) === DETAIL_SYS);
+    var b = BID[m.id], fade = SolLines.budget("moonRing", m.radius / pxw());
+    m.g.position.copy(marker(m.par, MAPJD)); m.g.visible = LAY.moon && fade > 0 && b.obj.visible;
     if (!m.g.visible) return;
+    m.line.material.uniforms.opacity.value = m.line.userData.baseOpacity * fade;
     if (SolLines.stale(m.epoch, MAPJD)) moonRing(m, MAPJD);
     aimRing(m.line, m.id, m.g.position);
   });
   ORB.children.forEach(function (o) { o.material.uniforms.opacity.value = o.userData.baseOpacity * (DETAIL_SYS ? .3 : 1); aimRing(o, o.userData.id, ORB.position); });
-  GRID.visible = LAY.ring; ORB.visible = LAY.orb;
+  var gridFade = SolLines.budget("grid", RIG.dist);
+  GRID.visible = LAY.ring && gridFade > 0; ORB.visible = LAY.orb;
+  GRID.children.forEach(function (o) { o.material.uniforms.opacity.value = o.userData.baseOpacity * gridFade; });
   // routes
   SolLines.zoom(pxw());
   FL.forEach(function (F, j) {
     var on = FILT.fl && !(rep && SEL.i !== j), sel = SEL.t === "f" && SEL.i === j;
     var fa = 1;
     var g = syncRoute(F, 0x5cc8ff); g.visible = on;
-    if (on) aimRoute(g, MAPJD, F.jd, (sel ? 0.6 : 0.28) * fa, (sel ? 1 : 0.55) * fa);
+    if (on) aimRoute(g, MAPJD, F.jd, sel ? 0.6 * fa : 0, (sel ? 1 : 0.55) * fa, sel ? 0 : SolLines.TRAIL_PX * pxw());
     F.ship.visible = F.halo.visible = on && fa > 0.01;
     if (!F.ship.visible) return;
     var v = F.sc.v, s = pxw(v) * fa;

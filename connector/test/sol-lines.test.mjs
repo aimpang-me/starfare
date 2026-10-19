@@ -56,3 +56,39 @@ test('the dash period steps by octaves of zoom and blends toward the next', () =
     near(d.period * 2 ** d.t, 12 * pxw, 1e-12);
   }
 });
+
+test('the distance grid fades out as the camera closes on one system', () => {
+  assert.equal(Lines.budget('grid', 142), 1);
+  assert.equal(Lines.budget('grid', 60), 1);
+  assert.equal(Lines.budget('grid', 47.5), 0.5);
+  assert.equal(Lines.budget('grid', 35), 0);
+  assert.equal(Lines.budget('grid', 9), 0);
+});
+
+test('a moon ring fades in between 12 and 40 px of ring radius', () => {
+  assert.equal(Lines.budget('moonRing', 8), 0);
+  assert.equal(Lines.budget('moonRing', 12), 0);
+  assert.equal(Lines.budget('moonRing', 26), 0.5);
+  assert.equal(Lines.budget('moonRing', 40), 1);
+  assert.equal(Lines.budget('moonRing', 300), 1);
+});
+
+test('distance along a leg follows sky time between its points and holds at its ends', () => {
+  const ss = [0, 2, 4], ds = [0, 10, 30];
+  assert.equal(Lines.along(ss, ds, -1), 0);
+  assert.equal(Lines.along(ss, ds, 1), 5);
+  assert.equal(Lines.along(ss, ds, 3), 20);
+  assert.equal(Lines.along(ss, ds, 9), 30);
+});
+
+test('a trail measures the ship from each leg start, along the whole route', () => {
+  const leg = (ss, ds) => ({ userData: { ss, ds }, material: { uniforms: { tail: { value: { set(x, y) { Object.assign(this, { x, y }); } } } } } });
+  const tail = (m) => { const { x, y } = m.material.uniforms.tail.value; return [x, y]; };
+  const a = leg([0, 10], [0, 100]), b = leg([20, 30], [0, 50]);
+  Lines.tails([a, b], 25, 8);
+  assert.deepEqual([tail(a), tail(b)], [[125, 8], [25, 8]]);
+  Lines.tails([a, b], 15, 8);
+  assert.deepEqual([tail(a), tail(b)], [[100, 8], [0, 8]]);
+  Lines.tails([a, b], -5, 0);
+  assert.deepEqual([tail(a), tail(b)], [[0, 0], [-100, 0]]);
+});
