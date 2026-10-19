@@ -1587,6 +1587,7 @@ function pilotTurn(key) { pilotLook(key === "ArrowLeft" ? -20 : key === "ArrowRi
 function bindPilot(host) {
   var ptrs = {}, down = null, pinch = 0;
   host.addEventListener("pointerdown", function (e) {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
     ptrs[e.pointerId] = [e.clientX, e.clientY]; DRAG = true;
     try { host.setPointerCapture(e.pointerId); } catch (x) { /* capture is optional */ }
     var ids = Object.keys(ptrs);
@@ -1640,7 +1641,10 @@ function bindKeys() {
     else if (k === "c" && PIL.lock) { PIL.view = PIL.view === "chase" ? "cockpit" : "chase"; PIL.cyaw = PIL.cpitch = 0; mapHud(); glStart(); }
   });
   document.addEventListener("keyup", function (e) { delete KEYS[e.key.toLowerCase()]; KEYS.shift = e.shiftKey ? 1 : 0; });
-  addEventListener("blur", function () { KEYS = {}; });
+  // The browser swallows the keyup when a context menu opens or the tab hides, so a held key would fly on forever.
+  function release() { KEYS = {}; }
+  addEventListener("blur", release); addEventListener("contextmenu", release);
+  document.addEventListener("visibilitychange", release);
 }
 function markFocus(f, body) {
   $$("#focus [data-f]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.f === f ? "true" : "false"); });
