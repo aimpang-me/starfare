@@ -20,3 +20,6 @@ audit/option-b-thermal-hardware-budget.json
 
 # 4K planet maps are release assets; design/prepare-planet-assets.py rebuilds them.
 design/assets/tex/*_4k.*
+
+.playwright-mcp/
+tools/media/*-this-session-is-being-continued-*.txt
