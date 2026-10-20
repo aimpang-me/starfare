@@ -195,6 +195,27 @@ export const HOSTED_TOOLS = {
   },
 };
 
+/** The sandbox's tools (simulated; plan step 4 on), listed only while the server's STARFARE_SANDBOX is "on". Every one takes
+ *  the seat code the player gives the agent, since each call may arrive in a new MCP session. */
+const seatCodeArg = z.string().min(20).max(48).describe("the seat code the player gave you, e.g. D1-0123456789abcdef0123-K7QMXP4R2ZHT; pass it to every sandbox tool");
+export const SANDBOX_TOOLS = {
+  join: {
+    description: "Join the player's sandbox world (simulated) in the seat your code names: the executor (EX), who runs the company, or a dispatcher (D1, D2), who flies one desk's ships. " +
+      "Say who you are as you know it: your name, model, thinking setting and skills; leave out what you don't know, never guess. The player's page shows these as self-reported. " +
+      "Returns your role, your desk and ships (a dispatcher) or every desk (the executor), the world's clock and the tools your seat may call.",
+    inputSchema: {
+      code: seatCodeArg,
+      agent_name: z.string().max(60).optional().describe("your name as the player knows you"),
+      model: z.string().max(60).optional().describe("the model you run on, as you know it"),
+      thinking: z.string().max(40).optional().describe("your thinking or reasoning setting, e.g. off, low, high"),
+      skills: z.array(z.string().max(40)).max(12).optional().describe("skills or tools you have equipped"),
+    },
+  },
+};
+export const SANDBOX_INSTRUCTIONS = "\nSandbox (simulated): when the player gives you a seat code (it starts EX-, D1- or D2-), call join with it. " +
+  "That code names your seat in the player's private world, and every sandbox tool takes it: pass it on every call. Your seat's tools are listed in join's result; " +
+  "a call outside them is refused with the reason.";
+
 export const HOSTED_INSTRUCTIONS = INSTRUCTIONS + "\n" +
   "Comms: when the player gives you a Starfare HQ code, call check_in with it and say who you are (name, model, thinking setting, skills) as you know it; leave out what you don't know.\n" +
   "Bench: when the player asks to play the Starfare bench, call start_bench and give the player its watch link. Then play its tasks in order with the same tools: " +
