@@ -6,9 +6,11 @@ import sys
 from PIL import Image, ImageDraw, ImageFont
 
 ORDER = ["station-orbital-depot", "station-lunar-data-center", "station-mars-base", "station-ceres-port",
-         "station-titan-dock", "dock-ring", "dock-tether", "dock-spar", "ship-taxi", "ship-shuttle", "ship-liner"]
+         "station-titan-dock", "dock-ring", "dock-tether", "dock-spar", "ship-taxi", "ship-shuttle", "ship-liner",
+         "debris-stage", "debris-husk", "debris-fairing", "debris-panels", "debris-rock"]
 src, out = sys.argv[1], sys.argv[2]
-names = [n for n in ORDER if os.path.exists(os.path.join(src, n + ".png"))]
+names = [n for n in ORDER if len(sys.argv) < 4 or n.startswith(sys.argv[3])]
+names = [n for n in names if os.path.exists(os.path.join(src, n + ".png"))]
 T, COLS, BG = 300, 4, (8, 10, 14)
 rows = (len(names) + COLS - 1) // COLS
 sheet = Image.new("RGB", (COLS * T, rows * (T + 70) + 40), BG)

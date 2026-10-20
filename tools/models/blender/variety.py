@@ -141,9 +141,9 @@ def collar(at, axis, r=2.2):
     return [cyl(r * 0.6, L, c, e, 16, mat="dark"), ring(r, r * 0.22, a + ax * 3, e, 24, 8, mat="dark")]
 
 
-def rock(r, at, seed, squash=(1.25, 1.0, 0.85)):
+def rock(r, at, seed, squash=(1.25, 1.0, 0.85), subdiv=5):
     """A captured asteroid: a noisy, cratered icosphere."""
-    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=5, radius=r)
+    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=subdiv, radius=r)
     o = bpy.context.object
     rng = random.Random(seed)
     craters = [(Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-1, 1))).normalized(), rng.uniform(0.15, 0.45))
@@ -385,6 +385,80 @@ def liner():
     return join(P, "ship-liner")
 
 
+# ---------- debris (generic, fictional; small budgets, they are many and small) ----------
+
+def cut(o, keep):
+    """Delete the vertices of o (in its local frame after placement) where keep(co) is false: torn and halved parts."""
+    import bmesh
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not keep(v.co)], context="VERTS")
+    bm.to_mesh(o.data)
+    bm.free()
+    return o
+
+
+def debris_stage():
+    """A spent upper stage: a tank cylinder, an open interstage ring, a dead nozzle, a snapped strut."""
+    P = [cyl(1.6, 7, (0, 0, 0), (math.pi / 2, 0, 0), 20), ball(1.6, (0, -3.5, 0), 16, mat="mli")]
+    P.append(cyl(1.65, 1.2, (0, 3.2, 0), (math.pi / 2, 0, 0), 20, mat="accent"))
+    P.append(cyl(1.7, 1.6, (0, 4.4, 0), (math.pi / 2, 0, 0), 20, r2=1.9, mat="dark"))   # interstage skirt
+    P.append(cyl(0.35, 1.0, (0, 4.6, 0), (math.pi / 2, 0, 0), 12, mat="dark"))
+    P.append(cyl(0.4, 1.6, (0, 5.6, 0), (-math.pi / 2, 0, 0), 16, r2=1.0, mat="dark"))  # nozzle, cold
+    P.append(rod((1.2, -2, 1.0), (2.6, -2.6, 2.2), 0.08))
+    return join(P, "debris-stage")
+
+
+def debris_husk():
+    """A dead satellite: a box bus, one solar wing torn short, a bent dish, foil peeling."""
+    P = [box((1.6, 1.6, 2.0), (0, 0, 0), mat="mli"), box((1.62, 1.62, 0.25), (0, 0, 0.7), mat="dark")]
+    P.append(rod((0.8, 0, 0), (1.6, 0, 0), 0.06))
+    P += panel(3.2, 1.4, (3.3, 0, 0), (0, math.radians(12), math.radians(8)), 0.04, 3, kind="solar")
+    P += panel(1.1, 1.4, (-1.6, 0, 0.1), (0, math.radians(-30), math.radians(-20)), 0.04, 1, kind="solar")  # stub
+    P.append(cyl(0.9, 0.25, (0, 0.6, 1.5), (math.radians(65), math.radians(20), 0), 16, r2=0.15, mat="hull"))
+    P.append(box((0.9, 0.04, 0.7), (0.4, 0.85, -0.6), (0.3, 0.2, 0.5), mat="mli"))  # peeled foil
+    return join(P, "debris-husk")
+
+
+def debris_fairing():
+    """Half a payload fairing shell, curled and open: the hollow side reads at any angle."""
+    o = cyl(2.2, 5, (0, 0, 0), (0, 0, 0), 24, mat="hull")
+    t = cyl(2.2, 3, (0, 0, 4), (0, 0, 0), 24, r2=0.4, mat="hull")
+    o = join([o, t], "debris-fairing")
+    cut(o, lambda v: v.x > -0.05)
+    o.rotation_euler = (0.4, 0.2, 0.9)
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    return o
+
+
+def debris_panels():
+    """A loose cluster of torn panel shards and a bent truss stub, from a breakup."""
+    rng = random.Random(11)
+    P = []
+    for i in range(7):
+        w, h = rng.uniform(0.6, 2.2), rng.uniform(0.4, 1.4)
+        at = (rng.uniform(-3, 3), rng.uniform(-3, 3), rng.uniform(-2, 2))
+        rot = (rng.uniform(0, math.pi), rng.uniform(0, math.pi), rng.uniform(0, math.pi))
+        P.append(box((w, h, 0.05), at, rot, mat=rng.choice(["hull", "radiator", "solar", "mli"])))
+    P += truss((-1, -1, -1), (1.8, 0.4, 0.9), 0.4, bay=0.5)
+    return join(P, "debris-panels")
+
+
+def debris_rock():
+    """A small rock: a boulder or shard from a captured body, a few metres across."""
+    o = rock(2.5, (0, 0, 0), 23, squash=(1.6, 0.9, 0.7), subdiv=2)
+    rng = random.Random(5)
+    planes = [(Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-1, 1))).normalized(), rng.uniform(1.0, 1.9))
+              for _ in range(9)]
+    for v in o.data.vertices:                     # cleave it flat on a few planes: a broken shard, not a pebble
+        for n, d in planes:
+            h = v.co.dot(n)
+            if h > d:
+                v.co -= n * (h - d)
+    return join([o], "debris-rock")
+
+
 # What the pages show where (written into variety.json). The engine's ship classes are real reference hulls with
 # placeholder seats; until the taxi/shuttle/liner ladder is decided, each maps to the look that fits its job: DS1 hops
 # like a taxi, Dawn is the mid hull, RTG ships fly the outer system like liners. Seats are not drawn, so this is
@@ -403,6 +477,8 @@ MODELS = {
     "station-mars-base": mars_base, "station-ceres-port": ceres_port, "station-titan-dock": titan_dock,
     "dock-ring": dock_ring, "dock-tether": dock_tether, "dock-spar": dock_spar,
     "ship-taxi": taxi, "ship-shuttle": shuttle, "ship-liner": liner,
+    "debris-stage": debris_stage, "debris-husk": debris_husk, "debris-fairing": debris_fairing,
+    "debris-panels": debris_panels, "debris-rock": debris_rock,
 }
 
 
