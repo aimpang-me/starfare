@@ -609,6 +609,9 @@ test("shared flight: plan_leg chains one car's legs; the one-booking tools and s
 
 test("shared flight: dispatch with legs, stops and quotes scores each booking and lists the passengers stop by stop", async () => {
   const s = await sharedRun(), legs = await sharedLegs(s.call), [, l2, , l4] = legs;
+  // Each plan_leg leg says who its chain puts aboard and each booking's per-seat fare so far; these two never share a leg.
+  assert.deepEqual(legs.map((l) => l.aboard), [0, 1, 0, 1]);
+  assert.deepEqual(l4.fares_so_far, { "ceres-shift": l2.fare_usd, "phobos-commute": l4.fare_usd });
   const out = await s.call("dispatch", {
     legs: legs.map((l) => l.leg_id), ask_after_hours: "never",
     stops: [{ board: ["ceres-shift"] }, { alight: ["ceres-shift"] }, { board: ["phobos-commute"] }, { alight: ["phobos-commute"] }],

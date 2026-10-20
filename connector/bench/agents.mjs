@@ -34,17 +34,23 @@ const maxAboard = (stops, party) => {
   for (const s of stops) { n += s.board.reduce((a, id) => a + party[id], 0); top = Math.max(top, n); n -= s.alight.reduce((a, id) => a + party[id], 0); }
   return top;
 };
-/** Each booking's fare (the sum over the legs it rides) and its arrival (where its last leg lands), from legs as the tools print them. */
-function quotesOf(stops, legs, ids) {
-  const q = {};
+/** Each booking's fare and its arrival (where its last leg lands), from legs as the tools print them and the party sizes get_hail lists.
+ *  Fares are per seat: each leg it rides splits by party size among the bookings aboard, the same sum R.seatFares makes. */
+function quotesOf(stops, legs, ids, party) {
+  const at = (id, k) => stops.findIndex((s) => s[k].includes(id)), q = {};
+  const on = legs.map((L, i) => ids.filter((id) => at(id, "board") < i && i <= at(id, "alight")));
   for (const id of ids) {
-    const b = stops.findIndex((s) => s.board.includes(id)), a = stops.findIndex((s) => s.alight.includes(id));
-    q[id] = { fare_usd: legs.slice(b + 1, a + 1).reduce((x, L) => x + L.fare_usd, 0), arrival: legs[a].arrive };
+    const usd = legs.reduce((x, L, i) => {
+      if (!on[i].includes(id)) return x;
+      const n = on[i].reduce((a, b) => a + party[b], 0);
+      return x + (party[id] === n ? L.fare_usd : L.fare_usd * party[id] / n);
+    }, 0);
+    q[id] = { fare_usd: Math.round(usd * 100) / 100, arrival: legs[at(id, "alight")].arrive };
   }
   return q;
 }
-const dispatchShared = (call, run_id, legs, stops, ids) => call("dispatch", {
-  run_id, legs: legs.map((L) => L.leg_id), stops: stops.map((s) => ({ board: s.board, alight: s.alight })), quotes: quotesOf(stops, legs, ids), ask_after_hours: "never",
+const dispatchShared = (call, run_id, legs, stops, ids, party) => call("dispatch", {
+  run_id, legs: legs.map((L) => L.leg_id), stops: stops.map((s) => ({ board: s.board, alight: s.alight })), quotes: quotesOf(stops, legs, ids, party), ask_after_hours: "never",
 });
 
 /** Plans a shared flight's legs one by one; prefix shares the legs of routes already planned with this car. null if a leg fails or the calls run out. */
@@ -105,7 +111,7 @@ export async function naive(call, E) {
     if (legs) rows.push({ kwh: legs.reduce((a, L) => a + L.battery_kwh, 0), legs, stops });
   }
   for (const { legs, stops } of rows.sort((a, b) => a.kwh - b.kwh)) {
-    const d = await dispatchShared(call, run_id, legs, stops, ids);
+    const d = await dispatchShared(call, run_id, legs, stops, ids, party);
     if (d.ok !== false) return d;
   }
 }
@@ -138,7 +144,7 @@ export async function random(call, E, rng) {
     const legs = await planRoute(call, run_id, pick(rng, cars).id, stops, obj(), null);
     if (legs === "out") return;
     if (!legs) continue;
-    const d = await dispatchShared(call, run_id, legs, stops, ids);
+    const d = await dispatchShared(call, run_id, legs, stops, ids, party);
     if (d.ok !== false) return d;
   }
 }
@@ -164,11 +170,7 @@ export function reference(E, run) {
     const flown = [{ F: R.start(run.id, car, plan, t0, seed, { ask_after_hours: null, end_jd: end }).done, replans: 0, path: [] },
       { F: O.outcome, replans: O.decisions.filter((d) => d.action === "replan").length, path: O.path }];
     for (const { F, replans, path } of flown) {
-      const fareOf = (id) => {
-        if (!stops) return legs[1].fare;
-        const M = R.manifest({ stops, legs }), s = M.stop[id];
-        return legs.slice(s.board[0], s.alight[0]).reduce((a, L) => a + L.fare, 0);
-      };
+      const fareOf = (id) => (stops ? R.seatFares({ stops, legs })[id] : legs[1].fare);
       const quoteOf = (id) => ({ fare_usd: fareOf(id), arrival: isoJD(stops ? F.bookings[id].arrive_jd : F.arrive_jd) });
       const sc = R.score(run.id, stops ? { stops, legs } : legs, {
         ...ctx, ship: car, window_kwh: legs.reduce((a, L) => a + (L && L.window_kwh != null ? L.window_kwh : L ? L.kwh : 0), 0),

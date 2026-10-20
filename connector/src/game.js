@@ -258,7 +258,8 @@ const sharedRules = (run) =>
   " This is a shared flight (simulated) with " + run.hails.length + " bookings, listed in bookings: one Starseeker carries them all, and passengers aboard can't exceed its seats. " +
   "Plan it with plan_leg, not plan_pickup and plan_ride: the first leg names a ship (its car field) and flies from where it is parked; each later leg names after_leg and flies on from where that one lands, " +
   "after boarding if a booking boards there. A leg's to is a booking's pickup or destination. Then dispatch with legs (the legs in order), stops (one per leg: the bookings that board and alight where it lands) " +
-  "and quotes (a fare_usd and an arrival for each booking). A booking's fare is the sum of the fares of the legs it rides. Fast pickup, on time, kept promise and honest fare are scored per booking " +
+  "and quotes (a fare_usd and an arrival for each booking). Fares are per seat: each leg's fare_usd is split by party size among the bookings aboard it, a booking pays its share of each leg it rides, " +
+  "and a leg with nobody aboard is free. plan_leg's fares_so_far gives each booking's share on the stops the chain implies. Fast pickup, on time, kept promise and honest fare are scored per booking " +
   "and averaged by party size; energy is against par, the best nearby ship carrying every booking.";
 const rules = (E) =>
   "Pick a Starseeker from the fleet (the car field takes its call sign). A ship with a busy_until time is finishing another (simulated) job and can't leave before then; \"free\" ships can leave when the rider is ready. " +
@@ -674,7 +675,15 @@ export async function decide(E, run, inp, legFn) {
 }
 
 // ---- applyTool: every run-scoped tool call, the one way a run changes in the live game and in a bench run. ----
-const planned = (E, run, { leg, cached }) => Object.assign(legPub(E, leg), { plans_used: run.calls, cached });
+const planned = (E, run, { leg, cached }) => Object.assign(legPub(E, leg), leg.role === "leg" ? chainView(E, run, leg) : {}, { plans_used: run.calls, cached });
+/** A plan_leg leg's chain back to the ship's first leg, priced on the stops it implies (R.chainStops): who is aboard this leg,
+ *  and each booking's fare per seat for the legs so far. The dispatch prices the stops it is given. */
+function chainView(E, run, L) {
+  const R = E.R, chain = [];
+  for (let x = L; x; x = x.after ? own(run.legs, x.after) : null) chain.unshift(x);
+  const stops = R.chainStops(run.hails, R.CAR[chain[0].car].at, chain), M = R.manifest({ stops, legs: chain });
+  return { aboard: M.party[chain.length - 1], fares_so_far: R.seatFares({ stops, legs: chain }) };
+}
 const RUN_TOOLS = {
   get_hail: (E, run, inp, ctx) => hailInfo(E, run, ctx.nowMs),
   plan_pickup: async (E, run, inp, ctx) => planned(E, run, await planPickup(E, run, inp, ctx.legFn)),

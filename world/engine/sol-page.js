@@ -1342,6 +1342,32 @@ function manifest(plan){
   Object.keys(stop).forEach(function(id){ if (hails.indexOf(id) < 0) hails.push(id); });
   return { hails: hails, roles: roles, party: party, stop: stop };
 }
+// Fares per seat (Alvin, 2026-10-20): a leg's fare is split by party size among the bookings aboard it, and a booking pays
+// its share of each leg it rides. A leg with nobody aboard (a pickup) is not charged, as before. Shares are rounded to cents.
+function seatFares(plan){
+  var M = manifest(plan), out = {};
+  M.hails.forEach(function(b){ out[b] = 0; });
+  plan.legs.forEach(function(L, i){
+    var on = M.party[i];
+    M.hails.forEach(function(b){ var s = M.stop[b];
+      if (BY[b] && s.board.length && s.board[0] <= i && (!s.alight.length || i < s.alight[0])) out[b] += BY[b].party === on ? +L.fare : +L.fare * BY[b].party / on; });
+  });
+  Object.keys(out).forEach(function(b){ out[b] = Math.round(out[b] * 100) / 100; });
+  return out;
+}
+function fares(id, car, legs){ return seatFares(planOf(id, car, legs)); }
+// The stops a chain of legs implies for a set of bookings: each boards at its first visit to its pickup and alights at its
+// first visit after that to its destination. Stop 0 is where the car starts. A plan_leg chain is priced on these stops.
+function chainStops(ids, startAt, legs){
+  var stops = [{ at: startAt }], state = {};
+  legs.forEach(function(L){
+    var s = { at: L.to, board: [], alight: [] };
+    ids.forEach(function(id){ if (state[id] === "aboard" && BY[id].to === L.to){ s.alight.push(id); state[id] = "done"; } });
+    ids.forEach(function(id){ if (!state[id] && BY[id].from === L.to){ s.board.push(id); state[id] = "aboard"; } });
+    stops.push(s);
+  });
+  return stops;
+}
 
 var PID = {}; E.PLACES.forEach(function(p){ PID[p.id] = p; });
 // Which planet's neighbourhood a place is in (stations and moons belong to their planet; Ceres to itself).
@@ -2037,7 +2063,7 @@ function score(id, legs, ctx){
   function row(key, label, got, unit, measure, note){ return { key: key, label: label, max: SCORE_MAX[key], got: got, unit: unit, measure: measure, note: note }; }
   function booking(b){
     var B = ctx.bookings && ctx.bookings[b] || ctx, Fb = F.bookings && F.bookings[b] || F, mine = ridden(b), last = mine[mine.length - 1];
-    var fare = mine.map(function(l){ return l.fare; }).reduce(function(a, f){ return a + f; });
+    var fare = shares[b];
     var wait = Math.max(1e-6, Fb.pickup_jd - B.t0), late = Math.max(0, Fb.arrive_jd - B.arrive_by_jd);
     var q = B.quote || {}, fareGap = isFinite(+q.fare_usd) ? Math.abs(+q.fare_usd - fare) : fare, fareOk = isFinite(+q.fare_usd) && fareGap <= 1, qj = quotedJd(q.arrival);
     var slip = qj == null ? null : Fb.arrive_jd - qj;
@@ -2049,10 +2075,10 @@ function score(id, legs, ctx){
       row("pickup", "Fast pickup", SCORE_MAX.pickup * scoreRatio(pickupExcess), "min", waitMin, "rider waited " + dur(wait) + " (" + waitMin.toFixed(1) + " min), quickest nearby ship " + dur(B.best_wait_days) + ". " + Math.max(0, waitMin - bestMin).toFixed(1) + " min over that ship"),
       row("on_time", "Arrived on time", SCORE_MAX.on_time * scoreRatio(lateMin / 60), "min", lateMin, late > 0 ? "arrived " + dur(late) + " late (" + lateMin.toFixed(1) + " min). The reference is 0 min late" : "arrived by " + iso(B.arrive_by_jd) + ", 0 min late"),
       row("promise", "Kept the promise", SCORE_MAX.promise * scoreRatio(promiseExcess), "min", slipMin, qj == null ? "no arrival time was quoted" : slip > 1 / 1440 ? "arrived " + dur(slip) + " (" + slipMin.toFixed(1) + " min) after the quoted " + iso(qj) + ". The reference is 0 min late" : slip < -1 / 1440 ? "arrived " + dur(-slip) + " (" + (-slipMin).toFixed(1) + " min) before the quoted " + iso(qj) : "arrived when promised, " + iso(qj)),
-      row("fare", "Honest fare", SCORE_MAX.fare * scoreRatio(fareExcess), "USD", fareGap, "fare " + (fareOk ? "matches" : "does not match") + " the ride leg's $" + k(fare) + (isFinite(+q.fare_usd) ? ". $" + fareGap.toFixed(2) + " off that fare" : ""))
+      row("fare", "Honest fare", SCORE_MAX.fare * scoreRatio(fareExcess), "USD", fareGap, "fare " + (fareOk ? "matches" : "does not match") + (one ? " the ride leg's $" : " its seats' share of the legs it rides, $") + k(fare) + (isFinite(+q.fare_usd) ? ". $" + fareGap.toFixed(2) + " off that fare" : ""))
     ] };
   }
-  var bookings = {}; M.hails.forEach(function(b){ bookings[b] = booking(b); });
+  var shares = seatFares(plan), bookings = {}; M.hails.forEach(function(b){ bookings[b] = booking(b); });
   var people = M.hails.reduce(function(a, b){ return a + bookings[b].party; }, 0);
   function mean(key){ var rows = M.hails.map(function(b){ return [b, bookings[b].parts.filter(function(p){ return p.key === key; })[0]]; }), p = rows[0][1];
     return { key: p.key, label: p.label, max: p.max, unit: p.unit,
@@ -2134,7 +2160,7 @@ function admit(h){
 }
 return { DWELL: DWELL, WINDOW: WINDOW, LEAD: LEAD, FLEET: FLEET, CAR: CAR, HAILS: HAILS, BY: BY, system: system, nearCars: nearCars,
   hailRow: hailRow, admit: admit,
-  planLeg: planLeg, par: par, terms: terms, check: check, score: score, planOf: planOf, manifest: manifest, iso: iso,
+  planLeg: planLeg, par: par, terms: terms, check: check, score: score, planOf: planOf, manifest: manifest, fares: fares, seatFares: seatFares, chainStops: chainStops, iso: iso,
   MAX_BOOKINGS: MAX_BOOKINGS, stopOrders: stopOrders, parSet: parSet, termsSet: termsSet,
   HOLD_KWH: HOLD_KWH, BERTHS: BERTHS, hazards: hazards, siphash24: siphash24, fly: fly, pickupStart: pickupStart, fleetState: fleetState,
   padForecast: padForecast, flareForecast: flareForecast, flareReach: flareReach, lightDays: lightDays, weatherForecast: weatherForecast,

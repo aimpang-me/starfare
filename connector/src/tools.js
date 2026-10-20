@@ -70,7 +70,9 @@ export const TOOLS = {
   },
   plan_leg: {
     description: "Shared flights only (get_hail lists several bookings): plan one leg of the flight to a booking's pickup place or destination, and re-fly it in the n-body checker. " +
-      "The first leg names a ship (its car field) and flies from where it is parked; each later leg names after_leg and flies on from where that leg lands, after boarding if anyone boards there (or wait_days later). Returns the leg with its leg_id, fare_usd and arrive time.",
+      "The first leg names a ship (its car field) and flies from where it is parked; each later leg names after_leg and flies on from where that leg lands, after boarding if anyone boards there (or wait_days later). Returns the leg with its leg_id, fare_usd and arrive time, " +
+      "plus aboard (passengers on this leg) and fares_so_far (each booking's fare for the legs so far, per seat), read from the stops this chain implies: " +
+      "a booking boards at its first visit to its pickup and alights at its first visit after that to its destination.",
     inputSchema: {
       run_id: runId,
       car: z.string().optional().describe("first leg: the ship's call sign from the fleet, e.g. sf-01"),
@@ -114,7 +116,7 @@ export const TOOLS = {
       stops: z.array(z.object({ board: z.array(z.string()).optional(), alight: z.array(z.string()).optional() })).optional()
         .describe("shared flight: one entry per leg, the hail ids that board and alight where that leg lands"),
       quotes: z.record(z.object({ fare_usd: z.number(), arrival: z.string() })).optional()
-        .describe("shared flight: per hail id, the fare you quote (the sum of fare_usd over the legs it rides) and the arrival you promise"),
+        .describe("shared flight: per hail id, the fare you quote (its seats' share of the legs it rides: fares_so_far on the last leg when your stops are the ones the chain implies) and the arrival you promise"),
       ask_after_hours: z.union([z.number().min(0).max(24), z.literal("never")]).optional()
         .describe("stop at a checkpoint once a hold or pad wait passes this many hours (0-24, default 1); \"never\" flies the default answers without stopping"),
       note,
