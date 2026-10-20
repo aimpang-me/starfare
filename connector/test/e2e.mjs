@@ -103,8 +103,8 @@ const jdOf = (s) => Date.parse(s.replace(" ", "T") + ":00Z") / 864e5 + 2440587.5
 function nodeScore(hailId, riderReady, season, carId, planCalls, quote, objective = "energy", opts = {}) {
   const t0 = jdOf(riderReady), h = R.BY[hailId], seed = String(season);
   const T = R.terms(hailId, t0, SEASON_END, seed);
-  const p = computeLeg(E, R.CAR[carId].at, h.from, R.pickupStart(hailId, carId, t0, seed), objective, SEASON_END, carId);
-  const r = computeLeg(E, h.from, h.to, p.arr_jd + R.DWELL, objective, SEASON_END, carId);
+  const p = computeLeg(E, R.CAR[carId].at, h.from, R.pickupStart(hailId, carId, t0, seed), objective, SEASON_END, carId, 0);
+  const r = computeLeg(E, h.from, h.to, p.arr_jd + R.DWELL, objective, SEASON_END, carId, h.party);
   const q = quote === "exact" ? { fare_usd: r.fare, arrival: isoJD(r.arr_jd) } : quote;
   let F = R.fly(hailId, carId, [p, r], t0, seed);
   // A ride that stopped and was answered has a recovery grade. fly() does not: it never asks.

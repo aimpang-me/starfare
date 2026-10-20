@@ -296,17 +296,18 @@ export function legPub(E, L) {
   return {
     leg_id: L.leg_id, kind: L.role, ...(L.car ? { car: L.car } : {}), from: placeName(L.from), to: placeName(L.to), depart: isoJD(L.dep_jd), arrive: isoJD(L.arr_jd),
     tof_days: +L.tof_days.toFixed(2), burn_total_kms: L.dv, battery_kwh: L.kwh, xenon_kg: L.xenon_kg, set_point: L.set_point, r_au: L.r_au == null ? null : +(+L.r_au).toFixed(3),
-    departures: L.departures || [], fare_usd: L.fare, refly: L.refly,
+    departures: L.departures || [], fare_usd: L.fare, refly: L.refly, ...(L.aboard != null ? { aboard: L.aboard } : {}),
     ...(L.busy_until_jd ? { car_busy_until: isoJD(L.busy_until_jd), note: "The ship was busy on another job until " + isoJD(L.busy_until_jd) + ", so this pickup leaves no earlier than then." } : {}),
   };
 }
 
 /** Key for the plan+re-fly cache: everything planLeg and refly depend on. */
-export const legKey = (from, to, t, obj, endJd, ship) => ["arc12", from, to, t.toFixed(6), obj, endJd.toFixed(6), ship || ""].join("|");
+export const legKey = (from, to, t, obj, endJd, ship, aboard) => ["arc12", from, to, t.toFixed(6), obj, endJd.toFixed(6), ship || "", +aboard || 0].join("|");
 
-/** planLeg + refly, reduced to what a leg keeps (page planLegFor). arc_au is the drawn path, kept for the /flight replay. */
-export function computeLeg(E, from, to, t, obj, endJd, ship) {
-  const b = E.R.planLeg(from, to, t, obj, endJd, ship);
+/** planLeg + refly, reduced to what a leg keeps (page planLegFor). arc_au is the drawn path, kept for the /flight replay.
+ *  aboard: the people on the leg; a fictional-drive leg keeps it, since its burn depends on it. */
+export function computeLeg(E, from, to, t, obj, endJd, ship, aboard) {
+  const b = E.R.planLeg(from, to, t, obj, endJd, ship, aboard);
   const g = E.refly(b);
   const loc = !!(g && g.local);
   const departures = (b.departures || []).map((d) => ({
@@ -316,7 +317,7 @@ export function computeLeg(E, from, to, t, obj, endJd, ship) {
   return {
     from, to, dep_jd: b.dep_jd, arr_jd: b.arr_jd, tof_days: b.tof_days, dv: +b.dv_total_kms.toFixed(3), kwh: b.battery.energy_kwh, fare: b.fare.total_usd,
     xenon_kg: b.battery.propellant_kg, set_point: b.battery.set_point || null, r_au: b.r_au, window_kwh: b.window_kwh,
-    throttled_kwh: b.battery.energy_kwh, departures,
+    throttled_kwh: b.battery.energy_kwh, departures, ...(b.battery.aboard != null ? { aboard: b.battery.aboard } : {}),
     gate: loc ? "local" : g && g.pass ? "PASS" : "FAIL",
     refly: loc ? { result: "not re-flown: local transfer" } : g && g.error ? { result: "FAIL", note: g.error }
       : { final_miss_km: +(+g.final_miss_km).toFixed(3), retarget_ms: +(+g.retarget_ms).toFixed(1), result: g.pass ? "PASS" : "FAIL" },
@@ -332,18 +333,18 @@ function guardRun(run) {
   if (phase === "in_flight") fail("this hail has already been dispatched and the ship is at a checkpoint; answer it with decide");
   if (phase === "arrived") fail("this hail has already been dispatched");
 }
-async function addLeg(run, role, car, from, to, t, obj, legFn, extra) {
+async function addLeg(run, role, car, from, to, t, obj, legFn, extra, aboard) {
   if (run.calls >= MAX_PLANS_PER_RUN) fail("this run has used its " + MAX_PLANS_PER_RUN + " plans; take the hail again");
   run.calls++;
   let got;
-  try { got = await legFn(from, to, t, obj, SEASON_END, car || run.car); }
+  try { got = await legFn(from, to, t, obj, SEASON_END, car || run.car, aboard || 0); }
   catch (e) { throw new GameError(String((e && e.message) || e)); }
   const id = "leg" + (++run.lseq);
   const L = Object.assign({ leg_id: id, role, ...(car ? { car } : {}) }, got.leg, extra);
   run.legs[id] = L;
   return { leg: L, cached: got.cached };
 }
-const defaultLegFn = (E) => (from, to, t, obj, end, ship) => ({ leg: computeLeg(E, from, to, t, obj, end, ship), cached: false });
+const defaultLegFn = (E) => (from, to, t, obj, end, ship, aboard) => ({ leg: computeLeg(E, from, to, t, obj, end, ship, aboard), cached: false });
 const waitOf = (inp) => Math.max(0, Math.min(400, +inp.wait_days || 0));
 
 /** Page planPickup(car, objective, wait). Mutates run. A plan counts even if planning then fails.
@@ -369,7 +370,7 @@ export async function planRideLeg(E, run, inp, legFn) {
   if (prev.role !== "pickup") fail(inp.after_leg + " is a ride leg; pass the pickup leg");
   const obj = inp.objective === "time" ? "time" : "energy", wait = waitOf(inp);
   // The ride flies the pickup's ship. run.car is not set until dispatch, and a missing ship would plan this leg as Dawn.
-  return addLeg(run, "ride", prev.car, h.from, h.to, prev.arr_jd + R.DWELL + wait, obj, legFn || defaultLegFn(E), { objective: obj, wait_days: wait, after: prev.leg_id });
+  return addLeg(run, "ride", prev.car, h.from, h.to, prev.arr_jd + R.DWELL + wait, obj, legFn || defaultLegFn(E), { objective: obj, wait_days: wait, after: prev.leg_id }, h.party);
 }
 
 function carOf(E, q) {
@@ -387,12 +388,13 @@ export async function planHop(E, run, inp, legFn) {
   const ends = [...new Set(run.hails.flatMap((id) => [R.BY[id].from, R.BY[id].to]))], to = placeOf(inp.to);
   if (!to || !ends.includes(to.id)) fail("to must be a booking's pickup or destination: " + ends.map(placeName).join(", "));
   const obj = inp.objective === "time" ? "time" : "energy", wait = waitOf(inp);
-  let car, from, t, extra;
+  let car, from, t, extra, chain = [];
   if (inp.after_leg != null && inp.after_leg !== "") {
     const prev = own(run.legs, inp.after_leg);
     if (!prev || prev.role !== "leg") fail("unknown leg_id " + inp.after_leg + ": pass the plan_leg leg this one follows");
     if (inp.car && carOf(E, inp.car).id !== prev.car) fail(inp.after_leg + " flies " + R.CAR[prev.car].name + "; a flight is one ship");
     car = prev.car; from = prev.to;
+    for (let x = prev; x; x = x.after ? own(run.legs, x.after) : null) chain.unshift(x);
     t = prev.arr_jd + (run.hails.some((id) => R.BY[id].from === from) ? R.DWELL : 0) + wait;
     extra = { after: prev.leg_id };
   } else {
@@ -401,7 +403,10 @@ export async function planHop(E, run, inp, legFn) {
     extra = start > run.t0 ? { busy_until_jd: start } : {};
   }
   if (from === to.id) fail("this leg would start and end at " + to.name);
-  return addLeg(run, "leg", car, from, to.id, t, obj, legFn || defaultLegFn(E), { objective: obj, wait_days: wait, ...extra });
+  // Planned for the people the chain implies aboard this leg (R.chainStops), as chainView reports and dispatch checks.
+  chain.push({ from, to: to.id });
+  const aboard = R.manifest({ stops: R.chainStops(run.hails, R.CAR[car].at, chain), legs: chain }).party[chain.length - 1];
+  return addLeg(run, "leg", car, from, to.id, t, obj, legFn || defaultLegFn(E), { objective: obj, wait_days: wait, ...extra }, aboard);
 }
 
 // ---- forecasts: read-only, free (not plans). They only ever show what the engine forecasts (booked berths, odds). ----
@@ -537,7 +542,7 @@ function stopsPlan(E, run, inp) {
   return probs.length ? { problems: probs } : { legs, stops, quotes };
 }
 
-const slimLeg = (L) => ({ from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate });
+const slimLeg = (L) => ({ from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate, ...(L.aboard != null ? { aboard: L.aboard } : {}) });
 const r1 = (x) => Math.round(x * 10) / 10 || 0; // no -0
 const incidentsPub = (E, list) => {
   const { placeName } = names(E);
@@ -660,9 +665,9 @@ export async function decide(E, run, inp, legFn) {
     if (jd == null) fail("depart_after must be a sky time as YYYY-MM-DD HH:MM, at or after " + isoJD(cp.reply_jd));
     if (jd < cp.reply_jd - 1 / 1440) fail("a replan must depart at or after " + isoJD(cp.reply_jd) + ", when your answer reaches the ship");
     if (jd > latest) fail("depart_after must be by " + isoJD(latest));
-    const S = ride.segs[ride.at.seg];
+    const S = ride.segs[ride.at.seg], aboard = R.manifest({ stops: ride.stops, legs: ride.legs }).party[S.stop - 1];
     const { leg: L } = await addLeg(run, S.role, run.car, S.from, S.to, Math.max(jd, cp.reply_jd), input.objective, legFn || defaultLegFn(E),
-      { objective: input.objective, wait_days: 0, replan_of: n });
+      { objective: input.objective, wait_days: 0, replan_of: n }, aboard);
     if (L.gate === "FAIL") fail(L.leg_id + " was rejected by the checker; checkpoint " + n + " is still open (wait, or replan from another time)");
     decision = { action: "replan", leg: slimLeg(L) };
   }

@@ -79,4 +79,21 @@ ok("the planner flies a fictional class with its cabin, and says the drive is fi
   assert.ok(none.battery.energy_kwh < b.battery.energy_kwh, "an empty pickup leg costs less than a full ride");
 });
 
+ok("who is aboard: a drive leg is planned for its cabin, dispatch refuses one planned for others, and real hulls ignore it", () => {
+  const R = E.R, END = 2461329.5 + 7000 - 1, t0 = 2461329.5 + 10;
+  // No Starseeker is parked yet (the fleet switch waits on review), so this check parks one for itself.
+  R.CAR["test-taxi"] = { id: "test-taxi", name: "Test Taxi", at: "callisto", ship_class: "star-taxi", seats: 6 };
+  try {
+    const leg = (from, to, t, on) => { const b = R.planLeg(from, to, t, "energy", END, "test-taxi", on);
+      return { from, to, dep_jd: b.dep_jd, arr_jd: b.arr_jd, kwh: b.battery.energy_kwh, fare: b.fare.total_usd, aboard: b.battery.aboard }; };
+    const p = leg("callisto", "io", t0, 0), r = leg("io", "ganymede", p.arr_jd + R.DWELL, 1), six = leg("io", "ganymede", p.arr_jd + R.DWELL, 6);
+    assert.deepStrictEqual([p.aboard, r.aboard, six.aboard], [0, 1, 6]);
+    assert.ok(six.kwh > r.kwh, "six aboard burn more than one: " + six.kwh + " vs " + r.kwh);
+    assert.deepStrictEqual(R.check("jovian-hop", "test-taxi", [p, r]), []);
+    assert.deepStrictEqual(R.check("jovian-hop", "test-taxi", [p, six]), ["the ride was planned for 6 aboard, but 1 ride it"]);
+  } finally { delete R.CAR["test-taxi"]; }
+  const a = R.planLeg("io", "ganymede", t0, "energy", END, "sf-05", 0), b = R.planLeg("io", "ganymede", t0, "energy", END, "sf-05", 6);
+  assert.strictEqual(a.battery.energy_kwh, b.battery.energy_kwh); assert.strictEqual(b.battery.aboard, undefined);
+});
+
 console.log(n + " passed");

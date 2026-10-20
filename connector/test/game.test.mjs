@@ -566,10 +566,10 @@ test("ride history cursor: base64url of created_ms and run_id, round trips, and 
 
 // A shared flight: ceres-shift (lead, Ceres Port to Mars Base) and phobos-commute (Phobos to Mars Base), at a frozen clock.
 const SHARED = ["ceres-shift", "phobos-commute"];
-async function sharedRun() {
+async function sharedRun(legFn) {
   const inst = suiteInstance(E, { hails: SHARED }, { seed: "2", clockJd: 2461550.0, tag: "t", budget: null });
   let run = await openRun(E, inst, "run_00000000000000000001", 0);
-  const call = async (tool, input) => { const o = await applyTool(E, run, tool, input, { nowMs: 0 }); if (o.run) run = o.run; return o.result; };
+  const call = async (tool, input) => { const o = await applyTool(E, run, tool, input, { nowMs: 0, ...(legFn ? { legFn } : {}) }); if (o.run) run = o.run; return o.result; };
   return { call, get run() { return run; } };
 }
 async function sharedLegs(call) {
@@ -605,6 +605,19 @@ test("shared flight: plan_leg chains one car's legs; the one-booking tools and s
   assert.equal((await s.call("plan_leg", { after_leg: l1.leg_id, to: "ceres-port" })).error, "this leg would start and end at Ceres Port");
   const one = await openRun(E, suiteInstance(E, { hail_id: "iss-crew" }, { seed: "2", clockJd: 2461550.0, tag: "t", budget: null }), "run_00000000000000000002", 0);
   assert.equal((await applyTool(E, one, "plan_leg", { car: "sf-01", to: "iss" }, { nowMs: 0 })).result.error, "this flight has one booking; plan it with plan_pickup and plan_ride");
+});
+
+test("who is aboard: plan_pickup plans for an empty cabin, plan_ride for the party, plan_leg for the people its chain puts aboard", async () => {
+  const seen = [], spy = (from, to, t, obj, end, ship, aboard) => { seen.push([to, aboard]); return { leg: computeLeg(E, from, to, t, obj, end, ship, aboard), cached: false }; };
+  const s = await sharedRun(spy);
+  await sharedLegs(s.call);
+  assert.deepEqual(seen, [["ceres-port", 0], ["mars-base", 1], ["phobos", 0], ["mars-base", 1]]);
+  seen.length = 0;
+  let one = await openRun(E, suiteInstance(E, { hail_id: "iss-crew" }, { seed: "2", clockJd: 2461550.0, tag: "t", budget: null }), "run_00000000000000000002", 0);
+  const p = await applyTool(E, one, "plan_pickup", { car: "sf-01" }, { nowMs: 0, legFn: spy });
+  one = p.run || one;
+  await applyTool(E, one, "plan_ride", { after_leg: p.result.leg_id }, { nowMs: 0, legFn: spy });
+  assert.deepEqual(seen, [["iss", 0], ["lunar-data-center", R.BY["iss-crew"].party]]);
 });
 
 test("shared flight: dispatch with legs, stops and quotes scores each booking and lists the passengers stop by stop", async () => {

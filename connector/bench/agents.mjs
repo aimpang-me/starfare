@@ -154,12 +154,12 @@ export async function random(call, E, rng) {
  *  (R.oracle), quoted the true arrival and the honest fare, and scored with the run's own terms. Returns the best { total, ... }. */
 export function reference(E, run) {
   const R = E.R, seed = run.seed, t0 = run.t0, end = run.end_jd, memo = new Map();
-  const leg = (from, to, t, obj, ship) => {
-    const k = legKey(from, to, t, obj, end, ship);
-    if (!memo.has(k)) { try { memo.set(k, computeLeg(E, from, to, t, obj, end, ship)); } catch { memo.set(k, null); } }
+  const leg = (from, to, t, obj, ship, aboard) => {
+    const k = legKey(from, to, t, obj, end, ship, aboard);
+    if (!memo.has(k)) { try { memo.set(k, computeLeg(E, from, to, t, obj, end, ship, aboard)); } catch { memo.set(k, null); } }
     return memo.get(k);
   };
-  const slim = (L) => ({ from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate });
+  const slim = (L) => ({ from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate, ...(L.aboard != null ? { aboard: L.aboard } : {}) });
   const ctx = { t0, arrive_by_jd: run.arrive_by_jd, par_kwh: run.par_kwh, best_wait_days: run.best_wait_days, kind: R.BY[run.id].kind };
   let best = null;
   const consider = (car, legs, stops, label) => {
@@ -186,9 +186,9 @@ export function reference(E, run) {
     for (const c of R.nearCars(h)) {
       const start = R.pickupStart(run.id, c.id, t0, seed);
       for (const op of OBJ) {
-        const p = leg(c.at, h.from, start, op, c.id);
+        const p = leg(c.at, h.from, start, op, c.id, 0);
         if (!p || p.gate === "FAIL") continue;
-        for (const or of OBJ) consider(c.id, [p, leg(h.from, h.to, p.arr_jd + R.DWELL, or, c.id)], null, op + "/" + or);
+        for (const or of OBJ) consider(c.id, [p, leg(h.from, h.to, p.arr_jd + R.DWELL, or, c.id, h.party)], null, op + "/" + or);
       }
     }
     return best;
@@ -199,10 +199,11 @@ export function reference(E, run) {
     const start = R.pickupStart(run.id, c.id, t0, seed);
     for (const order of R.stopOrders(ids)) {
       if (maxAboard(order, party) > c.seats || order[0].at === c.at) continue;
+      const on = R.manifest({ stops: [{ at: c.at }, ...order], legs: [] }).party;
       for (const o of OBJ) {
         const legs = [];
         for (let i = 0, from = c.at, t = start; i < order.length; i++) {
-          const L = leg(from, order[i].at, t, o, c.id);
+          const L = leg(from, order[i].at, t, o, c.id, on[i]);
           legs.push(L);
           if (!L || L.gate === "FAIL") break;
           from = L.to; t = L.arr_jd + (boards.has(from) ? R.DWELL : 0);
