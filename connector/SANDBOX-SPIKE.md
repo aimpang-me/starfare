@@ -7,11 +7,20 @@ Step 0 of the sandbox build plan (`game-design/SANDBOX-BUILD-PLAN-2026-10-20.md`
 
 Nothing here is a game: no hails, no scores, nothing simulated.
 
+## Results with Grok (2026-10-20)
+
+Alvin ran the test on the starfare-spike Worker (version 86db3e36) with three Grok chats (client `connectors-manager 0.1.0`, Streamable HTTP, Grok 4.7 as self-reported).
+
+- **Grok opens a new MCP session for every tool call**, even within one message: each seat's join, waits and sends all came in on different sessions. The three chats are separate, but no seat can be remembered by its session. **Sandbox rule: every tool takes the seat code** (or a token join returns).
+- **Grok gives up on a tool call after about 60 s.** A 51.7 s wait came back. Both 60 s waits, and a 240 s one, failed in Grok with "Timeout expired", although the server finished the 60 s one. Grok asks for progress, and the server sent it every 10 s, but that did not extend the limit. **Sandbox rule: wait returns after 45 s at most** with nothing new, and the agent calls it again. The spike's cap is now 45 s.
+- **A note wakes a wait that is already running:** the executor's note woke dispatcher 2 after 51.7 s of a 120 s wait, and Grok got the result. A note sent before the wait started is returned at once.
+- When a call said "no seat", Grok retried it with the seat code without being asked.
+
 ## What it adds
 
 All of it is off unless the Worker's `STARFARE_SPIKE` var is `on`. The live Worker never sets it.
 
-- Three MCP tools (`src/spike.js`): `join` takes a seat with its code, `send` posts a note to another seat, `wait` holds until a note arrives or its seconds (1 to 600) run out. A client that sends a progress token gets a progress notification every 10 s while it waits. A call from a session with no seat is refused with a message that says so, and `wait` and `send` then take the seat code as a fallback, which the log marks "by code".
+- Three MCP tools (`src/spike.js`): `join` takes a seat with its code, `send` posts a note to another seat, `wait` holds until a note arrives or its seconds (1 to 45) run out. A client that sends a progress token gets a progress notification every 10 s while it waits. A call from a session with no seat is refused with a message that says so, and `wait` and `send` then take the seat code as a fallback, which the log marks "by code".
 - `/spike`: opens a test world with three seat codes (they work for 12 hours). `/spike/<world>`: the codes, the message to paste into each Grok chat, what the server saw so far, and the log. It polls `/spike/<world>.json`.
 - State lives in the existing `StarfareHub` in three `spike_*` tables made on first use. No new Durable Object class and no migration.
 
@@ -21,7 +30,7 @@ All of it is off unless the Worker's `STARFARE_SPIKE` var is `on`. The live Work
 node build.mjs && node test/spike-e2e.mjs
 ```
 
-It runs `wrangler dev` twice (spike off, then on) and checks: no tools or page when off; three clients on three sessions; a client with no seat is told so and can pass its code; a note wakes a waiting seat once; progress every 10 s; a 75 s wait runs past the SDK's 60 s default timeout; one client holding two seats is flagged; the log. About two minutes.
+It runs `wrangler dev` twice (spike off, then on) and checks: no tools or page when off; three clients on three sessions; a client with no seat is told so and can pass its code; a note wakes a waiting seat once; progress every 10 s; a wait holds 45 s at most; one client holding two seats is flagged; the log. About two minutes.
 
 ## Deploy it as its own Worker
 

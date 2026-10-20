@@ -13,7 +13,8 @@ const SEAT_NAME = { EX: "executor", D1: "dispatcher 1", D2: "dispatcher 2" };
 const CODE_ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const SEAT_CODE = /^(EX|D1|D2)-[A-HJ-NP-Z2-9]{5}$/;
 const WORLD_MS = 12 * 3600 * 1000; // a test world's codes work this long
-const WAIT_MAX_S = 600, WAIT_DEFAULT_S = 60, POLL_MS = 1000, PROGRESS_MS = 10000;
+// Grok gives up on a tool call after about 60 s, progress or not (the 2026-10-20 test), so a wait returns well before that.
+const WAIT_MAX_S = 45, WAIT_DEFAULT_S = 30, POLL_MS = 1000, PROGRESS_MS = 10000;
 const EVENTS_MAX = 400;
 
 const newWorld = () => [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -224,9 +225,9 @@ const h = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "
 const short = (s) => { if (!s) return "none"; const id = String(s).split(":").pop(); return id.slice(0, 6) + "…" + id.slice(-4); };
 const NAME = { EX: "Executor", D1: "Dispatcher 1", D2: "Dispatcher 2" };
 const STEPS = {
-  D1: (c) => "Starfare sandbox connection test. Call the Starfare join tool with code " + c + ". Then call wait with seconds 60 and tell me exactly what it returned. Then call wait with seconds 240 and tell me exactly what it returned, or the error you saw.",
-  D2: (c) => "Starfare sandbox connection test. Call the Starfare join tool with code " + c + ". Then call wait with seconds 600 and tell me exactly what it returned, or the error you saw.",
-  EX: (c) => "Starfare sandbox connection test. Call the Starfare join tool with code " + c + ". Then call send with to D2 and text \\"wake up, D2\\". Then call wait with seconds 30 and tell me exactly what it returned.",
+  D1: (c) => "Starfare sandbox connection test. Call the Starfare join tool with code " + c + ". Then call wait with seconds 45 and code " + c + ", and tell me exactly what it returned, or the error you saw.",
+  D2: (c) => "Starfare sandbox connection test. Call the Starfare join tool with code " + c + ". Then call wait with seconds 45 and code " + c + ", and tell me exactly what it returned, or the error you saw.",
+  EX: (c) => "Starfare sandbox connection test. Call the Starfare join tool with code " + c + ". Then call send with to D2, text \\"wake up, D2\\" and code " + c + ". Then call wait with seconds 20 and code " + c + ", and tell me exactly what it returned.",
 };
 if (!B.world) {
   app.innerHTML = '<div class="panel"><p>Opens a test world with three seat codes. Codes work for 12 hours.</p><p><button id="new">New test world</button></p></div>';
@@ -242,13 +243,13 @@ if (!B.world) {
     const ends = events.filter((e) => e.kind === "wait_end"), starts = events.filter((e) => e.kind === "wait_start");
     const byCode = events.filter((e) => e.by === "code").length, moved = events.filter((e) => e.kind === "join" && e.moved_from).length;
     const longest = ends.filter((e) => e.woke_by === "timeout").reduce((m, e) => Math.max(m, e.elapsed_s), 0);
-    const woke = ends.some((e) => e.woke_by === "note"), prog = starts.some((e) => e.progress_token);
+    const woke = ends.some((e) => e.woke_by === "note" && e.elapsed_s >= 1), queued = ends.some((e) => e.woke_by === "note" && e.elapsed_s < 1), prog = starts.some((e) => e.progress_token);
     const open = starts.filter((s) => !ends.some((e) => e.seq > s.seq && e.seat === s.seat && e.session === s.session));
     const verdict = [
       ["Each chat has its own connection", joined < 3 ? ["muted", joined + " of 3 seats joined"] : distinct === 3 ? ["ok", "Yes: 3 seats, 3 connections"] : ["bad", "No: 3 seats on " + distinct + " connection(s)"]],
       ["Connection kept between calls", byCode || moved ? ["bad", "No: " + byCode + " call(s) needed the code, " + moved + " seat(s) moved"] : starts.length ? ["ok", "Yes so far"] : ["muted", "No calls yet"]],
-      ["Longest wait run to its end on the server", longest ? ["ok", longest + " s"] : ["muted", "None yet"]],
-      ["A note woke a waiting seat", woke ? ["ok", "Yes"] : ["muted", "Not yet"]],
+      ["Longest wait run to its end on the server (Grok may give up sooner)", longest ? ["ok", longest + " s"] : ["muted", "None yet"]],
+      ["A note woke a wait already running", woke ? ["ok", "Yes"] : queued ? ["muted", "Not yet (a note was already waiting when the wait started)"] : ["muted", "Not yet"]],
       ["Grok asked for progress updates", starts.length ? (prog ? ["ok", "Yes (the server sends one every 10 s)"] : ["muted", "No"]) : ["muted", "No calls yet"]],
     ];
     app.innerHTML =

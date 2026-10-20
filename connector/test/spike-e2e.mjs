@@ -1,5 +1,5 @@
 // End-to-end check of the sandbox spike (src/spike.js) under `wrangler dev`: three MCP clients join three seats of one test
-// world, each on its own session; a note wakes a waiting seat; a wait runs past the SDK's 60 s default request timeout;
+// world, each on its own session; a note wakes a waiting seat; a wait holds 45 s at most (Grok gives up after about 60 s);
 // a client that asks for progress gets it. Also checks that without STARFARE_SPIKE the tools and pages are not there.
 // Run: node build.mjs && node test/spike-e2e.mjs   (about two minutes)
 import { spawn } from "node:child_process";
@@ -113,9 +113,10 @@ await check("a client that asks for progress gets one every 10 s", async () => {
   assert.ok(seen.length >= 1, "progress notifications: " + seen.length);
 });
 
-await check("a 75 s wait runs to its end past the SDK's 60 s default timeout", async () => {
-  const r = await call(d1, "wait", { seconds: 75 }, { timeout: 120000 });
-  assert.equal(r.value.woke_by, "timeout"); assert.ok(r.value.elapsed_s >= 74, String(r.value.elapsed_s));
+await check("a wait holds 45 s at most, under Grok's 60 s limit", async () => {
+  const r = await call(d1, "wait", { seconds: 45 });
+  assert.equal(r.value.woke_by, "timeout"); assert.ok(r.value.elapsed_s >= 44 && r.value.elapsed_s < 50, String(r.value.elapsed_s));
+  assert.equal((await call(d1, "wait", { seconds: 46 })).isError, true);
 });
 
 await check("one client joining two seats is flagged", async () => {
