@@ -151,6 +151,7 @@ export function worldView(E, w, nowMs) {
     scores: scoresView(E, w),
     events: w.events.slice(-10),
     messages: (w.messages || []).slice(-MESSAGES_SHOWN), reports: (w.reports || []).slice(-MESSAGES_SHOWN),
+    map: mapView(E, w),
     note: "A simulated private world: its own clock, weather and traffic. The clock moves one tick (" + c.tick_days + " sky day) when every joined seat has called wait, " +
       "or " + c.cap_ms / 1000 + " real seconds after the tick opened.",
   };
@@ -164,11 +165,33 @@ const LIVE = new Set(["planning", "in_flight"]);
 // An arrived job's ride is flown and scored at once, but in the world's time its ship lands at lands_jd: the tick that
 // passes it posts the landing to the desk and the executor, and marks the job landed.
 const jobRow = (run, w) => ({ job_id: run.world.job_id, run_id: run.run_id, hail_id: run.id, title: run.title, phase: phaseOf(run), car: run.car || null,
-  taken_tick: w.clock.tick, ...(phaseOf(run) === "arrived" ? { total: run.score.total, lands_jd: run.ride.arrive_jd } : {}), ...(run.abandoned_reason ? { reason: run.abandoned_reason } : {}) });
+  taken_tick: w.clock.tick, ...(phaseOf(run) === "arrived" ? { total: run.score.total, lands_jd: run.ride.arrive_jd } : {}), ...(run.abandoned_reason ? { reason: run.abandoned_reason } : {}),
+  ...(run.ride ? flightPath(run) : {}) });
+/** A dispatched job's flight for the page's map: each leg [from, to, depart_jd, arrive_jd] as flown so far (as planned after
+ *  that), and held_at, the place of the checkpoint it is held at. */
+function flightPath(run) {
+  const legs = run.ride.segs.map((S) => {
+    const f = S.flew;
+    return [S.from, S.to, f ? f.dep_jd : S.dep_jd, f ? f.land_jd ?? f.left_jd ?? S.arr_jd : S.arr_jd];
+  });
+  const cp = phaseOf(run) === "in_flight" ? run.ride.checkpoints[run.ride.checkpoints.length - 1] : null;
+  return { legs, ...(cp ? { held_at: cp.place } : {}) };
+}
 /** A job's row as the views show it: its ship's name, and for an arrived job when its ship lands in the world's time. */
 function jobPub(E, j) {
-  const { lands_jd, landed, ...row } = j;
-  return { ...row, ...(j.car ? { ship: E.R.CAR[j.car].name } : {}), ...(lands_jd != null ? { lands: isoJD(lands_jd), landed: !!landed } : {}) };
+  const { lands_jd, landed, legs, held_at, ...row } = j;
+  return { ...row, ...(j.car ? { ship: E.R.CAR[j.car].name } : {}), ...(lands_jd != null ? { lands: isoJD(lands_jd), landed: !!landed } : {}),
+    ...(legs ? { legs: legs.map(([from, to, dep, arr]) => ({ from, to, depart: isoJD(dep), arrive: isoJD(arr) })) } : {}), ...(held_at ? { held_at } : {}) };
+}
+
+/** The page's map at the world's sky time: each place with its parent, and for a place that orbits the Sun its position in
+ *  the ecliptic plane (AU, x and y of the engine's heliocentric J2000 ecliptic frame). Moons and stations have none: the
+ *  page draws them beside their parent. */
+function mapView(E, w) {
+  const { placeName } = names(E), AU = E.R.AU_KM;
+  return { sky: isoJD(w.clock.jd), frame: "heliocentric ecliptic, AU",
+    places: E.PLACES.map((p) => ({ id: p.id, name: placeName(p.id), kind: p.kind, parent: p.parent,
+      ...(p.parent === "sun" ? { xy: E.placeState(p.id, w.clock.jd).r.slice(0, 2).map((v) => Math.round((v / AU) * 1000) / 1000) } : {}) })) };
 }
 
 /** Takes market hail hailId as a new job: { run, job }. The hail leaves the market. Fails (WorldError) on a closed world,

@@ -320,6 +320,29 @@ test("a ride held at a checkpoint keeps its ship busy until it lands; dropping t
   assert.deepEqual([w.jobs.j2.phase, w.jobs.j2.reason], ["abandoned", "dropped"]);
 });
 
+test("the map: every place at the world's sky time, and each dispatched job's legs and the checkpoint it is held at", async () => {
+  const { w, take, fly } = jobs();
+  const m = W.worldView(E, w, T0).map;
+  assert.equal(m.sky, W.worldView(E, w, T0).clock.sky_now);
+  assert.equal(m.places.length, E.PLACES.length);
+  for (const p of m.places) assert.equal(!!p.xy, p.parent === "sun", p.id);
+  const earth = m.places.find((p) => p.id === "earth").xy, r = E.placeState("earth", w.clock.jd).r;
+  assert.ok(Math.abs(earth[0] - r[0] / E.R.AU_KM) < 1e-3 && Math.abs(earth[1] - r[1] / E.R.AU_KM) < 1e-3);
+  assert.deepEqual(m.places.find((p) => p.id === "titan-dock"), { id: "titan-dock", name: "Titan Dock", kind: "station", parent: "titan" });
+  const run = await take("w0123456789ab-12"), planning = W.worldView(E, w, T0).jobs[0];
+  assert.equal(planning.legs, undefined, "a job still planning has no flight yet");
+  const o = await fly(run, run.par_car, 0);
+  const held = W.worldView(E, w, T0).jobs[0];
+  assert.equal(held.held_at, "ceres");
+  assert.ok(held.legs.length >= 1 && held.legs.every((L) => E.PLACES.some((p) => p.id === L.from) && /^\d{4}-\d\d-\d\d \d\d:\d\d$/.test(L.depart) && L.arrive >= L.depart), JSON.stringify(held.legs));
+  assert.equal(held.legs.at(-1).to, "ceres");
+  W.dropJob(E, w, o.run);
+  const landed = W.worldView(E, w, T0).jobs[0];
+  assert.equal(landed.held_at, undefined);
+  assert.equal(landed.legs.at(-1).arrive, landed.lands);
+  assert.doesNotMatch(JSON.stringify(W.worldView(E, w, T0)), /_jd"/, "the view gives times as sky time, not Julian dates");
+});
+
 test("StarfareWorld: take, act and drop a job, each run under its own key", async () => {
   const { obj, saved } = worldDO();
   assert.equal((await obj.take("w0123456789ab-0")).error, "unknown world");
