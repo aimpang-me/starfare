@@ -158,6 +158,9 @@ h1,h2,h3{margin:0;font-weight:600}
 .popm{max-height:min(70vh,520px);overflow-y:auto}
 .lay-size{display:flex;align-items:center;gap:8px;padding:3px 0 2px 23px;font-size:11px;color:var(--ink-3)}
 .lay-size .seg button{padding:4px 7px}
+.trf-note{padding-left:23px;margin-top:2px}
+.lg .tr{width:26px;height:2px;flex:none;background:linear-gradient(90deg,rgba(255,214,160,0),rgba(255,214,160,.7));position:relative}
+.lg .tr::after{content:"";position:absolute;right:-2px;top:-2px;width:6px;height:6px;border-radius:50%;background:#ffe2bd;box-shadow:0 0 5px #ffd6a0}
 .popm label.sub{padding-left:23px;font-size:12px;color:var(--ink-2)}
 .layact{display:flex;gap:6px;margin-top:10px}
 .layact kbd{font:600 9.5px var(--mono);opacity:.7;margin-left:4px}
@@ -539,6 +542,9 @@ body.cm-open .mc-activity{display:none}
           <label><input type="checkbox" data-lay="rte" checked> Path lines (flights &amp; bookings)</label>
           <label class="sub"><input type="checkbox" data-lay="rsel" id="rsel"> Only the selected one</label>
           <label><input type="checkbox" data-lay="ring"> Distance grid</label>
+          <div class="caps" style="margin-top:8px">Background traffic</div>
+          <div class="lay-size"><div class="seg" id="trfSeg" role="group" aria-label="Background traffic"><button type="button" data-trf="off" aria-pressed="false">Off</button><button type="button" data-trf="light" aria-pressed="false">Light</button><button type="button" data-trf="busy" aria-pressed="true">Busy</button></div></div>
+          <p class="lgn trf-note">Illustrative ships on the lanes between places. Not bookable, not scored.</p>
           <div class="caps" style="margin-top:8px">Screen</div>
           <label><input type="checkbox" data-lay="hud" checked> Time readout</label>
           <div class="layact"><button type="button" class="btn small" id="cleanView" aria-pressed="false" title="Hide every name and line (H)">Clean view <kbd>H</kbd></button><button type="button" class="btn small" id="layReset">Reset</button></div>
@@ -566,9 +572,10 @@ body.cm-open .mc-activity{display:none}
           <li><span class="sw a"></span>Open booking (engine plan)</li>
           <li><span class="dm"></span>Stop</li>
           <li><span class="sh" id="lgShip"></span>Starseeker on a flight</li>
+          <li><span class="tr"></span>Background traffic (illustrative)</li>
           <li><span class="dt"></span>Ready <span class="dt b" style="margin-left:6px"></span>Busy</li>
         </ul>
-        <p class="lgn">JPL positions at simulated sky dates. Orbit lines are two-body orbits at the sky date, simulated. Stored paths where available; straight route guides otherwise. True scale: real distances and sizes; bodies too small to see are drawn at a few pixels. Surface rotation and clouds are slowed for viewing.</p>
+        <p class="lgn">JPL positions at simulated sky dates. Orbit lines are two-body orbits at the sky date, simulated. Stored paths where available; straight route guides otherwise. True scale: real distances and sizes; bodies too small to see are drawn at a few pixels. Surface rotation and clouds are slowed for viewing. Background traffic is illustrative: fictional ships flying burn-flip-burn trips (0.01 g between planets, 0.003 g near one) on a schedule fixed by the sky date. They take no bookings and never touch scores or the benchmark.</p>
         <p class="lgn">Sound is off until you turn it on with the speaker button. Space is silent, so every sound is stylized and simulated: a cabin bed in open space, hits on the hull where debris is (low Earth orbit, the geostationary belt, Saturn&rsquo;s rings, near small bodies, faintly in the asteroid belt), radio-style sonifications close to a planet or moon, and console beeps near a station. All of it is synthesized in the browser.</p>
         <p class="lgn cred" id="artCred" hidden></p>
         <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Q down and E up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Station, dock and ship models are illustrative. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to follow it, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
@@ -736,6 +743,7 @@ body.cm-open .mc-activity{display:none}
 <script src="/assets/sol-lore.js"></script>
 <script src="/assets/sol-lines.js"></script>
 <script src="/assets/sol-layers.js"></script>
+<script src="/assets/sol-traffic.js"></script>
 <script src="/assets/sol-audio.js"></script>
 <script src="/assets/vendor/gsap-3.15.0.min.js"></script>
 <script src="/assets/mission-control.js"></script>
@@ -2069,6 +2077,71 @@ function labels() {
 /* ---------- the render loop: paused when the tab is hidden or the map is off screen ---------- */
 var raf = 0, last = 0, MAPVIS = true;
 var tickMs = 1000 / 60, tickT = 0;
+/* ---------- background traffic: illustrative ships on the lanes between places (design/assets/sol-traffic.js) ----------
+   Not bookings, not scored and never sent to the engine: a schedule fixed by the sky date, drawn as glowing dots with
+   short trails in two draw calls. A ship flies straight between its two ends as the map draws them now, bowed away from
+   what the lane circles and spread a little sideways per ship. Hops inside a planet's system show once its ends stand
+   clear of each other on screen. */
+var TRF = { all: null, ships: [], n: -1, shown: 0, pts: null, tails: null, reach: {} };
+var TRF_COL = { helio: [1, 0.86, 0.66], local: [0.7, 0.82, 1] };
+function trafficReach(id) {
+  if (TRF.reach[id]) return TRF.reach[id];
+  var P = SF.place(id), most = 0;
+  for (var k = 0; k < 48; k++) {
+    var j = SF.SKY.jd0 + k * SF.SKY.len_days / 48, a = SF.pos(id, j), b = P.parent === "sun" ? [0, 0, 0] : SF.pos(P.parent, j);
+    most = Math.max(most, Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]));
+  }
+  return (TRF.reach[id] = most * 1.05 * AU * 1000);
+}
+function trafficDist(a, b, j) { var p = SF.pos(a, j), q = SF.pos(b, j); return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) * AU * 1000; }
+function trafficMesh(n, lines) {
+  var g = new THREE.BufferGeometry(), k = lines ? 2 : 1;
+  g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3 * k), 3).setUsage(THREE.DynamicDrawUsage));
+  g.setAttribute("color", new THREE.BufferAttribute(new Float32Array(n * 3 * k), 3).setUsage(THREE.DynamicDrawUsage));
+  var common = { vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending };
+  var o = lines ? new THREE.LineSegments(g, new THREE.LineBasicMaterial(common))
+    : new THREE.Points(g, new THREE.PointsMaterial(Object.assign({ size: GW <= 760 ? 8 : 7, sizeAttenuation: false, map: glowTex("rgba(255,255,255,1)", "rgba(255,255,255,.35)") }, common)));
+  o.frustumCulled = false; o.renderOrder = 2; g.setDrawRange(0, 0); scene.add(o);
+  return o;
+}
+function trafficSync() {
+  var tier = window.SolArt ? SolArt.quality().name : GW <= 760 ? "medium" : "high", n = SolTraffic.count(LAY.trf, tier);
+  if (n === TRF.n) return;
+  TRF.n = n;
+  if (!TRF.all) TRF.all = SolTraffic.fleet(PLACES, trafficReach, SolTraffic.CAP.high, SF.SKY.jd0, 1);
+  if (!TRF.pts) { TRF.pts = trafficMesh(SolTraffic.CAP.high, false); TRF.tails = trafficMesh(SolTraffic.CAP.high, true); }
+  TRF.ships = TRF.all.slice(0, n);
+}
+var TA = V(), TB = V(), TC = V(), TD = V(), TS = V(), TP = V();
+// Point at share f of the way from A to B, bowed by TS (unit, already scaled per lane) and pushed sideways by TC.
+function trafficAt(A, B, f, len, out) { var b = Math.sin(Math.PI * f) * len; return out.copy(A).lerp(B, f).addScaledVector(TS, b).addScaledVector(TC, b); }
+function drawTraffic() {
+  trafficSync();
+  var P = TRF.pts, Tl = TRF.tails; if (!P) return;
+  var pa = P.geometry.attributes.position, pc = P.geometry.attributes.color, la = Tl.geometry.attributes.position, lc = Tl.geometry.attributes.color, m = 0;
+  for (var i = 0; i < TRF.ships.length; i++) {
+    var s = TRF.ships[i], st = SolTraffic.state(s, MAPJD, trafficDist); if (!st) continue;
+    var A = marker(st.from, MAPJD), B = marker(st.to, MAPJD), len = A.distanceTo(B), L = s.lane;
+    if (!(len > 0) || (L.local && len / pxAt(A) < 14)) continue;
+    // bow: away from the Sun or the lane's planet, square to the lane; fall back to the ecliptic normal side when edge-on
+    TD.copy(B).sub(A).divideScalar(len);
+    TS.copy(A).add(B).multiplyScalar(0.5).sub(L.hub === "sun" ? V0 : marker(L.hub, MAPJD));
+    TS.addScaledVector(TD, -TS.dot(TD));
+    if (TS.lengthSq() < 1e-6 * len * len) TS.crossVectors(TD, UP);
+    TS.normalize(); TC.crossVectors(TD, TS).multiplyScalar(0.05 * s.side);
+    TS.multiplyScalar(L.local ? 0.22 : 0.12);
+    trafficAt(A, B, st.f, len, TP).sub(EYE); pa.setXYZ(m, TP.x, TP.y, TP.z);
+    la.setXYZ(2 * m, TP.x, TP.y, TP.z);
+    trafficAt(A, B, st.ft, len, TA).sub(EYE); la.setXYZ(2 * m + 1, TA.x, TA.y, TA.z);
+    var c = L.local ? TRF_COL.local : TRF_COL.helio;
+    pc.setXYZ(m, c[0] * 0.8, c[1] * 0.8, c[2] * 0.8); lc.setXYZ(2 * m, c[0] * 0.45, c[1] * 0.45, c[2] * 0.45); lc.setXYZ(2 * m + 1, 0, 0, 0);
+    m++;
+  }
+  TRF.shown = m;
+  [pa, pc, la, lc].forEach(function (a) { a.needsUpdate = true; });
+  P.geometry.setDrawRange(0, m); Tl.geometry.setDrawRange(0, 2 * m);
+  P.visible = Tl.visible = m > 0;
+}
 function frame(t) {
   raf = requestAnimationFrame(frame);
   // A frame is drawn when its target interval is within half a display tick: on a 240 Hz display a 60 fps cap would otherwise wait five ticks, not four.
@@ -2246,6 +2319,7 @@ function draw(dt, t) {
     idleSway(c.car, ship);
   });
   drawDocks();
+  drawTraffic();
   setPts(PARK_R, window.SolArt ? [] : pr); setPts(PARK_B, window.SolArt ? [] : pb);
   AMB.intensity = PIL.lock ? AMB_CHASE : AMB_FREE;
   drawHoles();
@@ -2264,7 +2338,7 @@ function mapHud() {
   // Phones show the scale note on the first line and drop the keyboard-only speed line, so the readout stays short above the planet dock.
   var hm = '<span class="hud-m"> &middot; true scale &middot; simulated</span></span>';
   $("#hud").innerHTML = '<span class="caps">' + (rep ? "Map time &middot; following " + esc(F.call) + hm + "<br><b>" + iso(MAPJD) + "</b> UTC" : mapTimeWords(MAPJD) + hm)
-    + '<span class="hud-scale"><br>True scale &middot; real distances and sizes &middot; simulated</span><br>' + where + (speed && '<span class="hud-speed">' + speed + "</span>");
+    + '<span class="hud-scale"><br>True scale &middot; real distances and sizes &middot; simulated</span><br>' + (TRF.n > 0 ? '<span class="hud-trf">' + SF.fmt(TRF.shown) + ' background ships &middot; illustrative</span><br>' : "") + where + (speed && '<span class="hud-speed">' + speed + "</span>");
   $("#liveBtn").hidden = !rep;
   // The bar holds at the distance of what the camera rides with; nearer things look larger in perspective.
   var ap = L && L.sc ? L.sc.v : A ? anchorPos(A) : V0, name = L ? L.call : A && A.F ? A.F.call : A && A.b.kind !== "sun" ? SF.name(A.b.id) : "the Sun";
@@ -2289,6 +2363,7 @@ function syncLayers() {
   store("sf-layers", LAY);
   $$("[data-lay]").forEach(function (c) { c.checked = !!LAY[c.dataset.lay]; });
   $$("[data-size]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.size === LAY.size)); });
+  $$("[data-trf]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.trf === LAY.trf)); });
   $("#rsel").disabled = !LAY.rte;
   $("#mapbox").classList.toggle("no-hud", !LAY.hud);
   $("#cleanView").setAttribute("aria-pressed", String(SolLayers.isClean(LAY)));
@@ -2793,6 +2868,7 @@ function start() {
   });
   $$("[data-lay]").forEach(function (c) { c.addEventListener("change", function () { LAY[c.dataset.lay] = c.checked; LAY_BEFORE_CLEAN = null; syncLayers(); glStart(); }); });
   $$("[data-size]").forEach(function (b) { b.addEventListener("click", function () { LAY.size = b.dataset.size; syncLayers(); glStart(); }); });
+  $$("[data-trf]").forEach(function (b) { b.addEventListener("click", function () { LAY.trf = b.dataset.trf; syncLayers(); glStart(); }); });
   $("#layReset").addEventListener("click", function () { Object.assign(LAY, SolLayers.DEFAULTS); LAY_BEFORE_CLEAN = null; syncLayers(); glStart(); });
   $("#cleanView").addEventListener("click", toggleClean);
   syncLayers();

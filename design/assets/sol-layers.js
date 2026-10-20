@@ -7,8 +7,10 @@
   'use strict';
   var KEY = 'sf-layers';
   // pln planet names, plc moon / station / place names, shp Starseeker names, orb orbit lines, moon moon orbit rings,
-  // rte path lines, ring distance grid, hud time readout, rsel path lines for the selected flight only.
-  var DEFAULTS = { pln: true, plc: true, shp: true, orb: true, moon: true, rte: true, ring: false, hud: true, rsel: false, size: 'm' };
+  // rte path lines, ring distance grid, hud time readout, rsel path lines for the selected flight only, trf background
+  // traffic density (off, light or busy; see sol-traffic.js).
+  var DEFAULTS = { pln: true, plc: true, shp: true, orb: true, moon: true, rte: true, ring: false, hud: true, rsel: false, size: 'm', trf: 'busy' };
+  var TRAFFIC = { off: 1, light: 1, busy: 1 };
   var CLEAN = ['pln', 'plc', 'shp', 'orb', 'moon', 'rte', 'ring'];
   // Label font size as a multiple of the stylesheet's size.
   var SIZES = { s: 0.85, m: 1, l: 1.2 };
@@ -17,14 +19,14 @@
     var s = {};
     Object.keys(DEFAULTS).forEach(function (k) {
       var v = saved && typeof saved === 'object' ? saved[k] : undefined;
-      s[k] = k === 'size' ? (SIZES[v] ? v : DEFAULTS.size) : typeof v === 'boolean' ? v : DEFAULTS[k];
+      s[k] = k === 'size' ? (SIZES[v] ? v : DEFAULTS.size) : k === 'trf' ? (TRAFFIC[v] ? v : DEFAULTS.trf) : typeof v === 'boolean' ? v : DEFAULTS[k];
     });
     return s;
   }
   function isClean(s) { return CLEAN.every(function (k) { return !s[k]; }); }
   // Clean view hides every name and line; a second press restores what was showing (or the defaults if nothing was).
   function toggleClean(s, before) {
-    if (isClean(s)) return { state: normalize(Object.assign({}, before || DEFAULTS, { hud: s.hud, size: s.size, rsel: s.rsel })), before: null };
+    if (isClean(s)) return { state: normalize(Object.assign({}, before || DEFAULTS, { hud: s.hud, size: s.size, rsel: s.rsel, trf: s.trf })), before: null };
     var next = Object.assign({}, s); CLEAN.forEach(function (k) { next[k] = false; });
     return { state: next, before: Object.assign({}, s) };
   }
