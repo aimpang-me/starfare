@@ -10,8 +10,8 @@ import { GameError, RUN_TOOL_NAMES, applyTool, computeLeg, hailInfo, legKey, res
 import { worldSeed } from "./season-seed.js";
 import { hub } from "./store.js";
 import {
-  JOB_ID, SEATS, TICK_CAP_MS, WorldError, capDueMs, capTick, codeHash, dropJob, jobMoved, joinSeat, newSecret, newWorld, parseCode, scopeRefusal, seatBrief, seatCode,
-  syncJob, takeJob, waitSeat, worldView,
+  JOB_ID, SEATS, TICK_CAP_MS, WorldError, addReport, capDueMs, capTick, codeHash, declineHail, dropJob, jobMoved, jobRefusal, joinSeat, marketPage, newSecret, newWorld,
+  parseCode, queueView, reportsView, scopeRefusal, seatBrief, seatCode, syncJob, takeJob, transferShip, waitSeat, worldView,
 } from "./world-state.js";
 
 export { WORLD_ID, parseCode } from "./world-state.js";
@@ -87,11 +87,28 @@ export class StarfareWorld extends DurableObject {
         return { error: "That seat code is not valid. Ask the player for the code their world's page shows for your seat." };
       const refused = scopeRefusal(w, c.seat, tool);
       if (refused) return { error: refused };
-      const E = await engine(), now = Date.now();
-      if (tool === "join") {
-        joinSeat(w, c.seat, now, input.agent || null);
-        await this.#save(w);
-        return seatBrief(E, w, c.seat, now);
+      const E = await engine(), now = Date.now(), seat = c.seat;
+      // Tools that change the world save it; the rest only read.
+      const saved = async (r) => { await this.#save(w); return r; };
+      switch (tool) {
+        case "join":
+          joinSeat(w, seat, now, input.agent || null);
+          return saved(seatBrief(E, w, seat, now));
+        case "company": return worldView(E, w, now);
+        case "market": return marketPage(E, w, input);
+        case "assign": {
+          const desk = String(input.desk || "").toUpperCase();
+          if (!Object.hasOwn(w.desks, desk)) return { error: "desk must be one of " + Object.keys(w.desks).map((d) => d + " (" + w.desks[d].name + ")").join(", ") };
+          const h = await this.#take(E, w, input.hail_id, now, desk);
+          return { assigned: h.job_id, desk: desk + " (" + w.desks[desk].name + ")", hail: h };
+        }
+        case "decline": return saved(declineHail(E, w, input.hail_id, now));
+        case "transfer_ship": return saved(transferShip(E, w, input.car, String(input.desk || "").toUpperCase(), now));
+        case "reports": return reportsView(E, w);
+        case "queue": return queueView(E, w, seat, now);
+        case "report": return saved(addReport(w, seat, input.text, input.job_id ?? null, now));
+        default:
+          if (RUN_TOOL_NAMES.includes(tool)) return this.#act(E, w, input.job_id, tool, input, now, seat);
       }
       return { error: tool + " is not built yet in this sandbox." };
     }));
@@ -138,11 +155,15 @@ export class StarfareWorld extends DurableObject {
     return this.#serial(() => this.#guard(async () => {
       const w = await this.#world();
       if (!w) return { error: "unknown world" };
-      const E = await engine(), now = Date.now(), { run, job } = await takeJob(E, w, hailId, now, newRunId());
-      await this.ctx.storage.put("job:" + job.job_id, run);
-      await this.#save(w);
-      return hailInfo(E, run, now);
+      return this.#take(await engine(), w, hailId, Date.now(), null);
     }));
+  }
+
+  async #take(E, w, hailId, now, desk) {
+    const { run, job } = await takeJob(E, w, hailId, now, newRunId(), desk);
+    await this.ctx.storage.put("job:" + job.job_id, run);
+    await this.#save(w);
+    return hailInfo(E, run, now);
   }
 
   /** One run tool call on a job (get_hail, plan_pickup, plan_ride, plan_leg, check_pad, space_weather, dispatch, decide),
@@ -151,20 +172,28 @@ export class StarfareWorld extends DurableObject {
     return this.#serial(() => this.#guard(async () => {
       const w = await this.#world();
       if (!w) return { error: "unknown world" };
-      if (!RUN_TOOL_NAMES.includes(tool)) return { error: "not a job tool: " + tool };
-      const E = await engine(), before = await this.#job(E, jobId);
-      if (!before) return { error: "unknown job_id " + jobId };
-      const now = Date.now(), synced = syncJob(w, structuredClone(before));
-      const { run, result } = await applyTool(E, synced, tool, input, { nowMs: now, legFn: this.#legFn(E) });
-      const after = run || synced;
-      if (JSON.stringify(after) !== JSON.stringify(before)) {
-        jobMoved(w, after);
-        await this.ctx.storage.put("job:" + jobId, after);
-      }
-      w.active_ms = now;
-      await this.#save(w);
-      return result;
+      return this.#act(await engine(), w, jobId, tool, input, Date.now(), null);
     }));
+  }
+
+  /** A run tool on a job. From a dispatcher's seat, only on its desk's jobs and ships, and get_hail's fleet is its desk's. */
+  async #act(E, w, jobId, tool, input, now, seat) {
+    if (!RUN_TOOL_NAMES.includes(tool)) return { error: "not a job tool: " + tool };
+    const before = await this.#job(E, jobId);
+    if (!before) return { error: "unknown job_id " + jobId + (seat ? "; queue lists your desk's jobs" : "") };
+    if (seat) { const no = jobRefusal(E, w, seat, before, tool, input); if (no) return { error: no }; }
+    const inp = { ...input }, synced = syncJob(w, structuredClone(before));
+    delete inp.job_id; delete inp.code;
+    const { run, result } = await applyTool(E, synced, tool, inp, { nowMs: now, legFn: this.#legFn(E) });
+    const after = run || synced;
+    if (JSON.stringify(after) !== JSON.stringify(before)) {
+      jobMoved(w, after);
+      await this.ctx.storage.put("job:" + jobId, after);
+    }
+    w.active_ms = now;
+    await this.#save(w);
+    if (seat && result && Array.isArray(result.fleet)) result.fleet = result.fleet.filter((c) => w.desks[seat].ships.includes(c.car));
+    return result;
   }
 
   /** Drops a job: planning is abandoned; a ride at a checkpoint flies on with the defaults and is scored. */

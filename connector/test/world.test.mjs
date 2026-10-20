@@ -203,7 +203,7 @@ const jobs = (o = {}) => {
 test("a market hail taken is a job: today's run on the world's seed, sky time and ships, and it leaves the market", async () => {
   const { w, take } = jobs(), id = "w0123456789ab-0";
   const run = await take(id);
-  assert.deepEqual(w.jobs.j1, { job_id: "j1", run_id: run.run_id, hail_id: id, title: run.title, phase: "planning", car: null, taken_tick: 0 });
+  assert.deepEqual(w.jobs.j1, { job_id: "j1", run_id: run.run_id, hail_id: id, title: run.title, phase: "planning", car: null, taken_tick: 0, desk: null });
   assert.equal(run.seed, w.seed);
   assert.deepEqual(run.clock, { kind: "frozen", jd: w.clock.jd });
   assert.deepEqual(run.ships, w.ships);
@@ -384,5 +384,72 @@ test("StarfareWorld: three codes once at creation, join with a code, forged code
   for (const bad of [W.seatCode(ID, "D2", d1.secret), W.seatCode("w_fedcba98765432100123", "D2", d2.secret), "nonsense"])
     assert.match((await obj.seat(bad, "join")).error, /seat code is not valid/, bad);
   assert.match((await obj.seat(made.codes.D1, "assign")).error, /executor's tool/);
-  assert.match((await obj.seat(made.codes.EX, "assign")).error, /not built yet/);
+  assert.match((await obj.seat(made.codes.EX, "message")).error, /not built yet/);
+});
+
+// ---- the executor's and dispatchers' tools (plan step 5) ----
+test("market, decline and transfer_ship as pure functions", () => {
+  const w = fresh();
+  const p = W.marketPage(E, w, { kind: "quick", limit: 5 });
+  assert.equal(p.hails.length, 5);
+  assert.ok(p.hails.every((h) => h.kind === "quick" && /^(inner|outer)$/.test(h.region)));
+  assert.equal(p.hails[0].hail_id, "w0123456789ab-0");
+  assert.equal(p.hails[0].region, "outer", "Titan picks up in the outer region");
+  assert.equal(p.next_cursor, "5");
+  assert.match(W.marketPage(E, w, { cursor: "x" }).error, /cursor/);
+  assert.deepEqual(W.declineHail(E, w, "w0123456789ab-1", T0), { ok: true, hail_id: "w0123456789ab-1", status: "declined", market_open: W.MARKET_SIZE - 1 });
+  assert.throws(() => W.declineHail(E, w, "w0123456789ab-1", T0), /off the market: declined/);
+  const t = W.transferShip(E, w, "SF-05", "D1", T0);
+  assert.deepEqual([t.car, t.from, t.to], ["sf-05", "D2 (Outer desk)", "D1 (Inner desk)"]);
+  assert.ok(w.desks.D1.ships.includes("sf-05") && !w.desks.D2.ships.includes("sf-05"));
+  assert.equal(W.shipDesk(w, "sf-05"), "D1");
+  assert.throws(() => W.transferShip(E, w, "sf-05", "D1", T0), /already on the Inner desk/);
+  assert.throws(() => W.transferShip(E, w, "sf-99", "D2", T0), /unknown ship/);
+  assert.throws(() => W.transferShip(E, w, "sf-05", "D7", T0), /unknown desk D7/);
+  assert.throws(() => W.addReport(w, "D1", "  ", null, T0), /needs text/);
+  assert.equal(W.addReport(w, "D1", "x".repeat(700), null, T0).reported.text.length, 600);
+});
+
+test("StarfareWorld: the executor assigns a job to a desk and its dispatcher flies it with the desk's ships only", async () => {
+  const { obj } = worldDO();
+  const { codes } = await obj.create(ID);
+  const EX = codes.EX, D1 = codes.D1, D2 = codes.D2;
+  assert.equal((await obj.seat(EX, "company")).world_id, ID);
+  assert.equal((await obj.seat(EX, "market", { limit: 3 })).hails.length, 3);
+  assert.match((await obj.seat(D2, "market")).error, /market is the executor's tool/);
+  assert.match((await obj.seat(EX, "assign", { hail_id: "w0123456789ab-0", desk: "D9" })).error, /desk must be one of D1 \(Inner desk\), D2 \(Outer desk\)/);
+  // Titan to Saturn goes to the outer desk; Jupiter to Io too; the inner desk gets ISS to Tiangong.
+  const a = await obj.seat(EX, "assign", { hail_id: "w0123456789ab-0", desk: "D2" });
+  assert.deepEqual([a.assigned, a.desk, a.hail.job_id], ["j1", "D2 (Outer desk)", "j1"]);
+  await obj.seat(EX, "assign", { hail_id: "w0123456789ab-5", desk: "D1" });
+  assert.match((await obj.seat(EX, "assign", { hail_id: "w0123456789ab-0", desk: "D1" })).error, /off the market: it is job j1/);
+  const q = await obj.seat(D2, "queue");
+  assert.deepEqual([q.desk, q.name, q.jobs.map((j) => j.job_id), q.ships.map((s) => s.car)], ["D2", "Outer desk", ["j1"], ["sf-05", "sf-06", "sf-07", "sf-11"]]);
+  // The job's own tools, from its desk only, and get_hail's fleet is the desk's.
+  assert.match((await obj.seat(D1, "get_hail", { job_id: "j1" })).error, /job j1 is on the Outer desk's queue, not yours \(Inner desk\)/);
+  assert.match((await obj.seat(D2, "get_hail", { job_id: "j9" })).error, /unknown job_id j9; queue lists your desk's jobs/);
+  const h = await obj.seat(D2, "get_hail", { job_id: "j1" });
+  assert.deepEqual(h.fleet.map((c) => c.car), ["sf-05", "sf-06", "sf-07", "sf-11"]);
+  assert.match((await obj.seat(D2, "plan_pickup", { job_id: "j1", car: "sf-01" })).error, /SF-01 is on the Inner desk, not yours/);
+  const p = await obj.seat(D2, "plan_pickup", { job_id: "j1", car: "SF-07" });
+  const r = await obj.seat(D2, "plan_ride", { job_id: "j1", after_leg: p.leg_id });
+  // The executor moves sf-07 to the inner desk before the outer desk dispatches: the dispatch is refused.
+  await obj.seat(EX, "transfer_ship", { car: "sf-07", desk: "D1" });
+  const go = { job_id: "j1", pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: 100, quoted_arrival: r.arrive, ask_after_hours: "never" };
+  assert.match((await obj.seat(D2, "dispatch", go)).error, /SF-07 is on the Inner desk, not yours/);
+  await obj.seat(EX, "transfer_ship", { car: "sf-07", desk: "D2" });
+  const d = await obj.seat(D2, "dispatch", go);
+  assert.deepEqual([d.status, d.job_id], ["arrived", "j1"]);
+  assert.match((await obj.seat(EX, "dispatch", go)).error, /dispatch is a dispatcher's tool/);
+  const rep = await obj.seat(D2, "report", { text: "j1 arrived on SF-07.", job_id: "j1" });
+  assert.deepEqual([rep.reported.seat, rep.reported.job_id, rep.reported.text], ["D2", "j1", "j1 arrived on SF-07."]);
+  assert.match((await obj.seat(D2, "report", { text: "x", job_id: "j7" })).error, /unknown job_id j7/);
+  const all = await obj.seat(EX, "reports");
+  assert.deepEqual(all.reports.map((x) => x.text), ["j1 arrived on SF-07."]);
+  assert.deepEqual(all.jobs.map((j) => [j.job_id, j.desk, j.phase]), [["j1", "D2", "arrived"], ["j2", "D1", "planning"]]);
+  assert.deepEqual(all.counts, { taken: 2, arrived: 1, live: 1, abandoned: 0, declined: 0 });
+  assert.equal(all.jobs[0].total, d.total);
+  assert.equal((await obj.seat(EX, "decline", { hail_id: "w0123456789ab-2" })).status, "declined");
+  assert.equal((await obj.seat(EX, "reports")).counts.declined, 1);
+  assert.match((await obj.seat(EX, "wait")).error, /not built yet/);
 });
