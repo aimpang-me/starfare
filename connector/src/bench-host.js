@@ -86,7 +86,9 @@ export function newSession(suite, benchId, player, nowMs, { split = "dev", key, 
   const pool = [...((suite.splits && suite.splits[split]) || [])], tasks = [];
   if (!pool.length) return { error: "Suite " + suite.id + " has no " + split + " split yet." + dev };
   while (tasks.length < n && pool.length) tasks.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-  return { bench_id: benchId, player, suite: suite.id, split, budget: suite.budget, tasks, run_ids: tasks.map(() => newRunId()), i: 0, run: null, results: [], notice: null, started_ms: nowMs, done: false };
+  // A suite with world "per_repeat" draws each session's worlds afresh, so replaying a held-out task never meets the same hazards.
+  const repeat = suite.world === "per_repeat" ? { repeat: crypto.getRandomValues(new Uint32Array(1))[0] } : {};
+  return { bench_id: benchId, player, suite: suite.id, split, budget: suite.budget, tasks, run_ids: tasks.map(() => newRunId()), ...repeat, i: 0, run: null, results: [], notice: null, started_ms: nowMs, done: false };
 }
 
 /** Scores the open task (a ride stopped at a checkpoint flies on with the defaults) and moves to the next. Changes s. */
@@ -135,7 +137,7 @@ export async function benchCall(E, suite, session, tool, input, nowMs, key) {
   const s = structuredClone(session);
   if (s.done) return { session: s, task: null, result: { error: "This bench session is over. start_bench starts a new one.", bench: { done: true } } };
   const k = s.i, t = s.tasks[k];
-  if (!s.run) s.run = await openTask(E, suite, t, await seedFor(suite, s.split, t, 0, key), s.run_ids[k]);
+  if (!s.run) s.run = await openTask(E, suite, t, await seedFor(suite, s.split, t, s.repeat ?? 0, key), s.run_ids[k]);
   const b = new BenchBackend(E, s.run), result = await b.call(tool, input);
   s.run = b.run;
   const bench = { task: k + 1 + " of " + s.tasks.length, task_id: t.id, calls_used: s.run.tool_calls, budget: s.run.budget, ...(s.notice ? { notice: s.notice } : {}) };
@@ -176,10 +178,10 @@ export const TRACE_FORMAT = "starfare.bench-trace/1";
 /** A finished session as a file anyone can replay: how it started (tasks and run_ids, not the player), every call in order
  *  ({ seq, at, task, tool, input }, the End button as END_TOOL), and the results it stored. */
 export function traceOf(suite, s, calls) {
-  const { bench_id, split, budget, tasks, run_ids, started_ms } = s;
+  const { bench_id, split, budget, tasks, run_ids, repeat, started_ms } = s;
   return {
     format: TRACE_FORMAT, simulated: true, bench_id, suite: suite.id, engine_sha256: suite.engine_sha256, score_version: suite.score_version, split,
-    start: { bench_id, suite: s.suite, split, budget, tasks, run_ids, started_ms }, results: s.results, total: totalOf(s), out_of: 100000 * s.tasks.length,
+    start: { bench_id, suite: s.suite, split, budget, tasks, run_ids, ...(repeat != null ? { repeat } : {}), started_ms }, results: s.results, total: totalOf(s), out_of: 100000 * s.tasks.length,
     verified: s.verified ?? null, calls,
   };
 }

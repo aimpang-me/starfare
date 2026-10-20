@@ -676,6 +676,7 @@ async function phaseOff() {
     assert.equal(j.score_version, SCORE_VERSION); assert.equal(row.score_version, SCORE_VERSION); assert.equal(row.engine_sha256, META.sha256);
     assert.equal(row.kwh, Math.round(best.score.used_kwh)); assert.ok(Math.abs(row.wait_h - (jdOf(best.score.pickup) - jdOf(best.hail.rider_ready)) * 24) <= 0.06, `${row.wait_h} h vs actual pickup ${best.score.pickup}`);
     assert.equal(j.stats.runs_scored, scored);
+    assert.deepEqual(j.standings, { min_attempts: 3, players: 0, unranked: 0, ranked: [] }, "without sign-in no run has a player to rank");
     const r = await fetch(`${w.base}/board`);
     assert.match(r.headers.get("content-type"), /text\/html/);
     const html = await r.text();
@@ -726,6 +727,12 @@ async function phaseOff() {
       assert.equal(start.value.tasks, 5);
       assert.equal(start.value.score, undefined);
       assert.equal(start.value.total, undefined);
+      // Three held-out sessions a day per player (here, per address: this server runs without sign-in), then a refusal.
+      for (let i = 0; i < 2; i++) assert.equal((await call(bot, "start_bench", { split: "test" })).isError, false);
+      const fourth = await call(bot, "start_bench", { split: "test" });
+      assert.equal(fourth.isError, true);
+      assert.match(fourth.value, /allows 3 sessions a day per player/);
+      assert.equal((await call(bot, "start_bench", { split: "dev" })).isError, false, "practice is not limited");
     } finally { await bot.close(); }
   });
   await client.close();
@@ -941,7 +948,12 @@ async function phaseOn() {
       assert.equal(j.best["iss-crew"].player_tag, good.hail.player_id.slice(2, 8));
       assert.equal(j.best["iss-crew"].run_id, good.hail.run_id);
       assert.equal(Object.hasOwn(j.best["iss-crew"], "player_id"), false);
+      // The season standings count the signed-in players' attempts (mean over attempts, ranked from 3).
+      assert.equal(j.standings.min_attempts, 3);
+      assert.ok(j.standings.players >= 1, JSON.stringify(j.standings));
+      assert.equal(j.standings.players, j.standings.unranked + j.standings.ranked.length);
       const html = await (await fetch(`${base}/board`)).text();
+      assert.match(html, /Season standings/);
       assert.ok(html.includes(`planned by Grok bot · player ${good.hail.player_id.slice(2, 8)}`));
       assert.ok(html.includes(`href="/flight/${good.hail.run_id}"`));
       assert.ok(html.includes(R.BY["iss-crew"].title));

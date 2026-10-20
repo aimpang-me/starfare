@@ -3,7 +3,9 @@
 import { DurableObject } from "cloudflare:workers";
 import { END_TOOL, benchCall, benchView, endTask, newSession, replayTrace, traceOf } from "./bench-host.js";
 import { engine } from "./engine.js";
-import { loadSuite } from "./suite.js";
+import { benchTestPerDay } from "./limit.js";
+import { hub } from "./store.js";
+import { PUBLIC_SPLITS, loadSuite } from "./suite.js";
 import V1 from "./suites/v1.json" with { type: "json" };
 
 export const BENCH_ID = /^b_[0-9a-f]{20}$/;
@@ -32,12 +34,18 @@ export class StarfareBench extends DurableObject {
     this.ctx.storage.sql.exec("INSERT INTO trace (at, task, tool, input, result) VALUES (?, ?, ?, ?, ?)", Date.now(), task, tool, JSON.stringify(input ?? {}), r);
   }
 
-  /** split "dev" (practice) or "test" (held out). The key stays in env: it is never stored, logged or returned. */
-  create(id, player, split = "dev") {
+  /** split "dev" (practice) or "test" (held out). The key stays in env: it is never stored, logged or returned. who is what
+   *  the held-out split's daily limit counts against: the player, or the address when the server runs without sign-in. */
+  create(id, player, split = "dev", who = null) {
     return this.#serial(async () => {
       if (await this.#session()) return { error: "bench " + id + " already exists" };
       const s = newSession(suiteOf(), id, player, Date.now(), { split, key: this.env.STARFARE_BENCH_KEY });
       if (s.error) return s;
+      if (!PUBLIC_SPLITS.includes(split)) {
+        const q = await hub(this.env).benchQuota("bench-test:" + (who || "unknown"), benchTestPerDay(this.env));
+        if (!q.ok) return { error: "The held-out test split allows " + q.limit + " sessions a day per player, and yours are used. It opens again at 00:00 UTC. " +
+          "start_bench with split dev (practice) still works." };
+      }
       this.ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS trace (seq INTEGER PRIMARY KEY, at INTEGER, task INTEGER, tool TEXT, input TEXT, result TEXT)");
       await this.ctx.storage.put("session", s);
       await this.ctx.storage.setAlarm(Date.now() + BENCH_KEEP_MS);

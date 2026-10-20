@@ -33,6 +33,8 @@ export async function allowed(h, key, limit, n = 1) {
   return false;
 }
 export const rateLimit = (env) => Number(env.RATE_PER_MIN) || 120;
+/** Held-out test sessions a player (or, without sign-in, an address) may start per UTC day (security review M4). */
+export const benchTestPerDay = (env) => Number(env.BENCH_TEST_PER_DAY) || 3;
 
 const RPC_BATCH_MAX = 10;
 export const SHARED_IP = 5; // a signed-in /mcp call's address gets this many times the budget; its player gets the budget itself

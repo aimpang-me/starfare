@@ -70,3 +70,23 @@ test("past 20,000 keys in a minute, new keys share one bucket, so a flood of add
   assert.equal(h.hits.size, 20001);
   assert.equal(h.hit("ip1", 5).ok, true, "keys already counted keep their own budget");
 });
+
+test("the held-out bench allows a few sessions per key per UTC day, and the next day starts fresh", async () => {
+  const { DatabaseSync } = await import("node:sqlite");
+  const source = readFileSync(new URL("../src/store.js", import.meta.url), "utf8")
+    .replace(/^import\s[\s\S]*?;\r?\n/gm, "")
+    .replace(/\bexport (?=const |class )/g, "");
+  const deps = { DurableObject: class { constructor(ctx, env) { this.ctx = ctx; this.env = env; } }, META: { sha256: "x" } };
+  const { StarfareHub } = new Function(...Object.keys(deps), source + "\nreturn { StarfareHub };")(...Object.values(deps));
+  const db = new DatabaseSync(":memory:");
+  const h = new StarfareHub({ storage: { sql: { exec(q, ...a) { const rows = db.prepare(q).all(...a); return { toArray: () => rows, one: () => rows[0] }; } } } }, {});
+  const real = Date.now, DAY = 864e5, T = 1_800_000_000_000;
+  try {
+    Date.now = () => T;
+    assert.deepEqual([1, 2, 3, 4].map(() => h.benchQuota("player:a", 3).ok), [true, true, true, false]);
+    assert.equal(h.benchQuota("player:b", 3).ok, true, "each key has its own count");
+    Date.now = () => T + DAY;
+    assert.deepEqual(h.benchQuota("player:a", 3), { ok: true, n: 1, limit: 3 });
+    assert.equal(db.prepare("SELECT COUNT(*) AS n FROM bench_quota").get().n, 1, "yesterday's rows are gone");
+  } finally { Date.now = real; }
+});

@@ -665,6 +665,10 @@ body.cm-open .mc-activity{display:none}
     <header><div class="ttl"><div class="caps">Log &amp; reports</div><h2 id="logH" tabindex="-1">Scoreboard</h2></div><button class="btn small" type="button" id="logClose">Close</button></header>
     <div class="bd">
       <p class="note" id="boardLead" style="margin-top:0">The best arrived flight for each booking this season (simulated). A scored row with a flight address opens that flight. The page replays the simulated flight and shows the receipt. Full table at <a href="/board">/board</a>, data at <code>/board.json</code>. The public log for a flight is <code>/rides/&lt;run_id&gt;.json</code>.</p>
+      <div class="caps">Season standings</div>
+      <p class="note" id="standLead" style="margin:4px 0 6px">Ranked by the mean score over every attempt this season. A booking counts from its first plan or forecast, and one that hasn't arrived counts 0.</p>
+      <div class="tw"><table class="t" style="min-width:420px"><thead><tr><th class="r">Rank</th><th>Player</th><th class="r">Mean</th><th class="r">Attempts</th><th class="r">Arrived</th><th class="r">Best</th></tr></thead><tbody id="standRows"></tbody></table></div>
+      <div class="caps" style="margin-top:14px">Best flight per booking</div>
       <div class="tw"><table class="t" style="min-width:560px"><thead><tr><th>Booking</th><th class="r">Points</th><th>Starseeker</th><th class="r">kWh vs par</th><th class="r">Wait h</th><th class="r">Plans</th><th>Tag</th></tr></thead><tbody id="boardRows"></tbody></table></div>
       <div class="caps" style="margin-top:14px">You</div>
       <p id="youRow" style="margin:4px 0 0;font-size:13px"></p>
@@ -2668,6 +2672,7 @@ function renderReports() {
 }
 function openBoard() {
   $("#boardRows").innerHTML = '<tr><td colspan="7" class="dim">Loading the scoreboard&hellip;</td></tr>';
+  $("#standRows").innerHTML = "";
   fetch("/board.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
     var best = j && j.best || {}, n = j && j.stats && j.stats.runs_scored, total = SF.SCORE_PARTS.reduce(function (a, p) { return a + p[2]; }, 0);
     $("#boardRows").innerHTML = (j.hails || []).concat(j.legacy_hails || []).sort(function (a, b) { return Number(!!best[b.hail_id]) - Number(!!best[a.hail_id]); }).map(function (h) {
@@ -2679,6 +2684,12 @@ function openBoard() {
         '</td><td class="r">' + (b.kwh != null ? fmt(b.kwh) : "") + (b.par != null ? " / " + fmt(b.par) : "") + '</td><td class="r">' + (b.wait_h != null ? fmt(b.wait_h, 1) : "") + '</td><td class="r">' + (b.plans != null ? fmt(b.plans) : "") +
         "</td><td>" + (b.run_id && RUN_ID.test(b.run_id) ? '<a href="/flight/' + esc(b.run_id) + '">' + esc(b.run_tag || "") + "</a>" : esc(b.run_tag || "")) + (b.player_tag ? ' <span class="dim">' + esc(b.player_tag) + "</span>" : "") + "</td></tr>";
     }).join("");
+    var st = j.standings;
+    $("#standRows").innerHTML = st && st.ranked.length ? st.ranked.map(function (p) {
+      return '<tr><td class="r">' + fmt(p.rank) + "</td><td>" + esc(p.player_tag) + '</td><td class="r" style="color:var(--me)">' + fmt(p.mean) + '</td><td class="r">' + fmt(p.attempts) +
+        '</td><td class="r">' + fmt(p.arrived) + '</td><td class="r">' + (p.best != null ? fmt(p.best) : "") + "</td></tr>";
+    }).join("") : '<tr><td colspan="6" class="dim">' + (st ? "No player has " + esc(st.min_attempts) + " attempts this season yet." : "Standings need the connector's sign-in.") + "</td></tr>";
+    if (st && st.unranked) $("#standRows").insertAdjacentHTML("beforeend", '<tr><td colspan="6" class="dim">' + fmt(st.unranked) + " more with fewer than " + esc(st.min_attempts) + " attempts, not ranked yet.</td></tr>");
     $("#boardLead").insertAdjacentHTML("beforeend", ' <span class="dim" id="boardN">Season ' + esc(j.season) + " · " + esc(j.pool_size) + " seasonal bookings. Scored catalog reference bookings are labelled separately." + (n != null ? " Flights scored across all seasons: " + fmt(n) + "." : "") + "</span>");
     var old = $$("#boardN"); if (old.length > 1) old[0].remove();
   }).catch(function () {

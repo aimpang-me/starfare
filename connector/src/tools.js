@@ -187,7 +187,7 @@ export const HOSTED_TOOLS = {
       "Returns a watch link that shows the player every tool call live. Call it when the player asks to play the bench.",
     inputSchema: {
       split: z.enum(["dev", "test"]).describe("dev (default): practice tasks from the public split, each score shown when its ride arrives. " +
-        "test: the held-out split; every score stays sealed until all its tasks are played. Use test only when the player asks for it.").optional(),
+        "test: the held-out split; every score stays sealed until all its tasks are played, and a player may start 3 test sessions a day. Use test only when the player asks for it.").optional(),
     },
   },
 };
@@ -199,7 +199,8 @@ export const HOSTED_INSTRUCTIONS = INSTRUCTIONS + "\n" +
   "Every call counts against the task's budget, list_hails and take_hail included. Every result's bench field says which task you are on, calls used and the budget; " +
   "when a task ends (its ride arrived or its budget is used) it says so, and the next call opens the next task. When bench.done is set, tell the player the total; later calls play the normal game. " +
   "Bench scores never go to /board. start_bench plays the practice (dev) split unless the player asks for the held-out test split (split \"test\"); " +
-  "there a task's score stays sealed until every task is played: a ride that arrives says only that it flew, and the next call opens the next task.";
+  "there a task's score stays sealed until every task is played: a ride that arrives says only that it flew, and the next call opens the next task. " +
+  "Each session draws its tasks' hazards afresh, and a player may start 3 test sessions a day.";
 
 export function registerTools(server, backend, tools = TOOLS) {
   for (const [name, def] of Object.entries(tools)) server.registerTool(name, def, async (input) => answer(await backend.call(name, input)));

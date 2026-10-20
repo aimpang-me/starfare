@@ -83,7 +83,7 @@ function select(rows, rng, { margin, perStratum, anchors }) {
 }
 
 async function cut({ id, split, n, key, rule, log }) {
-  const E = loadEngine(), suite = { format: SUITE_FORMAT, id, engine_sha256: META.sha256, score_version: SCORE_VERSION, budget: rule.budget, world: "per_task", margin: rule.margin };
+  const E = loadEngine(), suite = { format: SUITE_FORMAT, id, engine_sha256: META.sha256, score_version: SCORE_VERSION, budget: rule.budget, world: "per_repeat", margin: rule.margin };
   const rng = rngOf("starfare-bench|" + id + "|" + split + "|" + (split === "dev" ? "candidates" : key));
   const rows = await scoreAll(E, suite, split, candidates(E, rng, n), key, log);
   const tasks = select(rows, rng, rule);
