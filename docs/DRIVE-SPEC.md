@@ -105,14 +105,26 @@ I also ran a liner at 90 km/s. It used less propellant but more energy on every 
 
 ## Engine changes this needs
 
-None of these are made. Together they move the engine sha, so the suite is re-cut afterwards. That needs the score-version storage fix from the 2026-10-19 game design review first.
+Status on 2026-10-20: the physics is built on a local branch, and the fleet still flies the real hulls. Every engine change moves the engine sha, so the suite is re-cut at the end. The hidden test split is signed with Alvin's bench key, so that cut runs on his machine.
 
-1. **Classes.** Add taxi, shuttle and liner to `SHIP_CLASSES` (`sol-engine.js:492`), each with a drive block (vₑ, thrust, η), a propellant tank, seats, and "Fictional" in `ASSUMPTIONS` (`sol-engine.js:498`). The power doesn't depend on distance from the Sun, which `power_mode: "constant"` already handles (`sol-engine.js:516`). Dawn, DS1 and RTG stay as the real reference hulls.
-2. **Mass.** In `battery()`, take vₑ from the class instead of the NSTAR set point (`sol-engine.js:548-556`). Make the final mass dry plus passengers aboard, plus consumables for the leg, plus the propellant later legs still need, instead of `cls.dry_kg` alone (`sol-engine.js:557`). On a multi-stop flight, that means costing legs from the last one back.
-3. **Burns.** Record burn time and start and end acceleration on each leg. Apply the Jupiter fix chosen in point 5 above.
-4. **Planner objective.** Either price consumables in the energy objective, or give each class a default delta-v cap for the time objective. Today the cap is 15 for every ship (`sol-engine.js:734`). The second is a one-line change per class. The first finds the best plan per route.
-5. **Fare.** Whatever Alvin picks in decision 4 (`sol-engine.js:567`). Score terms that weigh kWh shift scale too.
-6. **Carried over from the capacity review, unchanged:** boarding time (`DWELL`) scales with the number of people boarding, liners stay off 1-berth pads (`BERTHS`, `sol-rides.js:81`), and liners fly fixed routes so the par search stays small.
+**Built (engine only, parked fleet unchanged):**
+
+1. **Classes.** `SHIP_CLASSES` has `star-taxi`, `star-shuttle` and `star-liner` with seats, exhaust speed, thrust, efficiency and a tank. They are flagged `fictional`, and the planner lists `DRIVE_ASSUMPTIONS` for them. The ids avoid the real Shuttle class (the orbiter), which keeps `shuttle`. The taxi has 99 kN, triple the sized 33 kN, for the Jupiter fix.
+2. **Mass.** `driveLeg()` is the final mass of hull plus people plus supplies for the leg's days, with each burn costed from the last one back. A Starseeker refuels at every stop, so the tank holds one leg. That replaces "carry the later legs' propellant": each leg stays independent, the way the planner already plans them.
+3. **Burns.** Each leg records its burns, with minutes and start and peak g, throttled at 1 g. The worst Jovian taxi burn is 28.6 minutes.
+
+`world/engine/test-drive.js` has 7 checks, including every bookable route fitting its class's tank with every seat full. All the existing engine checks pass unchanged.
+
+**Next, in this order:**
+
+4. **Store versions on board rows.** Runs already keep `score_version`, but board rows keep neither it nor the engine sha (`connector/src/board.js`). Without them, a re-cut mixes old and new scores on one board.
+5. **Fleet.** The seven parked Starseekers become Taxis, which fly quick hops only. Shuttles fly the inner long hauls and Liners the outer ones. Until scheduled routes exist, they are dispatched like today (`nearCars`, `sol-rides.js:72`), filtered by what each class flies. Proposed parking: Shuttles at Mars Base and Ceres Port, Liners at the Orbital Depot and Titan Dock.
+6. **Who is aboard.** `planLeg` passes the people aboard to the planner. For a shared flight's `plan_leg` chain, a booking counts from its first visit to its pickup to its first visit after that to its destination. The dispatch re-prices every leg from the final manifest.
+7. **Fares per seat.** A leg's fare is split by seats among the bookings aboard. An empty pickup leg is charged to the bookings that board at its end. The rates stay $0.16/kWh and $0.35/min (`sol-engine.js:567`), and the honest-fare score part checks the per-seat fare.
+8. **Score version 4.** The "Xenon tank" part (whole plan within one tank) and the "Distance throttle" part (NSTAR set point by distance from the Sun) have no meaning on a drive that refuels at every stop and holds its power everywhere. Proposed: drop both and move their points to energy versus par. A hold costs `HOLD_KWH` = 250 kWh an hour (`sol-rides.js:80`), sized for probes, so it is re-derived for these classes. The planner's energy objective prices supplies, so liners land near the chosen Δv ≤ 45 plans by themselves.
+9. **Re-cut** the dev split here and the test split on Alvin's machine.
+
+**After that:** scheduled Shuttle and Liner routes with one pickup and one drop-off, and group bookings (crews and families) to fill them. Also boarding time (`DWELL`) that scales with the number of people boarding, and Liners kept off 1-berth pads (`BERTHS`, `sol-rides.js:81`).
 
 ## Decisions
 
