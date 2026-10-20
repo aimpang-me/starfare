@@ -27,7 +27,7 @@ const isMcpPath = (p) => p === "/mcp" || p.startsWith("/mcp/");
 // The landing page runs the engine in the browser. ?v= changes with every engine build, so that URL can be cached for good.
 const ENGINE_PATH = "/engine.js", ENGINE_V = META.sha256.slice(0, 16);
 const isBenchPath = (p) => p === "/bench" || p.startsWith("/bench/");
-const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p.startsWith("/rides/") || p.startsWith("/flight/") || p.startsWith("/agent/") || isBenchPath(p);
+const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p.startsWith("/rides/") || p.startsWith("/flight/") || p.startsWith("/agent/") || p.startsWith("/comms/") || isBenchPath(p);
 const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), FLIGHT_PATH = new RegExp("^/flight/(" + RUN_ID.source.slice(1, -1) + ")(\\.json)?$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
 
 function tooMany(limit) {
@@ -69,12 +69,33 @@ async function agentPage(req, url, env) {
   if (!(await hub(env).hit("rides:" + (req.headers.get("cf-connecting-ip") || "unknown"), limit)).ok) return new Response("Too many requests. Try again in a minute.", { status: 429, headers: { "retry-after": "60" } });
   if (!m[2]) {
     const places = JSON.stringify(Object.fromEntries((await engine()).PLACES.map((p) => [p.id, p.name]))).replace(/</g, "\\u003c");
-    return new Response(agentHtml.replace("__TOKEN__", m[1]).replace("__PLACES__", () => places), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
+    return new Response(agentHtml.replaceAll("__TOKEN__", m[1]).replace("__PLACES__", () => places), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
   }
   const ids = await hub(env).followRuns(m[1]);
   if (!ids) return Response.json({ error: "unknown follow link" }, { status: 404, headers: { "cache-control": "no-store" } });
   const runs = (await Promise.all(ids.map((id) => runStub(env, id).follow()))).filter(Boolean);
   return Response.json({ simulated: true, now_ms: Date.now(), runs }, { headers: { "cache-control": "no-store" } });
+}
+
+/** The home page's Comms channel (simulated). POST /comms/new opens one and returns its secret channel id and a check-in code;
+ *  POST /comms/<channel>/code mints a fresh code; GET /comms/<channel>.json?after=<seq> is what the panel polls: new events
+ *  (the agent connected and checked in), the code still waiting, and the agent's newest bookings as the follow page shows them. */
+const COMMS_PATH = /^\/comms\/([0-9a-f]{32})(\.json|\/code)$/;
+async function comms(req, url, env) {
+  const limit = Number(env.RATE_PER_MIN) || 120, h = hub(env), json = (v, status = 200) => Response.json(v, { status, headers: { "cache-control": "no-store" } });
+  if (!(await h.hit("rides:" + (req.headers.get("cf-connecting-ip") || "unknown"), limit)).ok) return new Response("Too many requests. Try again in a minute.", { status: 429, headers: { "retry-after": "60" } });
+  if (url.pathname === "/comms/new") return req.method === "POST" ? json({ simulated: true, ...(await h.commsOpen()) }) : new Response("Method not allowed", { status: 405 });
+  const m = COMMS_PATH.exec(url.pathname);
+  if (!m) return new Response("Not found", { status: 404 });
+  if (m[2] === "/code") {
+    if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
+    const r = await h.commsCode(m[1]);
+    return r.error ? json(r, 404) : json(r);
+  }
+  const v = await h.commsView(m[1], url.searchParams.get("after"));
+  if (!v) return json({ error: "unknown channel" }, 404);
+  const runs = (await Promise.all(v.run_ids.map((id) => runStub(env, id).follow()))).filter(Boolean);
+  return json({ simulated: true, now_ms: Date.now(), linked: v.linked, code: v.code, events: v.events, runs });
 }
 
 /** The bench watch pages. /bench: how to start one from Grok. /bench/<bench_id>: one session's tasks and tool calls, live
@@ -125,6 +146,7 @@ export default {
       return mcpHandler.fetch(req, env, ctx);
     }
     if (isBenchPath(url.pathname)) return bench(req, url, env);
+    if (url.pathname.startsWith("/comms/")) return comms(req, url, env);
     if (req.method !== "GET") return new Response("Method not allowed", { status: 405 });
     if (url.pathname === "/board" || url.pathname === "/board.json") {
       const E = await engine(), season = sky(Date.now()).season, cap = await hub(env).ensurePool(season);

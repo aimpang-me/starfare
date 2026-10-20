@@ -307,6 +307,7 @@ footer p{margin:0;max-width:100ch}
           <label class="caps" for="speed">Speed</label>
           <select id="speed"><option value="0.5">0.5&#xD7;</option><option value="1" selected>1&#xD7;</option><option value="2">2&#xD7;</option><option value="4">4&#xD7;</option></select>
           <div class="seg" role="group" aria-label="Camera"><button type="button" id="cammode" aria-pressed="false">Overhead</button></div>
+          <div class="seg" id="radioseg" hidden><button type="button" id="radiobtn" aria-pressed="false" title="Ship radio: an AI voice (ElevenLabs) reads departures, reroutes, checkpoints and arrivals as they play. Generated and simulated; sound stays off until you turn it on.">Radio</button></div>
           <div class="seg" id="liveseg" hidden><button type="button" id="golive" aria-pressed="true" title="Follow the flight as it flies now">Live</button></div>
           <div class="pop"><button class="btn small" type="button" id="lBtn" aria-expanded="false" aria-controls="lMenu">Layers</button>
             <div class="popm" id="lMenu" hidden><div class="caps">Names</div>
@@ -361,6 +362,7 @@ footer p{margin:0;max-width:100ch}
 <script src="/assets/sol-lore.js"></script>
 <script src="/assets/sol-lines.js"></script>
 <script src="/assets/sol-layers.js"></script>
+<script src="/assets/sol-radio.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () { // after the deferred engine script
 "use strict";
@@ -468,8 +470,8 @@ var SF = (function () {
     var ev = [];
     legs.forEach(function (L, i) {
       if (L.idle) return;
-      ev.push({ jd: L.dep, kind: "depart", leg: i, title: (L.kind === "pickup" ? "Pickup leg departs " : "Ride departs ") + name(L.from), text: name(L.from) + " to " + name(L.to) });
-      if (!L.open) ev.push({ jd: L.arr, kind: "arrive", leg: i, title: (L.kind === "pickup" ? "Rider aboard at " : "Arrived at ") + name(L.to), text: L.gate === "PASS" ? "Re-fly check: PASS" : "Local hop (not re-flown)" });
+      ev.push({ jd: L.dep, kind: "depart", leg: i, pickup: L.kind === "pickup", title: (L.kind === "pickup" ? "Pickup leg departs " : "Ride departs ") + name(L.from), text: name(L.from) + " to " + name(L.to) });
+      if (!L.open) ev.push({ jd: L.arr, kind: "arrive", leg: i, pickup: L.kind === "pickup", title: (L.kind === "pickup" ? "Rider aboard at " : "Arrived at ") + name(L.to), text: L.gate === "PASS" ? "Re-fly check: PASS" : "Local hop (not re-flown)" });
     });
     (live ? live.checkpoints : log.checkpoints || []).forEach(function (c) {
       var d = c.decision;
@@ -951,6 +953,11 @@ function bindRide() {
     RS.cur = j; RS.scrubbed = true;
   });
   $("#speed").addEventListener("change", function () { if (RS) RS.speed = +this.value; });
+  if (window.Radio && Radio.available()) {
+    var rb = $("#radiobtn"), rset = function (v) { rb.setAttribute("aria-pressed", String(v)); rb.textContent = v ? "Radio on" : "Radio"; };
+    $("#radioseg").hidden = false; rset(false); // browsers start audio only after a click, so the radio always starts off here
+    rb.addEventListener("click", function () { rset(Radio.setEnabled(!Radio.enabled())); });
+  }
   $("#cammode").addEventListener("click", function () { if (!RS) return; RS.over = !RS.over; this.setAttribute("aria-pressed", String(RS.over)); });
   bindRig($("#rhost"), { set az(v) { if (RS) RS.yaw = v; }, get az() { return RS ? RS.yaw : 0; }, set el(v) { if (RS) RS.pitch = v; }, get el() { return RS ? RS.pitch : 0; }, zoom: function (k) { if (RS) RS.zf = Math.max(0.25, Math.min(8, RS.zf * k)); } });
   bindLayers();
@@ -1065,6 +1072,12 @@ function trailOf(seg) {
   g.instanceCount = seg.length / 8;
   var m = new THREE.Mesh(g, TRAILMAT); m.frustumCulled = false; return m;
 }
+// A solar storm over a planet: the strongest storm hold at any place in its system.
+function stormOver(id, jd) {
+  var k = 0;
+  (RS.flare || []).forEach(function (w) { if (SF.system(w.body) === id) k = Math.max(k, window.StarfareView.weatherAt(RS.flare, w.body, jd)); });
+  return k;
+}
 function buildRideScene() {
   if (RS.sc) return;
   var rp = RS.rp, focus = rp.focus, sc = new THREE.Scene(), local = focus !== "sun";
@@ -1074,6 +1087,7 @@ function buildRideScene() {
   var labels = LabelSet($("#rlabels")); RS.labels = labels; RS.sc = sc; RS.cam = cam; RS.bodies = []; RS.rings = []; RS.paths = [];
   var live = RIDE.live;
   RS.wx = window.StarfareView.weatherWindows(live ? live.incidents : rp.record.score.incidents, live && live.hold, SF.E.PLACES);
+  RS.flare = window.StarfareView.weatherWindows(live ? live.incidents : rp.record.score.incidents, live && live.hold, SF.E.PLACES, window.StarfareView.FLARE);
   sc.add(stars());
   if (local) {
     sc.add(new THREE.AmbientLight(0x2c3442, 0.7));
@@ -1116,6 +1130,16 @@ function buildRideScene() {
     if (RS.wx.findIndex(function (x) { return x.body === w.body; }) !== i || !RS.bodies.some(function (b) { return b.id === w.body && !b.ringOf; })) return;
     labels.add({ html: esc(SF.name(w.body)) + " · " + WX[w.kind] + " · simulated", cls: "k-wx", pri: 70,
       hide: function () { return !window.StarfareView.weatherAt(RS.wx, w.body, RS.cur); }, pos: function () { return placeAt(w.body, RS.cur); } });
+  });
+  // Solar storm holds from the record: a label and a faint violet haze on the held place, and its planet's aurora
+  // brightens (Earth, Jupiter, Saturn). The record has no eruption time, so the Sun and the storm front are not drawn.
+  RS.storms = [];
+  RS.flare.forEach(function (w, i) {
+    if (RS.flare.findIndex(function (x) { return x.body === w.body; }) !== i || !RS.bodies.some(function (b) { return b.id === w.body && !b.ringOf; })) return;
+    var g = window.StarfareSkyEffects ? StarfareSkyEffects.stormGlow(THREE, 0x9d8cff) : null;
+    if (g) { sc.add(g); RS.storms.push({ body: w.body, g: g, b: RS.bodies.filter(function (b) { return b.id === w.body && !b.ringOf; })[0] }); }
+    labels.add({ html: esc(SF.name(w.body)) + " · solar storm · simulated", cls: "k-wx", pri: 70,
+      hide: function () { return !window.StarfareView.weatherAt(RS.flare, w.body, RS.cur); }, pos: function () { return placeAt(w.body, RS.cur); } });
   });
   RS.dest = rp.legs[rp.legs.length - 1].to;
   labels.add({ html: esc(SF.name(RS.dest)) + " · reached", cls: "k-ok", pri: 70, hide: function () { return RS.phase !== "arrived"; }, pos: function () { return placeAt(RS.dest, RS.cur); } });
@@ -1168,6 +1192,12 @@ function effRate() {
   else return base;
   return Math.min(base, Math.max(w / 8, 0.25) * RS.speed);
 }
+// Ship radio: speak the stock line for each event the playback crosses going forward (not on a scrub or a jump back).
+function radioTick(rp, jd, jump) {
+  var last = RS.radioJd; RS.radioJd = jd;
+  if (!window.Radio || !Radio.enabled() || jump || last == null || jd <= last) return;
+  rp.events.forEach(function (e, i) { if (e.jd > last && e.jd <= jd) Radio.cue(e, RS.rp.car + ":" + i + ":" + e.kind); });
+}
 function rideFrame(dt, t) {
   if (!RS) return;
   var rp = RS.rp, span = rp.end - rp.start, er = effRate(), lj = RS.live ? Math.max(rp.start, liveJd()) : null;
@@ -1178,6 +1208,7 @@ function rideFrame(dt, t) {
     else if (RS.cur >= rp.end) { RS.cur = rp.end; RS.playing = false; playIcon(); }
   }
   var jd = RS.cur, f = (jd - rp.start) / span, st = rp.at(jd), L = st.leg, jump = !!RS.scrubbed; // a scrub jumps the camera, no swoop
+  radioTick(rp, jd, jump);
   var fl = st.phase === "flight", held = RS.live && RIDE.live.hold && jd >= rp.hold - 1e-6;
   if (t - rHudT > 90 || RS.scrubbed) {
     rHudT = t; RS.scrubbed = false;
@@ -1292,8 +1323,12 @@ function rideFrame(dt, t) {
     var effectsTime = RS.planetClock.sample(t, RS.playing && !reduced && !document.hidden);
     var maps = SolArt.quality().maps;
     if (RS.sun && SolArt.updateSun) SolArt.updateSun(RS.sun, { elapsedSeconds: effectsTime, camera: cam, radiusPx: RS.sun.userData.solarSurface.scale.x / pxw(cam, RS.sun.position, GH), quality: maps });
-    RS.bodies.forEach(function (b) { if (b.m && b.m.userData.planetEffects) SolArt.updatePlanet(b.m, { elapsedSeconds: effectsTime, camera: cam, radiusPx: b.m.scale.x / pxw(cam, b.m.position, GH), quality: maps, veil: window.StarfareView.weatherAt(RS.wx, b.id, jd) }); });
+    RS.bodies.forEach(function (b) { if (b.m && b.m.userData.planetEffects) SolArt.updatePlanet(b.m, { elapsedSeconds: effectsTime, camera: cam, radiusPx: b.m.scale.x / pxw(cam, b.m.position, GH), quality: maps, veil: window.StarfareView.weatherAt(RS.wx, b.id, jd), storm: stormOver(b.id, jd) }); });
   }
+  (RS.storms || []).forEach(function (s) {
+    var k = window.StarfareView.weatherAt(RS.flare, s.body, jd), p = placeAt(s.body, jd); s.g.visible = k > 0 && !!p; if (!s.g.visible) return;
+    var px = pxw(cam, p, GH); s.g.position.copy(p); s.g.scale.setScalar(Math.max(s.b.m.scale.x * 3.2, px * 40)); s.g.material.opacity = 0.5 * k;
+  });
   // Arrival: one soft ring on the destination as playback crosses into arrived. After a scrub, or with reduced
   // motion, only the reached label shows.
   RS.phase = st.phase;
@@ -1501,6 +1536,7 @@ var THREE_SRC = [
   ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js", "sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa"],
   ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js", "sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E"],
   ["/assets/planet-effects.js"],
+  ["/assets/sky-effects.js"],
   ["/assets/sol-art.js"]
 ];
 function loadThree() {

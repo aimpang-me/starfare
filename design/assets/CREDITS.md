@@ -69,6 +69,14 @@ There are no audio files. Every map sound is synthesized in the browser with the
 
 All of it is labelled on the map as stylized and simulated. Distances and positions come from the engine and the true-scale map camera.
 
+## Audio: ship radio (`audio/radio/`, `sol-radio.js`)
+
+| File | Source | Licence | Changes |
+|---|---|---|---|
+| `audio/radio/*.mp3` (19 ship callouts, listed in `audio/radio/lines.json`) | Generated with ElevenLabs text to speech (model `eleven_v4`, library voice "Marilyn - Warm, Clear British"), 2026-10-20. AI voice; the lines are simulated. | ElevenLabs terms for the plan in use; confirm commercial use before launch (the account showed free-tier limits on 2026-10-20) | Cut from one take into one clip per line, trimmed, mono 48 kHz MP3 64 kbps. Stored clean. |
+
+The radio sound (a gentle band-limit, light compression, the open-channel blip, roger beep and two-tone alert) is original work, synthesized live in `sol-radio.js` with the Web Audio API. Lines speak no numbers, so the "never invent numbers" rule holds.
+
 ## Original work
 
 The procedural Starseeker ship model, its engine plume, nav lights and callsign decal, the Fresnel atmosphere rims, the bloom, vignette and grain settings, and the SVG icon sprite are all original. They were drawn in code in `sol-art.js` for Starfare. They are not modelled on any real vehicle, and Starfare is not affiliated with any real company. The home map draws ships with this model; the flight page draws the generated hulls below when the quality tier allows, and this model otherwise.
@@ -82,5 +90,7 @@ Original Starfare models, built in Blender 5.2 by `tools/models/blender/build_mo
 Meshes generated from Starfare's own concept art (`art/2026-10-17/starseeker-0*.png`, made for this project) with Tripo H3.1 image-to-3D, run through the Higgsfield MCP connector on Alvin's Higgsfield workspace. The job IDs, credits and source hashes are in `art/2026-10-17/kestrel-higgsfield-v1/generation-2026-10-18.json` and `art/2026-10-18/fleet-tripo-v1/generation-2026-10-18.json`. `tools/models/build-lods.mjs` reduces them to the game versions (about 15k triangles, 1024 px maps); `models/fleet.json` records both hashes and keeps `productionApproved: false`.
 
 Rights, as checked on October 19, 2026: Higgsfield's help centre says the user owns outputs, its Terms of Use (section 4.4) do not restrict commercial use, and Higgsfield may use content for model training unless deleted ([source](https://higgsfield.ai/creator-hub/help-center/account-and-privacy/who-owns-my-generations-and-can-i-use-them-commercially)). Tripo's own help page grants commercial rights only on its paid plans and does not say how models made through a third-party platform are treated ([source](https://www.tripo3d.ai/help/privacy-policy/how-to-use-tripo-models-commercially)). Open before production approval: confirm in writing (Higgsfield's terms or support) that Tripo models generated through Higgsfield carry the same commercial rights as other Higgsfield outputs.
+
+The station, dock and ship models (`models/variety/`, from `tools/models/blender/variety.py`) and their tiling trim maps (`models/trim/`, from `tools/models/trims.py`) are original too. They are scripted in Blender and numpy, use no third-party meshes, textures or generated hulls, and are not modelled on any real station or vehicle. They are fictional, illustrative and not production-approved (`models/variety.json`). The earlier generated hulls (`kestrel`, `tandem`, `lantern`, from Tripo via Higgsfield, licence unconfirmed) are no longer loaded by the pages.
 
 The rides, riders, weather and fleet on these pages are simulated. Planet positions are real (NASA JPL DE421).

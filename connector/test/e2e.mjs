@@ -32,7 +32,7 @@ const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
 const META = JSON.parse(readFileSync(new URL("../src/engine/meta.json", import.meta.url), "utf8"));
 const BENCH_KEY = "e2e-bench-key"; // a throwaway key for wrangler dev; the live one is a Wrangler secret
-const TOOLS = ["check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_leg", "plan_pickup", "plan_ride", "space_weather", "start_bench", "take_hail"];
+const TOOLS = ["check_in", "check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_leg", "plan_pickup", "plan_ride", "space_weather", "start_bench", "take_hail"];
 
 const results = [];
 let workerLog = [];
@@ -220,9 +220,36 @@ async function phaseOff() {
     assert.match(js.headers.get("cache-control"), /immutable/);
     assert.ok((await js.text()).includes("module.exports = SOLE"));
   });
-  await check("tools/list is exactly the eleven ride-hail tools and start_bench", async () => {
+  await check("tools/list is exactly the eleven ride-hail tools, start_bench and check_in", async () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     assert.deepEqual(names, TOOLS);
+  });
+  await check("Comms: an agent checks in with the page's one-time code, and its bookings show on that channel", async () => {
+    const opened = await fetch(`${w.base}/comms/new`, { method: "POST" });
+    assert.equal(opened.status, 200);
+    const { channel, code } = await opened.json();
+    assert.match(channel, /^[0-9a-f]{32}$/); assert.match(code, /^[A-Z2-9]{2}-[A-Z2-9]{4}$/);
+    const view = async () => (await fetch(`${w.base}/comms/${channel}.json`)).json();
+    assert.equal((await view()).linked, false);
+    const agent = await connect(w.base);
+    try {
+      const bad = await call(agent, "check_in", { code: "ZZ-ZZZZ" });
+      assert.equal(bad.isError, true); assert.match(bad.value, /unknown or expired/);
+      const r = await ok(agent, "check_in", { code: code.toLowerCase(), agent_name: "e2e", model: "none", skills: ["planning"] });
+      assert.equal(r.checked_in, true);
+      const again = await call(agent, "check_in", { code });
+      assert.equal(again.isError, true, "a code works once");
+      const v = await view();
+      assert.equal(v.linked, true); assert.equal(v.code, null);
+      assert.deepEqual(v.events.map((e) => e.kind), ["connected", "check_in"]);
+      assert.deepEqual(v.events[1], { ...v.events[1], name: "e2e", model: "none", thinking: null, skills: ["planning"], client: { name: "sol-e2e", version: "1" }, signed_in: false });
+      const pool = await ok(agent, "list_hails", { kind: "quick", limit: 200 });
+      const { hail } = await takeBookableQuick(agent, pool.hails);
+      const after = await view();
+      assert.equal(after.runs[0].run_id, hail.run_id);
+      assert.equal(after.runs[0].trail[0].tool, "take_hail");
+      assert.equal((await fetch(`${w.base}/comms/${"0".repeat(32)}.json`)).status, 404);
+    } finally { await agent.close(); }
   });
   await check("list_hails returns this season's pool, hides the catalog, and still lets two players take one hail", async () => {
     const r = await ok(client, "list_hails", { limit: 200 });

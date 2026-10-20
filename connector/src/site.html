@@ -158,6 +158,9 @@ h1,h2,h3{margin:0;font-weight:600}
 .popm{max-height:min(70vh,520px);overflow-y:auto}
 .lay-size{display:flex;align-items:center;gap:8px;padding:3px 0 2px 23px;font-size:11px;color:var(--ink-3)}
 .lay-size .seg button{padding:4px 7px}
+.trf-note{padding-left:23px;margin-top:2px}
+.lg .tr{width:26px;height:2px;flex:none;background:linear-gradient(90deg,rgba(255,214,160,0),rgba(255,214,160,.7));position:relative}
+.lg .tr::after{content:"";position:absolute;right:-2px;top:-2px;width:6px;height:6px;border-radius:50%;background:#ffe2bd;box-shadow:0 0 5px #ffd6a0}
 .popm label.sub{padding-left:23px;font-size:12px;color:var(--ink-2)}
 .layact{display:flex;gap:6px;margin-top:10px}
 .layact kbd{font:600 9.5px var(--mono);opacity:.7;margin-left:4px}
@@ -445,6 +448,39 @@ p{text-wrap:pretty}
 #mapSound svg{width:17px;height:17px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}#mapSound .w{display:none}#mapSound[aria-pressed=true] .w{display:inline}#mapSound[aria-pressed=true] .x{display:none}#mapSound[aria-pressed=true]{color:var(--ink)}
 </style>
 <link rel="stylesheet" href="/assets/mission-control.css">
+<style>
+/* Comms: the HQ channel, message style B (ledger with tags; ui-design/message-style-b.md). Colour lives only in chips. */
+.cm{position:fixed;top:136px;right:20px;bottom:128px;width:420px;z-index:9;display:flex;flex-direction:column;background:#090e14;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.cm[hidden]{display:none}
+body.cm-open .mc-activity{display:none}
+.cm-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.cm-t{flex:1;display:flex;flex-direction:column;gap:2px}.cm-t h2{margin:0;font:600 13px Inter,sans-serif;color:var(--ink)}
+.cm-log{flex:1;overflow:auto;overscroll-behavior:contain;margin:0;padding:0;list-style:none}
+.cm-r{display:grid;grid-template-columns:38px 78px 1fr;column-gap:10px;padding:10px 14px;border-bottom:1px solid #161e27}
+.cm-r.you{background:#0f1922}
+.cm-tm{font-size:11px;color:#96a4b3;font-variant-numeric:tabular-nums}
+.cm-r>.cm-chip{align-self:start;justify-self:start}
+.cm-x{font:13px/1.45 Inter,sans-serif;color:#edf1f5;overflow-wrap:anywhere}
+.cm-x .sub{display:block;font-size:12px;color:#aab6c3}.cm-x .sub i{color:#edf1f5}
+.cm-g{padding:6px 14px;font-size:11px;color:#96a4b3;background:#080c11;list-style:none}
+.cm-chip{font:500 10px/16px Inter,sans-serif;padding:0 6px;border:1px solid;border-radius:2px;white-space:nowrap}
+.c-hq{color:#9cc3df;border-color:#3d5568}.c-go{color:#8fd19e;border-color:#3f5b47}.c-warn{color:#e7c48c;border-color:#6b5a3d}.c-bad{color:#f0a196;border-color:#6e4740}.c-grey{color:#aab6c3;border-color:#465565}
+.cm-blk{grid-column:2/4;margin-top:8px;border:1px solid #26323e;border-radius:4px;padding:9px 11px;font-size:12px;display:grid;grid-template-columns:62px 1fr;row-gap:6px;column-gap:8px}
+.cm-blk.rows{grid-template-columns:1fr auto}.cm-blk .k{color:#96a4b3}.cm-blk .v2{color:#aab6c3;text-align:right}
+.cm-act{grid-column:2/4;display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}.cm-act .btn{min-height:32px;height:32px;padding:0 12px;font-size:12px}
+.cm-ask{border-top:1px solid var(--line);padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px}
+.cm-sugg{display:flex;gap:6px;flex-wrap:wrap}.cm-sugg .btn{min-height:32px;height:32px;padding:0 10px;font-size:12px}
+.cm-row{display:flex;gap:8px}.cm-row input{flex:1;min-width:0;height:40px;box-sizing:border-box;padding:0 12px;background:#0b1016;color:var(--ink);border:1px solid var(--line-2);border-radius:4px;font:400 13px Inter,sans-serif}
+.cm-row .btn{min-height:40px}
+.cm-foot{margin:0;font-size:11px;color:#96a4b3}
+.cm-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.cm-n:not(:empty){margin-left:6px;font-size:11px;color:#e7c48c}
+@media (max-width:760px){
+  .cm{top:28vh;left:0;right:0;bottom:46px;width:auto;border-radius:4px 4px 0 0;border-width:1px 0 0;z-index:30}
+  .cm-r{grid-template-columns:36px 74px 1fr;column-gap:8px;padding:10px 16px}
+  .cm-act .btn{min-height:40px;height:40px}.cm-ask{padding:10px 16px 14px}.cm-row input{height:44px;font-size:14px}
+}
+</style>
 <link rel="stylesheet" href="/assets/message-b.css">
 <body class="mc-home">
 <a class="skip-link" href="#tabB">Skip to bookings</a>
@@ -458,7 +494,7 @@ p{text-wrap:pretty}
     <span class="mc-read-status" id="liveStatus" role="status">Connecting to fleet…</span>
     <div class="clock" title="One real second is one sky day"><span class="caps">Sky time &middot; simulated clock</span><b id="clk">&nbsp;</b><span class="s" id="clkS">&nbsp;</span></div>
     <div class="stat"><i></i>Engine &middot; JPL DE421 positions</div>
-    <button class="btn primary small" type="button" id="connectBtn">Connect your agent</button>
+    <button class="btn primary small" type="button" id="connectBtn">Connect agent</button>
   </div>
 </header>
 
@@ -469,7 +505,7 @@ p{text-wrap:pretty}
       <button type="button" role="tab" id="tabB" aria-selected="true" aria-controls="bkWrap">Bookings<span class="n" id="bkN"></span></button>
       <button type="button" role="tab" id="tabF" aria-selected="false" aria-controls="flList" tabindex="-1">Flights<span class="n" id="flN"></span></button>
     </div>
-    <div class="mc-mobile-nav"><button type="button" id="mobileActivity" aria-expanded="false" aria-controls="activityPanel">Activity</button></div>
+    <div class="mc-mobile-nav"><button type="button" id="mobileComms" aria-expanded="false" aria-controls="comms">Comms</button><button type="button" id="mobileActivity" aria-expanded="false" aria-controls="activityPanel">Activity</button></div>
     <button type="button" class="mc-sheet-collapse" id="sheetCollapse" aria-expanded="true" aria-label="Collapse bookings" aria-controls="bookingScroll">⌄</button>
     <div class="scroll" id="bookingScroll">
       <ul class="cards" id="flList" role="tabpanel" aria-labelledby="tabF" hidden></ul>
@@ -506,6 +542,9 @@ p{text-wrap:pretty}
           <label><input type="checkbox" data-lay="rte" checked> Path lines (flights &amp; bookings)</label>
           <label class="sub"><input type="checkbox" data-lay="rsel" id="rsel"> Only the selected one</label>
           <label><input type="checkbox" data-lay="ring"> Distance grid</label>
+          <div class="caps" style="margin-top:8px">Background traffic</div>
+          <div class="lay-size"><div class="seg" id="trfSeg" role="group" aria-label="Background traffic"><button type="button" data-trf="off" aria-pressed="false">Off</button><button type="button" data-trf="light" aria-pressed="false">Light</button><button type="button" data-trf="busy" aria-pressed="true">Busy</button></div></div>
+          <p class="lgn trf-note">Illustrative ships on the lanes between places. Not bookable, not scored.</p>
           <div class="caps" style="margin-top:8px">Screen</div>
           <label><input type="checkbox" data-lay="hud" checked> Time readout</label>
           <div class="layact"><button type="button" class="btn small" id="cleanView" aria-pressed="false" title="Hide every name and line (H)">Clean view <kbd>H</kbd></button><button type="button" class="btn small" id="layReset">Reset</button></div>
@@ -533,12 +572,13 @@ p{text-wrap:pretty}
           <li><span class="sw a"></span>Open booking (engine plan)</li>
           <li><span class="dm"></span>Stop</li>
           <li><span class="sh" id="lgShip"></span>Starseeker on a flight</li>
+          <li><span class="tr"></span>Background traffic (illustrative)</li>
           <li><span class="dt"></span>Ready <span class="dt b" style="margin-left:6px"></span>Busy</li>
         </ul>
-        <p class="lgn">JPL positions at simulated sky dates. Orbit lines are two-body orbits at the sky date, simulated. Stored paths where available; straight route guides otherwise. True scale: real distances and sizes; bodies too small to see are drawn at a few pixels. Surface rotation and clouds are slowed for viewing.</p>
+        <p class="lgn">JPL positions at simulated sky dates. Orbit lines are two-body orbits at the sky date, simulated. Stored paths where available; straight route guides otherwise. True scale: real distances and sizes; bodies too small to see are drawn at a few pixels. Surface rotation and clouds are slowed for viewing. Background traffic is illustrative: fictional ships flying burn-flip-burn trips (0.01 g between planets, 0.003 g near one) on a schedule fixed by the sky date. They take no bookings and never touch scores or the benchmark.</p>
         <p class="lgn">Sound is off until you turn it on with the speaker button. Space is silent, so every sound is stylized and simulated: a cabin bed in open space, hits on the hull where debris is (low Earth orbit, the geostationary belt, Saturn&rsquo;s rings, near small bodies, faintly in the asteroid belt), radio-style sonifications close to a planet or moon, and console beeps near a station. All of it is synthesized in the browser.</p>
         <p class="lgn cred" id="artCred" hidden></p>
-        <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Q down and E up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Docks are placeholder art. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to follow it, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
+        <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Q down and E up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Station, dock and ship models are illustrative. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to follow it, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
       </div>
       <div class="mc-map-controls" role="group" aria-label="Map controls">
         <button type="button" id="zoomIn" aria-label="Move closer">+</button><button type="button" id="zoomOut" aria-label="Move farther">−</button><button type="button" id="resetMap" aria-label="Whole system view">⊙</button><button type="button" id="mapSound" aria-pressed="false" aria-label="Turn sound on" title="Sound off"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8h3l4-3.5v11L6 12H3z"/><path class="x" d="M13.5 8l4 4m0-4l-4 4"/><path class="w" d="M13 7.5a3.5 3.5 0 0 1 0 5M15.2 5.2a6.6 6.6 0 0 1 0 9.6"/></svg></button><button type="button" id="mapHelp" class="mc-map-note" aria-expanded="false" aria-controls="legend">Map info</button>
@@ -601,6 +641,15 @@ p{text-wrap:pretty}
   <aside class="mc-activity" id="activityDock" aria-label="Activity">
     <button class="btn" type="button" id="activityToggle" aria-expanded="false" aria-controls="activityPanel"><span>Activity <span id="activityCount">0</span></span><span class="mc-sign">+</span></button>
   </aside>
+  <aside class="cm" id="comms" aria-labelledby="cmH" hidden>
+    <header class="cm-h"><div class="cm-t"><span class="caps">Comms</span><h2 id="cmH" tabindex="-1">HQ channel</h2></div><span class="cm-chip c-grey">Simulated</span><button class="btn small" type="button" id="cmClose">Close</button></header>
+    <ol class="cm-log" id="cmLog" aria-live="polite" aria-label="HQ channel, oldest first"></ol>
+    <form class="cm-ask" id="cmAsk">
+      <div class="cm-sugg" id="cmSugg"></div>
+      <div class="cm-row"><label class="cm-sr" for="cmQ">Ask HQ</label><input id="cmQ" maxlength="300" autocomplete="off" placeholder="Ask HQ about the game"><button class="btn small" type="submit">Send</button></div>
+      <p class="cm-foot">HQ answers from live game data only and never plans or picks ships for your agent.</p>
+    </form>
+  </aside>
   <aside class="mc-drawer" id="opsDrawer" aria-labelledby="drawerTitle" hidden>
     <div class="mc-drawer-head"><h2 id="drawerTitle">Fleet</h2><button class="btn small" type="button" id="drawerClose">Close</button></div>
   </aside>
@@ -608,7 +657,7 @@ p{text-wrap:pretty}
 <div class="mc-strip">
   <div class="mc-sky"><button class="btn small" id="pauseMap" type="button" aria-pressed="false">Pause map</button><span id="mcClock"></span><span class="mc-season" id="mcSeason"></span><select class="btn small" id="mapRate" aria-label="Map speed"><option value="0.1">Calm 1 s = 0.1 day</option><option value="0.25">Slow 1 s = 0.25 day</option><option value="1" selected>Live 1 s = 1 day</option></select><span class="mc-rate" id="mcRate">1 s = 1 sky day · Simulated</span></div>
   <button class="btn small mc-operations-toggle" type="button" id="operationsMenu" aria-expanded="false" aria-controls="opsNav">Operations</button>
-  <nav aria-label="Operations" id="opsNav"><button class="btn small" type="button" data-drawer="fleet" aria-expanded="false" aria-controls="opsDrawer">Fleet</button><button class="btn small" type="button" data-drawer="tools" aria-expanded="false" aria-controls="opsDrawer">Agent tools</button><button class="btn small" type="button" data-drawer="alerts" aria-expanded="false" aria-controls="opsDrawer">Alerts</button><button class="btn small" type="button" data-drawer="reports" aria-expanded="false" aria-controls="opsDrawer">Reports</button><button class="btn small" type="button" id="hidePanels" aria-pressed="false">Hide panels</button></nav>
+  <nav aria-label="Operations" id="opsNav"><button class="btn small" type="button" id="commsBtn" aria-expanded="false" aria-controls="comms">Comms<span class="cm-n" id="commsN"></span></button><button class="btn small" type="button" data-drawer="fleet" aria-expanded="false" aria-controls="opsDrawer">Fleet</button><button class="btn small" type="button" data-drawer="tools" aria-expanded="false" aria-controls="opsDrawer">Agent tools</button><button class="btn small" type="button" data-drawer="alerts" aria-expanded="false" aria-controls="opsDrawer">Alerts</button><button class="btn small" type="button" data-drawer="reports" aria-expanded="false" aria-controls="opsDrawer">Reports</button><button class="btn small" type="button" id="hidePanels" aria-pressed="false">Hide panels</button></nav>
 </div>
 
 <div class="modal" id="logM" role="dialog" aria-modal="true" aria-labelledby="logH" hidden>
@@ -687,11 +736,14 @@ p{text-wrap:pretty}
 <script>window.SITE = __SITE__;</script><script src="__ENGINE_URL__" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js" integrity="sha384-nhO9toQuMo5osCuA0l+YFpSqscZWxDu251Bnho2gD3kSPv1neEwHg0LyEmrA+mPj" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js" integrity="sha384-mY+ii969jnDCI2HjRHftH2NZVkIO5ZGUkcnGCg3oVJ3kVstWQXwerYWBg+nbUG4R" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js" integrity="sha384-GkidzTYmQg24v13sa3xhBBbvOLbVLO1QxfyKLdOWweQqNqS/iWwUst2T1fER2Xrg" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js" integrity="sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js" integrity="sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js" integrity="sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js" integrity="sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js" integrity="sha384-Ua4+miEfAhtQpWvzgEohUG5UfbDPgyuYVVT+sgb2QvRC3fjACMsy7LV3Zoxnv2xf" crossorigin="anonymous"></script><script src="/assets/sol-art.js"></script>
 <script src="/assets/planet-effects.js"></script>
+<script src="/assets/sky-effects.js"></script>
 <script src="/assets/flight-view.js"></script>
 <script src="/assets/agent-log.js"></script>
+<script src="/assets/comms.js"></script>
 <script src="/assets/sol-lore.js"></script>
 <script src="/assets/sol-lines.js"></script>
 <script src="/assets/sol-layers.js"></script>
+<script src="/assets/sol-traffic.js"></script>
 <script src="/assets/sol-audio.js"></script>
 <script src="/assets/vendor/gsap-3.15.0.min.js"></script>
 <script src="/assets/mission-control.js"></script>
@@ -1006,7 +1058,7 @@ function makeFlight(f) {
 }
 function addFlightObjs(F) {
   if (!GL) return;
-  F.ship = window.SolArt ? SolArt.ship({ callsign: F.call }) : makeShip();
+  F.ship = window.SolArt ? SolArt.ship({ callsign: F.call, car: F.f.ship }) : makeShip();
   F.halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(160,225,255,.9)", "rgba(92,200,255,.25)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
   scene.add(F.halo); scene.add(F.ship);
   F.lbl = LBL.add({ html: esc(F.call), cls: "k-sample", hit: function () { var i = FL.indexOf(F); return i >= 0 ? { i: i } : null; }, pri: 90, click: function () { var i = FL.indexOf(F); if (i >= 0) select({ t: "f", i: i }); },
@@ -1598,6 +1650,7 @@ function drawDocks() {
     var v = marker(id, MAPJD), c = dockCentre(id, v); if (!c) return;
     var D = DOCKS[id]; if (!D) { D = DOCKS[id] = makeDock(SF.place(id)); scene.add(D); }
     D.visible = true; D.position.copy(c).sub(EYE); D.scale.setScalar(Math.max(SHIP_D / 6, pxAt(v) * DOCK_PX));
+    if (D.userData.setPx) D.userData.setPx(D.scale.x / pxAt(v));
     D.rotation.set(0.5, reduced ? 0.6 : IDLE_T * 0.15 + idlePhase(id), 0);
   });
   DOCKNEED = {};
@@ -1902,6 +1955,9 @@ function renderPlanetNav() {
 
 /* ---------- scene objects ---------- */
 var AMB, AMB_FREE = 0.28, AMB_CHASE = 0.75;
+// FX: the hazard effects and the belt (design/assets/sky-effects.js). HZ_NOW: the simulated hazards at the map's
+// date, from the season's seeded hazard layer (the same one the alerts list reads); pads refresh once a sky hour.
+var FX = { pads: {}, cache: {}, season: null }, HZ_NOW = { flare: 0, storm: {}, veil: {}, pads: [], hour: null, fronts: [] };
 var BODIES = [], BID = {}, SKY, SUN, GRID, ORB, MOR = [], LBL, STOPS = {}, PARK_R, PARK_B, PARK_SHIPS = {}, lastHud = 0, GRIDF = 1;
 var ATMO = { earth: "rgba(120,180,255,.55)", venus: "rgba(255,220,160,.4)", mars: "rgba(255,140,90,.35)", jupiter: "rgba(255,210,170,.3)", saturn: "rgba(255,230,180,.28)", uranus: "rgba(150,230,240,.35)", neptune: "rgba(110,150,255,.38)", titan: "rgba(255,190,110,.45)" };
 var RINGS = [0.5, 1, 2, 5, 10, 20, 30];
@@ -1954,6 +2010,13 @@ function buildScene(J0) {
     }
   });
   BODIES.push(BID.sun = { id: "sun", kind: "sun", obj: SUN, rKm: 695700, min: 6 });
+  if (window.StarfareSkyEffects) {
+    var SX = StarfareSkyEffects;
+    FX.belt = SX.belt(THREE, 2400, GL.r.getPixelRatio()); WORLD.add(FX.belt);
+    FX.fronts = SX.fronts(THREE, 6); WORLD.add(FX.fronts);
+    FX.glow = { mars: SX.stormGlow(THREE, 0xc98a4a), titan: SX.stormGlow(THREE, 0xd9963a) };
+    Object.keys(FX.glow).forEach(function (id) { WORLD.add(FX.glow[id]); });
+  }
   PARK_R = glowPoints(16, 0x5cc8ff, 13); PARK_B = glowPoints(16, 0x7f8a99, 11); WORLD.add(PARK_R); WORLD.add(PARK_B);
   ["sel", "hov"].forEach(function (k) { STN[k + "H"] = SolLines.halo(0xffffff); WORLD.add(STN[k + "H"]); });
   labels();
@@ -1999,6 +2062,13 @@ function labels() {
       pos: function () { var L = LIVE.filter(function (x) { return x.car === c.car; })[0]; return L ? marker(L.at, MAPJD) : null; },
       hide: function () { var L = LIVE.filter(function (x) { return x.car === c.car; })[0]; return !LAY.shp || !FILT.pk || FOLLOW || !L || (SF.place(L.at).parent !== "sun" && sepPx(L.at) <= 10); } });
   });
+  // The newest solar storm front, labelled where it crosses the ecliptic on the far side of the grid labels.
+  var FRONT_AT = V();
+  LBL.add({ html: "Solar storm front &middot; simulated", cls: "k-ring", pri: 6, dot: false,
+    pos: function () {
+      var e = HZ_NOW.fronts[HZ_NOW.fronts.length - 1], r = e && window.StarfareSkyEffects ? StarfareSkyEffects.frontRadius(e.start, MAPJD) : 0;
+      return r > 0 && r <= 40 ? FRONT_AT.set(Math.cos(2.4) * r, 0, Math.sin(2.4) * r) : null;
+    } });
   LBL.add({ html: "Selected booking", cls: "k-hail", pri: 40,
     pos: function () { var h = SEL.t === "b" && hailOf(SEL.id); return h ? marker(h.from.id, MAPJD) : null; },
     hide: function () { var B = SEL.t === "b" && BK[SEL.id]; return !FILT.bk || FOLLOW || !B || !B.rp; } });
@@ -2007,6 +2077,71 @@ function labels() {
 /* ---------- the render loop: paused when the tab is hidden or the map is off screen ---------- */
 var raf = 0, last = 0, MAPVIS = true;
 var tickMs = 1000 / 60, tickT = 0;
+/* ---------- background traffic: illustrative ships on the lanes between places (design/assets/sol-traffic.js) ----------
+   Not bookings, not scored and never sent to the engine: a schedule fixed by the sky date, drawn as glowing dots with
+   short trails in two draw calls. A ship flies straight between its two ends as the map draws them now, bowed away from
+   what the lane circles and spread a little sideways per ship. Hops inside a planet's system show once its ends stand
+   clear of each other on screen. */
+var TRF = { all: null, ships: [], n: -1, shown: 0, pts: null, tails: null, reach: {} };
+var TRF_COL = { helio: [1, 0.86, 0.66], local: [0.7, 0.82, 1] };
+function trafficReach(id) {
+  if (TRF.reach[id]) return TRF.reach[id];
+  var P = SF.place(id), most = 0;
+  for (var k = 0; k < 48; k++) {
+    var j = SF.SKY.jd0 + k * SF.SKY.len_days / 48, a = SF.pos(id, j), b = P.parent === "sun" ? [0, 0, 0] : SF.pos(P.parent, j);
+    most = Math.max(most, Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]));
+  }
+  return (TRF.reach[id] = most * 1.05 * AU * 1000);
+}
+function trafficDist(a, b, j) { var p = SF.pos(a, j), q = SF.pos(b, j); return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) * AU * 1000; }
+function trafficMesh(n, lines) {
+  var g = new THREE.BufferGeometry(), k = lines ? 2 : 1;
+  g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3 * k), 3).setUsage(THREE.DynamicDrawUsage));
+  g.setAttribute("color", new THREE.BufferAttribute(new Float32Array(n * 3 * k), 3).setUsage(THREE.DynamicDrawUsage));
+  var common = { vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending };
+  var o = lines ? new THREE.LineSegments(g, new THREE.LineBasicMaterial(common))
+    : new THREE.Points(g, new THREE.PointsMaterial(Object.assign({ size: GW <= 760 ? 8 : 7, sizeAttenuation: false, map: glowTex("rgba(255,255,255,1)", "rgba(255,255,255,.35)") }, common)));
+  o.frustumCulled = false; o.renderOrder = 2; g.setDrawRange(0, 0); scene.add(o);
+  return o;
+}
+function trafficSync() {
+  var tier = window.SolArt ? SolArt.quality().name : GW <= 760 ? "medium" : "high", n = SolTraffic.count(LAY.trf, tier);
+  if (n === TRF.n) return;
+  TRF.n = n;
+  if (!TRF.all) TRF.all = SolTraffic.fleet(PLACES, trafficReach, SolTraffic.CAP.high, SF.SKY.jd0, 1);
+  if (!TRF.pts) { TRF.pts = trafficMesh(SolTraffic.CAP.high, false); TRF.tails = trafficMesh(SolTraffic.CAP.high, true); }
+  TRF.ships = TRF.all.slice(0, n);
+}
+var TA = V(), TB = V(), TC = V(), TD = V(), TS = V(), TP = V();
+// Point at share f of the way from A to B, bowed by TS (unit, already scaled per lane) and pushed sideways by TC.
+function trafficAt(A, B, f, len, out) { var b = Math.sin(Math.PI * f) * len; return out.copy(A).lerp(B, f).addScaledVector(TS, b).addScaledVector(TC, b); }
+function drawTraffic() {
+  trafficSync();
+  var P = TRF.pts, Tl = TRF.tails; if (!P) return;
+  var pa = P.geometry.attributes.position, pc = P.geometry.attributes.color, la = Tl.geometry.attributes.position, lc = Tl.geometry.attributes.color, m = 0;
+  for (var i = 0; i < TRF.ships.length; i++) {
+    var s = TRF.ships[i], st = SolTraffic.state(s, MAPJD, trafficDist); if (!st) continue;
+    var A = marker(st.from, MAPJD), B = marker(st.to, MAPJD), len = A.distanceTo(B), L = s.lane;
+    if (!(len > 0) || (L.local && len / pxAt(A) < 14)) continue;
+    // bow: away from the Sun or the lane's planet, square to the lane; fall back to the ecliptic normal side when edge-on
+    TD.copy(B).sub(A).divideScalar(len);
+    TS.copy(A).add(B).multiplyScalar(0.5).sub(L.hub === "sun" ? V0 : marker(L.hub, MAPJD));
+    TS.addScaledVector(TD, -TS.dot(TD));
+    if (TS.lengthSq() < 1e-6 * len * len) TS.crossVectors(TD, UP);
+    TS.normalize(); TC.crossVectors(TD, TS).multiplyScalar(0.05 * s.side);
+    TS.multiplyScalar(L.local ? 0.22 : 0.12);
+    trafficAt(A, B, st.f, len, TP).sub(EYE); pa.setXYZ(m, TP.x, TP.y, TP.z);
+    la.setXYZ(2 * m, TP.x, TP.y, TP.z);
+    trafficAt(A, B, st.ft, len, TA).sub(EYE); la.setXYZ(2 * m + 1, TA.x, TA.y, TA.z);
+    var c = L.local ? TRF_COL.local : TRF_COL.helio;
+    pc.setXYZ(m, c[0] * 0.8, c[1] * 0.8, c[2] * 0.8); lc.setXYZ(2 * m, c[0] * 0.45, c[1] * 0.45, c[2] * 0.45); lc.setXYZ(2 * m + 1, 0, 0, 0);
+    m++;
+  }
+  TRF.shown = m;
+  [pa, pc, la, lc].forEach(function (a) { a.needsUpdate = true; });
+  P.geometry.setDrawRange(0, m); Tl.geometry.setDrawRange(0, 2 * m);
+  P.visible = Tl.visible = m > 0;
+}
 function frame(t) {
   raf = requestAnimationFrame(frame);
   // A frame is drawn when its target interval is within half a display tick: on a 240 Hz display a 60 fps cap would otherwise wait five ticks, not four.
@@ -2044,6 +2179,46 @@ function initSound() {
 }
 function glStart() { if (GL && !raf && !document.hidden && MAPVIS) { last = performance.now(); raf = requestAnimationFrame(frame); } }
 function glStop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
+// Belt density by quality tier: a phone draws fewer points.
+var BELT_N = { high: 2400, medium: 1400, low: 700 };
+function hazardsNow(jd, season) {
+  var SX = window.StarfareSkyEffects; if (!SX) return HZ_NOW;
+  if (FX.season !== season) { FX.season = season; FX.cache = {}; HZ_NOW.hour = null; }
+  var H = hz(season), f = H.flareAt(jd);
+  HZ_NOW.flare = SX.ramp(f, jd);
+  HZ_NOW.fronts = SX.eruptions(H, jd - SX.FRONT_DAYS, jd + 1e-9, FX.cache);
+  ["earth", "jupiter", "saturn"].forEach(function (p) { HZ_NOW.storm[p] = SX.ramp(H.flareAt(jd, p), jd); });
+  HZ_NOW.veil.mars = SX.ramp(H.weatherAt("mars", jd), jd); HZ_NOW.veil.titan = SX.ramp(H.weatherAt("titan", jd), jd);
+  var hr = Math.floor(jd * 24);
+  if (hr !== HZ_NOW.hour) {
+    HZ_NOW.hour = hr; HZ_NOW.pads = [];
+    PADS.forEach(function (p) { try { if (H.docked(p, hr) >= H.berths(p)) HZ_NOW.pads.push(p); } catch (e) { /* not a pad */ } });
+  }
+  return HZ_NOW;
+}
+function drawHazards(effectSeconds) {
+  if (!FX.fronts) return;
+  var Z = HZ_NOW, tier = window.SolArt ? SolArt.quality().name : "medium";
+  // The belt fades out while it is a smudge round the Sun (under about 60 px across).
+  var beltPx = 2.7 / pxAt(V0);
+  FX.belt.visible = beltPx > 40; FX.belt.geometry.setDrawRange(0, BELT_N[tier] || 1400); FX.belt.userData.setJd(MAPJD);
+  FX.belt.material.uniforms.opacity.value = 0.4 * clamp((beltPx - 40) / 120, 0, 1);
+  FX.fronts.userData.update(Z.fronts, MAPJD);
+  Object.keys(FX.glow).forEach(function (id) {
+    var g = FX.glow[id], b = BID[id], k = Z.veil[id] || 0; g.visible = k > 0 && !!b && b.obj.visible; if (!g.visible) return;
+    var v = b.obj.position, px = pxAt(v), rpx = b.obj.scale.x / px;
+    g.position.copy(v); g.scale.setScalar(Math.max(b.obj.scale.x * 2.6, px * 18));
+    g.material.opacity = 0.6 * k * clamp(1 - (rpx - 6) / 40, 0.12, 1);
+  });
+  var on = {};
+  Z.pads.forEach(function (id) {
+    on[id] = 1; var r = FX.pads[id];
+    if (!r) { r = FX.pads[id] = StarfareSkyEffects.padRing(THREE); WORLD.add(r); }
+    var v = marker(id, MAPJD); r.visible = true; r.position.copy(v); r.scale.setScalar(pxAt(v) * 26);
+    r.material.rotation = effectSeconds * 0.35;
+  });
+  Object.keys(FX.pads).forEach(function (id) { if (!on[id]) FX.pads[id].visible = false; });
+}
 function draw(dt, t) {
   var now = mapWallNow(), rep = FOLLOW && SEL.t === "f" && !!FL[SEL.i];
   LIVEJD = SF.sky(now).jd;
@@ -2057,7 +2232,8 @@ function draw(dt, t) {
   SUN.scale.setScalar(Math.max(695700 / AU, pxAt(V0) * 6));
   // Surface animation is illustrative and independent of ephemerides and recorded flights.
   var effectSeconds = PLANET_CLOCK ? PLANET_CLOCK.sample(t, !MAP_PAUSED && !reduced && !document.hidden) : 0;
-  if (window.SolArt && SolArt.updateSun) SolArt.updateSun(SUN, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: SUN.scale.x / pxAt(V0), quality: SolArt.quality().maps });
+  var Z = hazardsNow(MAPJD, SF.sky(now).season);
+  if (window.SolArt && SolArt.updateSun) SolArt.updateSun(SUN, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: SUN.scale.x / pxAt(V0), quality: SolArt.quality().maps, flare: Z.flare });
   // bodies: true size, or a few pixels when that is smaller. A moon or station shows once it stands clear of its planet.
   for (var i = 0; i < BODIES.length; i++) {
     var b = BODIES[i]; if (b.kind === "sun") continue;
@@ -2066,8 +2242,9 @@ function draw(dt, t) {
     b.obj.visible = b.kind === "planet" || b.kind === "small" || sepPx(b.id) > (b.rKm ? 4 : 8);
     if (!b.obj.visible || !b.rKm) continue;
     b.obj.scale.setScalar(Math.max(b.rKm / AU, pxAt(v) * b.min));
-    if (window.SolArt && SolArt.updatePlanet) SolArt.updatePlanet(b.obj, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: b.obj.scale.x / pxAt(v), quality: SolArt.quality().maps });
+    if (window.SolArt && SolArt.updatePlanet) SolArt.updatePlanet(b.obj, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: b.obj.scale.x / pxAt(v), quality: SolArt.quality().maps, veil: Z.veil[b.id] || 0, storm: Z.storm[b.id] || 0 });
   }
+  drawHazards(effectSeconds);
   stationRing("sel"); stationRing("hov");
   if (SND && SND.on && t - SND_T > 100) { SND_T = t; SND.update(SolAudio.mix(soundScene())); }
   // A moon's ring draws with its moon, fading in as it opens out round the planet.
@@ -2135,13 +2312,14 @@ function draw(dt, t) {
   if (FILT.pk && !FOLLOW) LIVE.forEach(function (c) { (c.busy && c.busy > LIVEJD ? pb : pr).push(marker(c.at, MAPJD)); });
   if (window.SolArt && FILT.pk && !FOLLOW) LIVE.forEach(function (c) {
     var ship = PARK_SHIPS[c.car];
-    if (!ship) { ship = PARK_SHIPS[c.car] = SolArt.ship({callsign:c.car.toUpperCase()}); scene.add(ship); }
+    if (!ship) { ship = PARK_SHIPS[c.car] = SolArt.ship({ callsign: c.car.toUpperCase(), car: c.car }); scene.add(ship); }
     var p = marker(c.at, MAPJD), sp = shipPx(p, 16); ship.visible = true; ship.position.copy(parkOff(c.at, p, sp)).sub(EYE); idleBob(c.car, ship.position, pxAt(p), sp); ship.scale.setScalar(Math.max(SHIP_D / 6, pxAt(p) * sp));
     var heading = window.StarfareView.orbitDirection(MAPJD, function (jd) { return marker(c.at, jd).toArray(); });
     window.StarfareView.orientShip(ship, window.StarfareView.headingFrame(heading, [0, 1, 0], ship.userData.headingSet ? ship.up.toArray() : null));
     idleSway(c.car, ship);
   });
   drawDocks();
+  drawTraffic();
   setPts(PARK_R, window.SolArt ? [] : pr); setPts(PARK_B, window.SolArt ? [] : pb);
   AMB.intensity = PIL.lock ? AMB_CHASE : AMB_FREE;
   drawHoles();
@@ -2160,7 +2338,7 @@ function mapHud() {
   // Phones show the scale note on the first line and drop the keyboard-only speed line, so the readout stays short above the planet dock.
   var hm = '<span class="hud-m"> &middot; true scale &middot; simulated</span></span>';
   $("#hud").innerHTML = '<span class="caps">' + (rep ? "Map time &middot; following " + esc(F.call) + hm + "<br><b>" + iso(MAPJD) + "</b> UTC" : mapTimeWords(MAPJD) + hm)
-    + '<span class="hud-scale"><br>True scale &middot; real distances and sizes &middot; simulated</span><br>' + where + (speed && '<span class="hud-speed">' + speed + "</span>");
+    + '<span class="hud-scale"><br>True scale &middot; real distances and sizes &middot; simulated</span><br>' + (TRF.n > 0 ? '<span class="hud-trf">' + SF.fmt(TRF.shown) + ' background ships &middot; illustrative</span><br>' : "") + where + (speed && '<span class="hud-speed">' + speed + "</span>");
   $("#liveBtn").hidden = !rep;
   // The bar holds at the distance of what the camera rides with; nearer things look larger in perspective.
   var ap = L && L.sc ? L.sc.v : A ? anchorPos(A) : V0, name = L ? L.call : A && A.F ? A.F.call : A && A.b.kind !== "sun" ? SF.name(A.b.id) : "the Sun";
@@ -2185,6 +2363,7 @@ function syncLayers() {
   store("sf-layers", LAY);
   $$("[data-lay]").forEach(function (c) { c.checked = !!LAY[c.dataset.lay]; });
   $$("[data-size]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.size === LAY.size)); });
+  $$("[data-trf]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.trf === LAY.trf)); });
   $("#rsel").disabled = !LAY.rte;
   $("#mapbox").classList.toggle("no-hud", !LAY.hud);
   $("#cleanView").setAttribute("aria-pressed", String(SolLayers.isClean(LAY)));
@@ -2689,10 +2868,11 @@ function start() {
   });
   $$("[data-lay]").forEach(function (c) { c.addEventListener("change", function () { LAY[c.dataset.lay] = c.checked; LAY_BEFORE_CLEAN = null; syncLayers(); glStart(); }); });
   $$("[data-size]").forEach(function (b) { b.addEventListener("click", function () { LAY.size = b.dataset.size; syncLayers(); glStart(); }); });
+  $$("[data-trf]").forEach(function (b) { b.addEventListener("click", function () { LAY.trf = b.dataset.trf; syncLayers(); glStart(); }); });
   $("#layReset").addEventListener("click", function () { Object.assign(LAY, SolLayers.DEFAULTS); LAY_BEFORE_CLEAN = null; syncLayers(); glStart(); });
   $("#cleanView").addEventListener("click", toggleClean);
   syncLayers();
-  $("#connectBtn").addEventListener("click", openIntro);
+  $("#connectBtn").addEventListener("click", function () { cmOpen(true); cmChannel().then(cmPoll); });
   $("#askConnect").addEventListener("click", openIntro);
   $("#askCopy").addEventListener("click", function () { copyText($("#askQ").value, $("#askQ"), $("#askMsg")); });
   $("#boardBtn").addEventListener("click", openBoard);
@@ -2703,9 +2883,201 @@ function start() {
     closeCtx();
     if (!$("#intro").hidden) closeIntro();
     else if (!$("#logM").hidden) closeBoard();
+    else if (!$("#comms").hidden) cmOpen(false);
     else $$(".popm").forEach(function (m) { m.hidden = true; });
   });
+  initComms();
   $("#loading").remove();
+}
+/* =========================================================
+   COMMS: the HQ channel. Connect agent opens it; the agent checks in with a one-time code (check_in) or the player opens
+   the follow link from the sign-in page (/agent/<token>, ?follow= here). HQ's answers come from src/comms.cjs and only the
+   game data this page already has. Rows are message style B: time, a word chip, text. Simulated.
+   ========================================================= */
+var CM = { toEnd: true, st: store("sf-comms") || {}, local: store("sf-comms-log") || [], events: [], runs: {}, seq: 0, code: null, linked: false,
+  board: null, timer: null, seen: store("sf-comms-seen") || 0, said: {}, fails: 0 };
+var CM_TOOLS = { take_hail: 1, plan_pickup: 1, plan_ride: 1, plan_leg: 1, dispatch: 1, decide: 1 };
+function cmSave() { store("sf-comms", CM.st); store("sf-comms-log", CM.local.slice(-30)); }
+function cmTime(ms) { return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }); }
+function cmChipClass(w) {
+  return /^(HQ|Check-in|Plan)$/.test(w) ? "c-hq" : w === "Dispatch" ? "c-go" : /^(Checkpoint|Pad closed|Self-reported)$/.test(w) ? "c-warn" : /^(Refused|Error)$/.test(w) ? "c-bad" : "c-grey";
+}
+function cmChip(w) { return '<span class="cm-chip ' + cmChipClass(w) + '">' + esc(w) + "</span>"; }
+function cmAdd(r) { CM.toEnd = true; r.id = r.id || "l" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); r.t = r.t || Date.now(); CM.local.push(r); cmSave(); cmRender(); cmSay(r); }
+// The ship radio (sol-radio.js, its own thread) speaks entries that carry a radio line, when it is on. Absent: silent.
+function cmSay(r) { if (r.radio && !CM.said[r.id] && window.Radio && Radio.enabled && Radio.enabled()) { CM.said[r.id] = 1; try { Radio.say(r); } catch (e) { /* the radio is optional */ } } }
+function cmAgentName() {
+  var c = CM.events.filter(function (e) { return e.kind === "check_in"; }).pop();
+  if (c) return c.name || (c.client && c.client.name) || "";
+  var ids = Object.keys(CM.runs);
+  for (var i = 0; i < ids.length; i++) { var n = AgentLog.agentName(CM.runs[ids[i]].trail); if (n) return n; }
+  return "";
+}
+function cmNewest() { return Object.keys(CM.runs).map(function (k) { return CM.runs[k]; }).sort(function (a, b) { return b.created_ms - a.created_ms; })[0] || null; }
+function cmFlight(runId) { for (var i = 0; i < FL.length; i++) if (FL[i].run_id === runId) return i; return -1; }
+function cmPlainWhere(F) { var s = F.st.s, L = s.leg; return s.phase === "flight" ? "between " + SF.name(L.from) + " and " + SF.name(L.to) : "at " + SF.name(s.phase === "arrived" || s.f >= 1 ? L.to : L.from); }
+// What HQ can read: the same desk, clock, hazards, fleet and flights the page shows, at this moment.
+var CM_CTX = {
+  routes: function () { return SF.desk(Date.now()).map(function (d) { return { from: SF.name(d.from), to: SF.name(d.to), kind: d.kind, party: Number(d.party) || 1, title: d.title, open: d.open }; }); },
+  clock: function () {
+    var s = SF.sky(Date.now()), END = SF.SEASON_END, LEAD = SF.R.LEAD, ok = function (k) { return Math.floor(s.jd + k) + 0.5 + 30 <= END; };
+    return { season: s.season, sky_now: iso(s.jd), seconds_left: Math.max(0, END - s.jd), quick_open: ok(1), long_open: ok(LEAD),
+      long_seconds_left: Math.max(0, Math.floor(END - 30.5) + 1 - LEAD - s.jd) };
+  },
+  alerts: function () { var s = SF.sky(Date.now()); return alertsNow(s.jd, s.season).map(function (a) { return { t: a.t, d: a.d }; }); },
+  fleet: function () { return liveFleet(Date.now()).map(function (c) { return { call: String(c.name).toUpperCase(), name: "", where: c.at ? "at " + SF.name(c.at) : "in service", busy: c.busy ? iso(c.busy) : null }; }); },
+  flights: function () { return FL.map(function (F) { return { call: F.call, title: F.f.title, where: cmPlainWhere(F), eta: etaOf(F, F.jd), run_id: F.run_id }; }); },
+  board: function () { return CM.board; },
+  agent: function () {
+    if (!CM.linked && !CM.st.follow && !Object.keys(CM.runs).length) return null;
+    var r = cmNewest(), name = cmAgentName();
+    if (!r) return { name: name };
+    var playing = r.phase === "in_flight" || (r.phase === "arrived" && r.land_ms > Date.now());
+    var state = r.waiting ? "stopped at checkpoint " + r.waiting.n + ", waiting for it to decide" : playing ? "flying" : { planning: "planning", in_flight: "flying", arrived: "landed", abandoned: "dropped" }[r.phase] || r.phase;
+    return { name: name, current: { title: r.title, state: state, run_id: r.watch ? r.run_id : null } };
+  },
+  get places() { return SF.E.PLACES.map(function (p) { return p.name; }); },
+};
+function cmBoard() {
+  if (CM.board) return;
+  fetch("/board.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+    if (!j) return;
+    var best = j.best || {};
+    CM.board = (j.hails || []).filter(function (h) { return best[h.hail_id]; }).map(function (h) { return { title: h.title, points: best[h.hail_id].points }; })
+      .sort(function (a, b) { return b.points - a.points; });
+  }).catch(function () { /* HQ says the board is loading */ });
+}
+function cmAsk(q) {
+  q = String(q || "").trim(); if (!q) return;
+  cmAdd({ chip: "You", you: true, text: q });
+  var a = Comms.ask(q, CM_CTX);
+  cmAdd({ chip: "HQ", text: a.text, sub: a.sub, rows: a.rows, kv: false, actions: a.actions, radio: { text: a.refused ? "That one is your agent's call." : "HQ copies.", level: "routine", src: "hq" } });
+}
+// Every row the log shows, oldest first: this browser's own lines, the channel's events and the agent's bookings.
+function cmRows() {
+  var out = CM.local.slice();
+  CM.events.forEach(function (e) {
+    if (e.kind === "connected") out.push({ id: "e" + e.seq, t: e.at_ms, chip: "System", text: "Agent connected to the Starfare server" + (e.client ? " (client \"" + e.client.name + "\"" + (e.client.version ? " " + e.client.version : "") + ")" : "") + "." });
+    else if (e.kind === "check_in") out.push({ id: "e" + e.seq, t: e.at_ms + 1, chip: "Check-in", text: "Agent checked in on your channel. Welcome aboard, dispatcher.", kv: Comms.checkIn(e), selfrep: true,
+      radio: { text: "HQ confirms, agent checked in.", level: "routine", src: "hq" } });
+  });
+  Object.keys(CM.runs).forEach(function (id) {
+    var r = CM.runs[id], g = r.title || r.hail_id, last = 0;
+    var prev = null;
+    (r.trail || []).forEach(function (e, i) {
+      if (!CM_TOOLS[e.tool] && !e.error) { prev = null; return; }
+      var L = AgentLog.line(e, SF.name), w = Comms.chipOf(L); last = e.at_ms;
+      // Refusals in a row from the same tool fold into one line: how many, and the last reason.
+      if (L.tone === "error" && prev && prev.tool === e.tool) { prev.n++; prev.row.t = e.at_ms; prev.row.text = L.act.replace(/:? refused$/, "") + ": refused " + prev.n + " times. Last: " + L.text + "."; return; }
+      var row = { id: id + ":" + i, t: e.at_ms, group: g, chip: w, text: (L.tone === "error" ? L.act.replace(/:? refused$/, "") + ": refused. " + L.text : L.act + (L.text ? ": " + L.text.replace(/ · (landed|stopped at a checkpoint)$/, "") : "")) + ".", why: L.why,
+        radio: (e.tool === "dispatch" || e.tool === "decide") && L.tone !== "error" ? { text: (L.act + (L.why ? ". " + L.why : "")).slice(0, 140), level: e.tool === "decide" ? "reroute" : "routine", src: "agent" } : null };
+      out.push(row); prev = L.tone === "error" ? { tool: e.tool, n: 1, row: row } : null;
+    });
+    var fi = cmFlight(id), F = fi >= 0 ? FL[fi] : null, st = null;
+    var playing = r.phase === "in_flight" || (r.phase === "arrived" && r.land_ms != null && r.land_ms > Date.now());
+    if (r.waiting) st = { chip: "Checkpoint", text: "Stopped at checkpoint " + r.waiting.n + " (" + String(r.waiting.kind).replace(/_/g, " ") + (r.waiting.place_name ? " at " + r.waiting.place_name : "") + "). Waiting for your agent to decide." };
+    else if (playing) st = { chip: "Flying", text: (F ? F.call + " is " + cmPlainWhere(F) + "." : "In flight."), kv: F ? [["Ship", F.call], ["Lands in", etaOf(F, F.jd) + " of sky time"]] : null };
+    else if (r.phase === "arrived") st = { chip: "System", text: "Landed" + (r.total != null ? ". Score " + fmt(Math.round(r.total)) + " of 100,000 (simulated)." : ".") };
+    if (st) {
+      st.actions = [];
+      if (F) st.actions.push({ label: "Follow on map", act: "follow", run_id: id });
+      if (r.watch) st.actions.push({ label: r.phase === "arrived" && !playing ? "Replay the flight" : "Open flight page", act: "flight", run_id: id });
+      out.push(Object.assign(st, { id: id + ":st", t: (last || r.created_ms) + 1, group: g }));
+    }
+  });
+  if (CM.st.channel && !CM.linked && !CM.st.follow) {
+    var code = CM.code && CM.code.expires_ms > Date.now() ? CM.code.code : null;
+    out.push({ id: "code", t: Date.now() + 1e9, chip: "HQ", pin: true,
+      text: code ? "To link your agent, tell it: “Check in with Starfare HQ, code " + code + ".”" : "The check-in code expired. Get a new one, then give it to your agent.",
+      sub: code ? "The code works once and lasts 10 minutes. Or open the follow link the sign-in page showed you." : "",
+      actions: (code ? [{ label: "Copy message", act: "copy", text: "Check in with Starfare HQ, code " + code + "." }] : []).concat([{ label: "New code", act: "code" }, { label: "Set up the connector", act: "setup" }]) });
+  }
+  return out.sort(function (a, b) { return a.t - b.t; });
+}
+function cmRowHtml(r) {
+  var h = '<li class="cm-r' + (r.you ? " you" : "") + '"><span class="cm-tm">' + (r.pin ? "now" : esc(cmTime(r.t))) + "</span>" + cmChip(r.chip) +
+    '<div class="cm-x">' + W(r.text) + (r.why ? '<span class="sub">Why: <i>“' + esc(r.why) + "”</i></span>" : "") + (r.sub ? '<span class="sub">' + esc(r.sub) + "</span>" : "") + "</div>";
+  if (r.kv && r.kv.length) h += '<div class="cm-blk">' + r.kv.map(function (x) { return '<span class="k">' + esc(x[0]) + "</span><span>" + esc(x[1]) + "</span>"; }).join("") + "</div>";
+  if (r.rows && r.rows.length) h += '<div class="cm-blk rows">' + r.rows.map(function (x) { return "<span>" + W(x[0]) + '</span><span class="v2">' + W(x[1]) + "</span>"; }).join("") + "</div>";
+  if (r.selfrep) h += '<div class="cm-act">' + cmChip("Self-reported") + '<span class="sub" style="font-size:12px;color:#aab6c3">Name, model, thinking and skills come from the agent, unverified.</span></div>';
+  if (r.actions && r.actions.length) h += '<div class="cm-act">' + r.actions.map(function (a, i) {
+    return '<button class="btn small' + (i ? "" : " primary") + '" type="button" data-cm="' + esc(a.act) + '"' + (a.run_id ? ' data-run="' + esc(a.run_id) + '"' : "") + (a.text ? ' data-text="' + esc(a.text) + '"' : "") + ">" + esc(a.label) + "</button>";
+  }).join("") + "</div>";
+  return h + "</li>";
+}
+function cmRender() {
+  var rows = cmRows(), log = $("#cmLog"), g = null, html = "";
+  rows.forEach(function (r) { if (r.group && r.group !== g) html += '<li class="cm-g">Your agent · ' + W(r.group) + "</li>"; g = r.group || null; html += cmRowHtml(r); });
+  var atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+  log.innerHTML = html;
+  if (atEnd || CM.toEnd) log.scrollTop = log.scrollHeight;
+  if (log.clientHeight) CM.toEnd = false;
+  var news = rows.filter(function (r) { return !r.pin && r.t > CM.seen; }).length;
+  if (!$("#comms").hidden) { CM.seen = Date.now(); store("sf-comms-seen", CM.seen); news = 0; }
+  $("#commsN").textContent = news ? String(news) : "";
+  rows.forEach(cmSay);
+}
+function cmPoll() {
+  clearTimeout(CM.timer);
+  var jobs = [];
+  if (CM.st.channel) jobs.push(fetch("/comms/" + CM.st.channel + ".json?after=" + CM.seq, { cache: "no-store" }).then(function (r) {
+    if (r.status === 404) { CM.st.channel = null; cmSave(); return; }
+    if (!r.ok) throw new Error(r.status);
+    return r.json().then(function (d) {
+      CM.linked = d.linked; CM.code = d.code;
+      d.events.forEach(function (e) { CM.events.push(e); CM.seq = Math.max(CM.seq, e.seq); });
+      d.runs.forEach(function (x) { CM.runs[x.run_id] = x; });
+    });
+  }));
+  if (CM.st.follow) jobs.push(fetch("/agent/" + CM.st.follow + ".json", { cache: "no-store" }).then(function (r) {
+    if (r.status === 404) return; // not claimed yet: the link works once Allow is pressed
+    if (!r.ok) throw new Error(r.status);
+    return r.json().then(function (d) { d.runs.forEach(function (x) { CM.runs[x.run_id] = x; }); });
+  }));
+  if (!jobs.length) return;
+  Promise.all(jobs).then(function () { CM.fails = 0; cmRender(); }).catch(function () { CM.fails++; }).then(function () {
+    CM.timer = setTimeout(cmPoll, document.hidden ? 30000 : Math.min(30000, 4000 * Math.pow(2, CM.fails)));
+  });
+}
+function cmChannel() {
+  if (CM.st.channel || CM.st.follow) return Promise.resolve();
+  return fetch("/comms/new", { method: "POST" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+    CM.st.channel = d.channel; CM.code = { code: d.code, expires_ms: d.expires_ms }; cmSave();
+    cmAdd({ chip: "HQ", text: "Comms open. HQ will confirm your agent here when it checks in.", radio: { text: "HQ here. Comms open.", level: "routine", src: "hq" } });
+  }).catch(function () { cmAdd({ chip: "Error", text: "HQ couldn't open a channel. Try Connect agent again in a moment." }); });
+}
+function cmOpen(open) {
+  $("#comms").hidden = !open; document.body.classList.toggle("cm-open", open);
+  [$("#commsBtn"), $("#mobileComms")].forEach(function (b) { if (b) b.setAttribute("aria-expanded", String(open)); });
+  if (open) { cmBoard(); CM.toEnd = true; cmRender(); setTimeout(function () { $("#cmH").focus(); }, 0); }
+}
+function initComms() {
+  var m = /[?&]follow=([0-9a-f]{32})\b/.exec(location.search);
+  if (m) {
+    var had = CM.st.follow === m[1]; CM.st.follow = m[1]; cmSave(); history.replaceState(null, "", location.pathname);
+    if (!had) cmAdd({ chip: "HQ", text: "Following your agent from its follow link. Its bookings and decisions show up here as it plays." });
+    cmOpen(true);
+  }
+  $("#cmSugg").innerHTML = ["Open routes", "Season clock", "Space weather", "Flights in the air"].map(function (t) { return '<button class="btn small" type="button" data-q="' + esc(t) + '">' + esc(t) + "</button>"; }).join("");
+  $("#cmSugg").addEventListener("click", function (e) { var b = e.target.closest("[data-q]"); if (b) cmAsk(b.dataset.q); });
+  $("#cmAsk").addEventListener("submit", function (e) { e.preventDefault(); var q = $("#cmQ").value; $("#cmQ").value = ""; cmAsk(q); });
+  $("#cmClose").addEventListener("click", function () { cmOpen(false); $("#commsBtn").focus(); });
+  [$("#commsBtn"), $("#mobileComms")].forEach(function (b) { if (b) b.addEventListener("click", function () { cmOpen($("#comms").hidden); }); });
+  $("#cmLog").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-cm]"); if (!b) return;
+    var a = b.dataset.cm;
+    if (a === "copy") { var t = b.dataset.text; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { b.textContent = "Copied"; }, function () { b.textContent = "Copy failed: select the text"; }); }
+    else if (a === "code") fetch("/comms/" + CM.st.channel + "/code", { method: "POST" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) { if (d) { CM.code = d; cmRender(); } });
+    else if (a === "setup") openIntro();
+    else if (a === "connect") cmChannel().then(cmPoll);
+    else if (a === "board") openBoard();
+    else if (a === "bookings") { showTab("b"); if (window.innerWidth <= 760) cmOpen(false); }
+    else if (a === "flights") { showTab("f"); if (window.innerWidth <= 760) cmOpen(false); }
+    else if (a === "flight") location.href = "/flight/" + encodeURIComponent(b.dataset.run);
+    else if (a === "follow") { var i = cmFlight(b.dataset.run); if (i >= 0) { select({ t: "f", i: i }); setFollow(true); if (window.innerWidth <= 760) cmOpen(false); } }
+  });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && (CM.st.channel || CM.st.follow)) cmPoll(); });
+  cmRender(); cmPoll();
 }
 function ic(n) { return window.SolArt ? SolArt.icon(n) : ""; }
 // The icon for a run-log event or incident: depart, arrive, a checkpoint or a weather/traffic hold.

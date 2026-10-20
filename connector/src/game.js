@@ -894,6 +894,8 @@ export function followView(run) {
     watch: phase === "arrived" || (phase === "in_flight" && !!run.live),
     waiting: cp ? { n: cp.n, kind: cp.kind, place_name: cp.place_name || null, at: isoJD(cp.sky_at) } : null,
     total: phase === "arrived" && run.score ? run.score.total : null,
+    // When the live playback lands (real ms): an arrived run's score is final at dispatch, but pages show it at landing.
+    land_ms: run.live && run.live.track && run.live.track.length ? run.live.track[run.live.track.length - 1][0] : null,
     trail: run.trail || [],
   };
 }
@@ -988,4 +990,14 @@ export function rideCursorOf(c) {
   const m = s && /^(\d{1,15}):(run_[0-9a-f]{20})$/.exec(s);
   if (!m) fail("cursor is not one get_my_rides gave; leave it out for the first page");
   return { created_ms: +m[1], run_id: m[2] };
+}
+
+/** check_in's fields as plain short text: what the agent says about itself, and the client name and version it reported at initialize. */
+const clip = (v, n) => (typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, n) : "");
+export function checkInInfo(input, client) {
+  const skills = Array.isArray(input.skills) ? input.skills.map((x) => clip(x, 40)).filter(Boolean).slice(0, 12) : [];
+  return {
+    name: clip(input.agent_name, 60) || null, model: clip(input.model, 60) || null, thinking: clip(input.thinking, 40) || null, skills,
+    client: client && client.name ? { name: clip(client.name, 60), version: clip(client.version, 30) || null } : null,
+  };
 }
