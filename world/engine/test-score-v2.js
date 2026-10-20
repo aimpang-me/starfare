@@ -1,5 +1,7 @@
 // node world/engine/test-score-v2.js
-// Ship classes, tank cap, distance throttle, unranked departures, score version 3.
+// The real reference hulls (tank cap, distance throttle), unranked departures, and score version 4.
+// The parked fleet is all Starseekers since the drive (2026-10-20), so the real hulls are planned directly, and the
+// xenon tank check uses a Dawn this file parks for itself.
 const assert = require("assert"), E = require("./sol-page.js"), R = E.R;
 const END = 2461329.5 + 7000 - 1, t0 = 2461700.5;
 let n = 0; const ok = (name, f) => { f(); n++; console.log("ok", name); };
@@ -16,12 +18,13 @@ ok("same inputs plan the same departures", () => {
   }
 });
 
+const hull = (from, to, cls) => E.planRide({ place: from }, to, { depFrom: t0, depTo: t0 + R.WINDOW, arriveBy: END, objective: "energy", allLocal: true, ship: E.SHIP_CLASSES[cls] });
 ok("Dawn at Earth can thrust and Deep Space 1 stays under its tank on the lunar hop", () => {
-  const dawn = R.planLeg("orbital-depot", "iss", t0, "energy", END, "sf-01");
+  const dawn = hull("orbital-depot", "iss", "dawn");
   assert.strictEqual(dawn.battery.class_id, "dawn");
   assert.strictEqual(dawn.battery.set_point_w, 2310);
   assert(dawn.battery.propellant_kg <= 425);
-  const ds1 = R.planLeg("orbital-depot", "iss", t0, "energy", END, "sf-02");
+  const ds1 = hull("orbital-depot", "iss", "ds1");
   assert.strictEqual(ds1.battery.class_id, "ds1");
   assert(ds1.battery.propellant_kg <= 82);
 });
@@ -29,7 +32,7 @@ ok("Dawn at Earth can thrust and Deep Space 1 stays under its tank on the lunar 
 ok("a far Dawn cannot use a published set point, and the Shuttle class has no ion thruster", () => {
   const far = E.battery(5, "dawn", 9.5);
   assert.match(far.refused, /490 W/);
-  assert.throws(() => R.planLeg("titan-dock", "earth", t0, "energy", END, "sf-01"), /490 W/);
+  assert.match(hull("titan-dock", "earth", "dawn").error, /490 W/);
   const shuttle = E.planRide({ place: "callisto" }, "ganymede", { depFrom: t0, depTo: t0 + 5, arriveBy: END, allLocal: true, ship: E.SHIP_CLASSES.shuttle });
   assert.match(shuttle.error, /no xenon ion thruster/);
   const rtg = E.battery(5, "rtg", 9.5);
@@ -43,7 +46,9 @@ ok("the tank check refuses a plan that names more xenon than the hull holds", ()
     { from: "orbital-depot", to: "iss", dep_jd: t0, arr_jd: t0 + 0.03, kwh: 400, fare: 80, xenon_kg: 10, gate: "PASS" },
     { from: "iss", to: "lunar-data-center", dep_jd: t0 + 0.1, arr_jd: t0 + 5, kwh: 37000, fare: 8000, xenon_kg: 500, gate: "PASS" },
   ];
-  assert(R.check("iss-crew", "sf-01", legs).some((e) => /xenon tank holds 425 kg/.test(e)));
+  R.CAR["test-dawn"] = { id: "test-dawn", name: "Test Dawn", at: "orbital-depot", ship_class: "dawn", seats: 4, xenon_kg: 425 };
+  try { assert(R.check("iss-crew", "test-dawn", legs).some((e) => /xenon tank holds 425 kg/.test(e))); }
+  finally { delete R.CAR["test-dawn"]; }
 });
 
 ok("score parts sum to the total, and a second call matches", () => {
@@ -57,7 +62,7 @@ ok("score parts sum to the total, and a second call matches", () => {
   const a = R.score("iss-crew", legs, ctx), b = R.score("iss-crew", legs, ctx);
   assert.deepStrictEqual(a, b);
   assert.strictEqual(a.out_of, 100000);
-  assert.strictEqual(a.score_version, 3);
+  assert.strictEqual(a.score_version, 4);
   assert.strictEqual(a.total, a.parts.reduce((s, p) => s + p.got, 0));
   assert.strictEqual(a.parts.reduce((s, p) => s + p.max, 0), 100000);
   for (const p of a.parts) {
@@ -68,7 +73,7 @@ ok("score parts sum to the total, and a second call matches", () => {
 
 function partGot(sc, key){ return sc.parts.find((p) => p.key === key).got; }
 
-ok("a ride at every stated reference stays under half and fills no part", () => {
+ok("a ride at every stated reference earns every part's full weight, and moving off a reference costs points", () => {
   const legs = [
     { from: "orbital-depot", to: "iss", arr_jd: t0 + 0.03, kwh: 400, fare: 80, gate: "PASS", xenon_kg: 1 },
     { from: "iss", to: "lunar-data-center", arr_jd: t0 + 5, kwh: 37000, fare: 8000, gate: "PASS", xenon_kg: 90 },
@@ -82,12 +87,10 @@ ok("a ride at every stated reference stays under half and fills no part", () => 
   const at = R.score("iss-crew", legs, ctx);
   assert.strictEqual(at.out_of, 100000);
   assert.strictEqual(at.total, at.parts.reduce((s, p) => s + p.got, 0));
-  assert.ok(at.total < at.out_of / 2, at.total);
-  assert.strictEqual(at.score_version, 3);
-  for (const p of at.parts) {
-    assert.ok(p.got < p.max || p.max === 0, p.key + " " + p.got + " of " + p.max);
-    assert.strictEqual(p.got, p.got, p.key);
-  }
+  // Score version 4 (Alvin, 2026-10-20): the reference earns the full weight, so this ride reads 100000.
+  assert.strictEqual(at.total, at.out_of);
+  assert.strictEqual(at.score_version, 4);
+  for (const p of at.parts) assert.strictEqual(p.got, p.max, p.key + " " + p.got + " of " + p.max);
   const overEnergy = R.score("iss-crew", legs, Object.assign({}, ctx, { flown: flown(1.1) }));
   assert.ok(partGot(overEnergy, "energy") <= partGot(at, "energy") * 0.7, partGot(overEnergy, "energy"));
   const underEnergy = R.score("iss-crew", legs, Object.assign({}, ctx, { flown: flown(0.5) }));
@@ -113,7 +116,7 @@ ok("a ride at every stated reference stays under half and fills no part", () => 
   assert.notStrictEqual(onTime, Math.round(onTime * 10) / 10);
 });
 
-ok("a copied leg that ignores the tank, the throttle and the window scores far under the max", () => {
+ok("a copied leg that ignores par, the window and the hindsight option scores far under the max", () => {
   const legs = [
     { from: "orbital-depot", to: "iss", arr_jd: t0 + 0.03, kwh: 400, fare: 80, gate: "PASS", xenon_kg: 10 },
     { from: "iss", to: "lunar-data-center", arr_jd: t0 + 5, kwh: 80000, fare: 8000, gate: "PASS", xenon_kg: 900 },
@@ -124,9 +127,9 @@ ok("a copied leg that ignores the tank, the throttle and the window scores far u
     flown: { pickup_jd: t0 + 0.03, arrive_jd: t0 + 5, used_kwh: 80400, extra_kwh: 0, incidents: [] } };
   const sc = R.score("iss-crew", legs, ctx);
   assert.strictEqual(sc.total, sc.parts.reduce((s, p) => s + p.got, 0));
-  assert.strictEqual(sc.parts.find((p) => p.key === "tank").got, 0);
-  assert(sc.total < 40000, sc.total);
-  assert(sc.total < sc.out_of / 2);
+  assert.deepStrictEqual(sc.parts.filter((p) => p.key === "tank" || p.key === "throttle"), []);
+  // The energy, window and recovery parts lose most of their 37000 points.
+  assert(sc.total < 70000, sc.total);
 });
 
 console.log(n, "passed");

@@ -8,7 +8,7 @@ import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
 import engineSrc from "./engine/sol-page.txt";
 import { EPISODE_PATH } from "./episode.js";
-import { listHails, poolView, sky } from "./game.js";
+import { SCORE_VERSION, listHails, poolView, sky } from "./game.js";
 import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
 import agentHtml from "./agent.html";
@@ -153,7 +153,7 @@ export default {
       const raw = await hub(env).board(), pool = poolView(E, season, cap);
       const legacy_hails = listHails(E).filter((h) => raw.best[h.hail_id]);
       const hails = [...pool.hails, ...legacy_hails];
-      const data = { ...raw, season, pool_size: cap, hails: pool.hails, legacy_hails,
+      const data = { ...raw, score_version: SCORE_VERSION, season, pool_size: cap, hails: pool.hails, legacy_hails,
         best: Object.fromEntries(hails.filter((h) => raw.best[h.hail_id]).map((h) => [h.hail_id, raw.best[h.hail_id]])) };
       if (url.pathname === "/board.json") return Response.json({ label: "planned by Grok bot", ...data }, { headers: { "cache-control": "no-store" } });
       return new Response(boardHtml(hails, data), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });

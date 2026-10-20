@@ -2,8 +2,11 @@
   "generator": "tools/models/build-lods.mjs",
   "productionApproved": false,
   "classes": {
+    "star-taxi": "kestrel",
     "dawn": "kestrel",
+    "star-shuttle": "tandem",
     "ds1": "tandem",
+    "star-liner": "lantern",
     "rtg": "lantern"
   },
   "hulls": {

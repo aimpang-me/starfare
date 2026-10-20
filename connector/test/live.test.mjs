@@ -50,7 +50,7 @@ async function views() {
     put("dust." + how + ".record.arrived", rideRecord(E, run));
   }
   const cold = await take("ceres-shift", CERES_NOW, "run_cold");
-  const p = (await planPickup(E, cold, { car: "sf-04" })).leg, r = (await planRideLeg(E, cold, { after_leg: p.leg_id })).leg;
+  const p = (await planPickup(E, cold, { car: "sf-09" })).leg, r = (await planRideLeg(E, cold, { after_leg: p.leg_id })).leg;
   let msg = null;
   try { dispatch(E, cold, { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd) }, CERES_NOW + (r.dep_jd - sky(CERES_NOW).jd + 2) * 1000); } catch (e) { msg = e.message; }
   put("cold.error", msg);

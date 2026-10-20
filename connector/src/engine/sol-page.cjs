@@ -500,7 +500,24 @@ const SHIP_CLASSES = {
   ds1: { id: "ds1", name: "Deep Space 1 class", dry_kg: 373, xenon_kg: 82, hydrazine_kg: 31, seats: 4, power_w_1au: 2500, housekeeping_w: 400, ion: true },
   rtg: { id: "rtg", name: "RTG class", dry_kg: 747.1, xenon_kg: 1085, hydrazine_kg: 0, seats: 4, power_w_1au: 633, housekeeping_w: 0, ion: true, power_mode: "constant" },
   shuttle: { id: "shuttle", name: "Shuttle class", dry_kg: 68000, xenon_kg: 0, hydrazine_kg: 0, seats: 7, power_w_1au: 0, housekeeping_w: 0, ion: false },
+  // The fictional Starseeker drive (Alvin's call, 2026-10-19 and 2026-10-20; docs/DRIVE-SPEC.md). The figures are
+  // fictional: hundreds of MW to GW of jet power from a few tonnes of hull, held at any distance from the Sun. Every
+  // quantity computed from them uses the real equations (driveLeg below). propellant_kg is the tank, refilled at every
+  // stop. Seats are the ladder Alvin chose (6, 20, 100). The taxi's 99 kN is triple the sized 33 kN, so a burn out of
+  // Jupiter's low parking orbit takes about half an hour instead of 81 minutes.
+  "star-taxi": { id: "star-taxi", name: "Starseeker Taxi", fictional: true, dry_kg: 6000, propellant_kg: 7000, seats: 6, ve_kms: 30, thrust_n: 99000, eta: 0.64, power_mode: "constant" },
+  "star-shuttle": { id: "star-shuttle", name: "Starseeker Shuttle", fictional: true, dry_kg: 25000, propellant_kg: 50000, seats: 20, ve_kms: 30, thrust_n: 60000, eta: 0.64, power_mode: "constant" },
+  // plan_dv_kms: a liner flies one plan, the earliest arrival with a total burn of at most 45 km/s (Alvin, 2026-10-20).
+  "star-liner": { id: "star-liner", name: "Starseeker Liner", fictional: true, dry_kg: 200000, propellant_kg: 500000, seats: 100, ve_kms: 60, thrust_n: 250000, eta: 0.64, power_mode: "constant", plan_dv_kms: 45 },
 };
+// Cabin and comfort for the fictional drive. 100 kg per passenger with luggage and 2.5 kg of supplies (food, water, air)
+// per person per day aboard are assumptions, not sourced figures. Burns throttle so nobody aboard feels more than 1 g.
+const DRIVE = { PAX_KG: 100, SUPPLY_KG_DAY: 2.5, COMFORT_G: 1 };
+const DRIVE_ASSUMPTIONS = [
+  "Starseeker Taxi, Shuttle and Liner use a declared fictional drive: the exhaust speed, thrust and power figures are fictional, and the rocket equation, mass flow, burn time, jet power and energy are computed",
+  "the cabin counts 100 kg per passenger with luggage and 2.5 kg of supplies per person per day aboard (assumptions)",
+  "burns throttle to stay at or under 1 g; the leg is still planned as impulsive burns",
+  "a Starseeker refuels at every stop, so its tank holds one leg"];
 const ASSUMPTIONS = [
   "Dawn class dry mass 747.1 kg, xenon tank 425 kg, arrays over 10000 W at 1 AU (that power figure is a lower bound)",
   "Deep Space 1 class dry mass 373 kg, xenon tank 82 kg, arrays 2500 W at 1 AU, housekeeping near 400 W",
@@ -537,8 +554,39 @@ function classOf(ship) {
 }
 // battery(dv) is the retired single hull (direct calls only). A ship class uses that hull's dry mass,
 // the NSTAR set point its arrays can feed at r_au, and refuses when the xenon tank cannot hold the burn.
-function battery(dv_kms, ship, r_au) {
+// One burn on the fictional drive, from mass m0 down to m1 (kg): full thrust until the acceleration reaches COMFORT_G,
+// then throttled to hold it. At constant exhaust speed throttling lowers the mass flow, so the energy is unchanged.
+function driveBurn(cls, dv_kms, m0, m1) {
+  const ve = cls.ve_kms * 1000, g = DRIVE.COMFORT_G * G0, mdot = cls.thrust_n / ve, mCap = cls.thrust_n / g;
+  let s;
+  if (m1 >= mCap) s = (m0 - m1) / mdot;
+  else if (m0 <= mCap) s = ve / g * Math.log(m0 / m1);
+  else s = (m0 - mCap) / mdot + ve / g * Math.log(mCap / m1);
+  return { dv_kms: pyRound(dv_kms, 3), minutes: pyRound(s / 60, 1), start_g: pyRound(Math.min(cls.thrust_n / m0 / G0, DRIVE.COMFORT_G), 3),
+    peak_g: pyRound(Math.min(cls.thrust_n / m1 / G0, DRIVE.COMFORT_G), 3) };
+}
+// A leg on the fictional drive. load (all optional): aboard, people in the cabin; days, time aboard on this leg, for
+// supplies; burns, the leg's burns in order (km/s), which default to one burn of dv_kms. The final mass is hull + people +
+// supplies; each burn is costed from the last one back, so earlier burns also carry the later burns' propellant.
+function driveLeg(dv_kms, ship, load) {
+  const cls = classOf(ship), L = load || {};
+  const aboard = Math.max(0, +L.aboard || 0), days = Math.max(0, +L.days || 0);
+  const cabin_kg = aboard * DRIVE.PAX_KG, supplies_kg = aboard * DRIVE.SUPPLY_KG_DAY * days, m_f = cls.dry_kg + cabin_kg + supplies_kg;
+  const ve_kms = cls.ve_kms, burns = Array.isArray(L.burns) && L.burns.length ? L.burns.filter((b) => b > 1e-9) : (dv_kms > 1e-9 ? [dv_kms] : []);
+  let m = m_f; const flown = [];
+  for (let i = burns.length - 1; i >= 0; i--) { const m0 = m * Math.exp(burns[i] / ve_kms); flown.unshift(driveBurn(cls, burns[i], m0, m)); m = m0; }
+  const m_prop = m - m_f, kwh = 0.5 * m_prop * (ve_kms * 1000) ** 2 / cls.eta / 3.6e6;
+  const out = { dv_kms: pyRound(dv_kms, 3), propellant_kg: pyRound(m_prop, 1), propellant_kg_exact: m_prop, energy_kwh: pyRound(kwh), energy_kwh_exact: kwh,
+    class_id: cls.id, fictional: true, isp_s: pyRound(ve_kms * 1000 / G0), eff: cls.eta, tank_kg: cls.propellant_kg,
+    aboard, cabin_kg: pyRound(cabin_kg, 1), supplies_kg: pyRound(supplies_kg, 1), final_kg: pyRound(m_f, 1), start_kg: pyRound(m, 1),
+    burns: flown, burn_minutes: pyRound(flown.reduce((a, b) => a + b.minutes, 0), 1), peak_g: flown.reduce((a, b) => Math.max(a, b.peak_g), 0) };
+  if (aboard > cls.seats) out.refused = cls.name + " seats " + cls.seats + " and this leg has " + aboard + " aboard";
+  else if (m_prop > cls.propellant_kg + 1e-6) out.refused = cls.name + " tank holds " + cls.propellant_kg + " kg and this leg needs " + pyRound(m_prop, 1) + " kg";
+  return out;
+}
+function battery(dv_kms, ship, r_au, load) {
   const cls = classOf(ship);
+  if (cls && cls.fictional) return { ...driveLeg(dv_kms, cls, load), r_au: r_au == null ? 1 : r_au };
   if (!cls) {
     const { CAR_DRY_KG, EXHAUST_KMS, THRUSTER_EFF, PACK_KWH } = MODELS;
     const m_prop = CAR_DRY_KG * (Math.exp(dv_kms / EXHAUST_KMS) - 1);
@@ -709,7 +757,8 @@ function planRideInner(origin, dest, opts) {
   const objective = opts.objective || "energy";
   const capture = (opts.arrive || "capture") === "capture";
   const req = opts.requestJd ?? depFrom;
-  const notPriced = [...ASSUMPTIONS.slice(4), "launch from the surface to the parking orbit is not priced",
+  const fictional = !!(opts.ship && opts.ship.fictional);
+  const notPriced = [...(fictional ? [ASSUMPTIONS[6], "landing and aerobraking are not priced"] : ASSUMPTIONS.slice(4)), "launch from the surface to the parking orbit is not priced",
     "burns are impulsive and in the best direction"];
   for (const ep of [o, d]) {
     const p = ep.place && P[ep.place];
@@ -724,7 +773,7 @@ function planRideInner(origin, dest, opts) {
     if (lt) {
       if (lt.error) return lt;
       notPriced.push("phasing (waiting for the target to line up) is not modelled: departs at the window start");
-      return finish(lt, { o, d, mo, md, req, notPriced, objective, t0, capture, origin, dest, ship: opts.ship || null });
+      return finish(lt, { o, d, mo, md, req, notPriced, objective, t0, capture, origin, dest, ship: opts.ship || null, aboard: opts.aboard });
     }
   }
   if (!mo.anchor && !md.anchor && d.ship) { /* ship to ship is fine */ }
@@ -831,7 +880,7 @@ function planRideInner(origin, dest, opts) {
   let chosen = null, refusal = null;
   for (const item of pool) {
     const rAu = norm(item.e.r1) / AU_KM;
-    const bat = battery(item.e.dv, ship, rAu);
+    const bat = battery(item.e.dv, ship, rAu, { aboard: opts.aboard, days: item.e.tof, burns: [item.e.dvd, item.e.dva] });
     if (bat.refused || bat.energy_kwh == null) { refusal = { error: bat.refused || ship.name + " cannot fly this leg" }; continue; }
     departures.push({
       dep_jd: item.e.d0, arr_jd: item.e.d0 + item.e.tof, depart: isoFromJd(item.e.d0, true), arrive: isoFromJd(item.e.d0 + item.e.tof, true),
@@ -852,18 +901,18 @@ function planRideInner(origin, dest, opts) {
     vinf_dep_kms: e.vd, vinf_arr_kms: e.va, c3_dep_km2s2: e.vd * e.vd, dv_dep_kms: e.dvd, dv_arr_kms: e.dva,
     transfer_angle_deg: e.L.angle_deg, arc_au: pts, cost: chosen.k, lambert_evals: evals,
     method: `Sun-centred Lambert (Izzo, ${e.M} rev${e.M ? (e.low ? ", low branch" : ", high branch") : ""}) between ${mo.label}${mo.anchor && mo.anchor !== o.place ? ` (via ${P[mo.anchor].name})` : ""} and ${md.label}${md.anchor && md.anchor !== d.place ? ` (via ${P[md.anchor].name})` : ""}; patched-conic burns; DE421 table` };
-  const done = finish(opt, { o, d, mo, md, req, notPriced, objective, t0, capture, origin, dest, ship });
+  const done = finish(opt, { o, d, mo, md, req, notPriced, objective, t0, capture, origin, dest, ship, aboard: opts.aboard });
   if (done.error) return done;
   departures.sort((a, b) => a.dep_jd - b.dep_jd);
   done.departures = departures;
   done.window_kwh = departures.reduce((m, d) => Math.min(m, d.battery_kwh), Infinity);
   return done;
 }
-function finish(opt, { o, d, req, notPriced, objective, t0, capture, ship }) {
+function finish(opt, { o, d, req, notPriced, objective, t0, capture, ship, aboard }) {
   const cls = ship || SHIP_CLASSES.dawn;
   opt.dv_total_kms = opt.dv_dep_kms + opt.dv_arr_kms;
   if (opt.r_au == null) opt.r_au = 1;
-  const bat = battery(opt.dv_total_kms, cls, opt.r_au);
+  const bat = battery(opt.dv_total_kms, cls, opt.r_au, { aboard, days: opt.tof_days, burns: [opt.dv_dep_kms, opt.dv_arr_kms] });
   if (bat.refused || bat.energy_kwh == null) return { error: bat.refused || cls.name + " cannot fly this leg" };
   opt.battery = bat;
   const days = opt.arr_jd - req;
@@ -877,7 +926,7 @@ function finish(opt, { o, d, req, notPriced, objective, t0, capture, ship }) {
   opt.objective = objective;
   opt.arrive_mode = capture ? "capture" : "none";
   opt.not_priced = notPriced;
-  opt.assumptions = [...ASSUMPTIONS.slice(0, 4),
+  opt.assumptions = [...(cls.fictional ? DRIVE_ASSUMPTIONS : ASSUMPTIONS.slice(0, 4)),
     "patched conics: Sun-centred leg between the centres of the endpoints' Sun-orbiting bodies (a moon or station uses its planet)",
     "burns from/into circular parking orbits (PLACES park_alt_km); moon endpoints escape/capture through the parent's well at the moon's orbit radius, burning along the moon's motion (trip.py titan_burn, generalised)",
     "moon and station orbits are circular with approximate radii/periods and arbitrary phase",
@@ -1142,7 +1191,7 @@ function reflyInner(leg, opts) {
 }
 
 init(__EPHEM);
-return { MU_SUN: MU_SUN, PLACES: placesTable(), EPHEM_RANGE: ephemRange(), sub: sub, propagate: function(r, v, dt){ return propagate(r, v, dt); }, periodDays: function(s){ return periodDays(s); }, placeState: function(id, jd){ return placeState(id, jd); }, stateOf: function(o, jd){ return stateOf(o, jd); }, planRide: function(o, to, opts){ return planRide(o, typeof to === 'string' ? { place: to } : to, opts); }, refly: function(o, opts){ return refly(o, opts); }, isoFromJd: isoFromJd, jdFromIso: jdFromIso, battery: battery, fare: fare, SHIP_CLASSES: SHIP_CLASSES, thrustPoint: thrustPoint, G0: G0 };
+return { MU_SUN: MU_SUN, PLACES: placesTable(), EPHEM_RANGE: ephemRange(), sub: sub, propagate: function(r, v, dt){ return propagate(r, v, dt); }, periodDays: function(s){ return periodDays(s); }, placeState: function(id, jd){ return placeState(id, jd); }, stateOf: function(o, jd){ return stateOf(o, jd); }, planRide: function(o, to, opts){ return planRide(o, typeof to === 'string' ? { place: to } : to, opts); }, refly: function(o, opts){ return refly(o, opts); }, isoFromJd: isoFromJd, jdFromIso: jdFromIso, battery: battery, driveLeg: driveLeg, DRIVE: DRIVE, DRIVE_ASSUMPTIONS: DRIVE_ASSUMPTIONS, fare: fare, SHIP_CLASSES: SHIP_CLASSES, thrustPoint: thrustPoint, G0: G0 };
 })();
 // SOL delivery missions: the catalog, the brute-forced par route, route checks and scoring.
 // Appended to the engine bundle by world/bundle.py as `SOLE.M`, so the page, its worker and a future
@@ -1237,20 +1286,23 @@ SOLE.R = (function(E){
 var DWELL = 0.05;        // days at the pickup for the rider to board (1.2 h)
 var WINDOW = 120;        // a leg may depart up to this many days after it is allowed to
 var LEAD = 150;          // long-haul hails are booked this many sky days ahead (quick hails: 1 day)
-// Which hull each parked ship uses. A simulated assignment, not a published fleet plan.
-// Dawn class at Earth: the 2.31 kW set point fits the lunar hop, and Deep Space 1's 82 kg tank does not.
-// Deep Space 1 class on the light inner ships. The short Mars hop is the one it spends the least energy on.
-// RTG class on the outer ships. Its constant 633 W can feed the 0.49 kW set point at Jupiter and Saturn,
-// and its 1085 kg tank holds Ceres and Titan burns that Dawn's 425 kg tank does not.
-// The Shuttle class is not parked. It has no xenon ion thruster.
+// The parked fleet flies the fictional Starseeker drive (Alvin, 2026-10-20; docs/DRIVE-SPEC.md). A simulated
+// assignment, not a published fleet plan. The seven ships parked before the drive became Taxis at the same places.
+// Shuttles park at Mars Base and Ceres, and Liners at the Orbital Depot and Titan Dock. A ship can't pick up at the
+// place it is parked, so the Ceres shuttle waits beside Ceres Port, as SF-04 did. The real hulls (Dawn, Deep Space 1,
+// RTG, Shuttle class) stay in the engine as the reference and are not parked.
 var FLEET = [
-  { id: "sf-01", name: "SF-01", at: "orbital-depot", ship_class: "dawn" },
-  { id: "sf-02", name: "SF-02", at: "lunar-data-center", ship_class: "ds1" },
-  { id: "sf-03", name: "SF-03", at: "mars-base", ship_class: "ds1" },
-  { id: "sf-04", name: "SF-04", at: "ceres", ship_class: "rtg" },
-  { id: "sf-05", name: "SF-05", at: "europa", ship_class: "rtg" },
-  { id: "sf-06", name: "SF-06", at: "callisto", ship_class: "rtg" },
-  { id: "sf-07", name: "SF-07", at: "titan-dock", ship_class: "rtg" }
+  { id: "sf-01", name: "SF-01", at: "orbital-depot", ship_class: "star-taxi" },
+  { id: "sf-02", name: "SF-02", at: "lunar-data-center", ship_class: "star-taxi" },
+  { id: "sf-03", name: "SF-03", at: "mars-base", ship_class: "star-taxi" },
+  { id: "sf-04", name: "SF-04", at: "ceres", ship_class: "star-taxi" },
+  { id: "sf-05", name: "SF-05", at: "europa", ship_class: "star-taxi" },
+  { id: "sf-06", name: "SF-06", at: "callisto", ship_class: "star-taxi" },
+  { id: "sf-07", name: "SF-07", at: "titan-dock", ship_class: "star-taxi" },
+  { id: "sf-08", name: "SF-08", at: "mars-base", ship_class: "star-shuttle" },
+  { id: "sf-09", name: "SF-09", at: "ceres", ship_class: "star-shuttle" },
+  { id: "sf-10", name: "SF-10", at: "orbital-depot", ship_class: "star-liner" },
+  { id: "sf-11", name: "SF-11", at: "titan-dock", ship_class: "star-liner" }
 ];
 var CAR = {}; FLEET.forEach(function(c){
   var spec = E.SHIP_CLASSES[c.ship_class];
@@ -1294,14 +1346,50 @@ function manifest(plan){
   Object.keys(stop).forEach(function(id){ if (hails.indexOf(id) < 0) hails.push(id); });
   return { hails: hails, roles: roles, party: party, stop: stop };
 }
+// Fares per seat (Alvin, 2026-10-20): a leg's fare is split by party size among the bookings aboard it, and a booking pays
+// its share of each leg it rides. A leg with nobody aboard (a pickup) is not charged, as before. Shares are rounded to cents.
+function seatFares(plan){
+  var M = manifest(plan), out = {};
+  M.hails.forEach(function(b){ out[b] = 0; });
+  plan.legs.forEach(function(L, i){
+    var on = M.party[i];
+    M.hails.forEach(function(b){ var s = M.stop[b];
+      if (BY[b] && s.board.length && s.board[0] <= i && (!s.alight.length || i < s.alight[0])) out[b] += BY[b].party === on ? +L.fare : +L.fare * BY[b].party / on; });
+  });
+  Object.keys(out).forEach(function(b){ out[b] = Math.round(out[b] * 100) / 100; });
+  return out;
+}
+function fares(id, car, legs){ return seatFares(planOf(id, car, legs)); }
+// The stops a chain of legs implies for a set of bookings: each boards at its first visit to its pickup and alights at its
+// first visit after that to its destination. Stop 0 is where the car starts. A plan_leg chain is priced on these stops.
+function chainStops(ids, startAt, legs){
+  var stops = [{ at: startAt }], state = {};
+  legs.forEach(function(L){
+    var s = { at: L.to, board: [], alight: [] };
+    ids.forEach(function(id){ if (state[id] === "aboard" && BY[id].to === L.to){ s.alight.push(id); state[id] = "done"; } });
+    ids.forEach(function(id){ if (!state[id] && BY[id].from === L.to){ s.board.push(id); state[id] = "aboard"; } });
+    stops.push(s);
+  });
+  return stops;
+}
 
 var PID = {}; E.PLACES.forEach(function(p){ PID[p.id] = p; });
 // Which planet's neighbourhood a place is in (stations and moons belong to their planet; Ceres to itself).
 function system(id){ var p = PID[id]; while (p && p.parent && p.parent !== "sun") p = PID[p.parent]; return p ? p.id : id; }
-// Par and the best pickup only look at cars in the rider's or the destination's neighbourhood.
+// Which bookings each Starseeker class flies (docs/DRIVE-SPEC.md): Taxis the quick hops inside one planet's
+// neighbourhood, Shuttles the long hauls inside Jupiter's orbit, Liners the long hauls that touch the outer planets.
+// A real hull would fly any booking. Until scheduled routes exist, the classes are dispatched like the taxis.
+var OUTER = { jupiter: 1, saturn: 1, uranus: 1, neptune: 1 };
+var FLIES = { "star-taxi": "quick", "star-shuttle": "inner", "star-liner": "outer" };
+var FLIES_TEXT = { quick: "quick hops inside one planet's neighbourhood", inner: "long hauls inside Jupiter's orbit", outer: "long hauls to or from the outer planets" };
+function reach(h){ return system(h.from) === system(h.to) ? "quick" : OUTER[system(h.from)] || OUTER[system(h.to)] ? "outer" : "inner"; }
+function serves(car, h){ var c = CAR[car] || car, f = c && FLIES[c.ship_class]; return !!c && (!f || f === reach(h)); }
+function servesWhy(car, h){ var c = CAR[car] || car;
+  return serves(c, h) ? null : c.name + " is a " + E.SHIP_CLASSES[c.ship_class].name + ", which flies " + FLIES_TEXT[FLIES[c.ship_class]] + ", and " + h.id + " is one of the " + FLIES_TEXT[reach(h)]; }
+// Par and the best pickup only look at ships of the right class in the rider's or the destination's neighbourhood.
 function nearCars(h){ // rider's neighbourhood first, then the destination's
   var s = [system(h.from), system(h.to)], rank = function(c){ return s.indexOf(system(c.at)); };
-  return FLEET.filter(function(c){ return rank(c) >= 0 && c.at !== h.from; }).sort(function(a, b){ return rank(a) - rank(b) || FLEET.indexOf(a) - FLEET.indexOf(b); }); }
+  return FLEET.filter(function(c){ return rank(c) >= 0 && c.at !== h.from && serves(c, h); }).sort(function(a, b){ return rank(a) - rank(b) || FLEET.indexOf(a) - FLEET.indexOf(b); }); }
 
 
 /* ---------- the hard layer: simulated hazards ----------
@@ -1588,20 +1676,23 @@ function arrivePhase(ride){
   var ready = N.dep_jd;
   if (N.kind === "return"){
     ready = land + N.wait_hours * HOUR;
-    var b = planned(N.from, N.to, ready, "energy", ride.end_jd, ride.car);
+    var b = planned(N.from, N.to, ready, "energy", ride.end_jd, ride.car, aboardOn(ride, N));
     N.dep_jd = b.dep_jd; N.arr_jd = b.arr_jd; N.kwh = b.battery.energy_kwh;
     ready = N.dep_jd;
   } else ready = Math.max(N.dep_jd, land + (boarding ? DWELL : 0));
   ride.at = { seg: nx, phase: "depart", jd: ready };
   return null;
 }
+// Who is aboard a segment: the manifest's party on the leg it flies (a divert hop and its return carry the same people).
+function aboardOn(ride, S){ return manifest({ stops: ride.stops, legs: ride.legs }).party[S.stop - 1] || 0; }
+function onDrive(car){ return !!(CAR[car] && E.SHIP_CLASSES[CAR[car].ship_class].fictional); }
 function usedSoFar(ride){ return ride.segs.reduce(function(a, s){ return a + (s.flew ? s.kwh : 0); }, 0) + ride.extra_kwh; }
 // Local alternates for a closed pad: other stations and moons in the same neighbourhood, priced as a hop from orbit.
 function alternates(ride, place, target, T){
-  var H = hazards(ride.seed), rush = rushes(ride), out = [];
+  var H = hazards(ride.seed), rush = rushes(ride), out = [], on = aboardOn(ride, ride.segs[ride.at.seg]);
   E.PLACES.forEach(function(p){
     if (p.id === place || p.id === target || (p.kind !== "moon" && p.kind !== "station") || system(p.id) !== system(place)) return;
-    try { var b = planned(place, p.id, T, "energy", ride.end_jd, ride.car);
+    try { var b = planned(place, p.id, T, "energy", ride.end_jd, ride.car, on);
       out.push({ place: p.id, name: p.name, hop_kwh: b.battery.energy_kwh, hop_hours: Math.round((b.arr_jd - b.dep_jd) * 240) / 10, berths: H.berths(p.id), booked_now: H.docked(p.id, Math.floor(T * 24), rush, true) });
     } catch (e) {}
   });
@@ -1636,10 +1727,13 @@ function applyLaunch(ride, cp, d){
     ride.at.jd = Math.max(ride.at.jd, cp.reply_jd); return { action: "wait" }; }
   var S = ride.segs[ride.at.seg], L = d.leg;
   if (!L || L.from !== S.from || L.to !== S.to) throw new Error("a replan must go from " + nameOf(S.from) + " to " + nameOf(S.to));
+  if (onDrive(ride.car) && (+L.aboard || 0) !== aboardOn(ride, S)) throw new Error("a replan must be planned for the " + aboardOn(ride, S) + " aboard");
   if (!(L.dep_jd >= cp.reply_jd - 1e-9) || !(L.arr_jd > L.dep_jd) || !isFinite(L.kwh)) throw new Error("a replan must depart at or after " + iso(cp.reply_jd) + ", when the answer reaches the ship");
   if (L.dep_jd > cp.sky_at + 1e-9) ride.incidents.push({ kind: "replanned", leg: S.role, where: S.from, at_jd: cp.sky_at, hours: (L.dep_jd - cp.sky_at) * 24, kwh: 0,
     note: "Because " + CAUSE[cp.cause] + ", the ship waited on the ground and left on a new plan" });
   var leg = { from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate || null };
+  // The recorded decision keeps who the leg was planned for, so regret() can replay it on a Starseeker.
+  if (L.aboard != null) leg.aboard = +L.aboard;
   ride.segs[ride.at.seg] = seg(S.role, "replan", leg, S.target, S.stop);
   ride.at = { seg: ride.at.seg, phase: "depart", jd: leg.dep_jd };
   return { action: "replan", leg: leg };
@@ -1662,7 +1756,7 @@ function applyPad(ride, cp, d){
 }
 // The ship carries out a divert once the answer reaches it (arrivePhase calls this at act.at).
 function divert(ride, act){
-  var S = ride.segs[ride.at.seg], T = act.at, b = planned(S.to, act.place, T, "energy", ride.end_jd, ride.car);
+  var S = ride.segs[ride.at.seg], T = act.at, b = planned(S.to, act.place, T, "energy", ride.end_jd, ride.car, aboardOn(ride, S));
   S.flew.left_jd = T;
   var hop = seg(S.role, "divert", { from: S.to, to: act.place, dep_jd: b.dep_jd, arr_jd: b.arr_jd, kwh: b.battery.energy_kwh, gate: "local" }, S.target, S.stop);
   var back = { role: S.role, kind: "return", from: act.place, to: S.target, dep_jd: null, arr_jd: null, kwh: 0, gate: "local", target: S.target, stop: S.stop, wait_hours: act.wait };
@@ -1704,7 +1798,7 @@ function hindsight(ride, cp){
     out.push({ action: "wait" });
     var jd = cp.reply_jd;
     for (var i = 0; i < 400; i++){ var w = H.weatherAt(S.from, jd), f = S.role === "ride" ? H.flareAt(jd, S.from) : null; if (!w && !f) break; jd = Math.max(w ? w.end : 0, f ? f.end : 0); }
-    try { var b = planned(S.from, S.to, jd, "energy", ride.end_jd, ride.car); out.push({ action: "replan", depart_after: jd, leg: slim(b, S.from, S.to) }); } catch (e) {}
+    try { var b = planned(S.from, S.to, jd, "energy", ride.end_jd, ride.car, aboardOn(ride, S)); out.push({ action: "replan", depart_after: jd, leg: slim(b, S.from, S.to) }); } catch (e) {}
     return out;
   }
   out.push({ action: "hold" });
@@ -1773,7 +1867,8 @@ function fleetState(id, t0, seed){ var H = hazards(seed);
   return FLEET.map(function(c){ var b = H.busyUntil(id, c.id, t0); return { car: c.id, name: c.name, at: c.at, busy_until_jd: b }; }); }
 function pickupStart(id, car, t0, seed){ return hazards(seed).pickupStart(id, car, t0); }
 
-function planLeg(from, to, departAfter, objective, endJd, ship){
+// aboard: the people on this leg. Only the fictional drive's mass depends on it; the real hulls ignore it.
+function planLeg(from, to, departAfter, objective, endJd, ship, aboard){
   if (from === to) throw new Error("that leg would start and end at the same place");
   var spec = ship && CAR[ship] ? E.SHIP_CLASSES[CAR[ship].ship_class] : null;
   if (spec) {
@@ -1781,21 +1876,28 @@ function planLeg(from, to, departAfter, objective, endJd, ship){
     var probe = E.battery(1, spec, r);
     if (probe.refused && /cannot thrust|no xenon ion/.test(probe.refused)) throw new Error(probe.refused);
   }
-  var b = E.planRide({ place: from }, to, { depFrom: departAfter, depTo: departAfter + WINDOW, arriveBy: endJd, objective: objective === "time" ? "time" : "energy", allLocal: true, ship: spec });
+  var opts = { depFrom: departAfter, depTo: departAfter + WINDOW, arriveBy: endJd, objective: objective === "time" ? "time" : "energy", allLocal: true, ship: spec, aboard: Math.max(0, +aboard || 0) };
+  // A liner flies one plan whatever the objective: the earliest arrival within its burn cap. Its lowest-burn plans
+  // are the slowest and carry years of supplies, so they use more energy (docs/DRIVE-SPEC.md, "Liner speed").
+  if (spec && spec.plan_dv_kms){ opts.objective = "time"; opts.maxBurnKms = spec.plan_dv_kms; }
+  var b = E.planRide({ place: from }, to, opts);
   if (!b || b.error) throw new Error((b && b.error) || "no route from " + from + " to " + to);
+  if (spec && spec.plan_dv_kms) b.assumptions.push(spec.name + " flies one plan: the earliest arrival with a total burn of at most " + spec.plan_dv_kms + " km/s, whatever the objective");
   return b;
 }
 // The same plan, remembered: par's hindsight search asks for the same hops and replans many times. Read-only results.
 var MEMO = new Map();
-function planned(from, to, departAfter, objective, endJd, ship){
-  var key = from + "|" + to + "|" + departAfter + "|" + objective + "|" + endJd + "|" + (ship || "");
+function planned(from, to, departAfter, objective, endJd, ship, aboard){
+  var key = from + "|" + to + "|" + departAfter + "|" + objective + "|" + endJd + "|" + (ship || "") + "|" + (onDrive(ship) ? +aboard || 0 : "");
   if (MEMO.has(key)){ var hit = MEMO.get(key); if (hit instanceof Error) throw hit; return hit; }
   if (MEMO.size > 4000) MEMO.clear();
-  try { var b = planLeg(from, to, departAfter, objective, endJd, ship); MEMO.set(key, b); return b; } catch (e) { MEMO.set(key, e); throw e; }
+  try { var b = planLeg(from, to, departAfter, objective, endJd, ship, aboard); MEMO.set(key, b); return b; } catch (e) { MEMO.set(key, e); throw e; }
 }
 function slim(b, from, to){
-  return { from: from, to: to, dep_jd: b.dep_jd, arr_jd: b.arr_jd, kwh: b.battery.energy_kwh, fare: b.fare.total_usd,
+  var out = { from: from, to: to, dep_jd: b.dep_jd, arr_jd: b.arr_jd, kwh: b.battery.energy_kwh, fare: b.fare.total_usd,
     xenon_kg: b.battery.propellant_kg, r_au: b.r_au, set_point_w: b.battery.set_point_w, window_kwh: b.window_kwh };
+  if (b.battery.aboard != null) out.aboard = b.battery.aboard;
+  return out;
 }
 
 // Par: for every nearby car, pickup and ride each planned for least energy, leaving as soon as the car is free,
@@ -1808,9 +1910,13 @@ function par(id, t0, endJd, seed){
     // Quick hails: par may also wait on the ground (pickup and ride each 0-12 h) to dodge forecast trouble.
     (h.kind === "quick" ? PAR_WAITS : [[0, 0]]).forEach(function(w){
       try {
-        var p = planned(c.at, h.from, st + w[0] * HOUR, "energy", endJd, c.id), P = slim(p, c.at, h.from);
+        var p = planned(c.at, h.from, st + w[0] * HOUR, "energy", endJd, c.id, 0), P = slim(p, c.at, h.from);
         var pk = fly(id, c.id, [P, { from: h.from, to: h.from, dep_jd: p.arr_jd + DWELL, arr_jd: p.arr_jd + DWELL, kwh: 0 }], t0, seed).pickup_jd;
-        var r = planned(h.from, h.to, Math.max(p.arr_jd, pk) + DWELL + w[1] * HOUR, "energy", endJd, c.id), Rr = slim(r, h.from, h.to), legs = [P, Rr], F = fly(id, c.id, legs, t0, seed);
+        var r = planned(h.from, h.to, Math.max(p.arr_jd, pk) + DWELL + w[1] * HOUR, "energy", endJd, c.id, h.party), Rr = slim(r, h.from, h.to), legs = [P, Rr];
+        // Each leg can fit the tank while the pair does not; check() refuses that dispatch, so par must not pick it.
+        var xe = (+P.xenon_kg || 0) + (+Rr.xenon_kg || 0);
+        if (c.xenon_kg != null && xe > c.xenon_kg + 1e-6) throw new Error(c.name + " xenon tank holds " + c.xenon_kg + " kg and this plan needs " + Math.round(xe * 10) / 10 + " kg");
+        var F = fly(id, c.id, legs, t0, seed);
         if (!best || F.used_kwh < best.kwh - 1e-9) best = { car: c.id, kwh: F.used_kwh, planned_kwh: F.planned_kwh, arr_jd: F.arrive_jd, planned_arr_jd: r.arr_jd, legs: legs, wait_h: w, path: [] };
         // Holds and corrections only add energy, so a local ride planned above the best can't win; a replan or divert might.
         if (legs.some(function(L){ return system(L.from) !== system(L.to); }) || F.planned_kwh < best.kwh - 1e-9){
@@ -1820,7 +1926,7 @@ function par(id, t0, endJd, seed){
       } catch (e) { if (/cannot thrust|no xenon|xenon tank/.test(e.message)) refused = e.message; }
     });
     try {
-      var q = planLeg(c.at, h.from, st, "time", endJd, c.id), Q = slim(q, c.at, h.from);
+      var q = planLeg(c.at, h.from, st, "time", endJd, c.id, 0), Q = slim(q, c.at, h.from);
       // a stub ride leg (no time cost) to fly the pickup alone
       var G = fly(id, c.id, [Q, { from: h.from, to: h.from, dep_jd: q.arr_jd + DWELL, arr_jd: q.arr_jd + DWELL, kwh: 0 }], t0, seed);
       if (!wait || G.pickup_jd < wait.arr_jd) wait = { car: c.id, arr_jd: G.pickup_jd };
@@ -1834,9 +1940,9 @@ function par(id, t0, endJd, seed){
     if (endJd < ephEnd - 1) nearCars(h).forEach(function(c){
       if (later) return;
       try {
-        var stL = H.pickupStart(id, c.id, t0), pL = planned(c.at, h.from, stL, "energy", ephEnd, c.id);
-        planned(h.from, h.to, pL.arr_jd + DWELL, "energy", ephEnd, c.id);
-        later = true;
+        var stL = H.pickupStart(id, c.id, t0), pL = planned(c.at, h.from, stL, "energy", ephEnd, c.id, 0);
+        var rL = planned(h.from, h.to, pL.arr_jd + DWELL, "energy", ephEnd, c.id, h.party);
+        if (c.xenon_kg == null || (+pL.battery.propellant_kg || 0) + (+rL.battery.propellant_kg || 0) <= c.xenon_kg + 1e-6) later = true;
       } catch (e) {}
     });
     if (later) throw new Error("no ship can serve " + h.title);
@@ -1885,7 +1991,7 @@ function parSet(ids, t0, endJd, seed){
   if (!Array.isArray(ids) || !ids.length || ids.length > MAX_BOOKINGS) throw new Error("a set is 1 to " + MAX_BOOKINGS + " bookings");
   ids.forEach(function(id, i){ if (!BY[id]) throw new Error("unknown hail " + id); if (ids.indexOf(id) !== i) throw new Error(id + " is in the set twice"); });
   var lead = ids[0], H = hazards(seed), orders = stopOrders(ids), best = null, cars = [];
-  ids.forEach(function(id){ nearCars(BY[id]).forEach(function(c){ if (cars.indexOf(c) < 0) cars.push(c); }); });
+  ids.forEach(function(id){ nearCars(BY[id]).forEach(function(c){ if (cars.indexOf(c) < 0 && ids.every(function(b){ return serves(c, BY[b]); })) cars.push(c); }); });
   cars.forEach(function(c){
     var st = H.pickupStart(lead, c.id, t0);
     orders.forEach(function(order){
@@ -1893,7 +1999,7 @@ function parSet(ids, t0, endJd, seed){
       if (Math.max.apply(null, M.party) > c.seats) return;
       try {
         for (var i = 0, after = st; i < order.length; i++){
-          var b = planned(stops[i].at, stops[i + 1].at, after, "energy", endJd, c.id);
+          var b = planned(stops[i].at, stops[i + 1].at, after, "energy", endJd, c.id, M.party[i]);
           plan.legs.push(slim(b, stops[i].at, stops[i + 1].at));
           F = fly(lead, c.id, { stops: stops.slice(0, i + 2), legs: plan.legs }, t0, seed);
           after = Math.max(b.arr_jd, F.arrive_jd) + (stops[i + 1].board.length ? DWELL : 0);
@@ -1953,27 +2059,34 @@ function check(id, car, legs, t0, seed){
   S.forEach(function(s, n){
     if (n && !(s.board || []).length && !(s.alight || []).length) errs.push("stop " + n + " (" + nameOf(s.at) + ") has nobody boarding or alighting");
     if (M.party[n] > c.seats) errs.push(M.party[n] + " aboard after stop " + n + " (" + nameOf(s.at) + "), but " + c.name + " seats " + c.seats);
+    // The drive's mass counts the people aboard, so a leg planned for a different number is a different burn.
+    if (n < L.length && onDrive(car) && (+L[n].aboard || 0) !== M.party[n])
+      errs.push(legName(n) + " was planned for " + (+L[n].aboard || 0) + " aboard, but " + M.party[n] + " ride it");
     if (n && n < L.length && (s.board || []).length && L[n].dep_jd < L[n - 1].arr_jd + DWELL - 1e-6)
       errs.push(legName(n) + " leaves before " + who(s.board) + (one || s.board.length === 1 ? " has" : " have") + " boarded");
   });
   if (t0 != null){ var st = hazards(seed).pickupStart(id, car, t0); if (L[0].dep_jd < st - 1e-6) errs.push(c.name + " is busy on another ride until " + iso(st) + ", so its pickup can't leave before then"); }
   var xe = L.reduce(function(a, x){ return a + (+x.xenon_kg || 0); }, 0);
-  if (xe > c.xenon_kg + 1e-6) errs.push(c.name + " xenon tank holds " + c.xenon_kg + " kg and this plan needs " + xe + " kg");
+  if (c.xenon_kg != null && xe > c.xenon_kg + 1e-6) errs.push(c.name + " xenon tank holds " + c.xenon_kg + " kg and this plan needs " + xe + " kg");
+  M.hails.forEach(function(b){ if (BY[b] && !serves(c, BY[b])) errs.push(servesWhy(c, BY[b])); });
   return errs;
 }
 function quotedJd(s){ var m = /^\s*(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec(String(s || "")); return m ? E.jdFromIso(m[1] + "T" + m[2]) : null; }
 function k(x){ return Math.round(x).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 function iso(jd){ return E.isoFromJd(jd, true).replace("T", " ").slice(0, 16); }
-// Score version 3. Placeholder weights, they sum to 100000, until Alvin sets them. got is not rounded.
+// Score version 4. Placeholder weights, they sum to 100000, until Alvin sets them. got is not rounded.
 // total is the sum of the part got values. legs: today's [pickup, ride] or a plan.
-// ctx: { t0, arrive_by_jd, par_kwh, best_wait_days, plan_calls, ship, window_kwh, throttled_kwh, hindsight_kwh,
+// ctx: { t0, arrive_by_jd, par_kwh, best_wait_days, plan_calls, ship, window_kwh, hindsight_kwh,
 //   quote: { fare_usd, arrival }, flown: fly(...) }
 // A shared flight adds ctx.bookings. Passenger parts are the party weighted mean. Ship parts are once per flight.
 // The weights and that mean are a placeholder (docs/SHARED-FLIGHTS.md, open number 5).
-// SCORE_HEADROOM and SCORE_STEEPNESS are simulated assumptions. At the stated reference, excess is 0 and a part
-// earns headroom of its weight. It falls as excess grows and never reaches the weight.
-var SCORE_HEADROOM = 0.35, SCORE_STEEPNESS = 6;
-var SCORE_MAX = { pickup: 22000, on_time: 16000, energy: 24000, promise: 14000, checker: 4000, fare: 4000, economy: 3000, tank: 4000, throttle: 3000, window: 3000, recovery: 3000, dose: 0 };
+// SCORE_STEEPNESS is a simulated assumption. At the stated reference, excess is 0 and a part earns SCORE_HEADROOM of its
+// weight; it falls as excess grows. Version 3 set the headroom to 0.35, which only scaled every total down (no part can
+// score above its reference), so version 4 sets it to 1 and a ride on every reference reads 100000 (Alvin, 2026-10-20).
+var SCORE_HEADROOM = 1, SCORE_STEEPNESS = 6;
+// Version 4 also drops version 3's "Xenon tank" (4000) and "Distance throttle" (3000) parts: a Starseeker refuels at
+// every stop and holds its power at any distance from the Sun, so neither can be missed. Their points go to energy.
+var SCORE_MAX = { pickup: 22000, on_time: 16000, energy: 31000, promise: 14000, checker: 4000, fare: 4000, economy: 3000, window: 3000, recovery: 3000, dose: 0 };
 var SCORE_TOTAL = Object.keys(SCORE_MAX).reduce(function(a, key){ return a + SCORE_MAX[key]; }, 0);
 function scoreRatio(excess){ return SCORE_HEADROOM / (1 + SCORE_STEEPNESS * Math.max(0, excess)); }
 function score(id, legs, ctx){
@@ -1989,7 +2102,7 @@ function score(id, legs, ctx){
   function row(key, label, got, unit, measure, note){ return { key: key, label: label, max: SCORE_MAX[key], got: got, unit: unit, measure: measure, note: note }; }
   function booking(b){
     var B = ctx.bookings && ctx.bookings[b] || ctx, Fb = F.bookings && F.bookings[b] || F, mine = ridden(b), last = mine[mine.length - 1];
-    var fare = mine.map(function(l){ return l.fare; }).reduce(function(a, f){ return a + f; });
+    var fare = shares[b];
     var wait = Math.max(1e-6, Fb.pickup_jd - B.t0), late = Math.max(0, Fb.arrive_jd - B.arrive_by_jd);
     var q = B.quote || {}, fareGap = isFinite(+q.fare_usd) ? Math.abs(+q.fare_usd - fare) : fare, fareOk = isFinite(+q.fare_usd) && fareGap <= 1, qj = quotedJd(q.arrival);
     var slip = qj == null ? null : Fb.arrive_jd - qj;
@@ -2001,26 +2114,21 @@ function score(id, legs, ctx){
       row("pickup", "Fast pickup", SCORE_MAX.pickup * scoreRatio(pickupExcess), "min", waitMin, "rider waited " + dur(wait) + " (" + waitMin.toFixed(1) + " min), quickest nearby ship " + dur(B.best_wait_days) + ". " + Math.max(0, waitMin - bestMin).toFixed(1) + " min over that ship"),
       row("on_time", "Arrived on time", SCORE_MAX.on_time * scoreRatio(lateMin / 60), "min", lateMin, late > 0 ? "arrived " + dur(late) + " late (" + lateMin.toFixed(1) + " min). The reference is 0 min late" : "arrived by " + iso(B.arrive_by_jd) + ", 0 min late"),
       row("promise", "Kept the promise", SCORE_MAX.promise * scoreRatio(promiseExcess), "min", slipMin, qj == null ? "no arrival time was quoted" : slip > 1 / 1440 ? "arrived " + dur(slip) + " (" + slipMin.toFixed(1) + " min) after the quoted " + iso(qj) + ". The reference is 0 min late" : slip < -1 / 1440 ? "arrived " + dur(-slip) + " (" + (-slipMin).toFixed(1) + " min) before the quoted " + iso(qj) : "arrived when promised, " + iso(qj)),
-      row("fare", "Honest fare", SCORE_MAX.fare * scoreRatio(fareExcess), "USD", fareGap, "fare " + (fareOk ? "matches" : "does not match") + " the ride leg's $" + k(fare) + (isFinite(+q.fare_usd) ? ". $" + fareGap.toFixed(2) + " off that fare" : ""))
+      row("fare", "Honest fare", SCORE_MAX.fare * scoreRatio(fareExcess), "USD", fareGap, "fare " + (fareOk ? "matches" : "does not match") + (one ? " the ride leg's $" : " its seats' share of the legs it rides, $") + k(fare) + (isFinite(+q.fare_usd) ? ". $" + fareGap.toFixed(2) + " off that fare" : ""))
     ] };
   }
-  var bookings = {}; M.hails.forEach(function(b){ bookings[b] = booking(b); });
+  var shares = seatFares(plan), bookings = {}; M.hails.forEach(function(b){ bookings[b] = booking(b); });
   var people = M.hails.reduce(function(a, b){ return a + bookings[b].party; }, 0);
   function mean(key){ var rows = M.hails.map(function(b){ return [b, bookings[b].parts.filter(function(p){ return p.key === key; })[0]]; }), p = rows[0][1];
     return { key: p.key, label: p.label, max: p.max, unit: p.unit,
       got: rows.reduce(function(a, r){ return a + r[1].got * bookings[r[0]].party; }, 0) / people,
       measure: rows.reduce(function(a, r){ return a + (r[1].measure || 0) * bookings[r[0]].party; }, 0) / people,
       note: one ? p.note : rows.map(function(r){ return r[0] + ": " + r[1].note; }).join("; ") }; }
-  var spec = ctx.ship && CAR[ctx.ship] ? E.SHIP_CLASSES[CAR[ctx.ship].ship_class] : null;
   var ion = L.reduce(function(a, l){ return a + (l.kwh || 0); }, 0);
-  var xe = L.reduce(function(a, l){ return a + (+l.xenon_kg || 0); }, 0);
-  var cap = spec ? spec.xenon_kg : null;
-  var tankOver = cap == null ? 0 : Math.max(0, xe - cap);
-  var legal = ctx.throttled_kwh == null ? ion : +ctx.throttled_kwh;
   var cheap = ctx.window_kwh == null ? ion : +ctx.window_kwh;
   var hind = ctx.hindsight_kwh == null ? null : +ctx.hindsight_kwh;
   var lead = bookings[id], msv = dose(lead.pickup_jd, lead.arrive_jd);
-  var overKwh = Math.max(0, used - ctx.par_kwh), throttleOver = Math.max(0, ion - legal), windowOver = Math.max(0, ion - cheap);
+  var overKwh = Math.max(0, used - ctx.par_kwh), windowOver = Math.max(0, ion - cheap);
   var recoveryOver = hind == null ? 0 : Math.max(0, used - hind);
   var parts = [
     mean("pickup"),
@@ -2030,14 +2138,12 @@ function score(id, legs, ctx){
     row("checker", "Every leg checked", SCORE_MAX.checker * scoreRatio((flown.length - gated) / Math.max(flown.length, 1)), "legs", flown.length - gated, gated + " of " + flown.length + " legs passed the checker or were local hops"),
     mean("fare"),
     row("economy", "Planning economy", SCORE_MAX.economy * scoreRatio(extra / 6), "plans", extra, (ctx.plan_calls || 0) + " plans, 6 free. " + extra + " plans past that"),
-    row("tank", "Xenon tank", tankOver > 1e-9 ? 0 : SCORE_MAX.tank * scoreRatio(0), "kg", tankOver, cap == null ? "no ship class on this score" : xe + " kg of xenon, tank holds " + cap + " kg"),
-    row("throttle", "Distance throttle", SCORE_MAX.throttle * scoreRatio(throttleOver / Math.max(legal, 1e-9)), "kWh", throttleOver, legal + " kWh at the published set point, " + ion + " kWh on the plan. " + throttleOver + " kWh over that set point"),
     row("window", "Departure window", SCORE_MAX.window * scoreRatio(windowOver / Math.max(cheap, 1e-9)), "kWh", windowOver, cheap + " kWh on the lowest departure in the search, " + ion + " kWh on the plan. " + windowOver + " kWh over that departure"),
     row("recovery", "Checkpoint recovery", SCORE_MAX.recovery * scoreRatio(hind == null ? 0 : recoveryOver / Math.max(hind, 1e-9)), "kWh", recoveryOver, hind == null ? "no checkpoint to grade. 0 kWh over a hindsight option" : used + " kWh flown, " + hind + " kWh on a hindsight option. " + recoveryOver + " kWh over that option"),
     row("dose", "Cruise dose", 0, "mSv", msv, msv + " mSv on the cruise. This part is a placeholder and scores 0")
   ];
   var total = parts.reduce(function(a, p){ return a + p.got; }, 0);
-  var out = { total: total, out_of: SCORE_TOTAL, score_version: 3, parts: parts, used_kwh: used, extra_kwh: F.extra_kwh || 0, wait_days: lead.wait_days, late_days: lead.late_days,
+  var out = { total: total, out_of: SCORE_TOTAL, score_version: 4, parts: parts, used_kwh: used, extra_kwh: F.extra_kwh || 0, wait_days: lead.wait_days, late_days: lead.late_days,
     pickup_jd: lead.pickup_jd, arrive_jd: lead.arrive_jd, planned_arrive_jd: lead.planned_arrive_jd, rider_dose_msv: msv, fare_usd: lead.fare_usd, beat_par: used < ctx.par_kwh * 0.995, incidents: F.incidents || [] };
   if (!one){ out.bookings = {}; M.hails.forEach(function(b){ out.bookings[b] = bookings[b]; }); }
   return out;
@@ -2085,8 +2191,9 @@ function admit(h){
   return h;
 }
 return { DWELL: DWELL, WINDOW: WINDOW, LEAD: LEAD, FLEET: FLEET, CAR: CAR, HAILS: HAILS, BY: BY, system: system, nearCars: nearCars,
+  FLIES: FLIES, FLIES_TEXT: FLIES_TEXT, reach: reach, serves: serves, servesWhy: servesWhy,
   hailRow: hailRow, admit: admit,
-  planLeg: planLeg, par: par, terms: terms, check: check, score: score, planOf: planOf, manifest: manifest, iso: iso,
+  planLeg: planLeg, par: par, terms: terms, check: check, score: score, planOf: planOf, manifest: manifest, fares: fares, seatFares: seatFares, chainStops: chainStops, iso: iso,
   MAX_BOOKINGS: MAX_BOOKINGS, stopOrders: stopOrders, parSet: parSet, termsSet: termsSet,
   HOLD_KWH: HOLD_KWH, BERTHS: BERTHS, hazards: hazards, siphash24: siphash24, fly: fly, pickupStart: pickupStart, fleetState: fleetState,
   padForecast: padForecast, flareForecast: flareForecast, flareReach: flareReach, lightDays: lightDays, weatherForecast: weatherForecast,

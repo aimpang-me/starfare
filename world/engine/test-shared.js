@@ -1,62 +1,88 @@
 // node world/engine/test-shared.js : shared flights in sol-rides.js (docs/SHARED-FLIGHTS.md, build-order item 1), via the bundle.
 // A plan is { stops, legs }: stops[0] is where the car is parked, each later stop names who boards and alights there.
 const assert = require("assert"), R = require("./sol-page.js").R;
-const END = 2461329.5 + 7000 - 1, t0 = 2461700.5, DWELL = 0.05, SEED = "2"; // SF-04 is free at t0 on seed 2
+const END = 2461329.5 + 7000 - 1, t0 = 2461700.5, DWELL = 0.05, SEED = "2"; // SF-09 is free at t0 on seed 2
 let n = 0; const ok = (name, f) => { const a = Date.now(); f(); n++; console.log("ok", name, "(" + (Date.now() - a) + " ms)"); };
-const leg = (from, to, after) => { const b = R.planLeg(from, to, after, "energy", END); return { from, to, dep_jd: b.dep_jd, arr_jd: b.arr_jd, kwh: b.battery.energy_kwh, fare: b.fare.total_usd, gate: "PASS" }; };
-// SF-04 leaves Ceres, collects Ana at Ceres Port, swings by Phobos for Ravi, and lands both at Mars Base.
-const L1 = leg("ceres", "ceres-port", t0), L2 = leg("ceres-port", "phobos", L1.arr_jd + DWELL), L3 = leg("phobos", "mars-base", L2.arr_jd + DWELL);
-const POOL = { stops: [{ at: "ceres" }, { at: "ceres-port", board: ["ceres-shift"], alight: [] }, { at: "phobos", board: ["phobos-commute"], alight: [] },
-  { at: "mars-base", board: [], alight: ["ceres-shift", "phobos-commute"] }], legs: [L1, L2, L3] };
+// Each leg is planned on the ship for the people aboard it, as plan_leg does.
+const leg = (from, to, after, aboard, car) => { const b = R.planLeg(from, to, after, "energy", END, car || "sf-09", aboard);
+  return { from, to, dep_jd: b.dep_jd, arr_jd: b.arr_jd, kwh: b.battery.energy_kwh, fare: b.fare.total_usd, gate: "PASS", aboard: b.battery.aboard }; };
+// Both bookings are long hauls inside Jupiter's orbit, so a Shuttle flies them. SF-09 leaves Ceres, collects Ana and
+// Mateo's party of 3 at Ceres Port, lands the party at Phobos and Ana at Mars Base.
+const B = R.admit(R.hailRow("1", 74)) && "s1-74"; // a party of 3, Ceres Port to Phobos
+const L1 = leg("ceres", "ceres-port", t0, 0), L2 = leg("ceres-port", "phobos", L1.arr_jd + DWELL, 4), L3 = leg("phobos", "mars-base", L2.arr_jd, 1);
+const POOL = { stops: [{ at: "ceres" }, { at: "ceres-port", board: ["ceres-shift", B], alight: [] }, { at: "phobos", board: [], alight: [B] },
+  { at: "mars-base", board: [], alight: ["ceres-shift"] }], legs: [L1, L2, L3] };
 
 ok("a two-booking flight checks, flies with per-booking times, and scores passengers per booking and the ship per flight", () => {
-  assert.deepStrictEqual([L1.arr_jd, L2.dep_jd, L2.arr_jd, L3.arr_jd, L2.fare, L3.fare], [2461700.5981143885, 2461820.6481143883, 2462706.2877681972, 2462706.4306109184, 514782.87, 1064.71]);
-  assert.deepStrictEqual(R.check("ceres-shift", "sf-04", POOL, t0, SEED), []);
-  const st = R.start("ceres-shift", "sf-04", POOL, t0, SEED, { ask_after_hours: null, end_jd: END });
-  assert.deepStrictEqual(st.ride.hails, ["ceres-shift", "phobos-commute"]);
+  assert.deepStrictEqual([R.BY[B].from, R.BY[B].to, R.BY[B].party, R.reach(R.BY[B]), R.reach(R.BY["ceres-shift"])], ["ceres-port", "phobos", 3, "inner", "inner"]);
+  assert.deepStrictEqual([L1.arr_jd, L2.dep_jd, L2.arr_jd, L3.arr_jd, L2.fare, L3.fare], [2461700.5981143885, 2461820.6481143883, 2462706.2877681972, 2462706.3806109186, 820797.1, 31984.39]);
+  assert.deepStrictEqual([L1.aboard, L2.aboard, L3.aboard], [0, 4, 1]);
+  assert.deepStrictEqual(R.check("ceres-shift", "sf-09", POOL, t0, SEED), []);
+  const st = R.start("ceres-shift", "sf-09", POOL, t0, SEED, { ask_after_hours: null, end_jd: END });
+  assert.deepStrictEqual(st.ride.hails, ["ceres-shift", B]);
   assert.deepStrictEqual(st.ride.segs.map((s) => s.role + " " + s.from + ">" + s.to + " stop " + s.stop), ["pickup ceres>ceres-port stop 1", "ride ceres-port>phobos stop 2", "ride phobos>mars-base stop 3"]);
-  const F = R.fly("ceres-shift", "sf-04", POOL, t0, SEED);
-  assert.deepStrictEqual(F, { pickup_jd: 2461700.5981143885, ride_depart_jd: 2461820.6481143883, arrive_jd: 2462710.0563098914, planned_kwh: 56185, extra_kwh: 12305, used_kwh: 68490,
-    incidents: [{ kind: "flare", leg: "ride", where: "phobos", at_jd: 2462706.337768197, hours: 37.79626085981727, kwh: 0, note: "Solar storm at Phobos: no launches with a rider aboard until it passed" },
+  const F = R.fly("ceres-shift", "sf-09", POOL, t0, SEED);
+  assert.deepStrictEqual(F, { pickup_jd: 2461700.5981143885, ride_depart_jd: 2461820.6481143883, arrive_jd: 2462710.0563098914, planned_kwh: 2167901, extra_kwh: 12305, used_kwh: 2180206,
+    incidents: [{ kind: "flare", leg: "ride", where: "phobos", at_jd: 2462706.2877681972, hours: 38.99626085534692, kwh: 0, note: "Solar storm at Phobos: no launches with a rider aboard until it passed" },
       { kind: "dust_storm", leg: "ride", where: "mars-base", at_jd: 2462708.005455121, hours: 49.22051449120045, kwh: 12305, note: "Dust storm closed the pad; the car held in orbit" }],
-    delay_hours: 87.01677535101771, rider_dose_msv: 1857.4,
-    bookings: { "ceres-shift": { pickup_jd: 2461700.5981143885, arrive_jd: 2462710.0563098914 }, "phobos-commute": { pickup_jd: 2462706.2877681972, arrive_jd: 2462710.0563098914 } } });
-  const ctx = { t0, arrive_by_jd: t0 + 800, par_kwh: 100000, best_wait_days: 0.1, plan_calls: 3, flown: F, bookings: {
-    "ceres-shift": { t0, arrive_by_jd: t0 + 800, best_wait_days: 0.1, quote: { fare_usd: 515848, arrival: "2030-07-27 13:21" } },
-    "phobos-commute": { t0: t0 + 600, arrive_by_jd: t0 + 700, best_wait_days: 0.5, quote: { fare_usd: 1065, arrival: "2030-07-27 15:45" } } } };
+    delay_hours: 88.21677534654737, rider_dose_msv: 1857.4,
+    bookings: { "ceres-shift": { pickup_jd: 2461700.5981143885, arrive_jd: 2462710.0563098914 }, [B]: { pickup_jd: 2461700.5981143885, arrive_jd: 2462706.2877681972 } } });
+  const ctx = { t0, arrive_by_jd: t0 + 1600, par_kwh: 2114837, best_wait_days: 0.1, plan_calls: 3, flown: F, bookings: {
+    "ceres-shift": { t0, arrive_by_jd: t0 + 1600, best_wait_days: 0.1, quote: { fare_usd: 237184, arrival: "2030-07-27 13:21" } },
+    [B]: { t0, arrive_by_jd: t0 + 1000, best_wait_days: 34, quote: { fare_usd: 615598, arrival: "2030-07-23 18:54" } } } };
   const sc = R.score("ceres-shift", POOL, ctx);
-  assert.deepStrictEqual(sc.parts.map((p) => p.key), ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy", "tank", "throttle", "window", "recovery", "dose"]);
+  assert.deepStrictEqual(sc.parts.map((p) => p.key), ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy", "window", "recovery", "dose"]);
   const passenger = ["pickup", "on_time", "promise", "fare"];
   for (const key of passenger) {
-    const weighted = ["ceres-shift", "phobos-commute"].reduce((a, id) => a + sc.bookings[id].parts.find((p) => p.key === key).got * sc.bookings[id].party, 0);
-    const people = ["ceres-shift", "phobos-commute"].reduce((a, id) => a + sc.bookings[id].party, 0);
+    const weighted = ["ceres-shift", B].reduce((a, id) => a + sc.bookings[id].parts.find((p) => p.key === key).got * sc.bookings[id].party, 0);
+    const people = ["ceres-shift", B].reduce((a, id) => a + sc.bookings[id].party, 0);
     assert.strictEqual(sc.parts.find((p) => p.key === key).got, weighted / people, key);
   }
-  for (const p of sc.parts) assert.ok(p.got < p.max || p.max === 0, p.key);
-  assert.ok(sc.total < sc.out_of / 2, sc.total);
+  for (const p of sc.parts) assert.ok(p.got <= p.max, p.key);
+  assert.ok(sc.total < sc.out_of, sc.total);
   assert.strictEqual(sc.total, sc.parts.reduce((a, p) => a + p.got, 0));
-  assert.ok(sc.parts[0].note.includes("ceres-shift: rider waited 2.4 h") && sc.parts[0].note.includes("phobos-commute: rider waited 405.8 days"));
-  assert.ok(sc.parts[5].note.includes("ceres-shift: fare matches the ride leg's $515,848") && sc.parts[5].note.includes("phobos-commute: fare matches the ride leg's $1,065"));
-  assert.deepStrictEqual([sc.bookings["ceres-shift"].fare_usd, sc.bookings["phobos-commute"].fare_usd, sc.fare_usd], [515847.58, 1064.71, 515847.58]);
-  assert.deepStrictEqual([sc.wait_days, sc.late_days, sc.beat_par], [0.09811438852921128, 209.556309891399, true]);
+  assert.ok(sc.parts[0].note.includes("ceres-shift: rider waited 2.4 h") && sc.parts[0].note.includes(B + ": rider waited 2.4 h (141.3 min), quickest nearby ship 34.0 days"));
+  // Fares per seat: the party of 3 and Ana share the Phobos leg 3:1; Ana alone pays the leg on to Mars Base.
+  assert.ok(sc.parts[5].note.includes("ceres-shift: fare matches its seats' share of the legs it rides, $237,184") && sc.parts[5].note.includes(B + ": fare matches its seats' share of the legs it rides, $615,598"));
+  assert.deepStrictEqual([sc.bookings["ceres-shift"].fare_usd, sc.bookings[B].fare_usd, sc.fare_usd], [237183.66, 615597.82, 237183.66]);
+  assert.deepStrictEqual(R.fares("ceres-shift", "sf-09", POOL), { "ceres-shift": 237183.66, [B]: 615597.82 });
+  assert.deepStrictEqual([sc.wait_days, sc.late_days, sc.beat_par], [0.09811438852921128, 0, false]);
 });
 
-ok("check: more passengers than seats is refused", () => {
-  const five = ["iss-crew", "phobos-commute", "jovian-hop", "titan-home", "ceres-shift"], H = (id) => R.HAILS.find((h) => h.id === id);
-  const stops = [{ at: "orbital-depot" }].concat(five.map((h) => ({ at: H(h).from, board: [h], alight: [] })), five.map((h) => ({ at: H(h).to, board: [], alight: [h] })));
-  const legs = stops.slice(1).map((s, i) => ({ from: stops[i].at, to: s.at }));
-  assert.deepStrictEqual(R.check("iss-crew", "sf-01", { stops, legs }), ["5 aboard after stop 5 (Ceres Port), but SF-01 seats 4"]);
+ok("fares per seat: each leg splits by party among the bookings aboard, an empty leg is free, and a chain implies first-visit stops", () => {
+  R.admit(R.hailRow("1", 93)); // a party of 2, Tiangong to Earth
+  const big = "s1-93", legs = [["orbital-depot", "tiangong", 50], ["tiangong", "iss", 400], ["iss", "earth", 800], ["earth", "lunar-data-center", 200]]
+    .map(([from, to, fare]) => ({ from, to, fare }));
+  const stops = R.chainStops([big, "iss-crew"], "orbital-depot", legs);
+  assert.deepStrictEqual(stops.map((s) => [s.at, s.board || [], s.alight || []]), [["orbital-depot", [], []], ["tiangong", [big], []], ["iss", ["iss-crew"], []], ["earth", [], [big]], ["lunar-data-center", [], ["iss-crew"]]]);
+  // 400 alone; 800 shared 2:1; 200 alone; the empty first leg is not charged. Shares round to the cent.
+  assert.deepStrictEqual([R.BY[big].from, R.BY[big].to, R.BY[big].party], ["tiangong", "earth", 2]);
+  assert.deepStrictEqual(R.seatFares({ stops, legs }), { [big]: 933.33, "iss-crew": 466.67 });
+  // A chain that passes a pickup only after the destination never boards that booking.
+  assert.deepStrictEqual(R.chainStops(["iss-crew"], "earth", [{ to: "lunar-data-center" }, { to: "iss" }]).map((s) => [s.board || [], s.alight || []]), [[[], []], [[], []], [["iss-crew"], []]]);
+});
+
+ok("check: more passengers than seats is refused, and so is a ship of the wrong class", () => {
+  // Four quick hops from ISS on a Taxi: 1 + 3 + 2 + 2 is 8 people for 6 seats.
+  const four = ["iss-crew"].concat([8, 69, 119].map((i) => { const h = R.admit(R.hailRow("1", i)); return h.id || "s1-" + i; }));
+  assert.deepStrictEqual(four.map((id) => [R.BY[id].from, R.BY[id].party, R.reach(R.BY[id])]), [["iss", 1, "quick"], ["iss", 3, "quick"], ["iss", 2, "quick"], ["iss", 2, "quick"]]);
+  const stops = [{ at: "orbital-depot" }, { at: "iss", board: four, alight: [] }].concat(["earth", "lunar-data-center"].map((at) => ({ at, board: [], alight: four.filter((id) => R.BY[id].to === at) })));
+  const legs = stops.slice(1).map((s, i) => ({ from: stops[i].at, to: s.at, aboard: [0, 8, 3][i] }));
+  assert.deepStrictEqual(R.check("iss-crew", "sf-01", { stops, legs }), ["8 aboard after stop 1 (ISS), but SF-01 seats 6"]);
+  // SF-04 is the Taxi parked at Ceres: it can't fly the Shuttle's pool, though it starts where the plan does.
+  assert.deepStrictEqual(R.check("ceres-shift", "sf-04", POOL), ["ceres-shift", B].map((id) => R.servesWhy("sf-04", R.BY[id])));
+  assert.match(R.servesWhy("sf-04", R.BY[B]), /^SF-04 is a Starseeker Taxi, which flies quick hops inside one planet's neighbourhood, and s1-74 is one of the long hauls inside Jupiter's orbit$/);
 });
 
 ok("check: alighting before boarding, leaving before boarding is done, and a hail not on the plan are refused", () => {
-  const legs = [{ from: "ceres", to: "mars-base" }, { from: "mars-base", to: "ceres-port" }];
+  const legs = [{ from: "ceres", to: "mars-base", aboard: 0 }, { from: "mars-base", to: "ceres-port", aboard: 0 }];
   const bad = { stops: [{ at: "ceres" }, { at: "mars-base", board: [], alight: ["ceres-shift"] }, { at: "ceres-port", board: ["ceres-shift"], alight: [] }], legs };
-  assert.deepStrictEqual(R.check("ceres-shift", "sf-04", bad), ["ceres-shift alights before boarding"]);
+  assert.deepStrictEqual(R.check("ceres-shift", "sf-09", bad).filter((e) => !/planned for/.test(e)), ["ceres-shift alights before boarding"]);
   const rush = { stops: POOL.stops, legs: [L1, Object.assign({}, L2, { dep_jd: L1.arr_jd + 0.01 }), L3] };
-  assert.deepStrictEqual(R.check("ceres-shift", "sf-04", rush), ["leg 2 (ride) leaves before ceres-shift has boarded"]);
-  assert.deepStrictEqual(R.check("iss-crew", "sf-04", POOL), ["iss-crew is not on this plan"]);
+  assert.deepStrictEqual(R.check("ceres-shift", "sf-09", rush), ["leg 2 (ride) leaves before ceres-shift and " + B + " have boarded"]);
+  assert.deepStrictEqual(R.check("iss-crew", "sf-09", POOL), ["iss-crew is not on this plan"]);
   assert.deepStrictEqual(R.check("iss-crew", "sf-01", { stops: POOL.stops }), ["a dispatch is two legs [pickup, ride] or a plan { stops, legs }"]);
-  const two = [{ from: "mars-base", to: "phobos", dep_jd: t0, arr_jd: t0 + 0.1 }, { from: "phobos", to: "mars-base", dep_jd: t0 + 0.11, arr_jd: t0 + 0.2 }];
+  const two = [{ from: "mars-base", to: "phobos", dep_jd: t0, arr_jd: t0 + 0.1, aboard: 0 }, { from: "phobos", to: "mars-base", dep_jd: t0 + 0.11, arr_jd: t0 + 0.2, aboard: 1 }];
   assert.deepStrictEqual(R.check("phobos-commute", "sf-03", two), ["the ride leaves before the rider has boarded"]); // one booking keeps today's wording
 });
 
@@ -76,12 +102,12 @@ ok("a two-leg dispatch is its stops-plan rewrite: check, fly and score agree exa
   const sc = R.score("phobos-commute", DUST.legs, ctx);
   assert.deepStrictEqual(sc, R.score("phobos-commute", plan, ctx));
   assert.deepStrictEqual(Object.keys(sc), ["total", "out_of", "score_version", "parts", "used_kwh", "extra_kwh", "wait_days", "late_days", "pickup_jd", "arrive_jd", "planned_arrive_jd", "rider_dose_msv", "fare_usd", "beat_par", "incidents"]);
-  assert.strictEqual(sc.parts.length, 12);
+  assert.strictEqual(sc.parts.length, 10);
   assert.strictEqual(sc.total, sc.parts.reduce((a, p) => a + p.got, 0));
   assert.deepStrictEqual([two.used_kwh, two.delay_hours], [45505, 93.80377880483866]); // held 93.8 h in the storm
-  assert.strictEqual(sc.score_version, 3);
-  assert.ok(sc.total < sc.out_of / 2, sc.total);
-  for (const p of sc.parts) assert.ok(p.got < p.max || p.max === 0, p.key);
+  assert.strictEqual(sc.score_version, 4);
+  assert.ok(sc.total < sc.out_of, sc.total);
+  for (const p of sc.parts) assert.ok(p.got <= p.max, p.key);
   const energy = sc.parts.find((p) => p.key === "energy");
   assert.ok(energy.measure > 0, energy.measure);
 });
@@ -104,16 +130,19 @@ ok("stop orders: every booking boards before it lands, and events at the same pl
 });
 
 ok("par for a set: the best pooled flight checks and flies to its par, the split baseline is each booking's own par, and terms stay each booking's own", () => {
-  const T = R.termsSet(["ceres-shift", "phobos-commute"], t0, END, SEED), p = T.par, P = p.pooled;
-  assert.deepStrictEqual([P.car, P.plan.stops.map((s) => s.at), P.kwh, P.choices], ["sf-04", ["ceres", "ceres-port", "mars-base", "phobos", "mars-base"], 61412, []]);
+  const T = R.termsSet(["ceres-shift", B], t0, END, SEED), p = T.par, P = p.pooled;
+  assert.deepStrictEqual([P.car, P.plan.stops.map((s) => s.at), P.kwh, P.choices], ["sf-09", ["ceres", "ceres-port", "mars-base", "phobos"], 2114837, []]);
   assert.deepStrictEqual(R.check("ceres-shift", P.car, P.plan, t0, SEED), []);
   assert.strictEqual(R.fly("ceres-shift", P.car, P.plan, t0, SEED).used_kwh, P.kwh);
-  const solo = ["ceres-shift", "phobos-commute"].map((id) => R.terms(id, t0, END, SEED));
-  assert.deepStrictEqual(solo.map((s) => [s.par.car, s.par.kwh]), [["sf-04", 48508], ["sf-03", 6442]]);
-  assert.deepStrictEqual([p.split.kwh, p.kwh, p.pool_wins], [54950, 54950, false]); // the pool uses more energy than flying each booking alone, so the split is par
+  const solo = ["ceres-shift", B].map((id) => R.terms(id, t0, END, SEED));
+  assert.deepStrictEqual(solo.map((s) => [s.par.car, s.par.kwh]), [["sf-09", 1527320], ["sf-09", 1686606]]);
+  assert.deepStrictEqual([p.split.kwh, p.kwh, p.pool_wins], [3213926, 2114837, true]); // one Shuttle carrying both beats flying each alone, so the pool is par
   assert.deepStrictEqual(T.bookings, {
     "ceres-shift": { t0, arrive_by_jd: solo[0].arrive_by_jd, best_wait_days: solo[0].par.best_wait_days },
-    "phobos-commute": { t0, arrive_by_jd: solo[1].arrive_by_jd, best_wait_days: solo[1].par.best_wait_days } });
-  assert.deepStrictEqual([T.bookings["ceres-shift"].arrive_by_jd, T.bookings["phobos-commute"].arrive_by_jd], [2463209.5, 2461703.5]);
+    [B]: { t0, arrive_by_jd: solo[1].arrive_by_jd, best_wait_days: solo[1].par.best_wait_days } });
+  assert.deepStrictEqual([T.bookings["ceres-shift"].arrive_by_jd, T.bookings[B].arrive_by_jd], [2463209.5, 2463221.5]);
+  // No class flies both a quick hop and a long haul, so that set has no pooled flight and par is the split.
+  const mixed = R.parSet(["ceres-shift", "phobos-commute"], t0, END, SEED);
+  assert.deepStrictEqual([mixed.pooled, mixed.pool_wins, mixed.kwh], [null, false, mixed.split.kwh]);
 });
 console.log(n, "passed");

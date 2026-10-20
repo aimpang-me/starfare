@@ -18,7 +18,7 @@ const PLAYER = "p_0123456789abcdef";
 const skyAt = (jd) => SKY.t0_ms + Math.round((jd - SKY.jd0) * 1000);
 const DUST_NOW = skyAt(2462172.6);
 const LINE_KEYS = ["schema", "simulated", "run_id", "index", "steps", "kind", "observation", "action", "events", "checkpoint", "options", "reward", "outcome"];
-const PART_KEYS = ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy", "tank", "throttle", "window", "recovery", "dose"];
+const PART_KEYS = ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy", "window", "recovery", "dose"];
 const slang = ["c", "ar"].join("");
 const removed = ["Road", "ster"].join("");
 const banned = new RegExp("\\b" + slang + "\\b|" + removed, "i");
@@ -70,7 +70,7 @@ test("an arrived ride exports one JSONL episode with the schema fields and the s
   assert.match(last.outcome.note, /Simulated/);
   assert.equal(last.reward.total, run.score.total);
   assert.equal(last.reward.out_of, run.score.out_of);
-  assert.equal(last.reward.score_version, 3);
+  assert.equal(last.reward.score_version, 4);
   assert.equal(last.reward.score_version, run.score.score_version);
   assert.deepEqual(last.reward.parts.map((p) => p.key), PART_KEYS);
   assert.deepEqual(last.reward.parts.map((p) => p.key), run.score.parts.map((p) => p.key));

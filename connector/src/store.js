@@ -54,10 +54,10 @@ export class StarfareRun extends DurableObject {
   /** Plans go through the hub's leg cache; plan_pickup, plan_ride_leg and a replan at a checkpoint share it. */
   #legFn(E) {
     const h = hub(this.env);
-    return async (from, to, t, obj, end, ship) => {
-      const key = META.sha256 + "|" + legKey(from, to, t, obj, end, ship), hit = await h.legGet(key);
+    return async (from, to, t, obj, end, ship, aboard) => {
+      const key = META.sha256 + "|" + legKey(from, to, t, obj, end, ship, aboard), hit = await h.legGet(key);
       if (hit && hit.arc_au) return { leg: hit, cached: true }; // rows cached before arcs were kept are planned again
-      const leg = computeLeg(E, from, to, t, obj, end, ship);
+      const leg = computeLeg(E, from, to, t, obj, end, ship, aboard);
       await h.legPut(key, leg);
       return { leg, cached: false };
     };
@@ -67,6 +67,7 @@ export class StarfareRun extends DurableObject {
     const s = run.score;
     await hub(this.env).record({ hail_id: run.id, title: run.title, run_tag: run.run_id.slice(4, 10), run_id: run.run_id, points: s.total, car: s.car,
       wait_h: Math.round((run.pickup_jd - run.t0) * 240) / 10, kwh: Math.round(s.used_kwh), par: Math.round(s.par_kwh), plans: run.calls, at: Date.now(),
+      score_version: s.score_version, engine_sha256: META.sha256,
       ...(run.player_id ? { player_tag: run.player_id.slice(2, 8) } : {}) });
   }
   /** Save a changed run; put it on the board when it just arrived and in the player's history when its ride moved. */

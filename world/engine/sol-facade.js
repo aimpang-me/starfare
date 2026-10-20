@@ -16,4 +16,4 @@ export const stateOf = (origin, jd) => E.stateOf(origin, jd);
 export const planRide = (origin, to, opts) => E.planRide(origin, typeof to === "string" ? { place: to } : to, opts);
 // refly(option from planRide) -> {pass, raw_miss_km, final_miss_km, retarget_ms, iterations, ...} | {local:true}
 export const refly = (option, opts) => E.refly(option, opts);
-export { isoFromJd, jdFromIso, battery, fare } from "./sol-engine.js";
+export { isoFromJd, jdFromIso, battery, driveLeg, DRIVE, DRIVE_ASSUMPTIONS, fare } from "./sol-engine.js";

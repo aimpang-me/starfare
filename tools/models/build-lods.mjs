@@ -18,9 +18,9 @@ const OUT = join(ROOT, "design", "assets", "models");
 const TRIANGLES = 15000, MAX_BYTES = 1.5 * 1024 * 1024, TEXTURE_PX = 1024;
 // Engine ship class (SOLE.R.CAR[car].ship_class) -> hull. Wayfarer is a station, not a car, and stays on its review page.
 const HULLS = [
-  { id: "kestrel", classes: ["dawn"], src: "art/2026-10-17/kestrel-higgsfield-v1/models/kestrel-tripo-h3_1.glb" },
-  { id: "tandem", classes: ["ds1"], src: "art/2026-10-18/fleet-tripo-v1/models/tandem-tripo-h3_1.glb" },
-  { id: "lantern", classes: ["rtg"], src: "art/2026-10-18/fleet-tripo-v1/models/lantern-tripo-h3_1.glb" },
+  { id: "kestrel", classes: ["star-taxi", "dawn"], src: "art/2026-10-17/kestrel-higgsfield-v1/models/kestrel-tripo-h3_1.glb" },
+  { id: "tandem", classes: ["star-shuttle", "ds1"], src: "art/2026-10-18/fleet-tripo-v1/models/tandem-tripo-h3_1.glb" },
+  { id: "lantern", classes: ["star-liner", "rtg"], src: "art/2026-10-18/fleet-tripo-v1/models/lantern-tripo-h3_1.glb" },
 ];
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");

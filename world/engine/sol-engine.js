@@ -494,7 +494,24 @@ export const SHIP_CLASSES = {
   ds1: { id: "ds1", name: "Deep Space 1 class", dry_kg: 373, xenon_kg: 82, hydrazine_kg: 31, seats: 4, power_w_1au: 2500, housekeeping_w: 400, ion: true },
   rtg: { id: "rtg", name: "RTG class", dry_kg: 747.1, xenon_kg: 1085, hydrazine_kg: 0, seats: 4, power_w_1au: 633, housekeeping_w: 0, ion: true, power_mode: "constant" },
   shuttle: { id: "shuttle", name: "Shuttle class", dry_kg: 68000, xenon_kg: 0, hydrazine_kg: 0, seats: 7, power_w_1au: 0, housekeeping_w: 0, ion: false },
+  // The fictional Starseeker drive (Alvin's call, 2026-10-19 and 2026-10-20; docs/DRIVE-SPEC.md). The figures are
+  // fictional: hundreds of MW to GW of jet power from a few tonnes of hull, held at any distance from the Sun. Every
+  // quantity computed from them uses the real equations (driveLeg below). propellant_kg is the tank, refilled at every
+  // stop. Seats are the ladder Alvin chose (6, 20, 100). The taxi's 99 kN is triple the sized 33 kN, so a burn out of
+  // Jupiter's low parking orbit takes about half an hour instead of 81 minutes.
+  "star-taxi": { id: "star-taxi", name: "Starseeker Taxi", fictional: true, dry_kg: 6000, propellant_kg: 7000, seats: 6, ve_kms: 30, thrust_n: 99000, eta: 0.64, power_mode: "constant" },
+  "star-shuttle": { id: "star-shuttle", name: "Starseeker Shuttle", fictional: true, dry_kg: 25000, propellant_kg: 50000, seats: 20, ve_kms: 30, thrust_n: 60000, eta: 0.64, power_mode: "constant" },
+  // plan_dv_kms: a liner flies one plan, the earliest arrival with a total burn of at most 45 km/s (Alvin, 2026-10-20).
+  "star-liner": { id: "star-liner", name: "Starseeker Liner", fictional: true, dry_kg: 200000, propellant_kg: 500000, seats: 100, ve_kms: 60, thrust_n: 250000, eta: 0.64, power_mode: "constant", plan_dv_kms: 45 },
 };
+// Cabin and comfort for the fictional drive. 100 kg per passenger with luggage and 2.5 kg of supplies (food, water, air)
+// per person per day aboard are assumptions, not sourced figures. Burns throttle so nobody aboard feels more than 1 g.
+export const DRIVE = { PAX_KG: 100, SUPPLY_KG_DAY: 2.5, COMFORT_G: 1 };
+export const DRIVE_ASSUMPTIONS = [
+  "Starseeker Taxi, Shuttle and Liner use a declared fictional drive: the exhaust speed, thrust and power figures are fictional, and the rocket equation, mass flow, burn time, jet power and energy are computed",
+  "the cabin counts 100 kg per passenger with luggage and 2.5 kg of supplies per person per day aboard (assumptions)",
+  "burns throttle to stay at or under 1 g; the leg is still planned as impulsive burns",
+  "a Starseeker refuels at every stop, so its tank holds one leg"];
 export const ASSUMPTIONS = [
   "Dawn class dry mass 747.1 kg, xenon tank 425 kg, arrays over 10000 W at 1 AU (that power figure is a lower bound)",
   "Deep Space 1 class dry mass 373 kg, xenon tank 82 kg, arrays 2500 W at 1 AU, housekeeping near 400 W",
@@ -531,8 +548,39 @@ function classOf(ship) {
 }
 // battery(dv) is the retired single hull (direct calls only). A ship class uses that hull's dry mass,
 // the NSTAR set point its arrays can feed at r_au, and refuses when the xenon tank cannot hold the burn.
-export function battery(dv_kms, ship, r_au) {
+// One burn on the fictional drive, from mass m0 down to m1 (kg): full thrust until the acceleration reaches COMFORT_G,
+// then throttled to hold it. At constant exhaust speed throttling lowers the mass flow, so the energy is unchanged.
+function driveBurn(cls, dv_kms, m0, m1) {
+  const ve = cls.ve_kms * 1000, g = DRIVE.COMFORT_G * G0, mdot = cls.thrust_n / ve, mCap = cls.thrust_n / g;
+  let s;
+  if (m1 >= mCap) s = (m0 - m1) / mdot;
+  else if (m0 <= mCap) s = ve / g * Math.log(m0 / m1);
+  else s = (m0 - mCap) / mdot + ve / g * Math.log(mCap / m1);
+  return { dv_kms: pyRound(dv_kms, 3), minutes: pyRound(s / 60, 1), start_g: pyRound(Math.min(cls.thrust_n / m0 / G0, DRIVE.COMFORT_G), 3),
+    peak_g: pyRound(Math.min(cls.thrust_n / m1 / G0, DRIVE.COMFORT_G), 3) };
+}
+// A leg on the fictional drive. load (all optional): aboard, people in the cabin; days, time aboard on this leg, for
+// supplies; burns, the leg's burns in order (km/s), which default to one burn of dv_kms. The final mass is hull + people +
+// supplies; each burn is costed from the last one back, so earlier burns also carry the later burns' propellant.
+export function driveLeg(dv_kms, ship, load) {
+  const cls = classOf(ship), L = load || {};
+  const aboard = Math.max(0, +L.aboard || 0), days = Math.max(0, +L.days || 0);
+  const cabin_kg = aboard * DRIVE.PAX_KG, supplies_kg = aboard * DRIVE.SUPPLY_KG_DAY * days, m_f = cls.dry_kg + cabin_kg + supplies_kg;
+  const ve_kms = cls.ve_kms, burns = Array.isArray(L.burns) && L.burns.length ? L.burns.filter((b) => b > 1e-9) : (dv_kms > 1e-9 ? [dv_kms] : []);
+  let m = m_f; const flown = [];
+  for (let i = burns.length - 1; i >= 0; i--) { const m0 = m * Math.exp(burns[i] / ve_kms); flown.unshift(driveBurn(cls, burns[i], m0, m)); m = m0; }
+  const m_prop = m - m_f, kwh = 0.5 * m_prop * (ve_kms * 1000) ** 2 / cls.eta / 3.6e6;
+  const out = { dv_kms: pyRound(dv_kms, 3), propellant_kg: pyRound(m_prop, 1), propellant_kg_exact: m_prop, energy_kwh: pyRound(kwh), energy_kwh_exact: kwh,
+    class_id: cls.id, fictional: true, isp_s: pyRound(ve_kms * 1000 / G0), eff: cls.eta, tank_kg: cls.propellant_kg,
+    aboard, cabin_kg: pyRound(cabin_kg, 1), supplies_kg: pyRound(supplies_kg, 1), final_kg: pyRound(m_f, 1), start_kg: pyRound(m, 1),
+    burns: flown, burn_minutes: pyRound(flown.reduce((a, b) => a + b.minutes, 0), 1), peak_g: flown.reduce((a, b) => Math.max(a, b.peak_g), 0) };
+  if (aboard > cls.seats) out.refused = cls.name + " seats " + cls.seats + " and this leg has " + aboard + " aboard";
+  else if (m_prop > cls.propellant_kg + 1e-6) out.refused = cls.name + " tank holds " + cls.propellant_kg + " kg and this leg needs " + pyRound(m_prop, 1) + " kg";
+  return out;
+}
+export function battery(dv_kms, ship, r_au, load) {
   const cls = classOf(ship);
+  if (cls && cls.fictional) return { ...driveLeg(dv_kms, cls, load), r_au: r_au == null ? 1 : r_au };
   if (!cls) {
     const { CAR_DRY_KG, EXHAUST_KMS, THRUSTER_EFF, PACK_KWH } = MODELS;
     const m_prop = CAR_DRY_KG * (Math.exp(dv_kms / EXHAUST_KMS) - 1);
@@ -703,7 +751,8 @@ function planRideInner(origin, dest, opts) {
   const objective = opts.objective || "energy";
   const capture = (opts.arrive || "capture") === "capture";
   const req = opts.requestJd ?? depFrom;
-  const notPriced = [...ASSUMPTIONS.slice(4), "launch from the surface to the parking orbit is not priced",
+  const fictional = !!(opts.ship && opts.ship.fictional);
+  const notPriced = [...(fictional ? [ASSUMPTIONS[6], "landing and aerobraking are not priced"] : ASSUMPTIONS.slice(4)), "launch from the surface to the parking orbit is not priced",
     "burns are impulsive and in the best direction"];
   for (const ep of [o, d]) {
     const p = ep.place && P[ep.place];
@@ -718,7 +767,7 @@ function planRideInner(origin, dest, opts) {
     if (lt) {
       if (lt.error) return lt;
       notPriced.push("phasing (waiting for the target to line up) is not modelled: departs at the window start");
-      return finish(lt, { o, d, mo, md, req, notPriced, objective, t0, capture, origin, dest, ship: opts.ship || null });
+      return finish(lt, { o, d, mo, md, req, notPriced, objective, t0, capture, origin, dest, ship: opts.ship || null, aboard: opts.aboard });
     }
   }
   if (!mo.anchor && !md.anchor && d.ship) { /* ship to ship is fine */ }
@@ -825,7 +874,7 @@ function planRideInner(origin, dest, opts) {
   let chosen = null, refusal = null;
   for (const item of pool) {
     const rAu = norm(item.e.r1) / AU_KM;
-    const bat = battery(item.e.dv, ship, rAu);
+    const bat = battery(item.e.dv, ship, rAu, { aboard: opts.aboard, days: item.e.tof, burns: [item.e.dvd, item.e.dva] });
     if (bat.refused || bat.energy_kwh == null) { refusal = { error: bat.refused || ship.name + " cannot fly this leg" }; continue; }
     departures.push({
       dep_jd: item.e.d0, arr_jd: item.e.d0 + item.e.tof, depart: isoFromJd(item.e.d0, true), arrive: isoFromJd(item.e.d0 + item.e.tof, true),
@@ -846,18 +895,18 @@ function planRideInner(origin, dest, opts) {
     vinf_dep_kms: e.vd, vinf_arr_kms: e.va, c3_dep_km2s2: e.vd * e.vd, dv_dep_kms: e.dvd, dv_arr_kms: e.dva,
     transfer_angle_deg: e.L.angle_deg, arc_au: pts, cost: chosen.k, lambert_evals: evals,
     method: `Sun-centred Lambert (Izzo, ${e.M} rev${e.M ? (e.low ? ", low branch" : ", high branch") : ""}) between ${mo.label}${mo.anchor && mo.anchor !== o.place ? ` (via ${P[mo.anchor].name})` : ""} and ${md.label}${md.anchor && md.anchor !== d.place ? ` (via ${P[md.anchor].name})` : ""}; patched-conic burns; DE421 table` };
-  const done = finish(opt, { o, d, mo, md, req, notPriced, objective, t0, capture, origin, dest, ship });
+  const done = finish(opt, { o, d, mo, md, req, notPriced, objective, t0, capture, origin, dest, ship, aboard: opts.aboard });
   if (done.error) return done;
   departures.sort((a, b) => a.dep_jd - b.dep_jd);
   done.departures = departures;
   done.window_kwh = departures.reduce((m, d) => Math.min(m, d.battery_kwh), Infinity);
   return done;
 }
-function finish(opt, { o, d, req, notPriced, objective, t0, capture, ship }) {
+function finish(opt, { o, d, req, notPriced, objective, t0, capture, ship, aboard }) {
   const cls = ship || SHIP_CLASSES.dawn;
   opt.dv_total_kms = opt.dv_dep_kms + opt.dv_arr_kms;
   if (opt.r_au == null) opt.r_au = 1;
-  const bat = battery(opt.dv_total_kms, cls, opt.r_au);
+  const bat = battery(opt.dv_total_kms, cls, opt.r_au, { aboard, days: opt.tof_days, burns: [opt.dv_dep_kms, opt.dv_arr_kms] });
   if (bat.refused || bat.energy_kwh == null) return { error: bat.refused || cls.name + " cannot fly this leg" };
   opt.battery = bat;
   const days = opt.arr_jd - req;
@@ -871,7 +920,7 @@ function finish(opt, { o, d, req, notPriced, objective, t0, capture, ship }) {
   opt.objective = objective;
   opt.arrive_mode = capture ? "capture" : "none";
   opt.not_priced = notPriced;
-  opt.assumptions = [...ASSUMPTIONS.slice(0, 4),
+  opt.assumptions = [...(cls.fictional ? DRIVE_ASSUMPTIONS : ASSUMPTIONS.slice(0, 4)),
     "patched conics: Sun-centred leg between the centres of the endpoints' Sun-orbiting bodies (a moon or station uses its planet)",
     "burns from/into circular parking orbits (PLACES park_alt_km); moon endpoints escape/capture through the parent's well at the moon's orbit radius, burning along the moon's motion (trip.py titan_burn, generalised)",
     "moon and station orbits are circular with approximate radii/periods and arbitrary phase",

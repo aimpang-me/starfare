@@ -10,7 +10,7 @@
 // The hazard seed is the season, so a run that straddles a season reset (the last ~minute of a 7000 s season) can fail; rerun.
 import { spawn } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -22,7 +22,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
-import { SEASON_END, computeLeg, isoJD } from "../src/game.js";
+import { SCORE_VERSION, SEASON_END, computeLeg, isoJD } from "../src/game.js";
 import { stopWorkerProcess } from "./worker-process.mjs";
 
 const DIR = fileURLToPath(new URL("..", import.meta.url));
@@ -30,6 +30,7 @@ const MODE = (process.argv.find((a) => a.startsWith("--mode=")) || "--mode=both"
 if (!["off", "on", "both"].includes(MODE)) throw new Error("--mode must be off, on or both");
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
+const META = JSON.parse(readFileSync(new URL("../src/engine/meta.json", import.meta.url), "utf8"));
 const BENCH_KEY = "e2e-bench-key"; // a throwaway key for wrangler dev; the live one is a Wrangler secret
 const TOOLS = ["check_in", "check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_leg", "plan_pickup", "plan_ride", "space_weather", "start_bench", "take_hail"];
 
@@ -102,8 +103,8 @@ const jdOf = (s) => Date.parse(s.replace(" ", "T") + ":00Z") / 864e5 + 2440587.5
 function nodeScore(hailId, riderReady, season, carId, planCalls, quote, objective = "energy", opts = {}) {
   const t0 = jdOf(riderReady), h = R.BY[hailId], seed = String(season);
   const T = R.terms(hailId, t0, SEASON_END, seed);
-  const p = computeLeg(E, R.CAR[carId].at, h.from, R.pickupStart(hailId, carId, t0, seed), objective, SEASON_END, carId);
-  const r = computeLeg(E, h.from, h.to, p.arr_jd + R.DWELL, objective, SEASON_END, carId);
+  const p = computeLeg(E, R.CAR[carId].at, h.from, R.pickupStart(hailId, carId, t0, seed), objective, SEASON_END, carId, 0);
+  const r = computeLeg(E, h.from, h.to, p.arr_jd + R.DWELL, objective, SEASON_END, carId, h.party);
   const q = quote === "exact" ? { fare_usd: r.fare, arrival: isoJD(r.arr_jd) } : quote;
   let F = R.fly(hailId, carId, [p, r], t0, seed);
   // A ride that stopped and was answered has a recovery grade. fly() does not: it never asks.
@@ -162,7 +163,7 @@ async function takeBookableQuick(client, hails) {
   for (const booking of hails.filter((h) => h.kind === "quick")) {
     const result = await call(client, "take_hail", { hail_id: booking.hail_id });
     if (!result.isError) return { booking, hail: result.value };
-    assert.match(String(result.value), /xenon tank holds.*this leg needs|season ends too soon/i,
+    assert.match(String(result.value), /tank holds.*this (leg|plan) needs|season ends too soon/i,
       "Unexpected take_hail error must fail the check");
   }
   assert.fail("This season has no bookable quick hail for the integration check");
@@ -313,7 +314,7 @@ async function phaseOff() {
     for (const L of [pickup, ride]) assert.ok(L.refly.result === "PASS" || /local/.test(L.refly.result), JSON.stringify(L.refly));
     assert.equal(score.ok, true); assert.equal(score.out_of, 100000); assert.equal(score.parts.reduce((a, p) => a + p.max, 0), 100000);
     assert.equal(score.total, score.parts.reduce((a, p) => a + p.got, 0));
-    assert.deepEqual(score.parts.map((p) => p.key), ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy", "tank", "throttle", "window", "recovery", "dose"]);
+    assert.deepEqual(score.parts.map((p) => p.key), ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy", "window", "recovery", "dose"]);
     assert.equal(score.planned_by, "Grok bot (connector)");
     assert.equal(score.promised_arrival, ride.arrive); assert.equal(score.planned_arrive, ride.arrive);
     assert.ok(jdOf(score.arrive) >= jdOf(ride.arrive) - 1 / 1440 && jdOf(score.pickup) >= jdOf(pickup.arrive) - 1 / 1440);
@@ -477,18 +478,21 @@ async function phaseOff() {
     report.live = { tried, run_id: id, checkpoint_in_s: held.d.checkpoint_in_s, lands_in_s: held.d.lands_in_s, decides: n, landed_in_s: out.lands_in_s };
   });
 
-  await check("iss-crew on SF-02 is refused: the Deep Space 1 tank cannot hold the lunar pickup", async () => {
+  await check("iss-crew on SF-10 is refused: a Liner flies the outer long hauls, not quick hops", async () => {
     const hail = await ok(client, "take_hail", { hail_id: "iss-crew" });
-    const p = await call(client, "plan_pickup", { run_id: hail.run_id, car: "sf-02" });
+    const p = await call(client, "plan_pickup", { run_id: hail.run_id, car: "sf-10" });
     assert.equal(p.isError, true);
-    assert.match(p.value, /Deep Space 1 class xenon tank holds 82 kg and this leg needs 84\.3 kg/);
-    report.far = { refused: p.value };
+    assert.equal(p.value, R.servesWhy("sf-10", R.BY["iss-crew"]) + ". Pick a ship whose flies field fits; the fleet is in get_hail.");
+    assert.match(p.value, /^SF-10 is a Starseeker Liner, which flies long hauls to or from the outer planets/);
+    assert.equal((await ok(client, "get_hail", { run_id: hail.run_id })).plans_used, 0);
+    report.wrong_class = { refused: p.value };
   });
 
   await check("a wrong quote (fare and an arrival years early) drops the fare and the promise; a fare $5 off drops the fare a little; both match Node", async () => {
     const wrong = noteBest(await playHail(client, "iss-crew", undefined, { quote: { quoted_fare_usd: 1, quoted_arrival: "2020-01-01 00:00" } }));
     const got = (sc, k) => sc.parts.find((p) => p.key === k).got;
-    assert.ok(got(wrong.score, "fare") < 250, got(wrong.score, "fare"));
+    const fareTop = wrong.score.parts.find((p) => p.key === "fare").max * R.SCORE_HEADROOM;
+    assert.ok(got(wrong.score, "fare") < fareTop / 5, got(wrong.score, "fare"));
     assert.ok(got(wrong.score, "promise") < 1, got(wrong.score, "promise"));
     assert.equal(wrong.score.promised_arrival, "2020-01-01 00:00"); assert.ok(wrong.score.promise_slip_hours > 24 * 365);
     assertMatchesNode(wrong, 2, { fare_usd: 1, arrival: "2020-01-01 00:00" });
@@ -592,12 +596,12 @@ async function phaseOff() {
     // leg ids from another run are just as unknown here
     const d3 = await ok(client, "dispatch", { run_id: h.run_id, pickup_leg: "leg9", ride_leg: "leg10", quoted_fare_usd: 0, quoted_arrival: "" });
     assert.equal(d3.ok, false); assert.ok(d3.problems.every((x) => /unknown (pickup|ride)_leg/.test(x)));
-    const p2 = await call(client, "plan_pickup", { run_id: h.run_id, car: "sf-02" });
+    const p2 = await call(client, "plan_pickup", { run_id: h.run_id, car: "sf-09" });
     assert.equal(p2.isError, true);
-    assert.match(p2.value, /Deep Space 1 class xenon tank holds 82 kg/);
+    assert.match(p2.value, /^SF-09 is a Starseeker Shuttle/);
     const info = await ok(client, "get_hail", { run_id: h.run_id });
-    assert.equal(info.plans_used, 3); assert.equal(info.dispatched, false);
-    report.bad_legs = { plan_ride: u.value, ride_after_ride: rr.value, unknown_car: c.value, forged: d1.problems, swapped: d2.problems, other_run: d3.problems, far_tank: p2.value };
+    assert.equal(info.plans_used, 2); assert.equal(info.dispatched, false);
+    report.bad_legs = { plan_ride: u.value, ride_after_ride: rr.value, unknown_car: c.value, forged: d1.problems, swapped: d2.problems, other_run: d3.problems, wrong_class: p2.value };
   });
   await check("unknown or malformed run_id is rejected; unknown hail_id is refused", async () => {
     const r = await call(client, "get_hail", { run_id: "run_" + "0".repeat(20) });
@@ -664,6 +668,7 @@ async function phaseOff() {
     assert.equal(row.run_id, best.hail.run_id);
     assert.equal(row.run_tag, best.hail.run_id.slice(4, 10));
     assert.equal(Object.hasOwn(row, "player_id"), false);
+    assert.equal(j.score_version, SCORE_VERSION); assert.equal(row.score_version, SCORE_VERSION); assert.equal(row.engine_sha256, META.sha256);
     assert.equal(row.kwh, Math.round(best.score.used_kwh)); assert.ok(Math.abs(row.wait_h - (jdOf(best.score.pickup) - jdOf(best.hail.rider_ready)) * 24) <= 0.06, `${row.wait_h} h vs actual pickup ${best.score.pickup}`);
     assert.equal(j.stats.runs_scored, scored);
     const r = await fetch(`${w.base}/board`);
@@ -679,7 +684,7 @@ async function phaseOff() {
     assert.equal(flight.status, 200);
     await flight.body?.cancel();
     const rec = await (await fetch(`${w.base}/rides/${row.run_id}.json`)).json();
-    assert.deepEqual(rec.score.parts.map((p) => p.key).sort(), ["checker", "dose", "economy", "energy", "fare", "on_time", "pickup", "promise", "recovery", "tank", "throttle", "window"]);
+    assert.deepEqual(rec.score.parts.map((p) => p.key).sort(), ["checker", "dose", "economy", "energy", "fare", "on_time", "pickup", "promise", "recovery", "window"]);
     report.board = j;
   });
   await check("off: no OAuth: /mcp needs no token, OAuth endpoints are 404, runs carry no player_id, get_my_rides asks for the sign-in", async () => {
@@ -936,7 +941,7 @@ async function phaseOn() {
       assert.ok(html.includes(`href="/flight/${good.hail.run_id}"`));
       assert.ok(html.includes(R.BY["iss-crew"].title));
       const rec = await (await fetch(`${base}/rides/${good.hail.run_id}.json`)).json();
-      assert.deepEqual(rec.score.parts.map((p) => p.key).sort(), ["checker", "dose", "economy", "energy", "fare", "on_time", "pickup", "promise", "recovery", "tank", "throttle", "window"]);
+      assert.deepEqual(rec.score.parts.map((p) => p.key).sort(), ["checker", "dose", "economy", "energy", "fare", "on_time", "pickup", "promise", "recovery", "window"]);
       report.board_row = j.best["iss-crew"];
     });
     await check("on: SSE transport with the access token works (list_hails)", async () => {

@@ -34,17 +34,23 @@ const maxAboard = (stops, party) => {
   for (const s of stops) { n += s.board.reduce((a, id) => a + party[id], 0); top = Math.max(top, n); n -= s.alight.reduce((a, id) => a + party[id], 0); }
   return top;
 };
-/** Each booking's fare (the sum over the legs it rides) and its arrival (where its last leg lands), from legs as the tools print them. */
-function quotesOf(stops, legs, ids) {
-  const q = {};
+/** Each booking's fare and its arrival (where its last leg lands), from legs as the tools print them and the party sizes get_hail lists.
+ *  Fares are per seat: each leg it rides splits by party size among the bookings aboard, the same sum R.seatFares makes. */
+function quotesOf(stops, legs, ids, party) {
+  const at = (id, k) => stops.findIndex((s) => s[k].includes(id)), q = {};
+  const on = legs.map((L, i) => ids.filter((id) => at(id, "board") < i && i <= at(id, "alight")));
   for (const id of ids) {
-    const b = stops.findIndex((s) => s.board.includes(id)), a = stops.findIndex((s) => s.alight.includes(id));
-    q[id] = { fare_usd: legs.slice(b + 1, a + 1).reduce((x, L) => x + L.fare_usd, 0), arrival: legs[a].arrive };
+    const usd = legs.reduce((x, L, i) => {
+      if (!on[i].includes(id)) return x;
+      const n = on[i].reduce((a, b) => a + party[b], 0);
+      return x + (party[id] === n ? L.fare_usd : L.fare_usd * party[id] / n);
+    }, 0);
+    q[id] = { fare_usd: Math.round(usd * 100) / 100, arrival: legs[at(id, "alight")].arrive };
   }
   return q;
 }
-const dispatchShared = (call, run_id, legs, stops, ids) => call("dispatch", {
-  run_id, legs: legs.map((L) => L.leg_id), stops: stops.map((s) => ({ board: s.board, alight: s.alight })), quotes: quotesOf(stops, legs, ids), ask_after_hours: "never",
+const dispatchShared = (call, run_id, legs, stops, ids, party) => call("dispatch", {
+  run_id, legs: legs.map((L) => L.leg_id), stops: stops.map((s) => ({ board: s.board, alight: s.alight })), quotes: quotesOf(stops, legs, ids, party), ask_after_hours: "never",
 });
 
 /** Plans a shared flight's legs one by one; prefix shares the legs of routes already planned with this car. null if a leg fails or the calls run out. */
@@ -105,19 +111,20 @@ export async function naive(call, E) {
     if (legs) rows.push({ kwh: legs.reduce((a, L) => a + L.battery_kwh, 0), legs, stops });
   }
   for (const { legs, stops } of rows.sort((a, b) => a.kwh - b.kwh)) {
-    const d = await dispatchShared(call, run_id, legs, stops, ids);
+    const d = await dispatchShared(call, run_id, legs, stops, ids, party);
     if (d.ok !== false) return d;
   }
 }
 
-/** random: a random car from the whole fleet (not one parked at the first stop), random objectives, and for a shared flight a
- *  random stop order the car has seats for; up to 5 tries, each dispatched with the planned fare and arrival. */
+/** random: a random car from the whole fleet (not one parked at the first stop, and of a class that flies every booking), random
+ *  objectives, and for a shared flight a random stop order the car has seats for; up to 5 tries, each dispatched with the planned
+ *  fare and arrival. */
 export async function random(call, E, rng) {
   const R = E.R, info = await take(call);
   if (!info) return;
   const run_id = info.run_id, obj = () => (rng() < 0.5 ? "energy" : "time");
   if (!info.bookings) {
-    const cars = R.FLEET.filter((c) => c.at !== R.BY[info.hail_id].from);
+    const cars = R.FLEET.filter((c) => c.at !== R.BY[info.hail_id].from && R.serves(c, R.BY[info.hail_id]));
     for (let i = 0; i < 5; i++) {
       const p = await call("plan_pickup", { run_id, car: pick(rng, cars).id, objective: obj() });
       if (out(p)) return;
@@ -133,12 +140,12 @@ export async function random(call, E, rng) {
   const ids = info.bookings.map((b) => b.hail_id), party = Object.fromEntries(info.bookings.map((b) => [b.hail_id, b.party]));
   const orders = R.stopOrders(ids);
   for (let i = 0; i < 5; i++) {
-    const stops = pick(rng, orders), cars = R.FLEET.filter((c) => c.at !== stops[0].at && c.seats >= maxAboard(stops, party));
+    const stops = pick(rng, orders), cars = R.FLEET.filter((c) => c.at !== stops[0].at && c.seats >= maxAboard(stops, party) && ids.every((id) => R.serves(c, R.BY[id])));
     if (!cars.length) continue;
     const legs = await planRoute(call, run_id, pick(rng, cars).id, stops, obj(), null);
     if (legs === "out") return;
     if (!legs) continue;
-    const d = await dispatchShared(call, run_id, legs, stops, ids);
+    const d = await dispatchShared(call, run_id, legs, stops, ids, party);
     if (d.ok !== false) return d;
   }
 }
@@ -148,12 +155,12 @@ export async function random(call, E, rng) {
  *  (R.oracle), quoted the true arrival and the honest fare, and scored with the run's own terms. Returns the best { total, ... }. */
 export function reference(E, run) {
   const R = E.R, seed = run.seed, t0 = run.t0, end = run.end_jd, memo = new Map();
-  const leg = (from, to, t, obj, ship) => {
-    const k = legKey(from, to, t, obj, end, ship);
-    if (!memo.has(k)) { try { memo.set(k, computeLeg(E, from, to, t, obj, end, ship)); } catch { memo.set(k, null); } }
+  const leg = (from, to, t, obj, ship, aboard) => {
+    const k = legKey(from, to, t, obj, end, ship, aboard);
+    if (!memo.has(k)) { try { memo.set(k, computeLeg(E, from, to, t, obj, end, ship, aboard)); } catch { memo.set(k, null); } }
     return memo.get(k);
   };
-  const slim = (L) => ({ from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate });
+  const slim = (L) => ({ from: L.from, to: L.to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, kwh: L.kwh, fare: L.fare, gate: L.gate, ...(L.aboard != null ? { aboard: L.aboard } : {}) });
   const ctx = { t0, arrive_by_jd: run.arrive_by_jd, par_kwh: run.par_kwh, best_wait_days: run.best_wait_days, kind: R.BY[run.id].kind };
   let best = null;
   const consider = (car, legs, stops, label) => {
@@ -164,11 +171,7 @@ export function reference(E, run) {
     const flown = [{ F: R.start(run.id, car, plan, t0, seed, { ask_after_hours: null, end_jd: end }).done, replans: 0, path: [] },
       { F: O.outcome, replans: O.decisions.filter((d) => d.action === "replan").length, path: O.path }];
     for (const { F, replans, path } of flown) {
-      const fareOf = (id) => {
-        if (!stops) return legs[1].fare;
-        const M = R.manifest({ stops, legs }), s = M.stop[id];
-        return legs.slice(s.board[0], s.alight[0]).reduce((a, L) => a + L.fare, 0);
-      };
+      const fareOf = (id) => (stops ? R.seatFares({ stops, legs })[id] : legs[1].fare);
       const quoteOf = (id) => ({ fare_usd: fareOf(id), arrival: isoJD(stops ? F.bookings[id].arrive_jd : F.arrive_jd) });
       const sc = R.score(run.id, stops ? { stops, legs } : legs, {
         ...ctx, ship: car, window_kwh: legs.reduce((a, L) => a + (L && L.window_kwh != null ? L.window_kwh : L ? L.kwh : 0), 0),
@@ -184,9 +187,9 @@ export function reference(E, run) {
     for (const c of R.nearCars(h)) {
       const start = R.pickupStart(run.id, c.id, t0, seed);
       for (const op of OBJ) {
-        const p = leg(c.at, h.from, start, op, c.id);
+        const p = leg(c.at, h.from, start, op, c.id, 0);
         if (!p || p.gate === "FAIL") continue;
-        for (const or of OBJ) consider(c.id, [p, leg(h.from, h.to, p.arr_jd + R.DWELL, or, c.id)], null, op + "/" + or);
+        for (const or of OBJ) consider(c.id, [p, leg(h.from, h.to, p.arr_jd + R.DWELL, or, c.id, h.party)], null, op + "/" + or);
       }
     }
     return best;
@@ -197,10 +200,11 @@ export function reference(E, run) {
     const start = R.pickupStart(run.id, c.id, t0, seed);
     for (const order of R.stopOrders(ids)) {
       if (maxAboard(order, party) > c.seats || order[0].at === c.at) continue;
+      const on = R.manifest({ stops: [{ at: c.at }, ...order], legs: [] }).party;
       for (const o of OBJ) {
         const legs = [];
         for (let i = 0, from = c.at, t = start; i < order.length; i++) {
-          const L = leg(from, order[i].at, t, o, c.id);
+          const L = leg(from, order[i].at, t, o, c.id, on[i]);
           legs.push(L);
           if (!L || L.gate === "FAIL") break;
           from = L.to; t = L.arr_jd + (boards.has(from) ? R.DWELL : 0);
