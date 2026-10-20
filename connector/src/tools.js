@@ -40,11 +40,18 @@ const from = skyTime.describe("sky time YYYY-MM-DD HH:MM to start from (default:
 /** Every tool, in the order tools/list shows them. */
 export const TOOLS = {
   list_hails: {
-    description: "Simulated passengers waiting this season: hail id, party size, pickup place, destination, quick or long haul. The five catalog hails stay takeable and are not in this list. Also the fleet of Starseekers. Take one with take_hail.",
-    inputSchema: {},
+    description: "Simulated passengers waiting this season: hail id, party size, pickup place, destination, quick or long haul. The five catalog hails stay takeable and are not in this list. Also the fleet of Starseekers. Take one with take_hail. " +
+      "The pool has hundreds of hails, so this returns 25 at a time: filter with kind, from and to, and page with next_cursor.",
+    inputSchema: {
+      kind: z.enum(["quick", "long haul"]).optional().describe("only quick or only long-haul hails"),
+      from: z.string().min(1).max(64).optional().describe("only hails picking up at this place id or name, e.g. mars-base"),
+      to: z.string().min(1).max(64).optional().describe("only hails going to this place id or name"),
+      limit: z.number().int().min(1).max(200).optional().describe("hails per page, 1-200 (default 25)"),
+      cursor: z.string().max(12).optional().describe("next_cursor from the previous page"),
+    },
   },
   take_hail: {
-    description: "Take a ride hail. Returns a run_id and the terms: where and when the rider is ready, the destination, the arrive_by time, the fleet and the scoring rules. One run per bot: taking a new hail abandons this session's undispatched run, or flies a ride waiting at a checkpoint on to arrive with the default answers (scored). The result's previous_run says which.",
+    description: "Take a ride hail. Returns a run_id and the terms: where and when the rider is ready, the destination, the arrive_by time, the fleet and the scoring rules. One run per bot: taking a new hail abandons this session's undispatched run, or flies a ride waiting at a checkpoint on to arrive with the default answers (scored). The result's previous_run says which. When the player signed in, the result also has follow_url, a page where they follow every booking you take and each call you make on it, live: give it to them right away.",
     inputSchema: { hail_id: z.string().describe("hail id from list_hails, e.g. iss-crew") },
   },
   get_hail: {

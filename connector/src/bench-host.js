@@ -124,8 +124,8 @@ function after(s, row, ended) {
 }
 
 const why = (b) => (b.ended.why === "arrived" ? "the ride arrived" : b.ended.why === "budget" ? "its budget of tool calls is used" : b.ended.why);
-const endText = (b) => " [Bench: task " + b.task + " ended (" + why(b) + ")" + (b.ended.total == null ? "" : ", scoring " + b.ended.total) + ". " +
-  (b.done ? "Bench over: total " + b.total + " of " + b.out_of + "." : b.next) + "]";
+const endText = (b) => " [Bench: task " + b.task + " ended (" + why(b) + ")" + (b.ended.total == null ? "" : ", scoring " + Math.round(b.ended.total)) + ". " +
+  (b.done ? "Bench over: total " + Math.round(b.total) + " of " + b.out_of + "." : b.next) + "]";
 
 /** One tool call in a hosted session: { session, result, task }. The session passed in is never changed. The open task closes
  *  when its ride arrives or its budget is used; result.bench says where the session stands (also on an { error } result).

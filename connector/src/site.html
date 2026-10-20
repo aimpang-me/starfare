@@ -301,6 +301,14 @@ button.lbl:hover{color:var(--ink)}
 .wvk i{display:inline-block;width:6px;height:6px;border-radius:1px;margin-right:4px;vertical-align:0}
 .feed{list-style:none;margin:8px 0 0;padding:0;height:170px;overflow:auto;font:500 11px/1.45 var(--mono);color:var(--ink-2)}
 .feed li{padding:3px 0;border-bottom:1px solid rgba(120,180,255,.06);animation:fin .35s ease-out}
+.feed.agentfeed{height:auto}
+.agentfeed:not(:empty){margin-bottom:12px;border-bottom:1px solid var(--line-2)}
+/* agent actions are message style B rows (/assets/message-b.css): time, a worded chip, the words; no coloured strips */
+.agentfeed:not(:empty)::before{content:"Agent actions \00B7  newest first";display:block;padding:6px 4px;font:400 11px/1.4 Inter,system-ui,sans-serif;color:#96a4b3;background:#080c11;border-bottom:1px solid #161e27}
+.feed li.mb{padding:10px 4px;border-bottom:1px solid #161e27;font:400 13px/1.45 Inter,system-ui,sans-serif;color:#edf1f5}
+.feed .mb-s a{color:#9cc3df;white-space:nowrap}
+.ilast{margin-top:10px;border:1px solid #26323e;border-radius:4px;overflow:hidden}
+.ilast .mb-head{padding:6px 10px}.ilast .mb{padding:10px;border-bottom:0}
 .feed .tm{color:var(--ink-3);margin-right:6px}
 .feed b{color:var(--cy);font-weight:600;margin-right:6px}
 .feed .k-checkpoint b{color:var(--me)}.feed .k-incident b,.feed .k-alert b{color:var(--sun)}.feed .k-clear b{color:var(--ok)}
@@ -437,6 +445,7 @@ p{text-wrap:pretty}
 #mapSound svg{width:17px;height:17px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}#mapSound .w{display:none}#mapSound[aria-pressed=true] .w{display:inline}#mapSound[aria-pressed=true] .x{display:none}#mapSound[aria-pressed=true]{color:var(--ink)}
 </style>
 <link rel="stylesheet" href="/assets/mission-control.css">
+<link rel="stylesheet" href="/assets/message-b.css">
 <body class="mc-home">
 <a class="skip-link" href="#tabB">Skip to bookings</a>
 
@@ -576,6 +585,7 @@ p{text-wrap:pretty}
           <canvas class="wave" id="wave" role="img" aria-label="Feed events per second over the last minute of real time, by kind"></canvas>
           <div class="wvx"><span>&minus;60 s</span><span class="wvk"><span><i style="background:var(--cy)"></i>Flight</span><span><i style="background:var(--me)"></i>Checkpoint</span><span><i style="background:var(--sun)"></i>Hazard</span><span><i style="background:var(--ok)"></i>Clear</span></span><span>now</span></div>
         </div>
+        <ul class="feed agentfeed" id="agentFeed" aria-live="polite" aria-label="Agent actions, newest first"></ul>
         <ul class="feed" id="feed" aria-live="off"></ul>
       </div>
     </section>
@@ -678,6 +688,7 @@ p{text-wrap:pretty}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js" integrity="sha384-nhO9toQuMo5osCuA0l+YFpSqscZWxDu251Bnho2gD3kSPv1neEwHg0LyEmrA+mPj" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js" integrity="sha384-mY+ii969jnDCI2HjRHftH2NZVkIO5ZGUkcnGCg3oVJ3kVstWQXwerYWBg+nbUG4R" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js" integrity="sha384-GkidzTYmQg24v13sa3xhBBbvOLbVLO1QxfyKLdOWweQqNqS/iWwUst2T1fER2Xrg" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js" integrity="sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js" integrity="sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js" integrity="sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js" integrity="sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js" integrity="sha384-Ua4+miEfAhtQpWvzgEohUG5UfbDPgyuYVVT+sgb2QvRC3fjACMsy7LV3Zoxnv2xf" crossorigin="anonymous"></script><script src="/assets/sol-art.js"></script>
 <script src="/assets/planet-effects.js"></script>
 <script src="/assets/flight-view.js"></script>
+<script src="/assets/agent-log.js"></script>
 <script src="/assets/sol-lore.js"></script>
 <script src="/assets/sol-lines.js"></script>
 <script src="/assets/sol-layers.js"></script>
@@ -1044,7 +1055,7 @@ function loadLive() {
       return Promise.all([arcRequest,recordRequest]).then(function (data) {
         var fl=data[0], rec=data[1];
         LIVEF.details[f.run_id] = { key: key, arcs: fl.arcs || {} };
-        return Object.assign(f, { arcs: fl.arcs || {}, trail: rec.trail || [] });
+        return Object.assign(f, { arcs: fl.arcs || {}, trail: rec.trail || [], waiting: rec.live && rec.live.hold || null });
       }).catch(function () { return f; });
     })).then(function (flights) {
       setFlights(flights); LIVEF.error = false;
@@ -1052,8 +1063,13 @@ function loadLive() {
         var stamp = f.run_id + ':' + event.at_ms + ':' + event.tool, jd = SF.jdOf(event.sky);
         if (!Number.isFinite(jd) || LIVEF.seen.indexOf(stamp) >= 0) return;
         LIVEF.seen.push(stamp); if (LIVEF.seen.length > 400) LIVEF.seen.shift();
-        pushFeed({source:'agent', jd:jd, who:f.ship.toUpperCase(), kind:'tool', txt:'Agent called ' + event.tool + (event.error ? ': ' + event.error : '') + (event.note ? ' · ' + event.note : '')});
-      }); });
+        pushFeed({source:'agent', jd:jd, who:f.ship.toUpperCase(), kind:'tool', agent:event, run_id:f.run_id, by:window.AgentLog ? AgentLog.agentName(f.trail) : ''});
+      });
+      // A flight stopped at a checkpoint is waiting on its agent: say so once per checkpoint.
+      var hd = f.waiting, hs = hd && f.run_id + ':hold:' + hd.n;
+      if (hd && LIVEF.seen.indexOf(hs) < 0) { LIVEF.seen.push(hs); pushFeed({source:'agent', jd:SF.jdOf(hd.at), who:f.ship.toUpperCase(), kind:'checkpoint', run_id:f.run_id,
+        txt:'Waiting for the agent: checkpoint ' + hd.n + ', ' + String(hd.kind).replace('_', ' ') + ' at ' + (hd.place_name || SF.name(hd.place)) + '. The flight is stopped until it decides.'}); }
+      });
       $("#liveStatus").textContent = flights.length ? flights.length + " simulated flight" + (flights.length === 1 ? "" : "s") + " · connected" : "Connected · no active flights";
       $("#liveStatus").dataset.error = "false";
       $("#mapSub").textContent = "Live sky · simulated flights";
@@ -1087,6 +1103,14 @@ function statusOf(F, jd) {
   return { k: "pick", s: s };
 }
 function progOf(F, jd) { var L0 = F.rp.legs[0], Ln = F.rp.legs[F.rp.legs.length - 1]; return clamp((jd - L0.dep) / ((Ln.arr - L0.dep) || 1), 0, 1); }
+// The selected flight's latest agent action, with its own note: the full log is on the flight page.
+function lastAgent(F) {
+  var tr = (F.f.trail || []).filter(function (t) { return t.tool !== "check_pad" && t.tool !== "space_weather"; }), t = tr[tr.length - 1];
+  if (!t || !window.AgentLog) return "";
+  var L = AgentLog.line(t, SF.name), by = AgentLog.agentName(F.f.trail);
+  return '<div class="ilast"><div class="mb-head">Agent' + (by ? " · " + esc(by) + " (self-reported)" : "") + " · last action</div>" +
+    AgentLog.row(L, { tag: "div", ms: t.at_ms, words: shipWords, sub: '<span class="mb-s">' + F.f.trail.length + " tool calls</span>" }) + "</div>";
+}
 function etaOf(F, jd) { var a = F.rp.legs[F.rp.legs.length - 1].arr; return F.f.hold ? jd >= a ? "awaiting agent" : SF.dur(a - jd) + " to checkpoint" : jd >= a ? "arrived" : SF.dur(a - jd); }
 function arrOf(F) { return F.f.hold ? "Pending agent decision" : iso(F.rp.legs[F.rp.legs.length - 1].arr); }
 function whereOf(F) {
@@ -2272,7 +2296,8 @@ function renderInfo() {
       '<div class="irt">' + placeH(lg.from) + ' <span class="dim">&rarr;</span> ' + placeH(lg.to) + "</div>" +
       '<div class="note" style="margin-top:3px">' + W(F.f.title) + (F.f.hold ? " · awaiting agent decision" : "") + '</div><div class="note" id="iW" style="margin-top:3px"></div><div class="ipb"><i id="iBar"></i></div>' +
       '<dl class="kv"><dt>Progress</dt><dd id="iP"></dd><dt>ETA</dt><dd id="iEta"></dd><dt>Arrival</dt><dd>' + esc(arrOf(F)) + "</dd><dt>Legs flown</dt><dd>" + legs.filter(function (L) { return !L.idle; }).length + "</dd><dt>Bookings</dt><dd>" + F.pl.bookings.length + '</dd><dt>Passengers / seats</dt><dd id="iSeats"></dd><dt>Departed</dt><dd>' + (legs[0].idle ? "Awaiting launch" : iso(legs[0].dep_jd)) + "</dd></dl>" +
-      '<div class="irow">' + (RUN_ID.test(F.run_id) ? '<a class="btn small primary" href="/flight/' + esc(F.run_id) + '">View flight</a>' : "") + '<button class="btn small" type="button" data-act="follow" aria-pressed="' + FOLLOW + '">' + (FOLLOW ? "Following" : "Follow") + "</button></div>";
+      lastAgent(F) +
+      '<div class="irow">' + (RUN_ID.test(F.run_id) ? '<a class="btn small primary" href="/flight/' + esc(F.run_id) + '">View flight and agent log</a>' : "") + '<button class="btn small" type="button" data-act="follow" aria-pressed="' + FOLLOW + '">' + (FOLLOW ? "Following" : "Follow") + "</button></div>";
   } else {
     var B = BK[SEL.id] || {}, h = hailOf(SEL.id), P = B.plan, body;
     if (B.busy) body = '<div class="planning" style="margin-top:10px"><i></i>Planning with the engine</div>';
@@ -2359,14 +2384,31 @@ function renderAlerts() {
 // one bin per real second for the last minute, counting feed lines by kind: flight, checkpoint, hazard, clear
 var BINS = [], BIN0 = 0, WVK = { checkpoint: 1, incident: 2, alert: 2, clear: 3 }, WVC = ["#5cc8ff", "#ffcf7a", "#ffb65c", "#6fe0a8"];
 for (var bi = 0; bi < 60; bi++) BINS.push([0, 0, 0, 0]);
+// The line under an agent row: which ship, who flew it (self-reported) and the flight page.
+function agentSub(o) {
+  return '<span class="mb-s">' + esc(o.who) + (o.by ? " · " + esc(o.by) : "") + (o.run_id ? ' · <a href="/flight/' + encodeURIComponent(o.run_id) + '">Watch</a>' : "") + "</span>";
+}
 function pushFeed(o) {
   if (o.kind === "plan" || o.source === "preview" || o.who === "DESK") return;
   var ul = $("#feed"); if (!ul) return;
   var li = document.createElement("li"); li.className = "k-" + o.kind;
   li.dataset.source = o.source === "agent" ? "agent" : "simulation";
-  li.innerHTML = '<span class="tm">' + iso(o.jd) + ' · ' + (li.dataset.source === 'agent' ? 'Agent' : 'Simulation') + "</span><b>" + esc(o.who) + "</b>" + W(o.txt);
+  if (o.agent && window.AgentLog) {
+    // An agent's tool call, in words: what it did, the details from the tool result, its own note on why, and when (your clock).
+    var L = AgentLog.line(o.agent, SF.name);
+    li.className = "mb k-agent t-" + L.tone;
+    li.innerHTML = AgentLog.row(L, { inner: true, ms: o.agent.at_ms, words: shipWords, sub: agentSub(o) });
+  } else if (o.source === "agent" && o.kind === "checkpoint") {
+    // A flight held at a checkpoint, waiting on its agent.
+    li.className = "mb k-agent";
+    li.innerHTML = '<span class="mb-t">' + esc(AgentLog.clock(Date.now())) + '</span><span class="mb-c checkpoint">Checkpoint</span><span class="mb-x"><span class="mb-a">' + W(o.txt) + "</span>" + agentSub(o) + "</span>";
+  } else li.innerHTML = '<span class="tm">' + iso(o.jd) + ' · ' + (li.dataset.source === 'agent' ? 'Agent' : 'Simulation') + "</span><b>" + esc(o.who) + "</b>" + W(o.txt) +
+    (o.run_id ? ' <a class="ag-go" href="/flight/' + encodeURIComponent(o.run_id) + '">Watch</a>' : "");
+  // Agent actions get their own list above the sky feed: simulation lines arrive every sky day and would push them out.
+  if (li.dataset.source === "agent" && $("#agentFeed")) ul = $("#agentFeed");
   ul.insertBefore(li, ul.firstChild);
-  while (ul.children.length > 40) ul.removeChild(ul.lastChild);
+  while (ul.children.length > (ul.id === "agentFeed" ? 30 : 40)) ul.removeChild(ul.lastChild);
+  if (ul.id === "agentFeed" && window.MC_AGENT_SEEN) window.MC_AGENT_SEEN();
   BINS[59][WVK[o.kind] || 0]++;
 }
 function feedTick() {

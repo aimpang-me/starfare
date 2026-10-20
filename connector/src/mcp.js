@@ -8,7 +8,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { benchStub } from "./bench.js";
 import { hex } from "./bench-host.js";
 import { engine } from "./engine.js";
-import { poolView, sky } from "./game.js";
+import { hailPage, poolView, seasonClock, sky } from "./game.js";
 import { hub, runStub } from "./store.js";
 import { HOSTED_INSTRUCTIONS, HOSTED_TOOLS, registerTools } from "./tools.js";
 
@@ -17,21 +17,26 @@ const playerOf = (agent) => (agent.props && typeof agent.props.player_id === "st
 
 /** The tools that are this session's, not one run's. Each returns plain data or { error }. */
 const SESSION_TOOLS = {
-  async list_hails(agent) {
+  async list_hails(agent, input) {
     const E = await engine(), season = sky(Date.now()).season;
     const cap = await hub(agent.env).ensurePool(season);
-    return poolView(E, season, cap);
+    const page = hailPage(poolView(E, season, cap), input || {});
+    return page.error ? page : { ...page, season_clock: seasonClock(E, Date.now()) };
   },
 
   async take_hail(agent, { hail_id }) {
     const prev = agent.state && agent.state.run_id;
     const id = "run_" + hex(10);
     // With STARFARE_OAUTH on, the grant's anonymous player id rides along on the run (to the board and the player's history).
-    const r = await runStub(agent.env, id).create(id, hail_id, playerOf(agent));
+    // The MCP client name the agent reported at initialize labels its dispatcher log (self-reported).
+    const r = await runStub(agent.env, id).create(id, hail_id, playerOf(agent), agent.server.server.getClientVersion() || null);
     if (r.error) return r;
     const left = prev ? await runStub(agent.env, prev).leave() : null;
     agent.setState({ run_id: id });
-    return left ? { ...r, previous_run: left } : r;
+    // Signed in: the player's follow page lists this booking and every call on it from now on.
+    const player = playerOf(agent), origin = agent.props && agent.props.origin;
+    const out = player && origin ? { follow_url: origin + "/agent/" + (await hub(agent.env).followFor(player)), ...r } : r;
+    return left ? { ...out, previous_run: left } : out;
   },
 
   async start_bench(agent, input) {
