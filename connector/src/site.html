@@ -571,7 +571,7 @@ body.cm-open .mc-activity{display:none}
         <p class="lgn">JPL positions at simulated sky dates. Orbit lines are two-body orbits at the sky date, simulated. Stored paths where available; straight route guides otherwise. True scale: real distances and sizes; bodies too small to see are drawn at a few pixels. Surface rotation and clouds are slowed for viewing.</p>
         <p class="lgn">Sound is off until you turn it on with the speaker button. Space is silent, so every sound is stylized and simulated: a cabin bed in open space, hits on the hull where debris is (low Earth orbit, the geostationary belt, Saturn&rsquo;s rings, near small bodies, faintly in the asteroid belt), radio-style sonifications close to a planet or moon, and console beeps near a station. All of it is synthesized in the browser.</p>
         <p class="lgn cred" id="artCred" hidden></p>
-        <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Q down and E up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Docks are placeholder art. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to follow it, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
+        <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Q down and E up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Station, dock and ship models are illustrative. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to follow it, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
       </div>
       <div class="mc-map-controls" role="group" aria-label="Map controls">
         <button type="button" id="zoomIn" aria-label="Move closer">+</button><button type="button" id="zoomOut" aria-label="Move farther">−</button><button type="button" id="resetMap" aria-label="Whole system view">⊙</button><button type="button" id="mapSound" aria-pressed="false" aria-label="Turn sound on" title="Sound off"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8h3l4-3.5v11L6 12H3z"/><path class="x" d="M13.5 8l4 4m0-4l-4 4"/><path class="w" d="M13 7.5a3.5 3.5 0 0 1 0 5M15.2 5.2a6.6 6.6 0 0 1 0 9.6"/></svg></button><button type="button" id="mapHelp" class="mc-map-note" aria-expanded="false" aria-controls="legend">Map info</button>
@@ -1049,7 +1049,7 @@ function makeFlight(f) {
 }
 function addFlightObjs(F) {
   if (!GL) return;
-  F.ship = window.SolArt ? SolArt.ship({ callsign: F.call }) : makeShip();
+  F.ship = window.SolArt ? SolArt.ship({ callsign: F.call, car: F.f.ship }) : makeShip();
   F.halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(160,225,255,.9)", "rgba(92,200,255,.25)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
   scene.add(F.halo); scene.add(F.ship);
   F.lbl = LBL.add({ html: esc(F.call), cls: "k-sample", hit: function () { var i = FL.indexOf(F); return i >= 0 ? { i: i } : null; }, pri: 90, click: function () { var i = FL.indexOf(F); if (i >= 0) select({ t: "f", i: i }); },
@@ -1641,6 +1641,7 @@ function drawDocks() {
     var v = marker(id, MAPJD), c = dockCentre(id, v); if (!c) return;
     var D = DOCKS[id]; if (!D) { D = DOCKS[id] = makeDock(SF.place(id)); scene.add(D); }
     D.visible = true; D.position.copy(c).sub(EYE); D.scale.setScalar(Math.max(SHIP_D / 6, pxAt(v) * DOCK_PX));
+    if (D.userData.setPx) D.userData.setPx(D.scale.x / pxAt(v));
     D.rotation.set(0.5, reduced ? 0.6 : IDLE_T * 0.15 + idlePhase(id), 0);
   });
   DOCKNEED = {};
@@ -2178,7 +2179,7 @@ function draw(dt, t) {
   if (FILT.pk && !FOLLOW) LIVE.forEach(function (c) { (c.busy && c.busy > LIVEJD ? pb : pr).push(marker(c.at, MAPJD)); });
   if (window.SolArt && FILT.pk && !FOLLOW) LIVE.forEach(function (c) {
     var ship = PARK_SHIPS[c.car];
-    if (!ship) { ship = PARK_SHIPS[c.car] = SolArt.ship({callsign:c.car.toUpperCase()}); scene.add(ship); }
+    if (!ship) { ship = PARK_SHIPS[c.car] = SolArt.ship({ callsign: c.car.toUpperCase(), car: c.car }); scene.add(ship); }
     var p = marker(c.at, MAPJD), sp = shipPx(p, 16); ship.visible = true; ship.position.copy(parkOff(c.at, p, sp)).sub(EYE); idleBob(c.car, ship.position, pxAt(p), sp); ship.scale.setScalar(Math.max(SHIP_D / 6, pxAt(p) * sp));
     var heading = window.StarfareView.orbitDirection(MAPJD, function (jd) { return marker(c.at, jd).toArray(); });
     window.StarfareView.orientShip(ship, window.StarfareView.headingFrame(heading, [0, 1, 0], ship.userData.headingSet ? ship.up.toArray() : null));
