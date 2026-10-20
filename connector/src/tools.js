@@ -163,7 +163,7 @@ export const TOOLS = {
   },
 };
 
-const answer = (r) => (r && r.error
+export const answer = (r) => (r && r.error
   ? { content: [{ type: "text", text: tidyText(String(r.error)) }], isError: true }
   : { content: [{ type: "text", text: JSON.stringify(r) }] });
 
