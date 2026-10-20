@@ -375,6 +375,6 @@ test("diagnostic verification leaves the runtime engine source, copy and suite c
   const meta = JSON.parse(readFileSync(new URL("../src/engine/meta.json", import.meta.url)));
   const suite = JSON.parse(readFileSync(new URL("../src/suites/v1.json", import.meta.url)));
   assert.ok(src.equals(copy)); const sha = createHash("sha256").update(src).digest("hex");
-  assert.equal(sha, "13f5c2f0d2187b352d67d914057c54fb320aed3b020e642758478bd11dda8d65");
+  assert.equal(sha, "dbed39e835f71e71ee2e5d8b371242d459681bf147e226edb6b0bc6f0a0355b6");
   assert.equal(sha, meta.sha256); assert.equal(sha, suite.engine_sha256); assert.equal(suite.score_version, 3);
 });
