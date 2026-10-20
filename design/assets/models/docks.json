@@ -1,0 +1,60 @@
+{
+  "default": "dock-orbital",
+  "generator": "tools/models/blender/build_models.py (Blender 5.2.2 LTS)",
+  "models": {
+    "cabin-4": {
+      "abreast": 2,
+      "bytes": 153680,
+      "file": "cabin-4.glb",
+      "seats": 4,
+      "sha256": "c888d0cd3eeee5968b85c52be99695c53a8656901fccdc4d498fc1ce41dabe97",
+      "triangles": 1684
+    },
+    "dock-orbital": {
+      "bytes": 384696,
+      "file": "dock-orbital.glb",
+      "sha256": "5ff0ceab49774f29cf90236ab030f5b2b0ec6b2b4afc729fff5585ede97f63fd",
+      "triangles": 12524
+    },
+    "station-ceres-port": {
+      "bytes": 594384,
+      "file": "station-ceres-port.glb",
+      "sha256": "48ce10f77039ea734cbfbe97ab308d406bc2843480c7712963cce8965ef39a18",
+      "triangles": 25776
+    },
+    "station-lunar-data-center": {
+      "bytes": 612032,
+      "file": "station-lunar-data-center.glb",
+      "sha256": "dcb61378130b0f269fbff3159987bcf4d7865f47bd3db7d29b4711f62cb8025d",
+      "triangles": 26368
+    },
+    "station-mars-base": {
+      "bytes": 598120,
+      "file": "station-mars-base.glb",
+      "sha256": "a0cbfe9298df9776c99371b46dd013fc0d44751f5f4d514d23026e69ddb3c174",
+      "triangles": 25484
+    },
+    "station-orbital-depot": {
+      "bytes": 710504,
+      "file": "station-orbital-depot.glb",
+      "sha256": "428db28d91e4101fd9fe688c31982d3cc34431665f0257b0d260c22c5666f4bc",
+      "triangles": 34436
+    },
+    "station-titan-dock": {
+      "bytes": 624872,
+      "file": "station-titan-dock.glb",
+      "sha256": "1fb4e8fff73260ebe6e84aadd5633db8aa50fe4bcb044d4eab3662c13d2ce001",
+      "triangles": 26664
+    }
+  },
+  "note": "Fictional, original models built and surfaced in code. berth_N and seat_N are named nodes; up +Y, longest side 1.",
+  "places": {
+    "ceres-port": "station-ceres-port",
+    "lunar-data-center": "station-lunar-data-center",
+    "mars-base": "station-mars-base",
+    "orbital-depot": "station-orbital-depot",
+    "titan-dock": "station-titan-dock"
+  },
+  "productionApproved": false,
+  "packed": "tools/models/pack-docks.mjs (weld, dedup, meshopt medium)"
+}
