@@ -228,9 +228,9 @@ export const seasonOf = (run) => (run.season != null ? run.season : +seedOf(run)
 const VIEWS = Object.fromEntries(Object.entries({
   hail: "run_id hail_id title rider note pickup_at destination rider_ready arrive_by boarding_hours bookings season task_id fleet sky_now plans_used phase dispatched passengers situation player_id rules",
   arrived: "ok run_id hail_id planned_by player_id",
-  score: "status total out_of score_version parts car pickup arrive planned_pickup planned_arrive promised_arrival arrive_by delay_hours promise_slip_hours fare_usd planned_kwh extra_kwh divert_kwh used_kwh par_kwh par_car beat_par checkpoints rider_dose_msv incidents bookings passengers season task_id",
+  score: "status total out_of score_version parts car pickup arrive planned_pickup planned_arrive promised_arrival promised_earliest arrive_by delay_hours promise_slip_hours fare_usd planned_kwh extra_kwh divert_kwh used_kwh par_kwh par_car beat_par checkpoints rider_dose_msv incidents bookings passengers season task_id",
   log: "hail kind season task_id from to rider_ready arrive_by car par_car par_kwh fleet planned dispatched quote hails stops quotes forecasts checkpoints flown happened bookings incidents parts total",
-  summary: "run_id hail_id hails title kind season task_id phase taken_at rider_ready arrive_by plans_used forecasts_used reason open_checkpoint car par_car total out_of parts used_kwh par_kwh beat_par promised_arrival arrive promise_slip_hours delay_hours incidents checkpoints",
+  summary: "run_id hail_id hails title kind season task_id phase taken_at rider_ready arrive_by plans_used forecasts_used reason open_checkpoint car par_car total out_of parts used_kwh par_kwh beat_par promised_arrival promised_earliest arrive promise_slip_hours delay_hours incidents checkpoints",
   record: "format simulated note run_id player_tag hail_id season task_id phase taken_at reason open_checkpoint score log",
 }).map(([k, v]) => [k, new Set(v.split(" "))]));
 // A season run's own fields; a bench run never prints them (its season would be its seed, and no Grok bot planned it).
@@ -293,7 +293,7 @@ const sharedRules = (run) =>
   " This is a shared flight (simulated) with " + run.hails.length + " bookings, listed in bookings: one Starseeker carries them all, and passengers aboard can't exceed its seats. " +
   "Plan it with plan_leg, not plan_pickup and plan_ride: the first leg names a ship (its car field) and flies from where it is parked; each later leg names after_leg and flies on from where that one lands, " +
   "after boarding if a booking boards there. A leg's to is a booking's pickup or destination. Then dispatch with legs (the legs in order), stops (one per leg: the bookings that board and alight where it lands) " +
-  "and quotes (a fare_usd and an arrival for each booking). Fares are per seat: each leg's fare_usd is split by party size among the bookings aboard it, a booking pays its share of each leg it rides, " +
+  "and quotes (a fare_usd and an arrival for each booking, or a window: earliest and latest). Fares are per seat: each leg's fare_usd is split by party size among the bookings aboard it, a booking pays its share of each leg it rides, " +
   "and a leg with nobody aboard is free. plan_leg's fares_so_far gives each booking's share on the stops the chain implies. Fast pickup, on time, kept promise and honest fare are scored per booking " +
   "and averaged by party size; energy is against par, the best nearby ship carrying every booking.";
 const rules = (E) =>
@@ -312,7 +312,9 @@ const rules = (E) =>
   "Each part except cruise dose earns its full weight on the stated reference, and less as the ride moves off it. The falloff steepness of 6 is a simulated assumption. " +
   "fast pickup 22000 (minutes over the quickest nearby ship), arrived on time 16000 (minutes late, reference 0), " +
   "energy 31000 (kWh over par, including holds and correction burns), " +
-  "kept the promise 14000 (minutes after the quoted arrival, reference 0; minutes early cost a quarter as much), " +
+  "kept the promise 14000 (score version 5: the arrival window you quote, earliest to latest, or the arrival alone as a window of no width, judged by its interval score: " +
+  "its width in hours plus 10 times each hour the ship lands outside it. Full weight at 0, falling in a straight line to 0 at 60 h on a quick hail and 240 h on a long haul. " +
+  "It is a proper score: your best window runs from the 10th to the 90th percentile of the arrival you expect, so a window costs its width and an honest one pays), " +
   "every leg checked 4000, honest fare 4000 (dollars off the ride fare), planning economy 3000 (plans past the 6 free ones; check_pad and space_weather are free), " +
   "departure window 3000 (kWh above the lowest energy departure in the search; the tool list does not mark that departure), " +
   "checkpoint recovery 3000 (kWh above a hindsight option at a checkpoint), cruise dose 0 (reported, not scored). " +
@@ -541,7 +543,7 @@ export function dispatch(E, run, inp, nowMs) {
   run.route = legs.map((L) => L.leg_id);
   run.car = legs[0].car;
   if (got.stops) { run.plan = { stops: got.stops }; run.quotes = got.quotes; }
-  run.quote = got.quotes ? got.quotes[run.id] : { fare_usd: inp.quoted_fare_usd, arrival: inp.quoted_arrival };
+  run.quote = got.quotes ? got.quotes[run.id] : got.quote;
   run.decisions = [];
   const slim = legs.map(slimLeg);
   return next(E, run, R.start(run.id, run.car, got.stops ? { stops: got.stops, legs: slim } : slim, run.t0, seedOf(run), { ask_after_hours: after, end_jd: SEASON_END }));
@@ -558,7 +560,19 @@ function twoLegs(E, run, inp) {
     if (!probs.length) E.R.check(run.id, p.car, [p, r], run.t0, seedOf(run)).forEach((x) => probs.push(x));
     [p, r].forEach((L) => { if (L.gate === "FAIL") probs.push(L.leg_id + " was rejected by the checker"); });
   }
-  return probs.length ? { problems: probs } : { legs: [p, r] };
+  const quote = quoteOf(E, { fare_usd: inp.quoted_fare_usd, arrival: inp.quoted_arrival, earliest: inp.quoted_earliest, latest: inp.quoted_latest }, "", probs);
+  return probs.length ? { problems: probs } : { legs: [p, r], quote };
+}
+/** A booking's quote as dispatch stores it: fare_usd, arrival, and the window's earliest and latest when given. A window's
+ *  ends must read as sky times and earliest can't be after latest (score v5 scores the promise as that window). */
+function quoteOf(E, x, who, probs) {
+  const q = { fare_usd: x.fare_usd, arrival: x.arrival };
+  for (const k of ["earliest", "latest"]) if (x[k] != null) {
+    q[k] = x[k];
+    if (promisedJd(E, x[k]) == null) probs.push(who + k + " must be a sky time YYYY-MM-DD HH:MM");
+  }
+  if ((q.earliest != null || q.latest != null) && !probs.length && !E.R.quoteWindow(q)) probs.push(who + "the window runs backwards: earliest (or arrival) is after latest");
+  return q;
 }
 /** A shared flight's dispatch: the plan_leg legs in order, a stop where each lands (who boards, who alights) and a quote per
  *  booking. Stop 0 is where the car is parked. Returns { legs, stops, quotes } or { problems }. */
@@ -579,8 +593,8 @@ function stopsPlan(E, run, inp) {
   ids.forEach((id) => {
     if (!on.has(id)) probs.push(id + " is not on the plan: every booking boards and alights");
     const x = own(q, id);
-    if (!x || x.fare_usd == null || x.arrival == null) probs.push("quotes needs a fare_usd and an arrival for " + id);
-    else quotes[id] = { fare_usd: x.fare_usd, arrival: x.arrival };
+    if (!x || x.fare_usd == null || (x.arrival == null && x.latest == null)) probs.push("quotes needs a fare_usd and an arrival (or a window, earliest and latest) for " + id);
+    else quotes[id] = quoteOf(E, x, id + ": ", probs);
   });
   if (probs.length) return { problems: probs };
   R.check(run.id, car, { stops, legs }, run.t0, seedOf(run)).forEach((x) => probs.push(x));
@@ -607,7 +621,7 @@ const arrived = (run) => Object.assign(project(run, "arrived", { ok: true, run_i
 
 const FREE_PLANS = 6; // R.score's planning economy: 6 plans free, then a point each
 /** What a ride scores beyond the engine (whose sha256 is in meta.json): bump it when land() changes what it hands R.score. */
-export const SCORE_VERSION = 4;
+export const SCORE_VERSION = 5;
 /** The open checkpoint as a bot sees it: what stopped the car, where it stands, and what each answer costs so far. */
 function situation(E, run) {
   const R = E.R, ride = run.ride, cp = openCheckpoint(run);
@@ -630,10 +644,17 @@ function situation(E, run) {
   };
 }
 
-// The promised arrival, read the way R.score reads it (date, then a space or T, then HH:MM), or null.
+// A quoted time, read the way R.score reads it (date, then a space or T, then HH:MM), or null.
 function promisedJd(E, s) {
   const m = /^\s*(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec(String(s || "")), j = m ? E.jdFromIso(m[1] + "T" + m[2]) : null;
   return j != null && isFinite(j) ? j : null;
+}
+/** The promise as a score prints it: promised_arrival (the window's latest, or the arrival quoted alone), promised_earliest
+ *  for a window, and promise_slip_hours (hours after the latest, or minus the hours before the earliest; 0 inside). */
+function promiseOf(E, quote, arrive_jd, kind) {
+  const w = E.R.quoteWindow(quote || {});
+  if (!w) return { promised_arrival: null, promise_slip_hours: null };
+  return { promised_arrival: isoJD(w.hi), ...(w.hi > w.lo ? { promised_earliest: isoJD(w.lo) } : {}), promise_slip_hours: r1(E.R.promiseScore(w, arrive_jd, kind).slip_hours) };
 }
 function hindsightKwh(E, run) {
   const ride = run.ride;
@@ -650,15 +671,15 @@ function land(E, run, F) {
   const sc = R.score(run.id, plan, { t0: run.t0, arrive_by_jd: run.arrive_by_jd, par_kwh: run.par_kwh, best_wait_days: run.best_wait_days, plan_calls: run.calls,
     kind: R.BY[run.id].kind, ship: run.car, window_kwh: windowKwh, throttled_kwh: throttledKwh, hindsight_kwh: hindsightKwh(E, run), quote, flown: F,
     ...(run.plan ? { bookings: Object.fromEntries(run.hails.map((id) => [id, { ...run.bookings[id], quote: run.quotes[id] }])) } : {}) });
-  const qj = promisedJd(E, quote.arrival);
+  const P = promiseOf(E, quote, sc.arrive_jd, R.BY[run.id].kind);
   const incidents = incidentsPub(E, sc.incidents);
   setPhase(run, "arrived");
   run.pickup_jd = sc.pickup_jd; // actual, for the board's pickup wait
   run.score = project(run, "score", {
     status: "arrived", total: sc.total, out_of: sc.out_of, score_version: sc.score_version, parts: sc.parts, car: R.CAR[run.car].name,
     pickup: isoJD(sc.pickup_jd), arrive: isoJD(sc.arrive_jd), planned_pickup: isoJD(legs[M.stop[run.id].board[0] - 1].arr_jd), planned_arrive: isoJD(sc.planned_arrive_jd),
-    promised_arrival: qj == null ? null : isoJD(qj), arrive_by: isoJD(run.arrive_by_jd),
-    delay_hours: r1(F.delay_hours), promise_slip_hours: qj == null ? null : r1((sc.arrive_jd - qj) * 24),
+    promised_arrival: P.promised_arrival, ...(P.promised_earliest ? { promised_earliest: P.promised_earliest } : {}), arrive_by: isoJD(run.arrive_by_jd),
+    delay_hours: r1(F.delay_hours), promise_slip_hours: P.promise_slip_hours,
     fare_usd: sc.fare_usd, planned_kwh: F.planned_kwh, extra_kwh: sc.extra_kwh, divert_kwh: F.divert_kwh, used_kwh: sc.used_kwh,
     par_kwh: run.par_kwh, par_car: R.CAR[run.par_car].name, beat_par: sc.beat_par, checkpoints: F.checkpoints.length,
     rider_dose_msv: sc.rider_dose_msv, incidents, ...(run.plan ? { bookings: run.hails.map((id) => bookingScore(E, run, id, sc.bookings[id])), passengers: passengers(E, run) } : {}), ...worldOf(run),
@@ -668,9 +689,9 @@ function land(E, run, F) {
 }
 /** One booking's side of a shared flight's score: its times, its promise, its fare and its passenger parts. */
 function bookingScore(E, run, id, b) {
-  const qj = promisedJd(E, run.quotes[id].arrival);
+  const P = promiseOf(E, run.quotes[id], b.arrive_jd, E.R.BY[id].kind);
   return { hail_id: id, title: E.R.BY[id].title, party: b.party, pickup: isoJD(b.pickup_jd), arrive: isoJD(b.arrive_jd), planned_arrive: isoJD(b.planned_arrive_jd),
-    arrive_by: isoJD(run.bookings[id].arrive_by_jd), promised_arrival: qj == null ? null : isoJD(qj), promise_slip_hours: qj == null ? null : r1((b.arrive_jd - qj) * 24),
+    arrive_by: isoJD(run.bookings[id].arrive_by_jd), promised_arrival: P.promised_arrival, ...(P.promised_earliest ? { promised_earliest: P.promised_earliest } : {}), promise_slip_hours: P.promise_slip_hours,
     fare_usd: b.fare_usd, parts: b.parts };
 }
 
@@ -816,7 +837,8 @@ function trailOf(E, run, tool, inp, r) {
   if (tool === "space_weather") return { place: r.place.name, max_flare_odds: maxOf(r.days.map((d) => d.flare_odds)) };
   if (tool === "dispatch") {
     if (r.problems) return { problems: r.problems.slice(0, 3).map((p) => String(p).slice(0, 120)) };
-    return { route: run.route.slice(), car: E.R.CAR[run.car].name, fare_usd: run.quote.fare_usd, arrival: run.quote.arrival, status: r.status,
+    return { route: run.route.slice(), car: E.R.CAR[run.car].name, fare_usd: run.quote.fare_usd, arrival: run.quote.arrival,
+      ...(run.quote.earliest != null ? { earliest: run.quote.earliest } : {}), ...(run.quote.latest != null ? { latest: run.quote.latest } : {}), status: r.status,
       ...(run.quotes ? { quotes: run.quotes } : {}) };
   }
   if (tool === "decide") {
@@ -836,7 +858,7 @@ function runLog(E, run, quote, incidents, sc, F) {
     fleet: R.fleetState(run.id, run.t0, seedOf(run)).filter((c) => c.busy_until_jd).map((c) => ({ car: c.car, busy_until: isoJD(c.busy_until_jd) })),
     planned: Object.values(run.legs).map((L) => ({ leg: L.leg_id, kind: L.role, ...(L.car ? { car: L.car } : {}), ...(L.after ? { after: L.after } : {}), ...(L.replan_of ? { replan_of: L.replan_of } : {}),
       objective: L.objective, wait_days: L.wait_days, depart: isoJD(L.dep_jd), arrive: isoJD(L.arr_jd), kwh: L.kwh, gate: L.gate })),
-    dispatched: run.route.slice(), quote: { fare_usd: quote.fare_usd, arrival: quote.arrival },
+    dispatched: run.route.slice(), quote: { fare_usd: quote.fare_usd, arrival: quote.arrival, ...(quote.earliest != null ? { earliest: quote.earliest } : {}), ...(quote.latest != null ? { latest: quote.latest } : {}) },
     ...(run.plan ? { hails: run.hails, stops: run.plan.stops, quotes: run.quotes } : {}),
     forecasts: run.forecasts || [],
     ...(F.checkpoints.length ? { checkpoints: checkpointLog(E, run) } : {}),
@@ -876,7 +898,7 @@ export function rideSummary(E, run) {
   const s = run.score, cps = (s.log && s.log.checkpoints) || [];
   return project(run, "summary", Object.assign(base, {
     car: s.car, par_car: s.par_car, total: s.total, out_of: s.out_of, parts: Object.fromEntries(s.parts.map((x) => [x.key, { got: x.got, max: x.max }])),
-    used_kwh: s.used_kwh, par_kwh: s.par_kwh, beat_par: s.beat_par, promised_arrival: s.promised_arrival, arrive: s.arrive,
+    used_kwh: s.used_kwh, par_kwh: s.par_kwh, beat_par: s.beat_par, promised_arrival: s.promised_arrival, ...(s.promised_earliest ? { promised_earliest: s.promised_earliest } : {}), arrive: s.arrive,
     promise_slip_hours: s.promise_slip_hours, delay_hours: s.delay_hours,
     incidents: s.incidents.map((x) => ({ kind: x.kind, place: x.place, hours: x.hours, kwh: x.kwh })),
     checkpoints: cps.map((c) => ({ n: c.n, kind: c.kind, cause: c.cause, decision: c.decision, options_hindsight: c.options_hindsight || [] })),

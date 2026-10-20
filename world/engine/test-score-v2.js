@@ -62,7 +62,7 @@ ok("score parts sum to the total, and a second call matches", () => {
   const a = R.score("iss-crew", legs, ctx), b = R.score("iss-crew", legs, ctx);
   assert.deepStrictEqual(a, b);
   assert.strictEqual(a.out_of, 100000);
-  assert.strictEqual(a.score_version, 4);
+  assert.strictEqual(a.score_version, 5);
   assert.strictEqual(a.total, a.parts.reduce((s, p) => s + p.got, 0));
   assert.strictEqual(a.parts.reduce((s, p) => s + p.max, 0), 100000);
   for (const p of a.parts) {
@@ -89,7 +89,7 @@ ok("a ride at every stated reference earns every part's full weight, and moving 
   assert.strictEqual(at.total, at.parts.reduce((s, p) => s + p.got, 0));
   // Score version 4 (Alvin, 2026-10-20): the reference earns the full weight, so this ride reads 100000.
   assert.strictEqual(at.total, at.out_of);
-  assert.strictEqual(at.score_version, 4);
+  assert.strictEqual(at.score_version, 5);
   for (const p of at.parts) assert.strictEqual(p.got, p.max, p.key + " " + p.got + " of " + p.max);
   const overEnergy = R.score("iss-crew", legs, Object.assign({}, ctx, { flown: flown(1.1) }));
   assert.ok(partGot(overEnergy, "energy") <= partGot(at, "energy") * 0.7, partGot(overEnergy, "energy"));
@@ -107,8 +107,7 @@ ok("a ride at every stated reference earns every part's full weight, and moving 
   const slipped = R.score("iss-crew", legs, Object.assign({}, ctx, {
     quote: { fare_usd: 8000, arrival: R.iso(t0 + 5 - 30 / 1440) },
   }));
-  assert.ok(partGot(slipped, "promise") < partGot(at, "promise") * 0.5, partGot(slipped, "promise"));
-  assert.ok(partGot(slipped, "promise") > 0);
+  assert.ok(Math.abs(partGot(slipped, "promise") - partGot(at, "promise") * (1 - 5 / 60)) < 0.01, partGot(slipped, "promise")); // v5: 30 min x 10 of a 60 h cap
   const minute = R.score("iss-crew", legs, Object.assign({}, ctx, {
     flown: { pickup_jd: t0 + 0.03, arrive_jd: t0 + 9 + 1 / 1440, used_kwh: 37400, extra_kwh: 0, incidents: [] },
   }));
