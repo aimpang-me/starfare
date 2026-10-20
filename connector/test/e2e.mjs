@@ -810,7 +810,11 @@ async function phaseOff() {
     assert.equal(bare.isError, true); assert.match(bare.value, /run_id/);
     const r = await ok(client, "report", { code: D1, text: "j1 is planned next tick.", job_id: "j1" });
     assert.equal(r.ok, true);
-    assert.deepEqual((await ok(client, "reports", { code: EX })).reports.map((x) => x.text), ["j1 is planned next tick."]);
+    const rep = await ok(client, "reports", { code: EX });
+    assert.deepEqual(rep.reports.map((x) => x.text), ["j1 is planned next tick."]);
+    assert.deepEqual(rep.scores.desks.map((d) => [d.desk, d.mean, d.open]), [["D1", null, 1], ["D2", null, 0]], "an open job is not scored yet");
+    assert.ok(rep.scores.company.offered_person_trips > 0);
+    assert.equal((await ok(client, "queue", { code: D1 })).score.desk, "D1");
   });
 
   await check("sandbox inbox: wait returns a message or a new job at once, a held wait wakes on a message, and the last seat's wait runs the tick", async () => {

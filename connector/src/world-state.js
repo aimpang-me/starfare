@@ -7,7 +7,7 @@
 // and call the executor's and dispatchers' tools (step 5); each seat has an inbox of what happened for it (step 6), which its
 // wait call returns. StarfareWorld (world.js) only stores what these functions return. No Worker imports, so the tests load
 // it in plain Node.
-import { POOL_TIERS, SEASON_END, SKY, hailPage, hailView, isoJD, leaveRun, names, openRun, phaseOf, worldInstance } from "./game.js";
+import { POOL_TIERS, SEASON_END, SKY, hailPage, hailView, isoJD, leaveRun, names, openRun, phaseOf, seasonStandings, worldInstance } from "./game.js";
 
 export const WORLD_FORMAT = "starfare.world/1";
 export const WORLD_ID = /^w_[0-9a-f]{20}$/;
@@ -144,6 +144,7 @@ export function worldView(E, w, nowMs) {
     desks: Object.keys(w.desks).map((d) => ({ desk: d, name: w.desks[d].name, ships: w.desks[d].ships.map(ship) })),
     market: { size: w.market.size, open: w.market.size - Object.keys(w.market.closed).length },
     jobs: jobs.slice(-JOBS_SHOWN).map((j) => jobPub(E, j)),
+    scores: scoresView(E, w),
     events: w.events.slice(-10),
     note: "A simulated private world: its own clock, weather and traffic. The clock moves one tick (" + c.tick_days + " sky day) when every joined seat has called wait, " +
       "or " + c.cap_ms / 1000 + " real seconds after the tick opened.",
@@ -339,7 +340,8 @@ export function reportsView(E, w) {
     jobs: jobs.map((j) => jobPub(E, j)),
     counts: { taken: jobs.length, arrived: scored.length, live: jobs.filter((j) => LIVE.has(j.phase)).length, abandoned: jobs.filter((j) => j.phase === "abandoned").length,
       declined: Object.values(w.market.closed).filter((x) => x === "declined").length },
-    note: "Totals are each arrived job's own score (out of 100000), copied from its ride.",
+    scores: scoresView(E, w),
+    note: "Totals are each arrived job's own score (out of 100000), copied from its ride. scores says how each desk and the company are judged.",
   };
 }
 
@@ -348,7 +350,7 @@ export function queueView(E, w, desk, nowMs) {
   const v = worldView(E, w, nowMs), d = v.desks.find((x) => x.desk === desk), mine = Object.values(w.jobs || {}).filter((j) => j.desk === desk);
   const order = (j) => (LIVE.has(j.phase) ? 0 : 1);
   return {
-    simulated: true, desk, name: d.name, sky_now: v.clock.sky_now, tick: v.clock.tick, ships: d.ships,
+    simulated: true, desk, name: d.name, sky_now: v.clock.sky_now, tick: v.clock.tick, ships: d.ships, score: v.scores.desks.find((x) => x.desk === desk),
     jobs: mine.sort((a, b) => order(a) - order(b)).map((j) => jobPub(E, j)),
     note: "Plan and fly each open job with get_hail, plan_pickup, plan_ride (or plan_leg), check_pad, space_weather, dispatch and decide, passing your code and its job_id. " +
       "Only your desk's ships can fly your jobs.",
@@ -445,5 +447,36 @@ export function waitView(E, w, seat, events, waitedMs, nowMs) {
       ? "Act on these, then call wait again with your code. The clock ticks when every joined seat is waiting, or " + w.clock.cap_ms / 1000 + " s after the tick opened."
       : "Nothing new yet. Call wait again with your code: the clock ticks when every joined seat is waiting, or " + w.clock.cap_ms / 1000 + " s after the tick opened." +
         (held.length ? " Your rides at a checkpoint wait for decide: " + held.join(", ") + "." : ""),
+  };
+}
+
+// ---- layer scores (plan step 7) ----
+// Each flight keeps its own score (the ride's parts, unchanged). A desk is judged by the mean total over every job it was
+// given that has ended, an abandoned one (dropped, or gone cold) counting 0: the season board's rule (seasonStandings), so
+// keeping only the easy jobs does not pay. The company (the executor) is judged by the share of the market's person-trips it
+// flew times the mean over every ended job. Jobs still open are counted beside the means, not in them.
+const ended = (j) => j.phase === "arrived" || j.phase === "abandoned";
+const meanOf = (jobs) => {
+  const st = seasonStandings(jobs.filter(ended).map((j) => ({ player_id: "j:all", phase: j.phase, total: j.total, plans_used: 1, forecasts_used: 0 })), 1);
+  return st.ranked.length ? st.ranked[0].mean : null;
+};
+const partyOf = (E, w, hailId) => { const m = MARKET_HAIL.exec(hailId); return m ? marketRow(E, w, Number(m[2])).party : 0; };
+export function scoresView(E, w) {
+  const jobs = Object.values(w.jobs || {});
+  const desks = Object.keys(w.desks).map((d) => {
+    const mine = jobs.filter((j) => j.desk === d);
+    return { desk: d, name: w.desks[d].name, mean: meanOf(mine), ended: mine.filter(ended).length, arrived: mine.filter((j) => j.phase === "arrived").length,
+      abandoned: mine.filter((j) => j.phase === "abandoned").length, open: mine.filter((j) => LIVE.has(j.phase)).length };
+  });
+  let offered = 0;
+  for (let i = 0; i < w.market.size; i++) offered += marketRow(E, w, i).party;
+  const served = jobs.filter((j) => j.phase === "arrived").reduce((a, j) => a + partyOf(E, w, j.hail_id), 0), mean = meanOf(jobs);
+  const share = offered ? served / offered : 0;
+  return {
+    simulated: true, desks,
+    company: { offered_person_trips: offered, served_person_trips: served, served_share: Math.round(share * 10000) / 10000, mean, ended: jobs.filter(ended).length,
+      score: mean == null ? null : Math.round(share * mean * 10) / 10 },
+    note: "Points only (simulated). A desk's mean is over every job it was given that has ended, an abandoned job counting 0, out of 100000. " +
+      "The company's score is the share of the market's person-trips flown times the mean over every ended job. Open jobs are not counted yet.",
   };
 }
