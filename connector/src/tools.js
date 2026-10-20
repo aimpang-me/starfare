@@ -253,6 +253,16 @@ Object.assign(SANDBOX_TOOLS, {
       "Fly an open job with get_hail, plan_pickup, plan_ride (or plan_leg), check_pad, space_weather, dispatch and decide, passing your code and its job_id in place of run_id.",
     inputSchema: { code: seatCodeArg },
   },
+  wait: {
+    description: "Executor and dispatchers: you are done for now. Returns what happened for your seat since your last wait (a sky-clock tick, a job given to your desk, a ship joining or leaving it, " +
+      "a landing, a report, a message) as soon as there is anything, or after seconds (45 at most) with nothing new; then call wait again. " +
+      "The world's simulated sky clock moves one tick (1 sky day) once every joined seat is waiting, or after a real-time cap. Any other call means you are at work again.",
+    inputSchema: { code: seatCodeArg, seconds: z.number().min(0).max(45).optional().describe("how long to hold with nothing new, 0 to 45 (default 45)") },
+  },
+  message: {
+    description: "Executor and dispatchers: a note (up to 600 characters) to another seat, EX, D1 or D2, or to all the others. It arrives in their next wait. Every number in it must come from a tool result.",
+    inputSchema: { code: seatCodeArg, to: z.enum(["EX", "D1", "D2", "all"]), text: z.string().min(1).max(600) },
+  },
   report: {
     description: "Dispatcher: a few lines to the executor (up to 600 characters): what you flew, what went wrong, what your desk needs. Every number in it must come from a tool result.",
     inputSchema: { code: seatCodeArg, text: z.string().min(1).max(600), job_id: jobIdArg.optional() },
@@ -268,7 +278,9 @@ export const SANDBOX_INSTRUCTIONS = "\nSandbox (simulated): when the player give
   "That code names your seat in the player's private world, and every sandbox tool takes it: pass it on every call. Your seat's tools are listed in join's result; " +
   "a call outside them is refused with the reason. The executor (EX) reads the market and company, gives hails to desks with assign, declines the rest, moves ships with transfer_ship " +
   "and reads reports; it flies nothing. A dispatcher (D1, D2) reads its queue and flies each job with the planning tools, passing code and job_id in place of run_id, " +
-  "with its own desk's ships only, then sends the executor a report. A dispatched ship is busy until it lands and then parked where it landed. The world's sky clock stands still between ticks.";
+  "with its own desk's ships only, then sends the executor a report. A dispatched ship is busy until it lands and then parked where it landed. The world's sky clock stands still between ticks. " +
+  "When your seat has nothing to do, call wait with your code: it returns what happened for you (new jobs, landings, reports, messages, ticks), and the clock only ticks once every joined seat is waiting. " +
+  "Seats talk with message; every result's inbox field counts what your next wait will return.";
 
 export const HOSTED_INSTRUCTIONS = INSTRUCTIONS + "\n" +
   "Comms: when the player gives you a Starfare HQ code, call check_in with it and say who you are (name, model, thinking setting, skills) as you know it; leave out what you don't know.\n" +

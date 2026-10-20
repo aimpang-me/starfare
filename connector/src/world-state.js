@@ -3,9 +3,10 @@
 // where they last landed (the engine's ships map, step 1), the desks that hold them, and the market (a seeded hail pool).
 // The clock ticks when every joined seat has called wait, or once a seat has kept the others waiting for cap_ms of real
 // time. A job (step 3) is one taken market hail, played as today's run on the world's ships: several fly at once on
-// different ships, and a dispatched job parks its ship where the flight lands, busy until it lands. Seats' codes, the tools
-// and the inbox come in later steps; StarfareWorld (world.js) only stores what these functions return. No Worker imports,
-// so the tests load it in plain Node.
+// different ships, and a dispatched job parks its ship where the flight lands, busy until it lands. Seats hold codes (step 4)
+// and call the executor's and dispatchers' tools (step 5); each seat has an inbox of what happened for it (step 6), which its
+// wait call returns. StarfareWorld (world.js) only stores what these functions return. No Worker imports, so the tests load
+// it in plain Node.
 import { POOL_TIERS, SEASON_END, SKY, hailPage, hailView, isoJD, leaveRun, names, openRun, phaseOf, worldInstance } from "./game.js";
 
 export const WORLD_FORMAT = "starfare.world/1";
@@ -41,6 +42,7 @@ export function newWorld(E, { worldId, seed, owner = null, nowMs, capMs = TICK_C
     jobs: {}, job_seq: 0,
     reports: [],
     events: [],
+    inbox: Object.fromEntries(SEATS.map((s) => [s, []])), messages: [],
   };
 }
 
@@ -117,6 +119,8 @@ function advance(w, nowMs, why) {
   const event = { tick: c.tick, sky: isoJD(c.jd), at_ms: nowMs, why, stalled };
   w.events.push(event);
   if (w.events.length > EVENTS_KEPT) w.events.splice(0, w.events.length - EVENTS_KEPT);
+  post(w, joined(w), { kind: "tick", at_ms: nowMs, why, stalled });
+  landings(w, nowMs);
   return event;
 }
 
@@ -139,7 +143,7 @@ export function worldView(E, w, nowMs) {
       joined: w.seats[s].joined_ms != null, waiting: w.seats[s].waiting, stalls: w.seats[s].stalls, ...(w.seats[s].agent ? { agent: w.seats[s].agent } : {}) })),
     desks: Object.keys(w.desks).map((d) => ({ desk: d, name: w.desks[d].name, ships: w.desks[d].ships.map(ship) })),
     market: { size: w.market.size, open: w.market.size - Object.keys(w.market.closed).length },
-    jobs: jobs.slice(-JOBS_SHOWN).map((j) => ({ ...j, ...(j.car ? { ship: E.R.CAR[j.car].name } : {}) })),
+    jobs: jobs.slice(-JOBS_SHOWN).map((j) => jobPub(E, j)),
     events: w.events.slice(-10),
     note: "A simulated private world: its own clock, weather and traffic. The clock moves one tick (" + c.tick_days + " sky day) when every joined seat has called wait, " +
       "or " + c.cap_ms / 1000 + " real seconds after the tick opened.",
@@ -151,8 +155,15 @@ export function worldView(E, w, nowMs) {
 // run with the world's seed, the world's sky time as a frozen clock that the world moves on, and the world's ships map.
 export const JOB_ID = /^j[1-9]\d{0,5}$/;
 const LIVE = new Set(["planning", "in_flight"]);
+// An arrived job's ride is flown and scored at once, but in the world's time its ship lands at lands_jd: the tick that
+// passes it posts the landing to the desk and the executor, and marks the job landed.
 const jobRow = (run, w) => ({ job_id: run.world.job_id, run_id: run.run_id, hail_id: run.id, title: run.title, phase: phaseOf(run), car: run.car || null,
-  taken_tick: w.clock.tick, ...(phaseOf(run) === "arrived" ? { total: run.score.total } : {}), ...(run.abandoned_reason ? { reason: run.abandoned_reason } : {}) });
+  taken_tick: w.clock.tick, ...(phaseOf(run) === "arrived" ? { total: run.score.total, lands_jd: run.ride.arrive_jd } : {}), ...(run.abandoned_reason ? { reason: run.abandoned_reason } : {}) });
+/** A job's row as the views show it: its ship's name, and for an arrived job when its ship lands in the world's time. */
+function jobPub(E, j) {
+  const { lands_jd, landed, ...row } = j;
+  return { ...row, ...(j.car ? { ship: E.R.CAR[j.car].name } : {}), ...(lands_jd != null ? { lands: isoJD(lands_jd), landed: !!landed } : {}) };
+}
 
 /** Takes market hail hailId as a new job: { run, job }. The hail leaves the market. Fails (WorldError) on a closed world,
  *  a hail that is not open, or a trip that can't land before the world's clock ends (GameError from openRun). */
@@ -182,11 +193,12 @@ export function syncJob(w, run) {
  *  world's span until the ride lands. Changes w. */
 export function jobMoved(w, run) {
   const id = run.world.job_id, was = w.jobs[id], phase = phaseOf(run);
-  w.jobs[id] = { ...jobRow(run, w), taken_tick: was ? was.taken_tick : w.clock.tick, desk: was ? was.desk : null };
+  w.jobs[id] = { ...jobRow(run, w), taken_tick: was ? was.taken_tick : w.clock.tick, desk: was ? was.desk : null, ...(was && was.landed ? { landed: true } : {}) };
   if ((phase === "in_flight" || phase === "arrived") && run.ride) {
     const at = run.ride.stops[run.ride.stops.length - 1].at;
     w.ships[run.car] = { at, free_jd: phase === "arrived" ? run.ride.arrive_jd : w.clock.end_jd };
   }
+  landings(w, null);
   return w.jobs[id];
 }
 
@@ -262,6 +274,8 @@ export function seatBrief(E, w, seat, nowMs) {
       ? "You are the executor of a simulated Starseeker company: you pick jobs from the market, give each to a dispatcher's desk, move ships between desks and read their reports. You fly nothing yourself."
       : "You are a dispatcher of a simulated Starseeker company: you fly the jobs the executor gives your desk, with your desk's ships, using the planning tools.",
     codes: "Pass this same code to every sandbox tool: each call is checked against it.",
+    wait: "When you have nothing to do, call wait with your code. It returns what happened for your seat, or after up to " + WAIT_MAX_S + " s with nothing new; call it again. " +
+      "The clock ticks once every joined seat is waiting, or " + w.clock.cap_ms / 1000 + " s after the tick opened. Every result's inbox counts what your next wait returns.",
   };
 }
 
@@ -299,6 +313,8 @@ export function transferShip(E, w, car, desk, nowMs) {
   w.desks[from].ships = w.desks[from].ships.filter((x) => x !== id);
   to.ships.push(id);
   w.active_ms = nowMs;
+  post(w, [from], { kind: "ship_left", car: id, to: desk });
+  post(w, [desk], { kind: "ship_joined", car: id, from });
   return { ok: true, car: id, name: E.R.CAR[id].name, from: from + " (" + w.desks[from].name + ")", to: desk + " (" + to.name + ")" };
 }
 
@@ -310,6 +326,7 @@ export function addReport(w, seat, text, jobId, nowMs) {
   const r = { tick: w.clock.tick, sky: isoJD(w.clock.jd), at_ms: nowMs, seat, ...(jobId != null ? { job_id: jobId } : {}), text: t.slice(0, REPORT_MAX) };
   w.reports = [...(w.reports || []), r].slice(-REPORTS_KEPT);
   w.active_ms = nowMs;
+  post(w, ["EX"], { kind: "report", from: seat, at_ms: nowMs, ...(jobId != null ? { job_id: jobId } : {}), text: r.text });
   return { ok: true, reported: r };
 }
 
@@ -319,7 +336,7 @@ export function reportsView(E, w) {
   const scored = jobs.filter((j) => j.phase === "arrived");
   return {
     simulated: true, sky_now: isoJD(w.clock.jd), tick: w.clock.tick, reports: w.reports || [],
-    jobs: jobs.map((j) => ({ ...j, ...(j.car ? { ship: E.R.CAR[j.car].name } : {}) })),
+    jobs: jobs.map((j) => jobPub(E, j)),
     counts: { taken: jobs.length, arrived: scored.length, live: jobs.filter((j) => LIVE.has(j.phase)).length, abandoned: jobs.filter((j) => j.phase === "abandoned").length,
       declined: Object.values(w.market.closed).filter((x) => x === "declined").length },
     note: "Totals are each arrived job's own score (out of 100000), copied from its ride.",
@@ -332,7 +349,7 @@ export function queueView(E, w, desk, nowMs) {
   const order = (j) => (LIVE.has(j.phase) ? 0 : 1);
   return {
     simulated: true, desk, name: d.name, sky_now: v.clock.sky_now, tick: v.clock.tick, ships: d.ships,
-    jobs: mine.sort((a, b) => order(a) - order(b)).map((j) => ({ ...j, ...(j.car ? { ship: E.R.CAR[j.car].name } : {}) })),
+    jobs: mine.sort((a, b) => order(a) - order(b)).map((j) => jobPub(E, j)),
     note: "Plan and fly each open job with get_hail, plan_pickup, plan_ride (or plan_leg), check_pad, space_weather, dispatch and decide, passing your code and its job_id. " +
       "Only your desk's ships can fly your jobs.",
   };
@@ -355,4 +372,78 @@ export function jobRefusal(E, w, seat, run, tool, input) {
   if (car && Object.hasOwn(w.ships, car) && !desk.ships.includes(car))
     return E.R.CAR[car].name + " is on the " + w.desks[shipDesk(w, car)].name + ", not yours; your desk's ships are " + desk.ships.map((c) => E.R.CAR[c].name).join(", ");
   return null;
+}
+
+// ---- the inbox, wait and message (plan step 6) ----
+// Each seat's inbox holds what happened for it since its last wait: a tick (the newest only), a job assigned to its desk, a
+// ship joining or leaving its desk, a landing (its desk's, or any for the executor), a report (the executor) and a message.
+// wait returns the inbox and empties it. A seat's wait marks it done for the tick; any other call it makes means it is at
+// work again, so the clock waits for it (or the cap).
+const INBOX_KEPT = 50, MESSAGE_MAX = 600, MESSAGES_KEPT = 100;
+export const WAIT_MAX_S = 45; // Grok gives up on a tool call after about 60 s (the step 0 spike)
+const boxOf = (w, seat) => ((w.inbox = w.inbox || {})[seat] = w.inbox[seat] || []);
+
+/** Puts an event in each seat's inbox, stamped with the tick and sky time. A new tick replaces an unread older one. */
+export function post(w, seats, ev) {
+  const e = { kind: ev.kind, tick: w.clock.tick, sky: isoJD(w.clock.jd), ...ev };
+  for (const s of new Set(seats)) {
+    const box = boxOf(w, s);
+    if (e.kind === "tick") { const i = box.findIndex((x) => x.kind === "tick"); if (i >= 0) box.splice(i, 1); }
+    box.push(e);
+    if (box.length > INBOX_KEPT) box.splice(0, box.length - INBOX_KEPT);
+  }
+}
+export const inboxCount = (w, seat) => boxOf(w, seat).length;
+
+/** Each arrived job whose ship's landing the world's clock has now passed: posted to its desk and the executor. */
+function landings(w, nowMs) {
+  for (const j of Object.values(w.jobs || {})) {
+    if (j.phase !== "arrived" || j.landed || j.lands_jd == null || j.lands_jd > w.clock.jd) continue;
+    j.landed = true;
+    post(w, [...(j.desk ? [j.desk] : []), "EX"], { kind: "landed", ...(nowMs != null ? { at_ms: nowMs } : {}), job_id: j.job_id, car: j.car, at: w.ships[j.car].at, total: j.total });
+  }
+}
+
+/** A seat that calls anything but wait is at work, so the tick waits for it again. */
+export function busySeat(w, seat) {
+  seatOf(w, seat).waiting = false;
+  return w;
+}
+
+/** message: a note from one seat to another ("EX", "D1", "D2") or to "all" the others, into their inboxes. */
+export function sendMessage(w, seat, to, text, nowMs) {
+  const t = String(text ?? "").trim(), dest = String(to ?? "").trim().toUpperCase();
+  if (!t) fail("a message needs text");
+  const seats = dest === "ALL" ? SEATS.filter((s) => s !== seat) : [dest];
+  if (dest !== "ALL" && !SEATS.includes(dest)) fail("to must be " + SEATS.join(", ") + " or all");
+  if (dest === seat) fail("that is your own seat");
+  const m = { tick: w.clock.tick, sky: isoJD(w.clock.jd), at_ms: nowMs, from: seat, to: seats, text: t.slice(0, MESSAGE_MAX) };
+  w.messages = [...(w.messages || []), m].slice(-MESSAGES_KEPT);
+  post(w, seats, { kind: "message", from: seat, at_ms: nowMs, text: m.text });
+  w.active_ms = nowMs;
+  return { ok: true, sent_to: seats, text: m.text };
+}
+
+/** The seat's inbox as wait returns it (names beside the ids), emptied. */
+export function takeInbox(E, w, seat) {
+  const { placeName } = names(E), box = boxOf(w, seat), out = box.map((e) => ({
+    ...e, ...(e.car ? { ship: E.R.CAR[e.car].name } : {}), ...(e.at ? { at: { id: e.at, name: placeName(e.at) } } : {}),
+    ...(e.from && e.kind.startsWith("ship_") ? { from: e.from + " (" + w.desks[e.from].name + ")" } : {}), ...(e.to && e.kind === "ship_left" ? { to: e.to + " (" + w.desks[e.to].name + ")" } : {}),
+  }));
+  w.inbox[seat] = [];
+  return out;
+}
+
+/** wait's answer: the events, the clock and who is waiting, and for a dispatcher the rides held at a checkpoint for it. */
+export function waitView(E, w, seat, events, waitedMs, nowMs) {
+  const v = worldView(E, w, nowMs);
+  const held = roleOf(seat) === "dispatcher" ? Object.values(w.jobs || {}).filter((j) => j.desk === seat && j.phase === "in_flight").map((j) => j.job_id) : [];
+  return {
+    simulated: true, seat, events, waited_s: Math.round(waitedMs / 100) / 10, clock: v.clock, seats: v.seats.map(({ seat: s, joined: j, waiting, stalls }) => ({ seat: s, joined: j, waiting, stalls })),
+    ...(held.length ? { at_checkpoint: held } : {}),
+    note: w.clock.done ? "The world's clock has reached the end of its span: no more ticks." : events.length
+      ? "Act on these, then call wait again with your code. The clock ticks when every joined seat is waiting, or " + w.clock.cap_ms / 1000 + " s after the tick opened."
+      : "Nothing new yet. Call wait again with your code: the clock ticks when every joined seat is waiting, or " + w.clock.cap_ms / 1000 + " s after the tick opened." +
+        (held.length ? " Your rides at a checkpoint wait for decide: " + held.join(", ") + "." : ""),
+  };
 }

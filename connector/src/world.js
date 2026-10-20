@@ -1,6 +1,7 @@
 // StarfareWorld: one per sandbox world (world_id). Holds the world (world-state.js) and runs its clock's capped ticks on
 // the Durable Object's alarm. Calls run one at a time, so a seat's wait, a capped tick and two jobs dispatching the same
 // ship never interleave. Each job's run is stored under its own key ("job:<job_id>"), beside the world's index of jobs.
+// A wait with an empty inbox holds outside that queue, for up to its seconds, until a save puts something in its inbox.
 // Behind STARFARE_SANDBOX ("on" opens /world/new and /world/<world_id>.json; anything else answers 404). Nothing links it yet.
 import { DurableObject } from "cloudflare:workers";
 import META from "./engine/meta.json" with { type: "json" };
@@ -10,8 +11,9 @@ import { GameError, RUN_TOOL_NAMES, applyTool, computeLeg, hailInfo, legKey, res
 import { worldSeed } from "./season-seed.js";
 import { hub } from "./store.js";
 import {
-  JOB_ID, SEATS, TICK_CAP_MS, WorldError, addReport, capDueMs, capTick, codeHash, declineHail, dropJob, jobMoved, jobRefusal, joinSeat, marketPage, newSecret, newWorld,
-  parseCode, queueView, reportsView, scopeRefusal, seatBrief, seatCode, syncJob, takeJob, transferShip, waitSeat, worldView,
+  JOB_ID, SEATS, TICK_CAP_MS, WAIT_MAX_S, WorldError, addReport, busySeat, capDueMs, capTick, codeHash, declineHail, dropJob, inboxCount, jobMoved, jobRefusal, joinSeat,
+  marketPage, newSecret, newWorld, parseCode, post, queueView, reportsView, scopeRefusal, seatBrief, seatCode, sendMessage, syncJob, takeInbox, takeJob, transferShip,
+  waitSeat, waitView, worldView,
 } from "./world-state.js";
 
 export { WORLD_ID, parseCode } from "./world-state.js";
@@ -23,6 +25,7 @@ const KEEP_MS = 30 * 24 * 3600 * 1000; // a world nobody joined, waited in or lo
 
 export class StarfareWorld extends DurableObject {
   #queue = Promise.resolve();
+  #waiters = new Map(); // seat -> the wake functions of its held waits
 
   #serial(fn) {
     const p = this.#queue.then(fn);
@@ -37,6 +40,25 @@ export class StarfareWorld extends DurableObject {
     await this.ctx.storage.put("world", w);
     const due = capDueMs(w), gone = w.active_ms + KEEP_MS;
     await this.ctx.storage.setAlarm(due == null ? gone : Math.min(due, gone));
+    for (const seat of SEATS) if (inboxCount(w, seat) > 0) for (const wake of [...(this.#waiters.get(seat) || [])]) wake();
+  }
+
+  /** Resolves when a save puts something in seat's inbox, or after ms. */
+  #hold(seat, ms) {
+    return new Promise((resolve) => {
+      const set = this.#waiters.get(seat) || new Set(), wake = () => { clearTimeout(timer); set.delete(wake); resolve(); };
+      const timer = setTimeout(wake, ms);
+      set.add(wake);
+      this.#waiters.set(seat, set);
+    });
+  }
+
+  /** The world and the seat a code names, or { error } when the code is not this world's. */
+  async #seatOf(code) {
+    const c = parseCode(code), w = await this.#world();
+    if (!c || !w || c.world_id !== w.world_id || w.seats[c.seat].code_hash !== (await codeHash(c.secret)))
+      return { error: "That seat code is not valid. Ask the player for the code their world's page shows for your seat." };
+    return { w, seat: c.seat };
   }
 
   async #guard(fn) {
@@ -78,39 +100,75 @@ export class StarfareWorld extends DurableObject {
     }));
   }
 
-  /** Every sandbox tool call from an agent: the seat's code is checked, then the tool against the seat's role. join is the
-   *  one tool built so far (plan step 4); the executor's and dispatchers' tools come in steps 5 and 6. */
-  seat(code, tool, input = {}) {
+  /** Every sandbox tool call from an agent: the seat's code is checked, then the tool against the seat's role. Every answer
+   *  carries inbox, the count of events waiting for the seat's next wait. */
+  async seat(code, tool, input = {}) {
+    if (tool === "wait") return this.#wait(code, input);
     return this.#serial(() => this.#guard(async () => {
-      const c = parseCode(code), w = await this.#world();
-      if (!c || !w || c.world_id !== w.world_id || w.seats[c.seat].code_hash !== (await codeHash(c.secret)))
-        return { error: "That seat code is not valid. Ask the player for the code their world's page shows for your seat." };
-      const refused = scopeRefusal(w, c.seat, tool);
+      const at = await this.#seatOf(code);
+      if (at.error) return at;
+      const { w, seat } = at, refused = scopeRefusal(w, seat, tool);
       if (refused) return { error: refused };
-      const E = await engine(), now = Date.now(), seat = c.seat;
-      // Tools that change the world save it; the rest only read.
-      const saved = async (r) => { await this.#save(w); return r; };
-      switch (tool) {
-        case "join":
-          joinSeat(w, seat, now, input.agent || null);
-          return saved(seatBrief(E, w, seat, now));
-        case "company": return worldView(E, w, now);
-        case "market": return marketPage(E, w, input);
-        case "assign": {
-          const desk = String(input.desk || "").toUpperCase();
-          if (!Object.hasOwn(w.desks, desk)) return { error: "desk must be one of " + Object.keys(w.desks).map((d) => d + " (" + w.desks[d].name + ")").join(", ") };
-          const h = await this.#take(E, w, input.hail_id, now, desk);
-          return { assigned: h.job_id, desk: desk + " (" + w.desks[desk].name + ")", hail: h };
-        }
-        case "decline": return saved(declineHail(E, w, input.hail_id, now));
-        case "transfer_ship": return saved(transferShip(E, w, input.car, String(input.desk || "").toUpperCase(), now));
-        case "reports": return reportsView(E, w);
-        case "queue": return queueView(E, w, seat, now);
-        case "report": return saved(addReport(w, seat, input.text, input.job_id ?? null, now));
-        default:
-          if (RUN_TOOL_NAMES.includes(tool)) return this.#act(E, w, input.job_id, tool, input, now, seat);
+      const E = await engine(), now = Date.now();
+      busySeat(w, seat);
+      const r = await this.#tool(E, w, seat, tool, input, now);
+      await this.#save(w);
+      return r && typeof r === "object" && !Array.isArray(r) ? { ...r, inbox: inboxCount(w, seat) } : r;
+    }));
+  }
+
+  async #tool(E, w, seat, tool, input, now) {
+    switch (tool) {
+      case "join":
+        joinSeat(w, seat, now, input.agent || null);
+        return seatBrief(E, w, seat, now);
+      case "company": return worldView(E, w, now);
+      case "market": return marketPage(E, w, input);
+      case "assign": {
+        const desk = String(input.desk || "").toUpperCase();
+        if (!Object.hasOwn(w.desks, desk)) return { error: "desk must be one of " + Object.keys(w.desks).map((d) => d + " (" + w.desks[d].name + ")").join(", ") };
+        const h = await this.#take(E, w, input.hail_id, now, desk);
+        post(w, [desk], { kind: "assigned", at_ms: now, job_id: h.job_id, hail_id: h.hail_id, title: h.title, pickup_at: h.pickup_at, destination: h.destination,
+          rider_ready: h.rider_ready, arrive_by: h.arrive_by });
+        return { assigned: h.job_id, desk: desk + " (" + w.desks[desk].name + ")", hail: h };
       }
-      return { error: tool + " is not built yet in this sandbox." };
+      case "decline": return declineHail(E, w, input.hail_id, now);
+      case "transfer_ship": return transferShip(E, w, input.car, String(input.desk || "").toUpperCase(), now);
+      case "reports": return reportsView(E, w);
+      case "queue": return queueView(E, w, seat, now);
+      case "report": return addReport(w, seat, input.text, input.job_id ?? null, now);
+      case "message": return sendMessage(w, seat, input.to, input.text, now);
+      default:
+        if (RUN_TOOL_NAMES.includes(tool)) return this.#act(E, w, input.job_id, tool, input, now, seat);
+    }
+    return { error: tool + " is not built yet in this sandbox." };
+  }
+
+  /** wait: the seat is done for this tick (the last joined seat to wait runs it). Its inbox comes back at once when it holds
+   *  anything; otherwise the call holds up to seconds (WAIT_MAX_S at most) for a tick, a job, a landing or a message. */
+  async #wait(code, input) {
+    const secs = Math.max(0, Math.min(WAIT_MAX_S, input.seconds == null || !isFinite(Number(input.seconds)) ? WAIT_MAX_S : Number(input.seconds)));
+    const t0 = Date.now();
+    let held = null;
+    const first = await this.#serial(() => this.#guard(async () => {
+      const at = await this.#seatOf(code);
+      if (at.error) return at;
+      const { w, seat } = at;
+      if (w.seats[seat].joined_ms == null) return { error: "join first with this code; then wait." };
+      if (!w.clock.done) waitSeat(w, seat, Date.now());
+      await this.#save(w);
+      // Registered inside the queue, so an event saved right after this cannot slip past the hold.
+      if (inboxCount(w, seat) === 0 && secs > 0 && !w.clock.done) held = this.#hold(seat, secs * 1000);
+      return { seat };
+    }));
+    if (first.error) return first;
+    if (held) await held;
+    return this.#serial(() => this.#guard(async () => {
+      const w = await this.#world();
+      if (!w) return { error: "unknown world" };
+      const E = await engine(), now = Date.now(), events = takeInbox(E, w, first.seat);
+      await this.#save(w);
+      return { ...waitView(E, w, first.seat, events, now - t0, now), inbox: 0 };
     }));
   }
 

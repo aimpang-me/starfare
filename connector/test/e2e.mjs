@@ -33,7 +33,7 @@ const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
 const META = JSON.parse(readFileSync(new URL("../src/engine/meta.json", import.meta.url), "utf8"));
 const BENCH_KEY = "e2e-bench-key-0123456789abcdef01"; // a throwaway key for wrangler dev; the live one is a Wrangler secret
-const SANDBOX_SEAT_TOOLS = ["join", "company", "market", "assign", "decline", "transfer_ship", "reports", "queue", "report"];
+const SANDBOX_SEAT_TOOLS = ["join", "company", "market", "assign", "decline", "transfer_ship", "reports", "queue", "report", "wait", "message"];
 const TOOLS = ["check_in", "check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_leg", "plan_pickup", "plan_ride", "space_weather", "start_bench", "take_hail"];
 
 const results = [];
@@ -811,6 +811,31 @@ async function phaseOff() {
     const r = await ok(client, "report", { code: D1, text: "j1 is planned next tick.", job_id: "j1" });
     assert.equal(r.ok, true);
     assert.deepEqual((await ok(client, "reports", { code: EX })).reports.map((x) => x.text), ["j1 is planned next tick."]);
+  });
+
+  await check("sandbox inbox: wait returns a message or a new job at once, a held wait wakes on a message, and the last seat's wait runs the tick", async () => {
+    const v = await (await fetch(`${w.base}/world/new`, { method: "POST" })).json(), { EX, D1 } = v.codes;
+    const notJoined = await call(client, "wait", { code: D1, seconds: 1 });
+    assert.equal(notJoined.isError, true); assert.match(notJoined.value, /join first/);
+    await ok(client, "join", { code: EX });
+    await ok(client, "join", { code: D1 });
+    const m = await ok(client, "market", { code: EX, kind: "quick", limit: 50 });
+    const a = await ok(client, "assign", { code: EX, hail_id: m.hails.find((h) => h.region === "inner").hail_id, desk: "D1" });
+    const got = await ok(client, "wait", { code: D1, seconds: 10 });
+    assert.deepEqual(got.events.map((e) => [e.kind, e.job_id]), [["assigned", a.assigned]]);
+    assert.ok(got.waited_s < 5, "a full inbox comes back at once");
+    await ok(client, "queue", { code: D1 });
+    const t0 = Date.now(), held = ok(client, "wait", { code: D1, seconds: 20 });
+    await new Promise((r) => setTimeout(r, 500));
+    assert.deepEqual((await ok(client, "message", { code: EX, to: "D1", text: "Take j1 first." })).sent_to, ["D1"]);
+    const woke = await held;
+    assert.deepEqual(woke.events.map((e) => [e.kind, e.from, e.text]), [["message", "EX", "Take j1 first."]]);
+    assert.ok(Date.now() - t0 < 15000, "the message woke the held wait");
+    // D1 is waiting, so the executor's wait is the last one: the tick runs and comes back to it.
+    const t = await ok(client, "wait", { code: EX, seconds: 10 });
+    assert.deepEqual(t.events.map((e) => [e.kind, e.tick]), [["tick", 1]]);
+    assert.equal(t.clock.tick, 1);
+    assert.equal((await ok(client, "queue", { code: D1 })).inbox, 1, "D1's next wait has the tick");
   });
 
   await check("sandbox world: an unknown world_id is 404, a malformed path is 404, and the wrong method is 405", async () => {

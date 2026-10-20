@@ -384,7 +384,7 @@ test("StarfareWorld: three codes once at creation, join with a code, forged code
   for (const bad of [W.seatCode(ID, "D2", d1.secret), W.seatCode("w_fedcba98765432100123", "D2", d2.secret), "nonsense"])
     assert.match((await obj.seat(bad, "join")).error, /seat code is not valid/, bad);
   assert.match((await obj.seat(made.codes.D1, "assign")).error, /executor's tool/);
-  assert.match((await obj.seat(made.codes.EX, "message")).error, /not built yet/);
+  assert.match((await obj.seat(made.codes.EX, "message", { to: "D1" })).error, /a message needs text/);
 });
 
 // ---- the executor's and dispatchers' tools (plan step 5) ----
@@ -451,5 +451,78 @@ test("StarfareWorld: the executor assigns a job to a desk and its dispatcher fli
   assert.equal(all.jobs[0].total, d.total);
   assert.equal((await obj.seat(EX, "decline", { hail_id: "w0123456789ab-2" })).status, "declined");
   assert.equal((await obj.seat(EX, "reports")).counts.declined, 1);
-  assert.match((await obj.seat(EX, "wait")).error, /not built yet/);
+  assert.match((await obj.seat(EX, "wait")).error, /join first/);
+});
+
+// ---- the inbox, wait and message (plan step 6) ----
+test("the inbox: ticks to joined seats (the newest only), landings to the desk and the executor, messages, reports and ship moves", () => {
+  const w = fresh();
+  W.joinSeat(w, "EX", T0);
+  W.joinSeat(w, "D2", T0);
+  W.waitSeat(w, "EX", T0 + 1);
+  W.waitSeat(w, "D2", T0 + 2);
+  assert.deepEqual(w.inbox.EX.map((e) => [e.kind, e.tick, e.why]), [["tick", 1, "every seat waited"]]);
+  assert.equal(W.inboxCount(w, "D1"), 0, "D1 never joined, so it gets no ticks");
+  W.capTick(w, T0 + 1e9);
+  assert.deepEqual(w.inbox.D2.map((e) => [e.kind, e.tick]), [["tick", 2]], "an unread tick is replaced by the newer one");
+  // A job that arrived (its ride scored) lands in the world's time when a tick passes its landing.
+  w.jobs.j1 = { job_id: "j1", phase: "arrived", car: "sf-07", desk: "D2", total: 81000, lands_jd: w.clock.jd + 0.5 };
+  w.ships["sf-07"] = { at: "saturn", free_jd: w.clock.jd + 0.5 };
+  assert.equal(W.worldView(E, w, T0).jobs[0].landed, false);
+  W.capTick(w, T0 + 2e9);
+  assert.deepEqual(w.inbox.D2.map((e) => e.kind), ["tick", "landed"]);
+  assert.deepEqual(w.inbox.EX.at(-1), { kind: "landed", tick: 3, sky: isoJD(SKY.jd0 + 3), at_ms: T0 + 2e9, job_id: "j1", car: "sf-07", at: "saturn", total: 81000 });
+  assert.deepEqual([W.worldView(E, w, T0).jobs[0].landed, W.worldView(E, w, T0).jobs[0].lands_jd], [true, undefined], "views say landed, not the raw jd");
+  W.capTick(w, T0 + 3e9);
+  assert.equal(w.inbox.D2.filter((e) => e.kind === "landed").length, 1, "a landing is posted once");
+  assert.throws(() => W.sendMessage(w, "D2", "D2", "hi", T0), /your own seat/);
+  assert.throws(() => W.sendMessage(w, "D2", "D5", "hi", T0), /to must be EX, D1, D2 or all/);
+  assert.deepEqual(W.sendMessage(w, "EX", "all", "  Titan first.  ", T0).sent_to, ["D1", "D2"]);
+  W.addReport(w, "D2", "j1 landed.", "j1", T0);
+  W.transferShip(E, w, "sf-05", "D1", T0);
+  assert.deepEqual(w.inbox.D1.map((e) => e.kind), ["message", "ship_joined"]);
+  assert.deepEqual(w.inbox.EX.slice(-1).map((e) => [e.kind, e.from, e.text]), [["report", "D2", "j1 landed."]]);
+  assert.equal(w.messages.at(-1).text, "Titan first.");
+  const got = W.takeInbox(E, w, "D2");
+  assert.deepEqual(got.map((e) => [e.kind, e.tick]), [["landed", 3], ["tick", 4], ["message", 4], ["ship_left", 4]], "the newer tick moved to the end");
+  assert.deepEqual([got[0].ship, got[0].at.name, got[3].to], [E.R.CAR["sf-07"].name, "Saturn", "D1 (Inner desk)"]);
+  assert.equal(W.inboxCount(w, "D2"), 0, "taking the inbox empties it");
+  W.waitSeat(w, "D2", T0);
+  assert.equal(w.seats.D2.waiting, true);
+  W.busySeat(w, "D2");
+  assert.equal(w.seats.D2.waiting, false, "any other call puts the seat back to work");
+});
+
+test("StarfareWorld: wait returns the inbox at once, holds until a message or tick wakes it, and gives up after its seconds", async () => {
+  const { obj } = worldDO({ WORLD_TICK_CAP_S: "60" });
+  const { codes } = await obj.create(ID);
+  const EX = codes.EX, D2 = codes.D2;
+  await obj.seat(EX, "join");
+  assert.equal((await obj.seat(D2, "join")).inbox, 0);
+  const a = await obj.seat(EX, "assign", { hail_id: "w0123456789ab-0", desk: "D2" });
+  assert.equal(a.inbox, 0);
+  assert.equal((await obj.seat(D2, "queue")).inbox, 1, "every result counts what the next wait returns");
+  const w1 = await obj.seat(D2, "wait", { seconds: 5 });
+  assert.deepEqual(w1.events.map((e) => [e.kind, e.job_id, e.title]), [["assigned", "j1", a.hail.title]]);
+  assert.ok(w1.waited_s < 1, "an inbox with something in it comes back at once");
+  assert.deepEqual(w1.seats.map((s) => [s.seat, s.waiting]), [["EX", false], ["D1", false], ["D2", true]]);
+  // D2 is waiting; the executor's wait is the last one, so the tick runs and both get it.
+  const t = await obj.seat(EX, "wait", { seconds: 5 });
+  assert.deepEqual(t.events.map((e) => [e.kind, e.tick]), [["tick", 1]]);
+  assert.equal(t.clock.tick, 1);
+  // A held wait: D2's inbox has the tick, so it reads that first; its next wait holds until the executor's message.
+  assert.deepEqual((await obj.seat(D2, "wait", { seconds: 5 })).events.map((e) => e.kind), ["tick"]);
+  const started = Date.now(), held = obj.seat(D2, "wait", { seconds: 5 });
+  await new Promise((r) => setTimeout(r, 150));
+  const sent = await obj.seat(EX, "message", { to: "D2", text: "Fly j1 on SF-07." });
+  assert.deepEqual(sent.sent_to, ["D2"]);
+  const woke = await held;
+  assert.deepEqual(woke.events.map((e) => [e.kind, e.from, e.text]), [["message", "EX", "Fly j1 on SF-07."]]);
+  assert.ok(Date.now() - started < 3000, "the message woke the wait before its 5 s ran out");
+  // D2 goes back to work, so the executor's wait runs no tick: with nothing for it, the wait gives up after its seconds.
+  await obj.seat(D2, "queue");
+  const t1 = Date.now(), empty = await obj.seat(EX, "wait", { seconds: 0.3 });
+  assert.deepEqual([empty.events, empty.clock.tick], [[], 1]);
+  assert.ok(Date.now() - t1 >= 280);
+  assert.match(empty.note, /^Nothing new yet/);
 });
