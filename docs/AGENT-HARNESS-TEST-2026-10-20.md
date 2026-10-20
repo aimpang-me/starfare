@@ -45,5 +45,5 @@ The agent was Claude Code in headless mode (`claude -p`), restricted to the `sta
 ## Checks
 
 - Unit tests (`node --test test/*.test.mjs`): 278 of 290 pass. The 12 failures are the planet-effects tests that fetch three.js from a CDN this container cannot reach; main fails the same 12 here. `test/agent-log.test.mjs` is new (log wording, bench mapping, agent name cleaning, `list_hails` paging and the season clock). The shared-dispatch escaping test now checks `AgentLog`.
-- Local Worker checks (`test/e2e.mjs`): the full-pool calls now pass `limit: 200`.
+- Local Worker checks (`test/e2e.mjs`): the full-pool calls now pass `limit: 200`. 43 of 43 passed earlier on 20 October; later the same day 42 of 43 pass on this branch and on main alike. The failing check re-dispatches a pool hail later in sky time and the engine refuses the leg with "RTG class xenon tank holds 1085 kg and this leg needs 1230.4 kg", the same unflyable-hail bug listed above.
 - Captures: desktop 1440x900 and phone 390x844 in `docs/agent-harness/2026-10-20/`, from the real pages on local `wrangler dev`, labelled simulated. three.js r128 was served from npm because the container cannot reach cdnjs or jsdelivr.
