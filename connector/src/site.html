@@ -298,13 +298,13 @@ button.lbl:hover{color:var(--ink)}
 .feed{list-style:none;margin:8px 0 0;padding:0;height:170px;overflow:auto;font:500 11px/1.45 var(--mono);color:var(--ink-2)}
 .feed li{padding:3px 0;border-bottom:1px solid rgba(120,180,255,.06);animation:fin .35s ease-out}
 .feed.agentfeed{height:auto}
-.agentfeed:not(:empty){margin-bottom:12px;padding-bottom:4px;border-bottom:1px solid var(--line-2)}
-.agentfeed:not(:empty)::before{content:"Agent actions \00B7 newest first";display:block;font:600 10px Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--me);margin:2px 0 6px}
-.feed li.k-agent{border-left:2px solid var(--me);padding-left:8px}.feed li.k-agent.t-error{border-left-color:var(--bad)}
-.feed .ag-act{font-weight:600;color:var(--ink)}.feed q{display:block;font-style:italic;color:var(--ink);margin-top:3px;quotes:"\201C" "\201D"}
-.feed .ag-go{color:var(--ride);font-size:11px;white-space:nowrap}
-.ilast{margin-top:10px;padding:8px 10px;border:1px solid var(--line);border-left:2px solid var(--me);border-radius:4px;font-size:12px;color:var(--ink-2)}
-.ilast b{color:var(--ink)}.ilast q{display:block;font-style:italic;color:var(--ink);margin:3px 0;quotes:"\201C" "\201D"}.ilast .dim{display:block;font-size:10.5px}
+.agentfeed:not(:empty){margin-bottom:12px;border-bottom:1px solid var(--line-2)}
+/* agent actions are message style B rows (/assets/message-b.css): time, a worded chip, the words; no coloured strips */
+.agentfeed:not(:empty)::before{content:"Agent actions \00B7  newest first";display:block;padding:6px 4px;font:400 11px/1.4 Inter,system-ui,sans-serif;color:#96a4b3;background:#080c11;border-bottom:1px solid #161e27}
+.feed li.mb{padding:10px 4px;border-bottom:1px solid #161e27;font:400 13px/1.45 Inter,system-ui,sans-serif;color:#edf1f5}
+.feed .mb-s a{color:#9cc3df;white-space:nowrap}
+.ilast{margin-top:10px;border:1px solid #26323e;border-radius:4px;overflow:hidden}
+.ilast .mb-head{padding:6px 10px}.ilast .mb{padding:10px;border-bottom:0}
 .feed .tm{color:var(--ink-3);margin-right:6px}
 .feed b{color:var(--cy);font-weight:600;margin-right:6px}
 .feed .k-checkpoint b{color:var(--me)}.feed .k-incident b,.feed .k-alert b{color:var(--sun)}.feed .k-clear b{color:var(--ok)}
@@ -440,6 +440,7 @@ p{text-wrap:pretty}
 @media (pointer:coarse){.popm label{min-height:44px}}
 </style>
 <link rel="stylesheet" href="/assets/mission-control.css">
+<link rel="stylesheet" href="/assets/message-b.css">
 <body class="mc-home">
 <a class="skip-link" href="#tabB">Skip to bookings</a>
 
@@ -1085,8 +1086,8 @@ function lastAgent(F) {
   var tr = (F.f.trail || []).filter(function (t) { return t.tool !== "check_pad" && t.tool !== "space_weather"; }), t = tr[tr.length - 1];
   if (!t || !window.AgentLog) return "";
   var L = AgentLog.line(t, SF.name), by = AgentLog.agentName(F.f.trail);
-  return '<div class="ilast"><div class="caps">Agent' + (by ? " · " + esc(by) : "") + ' · last action</div><b>' + W(L.act) + "</b> " + W(L.text) + (L.why ? "<q>" + esc(L.why) + "</q>" : "") +
-    '<span class="dim">' + esc(new Date(t.at_ms).toLocaleTimeString()) + " your time · " + F.f.trail.length + " tool calls</span></div>";
+  return '<div class="ilast"><div class="mb-head">Agent' + (by ? " · " + esc(by) + " (self-reported)" : "") + " · last action</div>" +
+    AgentLog.row(L, { tag: "div", ms: t.at_ms, words: shipWords, sub: '<span class="mb-s">' + F.f.trail.length + " tool calls</span>" }) + "</div>";
 }
 function etaOf(F, jd) { var a = F.rp.legs[F.rp.legs.length - 1].arr; return F.f.hold ? jd >= a ? "awaiting agent" : SF.dur(a - jd) + " to checkpoint" : jd >= a ? "arrived" : SF.dur(a - jd); }
 function arrOf(F) { return F.f.hold ? "Pending agent decision" : iso(F.rp.legs[F.rp.legs.length - 1].arr); }
@@ -2328,6 +2329,10 @@ function renderAlerts() {
 // one bin per real second for the last minute, counting feed lines by kind: flight, checkpoint, hazard, clear
 var BINS = [], BIN0 = 0, WVK = { checkpoint: 1, incident: 2, alert: 2, clear: 3 }, WVC = ["#5cc8ff", "#ffcf7a", "#ffb65c", "#6fe0a8"];
 for (var bi = 0; bi < 60; bi++) BINS.push([0, 0, 0, 0]);
+// The line under an agent row: which ship, who flew it (self-reported) and the flight page.
+function agentSub(o) {
+  return '<span class="mb-s">' + esc(o.who) + (o.by ? " · " + esc(o.by) : "") + (o.run_id ? ' · <a href="/flight/' + encodeURIComponent(o.run_id) + '">Watch</a>' : "") + "</span>";
+}
 function pushFeed(o) {
   if (o.kind === "plan" || o.source === "preview" || o.who === "DESK") return;
   var ul = $("#feed"); if (!ul) return;
@@ -2336,10 +2341,12 @@ function pushFeed(o) {
   if (o.agent && window.AgentLog) {
     // An agent's tool call, in words: what it did, the details from the tool result, its own note on why, and when (your clock).
     var L = AgentLog.line(o.agent, SF.name);
-    li.className = "k-agent t-" + L.tone;
-    li.innerHTML = '<span class="tm">' + esc(new Date(o.agent.at_ms).toLocaleTimeString()) + ' your time · Agent' + (o.by ? ' ' + esc(o.by) : '') + "</span><b>" + esc(o.who) + "</b>" +
-      '<span class="ag-act">' + W(L.act) + "</span>" + (L.text ? " " + W(L.text) : "") + (L.why ? '<q>' + esc(L.why) + "</q>" : "") +
-      (o.run_id ? ' <a class="ag-go" href="/flight/' + encodeURIComponent(o.run_id) + '">Watch</a>' : "");
+    li.className = "mb k-agent t-" + L.tone;
+    li.innerHTML = AgentLog.row(L, { inner: true, ms: o.agent.at_ms, words: shipWords, sub: agentSub(o) });
+  } else if (o.source === "agent" && o.kind === "checkpoint") {
+    // A flight held at a checkpoint, waiting on its agent.
+    li.className = "mb k-agent";
+    li.innerHTML = '<span class="mb-t">' + esc(AgentLog.clock(Date.now())) + '</span><span class="mb-c checkpoint">Checkpoint</span><span class="mb-x"><span class="mb-a">' + W(o.txt) + "</span>" + agentSub(o) + "</span>";
   } else li.innerHTML = '<span class="tm">' + iso(o.jd) + ' · ' + (li.dataset.source === 'agent' ? 'Agent' : 'Simulation') + "</span><b>" + esc(o.who) + "</b>" + W(o.txt) +
     (o.run_id ? ' <a class="ag-go" href="/flight/' + encodeURIComponent(o.run_id) + '">Watch</a>' : "");
   // Agent actions get their own list above the sky feed: simulation lines arrive every sky day and would push them out.

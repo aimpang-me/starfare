@@ -198,22 +198,11 @@ button.lbl:hover{color:var(--ink)}
 .ptabs button{flex:1;min-height:44px;background:none;border:0;border-bottom:2px solid transparent;color:var(--ink-2);font:600 12.5px Inter,sans-serif;letter-spacing:.04em;cursor:pointer;padding:0 10px}
 .ptabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--me)}
 .ptabs .cnt{font:500 11px var(--mono);color:var(--ink-3);margin-left:4px}
-.await{border:1px solid var(--me);border-left-width:3px;border-radius:4px;padding:9px 11px;margin:0 0 10px;background:rgba(255,207,122,.08);font-size:12.5px;color:var(--ink-2)}
-.await b{display:block;color:var(--me);font-size:13px;margin-bottom:2px}
-.alog{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:al}
-.alog li{position:relative;padding:8px 10px 9px 34px;border:1px solid var(--line);border-left:3px solid var(--line-2);border-radius:4px;background:rgba(0,0,0,.18);font-size:12.5px;color:var(--ink-2)}
-.alog li::before{counter-increment:al;content:counter(al);position:absolute;left:9px;top:9px;font:500 10.5px var(--mono);color:var(--ink-3)}
-.alog li.t-plan{border-left-color:var(--ride)}.alog li.t-check{border-left-color:var(--sim)}.alog li.t-dispatch{border-left-color:var(--ok)}
-.alog li.t-decide{border-left-color:var(--me)}.alog li.t-take{border-left-color:var(--ink-2)}.alog li.t-error{border-left-color:var(--bad)}
-.alog li.now{background:rgba(255,207,122,.07);border-color:var(--me)}
-.alog li[data-jd]{cursor:pointer}.alog li[data-jd]:hover{border-color:var(--line-2)}
-.alog .act{display:block;font-weight:600;font-size:13px;color:var(--ink)}
-.alog li.t-error .act{color:var(--bad)}
-.alog .tx{display:block;overflow-wrap:anywhere}
-.alog q{display:block;font-size:12.5px;font-style:italic;color:var(--ink);border-left:2px solid var(--ok);padding-left:8px;margin-top:5px;quotes:"\201C" "\201D"}
-.alog q::before{content:"Why: " open-quote;font-style:normal;color:var(--ok)}
-.alog .tm{display:flex;flex-wrap:wrap;gap:2px 8px;margin-top:4px;font:500 10.5px/1.4 var(--mono);color:var(--ink-3)}
-.alog .tm code{color:var(--ink-3);font:inherit}
+/* agent log rows are message style B (/assets/message-b.css): time, a worded chip, the words; no coloured strips */
+.await{margin:0 0 10px;border:1px solid #26323e;border-radius:4px;overflow:hidden}
+.await .mb{border-bottom:0}
+.alog{border-top:1px solid #161e27}
+.alog .mb{padding-left:4px;padding-right:4px}
 .lv-st{font:500 13px var(--mono);color:var(--ink)}
 @media (max-width:560px){.tl button{grid-template-columns:minmax(0,1fr)}.tl .tm{grid-row:auto}}
 
@@ -280,6 +269,7 @@ footer p{margin:0;max-width:100ch}
 #loading .box a{color:var(--ride)}
 </style>
 <link rel="stylesheet" href="/assets/mission-control.css">
+<link rel="stylesheet" href="/assets/message-b.css">
 </head>
 <body class="mc-flight">
 <header class="nav">
@@ -340,7 +330,7 @@ footer p{margin:0;max-width:100ch}
       <div class="pb" id="agentPane" role="tabpanel" aria-labelledby="tabAgent">
         <p class="sub" id="agentWho">What the agent did on this flight, oldest first: each tool call, when it made it and, where it left one, its own note on why.</p>
         <div class="await" id="agentWait" role="status" hidden></div>
-        <ol class="alog" id="alog" aria-live="polite"></ol>
+        <ol class="alog mb-list" id="alog" aria-live="polite"></ol>
         <p class="note" id="agentEmpty" hidden>No agent tool calls are recorded for this flight.</p>
         <p class="note" style="margin-top:10px">Numbers are copied from the tool results. <span class="tag sim">Simulated</span></p>
       </div>
@@ -1368,15 +1358,16 @@ function renderAgentLog() {
   var w = $("#agentWait");
   w.hidden = !hd;
   if (hd && $(".plist")) $(".plist").scrollTop = 0;
-  if (hd) w.innerHTML = "<b>Waiting for " + esc(agentWho()) + "</b>Checkpoint " + esc(hd.n) + ": " + esc(String(hd.kind).replace("_", " ")) + " at " + esc(hd.place_name) + " (" + esc(String(hd.cause).replace("_", " ")) +
-    ") since " + esc(hd.at) + " sky time. The flight is stopped until the agent answers with <code>decide</code>.";
+  if (hd) w.innerHTML = '<div class="mb"><span class="mb-t">Now</span><span class="mb-c checkpoint">Checkpoint</span><span class="mb-x"><span class="mb-a">Waiting for ' + esc(agentWho()) + "</span>" +
+    '<span class="mb-s">The flight is stopped until the agent answers with <code>decide</code>.</span></span>' +
+    '<dl class="mb-b"><dt>Stop</dt><dd>Checkpoint ' + esc(hd.n) + ": " + esc(String(hd.kind).replace(/_/g, " ")) + "</dd><dt>Place</dt><dd>" + esc(hd.place_name) + "</dd>" +
+    "<dt>Cause</dt><dd>" + esc(String(hd.cause).replace(/_/g, " ")) + "</dd><dt>Since</dt><dd>" + esc(hd.at) + " sky</dd></dl></div>";
   RS.alj = [];
   $("#alog").innerHTML = tr.map(function (t, i) {
     var L = AgentLog.line(t, SF.name), j = agentJd(t, rp);
     RS.alj.push(j);
-    return '<li class="t-' + L.tone + '"' + (j != null ? ' data-jd="' + j + '" title="Jump the replay here"' : "") + ' data-i="' + i + '"><span class="act">' + esc(shipWords(L.act)) + "</span>" +
-      (L.text ? '<span class="tx">' + esc(shipWords(L.text)) + "</span>" : "") + (L.why ? "<q>" + esc(L.why) + "</q>" : "") +
-      '<span class="tm"><code>' + esc(t.tool) + "</code><span>" + esc(new Date(t.at_ms).toLocaleTimeString()) + " your time</span>" + (L.at ? "<span>about sky " + esc(L.at) + "</span>" : "") + "</span></li>";
+    return AgentLog.row(L, { ms: t.at_ms, words: shipWords, attrs: (j != null ? 'data-jd="' + j + '" title="Jump the replay here" ' : "") + 'data-i="' + i + '"',
+      sub: '<span class="mb-s">Step ' + (i + 1) + " · <code>" + esc(t.tool) + "</code>" + (L.at ? " · about sky " + esc(L.at) : "") + "</span>" });
   }).join("");
   $$("#alog li[data-jd]").forEach(function (li) {
     li.addEventListener("click", function () {

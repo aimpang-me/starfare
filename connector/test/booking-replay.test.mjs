@@ -149,10 +149,12 @@ test("shared dispatch feed shows each booking's quote and escapes agent-controll
   assert.match(L.text, /a<script>: fare \$20/);
   assert.match(L.text, /b: fare \$30, promised 2030-01-02 00:00/);
   assert.equal(L.why, "why <b>");
-  // The flight page escapes every word of it before it reaches the page.
-  assert.match(source, /esc\(shipWords\(L\.act\)\)/);
-  assert.match(source, /esc\(shipWords\(L\.text\)\)/);
-  assert.match(source, /"<q>" \+ esc\(L\.why\)/);
+  // The flight page renders it with AgentLog.row, which escapes every word of it before it reaches the page.
+  assert.match(source, /AgentLog\.row\(L, \{ ms: t\.at_ms, words: shipWords/);
+  const row = AgentLog.row(L);
+  assert.match(row, /a&lt;script&gt;: fare/);
+  assert.match(row, /Why: <q>why &lt;b&gt;<\/q>/);
+  assert.doesNotMatch(row, /<script>|<b>/);
 });
 
 test("recorded time conflicts are detected without retiming the flight", () => {
