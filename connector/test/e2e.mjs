@@ -462,7 +462,8 @@ async function phaseOff() {
   await check("a wrong quote (fare and an arrival years early) drops the fare and the promise; a fare $5 off drops the fare a little; both match Node", async () => {
     const wrong = noteBest(await playHail(client, "iss-crew", undefined, { quote: { quoted_fare_usd: 1, quoted_arrival: "2020-01-01 00:00" } }));
     const got = (sc, k) => sc.parts.find((p) => p.key === k).got;
-    assert.ok(got(wrong.score, "fare") < 250, got(wrong.score, "fare"));
+    const fareTop = wrong.score.parts.find((p) => p.key === "fare").max * R.SCORE_HEADROOM;
+    assert.ok(got(wrong.score, "fare") < fareTop / 5, got(wrong.score, "fare"));
     assert.ok(got(wrong.score, "promise") < 1, got(wrong.score, "promise"));
     assert.equal(wrong.score.promised_arrival, "2020-01-01 00:00"); assert.ok(wrong.score.promise_slip_hours > 24 * 365);
     assertMatchesNode(wrong, 2, { fare_usd: 1, arrival: "2020-01-01 00:00" });
