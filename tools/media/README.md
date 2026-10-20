@@ -10,6 +10,12 @@ node capture.mjs --page / --sizes og --video 5
 node capture.mjs --base http://127.0.0.1:8796 --page /bench --sizes phone
 ```
 
+`check-layout.mjs` checks the home map against a Worker you already started (`npm run dev` in `connector/`): at phone, small-phone and desktop sizes the time readout, planet dock and map controls must not overlap (on phones with the bookings sheet open and folded), and the map clock must run at the live sky's pace with the readout saying "Live sky". It exits 1 on any failure.
+
+```powershell
+node check-layout.mjs http://127.0.0.1:8787
+```
+
 The default starts a loopback Worker with temporary local storage and OAuth off. `--base` uses an existing service, which remains owned by whoever started it. Never point captures at a live service without permission. Output and the provenance/error manifest go under ignored `out/`; inspect both before sharing media. No posting or publication is performed.
 
 Owned Worker cleanup runs on startup failure, browser-launch failure, capture failure and normal completion, even if browser closing fails. It uses the shared Windows/POSIX process-tree helper and retries temporary-storage removal asynchronously. A storage-removal warning retains the exact directory for later inspection. SIGINT/SIGTERM request owned Worker cleanup; forced operating-system termination cannot run cleanup handlers. Verify process and port exit after interrupted runs.
