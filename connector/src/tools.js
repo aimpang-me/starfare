@@ -2,6 +2,7 @@
 // The hosted connector's backend forwards to Durable Objects (mcp.js); a Node harness can supply its own in-process one.
 // A backend has one method, call(tool, input), which returns the tool's plain data or { error } for a game error.
 import { z } from "zod";
+import { tidyText } from "./display.js";
 
 export const RUN_ID = /^run_[0-9a-f]{20}$/;
 
@@ -27,7 +28,7 @@ export const INSTRUCTIONS =
   "Add a note to dispatch and decide: one or two sentences on why, which the page shows as your own words.\n" +
   "Goal: pick the rider up fast, arrive by arrive_by, use the least battery actually flown, and keep your promise. The quoted arrival is a promise scored against the actual arrival: " +
   "late costs the most (0 at 6 hours late on a quick hail, 1 day on a long haul), early costs a quarter as much. Each plan counts: 6 are free, then each costs a point.\n" +
-  "Hard rules: every number you write must be copied from a tool result or the player's words, dates exactly as given. Never estimate a number. Never dispatch a leg whose refly.result is FAIL. " +
+  "Hard rules: every number you write must be copied from a tool result or the player's words, dates exactly as given; say scores in whole points (round the total and each part to the nearest point). Never estimate a number. Never dispatch a leg whose refly.result is FAIL. " +
   "The one time you choose is the promised arrival: the ride leg's arrive, or a later time you pick as a buffer for a forecast hazard; if you add a buffer, tell the rider it is one and why.\n" +
   "The sky clock runs 1 sky day per real second, so work promptly on long-haul hails. Scores go to the public board at /board on this server, labelled \"planned by Grok bot\".";
 
@@ -39,11 +40,18 @@ const from = skyTime.describe("sky time YYYY-MM-DD HH:MM to start from (default:
 /** Every tool, in the order tools/list shows them. */
 export const TOOLS = {
   list_hails: {
-    description: "Simulated passengers waiting this season: hail id, party size, pickup place, destination, quick or long haul. The five catalog hails stay takeable and are not in this list. Also the fleet of Starseekers. Take one with take_hail.",
-    inputSchema: {},
+    description: "Simulated passengers waiting this season: hail id, party size, pickup place, destination, quick or long haul. The five catalog hails stay takeable and are not in this list. Also the fleet of Starseekers. Take one with take_hail. " +
+      "The pool has hundreds of hails, so this returns 25 at a time: filter with kind, from and to, and page with next_cursor.",
+    inputSchema: {
+      kind: z.enum(["quick", "long haul"]).optional().describe("only quick or only long-haul hails"),
+      from: z.string().min(1).max(64).optional().describe("only hails picking up at this place id or name, e.g. mars-base"),
+      to: z.string().min(1).max(64).optional().describe("only hails going to this place id or name"),
+      limit: z.number().int().min(1).max(200).optional().describe("hails per page, 1-200 (default 25)"),
+      cursor: z.string().max(12).optional().describe("next_cursor from the previous page"),
+    },
   },
   take_hail: {
-    description: "Take a ride hail. Returns a run_id and the terms: where and when the rider is ready, the destination, the arrive_by time, the fleet and the scoring rules. One run per bot: taking a new hail abandons this session's undispatched run, or flies a ride waiting at a checkpoint on to arrive with the default answers (scored). The result's previous_run says which.",
+    description: "Take a ride hail. Returns a run_id and the terms: where and when the rider is ready, the destination, the arrive_by time, the fleet and the scoring rules. One run per bot: taking a new hail abandons this session's undispatched run, or flies a ride waiting at a checkpoint on to arrive with the default answers (scored). The result's previous_run says which. When the player signed in, the result also has follow_url, a page where they follow every booking you take and each call you make on it, live: give it to them right away.",
     inputSchema: { hail_id: z.string().describe("hail id from list_hails, e.g. iss-crew") },
   },
   get_hail: {
@@ -156,7 +164,7 @@ export const TOOLS = {
 };
 
 const answer = (r) => (r && r.error
-  ? { content: [{ type: "text", text: r.error }], isError: true }
+  ? { content: [{ type: "text", text: tidyText(String(r.error)) }], isError: true }
   : { content: [{ type: "text", text: JSON.stringify(r) }] });
 
 /** The hosted connector also runs the bench: start_bench, and the paragraph that tells a bot when to call it. */

@@ -11,6 +11,7 @@ import { EPISODE_PATH } from "./episode.js";
 import { SCORE_VERSION, listHails, poolView, sky } from "./game.js";
 import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
+import agentHtml from "./agent.html";
 import flightHtml from "./flight.html";
 import { methodPage } from "./method.js";
 import siteHtml from "./site.html";
@@ -26,7 +27,7 @@ const isMcpPath = (p) => p === "/mcp" || p.startsWith("/mcp/");
 // The landing page runs the engine in the browser. ?v= changes with every engine build, so that URL can be cached for good.
 const ENGINE_PATH = "/engine.js", ENGINE_V = META.sha256.slice(0, 16);
 const isBenchPath = (p) => p === "/bench" || p.startsWith("/bench/");
-const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p.startsWith("/rides/") || p.startsWith("/flight/") || isBenchPath(p);
+const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p.startsWith("/rides/") || p.startsWith("/flight/") || p.startsWith("/agent/") || isBenchPath(p);
 const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), FLIGHT_PATH = new RegExp("^/flight/(" + RUN_ID.source.slice(1, -1) + ")(\\.json)?$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
 
 function tooMany(limit) {
@@ -55,6 +56,25 @@ async function rides(req, path, env) {
     return file(recs.filter(Boolean).map((r) => JSON.stringify(r) + "\n").join(""), "application/x-ndjson", "starfare-rides.jsonl");
   }
   return new Response("Not found", { status: 404 });
+}
+
+/** The agent page (simulated). /agent/<token>: one signed-in player's newest bookings, each with where it stands and the
+ *  agent's log in words, live; the page polls /agent/<token>.json. The consent page shows the link and take_hail returns it;
+ *  the token is the capability, as the run_id is for /flight. */
+const AGENT_PATH = /^\/agent\/([0-9a-f]{32})(\.json)?$/;
+async function agentPage(req, url, env) {
+  const m = AGENT_PATH.exec(url.pathname);
+  if (!m) return new Response("Not found", { status: 404 });
+  const limit = Number(env.RATE_PER_MIN) || 120;
+  if (!(await hub(env).hit("rides:" + (req.headers.get("cf-connecting-ip") || "unknown"), limit)).ok) return new Response("Too many requests. Try again in a minute.", { status: 429, headers: { "retry-after": "60" } });
+  if (!m[2]) {
+    const places = JSON.stringify(Object.fromEntries((await engine()).PLACES.map((p) => [p.id, p.name]))).replace(/</g, "\\u003c");
+    return new Response(agentHtml.replace("__TOKEN__", m[1]).replace("__PLACES__", () => places), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
+  }
+  const ids = await hub(env).followRuns(m[1]);
+  if (!ids) return Response.json({ error: "unknown follow link" }, { status: 404, headers: { "cache-control": "no-store" } });
+  const runs = (await Promise.all(ids.map((id) => runStub(env, id).follow()))).filter(Boolean);
+  return Response.json({ simulated: true, now_ms: Date.now(), runs }, { headers: { "cache-control": "no-store" } });
 }
 
 /** The bench watch pages. /bench: how to start one from Grok. /bench/<bench_id>: one session's tasks and tool calls, live
@@ -133,6 +153,7 @@ export default {
         .replace("__SITE__", () => JSON.stringify(site).replace(/</g, "\\u003c"));
       return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
     }
+    if (url.pathname.startsWith("/agent/")) return agentPage(req, url, env);
     // Home map flights (simulated), including the newest landed one.
     if (url.pathname === "/live.json") return Response.json({ simulated: true, ...(await hub(env).live()) }, { headers: { "cache-control": "no-store" } });
     const episode = EPISODE_PATH.exec(url.pathname);

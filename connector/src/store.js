@@ -3,7 +3,7 @@
 //           serialized and different players plan in parallel.
 //   StarfareHub: one global instance. Plan+re-fly cache, hail-terms cache (keyed by hail, t0, season end, hazard seed and engine),
 //           best score per hail, per-IP rate limit, and each signed-in player's ride history (an index row and summary per run;
-//           the full log stays in the run's StarfareRun) plus 24-hour export tokens.
+//           the full log stays in the run's StarfareRun) plus 24-hour export tokens and follow tokens (/agent/<token>).
 //           (The best table's key column is still called mission_id; it holds the hail id.)
 // Every RPC method returns plain data; game errors come back as { error } instead of throwing across RPC.
 import { DurableObject } from "cloudflare:workers";
@@ -11,7 +11,7 @@ import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
 import { episodeText } from "./episode.js";
 import {
-  GameError, applyTool, computeLeg, flyLive, hailInfo, leaveRun, legKey, legPub, liveRecord, liveRow, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord,
+  GameError, applyTool, computeLeg, flyLive, followView, hailInfo, leaveRun, legKey, legPub, liveRecord, liveRow, logTake, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord,
   rideStats, rideSummary, resolveHail, restoreRunBookings, seasonInstance, sky,
 } from "./game.js";
 import { liveIdsToDrop } from "./live.js";
@@ -25,6 +25,9 @@ const termsKey = (id, t0, end, seed) => `${id}|${t0}|${end}|s${seed}|e${META.sha
 const RIDES_MAX = 1000; // index rows kept per player, newest first
 const EXPORT_MAX = 500; // newest arrived rides in one export file (each is one RPC to its run)
 const EXPORT_MS = 24 * 3600 * 1000;
+const FOLLOW_RUNS = 10; // newest bookings the agent page shows
+export const FOLLOW_TOKEN = /^[0-9a-f]{32}$/;
+const newToken = () => [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
 /** Where a ride stands for its history row: its phase and the checkpoints answered. Plans and forecasts leave it where it was. */
 const rideMark = (run) => phaseOf(run) + "/" + (run.decisions ? run.decisions.length : 0);
 const LIVE_HELD_MS = 6 * 3600 * 1000; // a flight held at a checkpoint leaves the home map after this long without an answer
@@ -79,7 +82,7 @@ export class StarfareRun extends DurableObject {
     catch (e) { if (e instanceof GameError) return { error: e.message }; throw e; }
   }
 
-  async create(runId, hailId, playerId = null) {
+  async create(runId, hailId, playerId = null, client = null) {
     return this.#serial(() => this.#guard(async () => {
       if (await this.#run()) return { error: "run already exists" };
       const E = await engine(), h = hub(this.env);
@@ -95,6 +98,7 @@ export class StarfareRun extends DurableObject {
       resolveHail(E, hailId, season, cap);
       const run = await openRun(E, seasonInstance(E, hailId, now), runId, now, termsFn);
       if (playerId) run.player_id = playerId; // STARFARE_OAUTH on only; a label, the run_id rules do not change
+      logTake(E, run, now, client);
       await this.#save(run);
       await this.#index(E, run);
       return hailInfo(E, run, Date.now());
@@ -140,6 +144,11 @@ export class StarfareRun extends DurableObject {
     const run = await this.#run();
     return run && (phaseOf(run) === "arrived" || (phaseOf(run) === "in_flight" && run.live)) ? liveRecord(await engine(), run, Date.now()) : null;
   }
+  /** The agent page's view of this run (followView), or null. */
+  async follow() {
+    const run = await this.#run();
+    return run && run.tag == null ? followView(run) : null;
+  }
   async episode() {
     const run = await this.#run();
     if (!run) return null;
@@ -169,6 +178,9 @@ export class StarfareHub extends DurableObject {
     this.sql.exec("CREATE TABLE IF NOT EXISTS rides (run_id TEXT PRIMARY KEY, player_id TEXT NOT NULL, created_ms INTEGER NOT NULL, hail_id TEXT NOT NULL, phase TEXT NOT NULL, reason TEXT, summary TEXT)");
     this.sql.exec("CREATE INDEX IF NOT EXISTS rides_by_player ON rides (player_id, created_ms DESC, run_id DESC)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS exports (token TEXT PRIMARY KEY, player_id TEXT NOT NULL, expires_ms INTEGER NOT NULL)");
+    // A follow token opens /agent/<token>: one signed-in player's bookings and log, live. Shown on the consent page and by take_hail.
+    this.sql.exec("CREATE TABLE IF NOT EXISTS follows (token TEXT PRIMARY KEY, player_id TEXT NOT NULL, created_ms INTEGER NOT NULL)");
+    this.sql.exec("CREATE INDEX IF NOT EXISTS follows_by_player ON follows (player_id, created_ms DESC)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS live (run_id TEXT PRIMARY KEY, v TEXT NOT NULL, land_ms INTEGER, updated_ms INTEGER NOT NULL)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS hubkv (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
     this.hits = new Map(); // ip -> {win, n}; in memory on purpose: losing it on eviction only resets a minute's count
@@ -244,6 +256,28 @@ export class StarfareHub extends DurableObject {
     const row = this.sql.exec("SELECT player_id, expires_ms FROM exports WHERE token = ?", String(token)).toArray()[0];
     if (!row || row.expires_ms < Date.now()) return null;
     return this.sql.exec("SELECT run_id FROM rides WHERE player_id = ? AND phase = 'arrived' ORDER BY created_ms DESC, run_id DESC LIMIT ?", row.player_id, EXPORT_MAX)
+      .toArray().map((x) => x.run_id);
+  }
+
+  /** Ties the token the consent page showed to the player Allow just made. A token already taken stays with its player. */
+  followClaim(token, player) {
+    if (!FOLLOW_TOKEN.test(String(token))) return false;
+    this.sql.exec("INSERT OR IGNORE INTO follows (token, player_id, created_ms) VALUES (?, ?, ?)", token, player, Date.now());
+    return this.sql.exec("SELECT player_id FROM follows WHERE token = ?", token).one().player_id === player;
+  }
+  /** The player's follow token, minted on first use (a player who connected before follow links existed gets one here). */
+  followFor(player) {
+    const row = this.sql.exec("SELECT token FROM follows WHERE player_id = ? ORDER BY created_ms DESC LIMIT 1", player).toArray()[0];
+    if (row) return row.token;
+    const token = newToken();
+    this.sql.exec("INSERT INTO follows (token, player_id, created_ms) VALUES (?, ?, ?)", token, player, Date.now());
+    return token;
+  }
+  /** The run_ids of a follow token's newest bookings, newest first, or null for an unknown token. */
+  followRuns(token) {
+    const row = this.sql.exec("SELECT player_id FROM follows WHERE token = ?", String(token)).toArray()[0];
+    if (!row) return null;
+    return this.sql.exec("SELECT run_id FROM rides WHERE player_id = ? ORDER BY created_ms DESC, run_id DESC LIMIT ?", row.player_id, FOLLOW_RUNS)
       .toArray().map((x) => x.run_id);
   }
 
