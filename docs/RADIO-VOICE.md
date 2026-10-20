@@ -33,7 +33,7 @@ One spoken line per agent-log entry that matters, never a read-out of the whole 
 Recommendation: **live text-to-speech on the Worker, generated once per log entry and cached**, with Flash v2.5.
 - The agent's reasoning is free text, so it can't be pre-recorded; templates alone would lose the "voice of the agent's reasoning" part.
 - The Worker generates when the tool call lands (not when someone watches), stores the MP3 by text hash in KV or R2, and caps characters per day. Viewers only fetch the cached file, so a busy flight page costs nothing extra.
-- The radio filter runs in the browser with Web Audio (band-pass, light drive, hiss, squelch clicks), so clips are stored clean and the filter costs nothing and can be tuned without regenerating.
+- The comms filter runs in the browser with Web Audio (gentle band-limit, light compression, an open-channel blip and a roger beep; no hiss, per Alvin 2026-10-20), so clips are stored clean and the filter costs nothing and can be tuned without regenerating.
 - Open Sky (the claude.ai artifact) can't reach the Worker's audio, so it would get text only or a small inlined set of stock HQ lines.
 - Needs, all on Alvin's go: an ElevenLabs API key as a Wrangler secret, a KV or R2 binding, and a deploy.
 
