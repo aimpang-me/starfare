@@ -36,7 +36,7 @@ export function newWorld(E, { worldId, seed, owner = null, nowMs, capMs = TICK_C
     clock: { jd: start, start_jd: start, end_jd: SEASON_END, tick: 0, tick_days: TICK_DAYS, cap_ms: capMs, window_ms: null, done: false },
     ships: Object.fromEntries(E.R.FLEET.map((c) => [c.id, { at: c.at, free_jd: start }])),
     desks,
-    seats: Object.fromEntries(SEATS.map((s) => [s, { joined_ms: null, waiting: false, stalls: 0 }])),
+    seats: Object.fromEntries(SEATS.map((s) => [s, { joined_ms: null, waiting: false, stalls: 0, code_hash: null, agent: null }])),
     market: { size: MARKET_SIZE, closed: {} },
     jobs: {}, job_seq: 0,
     events: [],
@@ -75,10 +75,12 @@ const seatOf = (w, seat) => {
 };
 const joined = (w) => SEATS.filter((s) => w.seats[s].joined_ms != null);
 
-/** A seat takes part in ticks from now on. The first seat to join opens the tick window, so the cap starts counting. */
-export function joinSeat(w, seat, nowMs) {
+/** A seat takes part in ticks from now on. The first seat to join opens the tick window, so the cap starts counting.
+ *  agent is what the agent said about itself when it joined (self-reported, unverified), or null. */
+export function joinSeat(w, seat, nowMs, agent = null) {
   const s = seatOf(w, seat);
   if (s.joined_ms == null) s.joined_ms = nowMs;
+  if (agent) s.agent = agent;
   if (w.clock.window_ms == null) w.clock.window_ms = nowMs;
   w.active_ms = nowMs;
   return w;
@@ -133,7 +135,7 @@ export function worldView(E, w, nowMs) {
     clock: { sky_now: isoJD(c.jd), tick: c.tick, tick_days: c.tick_days, span_ends: isoJD(c.end_jd), done: c.done, cap_s: c.cap_ms / 1000,
       ...(due != null ? { cap_tick_in_s: Math.max(0, Math.ceil((due - nowMs) / 1000)) } : {}) },
     seats: SEATS.map((s) => ({ seat: s, role: s === "EX" ? "executor" : "dispatcher", ...(s === "EX" ? {} : { desk: w.desks[s].name }),
-      joined: w.seats[s].joined_ms != null, waiting: w.seats[s].waiting, stalls: w.seats[s].stalls })),
+      joined: w.seats[s].joined_ms != null, waiting: w.seats[s].waiting, stalls: w.seats[s].stalls, ...(w.seats[s].agent ? { agent: w.seats[s].agent } : {}) })),
     desks: Object.keys(w.desks).map((d) => ({ desk: d, name: w.desks[d].name, ships: w.desks[d].ships.map(ship) })),
     market: { size: w.market.size, open: w.market.size - Object.keys(w.market.closed).length },
     jobs: jobs.slice(-JOBS_SHOWN).map((j) => ({ ...j, ...(j.car ? { ship: E.R.CAR[j.car].name } : {}) })),
@@ -209,3 +211,55 @@ export function dropJob(E, w, run) {
 
 /** The jobs still open (planning, or held at a checkpoint), oldest first. */
 export const liveJobs = (w) => Object.values(w.jobs || {}).filter((j) => LIVE.has(j.phase));
+
+// ---- seats and codes (plan step 4) ----
+// Grok opens a new MCP session for every tool call (the step 0 spike), so no session is bound to a seat: every sandbox tool
+// takes the seat's code. A code names its seat and its world, so it routes itself, and carries a secret whose SHA-256 the
+// world keeps: "D1-0123456789abcdef0123-K7QMXP4R2ZHT". The world's page shows the codes to its owner; the view never does.
+const CODE_ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789", SECRET_LEN = 12;
+export const SEAT_CODE = new RegExp("^(" + SEATS.join("|") + ")-([0-9a-f]{20})-([" + CODE_ABC + "]{" + SECRET_LEN + "})$");
+/** A fresh seat code's secret: 12 letters and digits that read unambiguously (about 59 bits). */
+export const newSecret = (bytes = crypto.getRandomValues(new Uint8Array(SECRET_LEN))) => [...bytes].map((b) => CODE_ABC[b % CODE_ABC.length]).join("");
+export const seatCode = (worldId, seat, secret) => seat + "-" + worldId.slice(2) + "-" + secret;
+/** { seat, world_id, secret } from a code as an agent typed it (spaces and case forgiven), or null. */
+export function parseCode(code) {
+  const m = SEAT_CODE.exec(String(code ?? "").trim().toUpperCase().replace(/^(EX|D\d)-([0-9A-F]{20})-/, (all, seat, hex) => seat + "-" + hex.toLowerCase() + "-"));
+  return m ? { seat: m[1], world_id: "w_" + m[2], secret: m[3] } : null;
+}
+export async function codeHash(secret) {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("starfare-seat|" + secret));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Which tools each role may call. The executor runs the company: the market, which desk gets a job, the ships between desks,
+// the messages and the reports. A dispatcher flies its desk's jobs with today's planning tools. Both call join and wait.
+// Tools named here before the step that builds them are refused as not built yet, not as out of scope.
+const BOTH = ["join", "wait", "message"];
+export const SCOPES = {
+  executor: [...BOTH, "company", "market", "assign", "decline", "transfer_ship", "reports"],
+  dispatcher: [...BOTH, "queue", "get_hail", "plan_pickup", "plan_ride", "plan_leg", "check_pad", "space_weather", "dispatch", "decide", "report"],
+};
+export const roleOf = (seat) => (seat === "EX" ? "executor" : "dispatcher");
+/** Why seat may not call tool, or null when it may. */
+export function scopeRefusal(w, seat, tool) {
+  const role = roleOf(seat);
+  if (SCOPES[role].includes(tool)) return null;
+  const other = role === "executor" ? "dispatcher" : "executor";
+  const who = role === "executor" ? "the executor (EX)" : "dispatcher " + seat + " (" + w.desks[seat].name + ")";
+  return SCOPES[other].includes(tool)
+    ? tool + " is " + (other === "executor" ? "the executor's tool" : "a dispatcher's tool") + "; this code is " + who + ". Ask " + (other === "executor" ? "the executor" : "a dispatcher") + " with message."
+    : "unknown sandbox tool " + tool + "; " + who + " can call " + SCOPES[role].join(", ");
+}
+
+/** What a seat is told when it joins: its role, its desk and ships, the clock, what it may call, and how a tick works. */
+export function seatBrief(E, w, seat, nowMs) {
+  const v = worldView(E, w, nowMs), role = roleOf(seat), desk = role === "dispatcher" ? v.desks.find((d) => d.desk === seat) : null;
+  return {
+    simulated: true, joined: seat, role, world_id: w.world_id, ...(desk ? { desk: { name: desk.name, ships: desk.ships } } : { desks: v.desks }),
+    clock: v.clock, seats: v.seats, tools: SCOPES[role],
+    note: role === "executor"
+      ? "You are the executor of a simulated Starseeker company: you pick jobs from the market, give each to a dispatcher's desk, move ships between desks and read their reports. You fly nothing yourself."
+      : "You are a dispatcher of a simulated Starseeker company: you fly the jobs the executor gives your desk, with your desk's ships, using the planning tools.",
+    codes: "Pass this same code to every sandbox tool: each call is checked against it.",
+  };
+}

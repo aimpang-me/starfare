@@ -330,3 +330,59 @@ test("StarfareWorld: take, act and drop a job, each run under its own key", asyn
   assert.equal((await obj.drop("j2")).status, "abandoned");
   assert.equal(saved.get("job:j2").abandoned_reason, "dropped");
 });
+
+// ---- seats and codes (plan step 4) ----
+test("a seat code names its seat and world, reads forgivingly, and carries a secret the world keeps only as a hash", async () => {
+  const code = W.seatCode(ID, "D2", "K7QMXP4R2ZHT");
+  assert.equal(code, "D2-0123456789abcdef0123-K7QMXP4R2ZHT");
+  const want = { seat: "D2", world_id: ID, secret: "K7QMXP4R2ZHT" };
+  assert.deepEqual(W.parseCode(code), want);
+  assert.deepEqual(W.parseCode("  d2-0123456789ABCDEF0123-k7qmxp4r2zht "), want, "an agent may retype case and spaces");
+  for (const bad of [null, "", "D3-0123456789abcdef0123-K7QMXP4R2ZHT", "D2-0123456789abcdef012-K7QMXP4R2ZHT", "D2-0123456789abcdef0123-K7QMXP4R2ZH", "D2-0123456789abcdef0123-K7QMXP4R2ZH0"])
+    assert.equal(W.parseCode(bad), null, String(bad));
+  assert.match(W.newSecret(), /^[A-HJ-NP-Z2-9]{12}$/);
+  assert.notEqual(W.newSecret(), W.newSecret());
+  assert.match(await W.codeHash("K7QMXP4R2ZHT"), /^[0-9a-f]{64}$/);
+  assert.notEqual(await W.codeHash("K7QMXP4R2ZHT"), await W.codeHash("K7QMXP4R2ZHU"));
+});
+
+test("each role has its own tools, and a call outside them is refused with the reason", () => {
+  const w = fresh();
+  assert.equal(W.scopeRefusal(w, "EX", "assign"), null);
+  assert.equal(W.scopeRefusal(w, "D1", "dispatch"), null);
+  for (const s of W.SEATS) assert.equal(W.scopeRefusal(w, s, "join"), null);
+  assert.match(W.scopeRefusal(w, "D1", "assign"), /^assign is the executor's tool; this code is dispatcher D1 \(Inner desk\)/);
+  assert.match(W.scopeRefusal(w, "EX", "dispatch"), /^dispatch is a dispatcher's tool; this code is the executor \(EX\)/);
+  assert.match(W.scopeRefusal(w, "D2", "take_hail"), /^unknown sandbox tool take_hail; dispatcher D2 \(Outer desk\) can call join, wait/);
+  assert.deepEqual(W.SCOPES.executor.filter((t) => W.SCOPES.dispatcher.includes(t)), ["join", "wait", "message"]);
+});
+
+test("StarfareWorld: three codes once at creation, join with a code, forged codes and out-of-scope calls refused", async () => {
+  const { obj, saved } = worldDO();
+  const made = await obj.create(ID);
+  assert.deepEqual(Object.keys(made.codes), W.SEATS);
+  const stored = saved.get("world");
+  for (const s of W.SEATS) {
+    assert.equal(W.parseCode(made.codes[s]).seat, s);
+    assert.equal(stored.seats[s].code_hash, await W.codeHash(W.parseCode(made.codes[s]).secret));
+  }
+  const view = await obj.view();
+  assert.equal(view.codes, undefined);
+  for (const s of W.SEATS) assert.ok(!JSON.stringify(view).includes(W.parseCode(made.codes[s]).secret), "the view never shows a code");
+  assert.doesNotMatch(JSON.stringify(view), /code_hash/);
+  const agent = { name: "Grok", model: null, thinking: null, skills: [], client: null };
+  const j = await obj.seat(made.codes.D1, "join", { agent });
+  assert.deepEqual([j.joined, j.role, j.desk.name, j.tools], ["D1", "dispatcher", "Inner desk", W.SCOPES.dispatcher]);
+  assert.deepEqual(j.desk.ships.map((s) => s.car), ["sf-01", "sf-02", "sf-03", "sf-04", "sf-08", "sf-09", "sf-10"]);
+  assert.deepEqual(saved.get("world").seats.D1.agent, agent);
+  assert.equal((await obj.view()).seats[1].agent.name, "Grok");
+  assert.equal((await obj.view()).clock.cap_tick_in_s != null, true, "a joined seat opens the tick");
+  const ex = await obj.seat(made.codes.EX, "join");
+  assert.deepEqual([ex.role, ex.desks.map((d) => d.name)], ["executor", ["Inner desk", "Outer desk"]]);
+  // Another seat's secret, another world's code, a mangled code: all read the same, so none tells a guesser anything.
+  const d2 = W.parseCode(made.codes.D2), d1 = W.parseCode(made.codes.D1);
+  for (const bad of [W.seatCode(ID, "D2", d1.secret), W.seatCode("w_fedcba98765432100123", "D2", d2.secret), "nonsense"])
+    assert.match((await obj.seat(bad, "join")).error, /seat code is not valid/, bad);
+  assert.match((await obj.seat(made.codes.D1, "assign")).error, /executor's tool/);
+  assert.match((await obj.seat(made.codes.EX, "assign")).error, /not built yet/);
+});

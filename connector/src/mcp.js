@@ -10,7 +10,8 @@ import { hex } from "./bench-host.js";
 import { engine } from "./engine.js";
 import { checkInInfo, hailPage, poolView, seasonClock, sky } from "./game.js";
 import { hub, runStub } from "./store.js";
-import { HOSTED_INSTRUCTIONS, HOSTED_TOOLS, registerTools } from "./tools.js";
+import { HOSTED_INSTRUCTIONS, HOSTED_TOOLS, SANDBOX_INSTRUCTIONS, SANDBOX_TOOLS, registerTools } from "./tools.js";
+import { parseCode, sandboxOn, worldStub } from "./world.js";
 
 // With STARFARE_OAUTH on, the grant's anonymous player id. Off: null.
 const playerOf = (agent) => (agent.props && typeof agent.props.player_id === "string" ? agent.props.player_id : null);
@@ -76,8 +77,17 @@ const SESSION_TOOLS = {
   },
 };
 
+/** A sandbox tool goes to the world its seat code names, which checks the code and the seat's scope (world.js). */
+async function sandboxCall(agent, tool, { code, ...input }) {
+  const c = parseCode(code);
+  if (!c) return { error: "That seat code is not valid. Ask the player for the code their world's page shows for your seat." };
+  const inp = tool === "join" ? { agent: checkInInfo(input, agent.server.server.getClientVersion()) } : input;
+  return worldStub(agent.env, c.world_id).seat(code, tool, inp);
+}
+
 export class StarfareMcp extends McpAgent {
-  server = new McpServer({ name: "starfare", version: "0.1.0" }, { instructions: HOSTED_INSTRUCTIONS });
+  // The sandbox's tools and paragraph only while STARFARE_SANDBOX is on (this.env is set before field initializers run).
+  server = new McpServer({ name: "starfare", version: "0.1.0" }, { instructions: HOSTED_INSTRUCTIONS + (sandboxOn(this.env) ? SANDBOX_INSTRUCTIONS : "") });
   initialState = { run_id: null, bench_id: null };
 
   async #bench(id, tool, input) {
@@ -87,6 +97,7 @@ export class StarfareMcp extends McpAgent {
   }
 
   async #call(tool, input) {
+    if (Object.hasOwn(SANDBOX_TOOLS, tool)) return sandboxCall(this, tool, input);
     const bench = this.state && this.state.bench_id;
     if (bench && tool !== "start_bench" && tool !== "check_in") return this.#bench(bench, tool, input);
     if (Object.hasOwn(SESSION_TOOLS, tool)) return SESSION_TOOLS[tool](this, input);
@@ -96,7 +107,7 @@ export class StarfareMcp extends McpAgent {
   }
 
   async init() {
-    registerTools(this.server, { call: (tool, input) => this.#call(tool, input) }, HOSTED_TOOLS);
+    registerTools(this.server, { call: (tool, input) => this.#call(tool, input) }, sandboxOn(this.env) ? { ...HOSTED_TOOLS, ...SANDBOX_TOOLS } : HOSTED_TOOLS);
   }
 }
 

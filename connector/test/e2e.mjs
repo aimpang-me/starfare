@@ -229,9 +229,9 @@ async function phaseOff() {
     assert.match(js.headers.get("cache-control"), /immutable/);
     assert.ok((await js.text()).includes("module.exports = SOLE"));
   });
-  await check("tools/list is exactly the eleven ride-hail tools, start_bench and check_in", async () => {
+  await check("tools/list is exactly the eleven ride-hail tools, start_bench, check_in and (this phase runs the sandbox) join", async () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
-    assert.deepEqual(names, TOOLS);
+    assert.deepEqual(names, [...TOOLS, "join"].sort());
   });
   await check("Comms: an agent checks in with the page's one-time code, and its bookings show on that channel", async () => {
     const opened = await fetch(`${w.base}/comms/new`, { method: "POST" });
@@ -770,6 +770,24 @@ async function phaseOff() {
     const other = await (await fetch(`${w.base}/world/new`, { method: "POST" })).json();
     assert.notEqual(other.world_id, v.world_id);
     report.world = { world_id: v.world_id, clock: v.clock, market: v.market };
+  });
+
+  await check("sandbox seats: /world/new gives three seat codes once; join checks the code and names the seat, and the view shows who joined, never a code", async () => {
+    const v = await (await fetch(`${w.base}/world/new`, { method: "POST" })).json(), hex = v.world_id.slice(2);
+    for (const seat of ["EX", "D1", "D2"]) assert.match(v.codes[seat], new RegExp(`^${seat}-${hex}-[A-HJ-NP-Z2-9]{12}$`));
+    const d1 = await ok(client, "join", { code: v.codes.D1, agent_name: "e2e bot", model: "scripted" });
+    assert.deepEqual([d1.joined, d1.role, d1.desk.name, d1.desk.ships.length], ["D1", "dispatcher", "Inner desk", 7]);
+    assert.ok(d1.tools.includes("dispatch") && !d1.tools.includes("assign"));
+    const ex = await ok(client, "join", { code: v.codes.EX.toLowerCase() });
+    assert.deepEqual([ex.role, ex.desks.length], ["executor", 2]);
+    const forged = await call(client, "join", { code: v.codes.D2.slice(0, -1) + (v.codes.D2.endsWith("A") ? "B" : "A") });
+    assert.equal(forged.isError, true);
+    assert.match(forged.value, /seat code is not valid/);
+    const after = await (await fetch(v.view)).json(), text = JSON.stringify(after);
+    assert.deepEqual(after.seats.map((x) => [x.seat, x.joined]), [["EX", true], ["D1", true], ["D2", false]]);
+    assert.equal(after.seats[1].agent.name, "e2e bot");
+    for (const seat of ["EX", "D1", "D2"]) assert.ok(!text.includes(v.codes[seat].slice(-12)), "the view never shows a code");
+    assert.doesNotMatch(text, /code_hash/);
   });
 
   await check("sandbox world: an unknown world_id is 404, a malformed path is 404, and the wrong method is 405", async () => {

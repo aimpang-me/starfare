@@ -157,9 +157,10 @@ async function bench(req, url, env) {
   return v ? Response.json(v, { headers: { "cache-control": "no-store" } }) : new Response("Not found: no bench session with that id", { status: 404 });
 }
 
-/** The sandbox world (simulated; plan step 2), only while STARFARE_SANDBOX is "on" and linked from nowhere yet.
- *  POST /world/new makes a world and returns its world_id; GET /world/<world_id>.json is its view. The world_id is the
- *  capability, as the bench_id is for /bench. Seats, tools and the page come in later steps. */
+/** The sandbox world (simulated; plan steps 2 to 4), only while STARFARE_SANDBOX is "on" and linked from nowhere yet.
+ *  POST /world/new makes a world and returns its world_id and, this once, its three seat codes (the player gives one to each
+ *  agent, which calls join with it); GET /world/<world_id>.json is its view, which never shows a code. The world_id is the
+ *  capability, as the bench_id is for /bench. The page comes in a later step. */
 const WORLD_PATH = new RegExp("^/world/(" + WORLD_ID.source.slice(1, -1) + ")\\.json$");
 async function world(req, url, env) {
   if (!sandboxOn(env)) return new Response("Not found", { status: 404 });

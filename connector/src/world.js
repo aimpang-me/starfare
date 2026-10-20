@@ -9,9 +9,12 @@ import { engine } from "./engine.js";
 import { GameError, RUN_TOOL_NAMES, applyTool, computeLeg, hailInfo, legKey, restoreRunBookings } from "./game.js";
 import { worldSeed } from "./season-seed.js";
 import { hub } from "./store.js";
-import { JOB_ID, TICK_CAP_MS, WorldError, capDueMs, capTick, dropJob, jobMoved, joinSeat, newWorld, syncJob, takeJob, waitSeat, worldView } from "./world-state.js";
+import {
+  JOB_ID, SEATS, TICK_CAP_MS, WorldError, capDueMs, capTick, codeHash, dropJob, jobMoved, joinSeat, newSecret, newWorld, parseCode, scopeRefusal, seatBrief, seatCode,
+  syncJob, takeJob, waitSeat, worldView,
+} from "./world-state.js";
 
-export { WORLD_ID } from "./world-state.js";
+export { WORLD_ID, parseCode } from "./world-state.js";
 export const sandboxOn = (env) => env.STARFARE_SANDBOX === "on";
 export const worldStub = (env, id) => env.STARFARE_WORLD.get(env.STARFARE_WORLD.idFromName(id));
 /** The real-time cap on a tick: WORLD_TICK_CAP_S when set (tests shorten it), else TICK_CAP_MS. */
@@ -59,13 +62,38 @@ export class StarfareWorld extends DurableObject {
     };
   }
 
+  /** A new world, and its seat codes: returned here once (for the owner's page) and kept only as hashes. */
   create(worldId, owner = null) {
     return this.#serial(() => this.#guard(async () => {
       if (await this.#world()) return { error: "world " + worldId + " already exists" };
       const now = Date.now(), E = await engine();
-      const w = newWorld(E, { worldId, seed: await worldSeed(this.env, worldId), owner, nowMs: now, capMs: capMsOf(this.env) });
+      const w = newWorld(E, { worldId, seed: await worldSeed(this.env, worldId), owner, nowMs: now, capMs: capMsOf(this.env) }), codes = {};
+      for (const seat of SEATS) {
+        const secret = newSecret();
+        codes[seat] = seatCode(worldId, seat, secret);
+        w.seats[seat].code_hash = await codeHash(secret);
+      }
       await this.#save(w);
-      return worldView(E, w, now);
+      return { ...worldView(E, w, now), codes };
+    }));
+  }
+
+  /** Every sandbox tool call from an agent: the seat's code is checked, then the tool against the seat's role. join is the
+   *  one tool built so far (plan step 4); the executor's and dispatchers' tools come in steps 5 and 6. */
+  seat(code, tool, input = {}) {
+    return this.#serial(() => this.#guard(async () => {
+      const c = parseCode(code), w = await this.#world();
+      if (!c || !w || c.world_id !== w.world_id || w.seats[c.seat].code_hash !== (await codeHash(c.secret)))
+        return { error: "That seat code is not valid. Ask the player for the code their world's page shows for your seat." };
+      const refused = scopeRefusal(w, c.seat, tool);
+      if (refused) return { error: refused };
+      const E = await engine(), now = Date.now();
+      if (tool === "join") {
+        joinSeat(w, c.seat, now, input.agent || null);
+        await this.#save(w);
+        return seatBrief(E, w, c.seat, now);
+      }
+      return { error: tool + " is not built yet in this sandbox." };
     }));
   }
 
