@@ -255,3 +255,10 @@ test("GET /method returns the page and stays public when OAuth is on", async () 
     await stopWorker(child, persist);
   }
 });
+
+test("on a phone the method tables scroll inside their own box, so the page never scrolls sideways", () => {
+  const tables = html.match(/<table>/g) || [];
+  assert.ok(tables.length >= 4);
+  assert.equal((html.match(/<div class="tbl"><table>/g) || []).length, tables.length, "every table sits in a .tbl box");
+  assert.match(html, /\.tbl\{overflow-x:auto/);
+});
