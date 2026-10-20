@@ -2,6 +2,7 @@
 // The hosted connector's backend forwards to Durable Objects (mcp.js); a Node harness can supply its own in-process one.
 // A backend has one method, call(tool, input), which returns the tool's plain data or { error } for a game error.
 import { z } from "zod";
+import { tidyText } from "./display.js";
 
 export const RUN_ID = /^run_[0-9a-f]{20}$/;
 
@@ -27,7 +28,7 @@ export const INSTRUCTIONS =
   "Add a note to dispatch and decide: one or two sentences on why, which the page shows as your own words.\n" +
   "Goal: pick the rider up fast, arrive by arrive_by, use the least battery actually flown, and keep your promise. The quoted arrival is a promise scored against the actual arrival: " +
   "late costs the most (0 at 6 hours late on a quick hail, 1 day on a long haul), early costs a quarter as much. Each plan counts: 6 are free, then each costs a point.\n" +
-  "Hard rules: every number you write must be copied from a tool result or the player's words, dates exactly as given. Never estimate a number. Never dispatch a leg whose refly.result is FAIL. " +
+  "Hard rules: every number you write must be copied from a tool result or the player's words, dates exactly as given; say scores in whole points (round the total and each part to the nearest point). Never estimate a number. Never dispatch a leg whose refly.result is FAIL. " +
   "The one time you choose is the promised arrival: the ride leg's arrive, or a later time you pick as a buffer for a forecast hazard; if you add a buffer, tell the rider it is one and why.\n" +
   "The sky clock runs 1 sky day per real second, so work promptly on long-haul hails. Scores go to the public board at /board on this server, labelled \"planned by Grok bot\".";
 
@@ -154,7 +155,7 @@ export const TOOLS = {
 };
 
 const answer = (r) => (r && r.error
-  ? { content: [{ type: "text", text: r.error }], isError: true }
+  ? { content: [{ type: "text", text: tidyText(String(r.error)) }], isError: true }
   : { content: [{ type: "text", text: JSON.stringify(r) }] });
 
 /** The hosted connector also runs the bench: start_bench, and the paragraph that tells a bot when to call it. */
