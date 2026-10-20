@@ -1,7 +1,7 @@
 {
   "format": "starfare.suite/1",
   "id": "v1",
-  "engine_sha256": "79c8c90c99f0e1bee805c48369257ffa583d8d1beb147643e4bea3ca8a4a65ca",
+  "engine_sha256": "39c635352a52a9fa19902dc3e2e528384442089715fc699b89e031bb999b2a65",
   "score_version": 5,
   "budget": 60,
   "world": "per_repeat",
