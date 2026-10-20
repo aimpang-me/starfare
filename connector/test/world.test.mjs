@@ -9,6 +9,7 @@ import { SEASON_END, SKY, hailView, isoJD, seasonHail } from "../src/game.js";
 import { engine } from "../src/engine.js";
 import { keyedSeed, worldSeed } from "../src/season-seed.js";
 import * as W from "../src/world-state.js";
+import * as Ref from "../src/world-ref.js";
 
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const ID = "w_0123456789abcdef0123", T0 = 1_000_000;
@@ -126,12 +127,23 @@ test("a world's seed is keyed when the server has a key, random otherwise, and n
 // StarfareWorld with the Worker base class and engine wiring replaced, over a Map and a fake alarm.
 let runSeq = 0;
 function worldDO(env = {}) {
-  const deps = { DurableObject: class { constructor(ctx, env) { this.ctx = ctx; this.env = env; } }, engine, worldSeed, ...W, ...G,
+  return worldOf(worldClass(), env);
+}
+/** Several StarfareWorld instances by name, as env.STARFARE_WORLD gives them: a world and its reference ("ref:<world_id>"). */
+function worldNS(env = {}) {
+  const Cls = worldClass(), objs = new Map(), ns = { idFromName: (n) => n, get: (n) => (objs.has(n) ? objs : objs.set(n, worldOf(Cls, full))).get(n).obj };
+  const full = { ...env, STARFARE_WORLD: ns };
+  return { get: (n) => (ns.get(n), objs.get(n)) };
+}
+function worldClass() {
+  const deps = { DurableObject: class { constructor(ctx, env) { this.ctx = ctx; this.env = env; } }, engine, worldSeed, ...W, ...G, ...Ref,
     META: { sha256: "a".repeat(64) }, newRunId: () => "run_" + String(++runSeq).padStart(20, "0"), hub: () => { throw new Error("no hub in tests"); } };
   const source = readFileSync(new URL("../src/world.js", import.meta.url), "utf8")
     .replace(/^import\s[\s\S]*?;\r?\n/gm, "").replace(/^export \{[^}]*\} from [^;]*;\r?\n/gm, "")
     .replace(/\bexport (?=const |class )/g, "");
-  const { StarfareWorld } = new Function(...Object.keys(deps), source + "\nreturn { StarfareWorld };")(...Object.values(deps));
+  return new Function(...Object.keys(deps), source + "\nreturn { StarfareWorld };")(...Object.values(deps)).StarfareWorld;
+}
+function worldOf(StarfareWorld, env) {
   const saved = new Map(), clock = { alarm: null };
   const ctx = { storage: {
     async get(k) { return structuredClone(saved.get(k)); },
@@ -544,4 +556,63 @@ test("scores: a desk's mean over its ended jobs with abandoned ones as 0, and th
   assert.equal(s.company.score, Math.round((served / offered) * s.company.mean * 10) / 10);
   assert.deepEqual(W.worldView(E, w, T0).scores, s, "the company view carries the scores");
   assert.deepEqual(W.queueView(E, w, "D2", T0).score, s.desks[1], "a dispatcher's queue shows its desk's score");
+});
+
+test("the reference company: each tick it gives hails to the desk of the nearest free ship and flies or drops every job it takes", async () => {
+  let seq = 0;
+  const newRunId = () => "run_" + String(++seq).padStart(20, "0");
+  const play = async () => {
+    const w = fresh(), st = { skip: new Set(), runs: {} };
+    const taken = await Ref.refTick(E, w, st, { newRunId });
+    return { w, st, taken };
+  };
+  const { w, st, taken } = await play();
+  assert.ok(taken.length > 0, "every ship is free at the start, so the first tick takes jobs");
+  assert.equal(w.clock.tick, 1, "then the clock ticks");
+  for (const id of taken) {
+    const j = w.jobs[id];
+    assert.ok(j.phase === "arrived" || j.phase === "abandoned", id + " is " + j.phase + ": a reference job ends within its tick");
+    assert.equal(j.desk, j.car ? W.shipDesk(w, j.car) : j.desk, "flown by its own desk's ship");
+    assert.equal(st.runs[id].world.job_id, id);
+  }
+  assert.ok(taken.length <= E.R.FLEET.length, "at most one job per free ship");
+  assert.deepEqual(E.R.shipsProblems(w.ships), []);
+  const again = await play();
+  const noRun = (jobs) => Object.values(jobs).map(({ run_id, ...j }) => j);
+  assert.deepEqual(noRun(again.w.jobs), noRun(w.jobs), "the same world plays the same way");
+  // Catching up: a fresh reference beside a world at tick 3 plays three ticks; a budget of 0 plays none.
+  const ref = Ref.newRef(E, fresh(), T0);
+  assert.equal(await Ref.refCatchUp(E, ref, 3, { newRunId, budgetMs: 0 }), false);
+  assert.equal(await Ref.refCatchUp(E, ref, 3, { newRunId }), true);
+  assert.equal(ref.world.clock.tick, 3);
+  const s = Ref.refScores(E, ref);
+  assert.equal(s.tick, 3);
+  assert.deepEqual(s.company, W.scoresView(E, ref.world).company);
+  assert.ok(s.company.ended > 0 && s.company.score > 0);
+});
+
+test("StarfareWorld: the reference company plays in its own instance, a job per alarm, and sends its scores back", async () => {
+  const ns = worldNS({ WORLD_TICK_CAP_S: "60" }), main = ns.get(ID), { obj, saved } = main;
+  const { codes } = await obj.create(ID);
+  await new Promise((r) => setImmediate(r));
+  const ref = ns.get("ref:" + ID);
+  assert.equal(ref.saved.get("ref").to_tick, 0, "creating the world starts its reference at tick 0");
+  assert.equal(ref.saved.get("world"), undefined, "the reference's instance holds no world, so no seat code works there");
+  await obj.seat(codes.EX, "join");
+  await obj.seat(codes.EX, "wait", { seconds: 0 });
+  await new Promise((r) => setImmediate(r));
+  assert.equal(ref.saved.get("ref").to_tick, 1, "the world's new tick reached its reference");
+  // Each alarm plays one job; the reference is caught up once its world has ticked.
+  let alarms = 0;
+  while (ref.saved.get("ref").ref.world.clock.tick < 1 && alarms < 40) { await ref.obj.alarm(); alarms++; }
+  assert.ok(alarms > 1, "the first tick's jobs took several alarms, one job each");
+  assert.equal(ref.saved.get("ref").ref.world.clock.tick, 1);
+  assert.ok(ref.clock.alarm > Date.now() + 1000, "caught up: the reference sleeps until the next tick");
+  const c = await obj.seat(codes.EX, "company");
+  assert.equal(c.scores.reference.tick, 1);
+  assert.ok(c.scores.reference.company.ended > 0);
+  assert.equal(saved.get("world").ref_scores.tick, 1);
+  assert.equal((await obj.view()).scores.reference.tick, 1);
+  assert.doesNotMatch(JSON.stringify(c.scores.reference), /job_id|hail_id/, "only the reference's scores are shown, not its jobs");
+  assert.match((await ref.obj.seat(codes.EX, "company")).error, /seat code is not valid/);
 });

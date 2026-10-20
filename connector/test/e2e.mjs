@@ -840,6 +840,11 @@ async function phaseOff() {
     assert.deepEqual(t.events.map((e) => [e.kind, e.tick]), [["tick", 1]]);
     assert.equal(t.clock.tick, 1);
     assert.equal((await ok(client, "queue", { code: D1 })).inbox, 1, "D1's next wait has the tick");
+    // The reference company, in its own instance, plays up to tick 1 and sends its scores back; company shows them.
+    let ref = null;
+    for (let i = 0; i < 60 && ref?.tick !== 1; i++) { ref = (await ok(client, "company", { code: EX })).scores.reference; if (ref?.tick !== 1) await new Promise((r) => setTimeout(r, 500)); }
+    assert.equal(ref?.tick, 1, "the reference reached the world's tick");
+    assert.ok(ref.company.ended > 0, "the reference flew jobs in its first tick");
   });
 
   await check("sandbox world: an unknown world_id is 404, a malformed path is 404, and the wrong method is 405", async () => {
