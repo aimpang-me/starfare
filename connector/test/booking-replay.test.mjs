@@ -149,10 +149,12 @@ test("shared dispatch feed shows each booking's quote and escapes agent-controll
   assert.match(L.text, /a<script>: fare \$20/);
   assert.match(L.text, /b: fare \$30, promised 2030-01-02 00:00/);
   assert.equal(L.why, "why <b>");
-  // The flight page escapes every word of it before it reaches the page.
-  assert.match(source, /esc\(shipWords\(L\.act\)\)/);
-  assert.match(source, /esc\(shipWords\(L\.text\)\)/);
-  assert.match(source, /"<q>" \+ esc\(L\.why\)/);
+  // The flight page renders it with AgentLog.row, which escapes every word of it before it reaches the page.
+  assert.match(source, /AgentLog\.row\(L, \{ ms: t\.at_ms, words: shipWords/);
+  const row = AgentLog.row(L);
+  assert.match(row, /a&lt;script&gt;: fare/);
+  assert.match(row, /Why: <q>why &lt;b&gt;<\/q>/);
+  assert.doesNotMatch(row, /<script>|<b>/);
 });
 
 test("recorded time conflicts are detected without retiming the flight", () => {
@@ -205,7 +207,7 @@ test("a thousand-booking desk renders twenty cards, searches all rows, and keeps
   const $ = (s) => s === "#bkList" ? list : nodes.get(s) || (nodes.set(s, { value: "" }), nodes.get(s));
   const DESK = Array.from({ length: 1000 }, (_, i) => ({ id: `s1-${i}`, title: "Booking", kind: "quick", rider: "Passenger", party: 1, from: "a", to: "b", open: true, ready_jd: 100 }));
   const ctx = { $, $$: () => ready, DESK, BK: {}, BOOKING_PAGE: 0, BOOKING_PAGE_SIZE: 20, SEL: { t: "n" }, SF: { name: String },
-    esc: String, W: String, ic: () => "", placeH: String, iso: String };
+    esc: String, W: String, ic: () => "", placeH: String, iso: String, loreOf: () => null, FICT: "" };
   // Keep the same function object, as in the page, including its cached last markup.
   const render = evalSlice(source, "function renderBookings()", "function startPlan(", "renderBookings", ctx);
   render(); assert.equal(ready.length, 20); assert.equal($("#bkPage").textContent, "1–20 of 1000");

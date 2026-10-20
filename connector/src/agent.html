@@ -64,45 +64,21 @@ h2{margin:0;font-weight:300;font-size:26px;letter-spacing:-.01em}
 .live.off i{background:var(--ink-3);animation:none}
 @keyframes pulse{70%{box-shadow:0 0 0 8px rgba(134,217,168,0)}100%{box-shadow:0 0 0 0 rgba(134,217,168,0)}}
 @media (prefers-reduced-motion:reduce){.live i{animation:none}}
-.wait{border:1px solid var(--me);background:rgba(255,207,122,.07);border-radius:12px;padding:12px 14px;color:var(--ink)}
-.wait b{color:var(--me);font-weight:600}
 .run{border:1px solid var(--line);border-radius:var(--r);background:var(--bg-2);overflow:hidden}
 .run.current{border-color:var(--line-2)}
-.rh{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.rh{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;align-items:center;padding:14px 16px;border-bottom:1px solid #161e27}
 .rh h2{font-size:20px;font-weight:400}
 .rh .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--ink-2)}
-.ph{display:inline-flex;align-items:center;border-radius:999px;padding:2px 10px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line-2);color:var(--ink-2);white-space:nowrap}
-.ph.planning{color:var(--ride);border-color:rgba(156,195,255,.5)}
-.ph.waiting{color:var(--me);border-color:var(--me)}
-.ph.in_flight{color:var(--ok);border-color:rgba(134,217,168,.6)}
-.ph.arrived{color:var(--ink)}
-.ph.abandoned{color:var(--ink-3)}
-.steps{list-style:none;margin:0;padding:0}
-.steps li{display:grid;grid-template-columns:2.4em minmax(0,1fr) auto;gap:4px 12px;padding:10px 16px;border-top:1px solid rgba(255,255,255,.06);border-left:3px solid transparent}
-.steps li:first-child{border-top:0}
-.steps li.fresh{background:rgba(255,207,122,.06)}
-.steps li.t-error{border-left-color:var(--bad)} .steps li.t-error .act{color:var(--bad)}
-.steps li.t-go{border-left-color:var(--ok)}
-.steps li.t-decide{border-left-color:var(--me)}
-.steps .n{color:var(--ink-3);font-size:12px;font-variant-numeric:tabular-nums}
-.steps .act{font-weight:500}
-.steps .txt{color:var(--ink-2);font-size:13.5px}
-.steps .why{grid-column:2/-1;font-size:13px;font-style:italic;color:var(--ink);border-left:2px solid var(--ok);padding-left:8px;quotes:"\201C" "\201D"}
-.steps .why::before{content:"Why: " open-quote;font-style:normal;color:var(--ok)}
-.steps .why::after{content:close-quote}
-.steps .tm{color:var(--ink-3);font-size:12px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
-.steps .tm span{display:block}
-@media (max-width:640px){
-  .rh{grid-template-columns:1fr}
-  .steps li{grid-template-columns:2em minmax(0,1fr)}
-  .steps .tm{grid-column:2;text-align:left}
-  .steps .tm span{display:inline;margin-right:8px}
-}
+.rh .mb-c{font-size:11px;line-height:18px}
+.waitrow{border:1px solid #26323e;border-radius:var(--r);background:var(--bg-2);overflow:hidden}
+.waitrow .mb{border-bottom:0}
+@media (max-width:640px){.rh{grid-template-columns:1fr}}
 .empty{padding:20px 16px;color:var(--ink-2);border:1px dashed var(--line-2);border-radius:var(--r)}
 .copy code{font-size:13px}
 footer{border-top:1px solid var(--line);padding:24px max(28px, var(--gut)) 40px;color:var(--ink-3);font-size:12.5px;display:flex;flex-direction:column;gap:8px;max-width:1240px;margin:0 auto}
 [hidden]{display:none !important}
 </style>
+<link rel="stylesheet" href="/assets/message-b.css">
 <script src="/assets/agent-log.js"></script>
 </head>
 <body>
@@ -150,24 +126,21 @@ footer{border-top:1px solid var(--line);padding:24px max(28px, var(--gut)) 40px;
     (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { $("copy").textContent = "Copied"; }, function () { $("copy").textContent = "Select and copy"; });
   });
   function local(ms) { return new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }); }
+  // The booking's state as a style B chip: [words, chip class].
   function phaseOf(r) {
-    if (r.waiting) return ["waiting", "Waiting for the agent"];
-    return ({ planning: ["planning", "Planning"], in_flight: ["in_flight", "In flight"], arrived: ["arrived", "Landed"], abandoned: ["abandoned", "Dropped"] })[r.phase] || ["", r.phase];
+    if (r.waiting) return ["Checkpoint", "checkpoint"];
+    return ({ planning: ["Plan", "plan"], in_flight: ["Flying", "neutral"], arrived: ["Landed", "neutral"], abandoned: ["Dropped", "neutral"] })[r.phase] || [r.phase, "neutral"];
   }
-  function tone(L) { return L.tone === "error" ? "t-error" : /^dispatch|^decide/.test(L.tool) ? (L.tool === "decide" ? "t-decide" : "t-go") : ""; }
   function runHtml(r, agent) {
     var p = phaseOf(r), steps = r.trail.map(function (e, i) { return { e: e, L: AgentLog.line(e, name), i: i }; }).reverse();
-    var head = '<div class="rh"><div><h2>' + esc(r.title || r.hail_id) + '</h2><div class="meta"><span class="ph ' + p[0] + '">' + esc(p[1]) + "</span>" +
+    var head = '<div class="rh"><div><h2>' + esc(r.title || r.hail_id) + '</h2><div class="meta"><span class="mb-c ' + p[1] + '"' + (r.waiting ? ' title="Waiting for the agent"' : "") + ">" + esc(p[0]) + "</span>" +
       '<span class="num">' + esc(r.hail_id) + "</span>" + (r.total != null ? '<span class="num">Score ' + Math.round(r.total).toLocaleString() + " of 100,000 (simulated)</span>" : "") +
       "<span>" + r.trail.length + (r.trail.length === 1 ? " step" : " steps") + "</span></div></div>" +
       (r.watch ? '<a class="btn" href="/flight/' + encodeURIComponent(r.run_id) + '">' + (r.phase === "arrived" ? "Replay the flight" : "Watch the flight") + "</a>" :
         r.phase === "planning" ? '<span class="faint small">The flight page opens once it dispatches.</span>' : "") + "</div>";
-    var list = '<ol class="steps">' + steps.map(function (s) {
+    var list = '<ol class="mb-list">' + steps.map(function (s) {
       var key = r.run_id + ":" + s.i + ":" + s.e.at_ms, fresh = !first && !seen[key]; seen[key] = 1;
-      return '<li class="' + tone(s.L) + (fresh ? " fresh" : "") + '"><span class="n">' + (s.i + 1) + "</span><div><span class=\"act\">" + esc(s.L.act) + "</span> " +
-        '<span class="txt">' + esc(s.L.text) + "</span></div>" +
-        '<span class="tm"><span>' + local(s.e.at_ms) + "</span>" + (s.L.at ? "<span>sky " + esc(s.L.at) + "</span>" : "") + "</span>" +
-        (s.L.why ? '<q class="why">' + esc(s.L.why) + "</q>" : "") + "</li>";
+      return AgentLog.row(s.L, { ms: s.e.at_ms, cls: fresh ? "fresh" : "", sub: '<span class="mb-s">Step ' + (s.i + 1) + (s.L.at ? " · sky " + esc(s.L.at) : "") + "</span>" });
     }).join("") + "</ol>";
     return '<article class="run' + (r.phase === "planning" || r.waiting || r.phase === "in_flight" ? " current" : "") + '">' + head + list + "</article>";
   }
@@ -178,9 +151,11 @@ footer{border-top:1px solid var(--line);padding:24px max(28px, var(--gut)) 40px;
     document.title = (agent ? agent + " · " : "") + "Starfare Agent";
     $("empty").hidden = runs.length > 0;
     var w = runs.filter(function (r) { return r.waiting; })[0];
-    $("waitbox").innerHTML = w ? '<div class="wait"><b>Waiting for ' + esc(agent || "the agent") + ".</b> " + esc(w.title) + " stopped at checkpoint " + w.waiting.n + " (" +
-      esc(String(w.waiting.kind).replace(/_/g, " ")) + (w.waiting.place_name ? " at " + esc(w.waiting.place_name) : "") + ", sky " + esc(w.waiting.at) +
-      "). The flight is held until the agent answers with decide.</div>" : "";
+    $("waitbox").innerHTML = w ? '<div class="waitrow"><div class="mb"><span class="mb-t">Now</span><span class="mb-c checkpoint">Checkpoint</span>' +
+      '<span class="mb-x"><span class="mb-a">Waiting for ' + esc(agent || "the agent") + "</span>" +
+      '<span class="mb-s">The flight is held until the agent answers with decide.</span></span>' +
+      '<dl class="mb-b"><dt>Booking</dt><dd>' + esc(w.title || w.hail_id) + "</dd><dt>Stop</dt><dd>Checkpoint " + esc(w.waiting.n) + ": " + esc(String(w.waiting.kind).replace(/_/g, " ")) + "</dd>" +
+      (w.waiting.place_name ? "<dt>Place</dt><dd>" + esc(w.waiting.place_name) + "</dd>" : "") + "<dt>Sky</dt><dd>" + esc(w.waiting.at) + "</dd></dl></div></div>" : "";
     $("runs").innerHTML = runs.map(function (r) { return runHtml(r, agent); }).join("");
     first = false;
   }

@@ -1,0 +1,34 @@
+/* Message style B, "ledger with tags" (Alvin's pick, 2026-10-20; spec /mnt/project-files/ui-design/message-style-b.md).
+   One row per message: time, a worded chip, then the text. No coloured left strips: colour only appears inside a chip.
+   Used by the agent log on the flight page, the follow page, the home activity feed and the bench page (rows from AgentLog.row). */
+.mb-list{list-style:none;margin:0;padding:0}
+.mb{display:grid;grid-template-columns:38px 78px minmax(0,1fr);column-gap:10px;padding:10px 14px;border-bottom:1px solid #161e27;font:400 13px/1.45 Inter,system-ui,sans-serif;color:#edf1f5;text-align:left}
+.mb.own{background:#0f1922}
+.mb.now,.mb.fresh{background:#13212d;outline:1px solid #9cc3df;outline-offset:-1px}
+.mb[data-jd]{cursor:pointer}.mb[data-jd]:hover{background:#0f1922}
+.mb-t{font-size:11px;line-height:16px;color:#96a4b3;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mb-c{align-self:start;justify-self:start;max-width:100%;overflow:hidden;text-overflow:ellipsis;font:500 10px/16px Inter,system-ui,sans-serif;padding:0 6px;border:1px solid;border-radius:2px;white-space:nowrap;letter-spacing:0;text-transform:none}
+.mb-c.plan{color:#9cc3df;border-color:#3d5568}
+.mb-c.dispatch{color:#8fd19e;border-color:#3f5b47}
+.mb-c.checkpoint{color:#e7c48c;border-color:#6b5a3d}
+.mb-c.refused{color:#f0a196;border-color:#6e4740}
+.mb-c.neutral{color:#aab6c3;border-color:#465565}
+.mb-c.needs{background:#f0a196;border-color:#f0a196;color:#1b0d0a;font-weight:600}
+.mb-c.flare{background:#e7c48c;border-color:#e7c48c;color:#1b1406;font-weight:600}
+.mb-x{min-width:0;overflow-wrap:anywhere}
+.mb-a{display:block;color:#edf1f5}
+.mb-s{display:block;font-size:12px;color:#aab6c3}
+.mb-s a{color:#9cc3df}
+.mb-s code,.mb-x code{font:500 11px ui-monospace,SFMono-Regular,Menlo,monospace;color:#aab6c3}
+.mb-w{display:block;font-size:12px;color:#aab6c3}
+.mb-w q{font-style:italic;color:#edf1f5;quotes:"\201C" "\201D"}
+.mb-b{grid-column:2/-1;margin-top:8px;border:1px solid #26323e;border-radius:4px;padding:9px 11px;font-size:12px;color:#edf1f5;display:grid;grid-template-columns:62px minmax(0,1fr);gap:3px 8px}
+.mb-b dt{color:#96a4b3;margin:0}.mb-b dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.mb-b .mb-n{grid-column:1/-1;color:#aab6c3}
+.mb-b.sos{border-color:#8a5148;background:rgba(240,161,150,.05)}
+.mb-head{padding:6px 14px;font:400 11px/1.4 Inter,system-ui,sans-serif;color:#96a4b3;background:#080c11;border-bottom:1px solid #161e27}
+@media (max-width:560px){
+  .mb{grid-template-columns:36px 74px minmax(0,1fr);column-gap:8px;padding:10px 16px}
+  .mb-head{padding:6px 16px}
+  .mb-b.sos{grid-column:1/-1}
+}

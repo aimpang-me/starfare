@@ -109,9 +109,9 @@ button,input,select,textarea{font-family:inherit}
 .mc-activity .wv{display:none}
 .mc-activity .feed{max-height:32vh;overflow:auto;padding:0}
 .mc-activity .feed.agentfeed{height:auto;max-height:none;overflow:visible}
-.mc-activity .agentfeed q{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.mc-activity .agentfeed .mb-w{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .mc-activity .feed li{padding:10px 0;border-bottom:1px solid #25313c;font-size:12px}
-.mc-activity .feed li.k-agent{padding-left:10px}
+.mc-activity .feed li.mb{padding:10px 4px;border-bottom:1px solid #161e27;font-size:13px}
 .mc-activity .feed .tm{font-size:10px;color:#a7b5c4}
 .mc-feed-filter{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-2);padding:10px 0}
 .mc-feed-filter select{margin-left:auto;min-height:36px;border:1px solid var(--line-2);background:#0c141e;border-radius:3px;padding:4px;font-size:12px;max-width:175px}

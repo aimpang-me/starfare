@@ -87,7 +87,30 @@
     return t ? t.agent.name : "";
   }
 
-  var api = { line: line, fromCall: fromCall, agentName: agentName, decision: decision };
+  // Message style B (design/assets/message-b.css): every row carries a worded chip; colour lives only in the chip.
+  var CHIP = { plan: ["Plan", "plan"], check: ["Plan", "plan"], dispatch: ["Dispatch", "dispatch"], decide: ["Checkpoint", "checkpoint"], take: ["Take", "neutral"], error: ["Refused", "refused"] };
+  var READS = { get_hail: 1, list_hails: 1 };
+  /** The chip for a line: [words, class]. */
+  function chip(L) { return CHIP[L.tone] || (READS[L.tool] ? CHIP.plan : ["System", "neutral"]); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  /** A wall-clock time as 24-hour HH:MM in the reader's zone ("" without one). */
+  function clock(ms) { if (typeof ms !== "number" || !isFinite(ms)) return ""; var d = new Date(ms); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+  /** One log line as a style B row (HTML; everything from the line is escaped here). o: tag (li), cls, attrs (trusted HTML), ms (wall time),
+   *  time (text for the time column instead), title (its tooltip), words (a function over plain text, applied to act and text),
+   *  sub (trusted HTML lines added under the text), chip ([words, class] instead of the line's own), inner (just the cells, for an element the caller made). */
+  function row(L, o) {
+    o = o || {};
+    var tag = o.tag || "li", c = o.chip || chip(L), w = o.words || function (s) { return s; }, t = o.time != null ? o.time : clock(o.ms);
+    var title = o.title || (typeof o.ms === "number" ? new Date(o.ms).toLocaleString() + " your time" : "");
+    var cells = '<span class="mb-t"' + (title ? ' title="' + esc(title) + '"' : "") + ">" + esc(t) + "</span>" +
+      '<span class="mb-c ' + c[1] + '">' + esc(c[0]) + "</span>" +
+      '<span class="mb-x"><span class="mb-a">' + esc(w(L.act)) + "</span>" + (L.text ? '<span class="mb-s">' + esc(w(L.text)) + "</span>" : "") +
+      (o.sub || "") + (L.why ? '<span class="mb-w">Why: <q>' + esc(L.why) + "</q></span>" : "") + "</span>";
+    return o.inner ? cells : "<" + tag + ' class="mb' + (o.cls ? " " + o.cls : "") + '"' + (o.attrs ? " " + o.attrs : "") + ">" + cells + "</" + tag + ">";
+  }
+
+  var api = { line: line, fromCall: fromCall, agentName: agentName, decision: decision, chip: chip, row: row, clock: clock, esc: esc };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AgentLog = api;
 })(typeof self !== "undefined" ? self : this);

@@ -2,6 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
 import { HAIL_PAGE, agentOf, hailPage, poolView } from "../src/game.js";
 
 const require = createRequire(import.meta.url), AgentLog = require("../src/agent-log.cjs"), E = require("../src/engine/sol-page.cjs");
@@ -69,4 +70,23 @@ test("list_hails says when the season is too late to take a long haul", async ()
   assert.deepEqual([late.quick_open, late.long_haul_open], [true, false]);
   assert.match(late.note, /Long hauls can't be taken/);
   assert.equal(late.real_seconds_left, 39);
+});
+
+test("log rows are message style B: a worded chip, escaped words, the reason as Why, no coloured strip", () => {
+  const chip = (e) => AgentLog.chip(AgentLog.line(e));
+  assert.deepEqual(chip({ tool: "plan_ride", leg_id: "l" }), ["Plan", "plan"]);
+  assert.deepEqual(chip({ tool: "check_pad", place: "ISS" }), ["Plan", "plan"]);
+  assert.deepEqual(chip({ tool: "dispatch", car: "SF-01" }), ["Dispatch", "dispatch"]);
+  assert.deepEqual(chip({ tool: "decide", checkpoint: 1 }), ["Checkpoint", "checkpoint"]);
+  assert.deepEqual(chip({ tool: "dispatch", problems: ["late"] }), ["Refused", "refused"]);
+  assert.deepEqual(chip({ tool: "take_hail" }), ["Take", "neutral"]);
+  assert.deepEqual(chip({ tool: "get_my_rides" }), ["System", "neutral"]);
+  const ms = new Date(2026, 9, 20, 9, 5).getTime();
+  const html = AgentLog.row(AgentLog.line({ tool: "dispatch", car: "SF-01", fare_usd: 10, arrival: "x", note: "<b>closest</b>" }), { ms, attrs: 'data-i="0"' });
+  assert.match(html, /^<li class="mb" data-i="0"><span class="mb-t" title="[^"]+">09:05<\/span><span class="mb-c dispatch">Dispatch<\/span>/);
+  assert.match(html, /<span class="mb-w">Why: <q>&lt;b&gt;closest&lt;\/b&gt;<\/q><\/span>/);
+  assert.doesNotMatch(html, /border-left|style=/);
+  assert.doesNotMatch(AgentLog.row(AgentLog.line({ tool: "take_hail" }), { inner: true }), /<li/);
+  const css = readFileSync(new URL("../../design/assets/message-b.css", import.meta.url), "utf8");
+  assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ""), /border-left|inset \d/);
 });
