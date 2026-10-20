@@ -56,6 +56,19 @@ Mars has a thin warm limb; Venus uses its existing cloud-top map; Titan uses the
 
 Saturn reuses the existing alpha ring strip with analytic planet/ring shadows; no shadow-map asset is added. The Sun sharpens through the same 1K, 2K and 4K tiers as the planets and keeps its compact halo with subtle shader convection. Existing presentation tilt is retained. Slow appearance periods (180–720 seconds, with Venus/Uranus illustrated retrograde) are explicitly decorative, independent of ephemerides and replay timing; they are not scientific axial-orientation telemetry.
 
+## Audio (`sol-audio.js`)
+
+There are no audio files. Every map sound is synthesized in the browser with the Web Audio API from oscillators and generated noise, written for Starfare, so there is nothing to license or credit. No ElevenLabs credits and no samples were used.
+
+| Layer | What plays | Where | Based on |
+|---|---|---|---|
+| Space | Cabin bed: low hum, air handling, a rare console blip | Always, while sound is on; ducks near a body or station | Original. Space itself is silent |
+| Debris | Hits on the hull and fine dust hiss | Low Earth orbit (200 to 2,000 km), the geostationary belt, Saturn's main rings, near Bennu, Ceres and Phobos, faintly in the main asteroid belt | Where debris and dust are: [ESA Space Debris](https://www.esa.int/Space_Safety/Space_Debris), [NASA Saturn rings](https://science.nasa.gov/saturn/rings/), [NASA Bennu particle ejections](https://science.nasa.gov/missions/osiris-rex/) |
+| Planets and moons | One voice per body, fading in within 40 radii and full within 12 | The Sun, every planet, every moon in the engine, Ceres | Stylized after NASA's plasma-wave and radio sonifications: Earth's chorus and whistlers (Van Allen Probes), Jupiter's radio storms and Ganymede's flyby (Juno), Saturn's kilometric radiation (Cassini), Uranus (Voyager 2). Mars wind and Titan's haze nod to the Perseverance microphone and Huygens descent recordings. None of those recordings is used |
+| Stations | Mains hum, fans, console beep patterns, data blips, clanks | Within about 6,000 km of a station, full within 800 km | Original. The ISS and Tiangong get stylized sounds, not recordings |
+
+All of it is labelled on the map as stylized and simulated. Distances and positions come from the engine and the true-scale map camera.
+
 ## Audio: ship radio (`audio/radio/`, `sol-radio.js`)
 
 | File | Source | Licence | Changes |
@@ -77,5 +90,7 @@ Original Starfare models, built in Blender 5.2 by `tools/models/blender/build_mo
 Meshes generated from Starfare's own concept art (`art/2026-10-17/starseeker-0*.png`, made for this project) with Tripo H3.1 image-to-3D, run through the Higgsfield MCP connector on Alvin's Higgsfield workspace. The job IDs, credits and source hashes are in `art/2026-10-17/kestrel-higgsfield-v1/generation-2026-10-18.json` and `art/2026-10-18/fleet-tripo-v1/generation-2026-10-18.json`. `tools/models/build-lods.mjs` reduces them to the game versions (about 15k triangles, 1024 px maps); `models/fleet.json` records both hashes and keeps `productionApproved: false`.
 
 Rights, as checked on October 19, 2026: Higgsfield's help centre says the user owns outputs, its Terms of Use (section 4.4) do not restrict commercial use, and Higgsfield may use content for model training unless deleted ([source](https://higgsfield.ai/creator-hub/help-center/account-and-privacy/who-owns-my-generations-and-can-i-use-them-commercially)). Tripo's own help page grants commercial rights only on its paid plans and does not say how models made through a third-party platform are treated ([source](https://www.tripo3d.ai/help/privacy-policy/how-to-use-tripo-models-commercially)). Open before production approval: confirm in writing (Higgsfield's terms or support) that Tripo models generated through Higgsfield carry the same commercial rights as other Higgsfield outputs.
+
+The station, dock and ship models (`models/variety/`, from `tools/models/blender/variety.py`) and their tiling trim maps (`models/trim/`, from `tools/models/trims.py`) are original too. They are scripted in Blender and numpy, use no third-party meshes, textures or generated hulls, and are not modelled on any real station or vehicle. They are fictional, illustrative and not production-approved (`models/variety.json`). The earlier generated hulls (`kestrel`, `tandem`, `lantern`, from Tripo via Higgsfield, licence unconfirmed) are no longer loaded by the pages.
 
 The rides, riders, weather and fleet on these pages are simulated. Planet positions are real (NASA JPL DE421).

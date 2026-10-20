@@ -168,6 +168,18 @@ const answer = (r) => (r && r.error
 /** The hosted connector also runs the bench: start_bench, and the paragraph that tells a bot when to call it. */
 export const HOSTED_TOOLS = {
   ...TOOLS,
+  check_in: {
+    description: "Check in with Starfare HQ on the player's Comms panel. Call it when the player gives you an HQ code (like K7-4QM). Say who you are as you know it: " +
+      "your name, model, thinking or reasoning setting, and the skills you have equipped. Leave out anything you don't know; never guess. The panel shows these as " +
+      "self-reported and unverified, then shows every booking you take from now on with your notes. A code works once and lasts 10 minutes.",
+    inputSchema: {
+      code: z.string().min(4).max(12).describe("the HQ code the player gave you, e.g. K7-4QM"),
+      agent_name: z.string().max(60).optional().describe("your name as the player knows you"),
+      model: z.string().max(60).optional().describe("the model you run on, as you know it"),
+      thinking: z.string().max(40).optional().describe("your thinking or reasoning setting, e.g. off, low, high"),
+      skills: z.array(z.string().max(40)).max(12).optional().describe("skills or tools you have equipped"),
+    },
+  },
   start_bench: {
     description: "Start a Starfare bench session (simulated): a few tasks from the bench suite, played one after another with these same tools. " +
       "Returns a watch link that shows the player every tool call live. Call it when the player asks to play the bench.",
@@ -179,6 +191,7 @@ export const HOSTED_TOOLS = {
 };
 
 export const HOSTED_INSTRUCTIONS = INSTRUCTIONS + "\n" +
+  "Comms: when the player gives you a Starfare HQ code, call check_in with it and say who you are (name, model, thinking setting, skills) as you know it; leave out what you don't know.\n" +
   "Bench: when the player asks to play the Starfare bench, call start_bench and give the player its watch link. Then play its tasks in order with the same tools: " +
   "list_hails shows the open task's one hail (or one shared flight) and its task_id, take_hail gives that task's run_id, and sky time is paused for the task. " +
   "Every call counts against the task's budget, list_hails and take_hail included. Every result's bench field says which task you are on, calls used and the budget; " +

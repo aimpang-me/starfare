@@ -115,14 +115,16 @@
   // checkpoint that weather holds, from its time on (when it clears is not known yet). Run seeds never reach the page,
   // so the record is all it knows of the weather. Incidents name their place; a station's weather is its body's.
   // Back-to-back holds join into one window: their times are rounded to the minute and hours to a tenth.
-  var WEATHER = { dust_storm: 1, titan_haze: 1 };
-  function weatherWindows(incidents, hold, places) {
+  // kinds (optional) picks other incidents the same way: FLARE gives the solar storm holds a flight's record shows.
+  var WEATHER = { dust_storm: 1, titan_haze: 1 }, FLARE = { flare: 1, solar_flare: 1 };
+  function weatherWindows(incidents, hold, places, kinds) {
+    kinds = kinds || WEATHER;
     var at = {};
     places.forEach(function (p) { at[p.id] = at[p.name] = p; });
     function jd(s) { return Date.parse(s.replace(" ", "T") + ":00Z") / 864e5 + 2440587.5; }
     function on(kind, place, from, to) {
       var p = at[place];
-      return WEATHER[kind] && p ? [{ kind: kind, body: p.kind === "station" ? p.parent : p.id, from: from, to: to }] : [];
+      return kinds[kind] && p ? [{ kind: kind, body: p.kind === "station" ? p.parent : p.id, from: from, to: to }] : [];
     }
     var list = incidents.flatMap(function (x) { return x.hours > 0 ? on(x.kind, x.place, jd(x.at), jd(x.at) + x.hours / 24) : []; })
       .concat(hold ? on(hold.cause, hold.place, jd(hold.at), Infinity) : []);
@@ -171,7 +173,7 @@
   function unit(a) { var n = len(a); return [a[0] / n, a[1] / n, a[2] / n]; }
   var api = { flightDirection: flightDirection, orbitDirection: orbitDirection, headingFrame: headingFrame, orientShip: orientShip,
     preciseLocalArc: preciseLocalArc, passengerList: passengerList, aboardAt: aboardAt, seatCount: seatCount, seatsHtml: seatsHtml, timingConflicts: timingConflicts,
-    weatherWindows: weatherWindows, weatherAt: weatherAt, slowOrbit: slowOrbit };
+    weatherWindows: weatherWindows, weatherAt: weatherAt, FLARE: FLARE, slowOrbit: slowOrbit };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.StarfareView = api;
 })(typeof window !== "undefined" ? window : globalThis);
