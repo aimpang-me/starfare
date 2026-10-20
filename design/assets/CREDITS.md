@@ -62,7 +62,7 @@ Saturn reuses the existing alpha ring strip with analytic planet/ring shadows; n
 |---|---|---|---|
 | `audio/radio/*.mp3` (19 ship callouts, listed in `audio/radio/lines.json`) | Generated with ElevenLabs text to speech (model `eleven_v4`, library voice "Marilyn - Warm, Clear British"), 2026-10-20. AI voice; the lines are simulated. | ElevenLabs terms for the plan in use; confirm commercial use before launch (the account showed free-tier limits on 2026-10-20) | Cut from one take into one clip per line, trimmed, mono 48 kHz MP3 64 kbps. Stored clean. |
 
-The radio sound (band-pass, soft clipping, hiss, squelch bursts and the two-tone alert) is original work, synthesized live in `sol-radio.js` with the Web Audio API. Lines speak no numbers, so the "never invent numbers" rule holds.
+The radio sound (a gentle band-limit, light compression, the open-channel blip, roger beep and two-tone alert) is original work, synthesized live in `sol-radio.js` with the Web Audio API. Lines speak no numbers, so the "never invent numbers" rule holds.
 
 ## Original work
 

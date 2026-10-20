@@ -1,4 +1,4 @@
-// Ship radio: short spoken callouts for flight events and agent actions, in an AI voice (ElevenLabs), through a radio filter.
+// Ship radio: short spoken callouts for flight events and agent actions, in an AI voice (ElevenLabs), through a clean comms filter.
 // Off until the player turns it on; the choice is remembered per browser. Every line is generated and simulated, and is
 // also shown as text on the page, so the page reads the same muted. Clips are stored clean in /assets/audio/radio/ and the
 // filter runs here (Web Audio), so it can be tuned without regenerating anything.
@@ -42,25 +42,22 @@
     if (typeof fetch !== "function") return Promise.resolve(null);
     return lines = lines || fetch(BASE + "lines.json").then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { return j && j.lines || {}; }).catch(function () { return {}; });
   }
-  function noise(sec) {
-    var b = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * sec), ctx.sampleRate), d = b.getChannelData(0), x = 0;
-    for (var i = 0; i < d.length; i++) { x = 0.97 * x + 0.03 * (Math.random() * 2 - 1); d[i] = x * 6 + (Math.random() * 2 - 1) * 0.15; }
-    return b;
-  }
-  function band(node) { // radio band: two high-pass and two low-pass stages, a presence lift, soft clipping, then a compressor
+  // Clean digital comms (Alvin, 2026-10-20: "this is the future", no white noise): a gentle band-limit, a presence lift and
+  // light compression for the communications feel, with a soft open-channel blip before a call and a roger beep after it.
+  function band(node) {
     var t = node, mk = function (type, f, q, g) { var b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; if (q) b.Q.value = q; if (g) b.gain.value = g; t.connect(b); t = b; };
-    mk("highpass", 380); mk("highpass", 380); mk("lowpass", 3200); mk("lowpass", 3200); mk("peaking", 1800, 1.2, 5);
-    var ws = ctx.createWaveShaper(), c = new Float32Array(1024);
-    for (var i = 0; i < c.length; i++) { var v = i / 511.5 - 1; c[i] = Math.tanh(2.2 * v) / Math.tanh(2.2); }
-    ws.curve = c; t.connect(ws);
-    var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -24; comp.ratio.value = 6; ws.connect(comp);
+    mk("highpass", 180, 0.7); mk("lowpass", 6500, 0.7); mk("peaking", 2500, 1, 3); mk("lowshelf", 300, 0, -3);
+    var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -20; comp.ratio.value = 3; comp.attack.value = 0.005; comp.release.value = 0.12; t.connect(comp);
     return comp;
   }
-  function burst(at, sec, gain) { // squelch: a short band-limited noise burst with a click edge
-    var s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = noise(sec);
-    g.gain.setValueAtTime(gain, at); g.gain.exponentialRampToValueAtTime(0.001, at + sec);
-    band(s).connect(g); g.connect(out); s.start(at); s.stop(at + sec + 0.02);
+  function tone(at, f0, f1, sec, gain) { // a short sine blip, optionally sliding in pitch
+    var o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine";
+    o.frequency.setValueAtTime(f0, at); o.frequency.linearRampToValueAtTime(f1, at + sec);
+    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(gain, at + 0.008); g.gain.setValueAtTime(gain, at + sec - 0.015); g.gain.linearRampToValueAtTime(0, at + sec);
+    o.connect(g); g.connect(out); o.start(at); o.stop(at + sec + 0.01);
   }
+  function openCh(at) { tone(at, 1250, 1650, 0.06, 0.09); return at + 0.14; }
+  function roger(at) { tone(at, 1450, 1450, 0.05, 0.08); tone(at + 0.07, 1050, 1050, 0.06, 0.08); }
   function chirp(at) { // two-tone alert ahead of an emergency call
     [880, 660].forEach(function (f, i) {
       var o = ctx.createOscillator(), g = ctx.createGain(), t0 = at + i * 0.16; o.type = "sine"; o.frequency.value = f;
@@ -82,13 +79,10 @@
       if (!on) { busy = false; return; }
       var t = ctx.currentTime + 0.05;
       if (it.level === "emergency") t = chirp(t);
-      burst(t, 0.12, 0.35);
-      var s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = buf; g.gain.value = 1.4;
+      t = openCh(t);
+      var s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = buf; g.gain.value = 1.2;
       band(s).connect(g); g.connect(out);
-      var hiss = ctx.createBufferSource(), hg = ctx.createGain(); hiss.buffer = noise(buf.duration + 0.2); hg.gain.value = 0.025;
-      band(hiss).connect(hg); hg.connect(out);
-      s.start(t + 0.12); hiss.start(t + 0.1);
-      var end = t + 0.12 + buf.duration; burst(end, 0.2, 0.3);
+      s.start(t); roger(t + buf.duration + 0.08);
       s.onended = function () { setTimeout(function () { busy = false; next(); }, 450); };
     }).catch(function () { busy = false; next(); });
   }
