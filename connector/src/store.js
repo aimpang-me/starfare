@@ -58,6 +58,7 @@ export class StarfareRun extends DurableObject {
     const s = run.score;
     await hub(this.env).record({ hail_id: run.id, title: run.title, run_tag: run.run_id.slice(4, 10), run_id: run.run_id, points: s.total, car: s.car,
       wait_h: Math.round((run.pickup_jd - run.t0) * 240) / 10, kwh: Math.round(s.used_kwh), par: Math.round(s.par_kwh), plans: run.calls, at: Date.now(),
+      score_version: s.score_version, engine_sha256: META.sha256,
       ...(run.player_id ? { player_tag: run.player_id.slice(2, 8) } : {}) });
   }
   /** Save a changed run; put it on the board when it just arrived and in the player's history when its ride moved. */

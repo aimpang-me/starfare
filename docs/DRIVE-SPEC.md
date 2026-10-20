@@ -105,7 +105,7 @@ I also ran a liner at 90 km/s. It used less propellant but more energy on every 
 
 ## Engine changes this needs
 
-Status on 2026-10-20: the physics is built on a local branch, and the fleet still flies the real hulls. Every engine change moves the engine sha, so the suite is re-cut at the end. The hidden test split is signed with Alvin's bench key, so that cut runs on his machine.
+Status on 2026-10-20: the physics and board versions are built in draft PR #29, and the fleet still flies the real hulls. Every engine change moves the engine sha, so the suite is re-cut at the end. The hidden test split is signed with Alvin's bench key, so that cut runs on his machine.
 
 **Built (engine only, parked fleet unchanged):**
 
@@ -117,11 +117,11 @@ Status on 2026-10-20: the physics is built on a local branch, and the fleet stil
 
 **Next, in this order:**
 
-4. **Store versions on board rows.** Runs already keep `score_version`, but board rows keep neither it nor the engine sha (`connector/src/board.js`). Without them, a re-cut mixes old and new scores on one board.
+4. **Store versions on board rows.** Built: a board row keeps `score_version` and `engine_sha256` (`connector/src/store.js`). A row from a newer score version replaces a hail's best whatever its points, and rows from before this change count as version 3 (`keepsBest`, `connector/src/game.js`). `/board` marks a row scored with an older version.
 5. **Fleet.** The seven parked Starseekers become Taxis, which fly quick hops only. Shuttles fly the inner long hauls and Liners the outer ones. Until scheduled routes exist, they are dispatched like today (`nearCars`, `sol-rides.js:72`), filtered by what each class flies. Proposed parking: Shuttles at Mars Base and Ceres Port, Liners at the Orbital Depot and Titan Dock.
 6. **Who is aboard.** `planLeg` passes the people aboard to the planner. For a shared flight's `plan_leg` chain, a booking counts from its first visit to its pickup to its first visit after that to its destination. The dispatch re-prices every leg from the final manifest.
 7. **Fares per seat.** A leg's fare is split by seats among the bookings aboard. An empty pickup leg is charged to the bookings that board at its end. The rates stay $0.16/kWh and $0.35/min (`sol-engine.js:567`), and the honest-fare score part checks the per-seat fare.
-8. **Score version 4.** The "Xenon tank" part (whole plan within one tank) and the "Distance throttle" part (NSTAR set point by distance from the Sun) have no meaning on a drive that refuels at every stop and holds its power everywhere. Proposed: drop both and move their points to energy versus par. A hold costs `HOLD_KWH` = 250 kWh an hour (`sol-rides.js:80`), sized for probes, so it is re-derived for these classes. The planner's energy objective prices supplies, so liners land near the chosen Δv ≤ 45 plans by themselves.
+8. **Score version 4.** The "Xenon tank" part (whole plan within one tank) and the "Distance throttle" part (NSTAR set point by distance from the Sun) have no meaning on a drive that refuels at every stop and holds its power everywhere. Proposed: drop both and move their points to energy versus par. A hold costs `HOLD_KWH` = 250 kWh an hour (`sol-rides.js:80`), sized for probes, so it is re-derived for these classes. The planner's energy objective prices supplies, so liners land near the chosen Δv ≤ 45 plans by themselves. Also proposed, waiting on Alvin (2026-10-20): raise `SCORE_HEADROOM` (`sol-rides.js:745`) from 0.35 to 1, so a ride on every reference reads 100,000 and not 35,000. No part can score above its reference, so the 0.35 only multiplies every total by the same factor, and the ranking stays the same.
 9. **Re-cut** the dev split here and the test split on Alvin's machine.
 
 **After that:** scheduled Shuttle and Liner routes with one pickup and one drop-off, and group bookings (crews and families) to fill them. Also boarding time (`DWELL`) that scales with the number of people boarding, and Liners kept off 1-berth pads (`BERTHS`, `sol-rides.js:81`).

@@ -796,6 +796,13 @@ test("the board keeps the higher score for one hail", () => {
   assert.equal(keepsBest(high, { points: 40 }), false);
 });
 
+test("the board ranks a hail within one score version, and a newer version's row replaces an older best", () => {
+  const v3 = { points: 90000 }, v4low = { points: 100, score_version: 4 }, v4 = { points: 500, score_version: 4 };
+  assert.equal(keepsBest(v3, v4low), true, "a row without a version was scored with version 3");
+  assert.equal(keepsBest(v4low, v3), false); assert.equal(keepsBest(v4low, { points: 90000, score_version: 3 }), false);
+  assert.equal(keepsBest(v4low, v4), true); assert.equal(keepsBest(v4, v4low), false);
+});
+
 test("live: a bench task stays instant, with the same results less the playback fields, and keeps no track or log", async () => {
   const s = await liveFlight(null), b = await liveFlight("iss-crew/pad-closed-01");
   const { checkpoint_in_s, lands_in_s, playback, ...rest } = s.d;

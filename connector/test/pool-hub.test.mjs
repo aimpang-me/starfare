@@ -84,4 +84,7 @@ test("two finished scores for one pool hail keep the higher points", () => {
   assert.equal(recordBest(sql, { hail_id: hail, points: 81, title: "Phobos to Mars" }).best, true);
   assert.equal(JSON.parse(sql.exec("SELECT v FROM best WHERE mission_id = ?", hail).toArray()[0].v).points, 81);
   assert.equal(sql.exec("SELECT n FROM stats WHERE k = ?", "runs_scored").one().n, 4);
+  assert.equal(recordBest(sql, { hail_id: hail, points: 7, title: "Phobos to Mars", score_version: 4 }).best, true);
+  assert.equal(recordBest(sql, { hail_id: hail, points: 99, title: "Phobos to Mars", score_version: 3 }).best, false);
+  assert.equal(JSON.parse(sql.exec("SELECT v FROM best WHERE mission_id = ?", hail).toArray()[0].v).points, 7);
 });

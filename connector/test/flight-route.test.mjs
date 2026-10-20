@@ -35,6 +35,12 @@ test("a scored row without a run id shows the tag as text", () => {
   assert.equal(html.includes("/flight/012345"), false);
 });
 
+test("a row scored with an older score version says so, and a current row does not", () => {
+  const row = { points: 80, car: "Starseeker", wait_h: 1.5, kwh: 40, par: 42, plans: 2, run_tag: "012345", at: Date.UTC(2026, 9, 17) };
+  assert.ok(boardHtml([hail], { score_version: 4, best: { "iss-crew": row }, stats: {} }).includes("scored with version 3"));
+  assert.equal(boardHtml([hail], { score_version: 4, best: { "iss-crew": { ...row, score_version: 4 } }, stats: {} }).includes("scored with version"), false);
+});
+
 test("the home scoreboard publishes the flight address and keeps the six-character tag", () => {
   const site = readFileSync(new URL("src/site.html", root), "utf8");
   assert.equal(site.includes("/rides/&lt;run_id&gt;.json"), true);

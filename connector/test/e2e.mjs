@@ -10,7 +10,7 @@
 // The hazard seed is the season, so a run that straddles a season reset (the last ~minute of a 7000 s season) can fail; rerun.
 import { spawn } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -22,7 +22,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
-import { SEASON_END, computeLeg, isoJD } from "../src/game.js";
+import { SCORE_VERSION, SEASON_END, computeLeg, isoJD } from "../src/game.js";
 import { stopWorkerProcess } from "./worker-process.mjs";
 
 const DIR = fileURLToPath(new URL("..", import.meta.url));
@@ -30,6 +30,7 @@ const MODE = (process.argv.find((a) => a.startsWith("--mode=")) || "--mode=both"
 if (!["off", "on", "both"].includes(MODE)) throw new Error("--mode must be off, on or both");
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
+const META = JSON.parse(readFileSync(new URL("../src/engine/meta.json", import.meta.url), "utf8"));
 const BENCH_KEY = "e2e-bench-key"; // a throwaway key for wrangler dev; the live one is a Wrangler secret
 const TOOLS = ["check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_leg", "plan_pickup", "plan_ride", "space_weather", "start_bench", "take_hail"];
 
@@ -637,6 +638,7 @@ async function phaseOff() {
     assert.equal(row.run_id, best.hail.run_id);
     assert.equal(row.run_tag, best.hail.run_id.slice(4, 10));
     assert.equal(Object.hasOwn(row, "player_id"), false);
+    assert.equal(j.score_version, SCORE_VERSION); assert.equal(row.score_version, SCORE_VERSION); assert.equal(row.engine_sha256, META.sha256);
     assert.equal(row.kwh, Math.round(best.score.used_kwh)); assert.ok(Math.abs(row.wait_h - (jdOf(best.score.pickup) - jdOf(best.hail.rider_ready)) * 24) <= 0.06, `${row.wait_h} h vs actual pickup ${best.score.pickup}`);
     assert.equal(j.stats.runs_scored, scored);
     const r = await fetch(`${w.base}/board`);

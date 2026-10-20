@@ -92,8 +92,13 @@ export function seasonSpan(season) {
   const start = SKY.t0_ms + (Number(season) - 1) * SKY.len_days * 1000;
   return { start, end: start + SKY.len_days * 1000 };
 }
+/** Board rows written before rows carried a score version were scored with version 3 (2026-10-20). */
+export const rowVersion = (row) => row.score_version ?? 3;
+/** A row from a newer score version replaces the hail's best whatever its points; within a version, the higher points win. */
 export function keepsBest(cur, next) {
-  return !cur || next.points > cur.points;
+  if (!cur) return true;
+  const a = rowVersion(cur), b = rowVersion(next);
+  return b !== a ? b > a : next.points > cur.points;
 }
 const SEASON_HAIL = /^s(\d+)-(\d+)$/;
 export function resolveHail(E, hailId, season, cap) {
