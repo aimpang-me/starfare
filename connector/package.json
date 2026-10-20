@@ -8,7 +8,7 @@
     "sim": "node sim.mjs",
     "dev": "node build.mjs && node node_modules/wrangler/bin/wrangler.js dev",
     "test": "npm run test:engine && npm run test:unit && npm run test:e2e",
-    "test:engine": "node ../world/engine/test-hazards.js && node ../world/engine/test-keyed-hash.js && node ../world/engine/test-local-gm.js && node ../world/engine/test-score-v2.js && node ../world/engine/test-seeded-hails.js && node ../world/engine/test-shared.js && node ../world/engine/test-catalog-flyable.js && node ../world/engine/test-no-roadster.mjs && node ../world/engine/test-reroute.js && node ../world/engine/test-drive.js && node ../world/lore/test-lore.js",
+    "test:engine": "node ../world/engine/test-hazards.js && node ../world/engine/test-keyed-hash.js && node ../world/engine/test-local-gm.js && node ../world/engine/test-score-v2.js && node ../world/engine/test-seeded-hails.js && node ../world/engine/test-shared.js && node ../world/engine/test-catalog-flyable.js && node ../world/engine/test-no-roadster.mjs && node ../world/engine/test-reroute.js && node ../world/engine/test-drive.js && node ../world/engine/test-ship-state.js && node ../world/lore/test-lore.js",
     "test:unit": "node build.mjs && node --test test/*.test.mjs",
     "test:e2e": "node build.mjs && node test/e2e.mjs",
     "e2e:off": "node build.mjs && node test/e2e.mjs --mode=off",

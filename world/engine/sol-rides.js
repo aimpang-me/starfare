@@ -48,10 +48,10 @@ var BY = {}; HAILS.forEach(function(h){ BY[h.id] = h; });
    { stops, legs }: stops[0] = { at: where the car is parked }, then { at, board: [hail ids], alight: [hail ids] };
    legs[i] flies stops[i].at to stops[i + 1].at. Today's dispatch [pickup, ride] is the plan with stops
    [base, { at: h.from, board: [h] }, { at: h.to, alight: [h] }], and planOf rewrites it so old callers keep working. */
-function planOf(id, car, legs){
+function planOf(id, car, legs, ships){
   if (!Array.isArray(legs)) return legs;
   var h = BY[id], c = CAR[car];
-  return { stops: [{ at: c ? c.at : legs[0].from }, { at: h.from, board: [id], alight: [] }, { at: h.to, board: [], alight: [id] }], legs: legs };
+  return { stops: [{ at: c ? shipAt(c, ships) : legs[0].from }, { at: h.from, board: [id], alight: [] }, { at: h.to, board: [], alight: [id] }], legs: legs };
 }
 // Who rides what: the bookings (boarders first, in boarding order), each leg's role (pickup with an empty cabin, ride
 // with anyone aboard), passengers aboard after each stop, and each booking's board and alight stop numbers.
@@ -108,9 +108,42 @@ function serves(car, h){ var c = CAR[car] || car, f = c && FLIES[c.ship_class]; 
 function servesWhy(car, h){ var c = CAR[car] || car;
   return serves(c, h) ? null : c.name + " is a " + E.SHIP_CLASSES[c.ship_class].name + ", which flies " + FLIES_TEXT[FLIES[c.ship_class]] + ", and " + h.id + " is one of the " + FLIES_TEXT[reach(h)]; }
 // Par and the best pickup only look at ships of the right class in the rider's or the destination's neighbourhood.
-function nearCars(h){ // rider's neighbourhood first, then the destination's
-  var s = [system(h.from), system(h.to)], rank = function(c){ return s.indexOf(system(c.at)); };
-  return FLEET.filter(function(c){ return rank(c) >= 0 && c.at !== h.from && serves(c, h); }).sort(function(a, b){ return rank(a) - rank(b) || FLEET.indexOf(a) - FLEET.indexOf(b); }); }
+function nearCars(h, ships){ // rider's neighbourhood first, then the destination's
+  var s = [system(h.from), system(h.to)], rank = function(c){ return s.indexOf(system(shipAt(c, ships))); };
+  return FLEET.filter(function(c){ return rank(c) >= 0 && shipAt(c, ships) !== h.from && serves(c, h); }).sort(function(a, b){ return rank(a) - rank(b) || FLEET.indexOf(a) - FLEET.indexOf(b); }); }
+
+/* ---------- ships that remember (the sandbox: game-design/SANDBOX-BUILD-PLAN-2026-10-20.md, step 1) ----------
+   ships: an optional map { car id: { at: place id, free_jd: when it is free } }. A ship in the map is parked where it
+   last landed and is free from free_jd, so it is busy only with the jobs it really flew. A ship left out of the map, or
+   every ship when there is no map, is parked at home and busy as the season's draw says (hazards().busyUntil), as before.
+   Still a known gap: a ship parked at the rider's own place is not offered, because a pickup is a leg and a leg can't
+   start and end at the same place. */
+function shipAt(c, ships){ var s = ships && ships[c.id]; return s && s.at ? s.at : c.at; }
+function freeFrom(id, car, t0, seed, ships){
+  var s = ships && ships[car];
+  if (!s) return hazards(seed).pickupStart(id, car, t0);
+  return s.free_jd != null && s.free_jd > t0 ? s.free_jd : t0;
+}
+/** Problems with a ships map (empty = usable): known ships, known places, a finite free_jd. */
+function shipsProblems(ships){
+  if (ships == null) return [];
+  if (typeof ships !== "object" || Array.isArray(ships)) return ["ships is a map of ship id to { at, free_jd }"];
+  var errs = [];
+  Object.keys(ships).forEach(function(id){
+    var s = ships[id];
+    if (!CAR[id]){ errs.push("unknown ship " + id); return; }
+    if (!s || typeof s !== "object"){ errs.push(id + " needs { at, free_jd }"); return; }
+    if (s.at != null && !PID[s.at]) errs.push(id + " is at an unknown place " + s.at);
+    if (s.free_jd != null && !(typeof s.free_jd === "number" && isFinite(s.free_jd))) errs.push(id + " has a free_jd that is not a number");
+  });
+  return errs;
+}
+/** Where a ship is and when it is free after flying a plan: its last stop, from the flight's landing. Pass the result to
+ *  the next job's ships map. outcome is fly()'s result or a finished ride's outcome. */
+function landed(id, car, legs, outcome, ships){
+  var plan = planOf(id, car, legs, ships), last = plan.stops[plan.stops.length - 1];
+  return { at: last.at, free_jd: outcome.arrive_jd };
+}
 
 
 /* ---------- the hard layer: simulated hazards ----------
@@ -273,7 +306,7 @@ function start(id, car, legs, t0, seed, opts){
   opts = opts || {};
   var after = opts.ask_after_hours === undefined ? 1 : opts.ask_after_hours === "never" ? null : opts.ask_after_hours;
   if (after != null && !(after >= 0 && after <= 24)) throw new Error("ask_after_hours must be 0 to 24 hours, or \"never\"");
-  var plan = JSON.parse(JSON.stringify(planOf(id, car, legs))), M = manifest(plan);
+  var plan = JSON.parse(JSON.stringify(planOf(id, car, legs, opts.ships))), M = manifest(plan);
   var ride = { v: 2, id: id, car: car, t0: t0, seed: String(seed == null ? "1" : seed), ask_after_hours: after, end_jd: opts.end_jd || E.EPHEM_RANGE[1] - 1,
     legs: plan.legs, stops: plan.stops, hails: M.hails, segs: plan.legs.map(function(L, i){ return seg(M.roles[i], "planned", L, L.to, i + 1); }),
     at: { seg: 0, phase: "depart", jd: plan.legs[0].dep_jd }, extra_kwh: 0, incidents: [], pickup_jd: null, ride_depart_jd: null, arrive_jd: null, pickups: {}, arrivals: {},
@@ -504,8 +537,8 @@ function bookingsOf(ride){ var out = {};
 function dose(boarded, arrived){ return boarded == null || arrived == null ? null : Math.round(CRUISE_MSV_DAY * (arrived - boarded) * 100) / 100; }
 // What actually happens when a dispatch flies with nobody to ask: every checkpoint takes its default.
 // A one-booking flight keeps these nine keys (fixtures/fly-baseline.json pins them); a shared one adds bookings.
-function fly(id, car, legs, t0, seed){
-  var o = start(id, car, legs, t0, seed, { ask_after_hours: null }).done;
+function fly(id, car, legs, t0, seed, ships){
+  var o = start(id, car, legs, t0, seed, { ask_after_hours: null, ships: ships }).done;
   var F = { pickup_jd: o.pickup_jd, ride_depart_jd: o.ride_depart_jd, arrive_jd: o.arrive_jd, planned_kwh: o.planned_kwh, extra_kwh: o.extra_kwh, used_kwh: o.used_kwh, incidents: o.incidents,
     delay_hours: o.delay_hours, rider_dose_msv: o.rider_dose_msv };
   if (Object.keys(o.bookings).length > 1) F.bookings = o.bookings;
@@ -538,16 +571,16 @@ function better(a, b){ return !b || a.used_kwh < b.used_kwh - 1e-9 || (Math.abs(
 function finish(st){ while (!st.done){ st.ride.auto = true; st = step(st.ride, null); } return st.done; }
 // Par's flyer: tries every hindsight choice at the first ORACLE_DEPTH checkpoints (defaults after), and flying with
 // no checkpoints at all; keeps the least energy, then the earliest arrival.
-function oracle(id, car, legs, t0, seed, endJd){
+function oracle(id, car, legs, t0, seed, endJd, ships){
   var best = null;
   function keep(o, path, decisions){ if (better(o, best)) best = { used_kwh: o.used_kwh, planned_kwh: o.planned_kwh, arrive_jd: o.arrive_jd, path: path, decisions: decisions, outcome: o }; }
-  keep(start(id, car, legs, t0, seed, { ask_after_hours: null, end_jd: endJd }).done, [], []);
+  keep(start(id, car, legs, t0, seed, { ask_after_hours: null, end_jd: endJd, ships: ships }).done, [], []);
   (function explore(st, depth, path, decisions){
     if (st.done) return keep(st.done, path, decisions);
     if (depth >= ORACLE_DEPTH) return keep(finish(st), path, decisions);
     hindsight(st.ride, st.checkpoint).forEach(function(d){
       try { explore(step(st.ride, d), depth + 1, path.concat([label(d)]), decisions.concat([d])); } catch (e) {} });
-  })(start(id, car, legs, t0, seed, { ask_after_hours: 0, end_jd: endJd }), 0, [], []);
+  })(start(id, car, legs, t0, seed, { ask_after_hours: 0, end_jd: endJd, ships: ships }), 0, [], []);
   return best;
 }
 // For a finished (or stopped) ride: at each decided checkpoint, what every hindsight choice would have led to
@@ -584,9 +617,11 @@ function weatherForecast(place, fromJd, days, seed){ var H = hazards(seed), w = 
   if (!w) return { place: place, kind: null, days: [] }; days = Math.max(1, Math.min(60, Math.round(days || 10)));
   for (var d = Math.floor(fromJd); d < Math.floor(fromJd) + days; d++) out.push({ day_jd: d, odds: Math.round(H.wxOdds(place, d) * 100) / 100 });
   return { place: place, kind: w === "dust" ? "dust_storm" : "titan_haze", odds_are: w === "dust" ? "chance a storm starts somewhere in this 10-day block" : "chance of a haze spell that day", days: out }; }
-function fleetState(id, t0, seed){ var H = hazards(seed);
-  return FLEET.map(function(c){ var b = H.busyUntil(id, c.id, t0); return { car: c.id, name: c.name, at: c.at, busy_until_jd: b }; }); }
-function pickupStart(id, car, t0, seed){ return hazards(seed).pickupStart(id, car, t0); }
+function fleetState(id, t0, seed, ships){ var H = hazards(seed);
+  return FLEET.map(function(c){
+    var s = ships && ships[c.id], b = s ? (s.free_jd != null && s.free_jd > t0 ? s.free_jd : null) : H.busyUntil(id, c.id, t0);
+    return { car: c.id, name: c.name, at: shipAt(c, ships), busy_until_jd: b }; }); }
+function pickupStart(id, car, t0, seed, ships){ return freeFrom(id, car, t0, seed, ships); }
 
 // aboard: the people on this leg. Only the fictional drive's mass depends on it; the real hulls ignore it.
 function planLeg(from, to, departAfter, objective, endJd, ship, aboard){
@@ -624,32 +659,33 @@ function slim(b, from, to){
 // Par: for every nearby car, pickup and ride each planned for least energy, leaving as soon as the car is free,
 // flown through the season's hazards, and with hindsight at the first checkpoints (oracle).
 // best_wait: the earliest any nearby car actually reaches the rider (pickup planned for time).
-function par(id, t0, endJd, seed){
-  var h = BY[id], H = hazards(seed), best = null, wait = null, refused = null;
-  nearCars(h).forEach(function(c){
-    var st = H.pickupStart(id, c.id, t0);
+function par(id, t0, endJd, seed, ships){
+  var bad = shipsProblems(ships); if (bad.length) throw new Error(bad.join("; "));
+  var h = BY[id], best = null, wait = null, refused = null;
+  nearCars(h, ships).forEach(function(c){
+    var st = freeFrom(id, c.id, t0, seed, ships), at = shipAt(c, ships);
     // Quick hails: par may also wait on the ground (pickup and ride each 0-12 h) to dodge forecast trouble.
     (h.kind === "quick" ? PAR_WAITS : [[0, 0]]).forEach(function(w){
       try {
-        var p = planned(c.at, h.from, st + w[0] * HOUR, "energy", endJd, c.id, 0), P = slim(p, c.at, h.from);
-        var pk = fly(id, c.id, [P, { from: h.from, to: h.from, dep_jd: p.arr_jd + DWELL, arr_jd: p.arr_jd + DWELL, kwh: 0 }], t0, seed).pickup_jd;
+        var p = planned(at, h.from, st + w[0] * HOUR, "energy", endJd, c.id, 0), P = slim(p, at, h.from);
+        var pk = fly(id, c.id, [P, { from: h.from, to: h.from, dep_jd: p.arr_jd + DWELL, arr_jd: p.arr_jd + DWELL, kwh: 0 }], t0, seed, ships).pickup_jd;
         var r = planned(h.from, h.to, Math.max(p.arr_jd, pk) + DWELL + w[1] * HOUR, "energy", endJd, c.id, h.party), Rr = slim(r, h.from, h.to), legs = [P, Rr];
         // Each leg can fit the tank while the pair does not; check() refuses that dispatch, so par must not pick it.
         var xe = (+P.xenon_kg || 0) + (+Rr.xenon_kg || 0);
         if (c.xenon_kg != null && xe > c.xenon_kg + 1e-6) throw new Error(c.name + " xenon tank holds " + c.xenon_kg + " kg and this plan needs " + Math.round(xe * 10) / 10 + " kg");
-        var F = fly(id, c.id, legs, t0, seed);
+        var F = fly(id, c.id, legs, t0, seed, ships);
         if (!best || F.used_kwh < best.kwh - 1e-9) best = { car: c.id, kwh: F.used_kwh, planned_kwh: F.planned_kwh, arr_jd: F.arrive_jd, planned_arr_jd: r.arr_jd, legs: legs, wait_h: w, path: [] };
         // Holds and corrections only add energy, so a local ride planned above the best can't win; a replan or divert might.
         if (legs.some(function(L){ return system(L.from) !== system(L.to); }) || F.planned_kwh < best.kwh - 1e-9){
-          var O = oracle(id, c.id, legs, t0, seed, endJd);
+          var O = oracle(id, c.id, legs, t0, seed, endJd, ships);
           if (O.used_kwh < best.kwh - 1e-9) best = { car: c.id, kwh: O.used_kwh, planned_kwh: O.planned_kwh, arr_jd: O.arrive_jd, planned_arr_jd: r.arr_jd, legs: legs, wait_h: w, path: O.path };
         }
       } catch (e) { if (/cannot thrust|no xenon|xenon tank/.test(e.message)) refused = e.message; }
     });
     try {
-      var q = planLeg(c.at, h.from, st, "time", endJd, c.id, 0), Q = slim(q, c.at, h.from);
+      var q = planLeg(at, h.from, st, "time", endJd, c.id, 0), Q = slim(q, at, h.from);
       // a stub ride leg (no time cost) to fly the pickup alone
-      var G = fly(id, c.id, [Q, { from: h.from, to: h.from, dep_jd: q.arr_jd + DWELL, arr_jd: q.arr_jd + DWELL, kwh: 0 }], t0, seed);
+      var G = fly(id, c.id, [Q, { from: h.from, to: h.from, dep_jd: q.arr_jd + DWELL, arr_jd: q.arr_jd + DWELL, kwh: 0 }], t0, seed, ships);
       if (!wait || G.pickup_jd < wait.arr_jd) wait = { car: c.id, arr_jd: G.pickup_jd };
     } catch (e) { if (/cannot thrust|no xenon|xenon tank/.test(e.message)) refused = e.message; }
   });
@@ -658,10 +694,10 @@ function par(id, t0, endJd, seed){
     // If some ship can fly the same hail before the ephemeris ends, the season is what ran out.
     // A tank or thrust refusal that still fails on that longer limit stays the refusal.
     var ephEnd = E.EPHEM_RANGE[1] - 1, later = false;
-    if (endJd < ephEnd - 1) nearCars(h).forEach(function(c){
+    if (endJd < ephEnd - 1) nearCars(h, ships).forEach(function(c){
       if (later) return;
       try {
-        var stL = H.pickupStart(id, c.id, t0), pL = planned(c.at, h.from, stL, "energy", ephEnd, c.id, 0);
+        var stL = freeFrom(id, c.id, t0, seed, ships), pL = planned(shipAt(c, ships), h.from, stL, "energy", ephEnd, c.id, 0);
         var rL = planned(h.from, h.to, pL.arr_jd + DWELL, "energy", ephEnd, c.id, h.party);
         if (c.xenon_kg == null || (+pL.battery.propellant_kg || 0) + (+rL.battery.propellant_kg || 0) <= c.xenon_kg + 1e-6) later = true;
       } catch (e) {}
@@ -673,8 +709,8 @@ function par(id, t0, endJd, seed){
     choices: best.path, best_wait_days: wait ? Math.max(1e-6, wait.arr_jd - t0) : 1e-6, best_wait_car: wait ? wait.car : best.car };
 }
 // What the dispatcher is told when it takes the hail: when the rider is ready and when they must arrive.
-function terms(id, t0, endJd, seed){
-  var p = par(id, t0, endJd, seed);
+function terms(id, t0, endJd, seed, ships){
+  var p = par(id, t0, endJd, seed, ships);
   return { hail: id, t0: t0, arrive_by_jd: arriveBy(p, t0, endJd), par: p };
 }
 function arriveBy(p, t0, endJd){ return Math.min(endJd, t0 + Math.ceil((p.planned_arr_jd - t0) * 1.5 + 1)); }
@@ -708,21 +744,22 @@ function stopOrders(ids){
 // hazards, with hindsight (oracle) as in par. No ground waits, unlike a quick hail's par.
 // Split: the sum of each booking's own par, even when two of them want the same ship, so it is a floor the pool has to beat.
 // The first id is the lead booking: it keys every ship's busy time, as the id a dispatcher passes to check does.
-function parSet(ids, t0, endJd, seed){
+function parSet(ids, t0, endJd, seed, ships){
   if (!Array.isArray(ids) || !ids.length || ids.length > MAX_BOOKINGS) throw new Error("a set is 1 to " + MAX_BOOKINGS + " bookings");
   ids.forEach(function(id, i){ if (!BY[id]) throw new Error("unknown hail " + id); if (ids.indexOf(id) !== i) throw new Error(id + " is in the set twice"); });
-  var lead = ids[0], H = hazards(seed), orders = stopOrders(ids), best = null, cars = [];
-  ids.forEach(function(id){ nearCars(BY[id]).forEach(function(c){ if (cars.indexOf(c) < 0 && ids.every(function(b){ return serves(c, BY[b]); })) cars.push(c); }); });
+  var bad = shipsProblems(ships); if (bad.length) throw new Error(bad.join("; "));
+  var lead = ids[0], orders = stopOrders(ids), best = null, cars = [];
+  ids.forEach(function(id){ nearCars(BY[id], ships).forEach(function(c){ if (cars.indexOf(c) < 0 && ids.every(function(b){ return serves(c, BY[b]); })) cars.push(c); }); });
   cars.forEach(function(c){
-    var st = H.pickupStart(lead, c.id, t0);
+    var st = freeFrom(lead, c.id, t0, seed, ships);
     orders.forEach(function(order){
-      var stops = [{ at: c.at }].concat(order), plan = { stops: stops, legs: [] }, M = manifest({ stops: stops, legs: [] }), F = null;
+      var stops = [{ at: shipAt(c, ships) }].concat(order), plan = { stops: stops, legs: [] }, M = manifest({ stops: stops, legs: [] }), F = null;
       if (Math.max.apply(null, M.party) > c.seats) return;
       try {
         for (var i = 0, after = st; i < order.length; i++){
           var b = planned(stops[i].at, stops[i + 1].at, after, "energy", endJd, c.id, M.party[i]);
           plan.legs.push(slim(b, stops[i].at, stops[i + 1].at));
-          F = fly(lead, c.id, { stops: stops.slice(0, i + 2), legs: plan.legs }, t0, seed);
+          F = fly(lead, c.id, { stops: stops.slice(0, i + 2), legs: plan.legs }, t0, seed, ships);
           after = Math.max(b.arr_jd, F.arrive_jd) + (stops[i + 1].board.length ? DWELL : 0);
         }
       } catch (e) { return; }
@@ -731,36 +768,37 @@ function parSet(ids, t0, endJd, seed){
       if (!best || F.used_kwh < best.kwh - 1e-9) best = row(F, []);
       // Holds and corrections only add energy, so a local plan planned above the best can't win; a replan or divert might.
       if (plan.legs.some(function(L){ return system(L.from) !== system(L.to); }) || F.planned_kwh < best.kwh - 1e-9){
-        var O = oracle(lead, c.id, plan, t0, seed, endJd);
+        var O = oracle(lead, c.id, plan, t0, seed, endJd, ships);
         if (O.used_kwh < best.kwh - 1e-9) best = row(O.outcome, O.path);
       }
     });
   });
-  var solo = {}; ids.forEach(function(id){ solo[id] = par(id, t0, endJd, seed); });
+  var solo = {}; ids.forEach(function(id){ solo[id] = par(id, t0, endJd, seed, ships); });
   var split = { kwh: ids.reduce(function(a, id){ return a + solo[id].kwh; }, 0), bookings: solo };
   return { hails: ids, kwh: best ? Math.min(best.kwh, split.kwh) : split.kwh, pool_wins: !!best && best.kwh < split.kwh - 1e-9, pooled: best, split: split };
 }
 // Terms for a set: each booking keeps the terms it would have alone (ready at t0, its own arrive-by and best wait),
 // so pooling never loosens a deadline; a detour shows up in the on-time part (open number 6: no detour limit).
 // The rows are score's ctx.bookings; par_kwh for a pooled flight is par.pooled.kwh.
-function termsSet(ids, t0, endJd, seed){
-  var p = parSet(ids, t0, endJd, seed), bookings = {};
+function termsSet(ids, t0, endJd, seed, ships){
+  var p = parSet(ids, t0, endJd, seed, ships), bookings = {};
   ids.forEach(function(id){ var s = p.split.bookings[id]; bookings[id] = { t0: t0, arrive_by_jd: arriveBy(s, t0, endJd), best_wait_days: s.best_wait_days }; });
   return { hails: ids, t0: t0, bookings: bookings, par: p };
 }
 // A dispatch is a car plus a flight plan: today's two legs [pickup, ride], or { stops, legs } for a shared flight.
 // id is the booking the dispatcher took (it keys the car's busy time) and must be on the plan.
 // Returns a list of problems (empty = flyable). A one-booking plan gets the wording riders have always seen.
-function check(id, car, legs, t0, seed){
+function check(id, car, legs, t0, seed, ships){
   var c = CAR[car], errs = [];
   if (!c) return ["unknown ship " + car];
   if (Array.isArray(legs) && legs.length !== 2) return ["a dispatch is two legs: the pickup, then the ride"];
   if (!legs || (!Array.isArray(legs) && !(Array.isArray(legs.stops) && Array.isArray(legs.legs)))) return ["a dispatch is two legs [pickup, ride] or a plan { stops, legs }"];
-  var plan = planOf(id, car, legs), S = plan.stops, L = plan.legs, M = manifest(plan), one = M.hails.length === 1 && L.length === 2;
+  var bad = shipsProblems(ships); if (bad.length) return bad;
+  var plan = planOf(id, car, legs, ships), S = plan.stops, L = plan.legs, M = manifest(plan), one = M.hails.length === 1 && L.length === 2, home = shipAt(c, ships);
   if (L.length !== S.length - 1) return ["a plan with " + S.length + " stops has " + (S.length - 1) + " legs, not " + L.length];
   function legName(i){ return one ? (i ? "the ride" : "the pickup") : "leg " + (i + 1) + " (" + M.roles[i] + ")"; }
   function who(ids){ return one ? "the rider" : ids.join(" and "); }
-  if (S[0].at !== c.at) errs.push("the plan must start where " + c.name + " is parked, " + nameOf(c.at));
+  if (S[0].at !== home) errs.push("the plan must start where " + c.name + " is parked, " + nameOf(home));
   L.forEach(function(x, i){
     var badFrom = x.from !== S[i].at, badTo = x.to !== S[i + 1].at;
     if (one && i === 1){ if (badFrom || badTo) errs.push("the ride must go from the rider to their destination"); return; }
@@ -786,7 +824,7 @@ function check(id, car, legs, t0, seed){
     if (n && n < L.length && (s.board || []).length && L[n].dep_jd < L[n - 1].arr_jd + DWELL - 1e-6)
       errs.push(legName(n) + " leaves before " + who(s.board) + (one || s.board.length === 1 ? " has" : " have") + " boarded");
   });
-  if (t0 != null){ var st = hazards(seed).pickupStart(id, car, t0); if (L[0].dep_jd < st - 1e-6) errs.push(c.name + " is busy on another ride until " + iso(st) + ", so its pickup can't leave before then"); }
+  if (t0 != null){ var st = freeFrom(id, car, t0, seed, ships); if (L[0].dep_jd < st - 1e-6) errs.push(c.name + " is busy on another ride until " + iso(st) + ", so its pickup can't leave before then"); }
   var xe = L.reduce(function(a, x){ return a + (+x.xenon_kg || 0); }, 0);
   if (c.xenon_kg != null && xe > c.xenon_kg + 1e-6) errs.push(c.name + " xenon tank holds " + c.xenon_kg + " kg and this plan needs " + xe + " kg");
   M.hails.forEach(function(b){ if (BY[b] && !serves(c, BY[b])) errs.push(servesWhy(c, BY[b])); });
@@ -916,7 +954,7 @@ return { DWELL: DWELL, WINDOW: WINDOW, LEAD: LEAD, FLEET: FLEET, CAR: CAR, HAILS
   hailRow: hailRow, admit: admit,
   planLeg: planLeg, par: par, terms: terms, check: check, score: score, planOf: planOf, manifest: manifest, fares: fares, seatFares: seatFares, chainStops: chainStops, iso: iso,
   MAX_BOOKINGS: MAX_BOOKINGS, stopOrders: stopOrders, parSet: parSet, termsSet: termsSet,
-  HOLD_KWH: HOLD_KWH, BERTHS: BERTHS, hazards: hazards, siphash24: siphash24, fly: fly, pickupStart: pickupStart, fleetState: fleetState,
+  HOLD_KWH: HOLD_KWH, BERTHS: BERTHS, hazards: hazards, siphash24: siphash24, fly: fly, shipAt: shipAt, shipsProblems: shipsProblems, landed: landed, pickupStart: pickupStart, fleetState: fleetState,
   padForecast: padForecast, flareForecast: flareForecast, flareReach: flareReach, lightDays: lightDays, weatherForecast: weatherForecast,
   C_KMS: C_KMS, AU_KM: AU_KM, CME_KMS: CME_KMS, CRUISE_MSV_DAY: CRUISE_MSV_DAY,
   start: start, step: step, regret: regret, oracle: oracle, hindsight: hindsight, ORACLE_DEPTH: ORACLE_DEPTH, EVENTS: EVENTS, MAX_CHECKPOINTS: MAX_CHECKPOINTS,
