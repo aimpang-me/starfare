@@ -152,7 +152,39 @@
     g.userData.solarSurface = ball;
     var s1 = additiveSprite(glow("rgba(255,240,210,1)", "rgba(255,180,92,.5)", 0.22)); s1.scale.setScalar(r * 4.4); g.add(s1);
     var s2 = additiveSprite(glow("rgba(255,190,110,.32)", "rgba(255,140,60,.07)")); s2.scale.setScalar(r * (wide || 14)); g.add(s2);
+    var co = additiveSprite(corona(), 0xffe6c4); co.scale.setScalar(r * 6); g.add(co);
+    var fl = additiveSprite(pointGlow(), 0xfff6e8); fl.material.depthTest = false; fl.renderOrder = 3; fl.position.set(r * 0.7, r * 0.62, 0); fl.scale.setScalar(0); g.add(fl);
+    g.userData.sunFx = { r: r, glow: s1, corona: co, flare: fl, base: s1.material.color.clone() };
     return g;
+  }
+  // Coronal streamers: soft rays of uneven length, as in eclipse photographs. Seeded, so every page draws the same Sun.
+  function corona() {
+    if (GLOW.corona) return GLOW.corona;
+    var c = document.createElement("canvas"); c.width = c.height = 256; var g = c.getContext("2d"), s = 7;
+    function rnd() { s = (s * 16807) % 2147483647; return s / 2147483647; }
+    g.translate(128, 128); g.globalCompositeOperation = "lighter";
+    for (var i = 0; i < 90; i++) {
+      var a = rnd() * Math.PI * 2, len = 44 + rnd() * rnd() * 84, w = 0.04 + rnd() * 0.16;
+      var gr = g.createLinearGradient(0, 0, Math.cos(a) * len, Math.sin(a) * len);
+      gr.addColorStop(0.2, "rgba(255,236,210,.075)"); gr.addColorStop(1, "rgba(255,200,150,0)");
+      g.fillStyle = gr; g.beginPath(); g.moveTo(0, 0);
+      g.arc(0, 0, len, a - w, a + w); g.closePath(); g.fill();
+    }
+    g.globalCompositeOperation = "destination-out";
+    var hole = g.createRadialGradient(0, 0, 0, 0, 0, 40); hole.addColorStop(0, "rgba(0,0,0,1)"); hole.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = hole; g.fillRect(-128, -128, 256, 256);
+    return (GLOW.corona = new THREE.CanvasTexture(c));
+  }
+  // flare, 0 to 1: a simulated eruption under way at the Sun. The glow brightens and a hot spot flares at the limb;
+  // both are illustrative. The streamers turn slowly with the effects clock, so they hold still when motion is reduced.
+  function sunFx(g, context) {
+    var fx = g.userData.sunFx; if (!fx) return;
+    var sec = context.elapsedSeconds || 0, f = Math.max(0, Math.min(1, context.flare || 0));
+    fx.corona.material.rotation = sec * 0.004;
+    fx.corona.material.opacity = 0.6 + 0.4 * f;
+    fx.glow.material.color.copy(fx.base).multiplyScalar(1 + 0.7 * f);
+    fx.flare.visible = f > 0;
+    fx.flare.scale.setScalar(fx.r * f * (2.2 + 0.3 * Math.sin(sec * 1.7)));
   }
 
   /* ---------- the Yale Bright Star Catalog ---------- */
@@ -567,7 +599,7 @@
     BASE: BASE, init: init, setSun: setSun, planet: planet, hasRim: function (id) { return !!RIMS[id] || !!(root.StarfarePlanetEffects && MAPS[id]); },
     updatePlanet: function (body, context) { if (root.StarfarePlanetEffects) root.StarfarePlanetEffects.update(body, devicePixels(context)); },
     disposePlanet: function (body) { if (root.StarfarePlanetEffects && body) root.StarfarePlanetEffects.dispose(body.userData.solarSurface || body); },
-    updateSun: function (body, context) { if (root.StarfarePlanetEffects && body.userData.solarSurface) root.StarfarePlanetEffects.update(body.userData.solarSurface, devicePixels(context)); },
+    updateSun: function (body, context) { sunFx(body, context); if (root.StarfarePlanetEffects && body.userData.solarSurface) root.StarfarePlanetEffects.update(body.userData.solarSurface, devicePixels(context)); },
     sun: sun, stars: stars, composer: composer, ship: ship, setEngine: setEngine, setSky: setSky, quality: quality, icon: icon, ICONS: Object.keys(ICONS),
     CREDIT: "Maps: NASA, JPL, USGS (public domain); Earth effects, Saturn, rings, Sun: Solar System Scope (CC BY 4.0). Moon relief: NASA SVS / LRO LOLA. Stars: Yale Bright Star Catalog."
   };

@@ -671,6 +671,7 @@ p{text-wrap:pretty}
 <script>window.SITE = __SITE__;</script><script src="__ENGINE_URL__" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js" integrity="sha384-nhO9toQuMo5osCuA0l+YFpSqscZWxDu251Bnho2gD3kSPv1neEwHg0LyEmrA+mPj" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js" integrity="sha384-mY+ii969jnDCI2HjRHftH2NZVkIO5ZGUkcnGCg3oVJ3kVstWQXwerYWBg+nbUG4R" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js" integrity="sha384-GkidzTYmQg24v13sa3xhBBbvOLbVLO1QxfyKLdOWweQqNqS/iWwUst2T1fER2Xrg" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js" integrity="sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js" integrity="sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js" integrity="sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa" crossorigin="anonymous"></script><script src="/assets/sol-art.js"></script>
 <script src="/assets/planet-effects.js"></script>
+<script src="/assets/sky-effects.js"></script>
 <script src="/assets/flight-view.js"></script>
 <script src="/assets/sol-lines.js"></script>
 <script src="/assets/sol-layers.js"></script>
@@ -1857,6 +1858,9 @@ function renderPlanetNav() {
 
 /* ---------- scene objects ---------- */
 var AMB, AMB_FREE = 0.28, AMB_CHASE = 0.75;
+// FX: the hazard effects and the belt (design/assets/sky-effects.js). HZ_NOW: the simulated hazards at the map's
+// date, from the season's seeded hazard layer (the same one the alerts list reads); pads refresh once a sky hour.
+var FX = { pads: {}, cache: {}, season: null }, HZ_NOW = { flare: 0, storm: {}, veil: {}, pads: [], hour: null, fronts: [] };
 var BODIES = [], BID = {}, SKY, SUN, GRID, ORB, MOR = [], LBL, STOPS = {}, PARK_R, PARK_B, PARK_SHIPS = {}, lastHud = 0, GRIDF = 1;
 var ATMO = { earth: "rgba(120,180,255,.55)", venus: "rgba(255,220,160,.4)", mars: "rgba(255,140,90,.35)", jupiter: "rgba(255,210,170,.3)", saturn: "rgba(255,230,180,.28)", uranus: "rgba(150,230,240,.35)", neptune: "rgba(110,150,255,.38)", titan: "rgba(255,190,110,.45)" };
 var RINGS = [0.5, 1, 2, 5, 10, 20, 30];
@@ -1909,6 +1913,13 @@ function buildScene(J0) {
     }
   });
   BODIES.push(BID.sun = { id: "sun", kind: "sun", obj: SUN, rKm: 695700, min: 6 });
+  if (window.StarfareSkyEffects) {
+    var SX = StarfareSkyEffects;
+    FX.belt = SX.belt(THREE, 2400, GL.r.getPixelRatio()); WORLD.add(FX.belt);
+    FX.fronts = SX.fronts(THREE, 6); WORLD.add(FX.fronts);
+    FX.glow = { mars: SX.stormGlow(THREE, 0xc98a4a), titan: SX.stormGlow(THREE, 0xd9963a) };
+    Object.keys(FX.glow).forEach(function (id) { WORLD.add(FX.glow[id]); });
+  }
   PARK_R = glowPoints(16, 0x5cc8ff, 13); PARK_B = glowPoints(16, 0x7f8a99, 11); WORLD.add(PARK_R); WORLD.add(PARK_B);
   ["sel", "hov"].forEach(function (k) { STN[k + "H"] = SolLines.halo(0xffffff); WORLD.add(STN[k + "H"]); });
   labels();
@@ -1954,6 +1965,13 @@ function labels() {
       pos: function () { var L = LIVE.filter(function (x) { return x.car === c.car; })[0]; return L ? marker(L.at, MAPJD) : null; },
       hide: function () { var L = LIVE.filter(function (x) { return x.car === c.car; })[0]; return !LAY.shp || !FILT.pk || FOLLOW || !L || (SF.place(L.at).parent !== "sun" && sepPx(L.at) <= 10); } });
   });
+  // The newest solar storm front, labelled where it crosses the ecliptic on the far side of the grid labels.
+  var FRONT_AT = V();
+  LBL.add({ html: "Solar storm front &middot; simulated", cls: "k-ring", pri: 6, dot: false,
+    pos: function () {
+      var e = HZ_NOW.fronts[HZ_NOW.fronts.length - 1], r = e && window.StarfareSkyEffects ? StarfareSkyEffects.frontRadius(e.start, MAPJD) : 0;
+      return r > 0 && r <= 40 ? FRONT_AT.set(Math.cos(2.4) * r, 0, Math.sin(2.4) * r) : null;
+    } });
   LBL.add({ html: "Selected booking", cls: "k-hail", pri: 40,
     pos: function () { var h = SEL.t === "b" && hailOf(SEL.id); return h ? marker(h.from.id, MAPJD) : null; },
     hide: function () { var B = SEL.t === "b" && BK[SEL.id]; return !FILT.bk || FOLLOW || !B || !B.rp; } });
@@ -1973,6 +1991,46 @@ function frame(t) {
 }
 function glStart() { if (GL && !raf && !document.hidden && MAPVIS) { last = performance.now(); raf = requestAnimationFrame(frame); } }
 function glStop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
+// Belt density by quality tier: a phone draws fewer points.
+var BELT_N = { high: 2400, medium: 1400, low: 700 };
+function hazardsNow(jd, season) {
+  var SX = window.StarfareSkyEffects; if (!SX) return HZ_NOW;
+  if (FX.season !== season) { FX.season = season; FX.cache = {}; HZ_NOW.hour = null; }
+  var H = hz(season), f = H.flareAt(jd);
+  HZ_NOW.flare = SX.ramp(f, jd);
+  HZ_NOW.fronts = SX.eruptions(H, jd - SX.FRONT_DAYS, jd + 1e-9, FX.cache);
+  ["earth", "jupiter", "saturn"].forEach(function (p) { HZ_NOW.storm[p] = SX.ramp(H.flareAt(jd, p), jd); });
+  HZ_NOW.veil.mars = SX.ramp(H.weatherAt("mars", jd), jd); HZ_NOW.veil.titan = SX.ramp(H.weatherAt("titan", jd), jd);
+  var hr = Math.floor(jd * 24);
+  if (hr !== HZ_NOW.hour) {
+    HZ_NOW.hour = hr; HZ_NOW.pads = [];
+    PADS.forEach(function (p) { try { if (H.docked(p, hr) >= H.berths(p)) HZ_NOW.pads.push(p); } catch (e) { /* not a pad */ } });
+  }
+  return HZ_NOW;
+}
+function drawHazards(effectSeconds) {
+  if (!FX.fronts) return;
+  var Z = HZ_NOW, tier = window.SolArt ? SolArt.quality().name : "medium";
+  // The belt fades out while it is a smudge round the Sun (under about 60 px across).
+  var beltPx = 2.7 / pxAt(V0);
+  FX.belt.visible = beltPx > 40; FX.belt.geometry.setDrawRange(0, BELT_N[tier] || 1400); FX.belt.userData.setJd(MAPJD);
+  FX.belt.material.uniforms.opacity.value = 0.4 * clamp((beltPx - 40) / 120, 0, 1);
+  FX.fronts.userData.update(Z.fronts, MAPJD);
+  Object.keys(FX.glow).forEach(function (id) {
+    var g = FX.glow[id], b = BID[id], k = Z.veil[id] || 0; g.visible = k > 0 && !!b && b.obj.visible; if (!g.visible) return;
+    var v = b.obj.position, px = pxAt(v), rpx = b.obj.scale.x / px;
+    g.position.copy(v); g.scale.setScalar(Math.max(b.obj.scale.x * 2.6, px * 18));
+    g.material.opacity = 0.6 * k * clamp(1 - (rpx - 6) / 40, 0.12, 1);
+  });
+  var on = {};
+  Z.pads.forEach(function (id) {
+    on[id] = 1; var r = FX.pads[id];
+    if (!r) { r = FX.pads[id] = StarfareSkyEffects.padRing(THREE); WORLD.add(r); }
+    var v = marker(id, MAPJD); r.visible = true; r.position.copy(v); r.scale.setScalar(pxAt(v) * 26);
+    r.material.rotation = effectSeconds * 0.35;
+  });
+  Object.keys(FX.pads).forEach(function (id) { if (!on[id]) FX.pads[id].visible = false; });
+}
 function draw(dt, t) {
   var now = mapWallNow(), rep = FOLLOW && SEL.t === "f" && !!FL[SEL.i];
   LIVEJD = SF.sky(now).jd;
@@ -1986,7 +2044,8 @@ function draw(dt, t) {
   SUN.scale.setScalar(Math.max(695700 / AU, pxAt(V0) * 6));
   // Surface animation is illustrative and independent of ephemerides and recorded flights.
   var effectSeconds = PLANET_CLOCK ? PLANET_CLOCK.sample(t, !MAP_PAUSED && !reduced && !document.hidden) : 0;
-  if (window.SolArt && SolArt.updateSun) SolArt.updateSun(SUN, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: SUN.scale.x / pxAt(V0), quality: SolArt.quality().maps });
+  var Z = hazardsNow(MAPJD, SF.sky(now).season);
+  if (window.SolArt && SolArt.updateSun) SolArt.updateSun(SUN, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: SUN.scale.x / pxAt(V0), quality: SolArt.quality().maps, flare: Z.flare });
   // bodies: true size, or a few pixels when that is smaller. A moon or station shows once it stands clear of its planet.
   for (var i = 0; i < BODIES.length; i++) {
     var b = BODIES[i]; if (b.kind === "sun") continue;
@@ -1995,8 +2054,9 @@ function draw(dt, t) {
     b.obj.visible = b.kind === "planet" || b.kind === "small" || sepPx(b.id) > (b.rKm ? 4 : 8);
     if (!b.obj.visible || !b.rKm) continue;
     b.obj.scale.setScalar(Math.max(b.rKm / AU, pxAt(v) * b.min));
-    if (window.SolArt && SolArt.updatePlanet) SolArt.updatePlanet(b.obj, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: b.obj.scale.x / pxAt(v), quality: SolArt.quality().maps });
+    if (window.SolArt && SolArt.updatePlanet) SolArt.updatePlanet(b.obj, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: b.obj.scale.x / pxAt(v), quality: SolArt.quality().maps, veil: Z.veil[b.id] || 0, storm: Z.storm[b.id] || 0 });
   }
+  drawHazards(effectSeconds);
   stationRing("sel"); stationRing("hov");
   // A moon's ring draws with its moon, fading in as it opens out round the planet.
   MOR.forEach(function (m) {

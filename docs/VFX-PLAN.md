@@ -14,6 +14,38 @@ over the MengTo skills in `.claude/skills/`.
 | 3 | Quality tiers with an adaptive drop | 6bc0324 |
 | 4 | Fixes after Alvin's first look: slowed moon and station orbits, smooth steering, ion glow, point nav lights, less chrome | this branch |
 
+## Phase 5: hazards and a living sky (home map)
+
+Alvin, 2026-10-20: no VFX for the hazards, and the planets do not look alive. Every hazard effect reads the season's
+seeded hazard layer at the map's date (`SF.R.hazards(season)`, the same one the alerts list reads), so pausing, slowing
+or replaying the map shows the same sky. Code: `design/assets/sky-effects.js` (new), `planet-effects.js`, `sol-art.js`,
+`connector/src/site.html` (`hazardsNow`, `drawHazards`). Tests: `connector/test/sky-effects.test.mjs`.
+
+| Effect | Trigger | Look | Reduced motion |
+|---|---|---|---|
+| Flare at the Sun | `flareAt(jd)`: an eruption under way | Glow brightens, a hot spot at the limb | Steady (no pulse) |
+| Solar storm front | Each eruption in the last ~46 days | Thin limb-bright shell growing at the engine's 1500 km/s (0.87 AU a day), labelled "Solar storm front · simulated" | Same (it moves with sky time; the map starts paused) |
+| Storm aurora | `flareAt(jd, place)` at Earth, Jupiter, Saturn | The auroral oval widens and brightens about 3x | Curtains hold still |
+| Dust storm, haze | `weatherAt("mars"/"titan")` | The planet's ochre veil (now broken into drifting cells) close up; a soft coloured haze while the body is a few pixels | Cells hold still |
+| Full pad | `docked >= berths` this sky hour, at the alert list's pads | Amber dashed ring, a fixed size on screen, turning slowly | Not turning |
+| Coronal streamers | Always | Faint soft rays round the Sun, turning very slowly | Still |
+| Aurora | Always, close up (Earth, Jupiter, Saturn) | Night-side oval with moving curtains | Still |
+| Plumes | Always, close up (Io: Pele, Prometheus; Enceladus: south polar jets) | Faint lit fans | Still |
+| Main belt | Always, once the belt is over ~40 px across | 2400 / 1400 / 700 points (high / medium / low tier), each on its own Kepler orbit in the shader | They move with sky time |
+
+Cost: the belt is one draw (points, positions solved on the GPU), each front one sphere (at most six), each pad ring and
+storm haze one sprite, aurora one sphere per planet and plumes one small cone each, all only drawn close up. Hazard
+lookups are a few engine calls a frame; eruptions are cached per sky day, pads per sky hour.
+
+Approximations:
+- Fronts are full spheres; real CMEs are cones a few tens of degrees wide. Brightness follows 1/r (the engine's storm
+  strength falls as 1/r^2, which would hide a front before Mars); the radius is the engine's.
+- Auroral ovals sit on the spin pole (Earth's ~10 degree dipole tilt ignored); Uranus and Neptune, with fields tilted
+  ~59 and ~47 degrees, get none. Jupiter's and Saturn's aurorae are ultraviolet: the violet is illustrative.
+- Belt orbits are seeded, with e < 0.12 and |i| < 7 degrees (real ones run to ~0.3 and ~30 degrees) so the band reads,
+  and few at the 3:1, 5:2, 7:3 and 2:1 Kirkwood gaps.
+- Plume sites from Voyager/Galileo/Cassini; their size is to scale, their flicker illustrative.
+
 ## Phase 4 fixes
 
 - **Orbits.** A replay squeezes years into about 28 s, so the ISS ran hundreds of laps a second. `StarfareView.slowOrbit`
