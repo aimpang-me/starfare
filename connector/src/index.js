@@ -138,7 +138,7 @@ const HARDEN = {
   "x-frame-options": "DENY",
   "content-security-policy": "frame-ancestors 'none'; base-uri 'none'; object-src 'none'",
 };
-export function harden(res) {
+function harden(res) {
   if (res.status === 101 || res.webSocket) return res;
   const headers = new Headers(res.headers);
   for (const [k, v] of Object.entries(HARDEN)) if (!headers.has(k)) headers.set(k, v);
