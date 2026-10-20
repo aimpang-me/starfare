@@ -3,7 +3,8 @@
 //           serialized and different players plan in parallel.
 //   StarfareHub: one global instance. Plan+re-fly cache, hail-terms cache (keyed by hail, t0, season end, hazard seed and engine),
 //           best score per hail, per-IP rate limit, and each signed-in player's ride history (an index row and summary per run;
-//           the full log stays in the run's StarfareRun) plus 24-hour export tokens and follow tokens (/agent/<token>).
+//           the full log stays in the run's StarfareRun) plus 24-hour export tokens and follow tokens (/agent/<token>), and
+//           Comms channels: a home page's HQ log, linked to an agent by a one-time check-in code (check_in).
 //           (The best table's key column is still called mission_id; it holds the hail id.)
 // Every RPC method returns plain data; game errors come back as { error } instead of throwing across RPC.
 import { DurableObject } from "cloudflare:workers";
@@ -27,6 +28,11 @@ const EXPORT_MAX = 500; // newest arrived rides in one export file (each is one 
 const EXPORT_MS = 24 * 3600 * 1000;
 const FOLLOW_RUNS = 10; // newest bookings the agent page shows
 export const FOLLOW_TOKEN = /^[0-9a-f]{32}$/;
+// Comms: a channel is the browser's secret (it reads /comms/<channel>.json); the code is what the player gives the agent.
+export const COMMS_CHANNEL = /^[0-9a-f]{32}$/;
+const CODE_ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789", CODE_MS = 10 * 60 * 1000, COMMS_EVENTS = 50;
+export const COMMS_CODE = /^[A-HJ-NP-Z2-9]{2}-[A-HJ-NP-Z2-9]{4}$/;
+const newCode = () => { const b = crypto.getRandomValues(new Uint8Array(6)), c = [...b].map((x) => CODE_ABC[x % CODE_ABC.length]).join(""); return c.slice(0, 2) + "-" + c.slice(2); };
 const newToken = () => [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
 /** Where a ride stands for its history row: its phase and the checkpoints answered. Plans and forecasts leave it where it was. */
 const rideMark = (run) => phaseOf(run) + "/" + (run.decisions ? run.decisions.length : 0);
@@ -180,6 +186,12 @@ export class StarfareHub extends DurableObject {
     // A follow token opens /agent/<token>: one signed-in player's bookings and log, live. Shown on the consent page and by take_hail.
     this.sql.exec("CREATE TABLE IF NOT EXISTS follows (token TEXT PRIMARY KEY, player_id TEXT NOT NULL, created_ms INTEGER NOT NULL)");
     this.sql.exec("CREATE INDEX IF NOT EXISTS follows_by_player ON follows (player_id, created_ms DESC)");
+    // Comms channels (simulated game data only): the one-time code an agent checks in with, the player it turned out to be, its events and runs.
+    this.sql.exec("CREATE TABLE IF NOT EXISTS comms (channel TEXT PRIMARY KEY, code TEXT, code_expires_ms INTEGER, player_id TEXT, created_ms INTEGER NOT NULL)");
+    this.sql.exec("CREATE UNIQUE INDEX IF NOT EXISTS comms_by_code ON comms (code)");
+    this.sql.exec("CREATE TABLE IF NOT EXISTS comms_events (seq INTEGER PRIMARY KEY AUTOINCREMENT, channel TEXT NOT NULL, at_ms INTEGER NOT NULL, v TEXT NOT NULL)");
+    this.sql.exec("CREATE INDEX IF NOT EXISTS comms_events_by_channel ON comms_events (channel, seq)");
+    this.sql.exec("CREATE TABLE IF NOT EXISTS comms_runs (channel TEXT NOT NULL, run_id TEXT NOT NULL, created_ms INTEGER NOT NULL, PRIMARY KEY (channel, run_id))");
     this.sql.exec("CREATE TABLE IF NOT EXISTS live (run_id TEXT PRIMARY KEY, v TEXT NOT NULL, land_ms INTEGER, updated_ms INTEGER NOT NULL)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS hubkv (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
     this.hits = new Map(); // ip -> {win, n}; in memory on purpose: losing it on eviction only resets a minute's count
@@ -278,6 +290,58 @@ export class StarfareHub extends DurableObject {
     if (!row) return null;
     return this.sql.exec("SELECT run_id FROM rides WHERE player_id = ? ORDER BY created_ms DESC, run_id DESC LIMIT ?", row.player_id, FOLLOW_RUNS)
       .toArray().map((x) => x.run_id);
+  }
+
+  /** A new Comms channel and its first check-in code. The channel stays secret in the browser; the code goes to the agent. */
+  commsOpen() {
+    const channel = newToken(), now = Date.now();
+    this.sql.exec("INSERT INTO comms (channel, code, code_expires_ms, player_id, created_ms) VALUES (?, NULL, NULL, NULL, ?)", channel, now);
+    return { channel, ...this.commsCode(channel) };
+  }
+  /** A fresh code for a channel (the old one stops working), or { error } for an unknown channel. */
+  commsCode(channel) {
+    if (!this.sql.exec("SELECT 1 FROM comms WHERE channel = ?", String(channel)).toArray().length) return { error: "unknown channel" };
+    const expires_ms = Date.now() + CODE_MS;
+    for (;;) {
+      const code = newCode();
+      if (this.sql.exec("SELECT 1 FROM comms WHERE code = ?", code).toArray().length) continue;
+      this.sql.exec("UPDATE comms SET code = ?, code_expires_ms = ? WHERE channel = ?", code, expires_ms, channel);
+      return { code, expires_ms };
+    }
+  }
+  /** An agent checks in with a code: the code is spent, the channel learns the player (when signed in) and gets the two events. */
+  commsCheckIn(code, info, player) {
+    const c = String(code || "").trim().toUpperCase();
+    const row = COMMS_CODE.test(c) ? this.sql.exec("SELECT channel, code_expires_ms FROM comms WHERE code = ?", c).toArray()[0] : null;
+    if (!row || row.code_expires_ms < Date.now()) return { error: "That HQ code is unknown or expired. Ask the player for the code their Comms panel shows now (it lasts 10 minutes and works once)." };
+    this.sql.exec("UPDATE comms SET code = NULL, code_expires_ms = NULL" + (player ? ", player_id = ?" : "") + " WHERE channel = ?", ...(player ? [player, row.channel] : [row.channel]));
+    const now = Date.now();
+    this.#commsEvent(row.channel, now, { kind: "connected", client: info.client || null });
+    this.#commsEvent(row.channel, now, { kind: "check_in", ...info, signed_in: !!player });
+    return { channel: row.channel };
+  }
+  #commsEvent(channel, at, v) {
+    this.sql.exec("INSERT INTO comms_events (channel, at_ms, v) VALUES (?, ?, ?)", channel, at, JSON.stringify(v));
+    this.sql.exec("DELETE FROM comms_events WHERE channel = ? AND seq NOT IN (SELECT seq FROM comms_events WHERE channel = ? ORDER BY seq DESC LIMIT ?)", channel, channel, COMMS_EVENTS);
+  }
+  /** A booking taken in a session that checked in (needed when the server runs without sign-in). */
+  commsRun(channel, runId) {
+    if (!COMMS_CHANNEL.test(String(channel))) return false;
+    this.sql.exec("INSERT OR IGNORE INTO comms_runs (channel, run_id, created_ms) VALUES (?, ?, ?)", channel, runId, Date.now());
+    return true;
+  }
+  /** What a channel's page reads: its events after seq, whether a code is waiting, and the run_ids of its agent's newest bookings. */
+  commsView(channel, after = 0) {
+    const ch = this.sql.exec("SELECT * FROM comms WHERE channel = ?", String(channel)).toArray()[0];
+    if (!ch) return null;
+    const events = this.sql.exec("SELECT seq, at_ms, v FROM comms_events WHERE channel = ? AND seq > ? ORDER BY seq", ch.channel, Number(after) || 0)
+      .toArray().map((x) => ({ seq: x.seq, at_ms: x.at_ms, ...JSON.parse(x.v) }));
+    const runs = this.sql.exec("SELECT run_id, created_ms FROM comms_runs WHERE channel = ?", ch.channel).toArray();
+    if (ch.player_id) runs.push(...this.sql.exec("SELECT run_id, created_ms FROM rides WHERE player_id = ? ORDER BY created_ms DESC LIMIT ?", ch.player_id, FOLLOW_RUNS).toArray());
+    const seen = new Set(), run_ids = runs.sort((a, b) => b.created_ms - a.created_ms).map((r) => r.run_id).filter((id) => !seen.has(id) && seen.add(id)).slice(0, FOLLOW_RUNS);
+    const code = ch.code && ch.code_expires_ms > Date.now() ? { code: ch.code, expires_ms: ch.code_expires_ms } : null;
+    const linked = !!ch.player_id || this.sql.exec("SELECT 1 FROM comms_events WHERE channel = ? LIMIT 1", ch.channel).toArray().length > 0;
+    return { linked, code, events, run_ids };
   }
 
   /** A season flight's home-map row, written each time its playback track grows. */
