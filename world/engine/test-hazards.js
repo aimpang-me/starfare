@@ -61,7 +61,7 @@ ok("busy cars: check() refuses a pickup that leaves before the car is free", () 
   assert.strictEqual(R.check("iss-crew", "sf-01", [P, Rr]).length, 0); // no t0: old callers unchanged
   assert.strictEqual(R.pickupStart("iss-crew", "sf-01", t0, s), st.busy_until_jd);
 });
-ok("score: a kept promise stays under its weight, minutes late cost more than the same minutes early, and the part does not hit zero at 6 h", () => {
+ok("score: a kept promise earns its full weight, minutes late cost more than the same minutes early, and the part does not hit zero at 6 h", () => {
   const legs = [{ arr_jd: t0 + 0.03, kwh: 400, gate: "PASS" }, { arr_jd: t0 + 5, kwh: 37000, fare: 8000, gate: "PASS" }];
   const ctx = (slipH, q) => ({ t0, arrive_by_jd: t0 + 9, par_kwh: 37400, best_wait_days: 0.03, plan_calls: 2, quote: { fare_usd: 8000, arrival: R.iso(t0 + 5 + (q || 0)) },
     flown: { pickup_jd: t0 + 0.03, arrive_jd: t0 + 5 + slipH / 24, used_kwh: 37400, extra_kwh: 0, incidents: [] } });
@@ -69,7 +69,7 @@ ok("score: a kept promise stays under its weight, minutes late cost more than th
   const perfect = R.score("iss-crew", legs, ctx(0));
   assert.strictEqual(perfect.total, perfect.parts.reduce((a, p) => a + p.got, 0));
   assert.strictEqual(perfect.parts.reduce((a, p) => a + p.max, 0), 100000);
-  assert.ok(part(0).got < part(0).max);
+  assert.strictEqual(part(0).got, part(0).max); // score version 4: the reference earns the full weight
   assert.ok(part(6).got > 0);
   assert.ok(part(6).got < part(0).got * 0.5);
   assert.ok(part(3).got < part(0).got && part(3).got > part(6).got);

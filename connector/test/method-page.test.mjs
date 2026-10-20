@@ -47,14 +47,14 @@ function row(attr, value) {
 test("the page renders every score part from the engine", () => {
   const scored = scoreProbe();
   assert.equal(scored.out_of, R.SCORE_TOTAL);
-  assert.equal(scored.score_version, 3);
+  assert.equal(scored.score_version, 4);
   assert.equal(R.SCORE_TOTAL, 100000);
   assert.equal(scored.parts.reduce((s, p) => s + p.max, 0), 100000);
   assert.match(html, new RegExp("Score version " + scored.score_version + " scores out of " + R.SCORE_TOTAL));
   assert.match(html, /The weights are placeholders\./);
-  assert.match(html, new RegExp("at most " + R.SCORE_HEADROOM + " of its weight"));
+  assert.match(html, new RegExp("earns its full weight when the flight is on the stated reference \\(a headroom of " + R.SCORE_HEADROOM + "\\)"));
   assert.match(html, new RegExp("falloff steepness is " + R.SCORE_STEEPNESS));
-  assert.match(html, /simulated assumptions/);
+  assert.match(html, /simulated assumption/);
   for (const p of scored.parts) {
     const line = row("data-key", p.key);
     assert.match(line, new RegExp(">" + p.label + "<"));

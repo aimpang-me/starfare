@@ -50,8 +50,8 @@ test("score v2 parts sum to the total and keep their units", async () => {
   assert.equal(row.terminal, "landed");
   assert.equal(row.outOf, 100000);
   assert.equal(row.total, row.parts.reduce((acc, part) => acc + part.got, 0));
-  assert.ok(row.total > 0 && row.total < row.outOf / 2, row.total);
-  for (const part of row.parts) assert.ok(part.got < part.max || part.max === 0, part.key);
+  assert.ok(row.total > 0 && row.total < row.outOf, row.total);
+  for (const part of row.parts) assert.ok(part.got <= part.max, part.key);
   const printed = formatReport(report);
   assert.match(printed, /Score out of 100000\./);
   assert.match(printed, /pickup \(min\)/);

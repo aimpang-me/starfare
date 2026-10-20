@@ -57,7 +57,7 @@ ok("score parts sum to the total, and a second call matches", () => {
   const a = R.score("iss-crew", legs, ctx), b = R.score("iss-crew", legs, ctx);
   assert.deepStrictEqual(a, b);
   assert.strictEqual(a.out_of, 100000);
-  assert.strictEqual(a.score_version, 3);
+  assert.strictEqual(a.score_version, 4);
   assert.strictEqual(a.total, a.parts.reduce((s, p) => s + p.got, 0));
   assert.strictEqual(a.parts.reduce((s, p) => s + p.max, 0), 100000);
   for (const p of a.parts) {
@@ -68,7 +68,7 @@ ok("score parts sum to the total, and a second call matches", () => {
 
 function partGot(sc, key){ return sc.parts.find((p) => p.key === key).got; }
 
-ok("a ride at every stated reference stays under half and fills no part", () => {
+ok("a ride at every stated reference earns every part's full weight, and moving off a reference costs points", () => {
   const legs = [
     { from: "orbital-depot", to: "iss", arr_jd: t0 + 0.03, kwh: 400, fare: 80, gate: "PASS", xenon_kg: 1 },
     { from: "iss", to: "lunar-data-center", arr_jd: t0 + 5, kwh: 37000, fare: 8000, gate: "PASS", xenon_kg: 90 },
@@ -82,12 +82,10 @@ ok("a ride at every stated reference stays under half and fills no part", () => 
   const at = R.score("iss-crew", legs, ctx);
   assert.strictEqual(at.out_of, 100000);
   assert.strictEqual(at.total, at.parts.reduce((s, p) => s + p.got, 0));
-  assert.ok(at.total < at.out_of / 2, at.total);
-  assert.strictEqual(at.score_version, 3);
-  for (const p of at.parts) {
-    assert.ok(p.got < p.max || p.max === 0, p.key + " " + p.got + " of " + p.max);
-    assert.strictEqual(p.got, p.got, p.key);
-  }
+  // Score version 4 (Alvin, 2026-10-20): the reference earns the full weight, so this ride reads 100000.
+  assert.strictEqual(at.total, at.out_of);
+  assert.strictEqual(at.score_version, 4);
+  for (const p of at.parts) assert.strictEqual(p.got, p.max, p.key + " " + p.got + " of " + p.max);
   const overEnergy = R.score("iss-crew", legs, Object.assign({}, ctx, { flown: flown(1.1) }));
   assert.ok(partGot(overEnergy, "energy") <= partGot(at, "energy") * 0.7, partGot(overEnergy, "energy"));
   const underEnergy = R.score("iss-crew", legs, Object.assign({}, ctx, { flown: flown(0.5) }));
@@ -125,8 +123,8 @@ ok("a copied leg that ignores the tank, the throttle and the window scores far u
   const sc = R.score("iss-crew", legs, ctx);
   assert.strictEqual(sc.total, sc.parts.reduce((s, p) => s + p.got, 0));
   assert.strictEqual(sc.parts.find((p) => p.key === "tank").got, 0);
-  assert(sc.total < 40000, sc.total);
-  assert(sc.total < sc.out_of / 2);
+  // The tank, throttle, window, recovery and energy parts lose most of their 37000 points.
+  assert(sc.total < 70000, sc.total);
 });
 
 console.log(n, "passed");

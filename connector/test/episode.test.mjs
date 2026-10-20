@@ -70,7 +70,7 @@ test("an arrived ride exports one JSONL episode with the schema fields and the s
   assert.match(last.outcome.note, /Simulated/);
   assert.equal(last.reward.total, run.score.total);
   assert.equal(last.reward.out_of, run.score.out_of);
-  assert.equal(last.reward.score_version, 3);
+  assert.equal(last.reward.score_version, 4);
   assert.equal(last.reward.score_version, run.score.score_version);
   assert.deepEqual(last.reward.parts.map((p) => p.key), PART_KEYS);
   assert.deepEqual(last.reward.parts.map((p) => p.key), run.score.parts.map((p) => p.key));

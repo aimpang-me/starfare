@@ -121,7 +121,7 @@ test("dispatch scores from what actually happened: R.fly on the same legs, then 
   assert.ok(hit > 0, "no hazard hit any of 12 dispatches");
 });
 
-test("with nothing in the way, the par car's plan with an exact quote stays under half and fills no part", async () => {
+test("with nothing in the way, the par car's plan with an exact quote earns every part's full weight but the promise", async () => {
   const clean = await findDay(200, async (nowMs) => {
     const { out } = await play("iss-crew", undefined, "energy", nowMs);
     return out.incidents.length === 0 && out.extra_kwh === 0 ? out : null;
@@ -133,13 +133,13 @@ test("with nothing in the way, the par car's plan with an exact quote stays unde
   for (const k of ["pickup", "on_time", "energy", "checker", "fare", "economy", "tank", "throttle", "window", "recovery"]) {
     const row = clean.parts.find((x) => x.key === k);
     assert.ok(Math.abs(part(clean, k) - row.max * R.SCORE_HEADROOM) <= 1e-6, k + " " + part(clean, k));
-    assert.ok(part(clean, k) < row.max, k);
   }
+  assert.equal(R.SCORE_HEADROOM, 1); // score version 4: a ride on every reference reads 100000
   const promise = clean.parts.find((x) => x.key === "promise");
   assert.ok(part(clean, "promise") < promise.max);
   assert.ok(part(clean, "promise") > promise.max * R.SCORE_HEADROOM * 0.99, part(clean, "promise"));
   assert.equal(part(clean, "dose"), 0);
-  assert.ok(clean.total < clean.out_of / 2, clean.total);
+  assert.ok(clean.total > clean.out_of * 0.99 && clean.total < clean.out_of, clean.total);
   assert.equal(clean.promise_slip_hours, 0); assert.equal(clean.extra_kwh, 0);
 });
 
@@ -189,11 +189,11 @@ test("the quoted arrival is a promise scored against the actual arrival; a wrong
   assert.ok(Math.abs(prom.got - curve(prom.max, prom.measure / 60)) <= 1e-6, `${prom.got} for ${slipH} h late`);
   assert.ok(prom.got < prom.max);
   assert.match(prom.note, /after the quoted/);
-  // the same hail and car, quoting what actually happened, sits on the reference and still under the weight
+  // the same hail and car, quoting what actually happened, sits on the reference and earns the full weight (score version 4)
   const kept = await play("iss-crew", undefined, "energy", hit.nowMs, (r) => ({ quoted_fare_usd: r.fare, quoted_arrival: hit.out.arrive }), "run_kept");
   const keptPromise = part(kept.out, "promise");
   assert.ok(Math.abs(keptPromise - curve(R.SCORE_MAX.promise, 0)) <= 1e-6, String(keptPromise));
-  assert.ok(keptPromise < R.SCORE_MAX.promise);
+  assert.ok(Math.abs(keptPromise - R.SCORE_MAX.promise) <= 1e-6, String(keptPromise));
   assert.equal(kept.out.arrive, hit.out.arrive);
   // 4 h early costs a quarter as much as 4 h late: the early scale is 240 min, the late scale is 60 min
   const early = await play("iss-crew", undefined, "energy", hit.nowMs, (r) => ({ quoted_fare_usd: r.fare, quoted_arrival: isoJD(jdOfIso(hit.out.arrive) + 4 / 24) }), "run_early");
@@ -619,8 +619,8 @@ test("shared flight: dispatch with legs, stops and quotes scores each booking an
   });
   assert.deepEqual([out.status, out.car, out.used_kwh, out.par_kwh, out.planned_pickup, out.promised_arrival], ["arrived", "SF-04", 61412, 61412, "2027-10-22 02:21", "2030-07-23 00:22"]);
   assert.equal(out.total, out.parts.reduce((a, x) => a + x.got, 0));
-  assert.ok(out.total < out.out_of / 2, out.total);
-  for (const p of out.parts) assert.ok(p.got < p.max || p.max === 0, p.key);
+  assert.ok(out.total < out.out_of, out.total);
+  for (const p of out.parts) assert.ok(p.got <= p.max, p.key);
   assert.deepEqual(out.bookings.map((b) => [b.hail_id, b.pickup, b.arrive, b.promise_slip_hours, b.fare_usd]), [
     ["ceres-shift", "2027-10-22 02:21", "2030-07-23 01:00", 0.6, 514158.13],
     ["phobos-commute", "2030-07-23 03:14", "2030-07-23 06:39", 0.6, 1079.11]]);

@@ -125,7 +125,7 @@ th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;t
 
   <h2>The scale</h2>
   <p>Score version ${esc(catalog.version)} scores out of ${esc(R.SCORE_TOTAL)}. The weights are placeholders. They sum to ${esc(R.SCORE_TOTAL)}. The total is the sum of the part scores. Part scores are not rounded.</p>
-  <p>Each part except cruise dose earns at most ${esc(R.SCORE_HEADROOM)} of its weight when the flight is on the stated reference. That share is the headroom. The falloff steepness is ${esc(R.SCORE_STEEPNESS)}. Both numbers are simulated assumptions. As the flight moves off the reference, the part falls and never reaches its weight. Doing better than the reference does not add points past the headroom.</p>
+  <p>Each part except cruise dose earns its full weight when the flight is on the stated reference (a headroom of ${esc(R.SCORE_HEADROOM)}). As the flight moves off the reference, the part falls. The falloff steepness is ${esc(R.SCORE_STEEPNESS)}, a simulated assumption. Doing better than the reference does not add points past the weight. Score version 3 paid at most 0.35 of each weight on the reference. Because no part can score above its reference, that only scaled every total down, so version 4 pays the full weight.</p>
 
   <h2>Score parts</h2>
   <p>Each row is one part. Weight is the placeholder maximum. Unit is the plain unit. Engine unit is the string <span class="mono">score()</span> puts on the part.</p>

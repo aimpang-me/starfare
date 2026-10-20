@@ -32,8 +32,8 @@ ok("a two-booking flight checks, flies with per-booking times, and scores passen
     const people = ["ceres-shift", "phobos-commute"].reduce((a, id) => a + sc.bookings[id].party, 0);
     assert.strictEqual(sc.parts.find((p) => p.key === key).got, weighted / people, key);
   }
-  for (const p of sc.parts) assert.ok(p.got < p.max || p.max === 0, p.key);
-  assert.ok(sc.total < sc.out_of / 2, sc.total);
+  for (const p of sc.parts) assert.ok(p.got <= p.max, p.key);
+  assert.ok(sc.total < sc.out_of, sc.total);
   assert.strictEqual(sc.total, sc.parts.reduce((a, p) => a + p.got, 0));
   assert.ok(sc.parts[0].note.includes("ceres-shift: rider waited 2.4 h") && sc.parts[0].note.includes("phobos-commute: rider waited 405.8 days"));
   // Fares per seat: both ride the last leg, so each pays half of it; ceres-shift alone pays the leg before.
@@ -93,9 +93,9 @@ ok("a two-leg dispatch is its stops-plan rewrite: check, fly and score agree exa
   assert.strictEqual(sc.parts.length, 12);
   assert.strictEqual(sc.total, sc.parts.reduce((a, p) => a + p.got, 0));
   assert.deepStrictEqual([two.used_kwh, two.delay_hours], [45505, 93.80377880483866]); // held 93.8 h in the storm
-  assert.strictEqual(sc.score_version, 3);
-  assert.ok(sc.total < sc.out_of / 2, sc.total);
-  for (const p of sc.parts) assert.ok(p.got < p.max || p.max === 0, p.key);
+  assert.strictEqual(sc.score_version, 4);
+  assert.ok(sc.total < sc.out_of, sc.total);
+  for (const p of sc.parts) assert.ok(p.got <= p.max, p.key);
   const energy = sc.parts.find((p) => p.key === "energy");
   assert.ok(energy.measure > 0, energy.measure);
 });

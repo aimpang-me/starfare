@@ -1884,7 +1884,11 @@ function par(id, t0, endJd, seed){
       try {
         var p = planned(c.at, h.from, st + w[0] * HOUR, "energy", endJd, c.id), P = slim(p, c.at, h.from);
         var pk = fly(id, c.id, [P, { from: h.from, to: h.from, dep_jd: p.arr_jd + DWELL, arr_jd: p.arr_jd + DWELL, kwh: 0 }], t0, seed).pickup_jd;
-        var r = planned(h.from, h.to, Math.max(p.arr_jd, pk) + DWELL + w[1] * HOUR, "energy", endJd, c.id), Rr = slim(r, h.from, h.to), legs = [P, Rr], F = fly(id, c.id, legs, t0, seed);
+        var r = planned(h.from, h.to, Math.max(p.arr_jd, pk) + DWELL + w[1] * HOUR, "energy", endJd, c.id), Rr = slim(r, h.from, h.to), legs = [P, Rr];
+        // Each leg can fit the tank while the pair does not; check() refuses that dispatch, so par must not pick it.
+        var xe = (+P.xenon_kg || 0) + (+Rr.xenon_kg || 0);
+        if (xe > c.xenon_kg + 1e-6) throw new Error(c.name + " xenon tank holds " + c.xenon_kg + " kg and this plan needs " + Math.round(xe * 10) / 10 + " kg");
+        var F = fly(id, c.id, legs, t0, seed);
         if (!best || F.used_kwh < best.kwh - 1e-9) best = { car: c.id, kwh: F.used_kwh, planned_kwh: F.planned_kwh, arr_jd: F.arrive_jd, planned_arr_jd: r.arr_jd, legs: legs, wait_h: w, path: [] };
         // Holds and corrections only add energy, so a local ride planned above the best can't win; a replan or divert might.
         if (legs.some(function(L){ return system(L.from) !== system(L.to); }) || F.planned_kwh < best.kwh - 1e-9){
@@ -1909,8 +1913,8 @@ function par(id, t0, endJd, seed){
       if (later) return;
       try {
         var stL = H.pickupStart(id, c.id, t0), pL = planned(c.at, h.from, stL, "energy", ephEnd, c.id);
-        planned(h.from, h.to, pL.arr_jd + DWELL, "energy", ephEnd, c.id);
-        later = true;
+        var rL = planned(h.from, h.to, pL.arr_jd + DWELL, "energy", ephEnd, c.id);
+        if ((+pL.battery.propellant_kg || 0) + (+rL.battery.propellant_kg || 0) <= c.xenon_kg + 1e-6) later = true;
       } catch (e) {}
     });
     if (later) throw new Error("no ship can serve " + h.title);
@@ -2038,15 +2042,16 @@ function check(id, car, legs, t0, seed){
 function quotedJd(s){ var m = /^\s*(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec(String(s || "")); return m ? E.jdFromIso(m[1] + "T" + m[2]) : null; }
 function k(x){ return Math.round(x).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 function iso(jd){ return E.isoFromJd(jd, true).replace("T", " ").slice(0, 16); }
-// Score version 3. Placeholder weights, they sum to 100000, until Alvin sets them. got is not rounded.
+// Score version 4. Placeholder weights, they sum to 100000, until Alvin sets them. got is not rounded.
 // total is the sum of the part got values. legs: today's [pickup, ride] or a plan.
 // ctx: { t0, arrive_by_jd, par_kwh, best_wait_days, plan_calls, ship, window_kwh, throttled_kwh, hindsight_kwh,
 //   quote: { fare_usd, arrival }, flown: fly(...) }
 // A shared flight adds ctx.bookings. Passenger parts are the party weighted mean. Ship parts are once per flight.
 // The weights and that mean are a placeholder (docs/SHARED-FLIGHTS.md, open number 5).
-// SCORE_HEADROOM and SCORE_STEEPNESS are simulated assumptions. At the stated reference, excess is 0 and a part
-// earns headroom of its weight. It falls as excess grows and never reaches the weight.
-var SCORE_HEADROOM = 0.35, SCORE_STEEPNESS = 6;
+// SCORE_STEEPNESS is a simulated assumption. At the stated reference, excess is 0 and a part earns SCORE_HEADROOM of its
+// weight; it falls as excess grows. Version 3 set the headroom to 0.35, which only scaled every total down (no part can
+// score above its reference), so version 4 sets it to 1 and a ride on every reference reads 100000 (Alvin, 2026-10-20).
+var SCORE_HEADROOM = 1, SCORE_STEEPNESS = 6;
 var SCORE_MAX = { pickup: 22000, on_time: 16000, energy: 24000, promise: 14000, checker: 4000, fare: 4000, economy: 3000, tank: 4000, throttle: 3000, window: 3000, recovery: 3000, dose: 0 };
 var SCORE_TOTAL = Object.keys(SCORE_MAX).reduce(function(a, key){ return a + SCORE_MAX[key]; }, 0);
 function scoreRatio(excess){ return SCORE_HEADROOM / (1 + SCORE_STEEPNESS * Math.max(0, excess)); }
@@ -2111,7 +2116,7 @@ function score(id, legs, ctx){
     row("dose", "Cruise dose", 0, "mSv", msv, msv + " mSv on the cruise. This part is a placeholder and scores 0")
   ];
   var total = parts.reduce(function(a, p){ return a + p.got; }, 0);
-  var out = { total: total, out_of: SCORE_TOTAL, score_version: 3, parts: parts, used_kwh: used, extra_kwh: F.extra_kwh || 0, wait_days: lead.wait_days, late_days: lead.late_days,
+  var out = { total: total, out_of: SCORE_TOTAL, score_version: 4, parts: parts, used_kwh: used, extra_kwh: F.extra_kwh || 0, wait_days: lead.wait_days, late_days: lead.late_days,
     pickup_jd: lead.pickup_jd, arrive_jd: lead.arrive_jd, planned_arrive_jd: lead.planned_arrive_jd, rider_dose_msv: msv, fare_usd: lead.fare_usd, beat_par: used < ctx.par_kwh * 0.995, incidents: F.incidents || [] };
   if (!one){ out.bookings = {}; M.hails.forEach(function(b){ out.bookings[b] = bookings[b]; }); }
   return out;

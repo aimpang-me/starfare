@@ -163,7 +163,7 @@ async function takeBookableQuick(client, hails) {
   for (const booking of hails.filter((h) => h.kind === "quick")) {
     const result = await call(client, "take_hail", { hail_id: booking.hail_id });
     if (!result.isError) return { booking, hail: result.value };
-    assert.match(String(result.value), /xenon tank holds.*this leg needs|season ends too soon/i,
+    assert.match(String(result.value), /xenon tank holds.*this (leg|plan) needs|season ends too soon/i,
       "Unexpected take_hail error must fail the check");
   }
   assert.fail("This season has no bookable quick hail for the integration check");
