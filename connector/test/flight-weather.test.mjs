@@ -39,3 +39,12 @@ test("weather builds over the first hour, holds through the checkpoint and clear
   assert.equal(at("titan", 2461041.5 + 2 / 24), 0);
   assert.equal(at("earth", 2461041.5 + 2 / 24), 0);
 });
+
+test("solar storm windows come from recorded flare holds and a live solar_flare checkpoint", () => {
+  const w = View.weatherWindows(incidents, null, E.PLACES, View.FLARE);
+  assert.equal(w.length, 1);
+  assert.deepEqual([w[0].kind, w[0].body], ["flare", "earth"]);
+  assert.ok(near(w[0].from, 2461041.5) && near(w[0].to, 2461041.5 + 5 / 24));
+  const live = View.weatherWindows([], { cause: "solar_flare", place: "iss", at: "2026-01-02 00:00" }, E.PLACES, View.FLARE);
+  assert.deepEqual([live[0].body, live[0].to], ["earth", Infinity]);
+});

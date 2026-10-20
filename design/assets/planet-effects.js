@@ -4,14 +4,21 @@
   else root.StarfarePlanetEffects = factory();
 })(typeof window !== 'undefined' ? window : this, function () {
   'use strict';
-  var TAU = Math.PI * 2, geometries = new WeakMap(), ringGeometries = new WeakMap();
+  var TAU = Math.PI * 2, geometries = new WeakMap(), ringGeometries = new WeakMap(), coneGeometries = new WeakMap();
   // Seconds below are deliberately slow illustration periods, not astronomical spin telemetry.
   // Retain the map's existing .35-radian presentation tilt; anchors live outside that frame.
   // veil: the colour a recorded dust storm or haze lays over the body; the page passes how thick, 0 to 1.
+  // aurora: the auroral oval's height on the unit sphere (sin of its latitude), its width and colour. The oval is
+  // centred on the spin pole: Earth's ~10 degree dipole tilt is ignored, and Uranus and Neptune, whose fields are
+  // tilted ~59 and ~47 degrees, get none. Earth's is the green 557.7 nm oxygen line. Jupiter's and Saturn's glow in
+  // ultraviolet; the violet is illustrative, after Hubble's false-colour images. The page passes storm, 0 to 1, while
+  // a simulated flare storm is over the planet.
+  // plumes: lat, lon in degrees, height and half-width in body radii. Io's Pele and Prometheus (Galileo, Voyager),
+  // and Enceladus's south polar jets (Cassini), drawn as faint lit fans. Their flicker is illustrative.
   // A map layer names its file, * standing for the tier, then the tiers it ships in when not all of 1k, 2k and 4k.
   // A body shows its smallest map until drawn large; then the desktop sharpens it to 2K and, close up, to 4K.
   var PROFILES = {
-    earth: { day:'earth_day_*.jpg 2k 4k', relief:'earth_normal_*.png 1k 2k', clouds:'earth_clouds_*.webp 1k 2k', ocean:'earth_ocean_1k.png', period:180, air:[.1,.34,.8], shell:1.035, airStrength:.35 },
+    earth: { day:'earth_day_*.jpg 2k 4k', relief:'earth_normal_*.png 1k 2k', clouds:'earth_clouds_*.webp 1k 2k', ocean:'earth_ocean_1k.png', period:180, air:[.1,.34,.8], shell:1.035, airStrength:.35, aurora:{ y:.92, w:.035, c:[.25,1,.5], k:.55 } },
     moon: { day:'moon_*.jpg', relief:'moon_normal_*.png 1k 2k', period:420, rough:1 },
     mercury: { day:'mercury_*.jpg', period:540, rough:1 },
     venus: { day:'venus_*.jpg', period:-540, air:[.65,.42,.18], shell:1.045, airStrength:.32, haze:.25 },
@@ -19,14 +26,14 @@
     phobos: { day:'phobos_*.jpg', period:480, rough:1 },
     ceres: { day:'ceres_*.jpg', period:420, rough:1 },
     bennu: { day:'bennu_*.jpg', period:480, rough:1 },
-    jupiter: { day:'jupiter_*.jpg 2k 4k', period:240, gas:.009, air:[.28,.22,.16], shell:1.014, airStrength:.14 },
-    io: { day:'io_*.jpg', period:420, rough:1 },
+    jupiter: { day:'jupiter_*.jpg 2k 4k', period:240, gas:.009, air:[.28,.22,.16], shell:1.014, airStrength:.14, aurora:{ y:.965, w:.018, c:[.62,.5,1], k:.5 } },
+    io: { day:'io_*.jpg', period:420, rough:1, plumes:[{ lat:-19, lon:-255, h:.16, w:.33, c:[1,.82,.55] }, { lat:-2, lon:-153, h:.06, w:.12, c:[.9,.92,1] }] },
     europa: { day:'europa_*.jpg', period:480, ice:.08 },
     ganymede: { day:'ganymede_*.jpg', period:540, ice:.035 },
     callisto: { day:'callisto_*.jpg', period:600, rough:1 },
-    saturn: { day:'saturn_*.jpg', period:300, gas:.006, air:[.3,.24,.13], shell:1.018, airStrength:.17, ring:true },
+    saturn: { day:'saturn_*.jpg', period:300, gas:.006, air:[.3,.24,.13], shell:1.018, airStrength:.17, ring:true, aurora:{ y:.97, w:.02, c:[.58,.52,1], k:.45 } },
     titan: { day:'titan_1k.jpg', period:600, air:[.65,.31,.065], shell:1.07, airStrength:.45, haze:.5, veil:[.7,.4,.12] },
-    enceladus: { day:'enceladus_*.jpg', period:480, ice:.1 },
+    enceladus: { day:'enceladus_*.jpg', period:480, ice:.1, plumes:[{ lat:-88, lon:0, h:1.1, w:.35, c:[.85,.92,1] }, { lat:-82, lon:120, h:.8, w:.25, c:[.85,.92,1] }, { lat:-82, lon:-120, h:.9, w:.25, c:[.85,.92,1] }] },
     uranus: { day:'uranus_*.jpg 1k 2k', period:-420, gas:.002, air:[.09,.32,.36], shell:1.025, airStrength:.2 },
     neptune: { day:'neptune_*.jpg 1k 2k', period:360, gas:.004, air:[.07,.15,.46], shell:1.025, airStrength:.2 },
     triton: { day:'triton_*.jpg', period:540, ice:.07 }
@@ -98,7 +105,9 @@
     'float edge=pow(1.-max(dot(normalize(vN),V),0.),3.);' +
     'col+=airColor*edge*smoothstep(-.15,.55,d)*detail*.22;' +
     'col=mix(col,airColor*(.025+.65*sun),haze*edge*detail*.45);' +
-    'col=mix(col,veilColor*(.02+.8*sun),veil*(.62+.38*edge));col+=veilColor*edge*smoothstep(-.15,.55,d)*veil*.35;' +
+    'float cells=.55+.45*sin(vUv.x*37.7+time*.5+sin(vUv.y*21.-time*.31)*2.2)*sin(vUv.y*29.-time*.23+sin(vUv.x*17.+time*.17)*1.7);' +
+    'float storm=veil*mix(1.,cells,.55*detail);' +
+    'col=mix(col,veilColor*(.02+.8*sun),storm*(.62+.38*edge));col+=veilColor*edge*smoothstep(-.15,.55,d)*veil*.35;' +
     'col+=vec3(.65,.78,.85)*pow(max(dot(N,normalize(L+V)),0.),24.)*ice*sun*detail;' +
     '\n#endif\n' +
     'gl_FragColor=vec4(displayColor(col),1.);}';
@@ -117,6 +126,30 @@
     'float t=-dot(p,L),miss=length(p+max(t,0.)*L);float shadow=t>0.?1.-smoothstep(.97,1.03,miss):0.;' +
     'float lit=.16+.84*sqrt(abs(dot(normalize(ringNormal),L)))*(1.-shadow*.96);' +
     'gl_FragColor=vec4(displayColor(linearColor(map.rgb)*vec3(.85,.8,.7)*lit),map.a*.92);}';
+  // The tilt frame's position on the unit sphere: y is the spin pole.
+  var VS_LOCAL = '#include <common>\n#include <logdepthbuf_pars_vertex>\n' +
+    'varying vec2 vUv; varying vec3 vN; varying vec3 vT; varying vec3 vB; varying vec3 vW; varying vec3 vP;\n' +
+    'void main(){vUv=uv;vP=position;vN=normalize(mat3(modelMatrix)*normal);vT=normalize(mat3(modelMatrix)*vec3(0.,1.,0.));vB=vec3(0.);' +
+    'vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;\n#include <logdepthbuf_vertex>\n}';
+  // Curtains are bands of light along the oval, brighter where the line of sight grazes them. On the day side the
+  // sky drowns them out. time only moves the curtains; storm widens the oval toward the equator and brightens it.
+  var AURORA = HEAD + 'varying vec3 vP;uniform vec3 auroraColor;uniform float auroraY;uniform float auroraW;uniform float auroraK;uniform float storm;uniform float time;\n' +
+    'void main(){\n#include <logdepthbuf_fragment>\n' +
+    'vec3 N=normalize(vN),V=viewRay();float y=abs(vP.y),lon=atan(vP.z,vP.x);' +
+    'float c=auroraY-.03*storm,w=auroraW*(1.+storm);float band=exp(-pow((y-c)/w,2.));' +
+    'float curtain=.55+.45*sin(lon*7.+time*.21+sin(lon*3.-time*.13)*2.)*(.7+.3*sin(lon*23.-time*.37));' +
+    'float night=1.-.85*smoothstep(-.12,.3,dot(N,normalize(lightDirection)));' +
+    'float graze=clamp(.35/max(abs(dot(N,V)),.12),0.,2.5);' +
+    'float a=band*curtain*night*graze*auroraK*(.45+1.55*storm)*detail;' +
+    'gl_FragColor=vec4(auroraColor*a,a);}';
+  // A plume is a cone opening up from its vent (local y from 0 to 1). It shows where the vent is in sunlight.
+  var PLUME = HEAD + 'varying vec3 vP;uniform vec3 plumeColor;uniform float time;uniform float seed;\n' +
+    'void main(){\n#include <logdepthbuf_fragment>\n' +
+    'float h=clamp(vP.y,0.,1.);vec3 up=normalize(vT);' +
+    'float lit=smoothstep(-.4,.1,dot(up,normalize(lightDirection)));' +
+    'float shell=pow(abs(dot(normalize(vN),viewRay())),1.5);float flick=.85+.15*sin(time*.6+seed+h*9.);' +
+    'float a=pow(1.-h,1.8)*smoothstep(0.,.08,h)*shell*lit*flick*.9*detail;' +
+    'gl_FragColor=vec4(plumeColor*a,a);}';
   var SOLAR = HEAD + 'uniform sampler2D day;uniform float time;\nvoid main(){\n#include <logdepthbuf_fragment>\n' +
     'vec2 uv=vUv;float pole=pow(sin(uv.y*3.14159265),2.);uv.x=fract(uv.x+.0015*detail*pole*sin(time/60.+uv.y*12.));' +
     'vec3 N=normalize(vN);float cell=sin(N.x*31.+time*.025)*sin(N.y*37.-time*.017)*sin(N.z*29.+time*.021);' +
@@ -140,7 +173,9 @@
       airColor: { value: new T.Vector3().fromArray(profile.air || [0,0,0]) }, airStrength: { value: profile.airStrength || 0 },
       veil: { value: 0 }, veilColor: { value: new T.Vector3().fromArray(profile.veil || [0,0,0]) },
       ringMap: { value: profile.ring ? services.texture('saturn_ring_1k.webp') : null },
-      ringReady: { value: 0 },
+      ringReady: { value: 0 }, storm: { value: 0 },
+      auroraColor: { value: new T.Vector3().fromArray(profile.aurora ? profile.aurora.c : [0,0,0]) },
+      auroraY: { value: profile.aurora ? profile.aurora.y : 0 }, auroraW: { value: profile.aurora ? profile.aurora.w : 1 }, auroraK: { value: profile.aurora ? profile.aurora.k : 0 },
       ringNormal: { value: new T.Vector3(0,1,0) }, center: { value: new T.Vector3() }, bodyRadius: { value: 1 }
     };
     var surface = new T.Mesh(geo, new T.ShaderMaterial({ uniforms: uniforms, defines: id === 'earth' ? { EARTH: 1 } : profile.ring ? { RINGS: 1 } : {}, vertexShader: VS, fragmentShader: SURFACE }));
@@ -154,6 +189,22 @@
       atmosphere = new T.Mesh(geo, new T.ShaderMaterial({ uniforms: uniforms, vertexShader: VS, fragmentShader: ATMOSPHERE, transparent: true, depthWrite: false, side: T.BackSide, blending: T.AdditiveBlending }));
       atmosphere.scale.setScalar(profile.shell); atmosphere.renderOrder = 2; tilt.add(atmosphere);
     }
+    var aurora = null;
+    if (profile.aurora) {
+      aurora = new T.Mesh(geo, new T.ShaderMaterial({ uniforms: uniforms, vertexShader: VS_LOCAL, fragmentShader: AURORA, transparent: true, depthWrite: false, blending: T.AdditiveBlending }));
+      aurora.scale.setScalar(1.012); aurora.renderOrder = 3; aurora.visible = false; tilt.add(aurora);
+    }
+    var plumes = (profile.plumes || []).map(function (p, i) {
+      var cone = coneGeometries.get(T);
+      if (!cone) { cone = new T.CylinderGeometry(1, .04, 1, 20, 1, true); cone.translate(0, .5, 0); coneGeometries.set(T, cone); }
+      var mine = { plumeColor: { value: new T.Vector3().fromArray(p.c) }, seed: { value: i * 2.3 } };
+      ['lightDirection', 'viewDirection', 'orthographic', 'detail', 'time'].forEach(function (k) { mine[k] = uniforms[k]; });
+      var m = new T.Mesh(cone, new T.ShaderMaterial({ uniforms: mine, vertexShader: VS_LOCAL, fragmentShader: PLUME, transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide }));
+      var phi = (p.lon + 180) / 360 * TAU, theta = (90 - p.lat) * Math.PI / 180;
+      var n = new T.Vector3(-Math.cos(phi) * Math.sin(theta), Math.cos(theta), Math.sin(phi) * Math.sin(theta));
+      m.position.copy(n).multiplyScalar(.995); m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), n);
+      m.scale.set(p.w, p.h, p.w); m.renderOrder = 3; m.visible = false; surface.add(m); return m;
+    });
     var ring = null;
     if (profile.ring) {
       var rg = ringGeometries.get(T);
@@ -166,7 +217,7 @@
       ring.rotation.x=-Math.PI/2+.47; ring.renderOrder=1; tilt.add(ring);
     }
     root.userData.textured = true;
-    root.userData.planetEffects = { id: id, profile:profile, uniforms: uniforms, surface: surface, cloud: cloud, atmosphere: atmosphere, ring:ring, services: services, wanted: false, close: false, tier: null, shown: { day: pick(profile.day, '1k') }, next: {}, center: new T.Vector3(), scale:new T.Vector3(), disposed: false };
+    root.userData.planetEffects = { id: id, profile:profile, uniforms: uniforms, surface: surface, cloud: cloud, atmosphere: atmosphere, ring:ring, aurora: aurora, plumes: plumes, services: services, wanted: false, close: false, tier: null, shown: { day: pick(profile.day, '1k') }, next: {}, center: new T.Vector3(), scale:new T.Vector3(), disposed: false };
     return root;
   }
   function createSun(T, services) {
@@ -197,6 +248,9 @@
     if(e.ring){u.ringReady.value=imageReady(u.ringMap.value)?1:0;e.ring.visible=!!u.ringReady.value;e.ring.updateWorldMatrix(true,false);u.ringNormal.value.set(0,0,1).transformDirection(e.ring.matrixWorld);u.center.value.copy(e.center);body.getWorldScale(e.scale);u.bodyRadius.value=e.scale.x;}
     if (e.cloud) e.cloud.visible = !!(u.cloudReady.value && u.detail.value);
     if (e.atmosphere) e.atmosphere.visible = u.detail.value > 0;
+    u.storm.value = e.aurora ? Math.max(0, Math.min(1, context.storm || 0)) : 0;
+    if (e.aurora) e.aurora.visible = u.detail.value > 0;
+    e.plumes.forEach(function (m) { m.visible = u.detail.value > 0; });
   }
   // A new map replaces the shown one only once loaded, so a body never draws blank meanwhile; an empty layer takes
   // its map at once, its ready flag holding it back until loaded.
