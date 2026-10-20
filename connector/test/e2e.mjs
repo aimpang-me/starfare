@@ -847,6 +847,34 @@ async function phaseOff() {
     assert.ok(ref.company.ended > 0, "the reference flew jobs in its first tick");
   });
 
+  await check("sandbox page: GET /world and GET /world/<id> serve the page; POST /world/<id>/codes gives new codes once and the old ones stop working", async () => {
+    for (const path of ["/world", "/world/w_00000000000000000000"]) {
+      const r = await fetch(`${w.base}${path}`), html = await r.text();
+      assert.equal(r.status, 200, path);
+      assert.match(r.headers.get("content-type"), /text\/html/);
+      assert.match(html, /simulated/i);
+      assert.doesNotMatch(html, /__WORLD__/);
+    }
+    assert.match(await (await fetch(`${w.base}/world/w_00000000000000000000`)).text(), /"w_00000000000000000000"/);
+    const v = await (await fetch(`${w.base}/world/new`, { method: "POST" })).json();
+    assert.equal(v.page, `${w.base}/world/${v.world_id}`);
+    await ok(client, "join", { code: v.codes.EX });
+    const re = await fetch(`${w.base}/world/${v.world_id}/codes`, { method: "POST" });
+    assert.equal(re.status, 200);
+    const fresh = await re.json();
+    for (const seat of ["EX", "D1", "D2"]) assert.notEqual(fresh.codes[seat], v.codes[seat]);
+    assert.ok(fresh.seats.every((x) => !x.joined));
+    const old = await call(client, "join", { code: v.codes.EX });
+    assert.equal(old.isError, true);
+    assert.match(old.value, /seat code is not valid/);
+    assert.equal((await ok(client, "join", { code: fresh.codes.EX })).role, "executor");
+    const view = await (await fetch(v.view)).json();
+    assert.equal(view.codes, undefined);
+    assert.ok(Array.isArray(view.messages) && Array.isArray(view.reports));
+    const get = await fetch(`${w.base}/world/${v.world_id}/codes`); assert.equal(get.status, 405); assert.equal(get.headers.get("allow"), "POST"); await get.body?.cancel();
+    const miss = await fetch(`${w.base}/world/w_00000000000000000000/codes`, { method: "POST" }); assert.equal(miss.status, 404); await miss.body?.cancel();
+  });
+
   await check("sandbox world: an unknown world_id is 404, a malformed path is 404, and the wrong method is 405", async () => {
     const miss = await fetch(`${w.base}/world/w_00000000000000000000.json`);
     assert.equal(miss.status, 404); assert.match((await miss.json()).error, /no world/);
@@ -994,6 +1022,7 @@ async function phaseOn() {
     await check("on: the sandbox's world routes answer 404 while STARFARE_SANDBOX is off, as wrangler.jsonc ships it", async () => {
       const made = await fetch(`${base}/world/new`, { method: "POST" }); assert.equal(made.status, 404); await made.body?.cancel();
       const view = await fetch(`${base}/world/w_00000000000000000000.json`); assert.equal(view.status, 404); await view.body?.cancel();
+      const page = await fetch(`${base}/world`); assert.equal(page.status, 404); await page.body?.cancel();
     });
     await check("on: /, /engine.js, /board and /board.json stay public; /mcp without a token is 401", async () => {
       for (const path of ["/", "/engine.js", "/board", "/board.json", "/hails.json", "/assets/flight-view.js"]) { const r = await fetch(`${base}${path}`); assert.equal(r.status, 200, path); await r.body?.cancel(); }

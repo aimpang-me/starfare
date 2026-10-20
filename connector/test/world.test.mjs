@@ -399,6 +399,27 @@ test("StarfareWorld: three codes once at creation, join with a code, forged code
   assert.match((await obj.seat(made.codes.EX, "message", { to: "D1" })).error, /a message needs text/);
 });
 
+test("StarfareWorld: new codes free every seat, the old codes stop working, and the view lists messages and reports", async () => {
+  const { obj, saved } = worldDO();
+  const made = await obj.create(ID);
+  await obj.seat(made.codes.EX, "join");
+  await obj.seat(made.codes.D1, "join");
+  await obj.seat(made.codes.EX, "message", { to: "D1", text: "Take the Mars hails." });
+  await obj.seat(made.codes.D1, "report", { text: "On it." });
+  const v = await obj.view();
+  assert.deepEqual(v.messages.map((m) => [m.from, m.to, m.text]), [["EX", ["D1"], "Take the Mars hails."]]);
+  assert.deepEqual(v.reports.map((r) => [r.seat, r.text]), [["D1", "On it."]]);
+  const re = await obj.reissue();
+  assert.deepEqual(Object.keys(re.codes), W.SEATS);
+  for (const s of W.SEATS) assert.notEqual(re.codes[s], made.codes[s]);
+  assert.ok(re.seats.every((s) => !s.joined && !s.agent), "every seat is free to join again");
+  assert.equal(saved.get("world").clock.window_ms, null);
+  assert.match((await obj.seat(made.codes.EX, "join")).error, /seat code is not valid/);
+  assert.equal((await obj.seat(re.codes.EX, "join")).role, "executor");
+  assert.equal((await obj.view()).messages.length, 1, "messages outlive new codes");
+  assert.equal(await worldDO().obj.reissue(), null, "no world, no codes");
+});
+
 // ---- the executor's and dispatchers' tools (plan step 5) ----
 test("market, decline and transfer_ship as pure functions", () => {
   const w = fresh();

@@ -21,6 +21,7 @@ export const TICK_CAP_MS = 60 * 1000; // a tick runs after this long even if a j
 export const MARKET_SIZE = POOL_TIERS.rows[0].hails; // today's season pool size
 const EVENTS_KEPT = 50;
 const JOBS_SHOWN = 30; // newest jobs the view lists
+const MESSAGES_SHOWN = 40; // newest messages and reports the view lists (the page's Comms)
 
 export class WorldError extends Error {}
 const fail = (msg) => { throw new WorldError(msg); };
@@ -149,6 +150,7 @@ export function worldView(E, w, nowMs) {
     jobs: jobs.slice(-JOBS_SHOWN).map((j) => jobPub(E, j)),
     scores: scoresView(E, w),
     events: w.events.slice(-10),
+    messages: (w.messages || []).slice(-MESSAGES_SHOWN), reports: (w.reports || []).slice(-MESSAGES_SHOWN),
     note: "A simulated private world: its own clock, weather and traffic. The clock moves one tick (" + c.tick_days + " sky day) when every joined seat has called wait, " +
       "or " + c.cap_ms / 1000 + " real seconds after the tick opened.",
   };
@@ -266,6 +268,15 @@ export function scopeRefusal(w, seat, tool) {
   return SCOPES[other].includes(tool)
     ? tool + " is " + (other === "executor" ? "the executor's tool" : "a dispatcher's tool") + "; this code is " + who + ". Ask " + (other === "executor" ? "the executor" : "a dispatcher") + " with message."
     : "unknown sandbox tool " + tool + "; " + who + " can call " + SCOPES[role].join(", ");
+}
+
+/** Clears every seat for new codes: the old ones stop working and every seat is free to join again. The caller sets the
+ *  new code hashes (world.js returns the codes once, as at creation). Returns w. */
+export function unseat(w, nowMs) {
+  for (const s of SEATS) Object.assign(w.seats[s], { joined_ms: null, waiting: false, agent: null, code_hash: null });
+  w.clock.window_ms = null;
+  w.active_ms = nowMs;
+  return w;
 }
 
 /** What a seat is told when it joins: its role, its desk and ships, the clock, what it may call, and how a tick works. */

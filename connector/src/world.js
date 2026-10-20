@@ -17,13 +17,23 @@ import { hub } from "./store.js";
 import {
   JOB_ID, SEATS, TICK_CAP_MS, WAIT_MAX_S, WorldError, addReport, busySeat, capDueMs, capTick, codeHash, declineHail, dropJob, inboxCount, jobMoved, jobRefusal, joinSeat,
   marketPage, newSecret, newWorld, parseCode, post, queueView, reportsView, scopeRefusal, seatBrief, seatCode, sendMessage, syncJob, takeInbox, takeJob, transferShip,
-  waitSeat, waitView, worldView,
+  unseat, waitSeat, waitView, worldView,
 } from "./world-state.js";
 
 export { WORLD_ID, parseCode } from "./world-state.js";
 export const sandboxOn = (env) => env.STARFARE_SANDBOX === "on";
 export const worldStub = (env, id) => env.STARFARE_WORLD.get(env.STARFARE_WORLD.idFromName(id));
 /** The real-time cap on a tick: WORLD_TICK_CAP_S when set (tests shorten it), else TICK_CAP_MS. */
+/** Fresh codes for every seat of w: their hashes go in w, the codes are returned. */
+async function issueCodes(w) {
+  const codes = {};
+  for (const seat of SEATS) {
+    const secret = newSecret();
+    codes[seat] = seatCode(w.world_id, seat, secret);
+    w.seats[seat].code_hash = await codeHash(secret);
+  }
+  return codes;
+}
 /** A view with the reference company's latest scores beside the world's own. */
 const withRef = (w, v) => (w.ref_scores && v.scores ? { ...v, scores: { ...v.scores, reference: w.ref_scores } } : v);
 export const capMsOf = (env) => (Number(env.WORLD_TICK_CAP_S) > 0 ? Number(env.WORLD_TICK_CAP_S) * 1000 : TICK_CAP_MS);
@@ -103,14 +113,23 @@ export class StarfareWorld extends DurableObject {
     return this.#serial(() => this.#guard(async () => {
       if (await this.#world()) return { error: "world " + worldId + " already exists" };
       const now = Date.now(), E = await engine();
-      const w = newWorld(E, { worldId, seed: await worldSeed(this.env, worldId), owner, nowMs: now, capMs: capMsOf(this.env) }), codes = {};
-      for (const seat of SEATS) {
-        const secret = newSecret();
-        codes[seat] = seatCode(worldId, seat, secret);
-        w.seats[seat].code_hash = await codeHash(secret);
-      }
+      const w = newWorld(E, { worldId, seed: await worldSeed(this.env, worldId), owner, nowMs: now, capMs: capMsOf(this.env) });
+      const codes = await issueCodes(w);
       await this.#save(w);
       return { ...worldView(E, w, now), codes };
+    }));
+  }
+
+  /** New codes for every seat, returned once; the old codes stop working and every seat joins again. */
+  reissue() {
+    return this.#serial(() => this.#guard(async () => {
+      const w = await this.#world();
+      if (!w) return null;
+      const now = Date.now(), E = await engine();
+      unseat(w, now);
+      const codes = await issueCodes(w);
+      await this.#save(w);
+      return { ...withRef(w, worldView(E, w, now)), codes };
     }));
   }
 
