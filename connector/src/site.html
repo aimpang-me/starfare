@@ -523,7 +523,7 @@ p{text-wrap:pretty}
         </ul>
         <p class="lgn">JPL positions at simulated sky dates. Orbit lines are two-body orbits at the sky date, simulated. Stored paths where available; straight route guides otherwise. True scale: real distances and sizes; bodies too small to see are drawn at a few pixels. Surface rotation and clouds are slowed for viewing.</p>
         <p class="lgn cred" id="artCred" hidden></p>
-        <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Q down and E up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Docks are placeholder art. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to ride along, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
+        <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Q down and E up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Docks are placeholder art. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to follow it, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
       </div>
       <div class="mc-map-controls" role="group" aria-label="Map controls">
         <button type="button" id="zoomIn" aria-label="Move closer">+</button><button type="button" id="zoomOut" aria-label="Move farther">−</button><button type="button" id="resetMap" aria-label="Whole system view">⊙</button><button type="button" id="mapHelp" class="mc-map-note" aria-expanded="false" aria-controls="legend">Map info</button>
@@ -1745,7 +1745,7 @@ function bindPilot(host) {
     if (e.buttons & 2) { PIL.mul = clamp(PIL.mul * (e.deltaY < 0 ? 1.2 : 1 / 1.2), 0.02, 50); mapHud(); glStart(); return; }
     pilotDolly(Math.exp(clamp(e.deltaY, -240, 240) * 0.0015)); }, { passive: false });
 }
-// Click a ship to ride along or a body to jump to it; the nearest within 22 px wins.
+// Click a ship to follow it or a body to jump to it; the nearest within 22 px wins.
 function hitAt(cx, cy) {
   var r = $("#glhost").getBoundingClientRect(), x = cx - r.left, y = cy - r.top, best = null, bd = 22;
   function test(rel, hit, rpx) {
@@ -1777,7 +1777,7 @@ function openCtx(cx, cy, lbl) {
     items.push(["Copy position", copy(title + ", heliocentric ecliptic: " + xyz(bodyPos(b)))]);
   } else if (hit) {
     var F = FL[hit.i]; title = F.call;
-    items.push(["Ride along", function () { select({ t: "f", i: hit.i }); }]);
+    items.push(["Follow ship", function () { select({ t: "f", i: hit.i }); }]);
     items.push(["Follow", function () { select({ t: "f", i: hit.i }); setFollow(true); }]);
     if (RUN_ID.test(F.run_id)) items.push(["View flight page", "/flight/" + F.run_id]);
   } else {

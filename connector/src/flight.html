@@ -991,7 +991,7 @@ function loadRide(keep) {
   $("#rwho").className = "tag " + (rec.player_tag ? "me" : "sim");
   $("#rtitle").textContent = (RIDE.record.manifest ? RIDE.record.manifest.bookings.map(function (b) { return b.title; }).join(" + ") : shipWords(h.title || rec.hail_id));
   $("#rnote").textContent = local ? "Centred on " + SF.name(rp.focus) + ", distances in km. Not to scale: the " + SF.SHIP + " and small moons are enlarged. Orbit lines are two-body orbits at the sky date. The flight is simulated."
-    : "Distances compressed; sizes exaggerated. Positions from JPL ephemerides at simulated sky dates. Orbit lines are two-body orbits at the sky date; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet, straight guides between the planned places." : "");
+    : "Not to scale, unlike the true-scale sky map: distances are compressed and sizes exaggerated so the whole route fits. Positions from JPL ephemerides at simulated sky dates. Orbit lines are two-body orbits at the sky date; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet, straight guides between the planned places." : "");
   if (GL && window.SolArt) $("#rnote").insertAdjacentHTML("beforeend", '<span class="cred cred-l">' + esc(SolArt.CREDIT) + ' <a href="/assets/CREDITS.md">Credits</a></span><span class="cred cred-s">Maps: NASA, JPL, USGS; Solar System Scope (CC BY 4.0). <a href="/assets/CREDITS.md">Credits</a></span>');
   $("#sticks").innerHTML = rp.events.map(function (e) { return '<span class="tick ' + e.kind + '" style="left:' + ((e.jd - rp.start) / span * 100).toFixed(2) + '%" title="' + W(e.title) + '"></span>'; }).join("");
   $("#callouts").innerHTML = ""; RS.ckey = null; RS.lvst = null;
