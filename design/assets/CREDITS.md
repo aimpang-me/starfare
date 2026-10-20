@@ -56,6 +56,14 @@ Mars has a thin warm limb; Venus uses its existing cloud-top map; Titan uses the
 
 Saturn reuses the existing alpha ring strip with analytic planet/ring shadows; no shadow-map asset is added. The Sun sharpens through the same 1K, 2K and 4K tiers as the planets and keeps its compact halo with subtle shader convection. Existing presentation tilt is retained. Slow appearance periods (180–720 seconds, with Venus/Uranus illustrated retrograde) are explicitly decorative, independent of ephemerides and replay timing; they are not scientific axial-orientation telemetry.
 
+## Audio: ship radio (`audio/radio/`, `sol-radio.js`)
+
+| File | Source | Licence | Changes |
+|---|---|---|---|
+| `audio/radio/*.mp3` (19 ship callouts, listed in `audio/radio/lines.json`) | Generated with ElevenLabs text to speech (model `eleven_v4`, library voice "Marilyn - Warm, Clear British"), 2026-10-20. AI voice; the lines are simulated. | ElevenLabs terms for the plan in use; confirm commercial use before launch (the account showed free-tier limits on 2026-10-20) | Cut from one take into one clip per line, trimmed, mono 48 kHz MP3 64 kbps. Stored clean. |
+
+The radio sound (band-pass, soft clipping, hiss, squelch bursts and the two-tone alert) is original work, synthesized live in `sol-radio.js` with the Web Audio API. Lines speak no numbers, so the "never invent numbers" rule holds.
+
 ## Original work
 
 The Starseeker ship model, its engine plume, nav lights and callsign decal, the Fresnel atmosphere rims, the bloom, vignette and grain settings, and the SVG icon sprite are all original. They were drawn in code in `sol-art.js` for Starfare. They are not modelled on any real vehicle, and Starfare is not affiliated with any real company.
