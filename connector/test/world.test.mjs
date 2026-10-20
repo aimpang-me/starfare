@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { test } from "node:test";
+import * as G from "../src/game.js";
 import { SEASON_END, SKY, hailView, isoJD, seasonHail } from "../src/game.js";
 import { engine } from "../src/engine.js";
 import { keyedSeed, worldSeed } from "../src/season-seed.js";
@@ -123,8 +124,10 @@ test("a world's seed is keyed when the server has a key, random otherwise, and n
 });
 
 // StarfareWorld with the Worker base class and engine wiring replaced, over a Map and a fake alarm.
+let runSeq = 0;
 function worldDO(env = {}) {
-  const deps = { DurableObject: class { constructor(ctx, env) { this.ctx = ctx; this.env = env; } }, engine, worldSeed, ...W };
+  const deps = { DurableObject: class { constructor(ctx, env) { this.ctx = ctx; this.env = env; } }, engine, worldSeed, ...W, ...G,
+    META: { sha256: "a".repeat(64) }, newRunId: () => "run_" + String(++runSeq).padStart(20, "0"), hub: () => { throw new Error("no hub in tests"); } };
   const source = readFileSync(new URL("../src/world.js", import.meta.url), "utf8")
     .replace(/^import\s[\s\S]*?;\r?\n/gm, "").replace(/^export \{[^}]*\} from [^;]*;\r?\n/gm, "")
     .replace(/\bexport (?=const |class )/g, "");
@@ -170,4 +173,160 @@ test("StarfareWorld: create once, join, wait, a capped tick on the alarm, and an
   await obj.alarm();
   assert.equal(saved.size, 0);
   assert.equal(await obj.view(), null);
+});
+
+// ---- jobs (plan step 3): several runs at once on the world's ships ----
+const jobs = (o = {}) => {
+  const w = fresh(o);
+  let seq = 0;
+  const take = async (hailId) => (await W.takeJob(E, w, hailId, T0, "run_" + String(++seq).padStart(20, "0"))).run;
+  // What StarfareWorld.act does: sync the run to the world, one applyTool call, then move the job's ship.
+  const act = async (run, tool, input = {}) => {
+    const { run: next, result } = await G.applyTool(E, W.syncJob(w, structuredClone(run)), tool, input, { nowMs: T0 });
+    const after = next || W.syncJob(w, structuredClone(run));
+    W.jobMoved(w, after);
+    return { run: after, result };
+  };
+  // Plans the par ship's pickup and ride, and dispatches them with the planned arrival as the promise.
+  const fly = async (run, car = run.par_car, ask = "never") => {
+    let o = await act(run, "plan_pickup", { car });
+    assert.ok(!o.result.error, o.result.error);
+    const pickup = o.result.leg_id;
+    o = await act(o.run, "plan_ride", { after_leg: pickup });
+    const ride = o.result.leg_id;
+    o = await act(o.run, "dispatch", { pickup_leg: pickup, ride_leg: ride, quoted_fare_usd: 100, quoted_arrival: o.result.arrive, ask_after_hours: ask });
+    return o;
+  };
+  return { w, take, act, fly };
+};
+
+test("a market hail taken is a job: today's run on the world's seed, sky time and ships, and it leaves the market", async () => {
+  const { w, take } = jobs(), id = "w0123456789ab-0";
+  const run = await take(id);
+  assert.deepEqual(w.jobs.j1, { job_id: "j1", run_id: run.run_id, hail_id: id, title: run.title, phase: "planning", car: null, taken_tick: 0 });
+  assert.equal(run.seed, w.seed);
+  assert.deepEqual(run.clock, { kind: "frozen", jd: w.clock.jd });
+  assert.deepEqual(run.ships, w.ships);
+  assert.deepEqual(run.world, { world_id: ID, job_id: "j1" });
+  assert.equal(w.market.closed[id], "j1");
+  assert.equal(W.marketHails(E, w).length, W.MARKET_SIZE - 1);
+  await assert.rejects(take(id), /off the market: it is job j1/);
+  await assert.rejects(take("w0123456789ab-" + W.MARKET_SIZE), /unknown hail_id/);
+  await assert.rejects(take("wfedcba987654-3"), /unknown hail_id/, "another world's hail");
+  await assert.rejects(take(seasonHail(E, 1, 0).hail_id), /unknown hail_id/);
+  const info = G.hailInfo(E, run, T0);
+  assert.equal(info.job_id, "j1");
+  assert.equal(info.season, undefined, "a job names its job, not a season");
+  assert.ok(!JSON.stringify(info).includes(w.seed));
+  // A fresh isolate has no market rows: the run brings its own.
+  delete E.R.BY[id];
+  G.restoreRunBookings(E, run);
+  assert.equal(E.R.BY[id].title, run.title);
+});
+
+test("two jobs fly at once on different ships, and each landing parks its ship where it landed, busy until then", async () => {
+  const { w, take, fly } = jobs();
+  const a = await take("w0123456789ab-0"), b = await take("w0123456789ab-4"); // Titan to Saturn; Jupiter to Io
+  assert.notEqual(a.par_car, b.par_car);
+  const A = await fly(a), B = await fly(b);
+  assert.equal(A.result.status, "arrived");
+  assert.equal(B.result.status, "arrived");
+  assert.deepEqual([A.result.job_id, B.result.job_id, A.result.season], ["j1", "j2", undefined], "a score names its job, not a season");
+  assert.deepEqual(w.ships[a.par_car], { at: "saturn", free_jd: A.run.ride.arrive_jd });
+  assert.deepEqual(w.ships[b.par_car], { at: "io", free_jd: B.run.ride.arrive_jd });
+  assert.deepEqual([w.jobs.j1.phase, w.jobs.j1.car, w.jobs.j2.phase, w.jobs.j2.car], ["arrived", a.par_car, "arrived", b.par_car]);
+  assert.equal(w.jobs.j1.total, A.run.score.total);
+  const v = W.worldView(E, w, T0), ship = v.desks[1].ships.find((s) => s.car === a.par_car);
+  assert.deepEqual([ship.at.id, ship.free, ship.job], ["saturn", isoJD(A.run.ride.arrive_jd), "j1"]);
+  assert.deepEqual(v.jobs.map((j) => [j.job_id, j.phase, j.ship]), [["j1", "arrived", E.R.CAR[a.par_car].name], ["j2", "arrived", E.R.CAR[b.par_car].name]]);
+  assert.deepEqual(W.liveJobs(w), []);
+});
+
+test("a ship another job dispatched is refused, and a new pickup leaves from where it lands once it is free", async () => {
+  const { w, take, act, fly } = jobs();
+  const a = await take("w0123456789ab-4"), b = await take("w0123456789ab-9"); // Jupiter to Io; Jupiter to Europa
+  const car = a.par_car;
+  // b plans on the same ship while it is still at home, then a dispatches it first.
+  let o = await act(b, "plan_pickup", { car });
+  o = await act(o.run, "plan_ride", { after_leg: "leg1" });
+  const bPlanned = o.run, arrive = o.result.arrive;
+  const A = await fly(a, car);
+  assert.equal(A.result.status, "arrived");
+  o = await act(bPlanned, "dispatch", { pickup_leg: "leg1", ride_leg: "leg2", quoted_fare_usd: 100, quoted_arrival: arrive, ask_after_hours: "never" });
+  assert.ok(o.result.problems.some((p) => /must leave where .* is parked/.test(p)), o.result.problems);
+  assert.ok(o.result.problems.some((p) => /is busy on another ride until/.test(p)));
+  assert.equal(w.jobs.j2.phase, "planning");
+  // Planned again, the pickup leaves Io when a's ride has landed there.
+  o = await act(o.run, "plan_pickup", { car });
+  assert.equal(o.result.from, "Io");
+  assert.equal(o.result.depart, isoJD(w.ships[car].free_jd));
+  const listed = (await act(o.run, "get_hail")).result.fleet.find((c) => c.car === car);
+  assert.deepEqual([listed.parked_at.id, listed.busy_until], ["io", isoJD(w.ships[car].free_jd)]);
+});
+
+test("the world's ticks are the job's sky time: a plan whose departure passes goes cold", async () => {
+  const { w, take, act } = jobs();
+  let o = await act(await take("w0123456789ab-0"), "plan_pickup", { car: "sf-07" });
+  o = await act(o.run, "plan_ride", { after_leg: "leg1" });
+  W.joinSeat(w, "EX", T0);
+  for (let t = 1; w.clock.jd <= o.run.legs.leg1.dep_jd + 1; t++) W.waitSeat(w, "EX", T0 + t);
+  // Titan to Saturn is a quick hop inside one neighbourhood, so it never goes cold; a long haul's first far leg does.
+  const r = await act(o.run, "get_hail");
+  assert.equal(r.result.sky_now, isoJD(w.clock.jd));
+  const { w: w2, take: take2, act: act2 } = jobs();
+  const long = W.marketHails(E, w2).find((h) => h.kind === "long haul");
+  let L = await take2(long.hail_id);
+  L = (await act2(L, "plan_pickup", { car: L.par_car })).run;
+  const ride = await act2(L, "plan_ride", { after_leg: "leg1" });
+  W.joinSeat(w2, "EX", T0);
+  for (let t = 1; w2.clock.jd <= ride.run.legs.leg2.dep_jd; t++) W.waitSeat(w2, "EX", T0 + t);
+  const cold = await act2(ride.run, "dispatch", { pickup_leg: "leg1", ride_leg: "leg2", quoted_fare_usd: 100, quoted_arrival: ride.result.arrive });
+  assert.match(cold.result.error, /went cold/);
+  assert.deepEqual([w2.jobs.j1.phase, w2.jobs.j1.reason], ["abandoned", "cold"]);
+  assert.equal(w2.market.closed[long.hail_id], "j1", "a cold job's hail stays off the market");
+});
+
+test("a ride held at a checkpoint keeps its ship busy until it lands; dropping the job flies the defaults and frees it", async () => {
+  const { w, take, fly } = jobs();
+  const run = await take("w0123456789ab-12"); // Ceres Port to Ceres: the pad is closed when it arrives
+  const o = await fly(run, run.par_car, 0);
+  assert.equal(o.result.status, "checkpoint");
+  assert.deepEqual(w.ships[run.par_car], { at: "ceres", free_jd: w.clock.end_jd });
+  assert.equal(w.jobs.j1.phase, "in_flight");
+  assert.equal(W.worldView(E, w, T0).desks[0].ships.find((s) => s.car === run.par_car).free, "when its ride lands");
+  assert.deepEqual(W.liveJobs(w).map((j) => j.job_id), ["j1"]);
+  const d = W.dropJob(E, w, o.run);
+  assert.equal(d.result.status, "arrived");
+  assert.match(d.result.note, /dropped at checkpoint 1/);
+  assert.deepEqual(w.ships[run.par_car], { at: "ceres", free_jd: d.run.ride.arrive_jd });
+  assert.equal(w.jobs.j1.phase, "arrived");
+  assert.match(W.dropJob(E, w, d.run).result.error, /already arrived/);
+  // A job still planning is abandoned, and its hail stays off the market.
+  const p = await take("w0123456789ab-5");
+  const q = W.dropJob(E, w, p);
+  assert.deepEqual(q.result, { ok: true, job_id: "j2", status: "abandoned" });
+  assert.deepEqual([w.jobs.j2.phase, w.jobs.j2.reason], ["abandoned", "dropped"]);
+});
+
+test("StarfareWorld: take, act and drop a job, each run under its own key", async () => {
+  const { obj, saved } = worldDO();
+  assert.equal((await obj.take("w0123456789ab-0")).error, "unknown world");
+  await obj.create(ID);
+  const h = await obj.take("w0123456789ab-0");
+  assert.equal(h.job_id, "j1");
+  assert.match((await obj.take("w0123456789ab-0")).error, /off the market/);
+  assert.equal(saved.get("job:j1").run_id, h.run_id);
+  assert.match((await obj.act("j9", "get_hail")).error, /unknown job_id j9/);
+  assert.match((await obj.act("j1", "take_hail")).error, /not a job tool/);
+  const p = await obj.act("j1", "plan_pickup", { car: "sf-07" });
+  const r = await obj.act("j1", "plan_ride", { after_leg: p.leg_id });
+  const d = await obj.act("j1", "dispatch", { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: 100, quoted_arrival: r.arrive, ask_after_hours: "never" });
+  assert.equal(d.status, "arrived");
+  const v = await obj.view();
+  assert.deepEqual([v.jobs[0].phase, v.desks[1].ships.find((s) => s.car === "sf-07").at.id], ["arrived", "saturn"]);
+  assert.equal(saved.get("world").ships["sf-07"].at, "saturn");
+  assert.match((await obj.drop("j1")).error, /already arrived/);
+  await obj.take("w0123456789ab-5");
+  assert.equal((await obj.drop("j2")).status, "abandoned");
+  assert.equal(saved.get("job:j2").abandoned_reason, "dropped");
 });
