@@ -164,13 +164,20 @@ function takeAt(E, hailId, jd) {
   return Math.floor(jd + (h.kind === "quick" ? 1 : R.LEAD)) + 0.5;
 }
 const SEASON_TOO_SHORT = "The season ends too soon for a new hail. Wait for the reset.";
+// R.par found no plan that lands before the season ends: the trip is too long for the time left, not short of ships.
+const TRIP_TOO_LONG = "This trip would land after the season ends, so it can't be taken this late. Pick a shorter trip (quick hails, or a long haul " +
+  "between nearer places) or wait for the reset.";
+// The longest long haul in the 2026-10-20 gap review's sample took 2,401 sky days with its pickup; under this many sky days
+// left, list_hails warns that some long hauls can't land in time.
+const LONG_HAUL_WARN_DAYS = 2600;
 /** Where the season stands for list_hails: a take needs its t0 plus 30 sky days before the season ends, so long hauls close
  *  first (about LEAD + 30 real seconds before the reset) and quick hails about 31 s before it. 1 sky day is 1 real second. */
 export function seasonClock(E, nowMs) {
   const s = sky(nowMs), open = (kind) => Math.floor(s.jd + (kind === "quick" ? 1 : E.R.LEAD)) + 0.5 + 30 <= SEASON_END;
   const quick = open("quick"), long = open("long haul"), left = Math.max(0, Math.round(SEASON_END - s.jd));
   return { sky_now: isoJD(s.jd), season_ends: isoJD(SEASON_END), real_seconds_left: left, quick_open: quick, long_haul_open: long,
-    note: long ? "Every kind of hail can be taken now." : quick ? "Long hauls can't be taken this late in the season (take_hail refuses them); quick hails can. The season resets in about " + left + " real seconds."
+    note: long ? (left < LONG_HAUL_WARN_DAYS ? "Long hauls run for years of sky time, and " + left + " sky days are left this season, so some can't land before the reset: " +
+      "take_hail refuses those and says so." : "Every kind of hail can be taken now.") : quick ? "Long hauls can't be taken this late in the season (take_hail refuses them); quick hails can. The season resets in about " + left + " real seconds."
       : "No hail can be taken until the season resets, in about " + left + " real seconds." };
 }
 /** Page takeHail(): t0 and the hazard seed (the season number) from the sky clock. */
@@ -185,9 +192,9 @@ export function suiteInstance(E, task, { seed, clockJd, tag, budget }) {
   const hails = task.hails || [task.hail_id];
   return { hail_id: hails[0], ...(hails.length > 1 ? { hails } : {}), t0: takeAt(E, hails[0], clockJd), end_jd: SEASON_END, seed: String(seed), clock: { kind: "frozen", jd: clockJd }, tag, budget };
 }
-/** R.par throws "no ship can serve" when no flight leaving after t0 lands before end_jd: the season is too short. */
+/** R.par throws "no ship can serve" when no flight leaving after t0 lands before end_jd: the trip is too long for the season left. */
 async function seasonTerms(get) {
-  try { return await get(); } catch (e) { throw /^no ship can serve /.test(e.message) ? new GameError(SEASON_TOO_SHORT) : e; }
+  try { return await get(); } catch (e) { throw /^no ship can serve /.test(e.message) ? new GameError(TRIP_TOO_LONG) : e; }
 }
 /** A new run in planning for an instance. termsFn lets the caller cache R.terms; its cache key must include the seed.
  *  A shared flight (inst.hails) takes R.termsSet: the lead's terms, par from the best pooled flight, and every booking's own terms. */
