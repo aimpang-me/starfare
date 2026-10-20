@@ -12,8 +12,8 @@ import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
 import { episodeText } from "./episode.js";
 import {
-  GameError, applyTool, computeLeg, flyLive, followView, hailInfo, leaveRun, legKey, legPub, liveRecord, liveRow, logTake, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord,
-  rideStats, rideSummary, resolveHail, restoreRunBookings, seasonInstance, sky,
+  GameError, applyTool, computeLeg, engaged, flyLive, followView, hailInfo, leaveRun, legKey, legPub, liveRecord, liveRow, logTake, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord,
+  rideStats, rideSummary, resolveHail, restoreRunBookings, seasonInstance, seasonSpan, seasonStandings, sky,
 } from "./game.js";
 import { liveIdsToDrop } from "./live.js";
 import { distinctPlayers as playersIn, ensurePool as freezePool, poolSize as storedPool, recordBest } from "./hub-pool.js";
@@ -35,8 +35,9 @@ const CODE_ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789", CODE_MS = 10 * 60 * 1000, CO
 export const COMMS_CODE = /^[A-HJ-NP-Z2-9]{2}-[A-HJ-NP-Z2-9]{4}$/;
 const newCode = () => { const b = crypto.getRandomValues(new Uint8Array(6)), c = [...b].map((x) => CODE_ABC[x % CODE_ABC.length]).join(""); return c.slice(0, 2) + "-" + c.slice(2); };
 const newToken = () => [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
-/** Where a ride stands for its history row: its phase and the checkpoints answered. Plans and forecasts leave it where it was. */
-const rideMark = (run) => phaseOf(run) + "/" + (run.decisions ? run.decisions.length : 0);
+/** Where a ride stands for its history row: its phase, the checkpoints answered, and whether it counts as an attempt yet
+ *  (the first plan or forecast). Later plans and forecasts leave it where it was. */
+const rideMark = (run) => phaseOf(run) + "/" + (run.decisions ? run.decisions.length : 0) + (engaged(run) ? "/a" : "");
 const LIVE_HELD_MS = 6 * 3600 * 1000; // a flight held at a checkpoint leaves the home map after this long without an answer
 const LIVE_AFTER_MS = 60 * 1000; // landed rows older than this leave, except the newest
 const RUN_KEEP_MS = 3 * 24 * 3600 * 1000; // a run that never flew is deleted this long after it was taken (StarfareRun.alarm)
@@ -199,6 +200,7 @@ export class StarfareHub extends DurableObject {
     this.sql.exec("CREATE TABLE IF NOT EXISTS stats (k TEXT PRIMARY KEY, n INTEGER NOT NULL)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS rides (run_id TEXT PRIMARY KEY, player_id TEXT NOT NULL, created_ms INTEGER NOT NULL, hail_id TEXT NOT NULL, phase TEXT NOT NULL, reason TEXT, summary TEXT)");
     this.sql.exec("CREATE INDEX IF NOT EXISTS rides_by_player ON rides (player_id, created_ms DESC, run_id DESC)");
+    this.sql.exec("CREATE INDEX IF NOT EXISTS rides_by_created ON rides (created_ms)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS exports (token TEXT PRIMARY KEY, player_id TEXT NOT NULL, expires_ms INTEGER NOT NULL)");
     // A follow token opens /agent/<token>: one signed-in player's bookings and log, live. Shown on the consent page and by take_hail.
     this.sql.exec("CREATE TABLE IF NOT EXISTS follows (token TEXT PRIMARY KEY, player_id TEXT NOT NULL, created_ms INTEGER NOT NULL)");
@@ -212,6 +214,8 @@ export class StarfareHub extends DurableObject {
     this.sql.exec("CREATE TABLE IF NOT EXISTS comms_runs (channel TEXT NOT NULL, run_id TEXT NOT NULL, created_ms INTEGER NOT NULL, PRIMARY KEY (channel, run_id))");
     this.sql.exec("CREATE TABLE IF NOT EXISTS live (run_id TEXT PRIMARY KEY, v TEXT NOT NULL, land_ms INTEGER, updated_ms INTEGER NOT NULL)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS hubkv (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
+    // Held-out test sessions started per player (or address, without sign-in) on one UTC day (StarfareBench.create).
+    this.sql.exec("CREATE TABLE IF NOT EXISTS bench_quota (k TEXT PRIMARY KEY, day INTEGER NOT NULL, n INTEGER NOT NULL)");
     this.hits = new Map(); // key -> calls this minute; in memory on purpose: losing it on eviction only resets a minute's count
     this.hitsWin = -1;
   }
@@ -244,6 +248,17 @@ export class StarfareHub extends DurableObject {
 
   record(e) {
     return recordBest(this.sql, e);
+  }
+
+  /** Counts one held-out test session for key today (UTC), or refuses it once key has started limit today: { ok, n, limit }.
+   *  Rows from earlier days are dropped as it goes, so the table holds one day's keys. */
+  benchQuota(key, limit) {
+    const day = Math.floor(Date.now() / 864e5);
+    this.sql.exec("DELETE FROM bench_quota WHERE day < ?", day);
+    const n = (this.sql.exec("SELECT n FROM bench_quota WHERE k = ?", key).toArray()[0] || { n: 0 }).n;
+    if (n >= limit) return { ok: false, n, limit };
+    this.sql.exec("INSERT INTO bench_quota (k, day, n) VALUES (?, ?, 1) ON CONFLICT(k) DO UPDATE SET n = n + 1", key, day);
+    return { ok: true, n: n + 1, limit };
   }
 
   /** Insert or update a player's history row, then keep only their newest RIDES_MAX. */
@@ -395,11 +410,19 @@ export class StarfareHub extends DurableObject {
   distinctPlayers(season) { return playersIn(this.sql, season); }
   ensurePool(season) { return freezePool(this.sql, season); }
 
-  board() {
+  /** The board's season ranking, from the history rows of the season's signed-in players (seasonStandings). */
+  standings(season) {
+    const span = seasonSpan(season);
+    const rows = this.sql.exec("SELECT player_id, phase, json_extract(summary, '$.total') AS total, json_extract(summary, '$.plans_used') AS plans_used, " +
+      "json_extract(summary, '$.forecasts_used') AS forecasts_used FROM rides WHERE created_ms >= ? AND created_ms < ?", span.start, span.end).toArray();
+    return seasonStandings(rows);
+  }
+
+  board(season = null) {
     const best = {};
     for (const row of this.sql.exec("SELECT mission_id, v FROM best").toArray()) best[row.mission_id] = JSON.parse(row.v);
     const stats = {};
     for (const row of this.sql.exec("SELECT k, n FROM stats").toArray()) stats[row.k] = row.n;
-    return { best, stats };
+    return { best, stats, ...(season != null ? { standings: this.standings(season) } : {}) };
   }
 }

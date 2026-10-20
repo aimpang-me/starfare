@@ -222,6 +222,20 @@ test("a finished session's trace replays to the same results byte for byte; a ta
   assert.deepEqual((await replayTrace(E, suite, own)).suite_tasks, false);
 });
 
+test("with world per_repeat each session draws its own worlds, and its trace carries the draw so it still replays", async () => {
+  const suite = { ...SUITE, world: "per_repeat", splits: { dev: [SOLO] } };
+  const a = newSession(suite, "b_a", null, 0), b = newSession(suite, "b_b", null, 0);
+  assert.ok(Number.isInteger(a.repeat) && a.repeat >= 0);
+  assert.notEqual(a.repeat, b.repeat);
+  assert.equal(newSession(SUITE, "b_c", null, 0).repeat, undefined, "per_task sessions keep one world per task");
+  const seedOf = async (s) => (await benchCall(E, suite, s, "list_hails", {}, 0)).session.run.seed;
+  assert.equal(await seedOf(a), await seedFor(suite, "dev", SOLO, a.repeat));
+  assert.notEqual(await seedOf(a), await seedOf(b));
+  const trace = JSON.parse(JSON.stringify(await played(suite, "dev")));
+  assert.ok(Number.isInteger(trace.start.repeat));
+  assert.equal((await replayTrace(E, suite, trace)).verified, true);
+});
+
 test("bench/verify.mjs replays a downloaded test-split trace with the key, and exits 1 on a tampered one", async () => {
   const dir = mkdtempSync(join(tmpdir(), "starfare-verify-")), suiteFile = join(dir, "suite.json"), good = join(dir, "good.json"), bad = join(dir, "bad.json");
   try {

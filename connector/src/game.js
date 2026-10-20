@@ -228,7 +228,7 @@ const VIEWS = Object.fromEntries(Object.entries({
   arrived: "ok run_id hail_id planned_by player_id",
   score: "status total out_of score_version parts car pickup arrive planned_pickup planned_arrive promised_arrival arrive_by delay_hours promise_slip_hours fare_usd planned_kwh extra_kwh divert_kwh used_kwh par_kwh par_car beat_par checkpoints rider_dose_msv incidents bookings passengers season task_id",
   log: "hail kind season task_id from to rider_ready arrive_by car par_car par_kwh fleet planned dispatched quote hails stops quotes forecasts checkpoints flown happened bookings incidents parts total",
-  summary: "run_id hail_id hails title kind season task_id phase taken_at rider_ready arrive_by plans_used reason open_checkpoint car par_car total out_of parts used_kwh par_kwh beat_par promised_arrival arrive promise_slip_hours delay_hours incidents checkpoints",
+  summary: "run_id hail_id hails title kind season task_id phase taken_at rider_ready arrive_by plans_used forecasts_used reason open_checkpoint car par_car total out_of parts used_kwh par_kwh beat_par promised_arrival arrive promise_slip_hours delay_hours incidents checkpoints",
   record: "format simulated note run_id player_tag hail_id season task_id phase taken_at reason open_checkpoint score log",
 }).map(([k, v]) => [k, new Set(v.split(" "))]));
 // A season run's own fields; a bench run never prints them (its season would be its seed, and no Grok bot planned it).
@@ -867,7 +867,7 @@ const takenAt = (run) => new Date(run.created_ms || 0).toISOString();
 export function rideSummary(E, run) {
   const phase = phaseOf(run), h = own(E.R.BY, run.id);
   const base = { run_id: run.run_id, hail_id: run.id, ...(run.hails ? { hails: run.hails } : {}), title: run.title, kind: h ? kindOf(h) : null, ...worldOf(run), phase, taken_at: takenAt(run),
-    rider_ready: isoJD(run.t0), arrive_by: isoJD(run.arrive_by_jd), plans_used: run.calls };
+    rider_ready: isoJD(run.t0), arrive_by: isoJD(run.arrive_by_jd), plans_used: run.calls, forecasts_used: (run.forecasts || []).length };
   if (phase === "abandoned") return project(run, "summary", Object.assign(base, { reason: run.abandoned_reason || null }));
   if (phase === "in_flight") return project(run, "summary", Object.assign(base, { open_checkpoint: run.ride.pending }));
   if (phase !== "arrived") return project(run, "summary", base);
@@ -988,6 +988,27 @@ export function rideStats(rows) {
     return { hail_id, rides: rs.length, best_total: Math.max(...rs.map((r) => r.total)), last_total: rs[0].total, mean_total: mean1(rs.map((r) => r.total)),
       mean_parts: parts, lost_most: lost, note: "computed from your " + rs.length + " arrived ride" + (rs.length === 1 ? "" : "s") + " of " + hail_id };
   });
+}
+/** A booking counts toward the season ranking once its bot planned or read a forecast for it: from then on, dropping it
+ *  is a choice made with knowledge of the ride. Summaries written before forecasts_used existed count plans only. */
+export const engaged = (run) => run.calls > 0 || !!(run.forecasts && run.forecasts.length);
+export const isAttempt = (s) => s.plans_used > 0 || s.forecasts_used > 0;
+export const RANK_MIN_ATTEMPTS = 3, RANK_ROWS = 20;
+/** The season ranking (/board): per player, the mean total over every attempt, where a booking that has not arrived
+ *  (abandoned, or still open) counts 0, so keeping only the good draws does not pay. rows: { player_id, phase, total,
+ *  plans_used, forecasts_used }. A player with fewer than min attempts is counted but not ranked. */
+export function seasonStandings(rows, min = RANK_MIN_ATTEMPTS) {
+  const by = new Map();
+  for (const r of rows) {
+    if (!isAttempt(r)) continue;
+    const p = by.get(r.player_id) || { attempts: 0, arrived: 0, sum: 0, best: null };
+    p.attempts++;
+    if (r.phase === "arrived" && typeof r.total === "number") { p.arrived++; p.sum += r.total; p.best = Math.max(p.best ?? r.total, r.total); }
+    by.set(r.player_id, p);
+  }
+  const all = [...by].map(([id, p]) => ({ player_tag: id.slice(2, 8), attempts: p.attempts, arrived: p.arrived, mean: Math.round((p.sum / p.attempts) * 10) / 10, best: p.best }));
+  const ranked = all.filter((p) => p.attempts >= min).sort((a, b) => b.mean - a.mean || b.attempts - a.attempts || (a.player_tag < b.player_tag ? -1 : 1));
+  return { min_attempts: min, players: all.length, unranked: all.length - ranked.length, ranked: ranked.slice(0, RANK_ROWS).map((p, i) => ({ rank: i + 1, ...p })) };
 }
 /** get_my_rides paging: an opaque cursor for the last row of a page (newest first by created_ms, then run_id). */
 export const rideCursor = (row) => btoa(row.created_ms + ":" + row.run_id).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");

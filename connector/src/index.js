@@ -167,7 +167,7 @@ async function route(req, env, ctx) {
     const limit = rateLimit(env), n = await rpcCount(req);
     if (n instanceof Response) return n;
     if (!(await allowed(hub(env), clientKey(req), limit, n))) return tooMany(limit);
-    ctx.props = { origin: url.origin };
+    ctx.props = { origin: url.origin, client: clientKey(req) };
     return mcpHandler.fetch(req, env, ctx);
   }
   if (isBenchPath(url.pathname)) return bench(req, url, env);
@@ -175,7 +175,7 @@ async function route(req, env, ctx) {
   if (req.method !== "GET") return new Response("Method not allowed", { status: 405 });
   if (url.pathname === "/board" || url.pathname === "/board.json") {
     const E = await engine(), season = sky(Date.now()).season, cap = await poolCap(env, season);
-    const raw = await hub(env).board(), pool = poolView(E, season, cap);
+    const raw = await hub(env).board(season), pool = poolView(E, season, cap);
     const legacy_hails = listHails(E).filter((h) => raw.best[h.hail_id]);
     const hails = [...pool.hails, ...legacy_hails];
     const data = { ...raw, score_version: SCORE_VERSION, season, pool_size: cap, hails: pool.hails, legacy_hails,

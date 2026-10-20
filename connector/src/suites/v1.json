@@ -4,7 +4,7 @@
   "engine_sha256": "af9448185bb0f7a5f188ea87d5f7cbdba30e3a0ce9cbc91dfe44b6d5c10ee885",
   "score_version": 4,
   "budget": 60,
-  "world": "per_task",
+  "world": "per_repeat",
   "margin": 5,
   "splits": {
     "dev": [

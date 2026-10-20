@@ -14,6 +14,8 @@ import { HOSTED_INSTRUCTIONS, HOSTED_TOOLS, registerTools } from "./tools.js";
 
 // With STARFARE_OAUTH on, the grant's anonymous player id. Off: null.
 const playerOf = (agent) => (agent.props && typeof agent.props.player_id === "string" ? agent.props.player_id : null);
+// Who the held-out bench's daily limit counts: the player, or without sign-in the address the session connected from.
+const benchWho = (agent) => (playerOf(agent) ? "player:" + playerOf(agent) : "addr:" + ((agent.props && agent.props.client) || "unknown"));
 
 /** The tools that are this session's, not one run's. Each returns plain data or { error }. */
 const SESSION_TOOLS = {
@@ -42,7 +44,7 @@ const SESSION_TOOLS = {
   },
 
   async start_bench(agent, input) {
-    const id = "b_" + hex(10), r = await benchStub(agent.env, id).create(id, playerOf(agent), (input && input.split) || "dev");
+    const id = "b_" + hex(10), r = await benchStub(agent.env, id).create(id, playerOf(agent), (input && input.split) || "dev", benchWho(agent));
     if (r.error) return r;
     const prev = agent.state && agent.state.run_id, left = prev ? await runStub(agent.env, prev).leave() : null;
     agent.setState({ ...agent.state, run_id: null, bench_id: id });
