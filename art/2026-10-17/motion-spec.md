@@ -4,6 +4,8 @@ Scope: asset effects only. This is an art specification, not an implementation o
 
 Override, 2026-10-18: at Alvin's request the flight page shows a faint ion glow on ion ships through each flight stretch, labelled "Ion glow illustrative: thrust not recorded", and slows moon and station orbits between replay keys. See `docs/VFX-PLAN.md`.
 
+Override, 2026-10-20: at Alvin's request ships parked at a station on the sky map keep a slow idle bob and sway of a few pixels, out of step per ship. It is decoration on the presentation clock: it never moves the recorded position, it is not a hold, and it freezes with the map pause and for reduced motion. Holds keep the rule below (no hovering bob).
+
 **Default to an unlit, stationary asset when the required information is absent.** Never infer thrust from velocity, a departure label, distance covered or a plotted line. Never infer docking from arrival. All isolated demonstrations must say “CONCEPT PREVIEW — SYNTHETIC STATE — NOT A RECORDED FLIGHT” and stay out of activity feeds and counts.
 
 ## Effect decisions
