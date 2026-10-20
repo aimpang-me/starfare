@@ -149,15 +149,14 @@ button.lbl:hover{color:var(--ink)}
 .co p{margin:0;font-size:12px;color:var(--ink-2)}
 @keyframes co{from{transform:translateX(-12px);opacity:0}to{transform:none;opacity:1}}
 .r-note .cred{display:block;margin-top:2px;font-size:10px;opacity:.8}.r-note .cred-s{display:none}.r-note a{pointer-events:auto;color:inherit}
-.r-note{position:absolute;z-index:2;left:12px;bottom:calc(clamp(60px,10vh,84px) + 10px);font-size:11.5px;color:var(--ink-3);pointer-events:none;text-shadow:0 1px 4px #000;max-width:calc(100% - 24px)}
+.r-note{position:absolute;z-index:2;left:12px;bottom:calc(var(--barh,clamp(60px,10vh,84px)) + 10px);font-size:11.5px;color:var(--ink-3);pointer-events:none;text-shadow:0 1px 4px #000;max-width:calc(100% - 24px)}
 @media (max-width:520px){
   .lbar{padding:0 10px;gap:8px}
   .back .l{display:none}.back .s{display:inline}
   .lbar.b{gap:8px}
   .tcode{font-size:11px;min-width:0}
   .r-tele{font-size:9.5px}.r-tele .big{font-size:12px}
-  .callouts{top:auto;bottom:150px}
-  .r-note{bottom:112px}
+  .callouts{display:none} /* phones: the agent log and the waiting banner sit right under the player instead */
   .r-note .cred-l{display:none}.r-note .cred-s{display:block}
 }
 
@@ -193,17 +192,19 @@ button.lbl:hover{color:var(--ink)}
 .tl .tm{font:500 11px var(--mono);color:var(--ink-3);grid-row:span 2}
 .tl b{font-size:12.5px;font-weight:600}
 .tl .tx{font-size:12px;color:var(--ink-2)}
+/* lore moments (docs/LORE.md): flavour beside a recorded event, tagged Fictional */
+.tl .lore,.co .lore{display:block;margin-top:3px;font-size:11.5px;font-style:italic;color:var(--ink-3)}.tl .lore .tag,.co .lore .tag{margin-left:4px;font-style:normal}
 .tl .k-checkpoint b{color:var(--me)}.tl .k-incident b{color:var(--bad)}.tl .k-note b{color:var(--ok)}
-/* dispatcher log: the Grok bot's tool calls on this run, newest last */
-.dlog{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.dlog li{display:grid;grid-template-columns:150px minmax(0,1fr);gap:2px 12px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:rgba(0,0,0,.18)}
-.dlog .tm{font:500 11px/1.5 var(--mono);color:var(--ink-3);grid-row:span 3}
-.dlog .tm b{display:block;color:var(--ink-2);font-weight:500}
-.dlog code{font:600 12px var(--mono);color:var(--me)}
-.dlog .sm{font-size:12.5px;color:var(--ink-2)}
-.dlog .er{font-size:12.5px;color:var(--bad)}
-.dlog q{display:block;font-size:13px;font-style:italic;color:var(--ink);border-left:2px solid var(--ok);padding-left:8px;margin-top:2px;quotes:"\201C" "\201D"}
-@media (max-width:560px){.dlog li{grid-template-columns:minmax(0,1fr)}.dlog .tm{grid-row:auto}}
+/* agent log: the agent's tool calls on this run, oldest first, beside the replay (below it on phones) */
+.ptabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:10px;position:sticky;top:0;z-index:2;background:rgba(10,14,20,.94)}
+.ptabs button{flex:1;min-height:44px;background:none;border:0;border-bottom:2px solid transparent;color:var(--ink-2);font:600 12.5px Inter,sans-serif;letter-spacing:.04em;cursor:pointer;padding:0 10px}
+.ptabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--me)}
+.ptabs .cnt{font:500 11px var(--mono);color:var(--ink-3);margin-left:4px}
+/* agent log rows are message style B (/assets/message-b.css): time, a worded chip, the words; no coloured strips */
+.await{margin:0 0 10px;border:1px solid #26323e;border-radius:4px;overflow:hidden}
+.await .mb{border-bottom:0}
+.alog{border-top:1px solid #161e27}
+.alog .mb{padding-left:4px;padding-right:4px}
 .lv-st{font:500 13px var(--mono);color:var(--ink)}
 @media (max-width:560px){.tl button{grid-template-columns:minmax(0,1fr)}.tl .tm{grid-row:auto}}
 
@@ -270,6 +271,7 @@ footer p{margin:0;max-width:100ch}
 #loading .box a{color:var(--ride)}
 </style>
 <link rel="stylesheet" href="/assets/mission-control.css">
+<link rel="stylesheet" href="/assets/message-b.css">
 </head>
 <body class="mc-flight">
 <header class="nav">
@@ -323,10 +325,20 @@ footer p{margin:0;max-width:100ch}
         </div>
       </div>
     </div>
-    <aside class="panel plist" aria-labelledby="plH">
-      <div class="ph"><h2 id="plH">Passenger list</h2><span class="tag sim">Simulated</span></div>
-      <div class="pb">
-        <p class="sub">Who boards and who gets off at each stop, from the run log. It follows the replay.</p>
+    <aside class="panel plist" aria-label="Agent log and passengers">
+      <div class="ptabs" role="tablist" aria-label="Flight side panel">
+        <button type="button" role="tab" id="tabAgent" aria-selected="true" aria-controls="agentPane">Agent log <span class="cnt" id="agentN"></span></button>
+        <button type="button" role="tab" id="tabPax" aria-selected="false" aria-controls="paxPane" tabindex="-1">Passengers</button>
+      </div>
+      <div class="pb" id="agentPane" role="tabpanel" aria-labelledby="tabAgent">
+        <p class="sub" id="agentWho">What the agent did on this flight, oldest first: each tool call, when it made it and, where it left one, its own note on why.</p>
+        <div class="await" id="agentWait" role="status" hidden></div>
+        <ol class="alog mb-list" id="alog" aria-live="polite"></ol>
+        <p class="note" id="agentEmpty" hidden>No agent tool calls are recorded for this flight.</p>
+        <p class="note" style="margin-top:10px">Numbers are copied from the tool results. <span class="tag sim">Simulated</span></p>
+      </div>
+      <div class="pb" id="paxPane" role="tabpanel" aria-labelledby="tabPax" hidden>
+        <p class="sub">Who boards and who gets off at each stop, from the run log. It follows the replay. <span class="tag sim">Simulated</span></p>
         <div class="seats" id="plSeats"></div>
         <ol class="pstops" id="plStops"></ol>
         <div class="caps" style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">Cabin <span class="tag sim">Simulated</span></div>
@@ -335,11 +347,6 @@ footer p{margin:0;max-width:100ch}
     </aside>
   </div>
   <section class="debrief wrap" id="debrief" aria-label="Flight receipt"></section>
-  <section class="debrief wrap" id="dlogsec" aria-labelledby="dlH" hidden><div class="sheet2"><div class="sec">
-    <h3 id="dlH">Dispatcher log <span class="tag me">Written by the Grok bot</span><span class="tag sim">Simulated</span></h3>
-    <p class="note" style="margin:0 0 10px">Every tool call the Grok bot made on this flight, oldest first, with the notes it chose to leave. The numbers are what the tools returned. Times are sky time (UTC) and wall time.</p>
-    <ol class="dlog" id="dlog"></ol>
-  </div></div></section>
 </main>
 
 <footer>
@@ -351,6 +358,8 @@ footer p{margin:0;max-width:100ch}
 <script>window.SITE = __SITE__; window.FLIGHT = __RUN__;</script>
 <script src="__ENGINE_URL__" defer></script>
 <script src="/assets/flight-view.js"></script>
+<script src="/assets/agent-log.js"></script>
+<script src="/assets/sol-lore.js"></script>
 <script src="/assets/sol-lines.js"></script>
 <script src="/assets/sol-layers.js"></script>
 <script src="/assets/sol-radio.js"></script>
@@ -413,7 +422,8 @@ var SF = (function () {
     var lastArr = legs[legs.length - 1].arr, plan = live ? live.planned.filter(function (p) { return jdOf(p.depart) != null && jdOf(p.arrive) != null; }).map(function (p) { return { kind: p.leg, from: p.from, to: p.to, dep: jdOf(p.depart), arr: jdOf(p.arrive) }; }) : [];
     var end = Math.max(lastArr, hold || 0, plan.length ? plan[plan.length - 1].arr : 0);
     var start = legs[0].dep - 0.25 * (lastArr - legs[0].dep) / Math.max(1, legs.length);
-    start = Math.min(start, legs[0].dep - 1 / 24);
+    // The lead-in before a long first leg can reach back before the sky (and the ephemeris table) begins.
+    start = Math.max(Math.min(start, legs[0].dep - 1 / 24), Math.min(SKY.jd0, legs[0].dep));
     var keys = [start, end].concat(hold != null ? [hold] : [], legs.concat(plan).flatMap(function (L) { return [L.dep, L.orb, L.arr]; }))
       .filter(Number.isFinite).sort(function (a, b) { return a - b; });
     // Moons and stations as the replay draws them: true at every key, slowed between (StarfareView.slowOrbit).
@@ -458,24 +468,24 @@ var SF = (function () {
       return { p: pos(last.to, jd), leg: last, i: legs.length - 1, f: 1, phase: hold != null ? "holding" : "arrived" };
     }
     var ev = [];
-    legs.forEach(function (L) {
+    legs.forEach(function (L, i) {
       if (L.idle) return;
-      ev.push({ jd: L.dep, kind: "depart", pickup: L.kind === "pickup", title: (L.kind === "pickup" ? "Pickup leg departs " : "Ride departs ") + name(L.from), text: name(L.from) + " to " + name(L.to) });
-      if (!L.open) ev.push({ jd: L.arr, kind: "arrive", pickup: L.kind === "pickup", title: (L.kind === "pickup" ? "Rider aboard at " : "Arrived at ") + name(L.to), text: L.gate === "PASS" ? "Re-fly check: PASS" : "Local hop (not re-flown)" });
+      ev.push({ jd: L.dep, kind: "depart", leg: i, pickup: L.kind === "pickup", title: (L.kind === "pickup" ? "Pickup leg departs " : "Ride departs ") + name(L.from), text: name(L.from) + " to " + name(L.to) });
+      if (!L.open) ev.push({ jd: L.arr, kind: "arrive", leg: i, pickup: L.kind === "pickup", title: (L.kind === "pickup" ? "Rider aboard at " : "Arrived at ") + name(L.to), text: L.gate === "PASS" ? "Re-fly check: PASS" : "Local hop (not re-flown)" });
     });
     (live ? live.checkpoints : log.checkpoints || []).forEach(function (c) {
       var d = c.decision;
-      ev.push({ jd: jdOf(c.at), kind: "checkpoint", title: "Checkpoint " + c.n + ": " + c.kind.replace("_", " ") + " at " + name(c.place),
-        text: "Cause: " + c.cause.replace("_", " ") + ". " + (live ? (d ? "The Grok bot chose: " + decText(d) + "." : "Waiting for the Grok bot's decision.") : "Agent chose: " + (d ? d.action : "") + "."), cp: c });
+      ev.push({ jd: jdOf(c.at), kind: "checkpoint", cause: c.kind, where: c.place, title: "Checkpoint " + c.n + ": " + c.kind.replace("_", " ") + " at " + name(c.place),
+        text: "Cause: " + c.cause.replace("_", " ") + ". " + (live ? (d ? "The agent chose: " + decText(d) + "." : "Waiting for the agent's decision.") : "Agent chose: " + (d ? d.action : "") + "."), cp: c });
     });
     (live ? live.incidents : ride.record.score.incidents).forEach(function (x) {
-      ev.push({ jd: jdOf(x.at), kind: "incident", incident: x.kind, title: x.kind.replace("_", " ") + " at " + name(x.place), text: x.note + (x.hours ? " (" + fmt(x.hours, 1) + " h" : "") + (x.kwh ? (x.hours ? ", " : " (") + fmt(x.kwh) + " kWh)" : x.hours ? ")" : "") });
+      ev.push({ jd: jdOf(x.at), kind: "incident", cause: x.kind, where: x.place, title: x.kind.replace("_", " ") + " at " + name(x.place), text: x.note + (x.hours ? " (" + fmt(x.hours, 1) + " h" : "") + (x.kwh ? (x.hours ? ", " : " (") + fmt(x.kwh) + " kWh)" : x.hours ? ")" : "") });
     });
     // The bot's own words: the dispatch note at the first departure, each decide note at its checkpoint.
     (ride.trail || []).forEach(function (t) {
       if (!t.note || t.error) return;
       var j = t.tool === "decide" ? jdOf(t.checkpoint_at) : t.tool === "dispatch" && !legs[0].idle ? legs[0].dep : null;
-      if (j != null) ev.push({ jd: j, kind: "note", title: "The Grok bot's note on " + t.tool, text: "“" + t.note + "”" });
+      if (j != null) ev.push({ jd: j, kind: "note", title: "The agent's note on " + t.tool, text: "“" + t.note + "”" });
     });
     ev.sort(function (a, b) { return a.jd - b.jd; });
     var focus = legs.every(function (L) { return L.sys; }) && legs.every(function (L) { return L.sys === legs[0].sys; }) ? legs[0].sys : "sun";
@@ -548,7 +558,17 @@ function iso(jd) { return SF.iso(jd); }
 function dist(km) { return km >= 0.05 * AU ? fmt(km / AU, 2) + " AU" : km >= 1e6 ? fmt(km / 1e6, 2) + " million km" : fmt(km) + " km"; }
 function W(t) { return esc(shipWords(t)); }
 // A note is the bot's quote, shown as written.
-function evText(e) { return e.kind === "note" ? esc(e.text) : W(e.text); }
+function evText(e) {
+  return (e.kind === "note" ? esc(e.text) : W(e.text)) + (e.lore ? '<span class="lore">' + esc(e.lore.text) + '<span class="tag fict">Fictional</span></span>' : "");
+}
+// Lore moments (world/lore/sol-lore.js) beside the events the run log recorded: Fictional flavour, never part of the score.
+function addLore(rp, pl, rec) {
+  if (!window.SOL_LORE) return;
+  try {
+    var m = SOL_LORE.flight({ key: rec.run_id || rec.hail_id, late: !!(rec.score && (rec.score.promise_slip_hours ?? rec.score.delay_hours) > 0.05), legs: rp.legs, stops: pl.stops, events: rp.events });
+    rp.events.forEach(function (e, i) { e.lore = m[i]; });
+  } catch (e) { /* flavour only: a flight shows without it */ }
+}
 
 function initGL() {
   function fail() { GL = null; $("#rnogl").hidden = false; }
@@ -963,8 +983,8 @@ function setFollow(on) { RS.follow = on; if (on) RS.playing = true; $("#golive")
 function liveStatus(lj) {
   var lv = RIDE.live, w = wallNow(), hd = lv.hold, tx, hm = lv.track[lv.track.length - 1][0];
   if (lv.lands_at_ms != null) tx = "Lands in about <b>" + Math.max(0, Math.ceil((lv.lands_at_ms - w) / 1000)) + " s</b> (simulated playback).";
-  else if (hd && w < hm) tx = "Reaches checkpoint " + hd.n + " in about <b>" + Math.ceil((hm - w) / 1000) + " s</b>, then waits for the Grok bot's decision.";
-  else if (hd) tx = "<b>Waiting for the Grok bot's decision at checkpoint " + hd.n + "</b> (" + esc(hd.kind.replace("_", " ")) + " at " + esc(hd.place_name) + ").";
+  else if (hd && w < hm) tx = "Reaches checkpoint " + hd.n + " in about <b>" + Math.ceil((hm - w) / 1000) + " s</b>, then waits for " + esc(agentWho()) + " to decide.";
+  else if (hd) tx = "<b>Waiting for " + esc(agentWho()) + " to decide at checkpoint " + hd.n + "</b> (" + esc(hd.kind.replace("_", " ")) + " at " + esc(hd.place_name) + ").";
   else tx = "In the air (simulated playback).";
   var el = $("#lvst");
   if (el && tx !== RS.lvst) { RS.lvst = tx; el.innerHTML = tx; }
@@ -989,6 +1009,7 @@ function loadRide(keep) {
   }
   if (RS.live && (!keep || RS.follow)) RS.cur = Math.max(rp.start, liveJd());
   RS.pl = passengerList();
+  addLore(rp, RS.pl, rec);
   $("#timingWarning").hidden = !window.StarfareView.timingConflicts(RIDE.record, RIDE.lg).length;
   $("#cammode").setAttribute("aria-pressed", String(RS.over));
   $("#golive").setAttribute("aria-pressed", String(RS.follow));
@@ -998,14 +1019,14 @@ function loadRide(keep) {
   $("#rwho").className = "tag " + (rec.player_tag ? "me" : "sim");
   $("#rtitle").textContent = (RIDE.record.manifest ? RIDE.record.manifest.bookings.map(function (b) { return b.title; }).join(" + ") : shipWords(h.title || rec.hail_id));
   $("#rnote").textContent = local ? "Centred on " + SF.name(rp.focus) + ", distances in km. Not to scale: the " + SF.SHIP + " and small moons are enlarged. Orbit lines are two-body orbits at the sky date. The flight is simulated."
-    : "Distances compressed; sizes exaggerated. Positions from JPL ephemerides at simulated sky dates. Orbit lines are two-body orbits at the sky date; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet, straight guides between the planned places." : "");
+    : "Not to scale, unlike the true-scale sky map: distances are compressed and sizes exaggerated so the whole route fits. Positions from JPL ephemerides at simulated sky dates. Orbit lines are two-body orbits at the sky date; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet, straight guides between the planned places." : "");
   if (GL && window.SolArt) $("#rnote").insertAdjacentHTML("beforeend", '<span class="cred cred-l">' + esc(SolArt.CREDIT) + ' <a href="/assets/CREDITS.md">Credits</a></span><span class="cred cred-s">Maps: NASA, JPL, USGS; Solar System Scope (CC BY 4.0). <a href="/assets/CREDITS.md">Credits</a></span>');
   $("#sticks").innerHTML = rp.events.map(function (e) { return '<span class="tick ' + e.kind + '" style="left:' + ((e.jd - rp.start) / span * 100).toFixed(2) + '%" title="' + W(e.title) + '"></span>'; }).join("");
   $("#callouts").innerHTML = ""; RS.ckey = null; RS.lvst = null;
   playIcon();
   renderPlist();
   renderDebrief();
-  renderDlog();
+  renderAgentLog();
   if (GL) {
     buildRideScene();
     var L0 = rp.legs[0], d0 = shipPos(L0.orb).sub(shipPos(L0.dep)); // face along the first leg from the start
@@ -1183,7 +1204,7 @@ function rideFrame(dt, t) {
     var P = RS.pl, on = aboardAt(P, stopOf(st, P.stops.length - 1));
     var dkm = Math.hypot.apply(null, d3(SF.pos(L.to, jd), fl ? st.p : SF.pos(st.f >= 1 ? L.to : L.from, jd))) * AU; // true places, not the slowed ones
     var where = L.idle ? "parked" : st.phase === "arrived" ? "arrived" : st.f >= 1 ? "in orbit" : dist(dkm);
-    var rateTx = er > 0 ? "1 s = <b>" + SF.dur(er) + "</b>" + (RS.live && RS.follow ? " (live)" : er < RS.rate * RS.speed - 1e-9 ? " (slowed while waiting)" : "") : "<b>Held</b> until the Grok bot decides";
+    var rateTx = er > 0 ? "1 s = <b>" + SF.dur(er) + "</b>" + (RS.live && RS.follow ? " (live)" : er < RS.rate * RS.speed - 1e-9 ? " (slowed while waiting)" : "") : (RIDE.live && RIDE.live.hold ? "<b>Held</b> until the agent decides" : "<b>Paused</b> at the end of the recorded track");
     $("#rtele").innerHTML = '<div class="hudbox"><div class="caps">Sky time \u00B7 UTC \u00B7 simulated</div><div class="big">' + iso(jd) + "</div>" + rateTx + "<br>" +
       esc(SF.SHIP) + " <b>" + esc(rp.car) + "</b><br>Leg <b>" + (st.i + 1) + "/" + (rp.legs.length + rp.plan.length) + "</b> \u00B7 " + esc(on.length || fl && L.kind !== "pickup" ? "passenger" : legKind(L.kind)) + " \u00B7 <b>" + esc(st.phase) + "</b><br>" +
       esc(SF.name(L.from)) + " \u2192 " + esc(SF.name(L.to)) + "<br>To " + esc(SF.name(L.to)) + " <b>" + where + "</b><br>" + (RS.ion ? "Ion glow illustrative: thrust not recorded" : "Propulsion telemetry unavailable") + "<br>Moon and station orbits slowed between stops<br>" +
@@ -1193,13 +1214,13 @@ function rideFrame(dt, t) {
     if (key !== RS.ckey) {
       RS.ckey = key;
       var hd = RIDE.live && RIDE.live.hold;
-      $("#callouts").innerHTML = (held ? '<div class="co hold"><div class="k">Checkpoint ' + hd.n + ' \u00B7 <span class="mono">' + esc(hd.at) + '</span> \u00B7 simulated</div><b>Waiting for the Grok bot\'s decision at checkpoint ' + hd.n + "</b><p>" +
-        W(hd.kind.replace("_", " ") + " at " + hd.place_name + ", cause " + hd.cause.replace("_", " ")) + ". The playback holds here until the bot calls decide.</p></div>" : "") +
+      $("#callouts").innerHTML = (held ? '<div class="co hold"><div class="k">Checkpoint ' + hd.n + ' \u00B7 <span class="mono">' + esc(hd.at) + '</span> \u00B7 simulated</div><b>Waiting for ' + esc(agentWho()) + ' to decide at checkpoint ' + hd.n + "</b><p>" +
+        W(hd.kind.replace("_", " ") + " at " + hd.place_name + ", cause " + hd.cause.replace("_", " ")) + ". The playback holds here until the agent calls decide.</p></div>" : "") +
         vis.map(function (e) { return '<div class="co ' + e.kind + '"><div class="k">' + esc(e.kind) + ' \u00B7 <span class="mono">' + iso(e.jd) + "</span></div><b>" + W(e.title) + "</b><p>" + evText(e) + "</p></div>"; }).join("");
       RS.alert = held || vis.some(function (e) { return e.kind === "checkpoint" || e.kind === "incident"; });
     }
     if (RS.live) liveStatus(lj);
-    if (t - (RS.pillT || -1e9) > 1000) { RS.pillT = t; var s = SF.sky(); $("#skydate").textContent = "Season " + s.season + " \u00B7 " + iso(s.jd).slice(0, 10); }
+    if (t - (RS.pillT || -1e9) > 1000) { RS.pillT = t; agentNow(jd); var s = SF.sky(); $("#skydate").textContent = "Season " + s.season + " \u00B7 " + iso(s.jd).slice(0, 10); }
   }
   if (!GL || !RS.sc) return;
   var cam = RS.cam, GW = GL.W, GH = GL.H, p = shipPos(jd);
@@ -1349,23 +1370,65 @@ function liveSheet() {
     '<div class="sec"><h3>Raw log</h3><a class="raw" href="/rides/' + esc(rec.run_id) + '.json">/rides/' + esc(rec.run_id) + '.json</a><p class="note" style="margin:8px 0 0">The run so far (' + esc(rec.format) + "), as JSON.</p></div>" +
   "</div>";
 }
-// The dispatcher log: each tool call the Grok bot made on this run, in its order, with its own note. Numbers are the tool results'.
-function dlogText(t) {
-  if (t.tool === "check_pad") return "Pad at <b>" + esc(t.place) + "</b>: " + esc(t.berths) + " berths, up to " + esc(t.max_booked) + " booked an hour" + (t.weather ? "; " + esc(t.weather) + ", odds up to " + esc(t.max_odds) : "") + ".";
-  if (t.tool === "space_weather") return "Space weather at <b>" + esc(t.place) + "</b>: flare odds up to " + esc(t.max_flare_odds) + ".";
-  if (t.tool === "dispatch") return t.problems ? "Dispatch refused: " + esc(t.problems.join("; ")) : "Dispatched <b>" + esc(t.car) + "</b> on " + t.route.map(function (r) { return "<code>" + esc(r) + "</code>"; }).join(" + ") + " · " + (t.quotes ? Object.keys(t.quotes).map(function (id) { var q = t.quotes[id]; return "booking <code>" + esc(id) + "</code>: fare " + money(q.fare_usd) + ", arrival quoted " + esc(q.arrival); }).join("; ") : "fare " + money(t.fare_usd) + " · arrival quoted " + esc(t.arrival)) + " · " + esc(t.status) + ".";
-  if (t.tool === "decide") return "Checkpoint " + esc(t.checkpoint) + " (" + esc(String(t.kind).replace("_", " ")) + ", " + esc(t.checkpoint_at) + "): chose <b>" + esc(SF.decText(t.decision)) + "</b> · " + esc(t.status) + ".";
-  if (t.leg_id) return "Leg <code>" + esc(t.leg_id) + "</code> " + esc(legKind(t.kind)) + ", " + esc(SF.name(t.from)) + " → " + esc(SF.name(t.to)) + ", departs " + esc(t.depart) + ", arrives " + esc(t.arrive) + " · " + kwh(t.kwh) + " · " + money(t.fare_usd) + " · re-fly " + esc(t.gate) + ".";
-  return "";
+// The agent log: each tool call the agent made on this run, in its order, with its own note. Words from AgentLog; numbers are the tool results'.
+function agentWho() { var n = window.AgentLog ? AgentLog.agentName(RIDE.trail) : ""; return n ? n + " (self-reported)" : "the agent"; }
+function agentJd(t, rp) {
+  if (t.tool === "dispatch" && !t.error && !t.problems) return rp.legs.length ? rp.legs[0].dep : null;
+  var w = t.tool === "decide" ? t.checkpoint_at : null, j = w ? SF.jdOf(w) : NaN;
+  return Number.isFinite(j) ? j : null;
 }
-function renderDlog() {
-  var tr = RIDE.trail || [];
-  $("#dlogsec").hidden = !tr.length;
-  $("#dlog").innerHTML = tr.map(function (t) {
-    return '<li><div class="tm">' + esc(t.sky) + ' UTC<br><span class="sm">' + esc(new Date(t.at_ms).toLocaleTimeString()) + " your time</span></div><div><code>" + esc(t.tool) + "</code> " +
-      (t.error ? '<span class="er">' + esc(t.error) + "</span>" : dlogText(t)) + (t.note ? "<q>" + esc(t.note) + "</q>" : "") + "</div></li>";
+function renderAgentLog() {
+  var tr = RIDE.trail || [], rp = RS.rp, n = AgentLog.agentName(tr), hd = RIDE.live && RIDE.live.hold;
+  $("#agentN").textContent = tr.length ? String(tr.length) : "";
+  $("#agentEmpty").hidden = !!tr.length;
+  $("#agentWho").innerHTML = (n ? "Flown by <b>" + esc(n) + "</b> <span class=\"dim\">(the name its MCP client reported, unverified)</span>. " : "Flown by an agent through the Starfare connector. ") +
+    "Each tool call it made, oldest first, when it made it and, where it left one, its own note on why.";
+  var w = $("#agentWait");
+  w.hidden = !hd;
+  if (hd && $(".plist")) $(".plist").scrollTop = 0;
+  if (hd) w.innerHTML = '<div class="mb"><span class="mb-t">Now</span><span class="mb-c checkpoint">Checkpoint</span><span class="mb-x"><span class="mb-a">Waiting for ' + esc(agentWho()) + "</span>" +
+    '<span class="mb-s">The flight is stopped until the agent answers with <code>decide</code>.</span></span>' +
+    '<dl class="mb-b"><dt>Stop</dt><dd>Checkpoint ' + esc(hd.n) + ": " + esc(String(hd.kind).replace(/_/g, " ")) + "</dd><dt>Place</dt><dd>" + esc(hd.place_name) + "</dd>" +
+    "<dt>Cause</dt><dd>" + esc(String(hd.cause).replace(/_/g, " ")) + "</dd><dt>Since</dt><dd>" + esc(hd.at) + " sky</dd></dl></div>";
+  RS.alj = [];
+  $("#alog").innerHTML = tr.map(function (t, i) {
+    var L = AgentLog.line(t, SF.name), j = agentJd(t, rp);
+    RS.alj.push(j);
+    return AgentLog.row(L, { ms: t.at_ms, words: shipWords, attrs: (j != null ? 'data-jd="' + j + '" title="Jump the replay here" ' : "") + 'data-i="' + i + '"',
+      sub: '<span class="mb-s">Step ' + (i + 1) + " · <code>" + esc(t.tool) + "</code>" + (L.at ? " · about sky " + esc(L.at) : "") + "</span>" });
   }).join("");
+  $$("#alog li[data-jd]").forEach(function (li) {
+    li.addEventListener("click", function () {
+      var j = Math.min(RS.rp.end, +li.dataset.jd + (RS.rp.end - RS.rp.start) * 0.001);
+      if (RS.live) { setFollow(false); j = Math.min(j, liveJd()); }
+      RS.cur = j; RS.playing = false; RS.scrubbed = true; playIcon();
+    });
+  });
+  RS.alNow = null;
 }
+// The log entry the replay has reached: the last call whose action is at or before the playback time.
+function agentNow(jd) {
+  var k = -1;
+  (RS.alj || []).forEach(function (j, i) { if (j != null && j <= jd + 1 / 1440) k = i; });
+  if (k === RS.alNow) return;
+  RS.alNow = k;
+  $$("#alog li").forEach(function (li) { li.classList.toggle("now", +li.dataset.i === k); });
+  // Beside the replay (wide screens) the panel scrolls itself to the call the replay has reached; phones keep their scroll.
+  var box = $(".plist"), cur = k >= 0 ? $("#alog li[data-i=\"" + k + "\"]") : null;
+  if (cur && box && !(RIDE.live && RIDE.live.hold) && getComputedStyle(box).overflowY === "auto" && box.scrollHeight > box.clientHeight && window.innerWidth > 999)
+    box.scrollTo({ top: Math.max(0, cur.offsetTop - box.clientHeight / 3), behavior: reduced ? "auto" : "smooth" });
+}
+function setPane(agent) {
+  $("#tabAgent").setAttribute("aria-selected", String(agent)); $("#tabPax").setAttribute("aria-selected", String(!agent));
+  $("#tabAgent").tabIndex = agent ? 0 : -1; $("#tabPax").tabIndex = agent ? -1 : 0;
+  $("#agentPane").hidden = !agent; $("#paxPane").hidden = agent;
+}
+$("#tabAgent").addEventListener("click", function () { setPane(true); });
+$("#tabPax").addEventListener("click", function () { setPane(false); });
+$(".ptabs").addEventListener("keydown", function (e) {
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  var agent = $("#tabAgent").getAttribute("aria-selected") !== "true"; setPane(agent); (agent ? $("#tabAgent") : $("#tabPax")).focus(); e.preventDefault();
+});
 function debrief() {
   var r = RIDE, rec = r.record, sc = rec.score, lg = rec.log, h = hailOf(lg.hail) || {}, P = RS.pl;
   var parts = sc.parts.map(function (p) {
@@ -1537,6 +1600,14 @@ else {
   });
 }
 });
+</script>
+<script>
+// The control bar wraps to two or three rows on a phone; keep the caption above it, whatever its height.
+(function () {
+  var bar = document.querySelector(".lbar.b"), stage = bar && bar.parentNode;
+  if (!bar || !window.ResizeObserver) return;
+  new ResizeObserver(function () { stage.style.setProperty("--barh", bar.offsetHeight + "px"); }).observe(bar);
+})();
 </script>
 </body>
 </html>

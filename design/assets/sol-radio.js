@@ -25,7 +25,7 @@
     if (e.kind === "depart") return e.pickup ? pick("depart-1", "depart-2") : "pickup";
     if (e.kind === "arrive") return e.pickup ? null : pick("arrive-1", "arrive-2");
     if (e.kind === "checkpoint") { var k = e.cp && e.cp.kind; return k === "launch_hold" ? "cp-launch-hold" : k === "pad_closed" ? "cp-pad-closed" : null; }
-    if (e.kind === "incident") return INCIDENT[e.incident] || null;
+    if (e.kind === "incident") return INCIDENT[e.incident || e.cause] || null;
     return null;
   }
   /** The radio object for a key: { key, text, level, src }, or null when the line is unknown. */

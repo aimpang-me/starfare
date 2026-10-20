@@ -124,7 +124,7 @@ th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;t
   <p class="lede">Starfare scores an agent that maneuvers Starseeker starships carrying passengers in the solar system. Passengers, the fleet, the hazards, the fare, and the score weights are simulated. Planet positions in the baked table are real.</p>
 
   <h2>The scale</h2>
-  <p>Score version ${esc(catalog.version)} scores out of ${esc(R.SCORE_TOTAL)}. The weights are placeholders. They sum to ${esc(R.SCORE_TOTAL)}. The total is the sum of the part scores. Part scores are not rounded.</p>
+  <p>Score version ${esc(catalog.version)} scores out of ${esc(R.SCORE_TOTAL)}. The weights are placeholders. They sum to ${esc(R.SCORE_TOTAL)}. The total is the sum of the part scores. Stored part scores are not rounded. Pages show them in whole points.</p>
   <p>Each part except cruise dose earns at most ${esc(R.SCORE_HEADROOM)} of its weight when the flight is on the stated reference. That share is the headroom. The falloff steepness is ${esc(R.SCORE_STEEPNESS)}. Both numbers are simulated assumptions. As the flight moves off the reference, the part falls and never reaches its weight. Doing better than the reference does not add points past the headroom.</p>
 
   <h2>Score parts</h2>

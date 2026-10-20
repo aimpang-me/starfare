@@ -19,6 +19,7 @@ test("flight events and agent actions map to the right stock line", () => {
   assert.equal(k({ kind: "checkpoint", cp: { kind: "pad_closed" } }), "cp-pad-closed");
   assert.deepEqual(["dust_storm", "titan_haze", "flare", "solar_flare", "correction_burn"].map((x) => k({ kind: "incident", incident: x })),
     ["dust-storm", "titan-haze", "flare", "flare", "correction"]);
+  assert.equal(k({ kind: "incident", cause: "dust_storm" }), "dust-storm"); // the flight page names it cause
   assert.equal(k({ kind: "incident", incident: "something_new" }), null);
   assert.equal(k({ kind: "note" }), null);
   assert.deepEqual(["hold", "divert", "replan", "wait"].map((a) => k({ tool: "decide", decision: { action: a } })), ["hold", "divert", "replan", "wait"]);
