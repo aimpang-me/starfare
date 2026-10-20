@@ -245,11 +245,13 @@ Object.assign(SANDBOX_TOOLS, {
     inputSchema: { code: seatCodeArg, car: z.string().max(20).describe("the ship's call sign, e.g. sf-05"), desk: deskArg },
   },
   reports: {
-    description: "Executor: the dispatchers' reports, newest last, and every job so far with its desk, phase, ship and score (arrived jobs).",
+    description: "Executor: the dispatchers' reports, newest last, every job so far with its desk, phase, ship and score (arrived jobs), and scores: " +
+      "each desk's mean over its ended jobs (an abandoned job counts 0) and the company's served share of the market's person-trips times its mean. Points only, simulated.",
     inputSchema: { code: seatCodeArg },
   },
   queue: {
-    description: "Dispatcher: your desk: its ships (where each is parked, free or busy until when) and the jobs the executor gave it, open ones first. " +
+    description: "Dispatcher: your desk: its ships (where each is parked, free or busy until when), the jobs the executor gave it, open ones first, and your desk's score " +
+      "(the mean over its ended jobs, an abandoned job counting 0). " +
       "Fly an open job with get_hail, plan_pickup, plan_ride (or plan_leg), check_pad, space_weather, dispatch and decide, passing your code and its job_id in place of run_id.",
     inputSchema: { code: seatCodeArg },
   },

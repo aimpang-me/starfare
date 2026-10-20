@@ -526,3 +526,22 @@ test("StarfareWorld: wait returns the inbox at once, holds until a message or ti
   assert.ok(Date.now() - t1 >= 280);
   assert.match(empty.note, /^Nothing new yet/);
 });
+
+// ---- layer scores (plan step 7) ----
+test("scores: a desk's mean over its ended jobs with abandoned ones as 0, and the company's served share times its mean", () => {
+  const w = fresh();
+  assert.deepEqual(W.scoresView(E, w).desks.map((d) => [d.desk, d.mean, d.ended]), [["D1", null, 0], ["D2", null, 0]]);
+  const offered = W.marketHails(E, w).reduce((a, h) => a + h.party, 0);
+  assert.equal(W.scoresView(E, w).company.offered_person_trips, offered);
+  const row = (n, desk, phase, total) => ({ job_id: "j" + n, hail_id: "w0123456789ab-" + n, desk, phase, ...(total != null ? { total } : {}) });
+  w.jobs = { j1: row(1, "D1", "arrived", 80000), j2: row(2, "D1", "abandoned"), j3: row(3, "D1", "planning"), j4: row(4, "D2", "arrived", 60000), j5: row(5, "D2", "in_flight") };
+  const s = W.scoresView(E, w);
+  assert.deepEqual(s.desks[0], { desk: "D1", name: "Inner desk", mean: 40000, ended: 2, arrived: 1, abandoned: 1, open: 1 }, "the abandoned job counts 0; the open one is not counted yet");
+  assert.deepEqual([s.desks[1].mean, s.desks[1].open], [60000, 1]);
+  const served = W.marketRow(E, w, 1).party + W.marketRow(E, w, 4).party, mean = (80000 + 0 + 60000) / 3;
+  assert.equal(s.company.served_person_trips, served);
+  assert.equal(s.company.mean, Math.round(mean * 10) / 10);
+  assert.equal(s.company.score, Math.round((served / offered) * s.company.mean * 10) / 10);
+  assert.deepEqual(W.worldView(E, w, T0).scores, s, "the company view carries the scores");
+  assert.deepEqual(W.queueView(E, w, "D2", T0).score, s.desks[1], "a dispatcher's queue shows its desk's score");
+});
