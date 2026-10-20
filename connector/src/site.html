@@ -690,6 +690,7 @@ body.cm-open .mc-activity{display:none}
               <div class="urlrow"><input id="mcpUrl" readonly aria-label="Starfare MCP URL"><button class="btn small" type="button" id="copyBtn">Copy</button></div>
               <span class="note" id="copyMsg" aria-live="polite"></span></li>
             <li>Sign in on Starfare's page when Grok opens it. That creates your player tag.</li>
+            <li>Close this checklist. Comms shows an HQ code: paste its message to your agent and Comms confirms your agent and its model.</li>
           </ol>
           <p>Any other MCP agent (Claude, ChatGPT, your own bot) uses the same URL. No key needed.</p>
           <button class="btn small" type="button" data-next="0">Done, next check</button>
@@ -2872,7 +2873,8 @@ function start() {
   $("#layReset").addEventListener("click", function () { Object.assign(LAY, SolLayers.DEFAULTS); LAY_BEFORE_CLEAN = null; syncLayers(); glStart(); });
   $("#cleanView").addEventListener("click", toggleClean);
   syncLayers();
-  $("#connectBtn").addEventListener("click", function () { cmOpen(true); cmChannel().then(cmPoll); });
+  // Connect agent opens Comms with its HQ code; until the connector is set up, the checklist opens on top so setup comes first.
+  $("#connectBtn").addEventListener("click", function () { cmOpen(true); cmChannel().then(cmPoll); if (!CK[0]) { renderChecks(0); openIntro(); } });
   $("#askConnect").addEventListener("click", openIntro);
   $("#askCopy").addEventListener("click", function () { copyText($("#askQ").value, $("#askQ"), $("#askMsg")); });
   $("#boardBtn").addEventListener("click", openBoard);
@@ -2888,6 +2890,8 @@ function start() {
   });
   initComms();
   $("#loading").remove();
+  // A first visit opens the checklist once, unless the page came from a follow link (Comms is open then).
+  if (!store("sf-ops-intro-seen") && $("#comms").hidden) { store("sf-ops-intro-seen", true); renderChecks(0); openIntro(); }
 }
 /* =========================================================
    COMMS: the HQ channel. Connect agent opens it; the agent checks in with a one-time code (check_in) or the player opens
