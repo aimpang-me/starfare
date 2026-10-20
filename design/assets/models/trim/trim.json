@@ -11,6 +11,7 @@
   "dark": 2,
   "window": 4,
   "rock": 16,
-  "worn": 4
+  "worn": 4,
+  "accent": 4
  }
 }

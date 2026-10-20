@@ -47,6 +47,8 @@ var CELLS = [
 ];
 var grid = document.getElementById("grid"), R = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), antialias: true, alpha: true });
 R.setPixelRatio(Math.min(2, devicePixelRatio)); SolArt.init(R);
+// The map's own reflection sky: the Sun up and to the right, Earth filling part of the view below, as near a dock.
+SolArt.setSky({ sun: new THREE.Vector3(2, 1.4, 1.2).normalize(), planet: { id: "earth", dir: new THREE.Vector3(-0.3, -1, 0.2).normalize(), size: 0.9 } });
 var items = CELLS.map(function (c) {
   var el = document.createElement("div"); el.className = "cell"; el.innerHTML = "<span>" + c[0] + " <i>" + c[1] + "</i></span>"; grid.appendChild(el);
   var sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 1, 0.01, 100);

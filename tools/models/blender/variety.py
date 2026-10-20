@@ -26,7 +26,7 @@ TAU = math.pi * 2
 
 # ---------- materials ----------
 # Faces carry a material name from tools/models/trims.py (hull, hull2, mli, radiator, solar, truss, dark, window, rock) or
-# "accent" (hull maps, tinted per ship by the page for its livery). A primitive takes an explicit mat, else the
+# "accent" (light livery plates, tinted per ship by the page). A primitive takes an explicit mat, else the
 # innermost `with M(...)`, else its own default.
 
 STACK = []
@@ -593,7 +593,7 @@ def grey():
 def textured(mat):
     """Node setup for a review render, from the same trim maps the page uses."""
     name = mat.name.split(".")[0]
-    maps = "hull" if name == "accent" else name
+    maps = name
     mat.use_nodes = True
     nt = mat.node_tree
     nt.nodes.clear()
@@ -631,6 +631,28 @@ def textured(mat):
         b.inputs["Emission Strength"].default_value = 2.5
 
 
+def studio(w):
+    # A soft studio sky for the textured renders: bright overhead, a light band at the horizon, black below, so the
+    # polished hulls show reflections the way the page's PMREM sky gives them. Film stays transparent.
+    w.use_nodes = True
+    n, l = w.node_tree.nodes, w.node_tree.links
+    n.clear()
+    tc, xyz, ramp = n.new("ShaderNodeTexCoord"), n.new("ShaderNodeSeparateXYZ"), n.new("ShaderNodeValToRGB")
+    bg, out = n.new("ShaderNodeBackground"), n.new("ShaderNodeOutputWorld")
+    l.new(tc.outputs["Generated"], xyz.inputs[0])
+    l.new(xyz.outputs["Z"], ramp.inputs[0])
+    ramp.color_ramp.interpolation = "EASE"
+    e = ramp.color_ramp.elements
+    e[0].position, e[0].color = 0.42, (0.0, 0.0, 0.0, 1)
+    e[1].position, e[1].color = 1.0, (0.55, 0.6, 0.7, 1)
+    for pos, col in ((0.5, (0.02, 0.022, 0.03, 1)), (0.56, (0.35, 0.37, 0.42, 1)), (0.64, (0.03, 0.035, 0.045, 1))):
+        el = e.new(pos)
+        el.color = col
+    l.new(ramp.outputs["Color"], bg.inputs["Color"])
+    bg.inputs["Strength"].default_value = 1.0
+    l.new(bg.outputs[0], out.inputs[0])
+
+
 def stage(o, px, grey_only):
     sc = bpy.context.scene
     sc.render.engine = "CYCLES"
@@ -640,6 +662,8 @@ def stage(o, px, grey_only):
     sc.render.film_transparent = True
     sc.world = bpy.data.worlds.get("w") or bpy.data.worlds.new("w")
     sc.world.color = (0.012, 0.014, 0.02)
+    if not grey_only:
+        studio(sc.world)
     if grey_only:
         o.data.materials.clear()
         o.data.materials.append(grey())

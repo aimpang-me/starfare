@@ -405,9 +405,9 @@
   }
   function trimMat(name) {
     if (TRIMS[name]) return TRIMS[name];
-    var maps = name === "accent" ? "hull" : name, orm = trimTex(maps + "_orm.jpg");
+    var maps = name, orm = trimTex(maps + "_orm.jpg");
     var m = new THREE.MeshStandardMaterial({ map: trimTex(maps + "_color.jpg"), normalMap: trimTex(maps + "_normal.jpg"),
-      roughnessMap: orm, metalnessMap: orm, roughness: 1, metalness: 1, envMapIntensity: 0.6 });
+      roughnessMap: orm, metalnessMap: orm, roughness: 1, metalness: 1, envMapIntensity: 1 });
     m.normalScale.set(0.8, 0.8);
     if (name === "window") { m.emissiveMap = trimTex("window_emissive.jpg"); m.emissive.setRGB(1, 1, 1); m.emissiveIntensity = 2; }
     if (name === "accent") m.color.setHex(LIVERY[0]);
@@ -535,7 +535,12 @@
   }
   function skyScene() {
     var sc = new THREE.Scene();
-    sc.add(new THREE.Mesh(new THREE.SphereGeometry(50, 16, 8), new THREE.MeshBasicMaterial({ color: 0x0b111b, side: THREE.BackSide })));
+    // Dark space, a shade lighter toward one pole (an illustrative starlit glow), so polished hulls show a gradient
+    // rather than flat black away from the Sun and planet.
+    var g = new THREE.SphereGeometry(50, 16, 8), p = g.attributes.position, c = [], lo = new THREE.Color(0x04060a), hi = new THREE.Color(0x26303e);
+    for (var i = 0; i < p.count; i++) { var k = Math.pow(0.5 + 0.5 * p.getY(i) / 50, 1.6); c.push(lo.r + (hi.r - lo.r) * k, lo.g + (hi.g - lo.g) * k, lo.b + (hi.b - lo.b) * k); }
+    g.setAttribute("color", new THREE.Float32BufferAttribute(c, 3));
+    sc.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })));
     ENV.sun = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff1dc).multiplyScalar(6) }));
     ENV.planet = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), new THREE.MeshLambertMaterial({ color: 0x808080 }));
     ENV.light = new THREE.DirectionalLight(0xfff1dc, 1.6);

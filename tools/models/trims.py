@@ -19,7 +19,7 @@ N = 1024
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 OUT = os.path.join(ROOT, "design", "assets", "models", "trim")
 # metres covered by one tile; variety.py reads this file's manifest for its UV sizes
-TILE_M = {"hull": 4, "hull2": 4, "mli": 2, "radiator": 2, "solar": 2, "truss": 1, "dark": 2, "window": 4, "rock": 16, "worn": 4}
+TILE_M = {"hull": 4, "hull2": 4, "mli": 2, "radiator": 2, "solar": 2, "truss": 1, "dark": 2, "window": 4, "rock": 16, "worn": 4, "accent": 4}
 
 
 def periodic_noise(rng, sigma, n=N):
@@ -116,58 +116,59 @@ def tint(base, v):
 
 
 def hull(rng):
-    # 4 m tile: 1 m x 0.5 m plates, merged in places, hairline seams, rivet rows, light grime and wear.
+    # 4 m tile: polished graphite plates, 1 m x 0.5 m, merged in places, hairline seams, rivet rows; about one plate in
+    # five is a matte near-black service panel, so the gloss has something to read against.
     s, t = panels(rng, 4, 8)
     grime = fbm(rng, [60, 14, 3], [1, 0.5, 0.25])
     riv = rivets(N / 32, N / 64, 2.0) * (1 - s)
     big = periodic_noise(rng, 120)
-    two = (t > 0.78).astype(float)                       # about one plate in five is a grey service panel
-    v = 0.84 + 0.16 * (t - 0.5) - 0.2 * grime ** 2 - 0.12 * big - 0.55 * s - 0.1 * riv - 0.3 * two
-    color = tint((0.93, 0.92, 0.89), v) * (1 - two)[..., None] + tint((0.82, 0.86, 0.92), v) * two[..., None]
-    rough = 0.48 + 0.18 * grime + 0.08 * (t - 0.5) + 0.3 * s
-    metal = 0.15 + 0.1 * t
+    two = (t > 0.78).astype(float)
+    v = 0.36 + 0.06 * (t - 0.5) - 0.05 * grime ** 2 - 0.04 * big - 0.2 * s - 0.05 * riv - 0.24 * two
+    color = tint((0.92, 0.93, 0.96), v)
+    rough = (0.14 + 0.06 * grime + 0.03 * (t - 0.5) + 0.3 * s) * (1 - two) + (0.75 + 0.1 * grime) * two
+    metal = 0.6 * (1 - two) + 0.05 * two
     height = 0.6 * (1 - s) + 0.05 * t + 0.3 * riv + 0.02 * grime
     save("hull", color, rough, metal, blur(height, 0.8), 6)
 
 
 def hull2(rng):
-    # 4 m tile: the second hull finish, a darker blue-grey with larger 2 m x 1 m plates, so modules differ from afar.
+    # 4 m tile: the second hull finish, piano-black lacquer on larger 2 m x 1 m plates, so modules differ from afar.
     s, t = panels(rng, 2, 4, 0.2)
     grime = fbm(rng, [60, 14, 3], [1, 0.5, 0.25])
     riv = rivets(N / 16, N / 32, 2.4) * (1 - s)
-    v = 0.66 + 0.12 * (t - 0.5) - 0.12 * grime ** 2 - 0.5 * s - 0.1 * riv
-    color = tint((0.78, 0.84, 0.94), v)
-    rough = 0.42 + 0.2 * grime + 0.3 * s
-    metal = 0.1 + 0.05 * t
+    v = 0.05 + 0.015 * (t - 0.5) - 0.03 * s - 0.01 * riv
+    color = tint((0.9, 0.93, 1.0), v)
+    rough = 0.07 + 0.05 * grime ** 2 + 0.4 * s
+    metal = 0.0 + 0.3 * s
     height = 0.6 * (1 - s) + 0.05 * t + 0.3 * riv
     save("hull2", color, rough, metal, blur(height, 0.8), 6)
 
 
 def mli(rng):
-    # 2 m tile: multi-layer insulation blanket, crinkled gold Kapton foil quilted every 0.5 m.
+    # 2 m tile: multi-layer insulation blanket, crinkled black Kapton (carbon-loaded, as flown) quilted every 0.5 m.
     crinkle = fbm(rng, [2.5, 6, 18], [0.5, 0.35, 0.3])
     stretch = periodic_noise(rng, 40)
     q = grid_lines(4, 4, 3)
     stitch = q * (np.sin(np.mgrid[0:N, 0:N][1] * 0.9) > 0)
-    v = 0.5 + 0.65 * crinkle - 0.25 * q
-    color = np.dstack([v * 1.0, v * 0.74, v * 0.32])
-    rough = 0.25 + 0.4 * (1 - crinkle) + 0.2 * q
-    metal = 0.75 - 0.3 * q
+    v = 0.07 + 0.08 * crinkle - 0.04 * q
+    color = tint((0.95, 0.95, 1.0), v)
+    rough = 0.18 + 0.3 * (1 - crinkle) + 0.3 * q
+    metal = 0.35 - 0.3 * q
     height = crinkle + 0.4 * stretch - 0.8 * q - 0.2 * stitch
     save("mli", color, rough, metal, blur(height, 0.6), 4)
 
 
 def radiator(rng):
-    # 2 m tile: white radiator panel, coolant tubes every 0.125 m, panel seams every 1 m, scuffs.
+    # 2 m tile: dark grey radiator panel (high-emissivity coating), coolant tubes every 0.125 m, seams every 1 m.
     x = np.mgrid[0:N, 0:N][1]
     tube = 0.5 + 0.5 * np.cos((x % (N / 16)) / (N / 16) * 2 * np.pi)
     tube = tube ** 6
     seam = grid_lines(2, 2, 2.5)
     scuff = fbm(rng, [30, 6], [1, 0.4])
-    v = 0.86 - 0.22 * tube - 0.5 * seam - 0.14 * scuff ** 3
-    color = tint((0.95, 0.95, 0.96), v)
-    rough = 0.6 + 0.15 * scuff - 0.2 * tube
-    metal = 0.05 + 0.2 * tube
+    v = 0.26 + 0.08 * tube - 0.12 * seam - 0.04 * scuff ** 3
+    color = tint((0.93, 0.94, 0.97), v)
+    rough = 0.3 + 0.1 * scuff - 0.15 * tube
+    metal = 0.2 + 0.5 * tube
     height = 0.5 * tube - 0.9 * seam
     save("radiator", color, rough, metal, blur(height, 0.8), 5)
 
@@ -188,12 +189,12 @@ def solar(rng):
 
 
 def truss(rng):
-    # 1 m tile: brushed aluminium-lithium, streaks along U, a few scratches.
+    # 1 m tile: polished gunmetal, brushed streaks along U, a few scratches.
     lines = np.repeat(periodic_noise(rng, 3)[:, :1], N, 1)
     grime = fbm(rng, [40, 8], [1, 0.5])
-    v = 0.62 + 0.1 * lines - 0.12 * grime
-    color = tint((0.86, 0.87, 0.9), v)
-    rough = 0.32 + 0.2 * lines + 0.2 * grime
+    v = 0.42 + 0.06 * lines - 0.06 * grime
+    color = tint((0.9, 0.92, 0.95), v)
+    rough = 0.16 + 0.12 * lines + 0.1 * grime
     metal = 0.85 + 0 * v
     save("truss", color, rough, metal, lines * 0.3, 2)
 
@@ -205,11 +206,11 @@ def dark(rng):
     y, x = np.mgrid[0:N, 0:N]
     band = ((y % (N // 2)) < N // 32).astype(float)
     chev = band * (((x + y) // (N // 64)) % 2)
-    v = 0.16 + 0.05 * t + 0.05 * grime - 0.08 * s
+    v = 0.04 + 0.015 * t + 0.01 * grime - 0.02 * s
     color = tint((0.9, 0.92, 1.0), v)
     color = color * (1 - chev)[..., None] + chev[..., None] * np.array([0.95, 0.72, 0.18]) * 0.9
-    rough = 0.45 + 0.2 * grime + 0.2 * s
-    metal = 0.6 - 0.4 * chev
+    rough = 0.6 + 0.15 * grime + 0.2 * s - 0.3 * chev
+    metal = 0.1 + 0 * chev
     height = 0.5 * (1 - s) + 0.1 * chev
     save("dark", color, rough, metal, blur(height, 0.8), 5)
 
@@ -223,28 +224,28 @@ def window(rng):
     pane = (lx > cx * 0.18) & (lx < cx * 0.82) & (ly > cy * 0.3) & (ly < cy * 0.75)
     lit = cells(cols, rows, rng) > 0.35
     warm = 0.75 + 0.25 * cells(cols, rows, rng)
-    frame = tint((0.88, 0.88, 0.86), 0.8 - 0.1 * fbm(rng, [20], [1]))
+    frame = tint((0.9, 0.92, 0.96), 0.2 - 0.04 * fbm(rng, [20], [1]))
     glow = np.dstack([warm * 1.0, warm * 0.78, warm * 0.48])
     glass = np.where((pane & lit)[..., None], glow, np.array([0.05, 0.06, 0.08]))
     color = np.where(pane[..., None], glass, frame)
-    rough = np.where(pane, 0.08, 0.55)
-    metal = np.where(pane, 0.0, 0.2)
+    rough = np.where(pane, 0.05, 0.2)
+    metal = np.where(pane, 0.0, 0.75)
     save("window", color, rough, metal, blur((~pane).astype(float), 1.0), 4)
     em = np.where((pane & lit)[..., None], glow, 0.0)
     Image.fromarray((np.clip(em, 0, 1) * 255 + 0.5).astype(np.uint8)).save(os.path.join(OUT, "window_emissive.jpg"), quality=85)
 
 
 def worn(rng):
-    # 4 m tile: the hull panelling after years adrift: sun-bleached and pitted, scorched in patches, plates missing.
+    # 4 m tile: the graphite hull after years adrift: dulled and pitted, scorched in patches, plates missing.
     s, t = panels(rng, 4, 8, 0.25)
     soot = np.clip((fbm(rng, [50, 12, 3], [1, 0.5, 0.3]) - 0.45) * 2.0, 0, 1)
     pits = np.clip((periodic_noise(rng, 1.5) - 0.6) * 5, 0, 1)
     gone = (t > 0.88).astype(float)                       # bare substructure where a plate tore off
-    v = 0.8 + 0.14 * (t - 0.5) - 0.4 * soot - 0.5 * s - 0.12 * pits
-    color = tint((0.9, 0.86, 0.8), v)
-    color = color * (1 - gone)[..., None] + gone[..., None] * np.array([0.12, 0.11, 0.1])
-    rough = 0.6 + 0.3 * soot + 0.1 * pits
-    metal = 0.1 + 0.5 * gone
+    v = 0.32 + 0.08 * (t - 0.5) - 0.2 * soot - 0.2 * s - 0.06 * pits
+    color = tint((0.95, 0.93, 0.9), v)
+    color = color * (1 - gone)[..., None] + gone[..., None] * np.array([0.05, 0.05, 0.05])
+    rough = 0.4 + 0.4 * soot + 0.15 * pits
+    metal = 0.55 - 0.3 * soot
     height = 0.6 * (1 - s) - 0.4 * pits - 0.7 * gone
     save("worn", color, rough, metal, blur(height, 0.7), 6)
 
@@ -260,9 +261,22 @@ def rock(rng):
     save("rock", color, rough, metal, h - 0.3 * pits, 10)
 
 
+def accent(rng):
+    # 4 m tile: the livery band, light lacquered plates the page tints per callsign or place, so the colour stays bright
+    # against the dark hulls.
+    s, t = panels(rng, 4, 8)
+    riv = rivets(N / 32, N / 64, 2.0) * (1 - s)
+    v = 0.9 + 0.05 * (t - 0.5) - 0.45 * s - 0.08 * riv
+    color = tint((1.0, 1.0, 1.0), v)
+    rough = 0.2 + 0.05 * t + 0.4 * s
+    metal = 0.0 + 0.3 * s
+    height = 0.6 * (1 - s) + 0.3 * riv
+    save("accent", color, rough, metal, blur(height, 0.8), 6)
+
+
 def main():
     rng = np.random.default_rng(20261020)
-    for f in (hull, hull2, mli, radiator, solar, truss, dark, window, rock, worn):
+    for f in (hull, hull2, mli, radiator, solar, truss, dark, window, rock, worn, accent):
         f(rng)
         print("trim:", f.__name__, flush=True)
     with open(os.path.join(OUT, "trim.json"), "w") as fh:
