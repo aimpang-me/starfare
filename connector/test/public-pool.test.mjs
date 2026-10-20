@@ -13,6 +13,7 @@ function worker() {
   const deps = { ...game, ...seeds, conditions: createRequire(import.meta.url)("../src/conditions.cjs"), RUN_ID, BENCH_ID: /^b_[0-9a-f]{20}$/, EPISODE_PATH: /never/,
     engine: async () => E, META: { sky: game.SKY, look: {}, sha256: "a".repeat(64) },
     Date: class extends Date { static now() { return NOW; } },
+    WORLD_ID: /^w_[0-9a-f]{20}$/, sandboxOn: () => false, worldStub() { throw new Error("the sandbox world is off"); }, hex: () => "0",
     oauthOn: (env) => env.STARFARE_OAUTH === "on", oauthFetch() { throw new Error("public route incorrectly requires OAuth"); },
     siteHtml: "<script>window.SITE = __SITE__;</script>", boardHtml,
     hub: () => ({ ensurePool: async () => 3, board: async () => ({ best: {
