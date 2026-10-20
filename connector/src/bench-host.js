@@ -4,7 +4,6 @@
 // StarfareBench Durable Object only stores what it returns. Worker-safe: bench/backend.mjs re-exports this for Node.
 import { GameError, applyTool, hailInfo, isoJD, leaveRun, listHails, openRun, phaseOf, runFleet, spend } from "./game.js";
 import { PUBLIC_SPLITS, instanceFor, seedFor } from "./suite.js";
-import { points } from "./display.js";
 
 export const hex = (n) => [...crypto.getRandomValues(new Uint8Array(n))].map((b) => b.toString(16).padStart(2, "0")).join("");
 export const newRunId = () => "run_" + hex(10);
@@ -125,8 +124,8 @@ function after(s, row, ended) {
 }
 
 const why = (b) => (b.ended.why === "arrived" ? "the ride arrived" : b.ended.why === "budget" ? "its budget of tool calls is used" : b.ended.why);
-const endText = (b) => " [Bench: task " + b.task + " ended (" + why(b) + ")" + (b.ended.total == null ? "" : ", scoring " + points(b.ended.total)) + ". " +
-  (b.done ? "Bench over: total " + points(b.total) + " of " + b.out_of + "." : b.next) + "]";
+const endText = (b) => " [Bench: task " + b.task + " ended (" + why(b) + ")" + (b.ended.total == null ? "" : ", scoring " + b.ended.total) + ". " +
+  (b.done ? "Bench over: total " + b.total + " of " + b.out_of + "." : b.next) + "]";
 
 /** One tool call in a hosted session: { session, result, task }. The session passed in is never changed. The open task closes
  *  when its ride arrives or its budget is used; result.bench says where the session stands (also on an { error } result).
