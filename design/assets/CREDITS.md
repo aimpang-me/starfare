@@ -60,4 +60,6 @@ Saturn reuses the existing alpha ring strip with analytic planet/ring shadows; n
 
 The Starseeker ship model, its engine plume, nav lights and callsign decal, the Fresnel atmosphere rims, the bloom, vignette and grain settings, and the SVG icon sprite are all original. They were drawn in code in `sol-art.js` for Starfare. They are not modelled on any real vehicle, and Starfare is not affiliated with any real company.
 
+The station, dock and ship models (`models/variety/`, from `tools/models/blender/variety.py`) and their tiling trim maps (`models/trim/`, from `tools/models/trims.py`) are original too. They are scripted in Blender and numpy, use no third-party meshes, textures or generated hulls, and are not modelled on any real station or vehicle. They are fictional, illustrative and not production-approved (`models/variety.json`). The earlier generated hulls (`kestrel`, `tandem`, `lantern`, from Tripo via Higgsfield, licence unconfirmed) are no longer loaded by the pages.
+
 The rides, riders, weather and fleet on these pages are simulated. Planet positions are real (NASA JPL DE421).

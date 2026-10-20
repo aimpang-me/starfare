@@ -1,6 +1,6 @@
 /* sol-art.js: shared art for the Starfare mockups (three.js r128).
    Textured planets with a fresnel atmosphere rim, the Yale Bright Star Catalog starfield, the bloom/vignette/grain
-   composer, the procedural Starseeker and the HUD icon sprite. Sources and licences: CREDITS.md next to this file.
+   composer, the procedural Starseeker, the ship, station and dock models and the HUD icon sprite. Sources and licences: CREDITS.md next to this file.
    Frame: engine vectors are heliocentric J2000 ecliptic; the pages map them to three.js as (x, z, -y). */
 (function (root) {
   "use strict";
@@ -378,48 +378,78 @@
     }
     var car = opt.car && root.SOLE && root.SOLE.R && root.SOLE.R.CAR[String(opt.car).toLowerCase()];
     if (car && THREE.GLTFLoader) {
-      g.userData.hull = { cls: car.ship_class, proc: p, lights: lights, model: null, mounts: null, asked: false };
+      g.userData.hull = { cls: car.ship_class, callsign: opt.callsign || opt.car, proc: p, lights: lights, model: null, mounts: null, asked: false };
       quality(); // settle the tier first: a change prunes ships not yet added to a scene
       SHIPS.push(g); showHull(g);
     }
     return g;
   }
 
-  /* ---------- generated hulls ---------- */
-  // models/ holds the game versions of the generated meshes (tools/models/build-lods.mjs): bow +z, up +y, length 1,
-  // the procedural ship's frame. fleet.json maps each engine ship class to a hull. One load per class, cloned per
-  // ship, so every ship of a class shares its geometry and material.
-  var FLEET = null, HULLS = {}, SHIPS = [];
-  function loadHull(cls) {
-    FLEET = FLEET || fetch(BASE + "models/fleet.json").then(function (r) { if (!r.ok) throw new Error("fleet.json " + r.status); return r.json(); });
-    return HULLS[cls] || (HULLS[cls] = FLEET.then(function (f) {
-      var h = f.hulls[f.classes[cls]];
-      if (!h) throw new Error("no hull for ship class " + cls);
-      return new Promise(function (ok, bad) {
-        new THREE.GLTFLoader().load(BASE + "models/" + h.file, function (gl) {
-          gl.scene.traverse(function (o) {
-            if (!o.material) return;
-            // The pages render with no output encoding, so the planets' maps are read as stored; the hull's base
-            // colour, tagged sRGB by the loader, would otherwise come out darker than it was painted.
-            if (o.material.map) o.material.map.encoding = THREE.LinearEncoding;
-            if (ENV.rt) o.material.envMap = ENV.rt.texture;
-            // As painted, the maps read as polished chrome under the sky reflection and the normal map's dents as
-            // crumpled foil. Less metal, rougher (the factor scales the roughness map; the shader caps it at 1),
-            // shallower dents.
-            o.material.metalness = 0.6; o.material.roughness = 1.35; o.material.normalScale.multiplyScalar(0.6);
-            o.material.needsUpdate = true; ENV.mats.push(o.material);
-          });
-          var box = new THREE.Box3().setFromObject(gl.scene);
-          ok({ scene: gl.scene, mounts: h.mounts, stern: [0, (box.min.y + box.max.y) / 2, box.min.z - 0.01] });
-        }, undefined, bad);
-      });
+  /* ---------- hulls, stations and docks (models/variety.json) ---------- */
+  // models/variety/ holds the Blender-scripted models (tools/models/blender/variety.py): longest side 1, up +y, ships
+  // with the bow on +z, the procedural ship's frame. Their faces name a shared trim material (models/trim/, built by
+  // tools/models/trims.py), so every station, dock and ship shares one small set of tiling maps and one material per
+  // name. variety.json maps each engine ship class to a hull, each fictional station to its own model, and every other
+  // place to a dock type. One load per model, cloned per use. The "accent" band takes a livery colour per callsign.
+  var VARIETY = null, MODELS = {}, TRIMS = {}, SHIPS = [];
+  var LIVERY = [0xff9e38, 0x4fb8ff, 0xe8e8e2, 0x7fd18b, 0xff6b5b, 0xc79bff, 0xffd34f];
+  function variety() {
+    return VARIETY || (VARIETY = fetch(BASE + "models/variety.json").then(function (r) { if (!r.ok) throw new Error("variety.json " + r.status); return r.json(); }));
+  }
+  function trimTex(file, colour) {
+    var t = loader.load(BASE + "models/trim/" + file);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = ANISO;
+    // As with the planets: the pages render with no output encoding, so maps are read as stored.
+    t.encoding = THREE.LinearEncoding;
+    return t;
+  }
+  function trimMat(name) {
+    if (TRIMS[name]) return TRIMS[name];
+    var maps = name === "accent" ? "hull" : name, orm = trimTex(maps + "_orm.jpg");
+    var m = new THREE.MeshStandardMaterial({ map: trimTex(maps + "_color.jpg"), normalMap: trimTex(maps + "_normal.jpg"),
+      roughnessMap: orm, metalnessMap: orm, roughness: 1, metalness: 1, envMapIntensity: 0.6 });
+    m.normalScale.set(0.8, 0.8);
+    if (name === "window") { m.emissiveMap = trimTex("window_emissive.jpg"); m.emissive.setRGB(1, 1, 1); m.emissiveIntensity = 1.4; }
+    if (name === "accent") m.color.setHex(LIVERY[0]);
+    if (ENV.rt) m.envMap = ENV.rt.texture;
+    ENV.mats.push(m);
+    return TRIMS[name] = m;
+  }
+  function loadModel(file) {
+    return MODELS[file] || (MODELS[file] = new Promise(function (ok, bad) {
+      new THREE.GLTFLoader().load(BASE + "models/" + file, function (gl) {
+        gl.scene.traverse(function (o) { if (o.isMesh) o.material = trimMat(String(o.material && o.material.name || "hull").split(".")[0]); });
+        ok(gl.scene);
+      }, undefined, bad);
     }));
+  }
+  function livery(model, callsign) {
+    var h = 0, s = String(callsign || "");
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    var m = null;
+    model.traverse(function (o) {
+      if (!o.isMesh || o.material !== TRIMS.accent) return;
+      if (!m) { m = TRIMS.accent.clone(); m.color.setHex(LIVERY[h % LIVERY.length]); ENV.mats.push(m); }
+      o.material = m;
+    });
+  }
+  function loadHull(cls) {
+    return variety().then(function (f) {
+      var id = f.classes[cls], h = f.models[id];
+      if (!h) throw new Error("no hull for ship class " + cls);
+      var k = h.display_scale || 1;
+      return loadModel(h.file).then(function (scene) {
+        var box = new THREE.Box3().setFromObject(scene), mounts = {};
+        Object.keys(h.mounts).forEach(function (n) { mounts[n] = h.mounts[n].map(function (x) { return x * k; }); });
+        return { scene: scene, k: k, mounts: mounts, stern: [0, k * (box.min.y + box.max.y) / 2, k * box.min.z - 0.01] };
+      });
+    });
   }
   function showHull(g) {
     var h = g.userData.hull, want = quality().hulls;
     if (want && !h.asked) {
       h.asked = true;
-      loadHull(h.cls).then(function (m) { h.model = m.scene.clone(); h.mounts = m.mounts; h.stern = m.stern; g.add(h.model); showHull(g); },
+      loadHull(h.cls).then(function (m) { h.model = m.scene.clone(); h.model.scale.setScalar(m.k); livery(h.model, h.callsign); h.mounts = m.mounts; h.stern = m.stern; g.add(h.model); showHull(g); },
         function (e) { console.warn("SolArt: keeping the procedural ship for class " + h.cls + ":", e && e.message || e); });
     }
     var on = want && !!h.model;
@@ -427,6 +457,45 @@
     if (h.model) h.model.visible = on;
     NAV.forEach(function (n, i) { h.lights[i].position.fromArray(on ? h.mounts[n.mount] : n.at); });
     g.userData.engine.position.fromArray(on ? h.stern : STERN);
+  }
+
+  // dock(place, fallback): the model for a place, as a group that shows fallback (a THREE.Object3D) until it loads,
+  // and keeps it when it can't. A fictional station gets its own model; every other place gets a Starfare dock parked
+  // beside it, by place type (variety.json "docks"). setPx(px), with the drawn size on screen, picks the full model
+  // over about 90 px and the light one below. The low tier keeps the light one.
+  function dockId(f, P) {
+    if (!P) return f.docks.default;
+    if (f.stations[P.id]) return f.stations[P.id];
+    var d = f.docks;
+    if (d.byPlace[P.id]) return d.byPlace[P.id];
+    if (P.kind === "small" || (P.kind === "moon" && P.radius_km < d.smallMoonKm)) return d.small;
+    return d.byKind[P.kind] || d.default;
+  }
+  function dock(P, fallback) {
+    var g = new THREE.Group(), cur = null, want = "lod";
+    if (fallback) g.add(fallback);
+    var got = {};
+    function show() {
+      var m = got[want] || got.lod || got.file; if (!m || m === cur) return;
+      if (cur) cur.visible = false; else if (fallback) fallback.visible = false;
+      m.visible = true; cur = m;
+    }
+    function fetchOne(which) {
+      if (got[which] !== undefined) return; got[which] = null;
+      variety().then(function (f) {
+        var h = f.models[dockId(f, P)];
+        if (!h) throw new Error("no dock model for " + (P && P.id));
+        return loadModel(h[which]);
+      }).then(function (scene) { var m = scene.clone(); m.visible = false; g.add(m); got[which] = m; show(); },
+        function (e) { console.warn("SolArt: keeping the placeholder dock for " + (P && P.id) + ":", e && e.message || e); });
+    }
+    if (THREE.GLTFLoader) fetchOne("lod");
+    g.userData.setPx = function (px) {
+      want = px > 90 && quality().hulls ? "file" : "lod";
+      if (want === "file") fetchOne("file");
+      show();
+    };
+    return g;
   }
 
   /* ---------- hull reflections ---------- */
@@ -568,7 +637,7 @@
     updatePlanet: function (body, context) { if (root.StarfarePlanetEffects) root.StarfarePlanetEffects.update(body, devicePixels(context)); },
     disposePlanet: function (body) { if (root.StarfarePlanetEffects && body) root.StarfarePlanetEffects.dispose(body.userData.solarSurface || body); },
     updateSun: function (body, context) { if (root.StarfarePlanetEffects && body.userData.solarSurface) root.StarfarePlanetEffects.update(body.userData.solarSurface, devicePixels(context)); },
-    sun: sun, stars: stars, composer: composer, ship: ship, setEngine: setEngine, setSky: setSky, quality: quality, icon: icon, ICONS: Object.keys(ICONS),
+    sun: sun, stars: stars, composer: composer, ship: ship, dock: dock, setEngine: setEngine, setSky: setSky, quality: quality, icon: icon, ICONS: Object.keys(ICONS),
     CREDIT: "Maps: NASA, JPL, USGS (public domain); Earth effects, Saturn, rings, Sun: Solar System Scope (CC BY 4.0). Moon relief: NASA SVS / LRO LOLA. Stars: Yale Bright Star Catalog."
   };
 })(window);

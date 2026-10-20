@@ -1,0 +1,14 @@
+{
+ "generator": "tools/models/trims.py",
+ "px": 1024,
+ "tile_m": {
+  "hull": 4,
+  "mli": 2,
+  "radiator": 2,
+  "solar": 2,
+  "truss": 1,
+  "dark": 2,
+  "window": 4,
+  "rock": 16
+ }
+}
