@@ -2,6 +2,7 @@
 // The hosted connector's backend forwards to Durable Objects (mcp.js); a Node harness can supply its own in-process one.
 // A backend has one method, call(tool, input), which returns the tool's plain data or { error } for a game error.
 import { z } from "zod";
+import { forReaders, tidyText } from "./display.js";
 
 export const RUN_ID = /^run_[0-9a-f]{20}$/;
 
@@ -154,8 +155,8 @@ export const TOOLS = {
 };
 
 const answer = (r) => (r && r.error
-  ? { content: [{ type: "text", text: r.error }], isError: true }
-  : { content: [{ type: "text", text: JSON.stringify(r) }] });
+  ? { content: [{ type: "text", text: tidyText(String(r.error)) }], isError: true }
+  : { content: [{ type: "text", text: JSON.stringify(forReaders(r)) }] });
 
 /** The hosted connector also runs the bench: start_bench, and the paragraph that tells a bot when to call it. */
 export const HOSTED_TOOLS = {
