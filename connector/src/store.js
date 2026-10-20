@@ -16,6 +16,7 @@ import {
   rideStats, rideSummary, resolveHail, restoreRunBookings, seasonInstance, sky,
 } from "./game.js";
 import { liveIdsToDrop } from "./live.js";
+import { spikeStore } from "./spike.js";
 import { distinctPlayers as playersIn, ensurePool as freezePool, poolSize as storedPool, recordBest } from "./hub-pool.js";
 
 export const hub = (env) => env.STARFARE_HUB.get(env.STARFARE_HUB.idFromName("hub"));
@@ -313,6 +314,17 @@ export class StarfareHub extends DurableObject {
     return this.sql.exec("SELECT run_id FROM rides WHERE player_id = ? ORDER BY created_ms DESC, run_id DESC LIMIT ?", row.player_id, FOLLOW_RUNS)
       .toArray().map((x) => x.run_id);
   }
+
+  // Sandbox spike (src/spike.js, only with STARFARE_SPIKE "on"): seats, notes and the test log. Tables are made on first use.
+  spikeOpen() { return spikeStore.open(this.sql); }
+  spikeJoin(code, session, info) { return spikeStore.join(this.sql, code, session, info); }
+  spikeSeat(session, code) { return spikeStore.seatOf(this.sql, session, code); }
+  spikeSend(world, from, to, text, session, by) { spikeStore.send(this.sql, world, from, to, text, session, by); }
+  spikeInbox(world, seat, after) { return spikeStore.inbox(this.sql, world, seat, after); }
+  spikeLastSeen(world, seat) { return spikeStore.lastSeen(this.sql, world, seat); }
+  spikeSeen(world, seat, seq) { spikeStore.seen(this.sql, world, seat, seq); }
+  spikeEvent(world, v) { spikeStore.event(this.sql, world, v); }
+  spikeView(world, after) { return spikeStore.view(this.sql, world, after); }
 
   /** A new Comms channel and its first check-in code. The channel stays secret in the browser; the code goes to the agent. */
   commsOpen() {

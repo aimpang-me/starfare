@@ -16,6 +16,7 @@ import flightHtml from "./flight.html";
 import { methodPage } from "./method.js";
 import siteHtml from "./site.html";
 import { allowed, busy, clientKey, rateLimit, rpcCount, SHARED_IP, tooMany } from "./limit.js";
+import { SPIKE_PATH, spikeOn, spikePage } from "./spike.js";
 import { hub, runStub } from "./store.js";
 import { RUN_ID } from "./tools.js";
 
@@ -28,7 +29,7 @@ const isMcpPath = (p) => p === "/mcp" || p.startsWith("/mcp/");
 // The landing page runs the engine in the browser. ?v= changes with every engine build, so that URL can be cached for good.
 const ENGINE_PATH = "/engine.js", ENGINE_V = META.sha256.slice(0, 16);
 const isBenchPath = (p) => p === "/bench" || p.startsWith("/bench/");
-const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p.startsWith("/rides/") || p.startsWith("/flight/") || p.startsWith("/agent/") || p.startsWith("/comms/") || isBenchPath(p);
+const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p.startsWith("/rides/") || p.startsWith("/flight/") || p.startsWith("/agent/") || p.startsWith("/comms/") || isBenchPath(p) || p === "/spike" || p.startsWith("/spike/");
 const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), FLIGHT_PATH = new RegExp("^/flight/(" + RUN_ID.source.slice(1, -1) + ")(\\.json)?$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
 
 // A season's pool size is frozen the first time the hub is asked (hub-pool.js ensurePool), so each isolate keeps the answer
@@ -130,6 +131,22 @@ async function bench(req, url, env) {
   return v ? Response.json(v, { headers: { "cache-control": "no-store" } }) : new Response("Not found: no bench session with that id", { status: 404 });
 }
 
+/** The sandbox spike's pages, only with STARFARE_SPIKE "on" (src/spike.js). /spike: open a test world. POST /spike/new: a world
+ *  and its three seat codes. /spike/<world>: the world's seats and log, live; it polls /spike/<world>.json?after=<seq>. */
+async function spike(req, url, env) {
+  if (!spikeOn(env)) return new Response("Not found", { status: 404 });
+  const h = hub(env), json = (v, status = 200) => Response.json(v, { status, headers: { "cache-control": "no-store" } });
+  const html = (world) => new Response(spikePage(url.origin, world), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
+  if (url.pathname === "/spike") return req.method === "GET" ? html(null) : new Response("Method not allowed", { status: 405 });
+  if (!(await allowed(h, "rides:" + clientKey(req), rateLimit(env)))) return busy();
+  if (url.pathname === "/spike/new") return req.method === "POST" ? json(await h.spikeOpen()) : new Response("Method not allowed", { status: 405 });
+  const m = SPIKE_PATH.exec(url.pathname);
+  if (!m || req.method !== "GET") return new Response("Not found", { status: 404 });
+  if (!m[2]) return html(m[1]);
+  const v = await h.spikeView(m[1], Number(url.searchParams.get("after")) || 0);
+  return v ? json({ now_ms: Date.now(), ...v }) : json({ error: "unknown test world" }, 404);
+}
+
 // Every response the Worker builds gets these (the consent page's own frame headers are kept). The CSP leaves scripts alone
 // for now: the pages run inline scripts, so a script-src needs nonces first.
 const HARDEN = {
@@ -172,6 +189,7 @@ async function route(req, env, ctx) {
   }
   if (isBenchPath(url.pathname)) return bench(req, url, env);
   if (url.pathname.startsWith("/comms/")) return comms(req, url, env);
+  if (url.pathname === "/spike" || url.pathname.startsWith("/spike/")) return spike(req, url, env);
   if (req.method !== "GET") return new Response("Method not allowed", { status: 405 });
   if (url.pathname === "/board" || url.pathname === "/board.json") {
     const E = await engine(), season = sky(Date.now()).season, cap = await poolCap(env, season);

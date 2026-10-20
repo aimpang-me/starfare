@@ -10,7 +10,8 @@ import { hex } from "./bench-host.js";
 import { engine } from "./engine.js";
 import { checkInInfo, hailPage, poolView, seasonClock, sky } from "./game.js";
 import { hub, runStub } from "./store.js";
-import { HOSTED_INSTRUCTIONS, HOSTED_TOOLS, registerTools } from "./tools.js";
+import { SPIKE_INSTRUCTIONS, SPIKE_TOOLS, spikeHandlers, spikeOn } from "./spike.js";
+import { HOSTED_INSTRUCTIONS, HOSTED_TOOLS, answer, registerTools } from "./tools.js";
 
 // With STARFARE_OAUTH on, the grant's anonymous player id. Off: null.
 const playerOf = (agent) => (agent.props && typeof agent.props.player_id === "string" ? agent.props.player_id : null);
@@ -75,7 +76,7 @@ const SESSION_TOOLS = {
 };
 
 export class StarfareMcp extends McpAgent {
-  server = new McpServer({ name: "starfare", version: "0.1.0" }, { instructions: HOSTED_INSTRUCTIONS });
+  server = new McpServer({ name: "starfare", version: "0.1.0" }, { instructions: HOSTED_INSTRUCTIONS + (spikeOn(this.env) ? SPIKE_INSTRUCTIONS : "") });
   initialState = { run_id: null, bench_id: null };
 
   async #bench(id, tool, input) {
@@ -95,6 +96,11 @@ export class StarfareMcp extends McpAgent {
 
   async init() {
     registerTools(this.server, { call: (tool, input) => this.#call(tool, input) }, HOSTED_TOOLS);
+    // The sandbox spike's join, wait and send, on a test deploy only (STARFARE_SPIKE "on"; src/spike.js).
+    if (spikeOn(this.env)) {
+      const spike = spikeHandlers((agent) => hub(agent.env));
+      for (const [name, def] of Object.entries(SPIKE_TOOLS)) this.server.registerTool(name, def, async (input, extra) => answer(await spike[name](this, input, extra)));
+    }
   }
 }
 
