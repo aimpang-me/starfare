@@ -224,7 +224,7 @@ async function phaseOff() {
     assert.deepEqual(names, TOOLS);
   });
   await check("list_hails returns this season's pool, hides the catalog, and still lets two players take one hail", async () => {
-    const r = await ok(client, "list_hails");
+    const r = await ok(client, "list_hails", { limit: 200 });
     assertSeasonPool(r.hails);
     const pool = await (await fetch(`${w.base}/hails.json`)).json();
     assert.deepEqual(pool.hails, r.hails);
@@ -258,7 +258,7 @@ async function phaseOff() {
     return p;
   };
   await check("a pool hail plans, dispatches and scores, and a worse finish does not replace the best", async () => {
-    const listed = await ok(client, "list_hails");
+    const listed = await ok(client, "list_hails", { limit: 200 });
     const { booking: quick, hail: openedHail } = await takeBookableQuick(client, listed.hails);
     const m = /^s(\d+)-(\d+)$/.exec(quick.hail_id);
     R.admit(R.hailRow(m[1], Number(m[2])));
@@ -621,7 +621,7 @@ async function phaseOff() {
   await check("SSE transport also works (list_hails, take_hail, get_hail)", async () => {
     const sse = await connect(w.base, "sse");
     try {
-      assertSeasonPool((await ok(sse, "list_hails")).hails);
+      assertSeasonPool((await ok(sse, "list_hails", { limit: 200 })).hails);
       const h = await ok(sse, "take_hail", { hail_id: "iss-crew" });
       assert.equal((await ok(sse, "get_hail", { run_id: h.run_id })).hail_id, "iss-crew");
     } finally { await sse.close(); }
@@ -701,7 +701,7 @@ async function phaseOff() {
     try {
       worker = await startWorker(vars, persist);
       bot = await connect(worker.base);
-      const listed = await ok(bot, "list_hails");
+      const listed = await ok(bot, "list_hails", { limit: 200 });
       let taken = null;
       for (const hail of listed.hails.filter((h) => h.kind === "quick")) {
         const reply = await call(bot, "take_hail", { hail_id: hail.hail_id });
@@ -771,9 +771,11 @@ async function consent(authUrl, decision = "approve") {
   assert.match(html, /<button name="decision" value="approve">Allow<\/button>/);
   assert.match(html, /<button name="decision" value="deny">Deny<\/button>/);
   assert.doesNotMatch(html, /type="password"|name="code"/, "consent page must not ask for a code");
-  const posted = await fetch(authUrl, { ...noFollow, method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", cookie: jar.header() }, body: new URLSearchParams({ handle, decision }) });
+  const follow = /name="follow" value="([0-9a-f]{32})"/.exec(html)?.[1]; // a hidden field, sent as a browser would
+  assert.ok(follow && html.includes(`/agent/${follow}`), "consent page shows no follow link");
+  const posted = await fetch(authUrl, { ...noFollow, method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", cookie: jar.header() }, body: new URLSearchParams({ handle, follow, decision }) });
   assert.equal(posted.status, 302, await posted.clone().text());
-  return { html, location: new URL(posted.headers.get("location")) };
+  return { html, follow, location: new URL(posted.headers.get("location")) };
 }
 
 /** The SDK's OAuthClientProvider, as an MCP client app implements it. redirectToAuthorization only records the URL. */
@@ -805,14 +807,14 @@ async function sdkSignIn(base, name) {
     return true;
   });
   assert.ok(auth.authUrl, "SDK did not ask to open the authorization page");
-  const { html, location } = await consent(auth.authUrl);
+  const { html, follow, location } = await consent(auth.authUrl);
   assert.equal(location.origin + location.pathname, REDIRECT_URI);
   assert.equal(location.searchParams.get("state"), auth.authUrl.searchParams.get("state"));
   await first.finishAuth(location.searchParams.get("code"));
   trace.push("-- reconnect with the access token --");
   const client = new Client({ name, version: "1" });
   await client.connect(new StreamableHTTPClientTransport(url, { authProvider: auth, fetch: tracingFetch(trace) }));
-  return { auth, trace, client, html };
+  return { auth, trace, client, html, follow };
 }
 
 async function phaseOn() {
@@ -882,6 +884,21 @@ async function phaseOn() {
       assert.equal(u.isError, true); assert.match(u.value, /unknown run_id/);
       report.second_player = m.player_id;
     });
+    await check("on: the follow link on the consent page lists the agent's booking with its log in words; take_hail returns the same link", async () => {
+      assert.equal(good.hail.follow_url, `${base}/agent/${a.follow}`);
+      const j = await (await fetch(`${base}/agent/${a.follow}.json`)).json();
+      assert.equal(j.simulated, true);
+      const run = j.runs.find((r) => r.run_id === good.hail.run_id);
+      assert.ok(run, JSON.stringify(j.runs.map((r) => r.run_id)));
+      assert.equal(run.phase, "arrived"); assert.equal(run.watch, true); assert.equal(run.total, good.score.total);
+      assert.deepEqual(run.trail.map((e) => e.tool), ["take_hail", "plan_pickup", "plan_ride", "dispatch"]);
+      assert.equal(run.trail[0].agent.name, "sol e2e player A");
+      assert.equal(Object.hasOwn(run, "player_id"), false);
+      const page = await fetch(`${base}/agent/${a.follow}`);
+      assert.equal(page.status, 200); assert.match(await page.text(), /<script src="\/assets\/agent-log.js">/);
+      assert.equal((await fetch(`${base}/agent/${"0".repeat(32)}.json`)).status, 404);
+      assert.notEqual(b.follow, a.follow);
+    });
     await check("on: /board shows the best run with its player tag", async () => {
       const j = await (await fetch(`${base}/board.json`)).json();
       assert.equal(j.best["iss-crew"].player_tag, good.hail.player_id.slice(2, 8));
@@ -897,7 +914,7 @@ async function phaseOn() {
     });
     await check("on: SSE transport with the access token works (list_hails)", async () => {
       const sse = await connect(base, "sse", { requestInit: { headers: { Authorization: `Bearer ${a.auth.saved.access_token}` } } });
-      try { assertSeasonPool((await ok(sse, "list_hails")).hails); } finally { await sse.close(); }
+      try { assertSeasonPool((await ok(sse, "list_hails", { limit: 200 })).hails); } finally { await sse.close(); }
     });
     await check("on: a refreshed access token works and keeps the same player id", async () => {
       const r = await fetch(asMeta.token_endpoint, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },
