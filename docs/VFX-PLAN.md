@@ -33,6 +33,11 @@ or replaying the map shows the same sky. Code: `design/assets/sky-effects.js` (n
 | Plumes | Always, close up (Io: Pele, Prometheus; Enceladus: south polar jets) | Faint lit fans | Still |
 | Main belt | Always, once the belt is over ~40 px across | 2400 / 1400 / 700 points (high / medium / low tier), each on its own Kepler orbit in the shader | They move with sky time |
 
+Flight page: a recorded `flare` incident (or a live `solar_flare` hold) gives a solar storm window at its place
+(`StarfareView.weatherWindows(..., StarfareView.FLARE)`). The place shows "<place> · solar storm · simulated" and a faint
+violet haze, and its planet's aurora brightens. The record holds no eruption time, so the page draws no Sun flare and
+no front. It also gets the aurora, plumes and corona.
+
 Cost: the belt is one draw (points, positions solved on the GPU), each front one sphere (at most six), each pad ring and
 storm haze one sprite, aurora one sphere per planet and plumes one small cone each, all only drawn close up. Hazard
 lookups are a few engine calls a frame; eruptions are cached per sky day, pads per sky hour.

@@ -1044,6 +1044,12 @@ function trailOf(seg) {
   g.instanceCount = seg.length / 8;
   var m = new THREE.Mesh(g, TRAILMAT); m.frustumCulled = false; return m;
 }
+// A solar storm over a planet: the strongest storm hold at any place in its system.
+function stormOver(id, jd) {
+  var k = 0;
+  (RS.flare || []).forEach(function (w) { if (SF.system(w.body) === id) k = Math.max(k, window.StarfareView.weatherAt(RS.flare, w.body, jd)); });
+  return k;
+}
 function buildRideScene() {
   if (RS.sc) return;
   var rp = RS.rp, focus = rp.focus, sc = new THREE.Scene(), local = focus !== "sun";
@@ -1053,6 +1059,7 @@ function buildRideScene() {
   var labels = LabelSet($("#rlabels")); RS.labels = labels; RS.sc = sc; RS.cam = cam; RS.bodies = []; RS.rings = []; RS.paths = [];
   var live = RIDE.live;
   RS.wx = window.StarfareView.weatherWindows(live ? live.incidents : rp.record.score.incidents, live && live.hold, SF.E.PLACES);
+  RS.flare = window.StarfareView.weatherWindows(live ? live.incidents : rp.record.score.incidents, live && live.hold, SF.E.PLACES, window.StarfareView.FLARE);
   sc.add(stars());
   if (local) {
     sc.add(new THREE.AmbientLight(0x2c3442, 0.7));
@@ -1095,6 +1102,16 @@ function buildRideScene() {
     if (RS.wx.findIndex(function (x) { return x.body === w.body; }) !== i || !RS.bodies.some(function (b) { return b.id === w.body && !b.ringOf; })) return;
     labels.add({ html: esc(SF.name(w.body)) + " · " + WX[w.kind] + " · simulated", cls: "k-wx", pri: 70,
       hide: function () { return !window.StarfareView.weatherAt(RS.wx, w.body, RS.cur); }, pos: function () { return placeAt(w.body, RS.cur); } });
+  });
+  // Solar storm holds from the record: a label and a faint violet haze on the held place, and its planet's aurora
+  // brightens (Earth, Jupiter, Saturn). The record has no eruption time, so the Sun and the storm front are not drawn.
+  RS.storms = [];
+  RS.flare.forEach(function (w, i) {
+    if (RS.flare.findIndex(function (x) { return x.body === w.body; }) !== i || !RS.bodies.some(function (b) { return b.id === w.body && !b.ringOf; })) return;
+    var g = window.StarfareSkyEffects ? StarfareSkyEffects.stormGlow(THREE, 0x9d8cff) : null;
+    if (g) { sc.add(g); RS.storms.push({ body: w.body, g: g, b: RS.bodies.filter(function (b) { return b.id === w.body && !b.ringOf; })[0] }); }
+    labels.add({ html: esc(SF.name(w.body)) + " · solar storm · simulated", cls: "k-wx", pri: 70,
+      hide: function () { return !window.StarfareView.weatherAt(RS.flare, w.body, RS.cur); }, pos: function () { return placeAt(w.body, RS.cur); } });
   });
   RS.dest = rp.legs[rp.legs.length - 1].to;
   labels.add({ html: esc(SF.name(RS.dest)) + " · reached", cls: "k-ok", pri: 70, hide: function () { return RS.phase !== "arrived"; }, pos: function () { return placeAt(RS.dest, RS.cur); } });
@@ -1271,8 +1288,12 @@ function rideFrame(dt, t) {
     var effectsTime = RS.planetClock.sample(t, RS.playing && !reduced && !document.hidden);
     var maps = SolArt.quality().maps;
     if (RS.sun && SolArt.updateSun) SolArt.updateSun(RS.sun, { elapsedSeconds: effectsTime, camera: cam, radiusPx: RS.sun.userData.solarSurface.scale.x / pxw(cam, RS.sun.position, GH), quality: maps });
-    RS.bodies.forEach(function (b) { if (b.m && b.m.userData.planetEffects) SolArt.updatePlanet(b.m, { elapsedSeconds: effectsTime, camera: cam, radiusPx: b.m.scale.x / pxw(cam, b.m.position, GH), quality: maps, veil: window.StarfareView.weatherAt(RS.wx, b.id, jd) }); });
+    RS.bodies.forEach(function (b) { if (b.m && b.m.userData.planetEffects) SolArt.updatePlanet(b.m, { elapsedSeconds: effectsTime, camera: cam, radiusPx: b.m.scale.x / pxw(cam, b.m.position, GH), quality: maps, veil: window.StarfareView.weatherAt(RS.wx, b.id, jd), storm: stormOver(b.id, jd) }); });
   }
+  (RS.storms || []).forEach(function (s) {
+    var k = window.StarfareView.weatherAt(RS.flare, s.body, jd), p = placeAt(s.body, jd); s.g.visible = k > 0 && !!p; if (!s.g.visible) return;
+    var px = pxw(cam, p, GH); s.g.position.copy(p); s.g.scale.setScalar(Math.max(s.b.m.scale.x * 3.2, px * 40)); s.g.material.opacity = 0.5 * k;
+  });
   // Arrival: one soft ring on the destination as playback crosses into arrived. After a scrub, or with reduced
   // motion, only the reached label shows.
   RS.phase = st.phase;
@@ -1438,6 +1459,7 @@ var THREE_SRC = [
   ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js", "sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa"],
   ["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js", "sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E"],
   ["/assets/planet-effects.js"],
+  ["/assets/sky-effects.js"],
   ["/assets/sol-art.js"]
 ];
 function loadThree() {
