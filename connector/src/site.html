@@ -442,8 +442,42 @@ p{text-wrap:pretty}
 .btn:active,.chipb:active{transform:scale(.96)}
 @media (pointer:coarse){.btn,.btn.small,.chipb,.seg button,.tabs button{min-height:44px}}
 @media (pointer:coarse){.popm label{min-height:44px}}
+#mapSound svg{width:17px;height:17px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}#mapSound .w{display:none}#mapSound[aria-pressed=true] .w{display:inline}#mapSound[aria-pressed=true] .x{display:none}#mapSound[aria-pressed=true]{color:var(--ink)}
 </style>
 <link rel="stylesheet" href="/assets/mission-control.css">
+<style>
+/* Comms: the HQ channel, message style B (ledger with tags; ui-design/message-style-b.md). Colour lives only in chips. */
+.cm{position:fixed;top:136px;right:20px;bottom:128px;width:420px;z-index:9;display:flex;flex-direction:column;background:#090e14;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.cm[hidden]{display:none}
+body.cm-open .mc-activity{display:none}
+.cm-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.cm-t{flex:1;display:flex;flex-direction:column;gap:2px}.cm-t h2{margin:0;font:600 13px Inter,sans-serif;color:var(--ink)}
+.cm-log{flex:1;overflow:auto;overscroll-behavior:contain;margin:0;padding:0;list-style:none}
+.cm-r{display:grid;grid-template-columns:38px 78px 1fr;column-gap:10px;padding:10px 14px;border-bottom:1px solid #161e27}
+.cm-r.you{background:#0f1922}
+.cm-tm{font-size:11px;color:#96a4b3;font-variant-numeric:tabular-nums}
+.cm-r>.cm-chip{align-self:start;justify-self:start}
+.cm-x{font:13px/1.45 Inter,sans-serif;color:#edf1f5;overflow-wrap:anywhere}
+.cm-x .sub{display:block;font-size:12px;color:#aab6c3}.cm-x .sub i{color:#edf1f5}
+.cm-g{padding:6px 14px;font-size:11px;color:#96a4b3;background:#080c11;list-style:none}
+.cm-chip{font:500 10px/16px Inter,sans-serif;padding:0 6px;border:1px solid;border-radius:2px;white-space:nowrap}
+.c-hq{color:#9cc3df;border-color:#3d5568}.c-go{color:#8fd19e;border-color:#3f5b47}.c-warn{color:#e7c48c;border-color:#6b5a3d}.c-bad{color:#f0a196;border-color:#6e4740}.c-grey{color:#aab6c3;border-color:#465565}
+.cm-blk{grid-column:2/4;margin-top:8px;border:1px solid #26323e;border-radius:4px;padding:9px 11px;font-size:12px;display:grid;grid-template-columns:62px 1fr;row-gap:6px;column-gap:8px}
+.cm-blk.rows{grid-template-columns:1fr auto}.cm-blk .k{color:#96a4b3}.cm-blk .v2{color:#aab6c3;text-align:right}
+.cm-act{grid-column:2/4;display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}.cm-act .btn{min-height:32px;height:32px;padding:0 12px;font-size:12px}
+.cm-ask{border-top:1px solid var(--line);padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px}
+.cm-sugg{display:flex;gap:6px;flex-wrap:wrap}.cm-sugg .btn{min-height:32px;height:32px;padding:0 10px;font-size:12px}
+.cm-row{display:flex;gap:8px}.cm-row input{flex:1;min-width:0;height:40px;box-sizing:border-box;padding:0 12px;background:#0b1016;color:var(--ink);border:1px solid var(--line-2);border-radius:4px;font:400 13px Inter,sans-serif}
+.cm-row .btn{min-height:40px}
+.cm-foot{margin:0;font-size:11px;color:#96a4b3}
+.cm-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.cm-n:not(:empty){margin-left:6px;font-size:11px;color:#e7c48c}
+@media (max-width:760px){
+  .cm{top:28vh;left:0;right:0;bottom:46px;width:auto;border-radius:4px 4px 0 0;border-width:1px 0 0;z-index:30}
+  .cm-r{grid-template-columns:36px 74px 1fr;column-gap:8px;padding:10px 16px}
+  .cm-act .btn{min-height:40px;height:40px}.cm-ask{padding:10px 16px 14px}.cm-row input{height:44px;font-size:14px}
+}
+</style>
 <link rel="stylesheet" href="/assets/message-b.css">
 <body class="mc-home">
 <a class="skip-link" href="#tabB">Skip to bookings</a>
@@ -457,7 +491,7 @@ p{text-wrap:pretty}
     <span class="mc-read-status" id="liveStatus" role="status">Connecting to fleet…</span>
     <div class="clock" title="One real second is one sky day"><span class="caps">Sky time &middot; simulated clock</span><b id="clk">&nbsp;</b><span class="s" id="clkS">&nbsp;</span></div>
     <div class="stat"><i></i>Engine &middot; JPL DE421 positions</div>
-    <button class="btn primary small" type="button" id="connectBtn">Connect your agent</button>
+    <button class="btn primary small" type="button" id="connectBtn">Connect agent</button>
   </div>
 </header>
 
@@ -468,7 +502,7 @@ p{text-wrap:pretty}
       <button type="button" role="tab" id="tabB" aria-selected="true" aria-controls="bkWrap">Bookings<span class="n" id="bkN"></span></button>
       <button type="button" role="tab" id="tabF" aria-selected="false" aria-controls="flList" tabindex="-1">Flights<span class="n" id="flN"></span></button>
     </div>
-    <div class="mc-mobile-nav"><button type="button" id="mobileActivity" aria-expanded="false" aria-controls="activityPanel">Activity</button></div>
+    <div class="mc-mobile-nav"><button type="button" id="mobileComms" aria-expanded="false" aria-controls="comms">Comms</button><button type="button" id="mobileActivity" aria-expanded="false" aria-controls="activityPanel">Activity</button></div>
     <button type="button" class="mc-sheet-collapse" id="sheetCollapse" aria-expanded="true" aria-label="Collapse bookings" aria-controls="bookingScroll">⌄</button>
     <div class="scroll" id="bookingScroll">
       <ul class="cards" id="flList" role="tabpanel" aria-labelledby="tabF" hidden></ul>
@@ -535,11 +569,12 @@ p{text-wrap:pretty}
           <li><span class="dt"></span>Ready <span class="dt b" style="margin-left:6px"></span>Busy</li>
         </ul>
         <p class="lgn">JPL positions at simulated sky dates. Orbit lines are two-body orbits at the sky date, simulated. Stored paths where available; straight route guides otherwise. True scale: real distances and sizes; bodies too small to see are drawn at a few pixels. Surface rotation and clouds are slowed for viewing.</p>
+        <p class="lgn">Sound is off until you turn it on with the speaker button. Space is silent, so every sound is stylized and simulated: a cabin bed in open space, hits on the hull where debris is (low Earth orbit, the geostationary belt, Saturn&rsquo;s rings, near small bodies, faintly in the asteroid belt), radio-style sonifications close to a planet or moon, and console beeps near a station. All of it is synthesized in the browser.</p>
         <p class="lgn cred" id="artCred" hidden></p>
-        <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Q down and E up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Docks are placeholder art. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to follow it, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
+        <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Q down and E up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Station, dock and ship models are illustrative. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to follow it, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
       </div>
       <div class="mc-map-controls" role="group" aria-label="Map controls">
-        <button type="button" id="zoomIn" aria-label="Move closer">+</button><button type="button" id="zoomOut" aria-label="Move farther">−</button><button type="button" id="resetMap" aria-label="Whole system view">⊙</button><button type="button" id="mapHelp" class="mc-map-note" aria-expanded="false" aria-controls="legend">Map info</button>
+        <button type="button" id="zoomIn" aria-label="Move closer">+</button><button type="button" id="zoomOut" aria-label="Move farther">−</button><button type="button" id="resetMap" aria-label="Whole system view">⊙</button><button type="button" id="mapSound" aria-pressed="false" aria-label="Turn sound on" title="Sound off"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8h3l4-3.5v11L6 12H3z"/><path class="x" d="M13.5 8l4 4m0-4l-4 4"/><path class="w" d="M13 7.5a3.5 3.5 0 0 1 0 5M15.2 5.2a6.6 6.6 0 0 1 0 9.6"/></svg></button><button type="button" id="mapHelp" class="mc-map-note" aria-expanded="false" aria-controls="legend">Map info</button>
       </div>
       <div class="ov scale" id="scale">
         <div class="caps">Distance scale</div>
@@ -599,6 +634,15 @@ p{text-wrap:pretty}
   <aside class="mc-activity" id="activityDock" aria-label="Activity">
     <button class="btn" type="button" id="activityToggle" aria-expanded="false" aria-controls="activityPanel"><span>Activity <span id="activityCount">0</span></span><span class="mc-sign">+</span></button>
   </aside>
+  <aside class="cm" id="comms" aria-labelledby="cmH" hidden>
+    <header class="cm-h"><div class="cm-t"><span class="caps">Comms</span><h2 id="cmH" tabindex="-1">HQ channel</h2></div><span class="cm-chip c-grey">Simulated</span><button class="btn small" type="button" id="cmClose">Close</button></header>
+    <ol class="cm-log" id="cmLog" aria-live="polite" aria-label="HQ channel, oldest first"></ol>
+    <form class="cm-ask" id="cmAsk">
+      <div class="cm-sugg" id="cmSugg"></div>
+      <div class="cm-row"><label class="cm-sr" for="cmQ">Ask HQ</label><input id="cmQ" maxlength="300" autocomplete="off" placeholder="Ask HQ about the game"><button class="btn small" type="submit">Send</button></div>
+      <p class="cm-foot">HQ answers from live game data only and never plans or picks ships for your agent.</p>
+    </form>
+  </aside>
   <aside class="mc-drawer" id="opsDrawer" aria-labelledby="drawerTitle" hidden>
     <div class="mc-drawer-head"><h2 id="drawerTitle">Fleet</h2><button class="btn small" type="button" id="drawerClose">Close</button></div>
   </aside>
@@ -606,7 +650,7 @@ p{text-wrap:pretty}
 <div class="mc-strip">
   <div class="mc-sky"><button class="btn small" id="pauseMap" type="button" aria-pressed="false">Pause map</button><span id="mcClock"></span><span class="mc-season" id="mcSeason"></span><select class="btn small" id="mapRate" aria-label="Map speed"><option value="0.1">Calm 1 s = 0.1 day</option><option value="0.25">Slow 1 s = 0.25 day</option><option value="1" selected>Live 1 s = 1 day</option></select><span class="mc-rate" id="mcRate">1 s = 1 sky day · Simulated</span></div>
   <button class="btn small mc-operations-toggle" type="button" id="operationsMenu" aria-expanded="false" aria-controls="opsNav">Operations</button>
-  <nav aria-label="Operations" id="opsNav"><button class="btn small" type="button" data-drawer="fleet" aria-expanded="false" aria-controls="opsDrawer">Fleet</button><button class="btn small" type="button" data-drawer="tools" aria-expanded="false" aria-controls="opsDrawer">Agent tools</button><button class="btn small" type="button" data-drawer="alerts" aria-expanded="false" aria-controls="opsDrawer">Alerts</button><button class="btn small" type="button" data-drawer="reports" aria-expanded="false" aria-controls="opsDrawer">Reports</button><button class="btn small" type="button" id="hidePanels" aria-pressed="false">Hide panels</button></nav>
+  <nav aria-label="Operations" id="opsNav"><button class="btn small" type="button" id="commsBtn" aria-expanded="false" aria-controls="comms">Comms<span class="cm-n" id="commsN"></span></button><button class="btn small" type="button" data-drawer="fleet" aria-expanded="false" aria-controls="opsDrawer">Fleet</button><button class="btn small" type="button" data-drawer="tools" aria-expanded="false" aria-controls="opsDrawer">Agent tools</button><button class="btn small" type="button" data-drawer="alerts" aria-expanded="false" aria-controls="opsDrawer">Alerts</button><button class="btn small" type="button" data-drawer="reports" aria-expanded="false" aria-controls="opsDrawer">Reports</button><button class="btn small" type="button" id="hidePanels" aria-pressed="false">Hide panels</button></nav>
 </div>
 
 <div class="modal" id="logM" role="dialog" aria-modal="true" aria-labelledby="logH" hidden>
@@ -688,9 +732,11 @@ p{text-wrap:pretty}
 <script src="/assets/sky-effects.js"></script>
 <script src="/assets/flight-view.js"></script>
 <script src="/assets/agent-log.js"></script>
+<script src="/assets/comms.js"></script>
 <script src="/assets/sol-lore.js"></script>
 <script src="/assets/sol-lines.js"></script>
 <script src="/assets/sol-layers.js"></script>
+<script src="/assets/sol-audio.js"></script>
 <script src="/assets/vendor/gsap-3.15.0.min.js"></script>
 <script src="/assets/mission-control.js"></script>
 <script>
@@ -1004,7 +1050,7 @@ function makeFlight(f) {
 }
 function addFlightObjs(F) {
   if (!GL) return;
-  F.ship = window.SolArt ? SolArt.ship({ callsign: F.call }) : makeShip();
+  F.ship = window.SolArt ? SolArt.ship({ callsign: F.call, car: F.f.ship }) : makeShip();
   F.halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(160,225,255,.9)", "rgba(92,200,255,.25)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
   scene.add(F.halo); scene.add(F.ship);
   F.lbl = LBL.add({ html: esc(F.call), cls: "k-sample", hit: function () { var i = FL.indexOf(F); return i >= 0 ? { i: i } : null; }, pri: 90, click: function () { var i = FL.indexOf(F); if (i >= 0) select({ t: "f", i: i }); },
@@ -1596,6 +1642,7 @@ function drawDocks() {
     var v = marker(id, MAPJD), c = dockCentre(id, v); if (!c) return;
     var D = DOCKS[id]; if (!D) { D = DOCKS[id] = makeDock(SF.place(id)); scene.add(D); }
     D.visible = true; D.position.copy(c).sub(EYE); D.scale.setScalar(Math.max(SHIP_D / 6, pxAt(v) * DOCK_PX));
+    if (D.userData.setPx) D.userData.setPx(D.scale.x / pxAt(v));
     D.rotation.set(0.5, reduced ? 0.6 : IDLE_T * 0.15 + idlePhase(id), 0);
   });
   DOCKNEED = {};
@@ -2031,6 +2078,32 @@ function frame(t) {
   try { draw(dt, t); } catch (e) { if (!frame.err) { frame.err = 1; console.error(e); } }
   if (MAP_PAUSED && !pilotMoving()) glStop();
 }
+// Sound (sol-audio.js): off until the visitor turns it on. Levels follow the camera, ten times a second while the map
+// draws, and it falls quiet when the tab or the map is out of view. Positions go over as ecliptic AU, z north.
+var SND = null, SND_T = 0;
+function soundScene() {
+  return { eye: [EYE.x, -EYE.z, EYE.y], bodies: BODIES.map(function (b) { var p = bodyPos(b); return { id: b.id, kind: b.kind, rKm: b.rKm, p: [p.x, -p.z, p.y] }; }) };
+}
+function soundSync() { if (SND) SND.pause(document.hidden || !MAPVIS); }
+function initSound() {
+  var btn = $("#mapSound"), ls = null;
+  try { ls = window.localStorage; } catch (e) { /* blocked site data */ }
+  if (!btn) return;
+  if (!window.SolAudio || !(SND = SolAudio.create()).supported) { SND = null; btn.hidden = true; return; }
+  function show(on) { btn.setAttribute("aria-pressed", String(on)); btn.setAttribute("aria-label", on ? "Turn sound off" : "Turn sound on"); btn.title = on ? "Sound on" : "Sound off"; }
+  function set(v) { SolAudio.save(ls, SND.setOn(v)); show(SND.on); if (SND.on) { SND.update(SolAudio.mix(soundScene())); soundSync(); } }
+  btn.addEventListener("click", function () { set(!SND.on); });
+  show(false);
+  if (!SolAudio.load(ls)) return;
+  // Left on last visit: browsers only start sound from a click or key press, so wait for the first one.
+  show(true);
+  var go = function (e) {
+    document.removeEventListener("pointerdown", go, true); document.removeEventListener("keydown", go, true);
+    if (e.target && e.target.closest && e.target.closest("#mapSound")) { show(false); return; } // its own click turns it on
+    if (!SND.on) set(true);
+  };
+  document.addEventListener("pointerdown", go, true); document.addEventListener("keydown", go, true);
+}
 function glStart() { if (GL && !raf && !document.hidden && MAPVIS) { last = performance.now(); raf = requestAnimationFrame(frame); } }
 function glStop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
 // Belt density by quality tier: a phone draws fewer points.
@@ -2100,6 +2173,7 @@ function draw(dt, t) {
   }
   drawHazards(effectSeconds);
   stationRing("sel"); stationRing("hov");
+  if (SND && SND.on && t - SND_T > 100) { SND_T = t; SND.update(SolAudio.mix(soundScene())); }
   // A moon's ring draws with its moon, fading in as it opens out round the planet.
   MOR.forEach(function (m) {
     var b = BID[m.id], fade = SolLines.budget("moonRing", m.radius / pxAt(marker(m.par, MAPJD)));
@@ -2165,7 +2239,7 @@ function draw(dt, t) {
   if (FILT.pk && !FOLLOW) LIVE.forEach(function (c) { (c.busy && c.busy > LIVEJD ? pb : pr).push(marker(c.at, MAPJD)); });
   if (window.SolArt && FILT.pk && !FOLLOW) LIVE.forEach(function (c) {
     var ship = PARK_SHIPS[c.car];
-    if (!ship) { ship = PARK_SHIPS[c.car] = SolArt.ship({callsign:c.car.toUpperCase()}); scene.add(ship); }
+    if (!ship) { ship = PARK_SHIPS[c.car] = SolArt.ship({ callsign: c.car.toUpperCase(), car: c.car }); scene.add(ship); }
     var p = marker(c.at, MAPJD), sp = shipPx(p, 16); ship.visible = true; ship.position.copy(parkOff(c.at, p, sp)).sub(EYE); idleBob(c.car, ship.position, pxAt(p), sp); ship.scale.setScalar(Math.max(SHIP_D / 6, pxAt(p) * sp));
     var heading = window.StarfareView.orbitDirection(MAPJD, function (jd) { return marker(c.at, jd).toArray(); });
     window.StarfareView.orientShip(ship, window.StarfareView.headingFrame(heading, [0, 1, 0], ship.userData.headingSet ? ship.up.toArray() : null));
@@ -2656,11 +2730,12 @@ function start() {
     bindPilot($("#glhost")); bindKeys();
     onResize();
     if (window.ResizeObserver) new ResizeObserver(onResize).observe($("#mapbox")); else addEventListener("resize", onResize);
-    if (window.IntersectionObserver) new IntersectionObserver(function (en) { MAPVIS = en[0].isIntersecting; if (MAPVIS) glStart(); else glStop(); }).observe($("#mapbox"));
-    document.addEventListener("visibilitychange", function () { if (PLANET_CLOCK) PLANET_CLOCK.sample(performance.now(), false); if (document.hidden) glStop(); else glStart(); });
+    if (window.IntersectionObserver) new IntersectionObserver(function (en) { MAPVIS = en[0].isIntersecting; soundSync(); if (MAPVIS) glStart(); else glStop(); }).observe($("#mapbox"));
+    document.addEventListener("visibilitychange", function () { if (PLANET_CLOCK) PLANET_CLOCK.sample(performance.now(), false); soundSync(); if (document.hidden) glStop(); else glStart(); });
     addEventListener("solart-texture-ready", glStart);
-    if (window.MutationObserver) new MutationObserver(function () { if (!$("#intro").hidden || !$("#logM").hidden) { MAPVIS = false; glStop(); } else { MAPVIS = true; glStart(); } }).observe(document.body, {subtree:true, attributes:true, attributeFilter:["hidden"]});
+    if (window.MutationObserver) new MutationObserver(function () { if (!$("#intro").hidden || !$("#logM").hidden) { MAPVIS = false; glStop(); } else { MAPVIS = true; glStart(); } soundSync(); }).observe(document.body, {subtree:true, attributes:true, attributeFilter:["hidden"]});
     placeWhole();
+    initSound();
     glStart();
   }
   loadLive();
@@ -2721,7 +2796,7 @@ function start() {
   $("#layReset").addEventListener("click", function () { Object.assign(LAY, SolLayers.DEFAULTS); LAY_BEFORE_CLEAN = null; syncLayers(); glStart(); });
   $("#cleanView").addEventListener("click", toggleClean);
   syncLayers();
-  $("#connectBtn").addEventListener("click", openIntro);
+  $("#connectBtn").addEventListener("click", function () { cmOpen(true); cmChannel().then(cmPoll); });
   $("#askConnect").addEventListener("click", openIntro);
   $("#askCopy").addEventListener("click", function () { copyText($("#askQ").value, $("#askQ"), $("#askMsg")); });
   $("#boardBtn").addEventListener("click", openBoard);
@@ -2732,9 +2807,201 @@ function start() {
     closeCtx();
     if (!$("#intro").hidden) closeIntro();
     else if (!$("#logM").hidden) closeBoard();
+    else if (!$("#comms").hidden) cmOpen(false);
     else $$(".popm").forEach(function (m) { m.hidden = true; });
   });
+  initComms();
   $("#loading").remove();
+}
+/* =========================================================
+   COMMS: the HQ channel. Connect agent opens it; the agent checks in with a one-time code (check_in) or the player opens
+   the follow link from the sign-in page (/agent/<token>, ?follow= here). HQ's answers come from src/comms.cjs and only the
+   game data this page already has. Rows are message style B: time, a word chip, text. Simulated.
+   ========================================================= */
+var CM = { toEnd: true, st: store("sf-comms") || {}, local: store("sf-comms-log") || [], events: [], runs: {}, seq: 0, code: null, linked: false,
+  board: null, timer: null, seen: store("sf-comms-seen") || 0, said: {}, fails: 0 };
+var CM_TOOLS = { take_hail: 1, plan_pickup: 1, plan_ride: 1, plan_leg: 1, dispatch: 1, decide: 1 };
+function cmSave() { store("sf-comms", CM.st); store("sf-comms-log", CM.local.slice(-30)); }
+function cmTime(ms) { return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }); }
+function cmChipClass(w) {
+  return /^(HQ|Check-in|Plan)$/.test(w) ? "c-hq" : w === "Dispatch" ? "c-go" : /^(Checkpoint|Pad closed|Self-reported)$/.test(w) ? "c-warn" : /^(Refused|Error)$/.test(w) ? "c-bad" : "c-grey";
+}
+function cmChip(w) { return '<span class="cm-chip ' + cmChipClass(w) + '">' + esc(w) + "</span>"; }
+function cmAdd(r) { CM.toEnd = true; r.id = r.id || "l" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); r.t = r.t || Date.now(); CM.local.push(r); cmSave(); cmRender(); cmSay(r); }
+// The ship radio (sol-radio.js, its own thread) speaks entries that carry a radio line, when it is on. Absent: silent.
+function cmSay(r) { if (r.radio && !CM.said[r.id] && window.Radio && Radio.enabled && Radio.enabled()) { CM.said[r.id] = 1; try { Radio.say(r); } catch (e) { /* the radio is optional */ } } }
+function cmAgentName() {
+  var c = CM.events.filter(function (e) { return e.kind === "check_in"; }).pop();
+  if (c) return c.name || (c.client && c.client.name) || "";
+  var ids = Object.keys(CM.runs);
+  for (var i = 0; i < ids.length; i++) { var n = AgentLog.agentName(CM.runs[ids[i]].trail); if (n) return n; }
+  return "";
+}
+function cmNewest() { return Object.keys(CM.runs).map(function (k) { return CM.runs[k]; }).sort(function (a, b) { return b.created_ms - a.created_ms; })[0] || null; }
+function cmFlight(runId) { for (var i = 0; i < FL.length; i++) if (FL[i].run_id === runId) return i; return -1; }
+function cmPlainWhere(F) { var s = F.st.s, L = s.leg; return s.phase === "flight" ? "between " + SF.name(L.from) + " and " + SF.name(L.to) : "at " + SF.name(s.phase === "arrived" || s.f >= 1 ? L.to : L.from); }
+// What HQ can read: the same desk, clock, hazards, fleet and flights the page shows, at this moment.
+var CM_CTX = {
+  routes: function () { return SF.desk(Date.now()).map(function (d) { return { from: SF.name(d.from), to: SF.name(d.to), kind: d.kind, party: Number(d.party) || 1, title: d.title, open: d.open }; }); },
+  clock: function () {
+    var s = SF.sky(Date.now()), END = SF.SEASON_END, LEAD = SF.R.LEAD, ok = function (k) { return Math.floor(s.jd + k) + 0.5 + 30 <= END; };
+    return { season: s.season, sky_now: iso(s.jd), seconds_left: Math.max(0, END - s.jd), quick_open: ok(1), long_open: ok(LEAD),
+      long_seconds_left: Math.max(0, Math.floor(END - 30.5) + 1 - LEAD - s.jd) };
+  },
+  alerts: function () { var s = SF.sky(Date.now()); return alertsNow(s.jd, s.season).map(function (a) { return { t: a.t, d: a.d }; }); },
+  fleet: function () { return liveFleet(Date.now()).map(function (c) { return { call: String(c.name).toUpperCase(), name: "", where: c.at ? "at " + SF.name(c.at) : "in service", busy: c.busy ? iso(c.busy) : null }; }); },
+  flights: function () { return FL.map(function (F) { return { call: F.call, title: F.f.title, where: cmPlainWhere(F), eta: etaOf(F, F.jd), run_id: F.run_id }; }); },
+  board: function () { return CM.board; },
+  agent: function () {
+    if (!CM.linked && !CM.st.follow && !Object.keys(CM.runs).length) return null;
+    var r = cmNewest(), name = cmAgentName();
+    if (!r) return { name: name };
+    var playing = r.phase === "in_flight" || (r.phase === "arrived" && r.land_ms > Date.now());
+    var state = r.waiting ? "stopped at checkpoint " + r.waiting.n + ", waiting for it to decide" : playing ? "flying" : { planning: "planning", in_flight: "flying", arrived: "landed", abandoned: "dropped" }[r.phase] || r.phase;
+    return { name: name, current: { title: r.title, state: state, run_id: r.watch ? r.run_id : null } };
+  },
+  get places() { return SF.E.PLACES.map(function (p) { return p.name; }); },
+};
+function cmBoard() {
+  if (CM.board) return;
+  fetch("/board.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+    if (!j) return;
+    var best = j.best || {};
+    CM.board = (j.hails || []).filter(function (h) { return best[h.hail_id]; }).map(function (h) { return { title: h.title, points: best[h.hail_id].points }; })
+      .sort(function (a, b) { return b.points - a.points; });
+  }).catch(function () { /* HQ says the board is loading */ });
+}
+function cmAsk(q) {
+  q = String(q || "").trim(); if (!q) return;
+  cmAdd({ chip: "You", you: true, text: q });
+  var a = Comms.ask(q, CM_CTX);
+  cmAdd({ chip: "HQ", text: a.text, sub: a.sub, rows: a.rows, kv: false, actions: a.actions, radio: { text: a.refused ? "That one is your agent's call." : "HQ copies.", level: "routine", src: "hq" } });
+}
+// Every row the log shows, oldest first: this browser's own lines, the channel's events and the agent's bookings.
+function cmRows() {
+  var out = CM.local.slice();
+  CM.events.forEach(function (e) {
+    if (e.kind === "connected") out.push({ id: "e" + e.seq, t: e.at_ms, chip: "System", text: "Agent connected to the Starfare server" + (e.client ? " (client \"" + e.client.name + "\"" + (e.client.version ? " " + e.client.version : "") + ")" : "") + "." });
+    else if (e.kind === "check_in") out.push({ id: "e" + e.seq, t: e.at_ms + 1, chip: "Check-in", text: "Agent checked in on your channel. Welcome aboard, dispatcher.", kv: Comms.checkIn(e), selfrep: true,
+      radio: { text: "HQ confirms, agent checked in.", level: "routine", src: "hq" } });
+  });
+  Object.keys(CM.runs).forEach(function (id) {
+    var r = CM.runs[id], g = r.title || r.hail_id, last = 0;
+    var prev = null;
+    (r.trail || []).forEach(function (e, i) {
+      if (!CM_TOOLS[e.tool] && !e.error) { prev = null; return; }
+      var L = AgentLog.line(e, SF.name), w = Comms.chipOf(L); last = e.at_ms;
+      // Refusals in a row from the same tool fold into one line: how many, and the last reason.
+      if (L.tone === "error" && prev && prev.tool === e.tool) { prev.n++; prev.row.t = e.at_ms; prev.row.text = L.act.replace(/:? refused$/, "") + ": refused " + prev.n + " times. Last: " + L.text + "."; return; }
+      var row = { id: id + ":" + i, t: e.at_ms, group: g, chip: w, text: (L.tone === "error" ? L.act.replace(/:? refused$/, "") + ": refused. " + L.text : L.act + (L.text ? ": " + L.text.replace(/ · (landed|stopped at a checkpoint)$/, "") : "")) + ".", why: L.why,
+        radio: (e.tool === "dispatch" || e.tool === "decide") && L.tone !== "error" ? { text: (L.act + (L.why ? ". " + L.why : "")).slice(0, 140), level: e.tool === "decide" ? "reroute" : "routine", src: "agent" } : null };
+      out.push(row); prev = L.tone === "error" ? { tool: e.tool, n: 1, row: row } : null;
+    });
+    var fi = cmFlight(id), F = fi >= 0 ? FL[fi] : null, st = null;
+    var playing = r.phase === "in_flight" || (r.phase === "arrived" && r.land_ms != null && r.land_ms > Date.now());
+    if (r.waiting) st = { chip: "Checkpoint", text: "Stopped at checkpoint " + r.waiting.n + " (" + String(r.waiting.kind).replace(/_/g, " ") + (r.waiting.place_name ? " at " + r.waiting.place_name : "") + "). Waiting for your agent to decide." };
+    else if (playing) st = { chip: "Flying", text: (F ? F.call + " is " + cmPlainWhere(F) + "." : "In flight."), kv: F ? [["Ship", F.call], ["Lands in", etaOf(F, F.jd) + " of sky time"]] : null };
+    else if (r.phase === "arrived") st = { chip: "System", text: "Landed" + (r.total != null ? ". Score " + fmt(Math.round(r.total)) + " of 100,000 (simulated)." : ".") };
+    if (st) {
+      st.actions = [];
+      if (F) st.actions.push({ label: "Follow on map", act: "follow", run_id: id });
+      if (r.watch) st.actions.push({ label: r.phase === "arrived" && !playing ? "Replay the flight" : "Open flight page", act: "flight", run_id: id });
+      out.push(Object.assign(st, { id: id + ":st", t: (last || r.created_ms) + 1, group: g }));
+    }
+  });
+  if (CM.st.channel && !CM.linked && !CM.st.follow) {
+    var code = CM.code && CM.code.expires_ms > Date.now() ? CM.code.code : null;
+    out.push({ id: "code", t: Date.now() + 1e9, chip: "HQ", pin: true,
+      text: code ? "To link your agent, tell it: “Check in with Starfare HQ, code " + code + ".”" : "The check-in code expired. Get a new one, then give it to your agent.",
+      sub: code ? "The code works once and lasts 10 minutes. Or open the follow link the sign-in page showed you." : "",
+      actions: (code ? [{ label: "Copy message", act: "copy", text: "Check in with Starfare HQ, code " + code + "." }] : []).concat([{ label: "New code", act: "code" }, { label: "Set up the connector", act: "setup" }]) });
+  }
+  return out.sort(function (a, b) { return a.t - b.t; });
+}
+function cmRowHtml(r) {
+  var h = '<li class="cm-r' + (r.you ? " you" : "") + '"><span class="cm-tm">' + (r.pin ? "now" : esc(cmTime(r.t))) + "</span>" + cmChip(r.chip) +
+    '<div class="cm-x">' + W(r.text) + (r.why ? '<span class="sub">Why: <i>“' + esc(r.why) + "”</i></span>" : "") + (r.sub ? '<span class="sub">' + esc(r.sub) + "</span>" : "") + "</div>";
+  if (r.kv && r.kv.length) h += '<div class="cm-blk">' + r.kv.map(function (x) { return '<span class="k">' + esc(x[0]) + "</span><span>" + esc(x[1]) + "</span>"; }).join("") + "</div>";
+  if (r.rows && r.rows.length) h += '<div class="cm-blk rows">' + r.rows.map(function (x) { return "<span>" + W(x[0]) + '</span><span class="v2">' + W(x[1]) + "</span>"; }).join("") + "</div>";
+  if (r.selfrep) h += '<div class="cm-act">' + cmChip("Self-reported") + '<span class="sub" style="font-size:12px;color:#aab6c3">Name, model, thinking and skills come from the agent, unverified.</span></div>';
+  if (r.actions && r.actions.length) h += '<div class="cm-act">' + r.actions.map(function (a, i) {
+    return '<button class="btn small' + (i ? "" : " primary") + '" type="button" data-cm="' + esc(a.act) + '"' + (a.run_id ? ' data-run="' + esc(a.run_id) + '"' : "") + (a.text ? ' data-text="' + esc(a.text) + '"' : "") + ">" + esc(a.label) + "</button>";
+  }).join("") + "</div>";
+  return h + "</li>";
+}
+function cmRender() {
+  var rows = cmRows(), log = $("#cmLog"), g = null, html = "";
+  rows.forEach(function (r) { if (r.group && r.group !== g) html += '<li class="cm-g">Your agent · ' + W(r.group) + "</li>"; g = r.group || null; html += cmRowHtml(r); });
+  var atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+  log.innerHTML = html;
+  if (atEnd || CM.toEnd) log.scrollTop = log.scrollHeight;
+  if (log.clientHeight) CM.toEnd = false;
+  var news = rows.filter(function (r) { return !r.pin && r.t > CM.seen; }).length;
+  if (!$("#comms").hidden) { CM.seen = Date.now(); store("sf-comms-seen", CM.seen); news = 0; }
+  $("#commsN").textContent = news ? String(news) : "";
+  rows.forEach(cmSay);
+}
+function cmPoll() {
+  clearTimeout(CM.timer);
+  var jobs = [];
+  if (CM.st.channel) jobs.push(fetch("/comms/" + CM.st.channel + ".json?after=" + CM.seq, { cache: "no-store" }).then(function (r) {
+    if (r.status === 404) { CM.st.channel = null; cmSave(); return; }
+    if (!r.ok) throw new Error(r.status);
+    return r.json().then(function (d) {
+      CM.linked = d.linked; CM.code = d.code;
+      d.events.forEach(function (e) { CM.events.push(e); CM.seq = Math.max(CM.seq, e.seq); });
+      d.runs.forEach(function (x) { CM.runs[x.run_id] = x; });
+    });
+  }));
+  if (CM.st.follow) jobs.push(fetch("/agent/" + CM.st.follow + ".json", { cache: "no-store" }).then(function (r) {
+    if (r.status === 404) return; // not claimed yet: the link works once Allow is pressed
+    if (!r.ok) throw new Error(r.status);
+    return r.json().then(function (d) { d.runs.forEach(function (x) { CM.runs[x.run_id] = x; }); });
+  }));
+  if (!jobs.length) return;
+  Promise.all(jobs).then(function () { CM.fails = 0; cmRender(); }).catch(function () { CM.fails++; }).then(function () {
+    CM.timer = setTimeout(cmPoll, document.hidden ? 30000 : Math.min(30000, 4000 * Math.pow(2, CM.fails)));
+  });
+}
+function cmChannel() {
+  if (CM.st.channel || CM.st.follow) return Promise.resolve();
+  return fetch("/comms/new", { method: "POST" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+    CM.st.channel = d.channel; CM.code = { code: d.code, expires_ms: d.expires_ms }; cmSave();
+    cmAdd({ chip: "HQ", text: "Comms open. HQ will confirm your agent here when it checks in.", radio: { text: "HQ here. Comms open.", level: "routine", src: "hq" } });
+  }).catch(function () { cmAdd({ chip: "Error", text: "HQ couldn't open a channel. Try Connect agent again in a moment." }); });
+}
+function cmOpen(open) {
+  $("#comms").hidden = !open; document.body.classList.toggle("cm-open", open);
+  [$("#commsBtn"), $("#mobileComms")].forEach(function (b) { if (b) b.setAttribute("aria-expanded", String(open)); });
+  if (open) { cmBoard(); CM.toEnd = true; cmRender(); setTimeout(function () { $("#cmH").focus(); }, 0); }
+}
+function initComms() {
+  var m = /[?&]follow=([0-9a-f]{32})\b/.exec(location.search);
+  if (m) {
+    var had = CM.st.follow === m[1]; CM.st.follow = m[1]; cmSave(); history.replaceState(null, "", location.pathname);
+    if (!had) cmAdd({ chip: "HQ", text: "Following your agent from its follow link. Its bookings and decisions show up here as it plays." });
+    cmOpen(true);
+  }
+  $("#cmSugg").innerHTML = ["Open routes", "Season clock", "Space weather", "Flights in the air"].map(function (t) { return '<button class="btn small" type="button" data-q="' + esc(t) + '">' + esc(t) + "</button>"; }).join("");
+  $("#cmSugg").addEventListener("click", function (e) { var b = e.target.closest("[data-q]"); if (b) cmAsk(b.dataset.q); });
+  $("#cmAsk").addEventListener("submit", function (e) { e.preventDefault(); var q = $("#cmQ").value; $("#cmQ").value = ""; cmAsk(q); });
+  $("#cmClose").addEventListener("click", function () { cmOpen(false); $("#commsBtn").focus(); });
+  [$("#commsBtn"), $("#mobileComms")].forEach(function (b) { if (b) b.addEventListener("click", function () { cmOpen($("#comms").hidden); }); });
+  $("#cmLog").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-cm]"); if (!b) return;
+    var a = b.dataset.cm;
+    if (a === "copy") { var t = b.dataset.text; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { b.textContent = "Copied"; }, function () { b.textContent = "Copy failed: select the text"; }); }
+    else if (a === "code") fetch("/comms/" + CM.st.channel + "/code", { method: "POST" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) { if (d) { CM.code = d; cmRender(); } });
+    else if (a === "setup") openIntro();
+    else if (a === "connect") cmChannel().then(cmPoll);
+    else if (a === "board") openBoard();
+    else if (a === "bookings") { showTab("b"); if (window.innerWidth <= 760) cmOpen(false); }
+    else if (a === "flights") { showTab("f"); if (window.innerWidth <= 760) cmOpen(false); }
+    else if (a === "flight") location.href = "/flight/" + encodeURIComponent(b.dataset.run);
+    else if (a === "follow") { var i = cmFlight(b.dataset.run); if (i >= 0) { select({ t: "f", i: i }); setFollow(true); if (window.innerWidth <= 760) cmOpen(false); } }
+  });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && (CM.st.channel || CM.st.follow)) cmPoll(); });
+  cmRender(); cmPoll();
 }
 function ic(n) { return window.SolArt ? SolArt.icon(n) : ""; }
 // The icon for a run-log event or incident: depart, arrive, a checkpoint or a weather/traffic hold.

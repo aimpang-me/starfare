@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Starfare variety models</title>
+<!-- Review page for the station, dock and ship models, loaded through the same SolArt code and trim materials as the
+     map. Open it on a local wrangler dev as /assets/variety-preview.html (tools/media/variety-shots.mjs serves it
+     there) or copy it next to design/assets. Not part of the site. -->
+<style>
+  html, body { margin: 0; background: #07090d; color: #dfe4ec; font: 13px/1.4 Inter, system-ui, sans-serif; }
+  header { padding: 14px 18px 4px; } header b { font-size: 15px; } header p { margin: 2px 0 0; color: #8a93a3; }
+  #grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #1a1f28; }
+  .cell { position: relative; background: #07090d; aspect-ratio: 1 / 0.82; }
+  .cell span { position: absolute; left: 10px; bottom: 8px; color: #c9d0dc; } .cell i { color: #7d8696; font-style: normal; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  header, #grid { position: relative; z-index: 1; } .cell { background: transparent; } #grid { background: transparent; }
+</style>
+</head>
+<body>
+<header><b>Station, dock and ship models</b><p>Fictional, illustrative, not production-approved. Rendered live with the map's own materials; the hull band takes a livery colour per callsign.</p></header>
+<div id="grid"></div>
+<canvas id="c"></canvas>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="/engine.js"></script>
+<script src="/assets/sol-art.js"></script>
+<script>
+var CELLS = [
+  ["Orbital Depot", "station", { id: "orbital-depot", kind: "station" }],
+  ["Lunar Data Center", "station", { id: "lunar-data-center", kind: "station" }],
+  ["Mars Base", "station", { id: "mars-base", kind: "station" }],
+  ["Ceres Port", "station", { id: "ceres-port", kind: "station" }],
+  ["Titan Dock", "station", { id: "titan-dock", kind: "station" }],
+  ["Ring dock", "planets' big moons", { id: "europa", kind: "moon", radius_km: 1560.8 }],
+  ["Tether dock", "small bodies and small moons", { id: "phobos", kind: "moon", radius_km: 11.1 }],
+  ["Spar dock", "planets", { id: "earth", kind: "planet" }],
+  ["Taxi", "SF-02, DS1 class", "sf-02"],
+  ["Shuttle", "SF-01, Dawn class", "sf-01"],
+  ["Liner", "SF-04, RTG class", "sf-04"],
+  ["Liner", "SF-07, another livery", "sf-07"],
+  ["Spent stage", "debris", { debris: "stage" }],
+  ["Satellite husk", "debris", { debris: "husk" }],
+  ["Fairing half", "debris", { debris: "fairing" }],
+  ["Panel shards", "debris", { debris: "panels" }],
+  ["Rock shard", "debris", { debris: "rock" }]
+];
+var grid = document.getElementById("grid"), R = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), antialias: true, alpha: true });
+R.setPixelRatio(Math.min(2, devicePixelRatio)); SolArt.init(R);
+// The map's own reflection sky: the Sun up and to the right, Earth filling part of the view below, as near a dock.
+SolArt.setSky({ sun: new THREE.Vector3(2, 1.4, 1.2).normalize(), planet: { id: "earth", dir: new THREE.Vector3(-0.3, -1, 0.2).normalize(), size: 0.9 } });
+var items = CELLS.map(function (c) {
+  var el = document.createElement("div"); el.className = "cell"; el.innerHTML = "<span>" + c[0] + " <i>" + c[1] + "</i></span>"; grid.appendChild(el);
+  var sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
+  sc.add(new THREE.AmbientLight(0xffffff, 0.12));
+  var sun = new THREE.DirectionalLight(0xfff1dc, 1.6); sun.position.set(2, 1.4, 1.2); sc.add(sun);
+  var obj = typeof c[2] === "string" ? SolArt.ship({ callsign: c[2].toUpperCase(), car: c[2] }) : c[2].debris ? SolArt.debris(c[2].debris, 400) : SolArt.dock(c[2], null);
+  if (obj.userData.setPx) obj.userData.setPx(400);
+  sc.add(obj);
+  cam.position.set(1.5, 0.9, 1.9); cam.lookAt(0, 0, 0);
+  return { el: el, sc: sc, cam: cam, obj: obj };
+});
+function frame(t) {
+  var W = innerWidth, H = innerHeight; R.setSize(W, H, false); R.setScissorTest(true); R.setClearColor(0x000000, 0); R.clear();
+  items.forEach(function (it) {
+    var b = it.el.getBoundingClientRect(); if (b.bottom < 0 || b.top > H) return;
+    R.setViewport(b.left, H - b.bottom, b.width, b.height); R.setScissor(b.left, H - b.bottom, b.width, b.height);
+    it.cam.aspect = b.width / b.height; it.cam.updateProjectionMatrix();
+    it.obj.rotation.y = 0.6 + (location.hash === "#still" ? 0 : t / 9000);
+    R.render(it.sc, it.cam);
+  });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
