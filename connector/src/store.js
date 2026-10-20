@@ -11,7 +11,7 @@ import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
 import { episodeText } from "./episode.js";
 import {
-  GameError, applyTool, computeLeg, flyLive, hailInfo, leaveRun, legKey, legPub, liveRecord, liveRow, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord,
+  GameError, applyTool, computeLeg, flyLive, hailInfo, leaveRun, legKey, legPub, liveRecord, liveRow, logTake, openRun, phaseOf, rideCursor, rideCursorOf, rideRecord,
   rideStats, rideSummary, resolveHail, restoreRunBookings, seasonInstance, sky,
 } from "./game.js";
 import { liveIdsToDrop } from "./live.js";
@@ -78,7 +78,7 @@ export class StarfareRun extends DurableObject {
     catch (e) { if (e instanceof GameError) return { error: e.message }; throw e; }
   }
 
-  async create(runId, hailId, playerId = null) {
+  async create(runId, hailId, playerId = null, client = null) {
     return this.#serial(() => this.#guard(async () => {
       if (await this.#run()) return { error: "run already exists" };
       const E = await engine(), h = hub(this.env);
@@ -94,6 +94,7 @@ export class StarfareRun extends DurableObject {
       resolveHail(E, hailId, season, cap);
       const run = await openRun(E, seasonInstance(E, hailId, now), runId, now, termsFn);
       if (playerId) run.player_id = playerId; // STARFARE_OAUTH on only; a label, the run_id rules do not change
+      logTake(E, run, now, client);
       await this.#save(run);
       await this.#index(E, run);
       return hailInfo(E, run, Date.now());

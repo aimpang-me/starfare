@@ -50,4 +50,5 @@ if (!readFileSync(join(ART, "sol-art.js"), "utf8").includes("root.SolArt = {")) 
 rmSync(join(PUB, "assets"), { recursive: true, force: true });
 cpSync(ART, join(PUB, "assets"), { recursive: true });
 cpSync(join(HERE, "src", "flight-view.cjs"), join(PUB, "assets", "flight-view.js"));
+cpSync(join(HERE, "src", "agent-log.cjs"), join(PUB, "assets", "agent-log.js"));
 console.log("art copied: design/assets -> public/assets");

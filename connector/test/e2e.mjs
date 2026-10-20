@@ -221,7 +221,7 @@ async function phaseOff() {
     assert.deepEqual(names, TOOLS);
   });
   await check("list_hails returns this season's pool, hides the catalog, and still lets two players take one hail", async () => {
-    const r = await ok(client, "list_hails");
+    const r = await ok(client, "list_hails", { limit: 200 });
     assertSeasonPool(r.hails);
     const pool = await (await fetch(`${w.base}/hails.json`)).json();
     assert.deepEqual(pool.hails, r.hails);
@@ -255,7 +255,7 @@ async function phaseOff() {
     return p;
   };
   await check("a pool hail plans, dispatches and scores, and a worse finish does not replace the best", async () => {
-    const listed = await ok(client, "list_hails");
+    const listed = await ok(client, "list_hails", { limit: 200 });
     const { booking: quick, hail: openedHail } = await takeBookableQuick(client, listed.hails);
     const m = /^s(\d+)-(\d+)$/.exec(quick.hail_id);
     R.admit(R.hailRow(m[1], Number(m[2])));
@@ -618,7 +618,7 @@ async function phaseOff() {
   await check("SSE transport also works (list_hails, take_hail, get_hail)", async () => {
     const sse = await connect(w.base, "sse");
     try {
-      assertSeasonPool((await ok(sse, "list_hails")).hails);
+      assertSeasonPool((await ok(sse, "list_hails", { limit: 200 })).hails);
       const h = await ok(sse, "take_hail", { hail_id: "iss-crew" });
       assert.equal((await ok(sse, "get_hail", { run_id: h.run_id })).hail_id, "iss-crew");
     } finally { await sse.close(); }
@@ -698,7 +698,7 @@ async function phaseOff() {
     try {
       worker = await startWorker(vars, persist);
       bot = await connect(worker.base);
-      const listed = await ok(bot, "list_hails");
+      const listed = await ok(bot, "list_hails", { limit: 200 });
       let taken = null;
       for (const hail of listed.hails.filter((h) => h.kind === "quick")) {
         const reply = await call(bot, "take_hail", { hail_id: hail.hail_id });
@@ -893,7 +893,7 @@ async function phaseOn() {
     });
     await check("on: SSE transport with the access token works (list_hails)", async () => {
       const sse = await connect(base, "sse", { requestInit: { headers: { Authorization: `Bearer ${a.auth.saved.access_token}` } } });
-      try { assertSeasonPool((await ok(sse, "list_hails")).hails); } finally { await sse.close(); }
+      try { assertSeasonPool((await ok(sse, "list_hails", { limit: 200 })).hails); } finally { await sse.close(); }
     });
     await check("on: a refreshed access token works and keeps the same player id", async () => {
       const r = await fetch(asMeta.token_endpoint, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },

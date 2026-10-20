@@ -56,14 +56,19 @@
     feedPanel.querySelector('.pb').prepend(filter);
     var empty=document.createElement('p');empty.className='mc-feed-empty';empty.id='feedEmpty';empty.textContent='No events yet. Local route previews are excluded.';
     feedPanel.querySelector('.pb').appendChild(empty);
+    var agentN=document.createElement('span');agentN.className='mc-agent-n';agentN.id='activityAgents';activity.querySelector('span').appendChild(agentN);
     function filterFeed() {
-      var count=0;
-      document.querySelectorAll('#feed>li').forEach(function(li){li.hidden=filter.querySelector('select').value!=='all' && li.dataset.source!==filter.querySelector('select').value;if(!li.hidden) count++;});
+      var count=0, agents=0;
+      document.querySelectorAll('#feed>li,#agentFeed>li').forEach(function(li){li.hidden=filter.querySelector('select').value!=='all' && li.dataset.source!==filter.querySelector('select').value;if(!li.hidden) count++;if(li.dataset.source==='agent') agents++;});
       empty.hidden=count>0;
       $('#activityCount').textContent=count;
+      agentN.textContent=agents?'Agent '+agents:'';
     }
     filter.querySelector('select').addEventListener('change',filterFeed);
-    var observer=new MutationObserver(filterFeed);observer.observe($('#feed'),{childList:true});filterFeed();
+    var observer=new MutationObserver(filterFeed);observer.observe($('#feed'),{childList:true});if($('#agentFeed'))observer.observe($('#agentFeed'),{childList:true});filterFeed();
+    // The first agent action opens the activity panel on wide screens, unless the viewer has toggled it themselves.
+    var touched=false;[activity,mobileActivity].forEach(function(b){b.addEventListener('click',function(){touched=true;});});
+    window.MC_AGENT_SEEN=function(){if(!touched && feedPanel.hidden && window.innerWidth>900) activityOpen(true);};
     $('#mcClock').appendChild($('#clk')); $('#mcSeason').appendChild($('#clkS'));
     $('#zoomIn').addEventListener('click',function(){api.zoom(.8);});
     $('#zoomOut').addEventListener('click',function(){api.zoom(1.25);});

@@ -7,6 +7,7 @@ import * as game from "../src/game.js";
 
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const View = createRequire(import.meta.url)("../src/flight-view.cjs");
+const AgentLog = createRequire(import.meta.url)("../src/agent-log.cjs");
 const html = (name) => readFileSync(new URL(`../src/${name}.html`, import.meta.url), "utf8");
 function browserApi(name, SITE) {
   return pageSF(html(name), name === "site", { SITE, SOLE: E });
@@ -142,13 +143,16 @@ test("the home scoreboard uses the fresh board catalog, including a winner absen
 
 test("shared dispatch feed shows each booking's quote and escapes agent-controlled content", () => {
   const source = html("flight");
-  const t = { tool: "dispatch", route: ["leg1"], car: "SF-04", status: "arrived", quotes: {
+  const t = { tool: "dispatch", route: ["leg1"], car: "SF-04", status: "arrived", at_ms: 0, note: "why <b>", quotes: {
     "a<script>": { fare_usd: 20, arrival: "2030-01-01 00:00" }, b: { fare_usd: 30, arrival: "2030-01-02 00:00" } } };
-  const out = evalSlice(source, "function dlogText(", "function renderDlog", "dlogText(t)", { t, money: String, esc: (s) => String(s).replace(/</g, "&lt;") });
-  assert.match(out, /a&lt;script>/);
-  assert.match(out, /fare 20/);
-  assert.match(out, /fare 30/);
-  assert.doesNotMatch(out, /<script>/);
+  const L = AgentLog.line(t);
+  assert.match(L.text, /a<script>: fare \$20/);
+  assert.match(L.text, /b: fare \$30, promised 2030-01-02 00:00/);
+  assert.equal(L.why, "why <b>");
+  // The flight page escapes every word of it before it reaches the page.
+  assert.match(source, /esc\(shipWords\(L\.act\)\)/);
+  assert.match(source, /esc\(shipWords\(L\.text\)\)/);
+  assert.match(source, /"<q>" \+ esc\(L\.why\)/);
 });
 
 test("recorded time conflicts are detected without retiming the flight", () => {
