@@ -194,7 +194,8 @@ function assertSeasonPool(hails) {
 async function phaseOff() {
   console.log("\n== STARFARE_OAUTH=off (default) ==");
   const report = {};
-  const w = await startWorker({ STARFARE_OAUTH: "off", STARFARE_BENCH_KEY: BENCH_KEY, RATE_PER_MIN: "1000" }); // wrangler.jsonc ships "on" (the live setting)
+  // wrangler.jsonc ships OAuth "on" (the live setting) and the sandbox "off"; this server turns the sandbox's world routes on.
+  const w = await startWorker({ STARFARE_OAUTH: "off", STARFARE_BENCH_KEY: BENCH_KEY, RATE_PER_MIN: "1000", STARFARE_SANDBOX: "on" });
   console.log(`wrangler dev up at ${w.base}`);
   const client = await connect(w.base);
 
@@ -749,6 +750,35 @@ async function phaseOff() {
       assert.equal((await call(bot, "start_bench", { split: "dev" })).isError, false, "practice is not limited");
     } finally { await bot.close(); }
   });
+  await check("sandbox world: POST /world/new makes a private world (ships at home, desks by region, clock stopped) and its view never shows the seed", async () => {
+    const made = await fetch(`${w.base}/world/new`, { method: "POST" });
+    assert.equal(made.status, 201);
+    const v = await made.json();
+    assert.match(v.world_id, /^w_[0-9a-f]{20}$/);
+    assert.equal(v.view, `${w.base}/world/${v.world_id}.json`);
+    assert.equal(v.simulated, true);
+    assert.equal(v.clock.tick, 0);
+    assert.equal(v.clock.sky_now, isoJD(META.sky.jd0));
+    assert.deepEqual(v.desks.map((d) => d.ships.map((s) => s.car)), [["sf-01", "sf-02", "sf-03", "sf-04", "sf-08", "sf-09", "sf-10"], ["sf-05", "sf-06", "sf-07", "sf-11"]]);
+    for (const d of v.desks) for (const sh of d.ships) { assert.equal(sh.free, "free"); assert.equal(sh.at.id, R.CAR[sh.car].at); }
+    assert.deepEqual(v.seats.map((x) => [x.seat, x.joined]), [["EX", false], ["D1", false], ["D2", false]]);
+    assert.equal(v.market.open, v.market.size);
+    assert.doesNotMatch(JSON.stringify(v), /k1:/, "the world's hazard seed stays in its Durable Object");
+    const again = await (await fetch(v.view)).json();
+    assert.equal(again.world_id, v.world_id);
+    assert.equal(again.created_ms, v.created_ms, "the view reads the stored world");
+    const other = await (await fetch(`${w.base}/world/new`, { method: "POST" })).json();
+    assert.notEqual(other.world_id, v.world_id);
+    report.world = { world_id: v.world_id, clock: v.clock, market: v.market };
+  });
+
+  await check("sandbox world: an unknown world_id is 404, a malformed path is 404, and the wrong method is 405", async () => {
+    const miss = await fetch(`${w.base}/world/w_00000000000000000000.json`);
+    assert.equal(miss.status, 404); assert.match((await miss.json()).error, /no world/);
+    for (const path of ["/world/w_123.json", "/world/", "/world/new.json"]) { const r = await fetch(`${w.base}${path}`); assert.equal(r.status, 404, path); await r.body?.cancel(); }
+    const get = await fetch(`${w.base}/world/new`); assert.equal(get.status, 405); assert.equal(get.headers.get("allow"), "POST"); await get.body?.cancel();
+  });
+
   await client.close();
   await w.stop();
 
@@ -886,6 +916,10 @@ async function phaseOn() {
   console.log(`wrangler dev up at ${base}`);
   let asMeta, a, b;
   try {
+    await check("on: the sandbox's world routes answer 404 while STARFARE_SANDBOX is off, as wrangler.jsonc ships it", async () => {
+      const made = await fetch(`${base}/world/new`, { method: "POST" }); assert.equal(made.status, 404); await made.body?.cancel();
+      const view = await fetch(`${base}/world/w_00000000000000000000.json`); assert.equal(view.status, 404); await view.body?.cancel();
+    });
     await check("on: /, /engine.js, /board and /board.json stay public; /mcp without a token is 401", async () => {
       for (const path of ["/", "/engine.js", "/board", "/board.json", "/hails.json", "/assets/flight-view.js"]) { const r = await fetch(`${base}${path}`); assert.equal(r.status, 200, path); await r.body?.cancel(); }
       await assert.rejects(connect(base), (e) => { assert.equal(e.code, 401, e.message); return true; });

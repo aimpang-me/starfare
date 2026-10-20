@@ -18,10 +18,19 @@ export function seasonKey(env) {
 let warned = false;
 function warnOnce(msg) { if (!warned) { warned = true; console.error(msg); } }
 
-/** A season's seed under key: "k1:" + 32 hex. */
-export async function keyedSeed(season, key) {
+async function hmacSeed(msg, key) {
   const k = await crypto.subtle.importKey("raw", utf8(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  return "k1:" + hex(await crypto.subtle.sign("HMAC", k, utf8("starfare-season|" + Number(season)))).slice(0, 32);
+  return "k1:" + hex(await crypto.subtle.sign("HMAC", k, utf8(msg))).slice(0, 32);
+}
+/** A season's seed under key: "k1:" + 32 hex. */
+export const keyedSeed = (season, key) => hmacSeed("starfare-season|" + Number(season), key);
+
+/** A sandbox world's hazard seed (world.js): under the key when the server has one, so the operator can recompute it,
+ *  otherwise 128 random bits. Either way it stays in the world's Durable Object and is never shown. */
+export async function worldSeed(env, worldId) {
+  const key = seasonKey(env);
+  if (key) return hmacSeed("starfare-world|" + worldId, key);
+  return "k1:" + hex(crypto.getRandomValues(new Uint8Array(16)));
 }
 
 const memo = new Map(); // key|season -> seed, per isolate

@@ -2,6 +2,7 @@
 // private data); each run is addressed by an unguessable run_id, and /mcp is rate limited per IP.
 // STARFARE_OAUTH = "on" puts /mcp behind OAuth (src/oauth.js): one-click consent, an anonymous player id per grant.
 import { BENCH_ID, benchStub } from "./bench.js";
+import { hex } from "./bench-host.js";
 import benchHtml from "./bench.html";
 import { boardHtml } from "./board.js";
 import { engine } from "./engine.js";
@@ -20,17 +21,20 @@ import siteHtml from "./site.html";
 import { allowed, busy, clientKey, rateLimit, rpcCount, SHARED_IP, tooMany } from "./limit.js";
 import { hub, runStub } from "./store.js";
 import { RUN_ID } from "./tools.js";
+import { WORLD_ID, sandboxOn, worldStub } from "./world.js";
 
 export { StarfareBench } from "./bench.js";
 export { StarfareMcp } from "./mcp.js";
 export { StarfareAuth } from "./oauth.js";
 export { StarfareHub, StarfareRun } from "./store.js";
+export { StarfareWorld } from "./world.js";
 
 const isMcpPath = (p) => p === "/mcp" || p.startsWith("/mcp/");
 // The landing page runs the engine in the browser. ?v= changes with every engine build, so that URL can be cached for good.
 const ENGINE_PATH = "/engine.js", ENGINE_V = META.sha256.slice(0, 16);
 const isBenchPath = (p) => p === "/bench" || p.startsWith("/bench/");
-const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p === "/sky.json" || p.startsWith("/seasons/") || p.startsWith("/rides/") || p.startsWith("/flight/") || p.startsWith("/agent/") || p.startsWith("/comms/") || isBenchPath(p);
+const isWorldPath = (p) => p.startsWith("/world/");
+const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p === "/sky.json" || p.startsWith("/seasons/") || p.startsWith("/rides/") || p.startsWith("/flight/") || p.startsWith("/agent/") || p.startsWith("/comms/") || isBenchPath(p) || isWorldPath(p);
 const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), FLIGHT_PATH = new RegExp("^/flight/(" + RUN_ID.source.slice(1, -1) + ")(\\.json)?$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
 
 const SEASON_PATH = /^\/seasons\/(\d{1,9})\.json$/;
@@ -153,6 +157,25 @@ async function bench(req, url, env) {
   return v ? Response.json(v, { headers: { "cache-control": "no-store" } }) : new Response("Not found: no bench session with that id", { status: 404 });
 }
 
+/** The sandbox world (simulated; plan step 2), only while STARFARE_SANDBOX is "on" and linked from nowhere yet.
+ *  POST /world/new makes a world and returns its world_id; GET /world/<world_id>.json is its view. The world_id is the
+ *  capability, as the bench_id is for /bench. Seats, tools and the page come in later steps. */
+const WORLD_PATH = new RegExp("^/world/(" + WORLD_ID.source.slice(1, -1) + ")\\.json$");
+async function world(req, url, env) {
+  if (!sandboxOn(env)) return new Response("Not found", { status: 404 });
+  const json = (v, status = 200) => Response.json(v, { status, headers: { "cache-control": "no-store" } });
+  const m = WORLD_PATH.exec(url.pathname), method = url.pathname === "/world/new" ? "POST" : "GET";
+  if (url.pathname !== "/world/new" && !m) return new Response("Not found", { status: 404 });
+  if (req.method !== method) return new Response("Method not allowed", { status: 405, headers: { allow: method } });
+  if (!(await allowed(hub(env), "world:" + clientKey(req), rateLimit(env)))) return busy();
+  if (!m) {
+    const id = "w_" + hex(10), v = await worldStub(env, id).create(id);
+    return v.error ? json(v, 409) : json({ ...v, view: url.origin + "/world/" + id + ".json" }, 201);
+  }
+  const v = await worldStub(env, m[1]).view();
+  return v ? json(v) : json({ error: "no world with that world_id" }, 404);
+}
+
 // Every response the Worker builds gets these (the consent page's own frame headers are kept). The CSP leaves scripts alone
 // for now: the pages run inline scripts, so a script-src needs nonces first.
 const HARDEN = {
@@ -195,6 +218,7 @@ async function route(req, env, ctx) {
   }
   if (isBenchPath(url.pathname)) return bench(req, url, env);
   if (url.pathname.startsWith("/comms/")) return comms(req, url, env);
+  if (isWorldPath(url.pathname)) return world(req, url, env);
   if (req.method !== "GET") return new Response("Method not allowed", { status: 405 });
   if (url.pathname === "/board" || url.pathname === "/board.json") {
     const E = await engine(), season = sky(Date.now()).season, cap = await poolCap(env, season);
