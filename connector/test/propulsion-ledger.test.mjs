@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { after, before, test } from "node:test";
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -308,25 +308,37 @@ test("unrepresentable exponential or aggregate budgets throw instead of returnin
 });
 
 const E = createRequire(import.meta.url)("../../world/engine/sol-page.js");
-function realCase(from = "iss", to = "ceres-port", ship = "sf-01") {
+// The ledger diagnoses the real ion hulls, and the parked fleet is now fictional Starseekers, so these cases park
+// their own Dawn, Deep Space 1 and RTG class ships where SF-01, SF-03 and SF-04 used to be, and remove them after.
+const REAL = { "test-dawn": ["dawn", "orbital-depot"], "test-ds1": ["ds1", "mars-base"], "test-rtg": ["rtg", "ceres"] };
+before(() => { for (const [id, [cls, at]] of Object.entries(REAL)) {
+  const spec = E.SHIP_CLASSES[cls];
+  E.R.CAR[id] = { id, name: id.toUpperCase(), at, ship_class: cls, seats: spec.seats, xenon_kg: spec.xenon_kg };
+} });
+after(() => { for (const id of Object.keys(REAL)) delete E.R.CAR[id]; });
+test("no parked Starseeker is an ion ship, so the adapter refuses one", () => {
+  assert.equal(E.R.CAR["sf-01"].ship_class, "star-taxi");
+  assert.throws(() => adaptFullPlans(E, { id: "x", ship: "sf-01", stops: [], plans: [] }), /a known current ion fleet ship is required/);
+});
+function realCase(from = "iss", to = "ceres-port", ship = "test-dawn") {
   return { id: "real-plan", ship, stops: [{ at: from }, { at: to }],
     plans: [E.R.planLeg(from, to, 2461700.5, "energy", 2468328.5, ship)] };
 }
-test("real SF-01 Ceres plan preserves exact delta-v and detects unsupported arrival power", () => {
+test("a real Dawn class Ceres plan preserves exact delta-v and detects unsupported arrival power", () => {
   const request = realCase(), input = adaptFullPlans(E, request), r = assessItinerary(input);
   close(input.legs[0].burns[0].dv_mps, request.plans[0].dv_dep_kms * 1000);
   close(input.legs[0].burns[1].dv_mps, request.plans[0].dv_arr_kms * 1000);
   const f = failure(r, "thruster_power"); assert.equal(f.phase, "capture");
   close(f.generator_w, 1189.8987169547763); assert.equal(f.selected_thruster_w, 2310);
 });
-test("real SF-01 Titan case fails power even though its minimum firing fits flight time", () => {
+test("a real Dawn class Titan case fails power even though its minimum firing fits flight time", () => {
   const r = assessItinerary(adaptFullPlans(E, realCase("iss", "titan")));
   assert.ok(failure(r, "thruster_power")); assert.ok(!failure(r, "minimum_firing_exceeds_flight"));
 });
-test("real multi-leg SF-04 ISS booking catches fuel carried for the second leg", () => {
-  const pickup = E.R.planLeg("ceres", "iss", 2461700.5, "energy", 2468328.5, "sf-04");
-  const ride = E.R.planLeg("iss", "lunar-data-center", pickup.arr_jd + E.R.DWELL, "energy", 2468328.5, "sf-04");
-  const r = assessItinerary(adaptFullPlans(E, { id: "real-shared-mass", ship: "sf-04",
+test("a real multi-leg RTG class ISS booking catches fuel carried for the second leg", () => {
+  const pickup = E.R.planLeg("ceres", "iss", 2461700.5, "energy", 2468328.5, "test-rtg");
+  const ride = E.R.planLeg("iss", "lunar-data-center", pickup.arr_jd + E.R.DWELL, "energy", 2468328.5, "test-rtg");
+  const r = assessItinerary(adaptFullPlans(E, { id: "real-shared-mass", ship: "test-rtg",
     stops: [{ at: "ceres" }, { at: "iss", board: ["iss-crew"] }, { at: "lunar-data-center", alight: ["iss-crew"] }], plans: [pickup, ride] }));
   close(r.minimum_initial_xenon_kg.value, 1100.2059420302357);
   assert.ok(failure(r, "minimum_tank_capacity"));
@@ -339,8 +351,8 @@ test("adapter keeps all five reference throttle points informational and never c
   assert.equal(input.legs[0].burns[1].point.power_w, 2310); assert.deepEqual(request, original);
 });
 test("adapter rejects slim records, class mismatch and rounded or inconsistent burn totals", () => {
-  assert.throws(() => adaptFullPlans(E, { id: "slim", ship: "sf-01", stops: [{ at: "iss" }, { at: "ceres-port" }], plans: [{ from: "iss", to: "ceres-port", dv: 12.61 }] }), /full place endpoints/);
-  const mismatch = realCase(); mismatch.ship = "sf-03"; assert.throws(() => adaptFullPlans(E, mismatch), /ship class/);
+  assert.throws(() => adaptFullPlans(E, { id: "slim", ship: "test-dawn", stops: [{ at: "iss" }, { at: "ceres-port" }], plans: [{ from: "iss", to: "ceres-port", dv: 12.61 }] }), /full place endpoints/);
+  const mismatch = realCase(); mismatch.ship = "test-ds1"; assert.throws(() => adaptFullPlans(E, mismatch), /ship class/);
   const rounded = structuredClone(realCase()); rounded.plans[0].dv_total_kms = 12.61;
   assert.throws(() => adaptFullPlans(E, rounded), /total delta-v/);
 });
@@ -375,6 +387,6 @@ test("diagnostic verification leaves the runtime engine source, copy and suite c
   const meta = JSON.parse(readFileSync(new URL("../src/engine/meta.json", import.meta.url)));
   const suite = JSON.parse(readFileSync(new URL("../src/suites/v1.json", import.meta.url)));
   assert.ok(src.equals(copy)); const sha = createHash("sha256").update(src).digest("hex");
-  assert.equal(sha, "e4e52be7107a804187fc95560d294bd4b4f7d8a16f3c82b368e8e5c7d33dc938");
+  assert.equal(sha, "af9448185bb0f7a5f188ea87d5f7cbdba30e3a0ce9cbc91dfe44b6d5c10ee885");
   assert.equal(sha, meta.sha256); assert.equal(sha, suite.engine_sha256); assert.equal(suite.score_version, 4);
 });

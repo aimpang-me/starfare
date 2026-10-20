@@ -59,16 +59,17 @@ test("t0: quick hails 1 sky day ahead, long-haul hails LEAD days ahead; the haza
   const inst = seasonInstance(E, "ceres-shift", NOW);
   assert.equal(inst.t0, Math.floor(sky(NOW).jd + R.LEAD) + 0.5);
   assert.equal(inst.seed, String(sky(NOW).season));
-  for (const [hailId, runId] of [["ceres-shift", "run_b"], ["jovian-hop", "run_j"], ["titan-home", "run_t"]]) {
+  // Each class flies its own bookings: a Shuttle the long haul inside Jupiter's orbit, a Taxi the hop, a Liner the outer haul.
+  for (const [hailId, runId, cls] of [["ceres-shift", "run_b", "star-shuttle"], ["jovian-hop", "run_j", "star-taxi"], ["titan-home", "run_t", "star-liner"]]) {
     const run = await seasonRun(E, hailId, NOW, runId);
-    assert.equal(R.CAR[run.par_car].ship_class, "rtg", hailId + " " + run.par_car);
+    assert.equal(R.CAR[run.par_car].ship_class, cls, hailId + " " + run.par_car);
   }
   const info = hailInfo(E, q, NOW);
   assert.equal(info.fleet.length, R.FLEET.length); assert.equal(info.season, sky(NOW).season);
 });
 
 test("titan-home late in the season says the season ends too soon", async () => {
-  const late = skyAt(SKY.jd0 + 6200);
+  const late = skyAt(SKY.jd0 + 6300); // the Liner still fits a hail at 6200
   await assert.rejects(() => seasonRun(E, "titan-home", late, "run_late_titan"), /The season ends too soon/);
 });
 
@@ -130,7 +131,7 @@ test("with nothing in the way, the par car's plan with an exact quote earns ever
   assert.equal(clean.out_of, 100000);
   assert.equal(clean.total, clean.parts.reduce((a, x) => a + x.got, 0));
   assert.equal(clean.parts.reduce((a, x) => a + x.max, 0), 100000);
-  for (const k of ["pickup", "on_time", "energy", "checker", "fare", "economy", "tank", "throttle", "window", "recovery"]) {
+  for (const k of ["pickup", "on_time", "energy", "checker", "fare", "economy", "window", "recovery"]) {
     const row = clean.parts.find((x) => x.key === k);
     assert.ok(Math.abs(part(clean, k) - row.max * R.SCORE_HEADROOM) <= 1e-6, k + " " + part(clean, k));
   }
@@ -143,32 +144,29 @@ test("with nothing in the way, the par car's plan with an exact quote earns ever
   assert.equal(clean.promise_slip_hours, 0); assert.equal(clean.extra_kwh, 0);
 });
 
-test("a ride leg with more kWh than the published set point loses throttle points", async () => {
-  const run = await seasonRun(E, "iss-crew", NOW, "run_throttle");
-  const p = (await planPickup(E, run, { car: run.par_car })).leg;
-  const r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
-  const setPoint = p.kwh + r.kwh;
-  r.kwh += r.kwh;
-  const out = dispatch(E, run, {
-    pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd), ask_after_hours: "never",
-  }, NOW);
-  assert.equal(out.status, "arrived");
-  const row = out.parts.find((x) => x.key === "throttle");
-  assert.equal(row.measure, (p.kwh + r.kwh) - setPoint);
-  assert.ok(row.got < row.max * R.SCORE_HEADROOM, row.got);
-  assert.ok(row.got > 0, row.got);
+test("score version 4 has no xenon tank or distance throttle part: a Starseeker refuels at every stop", async () => {
+  const { out } = await play("iss-crew");
+  assert.deepEqual(out.parts.map((x) => x.key), ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy", "window", "recovery", "dose"]);
+  assert.equal(out.parts.reduce((a, x) => a + x.max, 0), 100000);
+  assert.equal(out.parts.find((x) => x.key === "energy").max, 31000);
 });
 
-test("a far car with the smaller tank is refused", async () => {
-  await assert.rejects(play("iss-crew", "sf-02"), /Deep Space 1 class xenon tank holds 82 kg and this leg needs 84\.3 kg/);
+test("a ship of the wrong class is refused before it costs a plan", async () => {
+  const run = await seasonRun(E, "iss-crew", NOW, "run_class");
+  await assert.rejects(planPickup(E, run, { car: "sf-09" }), (e) => e instanceof GameError &&
+    e.message === R.servesWhy("sf-09", R.BY["iss-crew"]) + ". Pick a ship whose flies field fits; the fleet is in get_hail.");
+  assert.match(R.servesWhy("sf-09", R.BY["iss-crew"]), /^SF-09 is a Starseeker Shuttle, which flies long hauls inside Jupiter's orbit, and iss-crew is one of the quick hops inside one planet's neighbourhood$/);
+  assert.equal(run.calls, 0);
+  assert.deepEqual(fleet(E).find((c) => c.car === "sf-09"), { car: "sf-09", name: "SF-09", ship_class: "Starseeker Shuttle", seats: 20, fictional: true, propellant_kg_per_leg: 50000,
+    flies: "long hauls inside Jupiter's orbit", parked_at: { id: "ceres", name: E.PLACES.find((p) => p.id === "ceres").name } });
 });
 
 test("plan_ride flies the pickup's ship, not a Dawn stand-in", async () => {
   const run = await seasonRun(E, "phobos-commute", NOW, "run_ship");
   const p = (await planPickup(E, run, { car: "sf-03" })).leg;
   const r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
-  const own = computeLeg(E, "phobos", "mars-base", p.arr_jd + R.DWELL, "energy", SEASON_END, "sf-03");
-  const dawn = computeLeg(E, "phobos", "mars-base", p.arr_jd + R.DWELL, "energy", SEASON_END, "sf-01");
+  const own = computeLeg(E, "phobos", "mars-base", p.arr_jd + R.DWELL, "energy", SEASON_END, "sf-03", 1);
+  const dawn = computeLeg(E, "phobos", "mars-base", p.arr_jd + R.DWELL, "energy", SEASON_END);
   assert.equal(r.car, "sf-03");
   assert.equal(r.kwh, own.kwh);
   assert.notEqual(r.kwh, dawn.kwh);
@@ -242,7 +240,7 @@ test("busy cars: plan_pickup leaves no earlier than R.pickupStart + wait_days an
   const bad = dispatch(E, run, { pickup_leg: "forged", ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd) }, nowMs);
   assert.equal(bad.ok, false); assert.ok(bad.problems.some((x) => /busy on another ride until/.test(x)), JSON.stringify(bad.problems));
   // a free car's pickup carries no note
-  const free = R.FLEET.find((c) => c.at !== R.BY["iss-crew"].from && R.pickupStart("iss-crew", c.id, run.t0, run.seed) === run.t0);
+  const free = R.FLEET.find((c) => c.at !== R.BY["iss-crew"].from && R.serves(c, R.BY["iss-crew"]) && R.pickupStart("iss-crew", c.id, run.t0, run.seed) === run.t0);
   if (free) {
     try {
       assert.equal(legPub(E, (await planPickup(E, run, { car: free.id })).leg).note, undefined);
@@ -343,7 +341,7 @@ test("hazards are deterministic per season: the same season replays the same, th
 
 test("long haul: the hail goes cold if the first interplanetary departure passes before dispatch", async () => {
   const run = await seasonRun(E, "ceres-shift", CERES_NOW, "run_cold");
-  const p = (await planPickup(E, run, { car: "sf-04" })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
+  const p = (await planPickup(E, run, { car: "sf-09" })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
   assert.equal(r.gate === "local", false);
   const late = CERES_NOW + (r.dep_jd - sky(CERES_NOW).jd + 2) * 1000;
   assert.throws(() => dispatch(E, run, { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd) }, late),
@@ -353,14 +351,15 @@ test("long haul: the hail goes cold if the first interplanetary departure passes
 
 const atClock = (jd) => SKY.t0_ms + (jd - SKY.jd0) * DAY_MS;
 
-test("long haul: Dawn and Deep Space 1 cannot hold the 2029-07-03 Ceres leg, and the RTG ship can", async () => {
+test("long haul: a Shuttle flies the 2029-07-03 Ceres leg, and the Taxis are refused as the wrong class", async () => {
   const fold = await seasonRun(E, "ceres-shift", atClock(2462170), "run_fold");
-  assert.equal(R.CAR[fold.par_car].ship_class, "rtg");
-  await assert.rejects(planPickup(E, fold, { car: "sf-01" }), /xenon tank holds 425 kg/);
-  await assert.rejects(planPickup(E, fold, { car: "sf-03" }), /xenon tank holds 82 kg/);
+  assert.equal(R.CAR[fold.par_car].ship_class, "star-shuttle");
+  await assert.rejects(planPickup(E, fold, { car: "sf-01" }), /SF-01 is a Starseeker Taxi, which flies quick hops/);
+  await assert.rejects(planPickup(E, fold, { car: "sf-04" }), /SF-04 is a Starseeker Taxi/);
+  assert.equal(fold.calls, 0);
   const run = await seasonRun(E, "ceres-shift", CERES_NOW, "run_fold_ok");
-  const p = (await planPickup(E, run, { car: "sf-04" })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
-  assert.deepEqual([run.par_car, r.from, r.to, r.refly.result], ["sf-04", "ceres-port", "mars-base", "PASS"]);
+  const p = (await planPickup(E, run, { car: "sf-09" })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
+  assert.deepEqual([run.par_car, r.from, r.to, r.refly.result, r.aboard], ["sf-09", "ceres-port", "mars-base", "PASS", 1]);
 });
 
 test("a long haul hailed after the last flight of the season can leave is refused with the season-end message", async () => {
@@ -390,14 +389,15 @@ async function dustRide(runId, extra = {}) {
   const r = (await planRideLeg(E, run, { after_leg: p.leg_id, wait_days: 2462175.529253031 - p.arr_jd - R.DWELL })).leg;
   return { run, p, r, out: dispatch(E, run, Object.assign({ pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd) }, extra), DUST_NOW) };
 }
-/** Ceres Shift on the par car in season 17, whose ride is grounded by a solar flare at launch. */
+/** Ceres Shift on the par Shuttle in season 17, whose ride is grounded by a solar flare at launch. */
 async function ceresRide(runId) {
   const run = await seasonRun(E, "ceres-shift", CERES_NOW, runId);
-  const p = (await planPickup(E, run, { car: "sf-04" })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
+  const p = (await planPickup(E, run, { car: "sf-09" })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
   return { run, p, r, out: dispatch(E, run, { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd) }, CERES_NOW) };
 }
 
-test("a pad closed on arrival stops the ride at a checkpoint; diverting to Phobos uses less than holding", async () => {
+// SF-03 is a Taxi: its hop to Phobos and back burns far more than the hold, so holding wins (world/engine/test-reroute.js).
+test("a pad closed on arrival stops the ride at a checkpoint; on a Taxi, holding uses less than diverting to Phobos", async () => {
   const a = await dustRide("run_hold");
   assert.equal(a.out.status, "checkpoint"); assert.equal(phaseOf(a.run), "in_flight");
   const s = a.out.situation;
@@ -405,7 +405,7 @@ test("a pad closed on arrival stops the ride at a checkpoint; diverting to Phobo
     [1, "pad_closed", "dust_storm", "mars-base", "ride", "2029-02-08 03:56", "holding in orbit at Mars Base", true, 1, 1, 7]);
   assert.deepEqual(s.options.map((o) => o.action), ["hold", "divert"]);
   assert.deepEqual([s.signal_delay_minutes, s.reply_arrives], [7.3, "2029-02-08 04:10"]); assert.match(s.signal, /dispatch from HQ on Earth, which controls every station and Starseeker/);
-  assert.deepEqual(s.options[1].alternates, [{ place: "phobos", name: "Phobos", hop_kwh: 3221, hop_hours: 2.2, berths: 3, booked_now: 1 }]);
+  assert.deepEqual(s.options[1].alternates, [{ place: "phobos", name: "Phobos", hop_kwh: 48512, hop_hours: 2.2, berths: 3, booked_now: 1 }]);
   assert.deepEqual(s.default, { action: "hold" });
   assert.deepEqual(hailInfo(E, a.run, DUST_NOW).situation, s);
   await assert.rejects(planPickup(E, a.run, { car: "sf-03" }), /answer it with decide/);
@@ -413,16 +413,16 @@ test("a pad closed on arrival stops the ride at a checkpoint; diverting to Phobo
   assert.equal(checkPad(E, a.run, { place: "mars-base" }, DUST_NOW).from, "2029-02-08 03:56");
   assert.deepEqual(a.run.forecasts.map((x) => [x.tool, x.from, x.checkpoint]), [["check_pad", "2029-02-08 03:56", 1]]);
   const hold = await decide(E, a.run, { checkpoint: 1, action: "hold" });
-  assert.deepEqual([hold.status, hold.used_kwh, hold.arrive, hold.checkpoints, hold.rider_dose_msv], ["arrived", 29893, "2029-02-12 00:44", 1, 9.03]);
+  assert.deepEqual([hold.status, hold.used_kwh, hold.arrive, hold.checkpoints, hold.rider_dose_msv], ["arrived", 119678, "2029-02-12 00:44", 1, 9.03]);
   assert.equal(phaseOf(a.run), "arrived");
   assert.deepEqual(hold.log.checkpoints, [{ n: 1, kind: "pad_closed", cause: "dust_storm", leg: "ride", place: "mars-base", at: "2029-02-08 03:56", decision: { action: "hold" },
-    options_hindsight: [{ option: "hold until open", used_kwh: 29893, arrive: "2029-02-12 00:44" }, { option: "divert to Phobos, wait 88.2 h", used_kwh: 13195, arrive: "2029-02-12 00:47" }] }]);
+    options_hindsight: [{ option: "hold until open", used_kwh: 119678, arrive: "2029-02-12 00:44" }, { option: "divert to Phobos, wait 88.2 h", used_kwh: 193562, arrive: "2029-02-12 00:47" }] }]);
   assert.deepEqual(hold.log.forecasts.map((x) => x.checkpoint), [1]);
   const b = await dustRide("run_divert");
   const div = await decide(E, b.run, { checkpoint: 1, action: "divert", place: "Phobos", wait_hours: 88.4 });
-  assert.deepEqual([div.status, div.used_kwh, div.divert_kwh, div.arrive], ["arrived", 13195, 6442, "2029-02-12 01:02"]);
+  assert.deepEqual([div.status, div.used_kwh, div.divert_kwh, div.arrive], ["arrived", 193562, 97024, "2029-02-12 01:02"]);
   assert.deepEqual(div.log.flown.map((x) => x.kind + " " + x.from + ">" + x.to), ["planned mars-base>phobos", "planned phobos>mars-base", "divert mars-base>phobos", "return phobos>mars-base"]);
-  assert.match(div.parts.find((x) => x.key === "energy").note, /6,442 on divert hops/);
+  assert.match(div.parts.find((x) => x.key === "energy").note, /97,024 on divert hops/);
   assert.ok(div.incidents.some((x) => x.kind === "divert"), JSON.stringify(div.incidents));
 });
 
@@ -449,7 +449,7 @@ test("a flare at launch: replan is a plan and beats waiting; a leg the checker r
   const rp = w.out.situation.options.find((o) => o.action === "replan");
   assert.deepEqual([rp.depart_after_min, rp.plans_used, rp.plans_left, rp.free_plans_left], ["2032-03-28 04:02", 2, MAX_PLANS_PER_RUN - 2, 4]);
   const waited = await decide(E, w.run, { checkpoint: 1, action: "wait" });
-  assert.deepEqual([waited.status, waited.used_kwh, waited.arrive], ["arrived", 72598, "2034-02-04 16:34"]);
+  assert.deepEqual([waited.status, waited.used_kwh, waited.arrive], ["arrived", 2222415, "2034-02-04 16:34"]);
 
   const { run } = await ceresRide("run_replan");
   await assert.rejects(decide(E, run, { checkpoint: 1, action: "hold" }), /a launch_hold checkpoint takes wait or replan, not hold/);
@@ -466,8 +466,8 @@ test("a flare at launch: replan is a plan and beats waiting; a leg the checker r
     out = await decide(E, run, { checkpoint: out.situation.checkpoint, action: out.situation.default.action });
   }
   assert.deepEqual(seen, []);
-  assert.deepEqual([out.used_kwh, out.arrive, out.parts.find((x) => x.key === "economy").note], [51822, "2034-03-09 06:56", "4 plans, 6 free. 0 plans past that"]);
-  assert.deepEqual(out.log.checkpoints[0].decision, { action: "replan", depart: "2032-06-24 08:22", kwh: 51466 });
+  assert.deepEqual([out.used_kwh, out.arrive, out.parts.find((x) => x.key === "economy").note], [1585831, "2034-03-09 06:56", "4 plans, 6 free. 0 plans past that"]);
+  assert.deepEqual(out.log.checkpoints[0].decision, { action: "replan", depart: "2032-06-24 08:22", kwh: 1579596 });
   assert.deepEqual(out.log.planned.filter((L) => L.replan_of).map((L) => [L.leg, L.replan_of, L.gate]), [["leg3", 1, "FAIL"], ["leg4", 1, "PASS"]]);
   const capped = await ceresRide("run_cap");
   capped.run.calls = MAX_PLANS_PER_RUN;
@@ -477,14 +477,14 @@ test("a flare at launch: replan is a plan and beats waiting; a leg the checker r
 test("ask_after_hours is checked; \"never\" flies the defaults and arrives at once", async () => {
   await assert.rejects(dustRide("run_ask", { ask_after_hours: 25 }), /ask_after_hours must be 0 to 24 hours, or "never"/);
   const { out } = await dustRide("run_never", { ask_after_hours: "never" });
-  assert.deepEqual([out.status, out.used_kwh, out.arrive, out.checkpoints], ["arrived", 29893, "2029-02-12 00:44", 0]);
+  assert.deepEqual([out.status, out.used_kwh, out.arrive, out.checkpoints], ["arrived", 119678, "2029-02-12 00:44", 0]);
   assert.equal(out.log.checkpoints, undefined);
 });
 
 test("leaving a ride at a checkpoint flies it on the defaults, so it still arrives and is scored", async () => {
   const { run } = await dustRide("run_leave");
   const out = leaveRun(E, run);
-  assert.deepEqual([out.status, out.used_kwh, out.arrive, out.checkpoints, out.left_at_checkpoint, phaseOf(run)], ["arrived", 29893, "2029-02-12 00:44", 1, 1, "arrived"]);
+  assert.deepEqual([out.status, out.used_kwh, out.arrive, out.checkpoints, out.left_at_checkpoint, phaseOf(run)], ["arrived", 119678, "2029-02-12 00:44", 1, 1, "arrived"]);
   assert.equal(out.note, "A newer hail was taken at checkpoint 1, so the rest of this ride flew on the default answers.");
   assert.deepEqual(out.log.checkpoints.map((c) => c.decision), [{ action: "hold" }]);
   assert.equal(leaveRun(E, run), null);
@@ -521,7 +521,7 @@ test("ride history: a summary copies the score and log, and lists each checkpoin
   assert.deepEqual(Object.fromEntries(Object.entries(s.parts).map(([k, v]) => [k, v.got])), sc.log.parts);
   assert.deepEqual(s.incidents, sc.incidents.map((x) => ({ kind: x.kind, place: x.place, hours: x.hours, kwh: x.kwh })));
   assert.deepEqual(s.checkpoints, [{ n: 1, kind: "pad_closed", cause: "dust_storm", decision: { action: "hold" },
-    options_hindsight: [{ option: "hold until open", used_kwh: 29893, arrive: "2029-02-12 00:44" }, { option: "divert to Phobos, wait 88.2 h", used_kwh: 13195, arrive: "2029-02-12 00:47" }] }]);
+    options_hindsight: [{ option: "hold until open", used_kwh: 119678, arrive: "2029-02-12 00:44" }, { option: "divert to Phobos, wait 88.2 h", used_kwh: 193562, arrive: "2029-02-12 00:47" }] }]);
   assert.deepEqual(JSON.parse(JSON.stringify(s)), s); // stored as JSON in the hub
   const rec = rideRecord(E, run);
   assert.deepEqual([rec.format, rec.simulated, rec.run_id, rec.hail_id, rec.phase, rec.player_tag], [RIDE_FORMAT, true, run.run_id, "phobos-commute", "arrived", null]);
@@ -540,7 +540,7 @@ test("ride history: planning, abandoned (newer hail, cold) rows carry only what 
   assert.equal(leaveRun(E, a).status, "abandoned");
   assert.deepEqual([rideSummary(E, a).phase, rideSummary(E, a).reason, rideRecord(E, a).reason, rideRecord(E, a).score], ["abandoned", "newer_hail", "newer_hail", null]);
   const run = await seasonRun(E, "ceres-shift", CERES_NOW, "run_cold2");
-  const p = (await planPickup(E, run, { car: "sf-04" })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
+  const p = (await planPickup(E, run, { car: "sf-09" })).leg, r = (await planRideLeg(E, run, { after_leg: p.leg_id })).leg;
   assert.throws(() => dispatch(E, run, { pickup_leg: p.leg_id, ride_leg: r.leg_id, quoted_fare_usd: r.fare, quoted_arrival: isoJD(r.arr_jd) }, CERES_NOW + (r.dep_jd - sky(CERES_NOW).jd + 2) * 1000), /went cold/);
   assert.deepEqual([rideSummary(E, run).reason, rideSummary(E, run).plans_used], ["cold", 2]);
 });
@@ -564,8 +564,9 @@ test("ride history cursor: base64url of created_ms and run_id, round trips, and 
     assert.throws(() => rideCursorOf(bad), (e) => e instanceof GameError && /cursor/.test(e.message), bad);
 });
 
-// A shared flight: ceres-shift (lead, Ceres Port to Mars Base) and phobos-commute (Phobos to Mars Base), at a frozen clock.
-const SHARED = ["ceres-shift", "phobos-commute"];
+// A shared flight: ceres-shift (lead, Ceres Port to Mars Base) and a season-1 party of 3 from Ceres Port to Phobos, at a
+// frozen clock. Both are long hauls inside Jupiter's orbit, so the Shuttle at Ceres flies them.
+const PARTY = R.admit(R.hailRow("1", 74)) && "s1-74", SHARED = ["ceres-shift", PARTY];
 async function sharedRun(legFn) {
   const inst = suiteInstance(E, { hails: SHARED }, { seed: "2", clockJd: 2461550.0, tag: "t", budget: null });
   let run = await openRun(E, inst, "run_00000000000000000001", 0);
@@ -573,36 +574,41 @@ async function sharedRun(legFn) {
   return { call, get run() { return run; } };
 }
 async function sharedLegs(call) {
-  const l1 = await call("plan_leg", { car: "sf-04", to: "ceres-port" });
-  const l2 = await call("plan_leg", { after_leg: l1.leg_id, to: "Mars Base" });
-  const l3 = await call("plan_leg", { after_leg: l2.leg_id, to: "phobos" });
-  const l4 = await call("plan_leg", { after_leg: l3.leg_id, to: "mars-base" });
-  return [l1, l2, l3, l4];
+  const l1 = await call("plan_leg", { car: "sf-09", to: "ceres-port" });
+  const l2 = await call("plan_leg", { after_leg: l1.leg_id, to: "Phobos" });
+  const l3 = await call("plan_leg", { after_leg: l2.leg_id, to: "mars-base" });
+  return [l1, l2, l3];
 }
+const SHARED_STOPS = [{ board: SHARED }, { alight: [PARTY] }, { alight: ["ceres-shift"] }];
+// What this flight plans and flies on seed 2 (the Phobos flare and the Mars Base dust storm hold Ana 88.2 h).
+const PAR_KWH = 2114837, BOOKINGS = [["ceres-shift", 1, "ceres-port", "mars-base", "2027-10-22 00:00", "2031-12-09 00:00"], [PARTY, 3, "ceres-port", "phobos", "2027-10-22 00:00", "2031-12-21 00:00"]];
+const SHARED_LEGS = [["leg", "sf-09", "Ceres", "Ceres Port", "2027-10-22 00:00", "2027-10-22 02:21"], ["leg", "sf-09", "Ceres Port", "Phobos", "2028-02-19 03:33", "2030-07-23 18:54"],
+  ["leg", "sf-09", "Phobos", "Mars Base", "2030-07-23 18:54", "2030-07-23 21:08"]];
+const SHARED_OUT = ["arrived", "SF-09", 2180206, PAR_KWH, "2027-10-22 02:21", "2030-07-23 21:08"];
+const SHARED_BOOKED = [["ceres-shift", "2027-10-22 02:21", "2030-07-27 13:21", 88.2, 237183.66], [PARTY, "2027-10-22 02:21", "2030-07-23 18:54", 0, 615597.82]];
 
 test("shared flight: the run carries every booking, par from the pooled flight, and get_hail lists the bookings and seats", async () => {
   const s = await sharedRun(), run = s.run;
-  assert.deepEqual([run.id, run.hails, run.t0, run.par_kwh, run.par_car], ["ceres-shift", SHARED, 2461700.5, 61412, "sf-04"]);
+  assert.deepEqual([R.BY[PARTY].from, R.BY[PARTY].to, R.BY[PARTY].party], ["ceres-port", "phobos", 3]);
+  assert.deepEqual([run.id, run.hails, run.t0, run.par_kwh, run.par_car], ["ceres-shift", SHARED, 2461700.5, PAR_KWH, "sf-09"]);
+  assert.deepEqual(run.booking_rows.map((h) => h.id), SHARED);
   const info = await s.call("get_hail", {});
-  assert.deepEqual(info.bookings.map((b) => [b.hail_id, b.party, b.pickup_at.id, b.destination.id, b.rider_ready, b.arrive_by]), [
-    ["ceres-shift", 1, "ceres-port", "mars-base", "2027-10-22 00:00", "2031-12-09 00:00"],
-    ["phobos-commute", 1, "phobos", "mars-base", "2027-10-22 00:00", "2027-10-25 00:00"]]);
-  assert.deepEqual(info.fleet.map((c) => [c.car, c.seats, c.xenon_kg]), R.FLEET.map((c) => [c.id, c.seats, c.xenon_kg]));
+  assert.deepEqual(info.bookings.map((b) => [b.hail_id, b.party, b.pickup_at.id, b.destination.id, b.rider_ready, b.arrive_by]), BOOKINGS);
+  assert.deepEqual(info.fleet.map((c) => [c.car, c.seats, c.propellant_kg_per_leg]), R.FLEET.map((c) => [c.id, c.seats, E.SHIP_CLASSES[c.ship_class].propellant_kg]));
   assert.equal(info.passengers, undefined);
   assert.match(info.rules, /shared flight \(simulated\) with 2 bookings/);
 });
 
-test("shared flight: plan_leg chains one car's legs; the one-booking tools and stray legs are refused", async () => {
+test("shared flight: plan_leg chains one car's legs; the one-booking tools, stray legs and a ship of the wrong class are refused", async () => {
   const s = await sharedRun();
-  assert.equal((await s.call("plan_pickup", { car: "sf-04" })).error, "this flight has 2 bookings; plan it with plan_leg");
-  assert.match((await s.call("plan_leg", { car: "sf-04", to: "titan" })).error, /^to must be a booking's pickup or destination: Ceres Port, Mars Base, Phobos$/);
-  const [l1, l2, , l4] = await sharedLegs(s.call);
-  assert.deepEqual([l1, l2, l4].map((l) => [l.kind, l.car, l.from, l.to, l.depart, l.arrive]), [
-    ["leg", "sf-04", "Ceres", "Ceres Port", "2027-10-22 00:00", "2027-10-22 02:21"],
-    ["leg", "sf-04", "Ceres Port", "Mars Base", "2028-02-19 03:33", "2030-07-23 00:22"],
-    ["leg", "sf-04", "Phobos", "Mars Base", "2030-07-23 03:48", "2030-07-23 06:02"]]);
-  assert.equal((await s.call("plan_leg", { after_leg: l1.leg_id, car: "sf-01", to: "mars-base" })).error, "leg1 flies SF-04; a flight is one ship");
-  assert.equal((await s.call("plan_leg", { after_leg: l1.leg_id, to: "ceres-port" })).error, "this leg would start and end at Ceres Port");
+  assert.equal((await s.call("plan_pickup", { car: "sf-09" })).error, "this flight has 2 bookings; plan it with plan_leg");
+  assert.match((await s.call("plan_leg", { car: "sf-09", to: "titan" })).error, /^to must be a booking's pickup or destination: Ceres Port, Mars Base, Phobos$/);
+  assert.equal((await s.call("plan_leg", { car: "sf-04", to: "ceres-port" })).error, R.servesWhy("sf-04", R.BY["ceres-shift"]) + ". Pick a ship whose flies field fits; the fleet is in get_hail.");
+  assert.equal(s.run.calls, 0);
+  const legs = await sharedLegs(s.call);
+  assert.deepEqual(legs.map((l) => [l.kind, l.car, l.from, l.to, l.depart, l.arrive]), SHARED_LEGS);
+  assert.equal((await s.call("plan_leg", { after_leg: legs[0].leg_id, car: "sf-08", to: "mars-base" })).error, "leg1 flies SF-09; a flight is one ship");
+  assert.equal((await s.call("plan_leg", { after_leg: legs[0].leg_id, to: "ceres-port" })).error, "this leg would start and end at Ceres Port");
   const one = await openRun(E, suiteInstance(E, { hail_id: "iss-crew" }, { seed: "2", clockJd: 2461550.0, tag: "t", budget: null }), "run_00000000000000000002", 0);
   assert.equal((await applyTool(E, one, "plan_leg", { car: "sf-01", to: "iss" }, { nowMs: 0 })).result.error, "this flight has one booking; plan it with plan_pickup and plan_ride");
 });
@@ -611,7 +617,7 @@ test("who is aboard: plan_pickup plans for an empty cabin, plan_ride for the par
   const seen = [], spy = (from, to, t, obj, end, ship, aboard) => { seen.push([to, aboard]); return { leg: computeLeg(E, from, to, t, obj, end, ship, aboard), cached: false }; };
   const s = await sharedRun(spy);
   await sharedLegs(s.call);
-  assert.deepEqual(seen, [["ceres-port", 0], ["mars-base", 1], ["phobos", 0], ["mars-base", 1]]);
+  assert.deepEqual(seen, [["ceres-port", 0], ["phobos", 4], ["mars-base", 1]]);
   seen.length = 0;
   let one = await openRun(E, suiteInstance(E, { hail_id: "iss-crew" }, { seed: "2", clockJd: 2461550.0, tag: "t", budget: null }), "run_00000000000000000002", 0);
   const p = await applyTool(E, one, "plan_pickup", { car: "sf-01" }, { nowMs: 0, legFn: spy });
@@ -621,48 +627,43 @@ test("who is aboard: plan_pickup plans for an empty cabin, plan_ride for the par
 });
 
 test("shared flight: dispatch with legs, stops and quotes scores each booking and lists the passengers stop by stop", async () => {
-  const s = await sharedRun(), legs = await sharedLegs(s.call), [, l2, , l4] = legs;
-  // Each plan_leg leg says who its chain puts aboard and each booking's per-seat fare so far; these two never share a leg.
-  assert.deepEqual(legs.map((l) => l.aboard), [0, 1, 0, 1]);
-  assert.deepEqual(l4.fares_so_far, { "ceres-shift": l2.fare_usd, "phobos-commute": l4.fare_usd });
+  const s = await sharedRun(), legs = await sharedLegs(s.call), [, l2, l3] = legs;
+  // Each plan_leg leg says who its chain puts aboard and each booking's per-seat fare so far: the party of 3 and Ana share
+  // the Phobos leg 3:1, and Ana alone pays the leg on to Mars Base.
+  assert.deepEqual(legs.map((l) => l.aboard), [0, 4, 1]);
+  assert.deepEqual(l3.fares_so_far, { "ceres-shift": Math.round((l2.fare_usd / 4 + l3.fare_usd) * 100) / 100, [PARTY]: Math.round(l2.fare_usd * 3 / 4 * 100) / 100 });
   const out = await s.call("dispatch", {
-    legs: legs.map((l) => l.leg_id), ask_after_hours: "never",
-    stops: [{ board: ["ceres-shift"] }, { alight: ["ceres-shift"] }, { board: ["phobos-commute"] }, { alight: ["phobos-commute"] }],
-    quotes: { "ceres-shift": { fare_usd: l2.fare_usd, arrival: l2.arrive }, "phobos-commute": { fare_usd: l4.fare_usd, arrival: l4.arrive } },
+    legs: legs.map((l) => l.leg_id), ask_after_hours: "never", stops: SHARED_STOPS,
+    quotes: { "ceres-shift": { fare_usd: l3.fares_so_far["ceres-shift"], arrival: l3.arrive }, [PARTY]: { fare_usd: l3.fares_so_far[PARTY], arrival: l2.arrive } },
   });
-  assert.deepEqual([out.status, out.car, out.used_kwh, out.par_kwh, out.planned_pickup, out.promised_arrival], ["arrived", "SF-04", 61412, 61412, "2027-10-22 02:21", "2030-07-23 00:22"]);
+  assert.deepEqual([out.status, out.car, out.used_kwh, out.par_kwh, out.planned_pickup, out.promised_arrival], SHARED_OUT);
   assert.equal(out.total, out.parts.reduce((a, x) => a + x.got, 0));
   assert.ok(out.total < out.out_of, out.total);
   for (const p of out.parts) assert.ok(p.got <= p.max, p.key);
-  assert.deepEqual(out.bookings.map((b) => [b.hail_id, b.pickup, b.arrive, b.promise_slip_hours, b.fare_usd]), [
-    ["ceres-shift", "2027-10-22 02:21", "2030-07-23 01:00", 0.6, 514158.13],
-    ["phobos-commute", "2030-07-23 03:14", "2030-07-23 06:39", 0.6, 1079.11]]);
-  const phobos = out.bookings.find((b) => b.hail_id === "phobos-commute");
-  assert.ok(phobos.parts.find((x) => x.key === "on_time").got < phobos.parts.find((x) => x.key === "pickup").got);
+  assert.deepEqual(out.bookings.map((b) => [b.hail_id, b.pickup, b.arrive, b.promise_slip_hours, b.fare_usd]), SHARED_BOOKED);
   assert.deepEqual(out.passengers.map((p) => [p.place.id, p.board, p.alight, p.aboard, p.seats]), [
-    ["ceres", [], [], 0, 4], ["ceres-port", ["ceres-shift"], [], 1, 4], ["mars-base", [], ["ceres-shift"], 0, 4],
-    ["phobos", ["phobos-commute"], [], 1, 4], ["mars-base", [], ["phobos-commute"], 0, 4]]);
-  assert.deepEqual([out.log.hails, out.log.dispatched, Object.keys(out.log.bookings)], [SHARED, ["leg1", "leg2", "leg3", "leg4"], SHARED]);
-  const logged = out.log.bookings["phobos-commute"].parts;
+    ["ceres", [], [], 0, 20], ["ceres-port", SHARED, [], 4, 20], ["phobos", [], [PARTY], 1, 20], ["mars-base", [], ["ceres-shift"], 0, 20]]);
+  assert.deepEqual([out.log.hails, out.log.dispatched, Object.keys(out.log.bookings)], [SHARED, ["leg1", "leg2", "leg3"], SHARED]);
+  const party = out.bookings.find((b) => b.hail_id === PARTY), logged = out.log.bookings[PARTY].parts;
   assert.deepEqual(Object.keys(logged).sort(), ["fare", "on_time", "pickup", "promise"]);
-  assert.equal(logged.pickup, phobos.parts.find((x) => x.key === "pickup").got);
-  assert.equal(logged.on_time, phobos.parts.find((x) => x.key === "on_time").got);
-  assert.deepEqual((await s.call("get_hail", {})).passengers.map((p) => p.aboard), [0, 1, 0, 1, 0]);
+  assert.equal(logged.pickup, party.parts.find((x) => x.key === "pickup").got);
+  assert.equal(logged.on_time, party.parts.find((x) => x.key === "on_time").got);
+  assert.deepEqual((await s.call("get_hail", {})).passengers.map((p) => p.aboard), [0, 4, 1, 0]);
   const rec = liveRecord(E, s.run, 0);
-  assert.deepEqual(rec.manifest.bookings.map((b) => [b.hail_id, b.rider, b.party]), [["ceres-shift", "Ana, a miner", 1], ["phobos-commute", "Ravi, a survey pilot", 1]]);
-  assert.deepEqual(rec.manifest.stops.map((p) => p.at), ["ceres", "ceres-port", "mars-base", "phobos", "mars-base"]);
-  assert.equal(rec.manifest.seats, 4);
+  assert.deepEqual(rec.manifest.bookings.map((b) => [b.hail_id, b.rider, b.party]), [["ceres-shift", "Ana, a miner", 1], [PARTY, "Mateo, a medic", 3]]);
+  assert.deepEqual(rec.manifest.stops.map((p) => p.at), ["ceres", "ceres-port", "phobos", "mars-base"]);
+  assert.equal(rec.manifest.seats, 20);
 });
 
 test("shared flight: dispatch refuses the two-leg form, a booking left off the plan, a missing quote and a stranger", async () => {
   const s = await sharedRun(), ids = (await sharedLegs(s.call)).map((l) => l.leg_id);
-  const q = { "ceres-shift": { fare_usd: 1, arrival: "2030-07-23 06:50" }, "phobos-commute": { fare_usd: 1, arrival: "2030-07-23 12:30" } };
+  const q = { "ceres-shift": { fare_usd: 1, arrival: "2030-07-23 06:50" }, [PARTY]: { fare_usd: 1, arrival: "2030-07-23 12:30" } };
   const probs = async (inp) => (await s.call("dispatch", inp)).problems;
   assert.match((await probs({ pickup_leg: ids[0], ride_leg: ids[1], quoted_fare_usd: 1, quoted_arrival: "2030-07-23 06:50" }))[0], /^this flight has 2 bookings: dispatch with legs/);
-  assert.deepEqual(await probs({ legs: ids, stops: [{}, {}, {}], quotes: q }), ["stops has 3 entries; it needs one for each of the 4 legs"]);
-  assert.deepEqual(await probs({ legs: ids, stops: [{ board: ["ceres-shift"] }, { alight: ["ceres-shift"] }, {}, {}], quotes: q }), ["phobos-commute is not on the plan: every booking boards and alights"]);
-  assert.deepEqual(await probs({ legs: ids, stops: [{ board: ["ceres-shift"] }, { alight: ["ceres-shift"] }, { board: ["phobos-commute"] }, { alight: ["phobos-commute", "iss-crew"] }], quotes: { "ceres-shift": q["ceres-shift"] } }),
-    ["iss-crew is not a booking on this flight; its bookings are ceres-shift, phobos-commute", "quotes needs a fare_usd and an arrival for phobos-commute"]);
+  assert.deepEqual(await probs({ legs: ids, stops: [{}, {}], quotes: q }), ["stops has 2 entries; it needs one for each of the 3 legs"]);
+  assert.deepEqual(await probs({ legs: ids, stops: [{ board: ["ceres-shift"] }, {}, { alight: ["ceres-shift"] }], quotes: q }), [PARTY + " is not on the plan: every booking boards and alights"]);
+  assert.deepEqual(await probs({ legs: ids, stops: [{ board: SHARED }, { alight: [PARTY] }, { alight: ["ceres-shift", "iss-crew"] }], quotes: { "ceres-shift": q["ceres-shift"] } }),
+    ["iss-crew is not a booking on this flight; its bookings are ceres-shift, " + PARTY, "quotes needs a fare_usd and an arrival for " + PARTY]);
   assert.equal(phaseOf(s.run), "planning");
 });
 
@@ -696,7 +697,7 @@ test("live: the dispatcher log keeps each season call with its summary and the b
   const t = f.run().trail;
   assert.deepEqual(t.map((e) => e.tool), ["check_pad", "plan_pickup", "plan_ride", "dispatch", "decide", "decide"]);
   assert.deepEqual(t[0], { at_ms: NOW, sky: "2030-01-28 00:00", tool: "check_pad", place: "ISS", berths: 2, max_booked: 3 });
-  assert.deepEqual(t[3], { at_ms: NOW + 1000, sky: "2030-01-28 00:00", tool: "dispatch", route: ["leg1", "leg2"], car: "SF-01", fare_usd: 5968.77, arrival: "2030-02-03 01:33",
+  assert.deepEqual(t[3], { at_ms: NOW + 1000, sky: "2030-01-28 00:00", tool: "dispatch", route: ["leg1", "leg2"], car: "SF-01", fare_usd: 29014.21, arrival: "2030-02-03 01:33",
     status: "checkpoint", note: "Par ship, least battery; ISS pad looked open." });
   assert.equal(typeof t[4].error, "string");
   assert.deepEqual(t[5], { at_ms: NOW + 3000, sky: "2030-01-28 00:00", tool: "decide", checkpoint: 1, kind: "pad_closed", checkpoint_at: "2030-02-03 02:46",

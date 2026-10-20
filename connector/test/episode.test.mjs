@@ -18,7 +18,7 @@ const PLAYER = "p_0123456789abcdef";
 const skyAt = (jd) => SKY.t0_ms + Math.round((jd - SKY.jd0) * 1000);
 const DUST_NOW = skyAt(2462172.6);
 const LINE_KEYS = ["schema", "simulated", "run_id", "index", "steps", "kind", "observation", "action", "events", "checkpoint", "options", "reward", "outcome"];
-const PART_KEYS = ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy", "tank", "throttle", "window", "recovery", "dose"];
+const PART_KEYS = ["pickup", "on_time", "energy", "promise", "checker", "fare", "economy", "window", "recovery", "dose"];
 const slang = ["c", "ar"].join("");
 const removed = ["Road", "ster"].join("");
 const banned = new RegExp("\\b" + slang + "\\b|" + removed, "i");

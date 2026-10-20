@@ -501,7 +501,8 @@ export const SHIP_CLASSES = {
   // Jupiter's low parking orbit takes about half an hour instead of 81 minutes.
   "star-taxi": { id: "star-taxi", name: "Starseeker Taxi", fictional: true, dry_kg: 6000, propellant_kg: 7000, seats: 6, ve_kms: 30, thrust_n: 99000, eta: 0.64, power_mode: "constant" },
   "star-shuttle": { id: "star-shuttle", name: "Starseeker Shuttle", fictional: true, dry_kg: 25000, propellant_kg: 50000, seats: 20, ve_kms: 30, thrust_n: 60000, eta: 0.64, power_mode: "constant" },
-  "star-liner": { id: "star-liner", name: "Starseeker Liner", fictional: true, dry_kg: 200000, propellant_kg: 500000, seats: 100, ve_kms: 60, thrust_n: 250000, eta: 0.64, power_mode: "constant" },
+  // plan_dv_kms: a liner flies one plan, the earliest arrival with a total burn of at most 45 km/s (Alvin, 2026-10-20).
+  "star-liner": { id: "star-liner", name: "Starseeker Liner", fictional: true, dry_kg: 200000, propellant_kg: 500000, seats: 100, ve_kms: 60, thrust_n: 250000, eta: 0.64, power_mode: "constant", plan_dv_kms: 45 },
 };
 // Cabin and comfort for the fictional drive. 100 kg per passenger with luggage and 2.5 kg of supplies (food, water, air)
 // per person per day aboard are assumptions, not sourced figures. Burns throttle so nobody aboard feels more than 1 g.

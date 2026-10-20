@@ -15,7 +15,10 @@ function chronological(ride) {
 }
 
 test("a delayed shared drop-off lands before the empty pickup departs", async () => {
-  const ids = ["ceres-shift", "phobos-commute"];
+  // Two long hauls inside Jupiter's orbit, so the Shuttle at Ceres flies both: Ana to Mars Base, then empty to Phobos
+  // for a season-1 booking back to Ceres Port.
+  const ids = ["ceres-shift", R.admit(R.hailRow("1", 22)) && "s1-22"];
+  assert.deepEqual([R.BY[ids[1]].from, R.BY[ids[1]].to], ["phobos", "ceres-port"]);
   let run = await openRun(E, suiteInstance(E, { hails: ids }, { seed: "2", clockJd: 2461550, tag: "timing", budget: null }), "run_timing", 0);
   async function call(tool, input) {
     const out = await applyTool(E, run, tool, input, { nowMs: 0 });
@@ -24,8 +27,8 @@ test("a delayed shared drop-off lands before the empty pickup departs", async ()
     return out.result;
   }
   const legs = [];
-  for (const to of ["ceres-port", "mars-base", "phobos", "mars-base"])
-    legs.push(await call("plan_leg", { to, ...(legs.length ? { after_leg: legs.at(-1).leg_id } : { car: "sf-04" }) }));
+  for (const to of ["ceres-port", "mars-base", "phobos", "ceres-port"])
+    legs.push(await call("plan_leg", { to, ...(legs.length ? { after_leg: legs.at(-1).leg_id } : { car: "sf-09" }) }));
   const out = await call("dispatch", { legs: legs.map((l) => l.leg_id), ask_after_hours: "never",
     stops: [{ board: [ids[0]] }, { alight: [ids[0]] }, { board: [ids[1]] }, { alight: [ids[1]] }],
     quotes: Object.fromEntries(ids.map((id, i) => [id, { fare_usd: legs[2 * i + 1].fare_usd, arrival: legs[2 * i + 1].arrive }])) });

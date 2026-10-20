@@ -56,7 +56,7 @@ ok("busy cars: check() refuses a pickup that leaves before the car is free", () 
   let found = null;
   for (let i = 0; i < 200 && !found; i++){ const s = String(i), st = R.fleetState("iss-crew", t0, s).find((c) => c.car === "sf-01" && c.busy_until_jd); if (st) found = [s, st]; }
   assert(found, "no busy SF-01 in 200 seeds");
-  const [s, st] = found, P = { from: "orbital-depot", to: "iss", dep_jd: t0, arr_jd: t0 + 0.03 }, Rr = { from: "iss", to: "lunar-data-center", dep_jd: t0 + 0.09, arr_jd: t0 + 5 };
+  const [s, st] = found, P = { from: "orbital-depot", to: "iss", dep_jd: t0, arr_jd: t0 + 0.03, aboard: 0 }, Rr = { from: "iss", to: "lunar-data-center", dep_jd: t0 + 0.09, arr_jd: t0 + 5, aboard: 1 };
   assert(R.check("iss-crew", "sf-01", [P, Rr], t0, s).some((e) => /busy/.test(e)));
   assert.strictEqual(R.check("iss-crew", "sf-01", [P, Rr]).length, 0); // no t0: old callers unchanged
   assert.strictEqual(R.pickupStart("iss-crew", "sf-01", t0, s), st.busy_until_jd);

@@ -26,6 +26,8 @@ export function candidates(E, rng, n) {
     // Three bookings cost about 6 minutes per candidate (pooled par and the reference each plan 90 stop orders), so v1 stops at two.
     const k = rng() < 0.6 ? 1 : 2, pool = [...ids], hails = [];
     while (hails.length < k) hails.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]);
+    // Each Starseeker class flies its own bookings, so a pair no one class flies has no flight to score.
+    if (!E.R.FLEET.some((c) => hails.every((h) => E.R.serves(c, E.R.BY[h])))) continue;
     const day = Math.floor(rng() * LAST_DAY), id = hails.join("+") + "/" + String(day).padStart(4, "0");
     out.set(id, { id, ...(k === 1 ? { hail_id: hails[0] } : { hails }), clock_jd: SKY.jd0 + day });
   }

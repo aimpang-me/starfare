@@ -125,8 +125,10 @@ export function restoreRunBookings(E, run) {
 export function fleet(E) {
   const { placeName } = names(E);
   return E.R.FLEET.map((c) => {
-    const spec = E.SHIP_CLASSES[c.ship_class];
-    return { car: c.id, name: c.name, ship_class: spec.name, seats: c.seats, xenon_kg: c.xenon_kg, parked_at: { id: c.at, name: placeName(c.at) } };
+    const spec = E.SHIP_CLASSES[c.ship_class], flies = E.R.FLIES[c.ship_class];
+    // A fictional Starseeker refuels at every stop, so its tank is per leg; a real hull carries one xenon load for the whole ride.
+    const tank = spec.fictional ? { fictional: true, propellant_kg_per_leg: spec.propellant_kg, flies: E.R.FLIES_TEXT[flies] } : { xenon_kg: c.xenon_kg };
+    return { car: c.id, name: c.name, ship_class: spec.name, seats: c.seats, ...tank, parked_at: { id: c.at, name: placeName(c.at) } };
   });
 }
 /** The fleet as it stands for this run: each car is "free" or busy on another (simulated) job until busy_until. */
@@ -276,14 +278,15 @@ const rules = (E) =>
   "Score out of 100000, from what actually happened. The weights are placeholders. Parts are not rounded and the total is their sum. " +
   "Each part except cruise dose earns its full weight on the stated reference, and less as the ride moves off it. The falloff steepness of 6 is a simulated assumption. " +
   "fast pickup 22000 (minutes over the quickest nearby ship), arrived on time 16000 (minutes late, reference 0), " +
-  "energy 24000 (kWh over par, including holds and correction burns), " +
+  "energy 31000 (kWh over par, including holds and correction burns), " +
   "kept the promise 14000 (minutes after the quoted arrival, reference 0; minutes early cost a quarter as much), " +
   "every leg checked 4000, honest fare 4000 (dollars off the ride fare), planning economy 3000 (plans past the 6 free ones; check_pad and space_weather are free), " +
-  "xenon tank 4000 (0 if the plan needs more xenon than the ship holds), distance throttle 3000 (kWh above the published set point the power on hand can feed), " +
   "departure window 3000 (kWh above the lowest energy departure in the search; the tool list does not mark that departure), " +
   "checkpoint recovery 3000 (kWh above a hindsight option at a checkpoint), cruise dose 0 (reported, not scored). " +
-  "Ships are Dawn class, Deep Space 1 class, RTG class, or Shuttle class. A leg is refused when the power on hand cannot feed a published NSTAR set point or the xenon tank cannot hold the burn. " +
-  "The RTG class is a simulated hull, not a flown ship: Dawn dry mass 747.1 kg, a 1085 kg xenon tank (Psyche's published load), and 633 W held constant (Cassini at the end of the mission). The Shuttle class has no xenon ion thruster and is not parked. " +
+  "The fleet is Starseeker Taxis (6 seats), Shuttles (20) and Liners (100). They are fictional classes on a declared fictional drive: each leg is costed with the rocket equation on the hull, the people aboard and their supplies, and burns throttle so nobody aboard feels more than 1 g. " +
+  "A Starseeker refuels at every stop, so a leg is refused when it carries more people than seats or needs more propellant than one tank holds. " +
+  "Each class flies its own bookings, and the fleet's flies field says which: Taxis the quick hops inside one planet's neighbourhood, Shuttles the long hauls inside Jupiter's orbit, Liners the long hauls to or from the outer planets. A ship of the wrong class is refused. " +
+  "A Liner flies one plan whatever the objective: the earliest arrival with a total burn of at most 45 km/s. " +
   "The sky clock runs 1 sky day per real second: if a leg flies between planets and its departure passes before dispatch, the hail goes cold. " +
   "In flight (simulated), the ship stops at checkpoints and asks you: a launch between planets that can't leave on time (wait for it to clear, or replan a fresh leg, which counts as a plan), " +
   "and a pad still closed or full after the ship has held ask_after_hours in orbit (hold, or divert to a nearby pad, wait on the ground and hop back). " +
@@ -291,12 +294,15 @@ const rules = (E) =>
   "You never see when a storm or haze ends, nor the unscheduled traffic; check_pad and space_weather forecast from the checkpoint's time. A ride asks at most " + E.R.MAX_CHECKPOINTS + " times, then takes the defaults. " +
   "dispatch with ask_after_hours \"never\" flies every checkpoint on its default (wait, hold) without asking.";
 
+// A Starseeker's propellant is fictional and it has no NSTAR set point, so its legs report propellant_kg, not xenon_kg.
+const tankPub = (fic, d) => (fic ? { propellant_kg: d.xenon_kg } : { xenon_kg: d.xenon_kg, set_point: d.set_point });
 export function legPub(E, L) {
-  const { placeName } = names(E);
+  const { placeName } = names(E), fic = !!(L.car && (E.SHIP_CLASSES[(E.R.CAR[L.car] || {}).ship_class] || {}).fictional);
   return {
     leg_id: L.leg_id, kind: L.role, ...(L.car ? { car: L.car } : {}), from: placeName(L.from), to: placeName(L.to), depart: isoJD(L.dep_jd), arrive: isoJD(L.arr_jd),
-    tof_days: +L.tof_days.toFixed(2), burn_total_kms: L.dv, battery_kwh: L.kwh, xenon_kg: L.xenon_kg, set_point: L.set_point, r_au: L.r_au == null ? null : +(+L.r_au).toFixed(3),
-    departures: L.departures || [], fare_usd: L.fare, refly: L.refly, ...(L.aboard != null ? { aboard: L.aboard } : {}),
+    tof_days: +L.tof_days.toFixed(2), burn_total_kms: L.dv, battery_kwh: L.kwh, ...tankPub(fic, L), r_au: L.r_au == null ? null : +(+L.r_au).toFixed(3),
+    departures: (L.departures || []).map(({ xenon_kg, set_point, ...d }) => ({ ...d, ...tankPub(fic, { xenon_kg, set_point }) })),
+    fare_usd: L.fare, refly: L.refly, ...(L.aboard != null ? { aboard: L.aboard } : {}),
     ...(L.busy_until_jd ? { car_busy_until: isoJD(L.busy_until_jd), note: "The ship was busy on another job until " + isoJD(L.busy_until_jd) + ", so this pickup leaves no earlier than then." } : {}),
   };
 }
@@ -354,6 +360,7 @@ export async function planPickup(E, run, inp, legFn) {
   guardRun(run);
   if (run.hails) fail(useLegs(run));
   const car = carOf(E, inp.car);
+  classFits(E, car, [h]);
   if (car.at === h.from) fail(car.name + " is already at the pickup");
   const obj = inp.objective === "time" ? "time" : "energy", wait = waitOf(inp), start = R.pickupStart(run.id, car.id, run.t0, seedOf(run));
   return addLeg(run, "pickup", car.id, car.at, h.from, start + wait, obj, legFn || defaultLegFn(E),
@@ -369,13 +376,18 @@ export async function planRideLeg(E, run, inp, legFn) {
   if (!prev) fail("unknown leg_id " + inp.after_leg + ": pass the pickup leg this ride follows");
   if (prev.role !== "pickup") fail(inp.after_leg + " is a ride leg; pass the pickup leg");
   const obj = inp.objective === "time" ? "time" : "energy", wait = waitOf(inp);
-  // The ride flies the pickup's ship. run.car is not set until dispatch, and a missing ship would plan this leg as Dawn.
+  // The ride flies the pickup's ship. run.car is not set until dispatch, and a missing ship would plan this leg on the default hull.
   return addLeg(run, "ride", prev.car, h.from, h.to, prev.arr_jd + R.DWELL + wait, obj, legFn || defaultLegFn(E), { objective: obj, wait_days: wait, after: prev.leg_id }, h.party);
 }
 
 function carOf(E, q) {
   const R = E.R, key = String(q || "").toLowerCase().trim();
   return own(R.CAR, key) || R.FLEET.filter((c) => c.name.toLowerCase() === key)[0] || fail("unknown ship " + q + ". The fleet is in get_hail.");
+}
+// Refused before planning, so a ship of the wrong class costs no plan; dispatch refuses it too (R.check).
+function classFits(E, car, hails) {
+  const why = hails.map((h) => E.R.servesWhy(car, h)).filter(Boolean)[0];
+  if (why) fail(why + ". Pick a ship whose flies field fits; the fleet is in get_hail.");
 }
 const useLegs = (run) => "this flight has " + run.hails.length + " bookings; plan it with plan_leg";
 
@@ -399,6 +411,7 @@ export async function planHop(E, run, inp, legFn) {
     extra = { after: prev.leg_id };
   } else {
     const c = carOf(E, inp.car), start = R.pickupStart(run.id, c.id, run.t0, seedOf(run));
+    classFits(E, c, run.hails.map((id) => R.BY[id]));
     car = c.id; from = c.at; t = start + wait;
     extra = start > run.t0 ? { busy_until_jd: start } : {};
   }

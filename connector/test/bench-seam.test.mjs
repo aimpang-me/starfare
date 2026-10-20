@@ -24,14 +24,14 @@ async function legs(run, car = run.par_car) {
 test("a frozen clock never goes cold: a long haul dispatched 400 sky days or a year later still flies", async () => {
   const ceresNow = SKY_CERES, clock = sky(ceresNow).jd;
   const live = await openRun(E, seasonInstance(E, "ceres-shift", ceresNow), "run_live", ceresNow);
-  const [lp, lr] = await legs(live, "sf-04");
+  const [lp, lr] = await legs(live, "sf-09");
   const late = ceresNow + (lr.dep_jd - clock + 2) * 1000;
   assert.throws(() => dispatch(E, live, quoteOf(lp, lr), late), { message: "The hail went cold: leg2 was due to depart 2032-03-28 03:33 and sky time is now 2032-03-30 03:33. Take the hail again." });
 
   for (const later of [400 * 1000, YEAR_MS]) {
     const run = await openRun(E, suiteInstance(E, { hail_id: "ceres-shift" }, { seed: SEED, clockJd: clock, tag: "ceres-shift/frozen-01", budget: 12 }), "run_frozen", ceresNow);
     assert.equal(run.t0, live.t0);
-    const [p, r] = await legs(run, "sf-04");
+    const [p, r] = await legs(run, "sf-09");
     const out = dispatch(E, run, quoteOf(p, r, { ask_after_hours: "never" }), ceresNow + later);
     assert.equal(out.status, "arrived");
     assert.equal(out.task_id, "ceres-shift/frozen-01");

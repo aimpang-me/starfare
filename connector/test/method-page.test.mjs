@@ -86,15 +86,25 @@ test("the page renders every ship class from the engine", () => {
     const line = row("data-class", cls.id);
     assert.match(line, new RegExp(">" + cls.name + "<"));
     assert.match(line, new RegExp(">" + cls.dry_kg + "<"));
-    assert.match(line, new RegExp(">" + cls.xenon_kg + "<"));
-    assert.match(line, new RegExp(">" + cls.power_w_1au + "<"));
-    assert.match(line, new RegExp(">" + cls.housekeeping_w + "<"));
     assert.match(line, new RegExp(">" + cls.seats + "<"));
+    if (cls.fictional) {
+      assert.match(line, new RegExp(">" + cls.propellant_kg + "<"));
+      assert.match(line, new RegExp(">" + cls.ve_kms + "<"));
+      assert.match(line, new RegExp(">" + cls.thrust_n / 1000 + "<"));
+      assert.ok(line.includes(R.FLIES_TEXT[R.FLIES[cls.id]]), line);
+    } else {
+      assert.match(line, new RegExp(">" + cls.xenon_kg + "<"));
+      assert.match(line, new RegExp(">" + cls.power_w_1au + "<"));
+      assert.match(line, new RegExp(">" + cls.housekeeping_w + "<"));
+    }
     const parked = R.FLEET.filter((s) => s.ship_class === cls.id).map((s) => s.name);
     if (parked.length === 0) assert.match(line, /not parked/);
     else assert.ok(parked.every((name) => line.includes(name)), line);
   }
-  assert.equal(R.FLEET.some((s) => s.ship_class === "shuttle"), false);
+  // The parked fleet is all Starseekers; the real hulls stay in the catalog as references.
+  assert.ok(R.FLEET.every((s) => E.SHIP_CLASSES[s.ship_class].fictional));
+  assert.match(row("data-class", "star-liner"), /total burn at most 45 km\/s/);
+  assert.match(html, /declared fictional drive/);
   assert.match(engineSrc, /over 10000 W at 1 AU/);
   assert.match(engineSrc, /near 400 W/);
   assert.match(engineSrc, /up to 1085 kg/);

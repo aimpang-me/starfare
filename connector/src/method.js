@@ -7,8 +7,6 @@ const MEASURE = {
   checker: "Count of legs that did not pass the checker and were not local hops.",
   fare: "USD off the flight fare. A missing fare quote scores 0.",
   economy: "Count of plans past the 6 free plans.",
-  tank: "kg of xenon over the tank. Over the tank scores 0. At or under the tank earns the reference share.",
-  throttle: "kWh above the published set point the power on hand can feed.",
   window: "kWh above the lowest energy departure in the search.",
   recovery: "kWh above a hindsight option at a checkpoint. With no checkpoint, the excess is 0.",
   dose: "mSv on the cruise. This part is a placeholder and scores 0.",
@@ -63,10 +61,15 @@ export function methodPage(E, sky) {
   const fleet = R.FLEET;
   const rows = parts.map((p) =>
     `<tr data-key="${esc(p.key)}"><td>${esc(p.label)}</td><td class="num">${esc(p.max)}</td><td>${esc(p.plain)}</td><td class="mono">${esc(p.unit)}</td><td>${esc(p.measure)}</td></tr>`).join("");
-  const ships = classes.map((c) => {
+  const parkedOf = (c) => {
     const parked = fleet.filter((s) => s.ship_class === c.id).map((s) => s.name);
+    return parked.length ? esc(parked.join(", ")) : "not parked";
+  };
+  const stars = classes.filter((c) => c.fictional).map((c) =>
+    `<tr data-class="${esc(c.id)}"><td>${esc(c.name)}</td><td class="num">${esc(c.seats)}</td><td class="num">${esc(c.dry_kg)}</td><td class="num">${esc(c.propellant_kg)}</td><td class="num">${esc(c.ve_kms)}</td><td class="num">${esc(c.thrust_n / 1000)}</td><td>${esc(R.FLIES_TEXT[R.FLIES[c.id]])}${c.plan_dv_kms ? esc("; one plan, total burn at most " + c.plan_dv_kms + " km/s") : ""}</td><td>${parkedOf(c)}</td></tr>`).join("");
+  const ships = classes.filter((c) => !c.fictional).map((c) => {
     const mode = c.power_mode === "constant" ? "constant" : "arrays, 1/r^2";
-    return `<tr data-class="${esc(c.id)}"><td>${esc(c.name)}</td><td class="num">${esc(c.dry_kg)}</td><td class="num">${esc(c.xenon_kg)}</td><td class="num">${esc(c.power_w_1au)}</td><td class="num">${esc(c.housekeeping_w)}</td><td class="num">${esc(c.seats)}</td><td>${esc(mode)}</td><td>${parked.length ? esc(parked.join(", ")) : "not parked"}</td></tr>`;
+    return `<tr data-class="${esc(c.id)}"><td>${esc(c.name)}</td><td class="num">${esc(c.dry_kg)}</td><td class="num">${esc(c.xenon_kg)}</td><td class="num">${esc(c.power_w_1au)}</td><td class="num">${esc(c.housekeeping_w)}</td><td class="num">${esc(c.seats)}</td><td>${esc(mode)}</td><td>${parkedOf(c)}</td></tr>`;
   }).join("");
   const tierRows = POOL_TIERS.rows.map((row) =>
     `<tr data-tier="${esc(row.min_players)}"><td class="num">${esc(row.min_players)}</td><td class="num">${esc(row.hails)}</td></tr>`).join("");
@@ -139,7 +142,16 @@ th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;t
   <p>In the local report, a flight that does not arrive is stranded. The score cell is blank. The mean uses landed flights only. Stranded flights are counted beside it and are not folded in as 0.</p>
 
   <h2>Starseeker classes</h2>
-  <p>The catalog has Dawn class, Deep Space 1 class, RTG class, and Shuttle class. The first three are parked. Shuttle class is not parked. Seat counts on Dawn class and Deep Space 1 class are a simulated cabin. Those probes flew with no passengers.</p>
+  <p>The parked fleet is Starseeker Taxis, Shuttles and Liners. They are fictional classes on a declared fictional drive. The exhaust speed and thrust are fictional. The rocket equation, mass flow, burn time, jet power and energy are computed from them, with a jet efficiency of ${esc(E.SHIP_CLASSES["star-taxi"].eta)}.</p>
+  <p>Each leg is costed on the hull plus ${esc(E.DRIVE.PAX_KG)} kg per person aboard (with luggage) plus ${esc(E.DRIVE.SUPPLY_KG_DAY)} kg of supplies per person per day aboard. Those two figures are assumptions, not sourced. Burns throttle so nobody aboard feels more than ${esc(E.DRIVE.COMFORT_G)} g; the leg is still planned as impulsive burns. A Starseeker refuels at every stop, so its tank holds one leg. A leg is refused when it carries more people than seats or needs more propellant than the tank.</p>
+  <p>Each class flies its own bookings. A ship of the wrong class is refused. Par and the quickest nearby ship only look at ships of the right class near the passengers or near their destination. The ship assignment is simulated.</p>
+  <table>
+    <thead><tr><th>Class</th><th>Seats</th><th>Dry kg</th><th>Propellant kg per leg</th><th>Exhaust km/s</th><th>Thrust kN</th><th>Flies</th><th>Parked</th></tr></thead>
+    <tbody>${stars}</tbody>
+  </table>
+
+  <h2>Reference hulls</h2>
+  <p>The catalog also keeps Dawn class, Deep Space 1 class, RTG class, and Shuttle class from real spacecraft. None is parked. Seat counts on Dawn class and Deep Space 1 class are a simulated cabin. Those probes flew with no passengers.</p>
   <table>
     <thead><tr><th>Class</th><th>Dry kg</th><th>Xenon kg</th><th>Power W at 1 AU</th><th>Housekeeping W</th><th>Seats</th><th>Power</th><th>Parked</th></tr></thead>
     <tbody>${ships}</tbody>
@@ -147,8 +159,8 @@ th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;t
   <p class="source">Dawn class stores dry mass ${esc(dawn.dry_kg)} kg, a xenon tank of ${esc(dawn.xenon_kg)} kg, and ${esc(dawn.power_w_1au)} W at 1 AU. The engine comment calls that power a published lower bound, over 10000 W at 1 AU. The repository does not give a URL for Dawn.</p>
   <p class="source">Deep Space 1 class stores dry mass ${esc(ds1.dry_kg)} kg, a xenon tank of ${esc(ds1.xenon_kg)} kg, ${esc(ds1.power_w_1au)} W at 1 AU, and housekeeping ${esc(ds1.housekeeping_w)} W. The assumptions line says housekeeping near 400 W. The repository does not give a URL for Deep Space 1.</p>
   <p class="source">RTG class is a simulated hull, not a flown ship. Dry mass ${esc(rtg.dry_kg)} kg is the Dawn figure. The xenon tank is ${esc(rtg.xenon_kg)} kg, Psyche's published load of up to 1085 kg (NASA JPL Psyche quick facts). Power is ${esc(rtg.power_w_1au)} W held constant, from Cassini at the end of the mission (NASA Cassini quick facts). The ${esc(rtg.power_w_1au)} W is treated as spare for the thruster. Housekeeping is not charged. The dry mass does not add tank structure for the larger xenon load. The repository does not give a URL for those quick facts.</p>
-  <p class="source">Shuttle class stores dry mass ${esc(shuttle.dry_kg)} kg and ${esc(shuttle.seats)} seats. The engine comment calls the mass the published orbiter figure of about 68000 kg, and the seats the orbiter crew of 7. It has no xenon ion thruster. It is not parked. The repository does not give a URL.</p>
-  <p>The ion thruster uses two published NSTAR set points. 2310 W, specific impulse 3280 s, efficiency 0.64. 490 W, specific impulse 1950 s, efficiency 0.38. The engine keeps the highest point the spare power can feed. No set point is published below 0.49 kW. Standard gravity is ${esc(E.G0)} m/s^2. The engine comment calls that NIST standard gravity.</p>
+  <p class="source">Shuttle class stores dry mass ${esc(shuttle.dry_kg)} kg and ${esc(shuttle.seats)} seats. The engine comment calls the mass the published orbiter figure of about 68000 kg, and the seats the orbiter crew of 7. It has no xenon ion thruster. The repository does not give a URL.</p>
+  <p>On the reference hulls the ion thruster uses two published NSTAR set points. 2310 W, specific impulse 3280 s, efficiency 0.64. 490 W, specific impulse 1950 s, efficiency 0.38. The engine keeps the highest point the spare power can feed. No set point is published below 0.49 kW. Standard gravity is ${esc(E.G0)} m/s^2. The engine comment calls that NIST standard gravity.</p>
   <p>The fare is simulated. It is $${esc(fare.perKwh)} per kWh plus $${esc(fare.perMin)} per minute. The engine header for those rates says they are stated and made up on purpose. Landing, aerobraking, and life support are not priced.</p>
 
   <h2>Planet positions</h2>
@@ -157,7 +169,7 @@ th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;t
   <p>Simulated stations, marked not real in the place table: ${esc(simulatedStations.join(", "))}.</p>
 
   <h2>Array power</h2>
-  <p>The engine does not use a solar constant of 1361 W/m2. docs/SOLAR-VARIABLES.md lists irradiance among the workbook rows the engine does not use. Solar array power is the class power at 1 AU divided by the square of the heliocentric distance. The RTG class generator does not fall off. It holds its watts at every distance.</p>
+  <p>The engine does not use a solar constant of 1361 W/m2. docs/SOLAR-VARIABLES.md lists irradiance among the workbook rows the engine does not use. On the reference hulls, solar array power is the class power at 1 AU divided by the square of the heliocentric distance. The RTG class generator does not fall off. It holds its watts at every distance.</p>
 
   <h2>Passengers and seasons</h2>
   <p>A season is ${esc(sky.len_days)} sky days. One real second is one sky day. Hazards are seeded by the season number, so every player in that season meets the same simulated hazards. A season's passengers are a seeded pool of simulated passengers. The tier sizes are placeholders.</p>

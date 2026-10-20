@@ -79,7 +79,8 @@ ok("digit seeds keep the FNV hazards byte for byte (values captured before the c
     assert.deepStrictEqual(want.u.map(([k]) => [k, H.u(k)]), want.u, seed);
     assert.deepStrictEqual([2461700, 2461727, 2461754].map((d) => H.flareOdds(d)), want.flareOdds, seed);
     assert.deepStrictEqual([0, 1, 2, 3, 4].map((i) => H.docked("iss", Math.floor(t0 * 24) + i, null)), want.docked_iss, seed);
-    assert.deepStrictEqual(R.FLEET.map((c) => R.pickupStart("iss-crew", c.id, t0, seed)), want.pickupStart, seed);
+    // Captured on the seven ships parked then; SF-01 to SF-07 keep their ids on the Starseeker fleet.
+    assert.deepStrictEqual(R.FLEET.slice(0, 7).map((c) => R.pickupStart("iss-crew", c.id, t0, seed)), want.pickupStart, seed);
     assert.strictEqual(H.weatherAt("mars-base", t0 + 3), want.weatherAt_mars, seed);
   }
   // Near misses of the k1 form stay on the FNV path, so the format really is the only switch.

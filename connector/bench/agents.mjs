@@ -116,14 +116,15 @@ export async function naive(call, E) {
   }
 }
 
-/** random: a random car from the whole fleet (not one parked at the first stop), random objectives, and for a shared flight a
- *  random stop order the car has seats for; up to 5 tries, each dispatched with the planned fare and arrival. */
+/** random: a random car from the whole fleet (not one parked at the first stop, and of a class that flies every booking), random
+ *  objectives, and for a shared flight a random stop order the car has seats for; up to 5 tries, each dispatched with the planned
+ *  fare and arrival. */
 export async function random(call, E, rng) {
   const R = E.R, info = await take(call);
   if (!info) return;
   const run_id = info.run_id, obj = () => (rng() < 0.5 ? "energy" : "time");
   if (!info.bookings) {
-    const cars = R.FLEET.filter((c) => c.at !== R.BY[info.hail_id].from);
+    const cars = R.FLEET.filter((c) => c.at !== R.BY[info.hail_id].from && R.serves(c, R.BY[info.hail_id]));
     for (let i = 0; i < 5; i++) {
       const p = await call("plan_pickup", { run_id, car: pick(rng, cars).id, objective: obj() });
       if (out(p)) return;
@@ -139,7 +140,7 @@ export async function random(call, E, rng) {
   const ids = info.bookings.map((b) => b.hail_id), party = Object.fromEntries(info.bookings.map((b) => [b.hail_id, b.party]));
   const orders = R.stopOrders(ids);
   for (let i = 0; i < 5; i++) {
-    const stops = pick(rng, orders), cars = R.FLEET.filter((c) => c.at !== stops[0].at && c.seats >= maxAboard(stops, party));
+    const stops = pick(rng, orders), cars = R.FLEET.filter((c) => c.at !== stops[0].at && c.seats >= maxAboard(stops, party) && ids.every((id) => R.serves(c, R.BY[id])));
     if (!cars.length) continue;
     const legs = await planRoute(call, run_id, pick(rng, cars).id, stops, obj(), null);
     if (legs === "out") return;

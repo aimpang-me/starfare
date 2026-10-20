@@ -26,10 +26,11 @@ for (let s = 1; s <= SEEDS; s++) {
     for (const c of R.nearCars(h)) {
       try {
         const st = R.pickupStart(h.id, c.id, t0, seed);
-        const p = R.planLeg(c.at, h.from, st, "energy", END), r = R.planLeg(h.from, h.to, p.arr_jd + R.DWELL, "energy", END);
+        // Planned on the ship itself, for the people aboard each leg (an empty pickup, then the party).
+        const p = R.planLeg(c.at, h.from, st, "energy", END, c.id, 0), r = R.planLeg(h.from, h.to, p.arr_jd + R.DWELL, "energy", END, c.id, h.party);
         const legs = [
-          { from: c.at, to: h.from, dep_jd: p.dep_jd, arr_jd: p.arr_jd, kwh: p.battery.energy_kwh, fare: p.fare.total_usd },
-          { from: h.from, to: h.to, dep_jd: r.dep_jd, arr_jd: r.arr_jd, kwh: r.battery.energy_kwh, fare: r.fare.total_usd }];
+          { from: c.at, to: h.from, dep_jd: p.dep_jd, arr_jd: p.arr_jd, kwh: p.battery.energy_kwh, fare: p.fare.total_usd, aboard: p.battery.aboard },
+          { from: h.from, to: h.to, dep_jd: r.dep_jd, arr_jd: r.arr_jd, kwh: r.battery.energy_kwh, fare: r.fare.total_usd, aboard: r.battery.aboard }];
         rides.push({ hail: h.id, seed, t0, car: c.id, kind: "energy", legs, flown: R.fly(h.id, c.id, legs, t0, seed) });
       } catch (e) {}
     }
