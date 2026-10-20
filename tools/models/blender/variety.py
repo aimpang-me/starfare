@@ -25,7 +25,7 @@ TAU = math.pi * 2
 
 
 # ---------- materials ----------
-# Faces carry a material name from tools/models/trims.py (hull, mli, radiator, solar, truss, dark, window, rock) or
+# Faces carry a material name from tools/models/trims.py (hull, hull2, mli, radiator, solar, truss, dark, window, rock) or
 # "accent" (hull maps, tinted per ship by the page for its livery). A primitive takes an explicit mat, else the
 # innermost `with M(...)`, else its own default.
 
@@ -196,7 +196,8 @@ def orbital_depot():
     P.append(cyl(4.58, 3, (0, 0, 13), (0, 0, 0), 24, mat="window"))
     P.append(cyl(4.58, 1.2, (0, 0, 5), (0, 0, 0), 24, mat="accent"))
     for s in (1, -1):
-        P.append(cyl(3.5, 10, (s * 85, 0, 0), (0, math.pi / 2, 0)))  # tug berth hubs
+        P.append(cyl(3.5, 10, (s * 85, 0, 0), (0, math.pi / 2, 0), mat="hull2"))  # tug berth hubs
+        P.append(cyl(3.56, 1.4, (s * 82, 0, 0), (0, math.pi / 2, 0), mat="accent"))
         P += collar((s * 90, 0, 0), (s, 0, 0), 3)
         P += panel(14, 30, (s * 64, 0, -14), (0, 0, 0), 0.25, 6)     # radiators hang under, edge-on to the Sun
         P.append(rod((s * 64, 0, -3), (s * 64, 0, -6), 0.5))
@@ -208,7 +209,7 @@ def lunar_data_center():
     A data centre is mostly heat to dump, and fins on edge to the Sun see it least."""
     P = []
     for i in range(6):
-        P.append(box((16, 16, 9), (0, 0, -25 + i * 10)))
+        P.append(box((16, 16, 9), (0, 0, -25 + i * 10), mat="hull2" if i % 2 else "hull"))
         P.append(box((17, 17, 0.8), (0, 0, -20.5 + i * 10), mat="dark"))
     for k in range(6):                                                # six fins round the tower
         a = TAU * k / 6
@@ -218,6 +219,7 @@ def lunar_data_center():
             P.append(rod(d * 8 + Vector((0, 0, z)), d * 18 + Vector((0, 0, z)), 0.6))
         P += panel(40, 52, tuple(d * 40), (math.pi / 2, 0, a), 0.3, 8)
     P.append(cyl(5, 10, (0, 0, 36), (0, 0, 0)))
+    P.append(cyl(5.06, 2, (0, 0, 33), (0, 0, 0), mat="accent"))
     P += collar((0, 0, 41), (0, 0, 1), 2.6)
     P.append(cyl(4, 8, (0, 0, -34), (0, 0, 0)))
     P += collar((0, 0, -38), (0, 0, -1), 2.6)
@@ -231,7 +233,9 @@ def mars_base():
     for x in (-11.5, 11.5):
         P.append(ring(26, 1.2, (x, 0, 0), (0, math.pi / 2, 0), 64, 8, mat="dark"))
     P.append(cyl(26.12, 6, (0, 0, 0), (0, math.pi / 2, 0), 64, mat="window"))
-    P.append(cyl(5, 70, (-10, 0, 0), (0, math.pi / 2, 0)))            # axle
+    for x in (-7, 7):
+        P.append(cyl(26.1, 1.5, (x, 0, 0), (0, math.pi / 2, 0), 64, mat="accent"))
+    P.append(cyl(5, 70, (-10, 0, 0), (0, math.pi / 2, 0), mat="hull2"))  # axle
     P.append(cyl(7, 8, (26, 0, 0), (0, math.pi / 2, 0)))              # despun hub
     P += collar((30, 0, 0), (1, 0, 0), 3)
     P += truss((-45, 0, 0), (-95, 0, 0), 5, bay=6)                    # cargo spine
@@ -259,7 +263,8 @@ def ceres_port():
         P.append(ring(4, 0.5, (-35 - i * 9.5, 0, -6), (0, math.pi / 2, 0), 16, 6, mat="dark"))
     for i in range(4):
         P.append(rod((-40 - i * 34, 0, -8), (-40 - i * 34, 0, -14 - (3 - i) * 4), 0.6))
-    P.append(cyl(4, 14, (0, 0, 34), (0, 0, 0)))                        # port tower
+    P.append(cyl(4, 14, (0, 0, 34), (0, 0, 0), mat="hull2"))           # port tower
+    P.append(cyl(4.06, 1.6, (0, 0, 38), (0, 0, 0), mat="accent"))
     P += collar((0, 0, 41), (0, 0, 1), 2.8)
     P += collar((32, 0, 6), (1, 0, 0), 2.8)
     return join(P, "station-ceres-port")
@@ -269,12 +274,14 @@ def titan_dock():
     """Outer system dock: far from the Sun, so no solar. Twin spin tori on a long reactor boom with radiators."""
     P = []
     for x in (-9, 9):
-        P.append(ring(24, 3.6, (x, 0, 0), (0, math.pi / 2, 0), 64, 14))
+        P.append(ring(24, 3.6, (x, 0, 0), (0, math.pi / 2, 0), 64, 14, mat="hull2" if x > 0 else "hull"))
         for k in range(3):
             a = TAU * k / 3 + (0.5 if x > 0 else 0)
             P.append(rod((x, 0, 0), (x, 24 * math.cos(a), 24 * math.sin(a)), 1.1))
     P.append(cyl(5, 34, (0, 0, 0), (0, math.pi / 2, 0)))
     P.append(cyl(5.1, 8, (0, 0, 0), (0, math.pi / 2, 0), 24, mat="window"))
+    for x in (-13, 13):
+        P.append(cyl(5.1, 1.6, (x, 0, 0), (0, math.pi / 2, 0), 24, mat="accent"))
     P += collar((17, 0, 0), (1, 0, 0), 3)
     P += truss((-17, 0, 0), (-140, 0, 0), 4, bay=7)                   # long boom keeps the reactor away
     for k in range(4):                                                # four radiator fins in a cross along the boom
@@ -290,7 +297,8 @@ def titan_dock():
 
 def dock_ring():
     """Beside planets and big moons: a hub, a truss ring and four berth arms."""
-    P = [cyl(3, 14, (0, 0, 0), (0, 0, 0)), ring(18, 1.0, (0, 0, 0), (0, 0, 0), 48, 8)]
+    P = [cyl(3, 14, (0, 0, 0), (0, 0, 0), mat="hull2"), cyl(3.05, 1.5, (0, 0, 3), (0, 0, 0), mat="accent"),
+         ring(18, 1.0, (0, 0, 0), (0, 0, 0), 48, 8)]
     for k in range(4):
         a = TAU * k / 4
         d = Vector((math.cos(a), math.sin(a), 0))
@@ -303,7 +311,8 @@ def dock_ring():
 
 def dock_tether():
     """Beside small bodies and small moons: a hub with two berths on a long tether to a counterweight."""
-    P = [cyl(3, 9, (0, 0, 0), (0, math.pi / 2, 0)), ball(3.2, (5, 0, 0))]
+    P = [cyl(3, 9, (0, 0, 0), (0, math.pi / 2, 0), mat="hull2"), ball(3.2, (5, 0, 0), mat="mli"),
+         cyl(3.05, 1.4, (-1.5, 0, 0), (0, math.pi / 2, 0), mat="accent")]
     P += collar((-4.5, 0, 0), (-1, 0, 0), 2)
     P += collar((0, 0, 4.5), (0, 0, 1), 2)
     P.append(rod((0, 0, -4), (0, 0, -60), 0.25, 6))
@@ -316,7 +325,8 @@ def dock_tether():
 def dock_spar():
     """Busy hubs: a long spar with six berth arms and a control module."""
     P = truss((-48, 0, 0), (48, 0, 0), 4, bay=6)
-    P.append(box((10, 8, 8), (0, 0, 0)))
+    P.append(box((10, 8, 8), (0, 0, 0), mat="hull2"))
+    P.append(box((10.1, 8.1, 1.2), (0, 0, -2.5), mat="accent"))
     P.append(box((10.1, 8.1, 2), (0, 0, 1), mat="window"))
     P.append(cyl(2.5, 6, (0, 0, 7), (0, 0, 0)))
     for i, x in enumerate((-36, -18, 18, 36, -27, 27)):
@@ -399,6 +409,15 @@ def cut(o, keep):
     return o
 
 
+def adrift(fn):
+    """Debris hulls take the worn trim (bleached, pitted, scorched) wherever a part doesn't name its own material."""
+    def build():
+        with M("worn"):
+            return fn()
+    build.__doc__ = fn.__doc__
+    return build
+
+
 def debris_stage():
     """A spent upper stage: a tank cylinder, an open interstage ring, a dead nozzle, a snapped strut."""
     P = [cyl(1.6, 7, (0, 0, 0), (math.pi / 2, 0, 0), 20), ball(1.6, (0, -3.5, 0), 16, mat="mli")]
@@ -416,15 +435,15 @@ def debris_husk():
     P.append(rod((0.8, 0, 0), (1.6, 0, 0), 0.06))
     P += panel(3.2, 1.4, (3.3, 0, 0), (0, math.radians(12), math.radians(8)), 0.04, 3, kind="solar")
     P += panel(1.1, 1.4, (-1.6, 0, 0.1), (0, math.radians(-30), math.radians(-20)), 0.04, 1, kind="solar")  # stub
-    P.append(cyl(0.9, 0.25, (0, 0.6, 1.5), (math.radians(65), math.radians(20), 0), 16, r2=0.15, mat="hull"))
+    P.append(cyl(0.9, 0.25, (0, 0.6, 1.5), (math.radians(65), math.radians(20), 0), 16, r2=0.15))
     P.append(box((0.9, 0.04, 0.7), (0.4, 0.85, -0.6), (0.3, 0.2, 0.5), mat="mli"))  # peeled foil
     return join(P, "debris-husk")
 
 
 def debris_fairing():
     """Half a payload fairing shell, curled and open: the hollow side reads at any angle."""
-    o = cyl(2.2, 5, (0, 0, 0), (0, 0, 0), 24, mat="hull")
-    t = cyl(2.2, 3, (0, 0, 4), (0, 0, 0), 24, r2=0.4, mat="hull")
+    o = cyl(2.2, 5, (0, 0, 0), (0, 0, 0), 24)
+    t = cyl(2.2, 3, (0, 0, 4), (0, 0, 0), 24, r2=0.4)
     o = join([o, t], "debris-fairing")
     cut(o, lambda v: v.x > -0.05)
     o.rotation_euler = (0.4, 0.2, 0.9)
@@ -440,7 +459,7 @@ def debris_panels():
         w, h = rng.uniform(0.6, 2.2), rng.uniform(0.4, 1.4)
         at = (rng.uniform(-3, 3), rng.uniform(-3, 3), rng.uniform(-2, 2))
         rot = (rng.uniform(0, math.pi), rng.uniform(0, math.pi), rng.uniform(0, math.pi))
-        P.append(box((w, h, 0.05), at, rot, mat=rng.choice(["hull", "radiator", "solar", "mli"])))
+        P.append(box((w, h, 0.05), at, rot, mat=rng.choice(["worn", "radiator", "solar", "mli"])))
     P += truss((-1, -1, -1), (1.8, 0.4, 0.9), 0.4, bay=0.5)
     return join(P, "debris-panels")
 
@@ -470,6 +489,7 @@ PLACEMENT = {
                  "mars-base": "station-mars-base", "ceres-port": "station-ceres-port", "titan-dock": "station-titan-dock"},
     "docks": {"default": "dock-ring", "small": "dock-tether", "smallMoonKm": 600,
               "byKind": {"planet": "dock-spar", "moon": "dock-ring", "station": "dock-ring"}, "byPlace": {}},
+    "debris": ["debris-stage", "debris-husk", "debris-fairing", "debris-panels", "debris-rock"],
 }
 
 MODELS = {
@@ -477,8 +497,8 @@ MODELS = {
     "station-mars-base": mars_base, "station-ceres-port": ceres_port, "station-titan-dock": titan_dock,
     "dock-ring": dock_ring, "dock-tether": dock_tether, "dock-spar": dock_spar,
     "ship-taxi": taxi, "ship-shuttle": shuttle, "ship-liner": liner,
-    "debris-stage": debris_stage, "debris-husk": debris_husk, "debris-fairing": debris_fairing,
-    "debris-panels": debris_panels, "debris-rock": debris_rock,
+    "debris-stage": adrift(debris_stage), "debris-husk": adrift(debris_husk), "debris-fairing": adrift(debris_fairing),
+    "debris-panels": adrift(debris_panels), "debris-rock": debris_rock,
 }
 
 
@@ -681,7 +701,7 @@ def main(argv):
         entry = {"size_m": size}
         if a.export:
             os.makedirs(outdir, exist_ok=True)
-            low = lod(o, 1200 if mid.startswith("ship") else 2000)
+            low = lod(o, 300 if mid.startswith("debris") else 1200 if mid.startswith("ship") else 2000)
             export(o, os.path.join(outdir, mid + ".glb"))
             export(low, os.path.join(outdir, mid + "-lod.glb"))
             entry.update({"file": f"variety/{mid}.glb", "lod": f"variety/{mid}-lod.glb", "triangles": triangles(o),

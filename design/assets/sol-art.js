@@ -409,8 +409,9 @@
     var m = new THREE.MeshStandardMaterial({ map: trimTex(maps + "_color.jpg"), normalMap: trimTex(maps + "_normal.jpg"),
       roughnessMap: orm, metalnessMap: orm, roughness: 1, metalness: 1, envMapIntensity: 0.6 });
     m.normalScale.set(0.8, 0.8);
-    if (name === "window") { m.emissiveMap = trimTex("window_emissive.jpg"); m.emissive.setRGB(1, 1, 1); m.emissiveIntensity = 1.4; }
+    if (name === "window") { m.emissiveMap = trimTex("window_emissive.jpg"); m.emissive.setRGB(1, 1, 1); m.emissiveIntensity = 2; }
     if (name === "accent") m.color.setHex(LIVERY[0]);
+    if (name === "worn") m.side = THREE.DoubleSide; // debris has open shells (a fairing half)
     if (ENV.rt) m.envMap = ENV.rt.texture;
     ENV.mats.push(m);
     return TRIMS[name] = m;
@@ -461,7 +462,7 @@
 
   // dock(place, fallback): the model for a place, as a group that shows fallback (a THREE.Object3D) until it loads,
   // and keeps it when it can't. A fictional station gets its own model; every other place gets a Starfare dock parked
-  // beside it, by place type (variety.json "docks"). setPx(px), with the drawn size on screen, picks the full model
+  // beside it, by place type (variety.json "docks"); its accent bands take a colour from the place id. setPx(px), with the drawn size on screen, picks the full model
   // over about 90 px and the light one below. The low tier keeps the light one.
   function dockId(f, P) {
     if (!P) return f.docks.default;
@@ -486,7 +487,7 @@
         var h = f.models[dockId(f, P)];
         if (!h) throw new Error("no dock model for " + (P && P.id));
         return loadModel(h[which]);
-      }).then(function (scene) { var m = scene.clone(); m.visible = false; g.add(m); got[which] = m; show(); },
+      }).then(function (scene) { var m = scene.clone(); livery(m, P && P.id); m.visible = false; g.add(m); got[which] = m; show(); },
         function (e) { console.warn("SolArt: keeping the placeholder dock for " + (P && P.id) + ":", e && e.message || e); });
     }
     if (THREE.GLTFLoader) fetchOne("lod");
@@ -495,6 +496,20 @@
       if (want === "file") fetchOne("file");
       show();
     };
+    return g;
+  }
+
+  // debris(id, px): one piece of drifting debris (variety.json "debris": stage, husk, fairing, panels, rock), the
+  // light model, or the full one when it will be drawn over about 90 px. Empty until it loads. Map art only: nothing
+  // here places debris or makes it a hazard; the page decides where it drifts and how it tumbles.
+  function debris(id, px) {
+    var g = new THREE.Group();
+    if (THREE.GLTFLoader) variety().then(function (f) {
+      var h = f.models[id] || f.models["debris-" + id];
+      if (!h) throw new Error("no debris model " + id);
+      return loadModel(px > 90 && quality().hulls ? h.file : h.lod);
+    }).then(function (scene) { g.add(scene.clone()); },
+      function (e) { console.warn("SolArt: no debris model:", e && e.message || e); });
     return g;
   }
 
@@ -637,7 +652,7 @@
     updatePlanet: function (body, context) { if (root.StarfarePlanetEffects) root.StarfarePlanetEffects.update(body, devicePixels(context)); },
     disposePlanet: function (body) { if (root.StarfarePlanetEffects && body) root.StarfarePlanetEffects.dispose(body.userData.solarSurface || body); },
     updateSun: function (body, context) { if (root.StarfarePlanetEffects && body.userData.solarSurface) root.StarfarePlanetEffects.update(body.userData.solarSurface, devicePixels(context)); },
-    sun: sun, stars: stars, composer: composer, ship: ship, dock: dock, setEngine: setEngine, setSky: setSky, quality: quality, icon: icon, ICONS: Object.keys(ICONS),
+    sun: sun, stars: stars, composer: composer, ship: ship, dock: dock, debris: debris, setEngine: setEngine, setSky: setSky, quality: quality, icon: icon, ICONS: Object.keys(ICONS),
     CREDIT: "Maps: NASA, JPL, USGS (public domain); Earth effects, Saturn, rings, Sun: Solar System Scope (CC BY 4.0). Moon relief: NASA SVS / LRO LOLA. Stars: Yale Bright Star Catalog."
   };
 })(window);

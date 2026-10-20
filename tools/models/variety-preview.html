@@ -38,7 +38,12 @@ var CELLS = [
   ["Taxi", "SF-02, DS1 class", "sf-02"],
   ["Shuttle", "SF-01, Dawn class", "sf-01"],
   ["Liner", "SF-04, RTG class", "sf-04"],
-  ["Liner", "SF-07, another livery", "sf-07"]
+  ["Liner", "SF-07, another livery", "sf-07"],
+  ["Spent stage", "debris", { debris: "stage" }],
+  ["Satellite husk", "debris", { debris: "husk" }],
+  ["Fairing half", "debris", { debris: "fairing" }],
+  ["Panel shards", "debris", { debris: "panels" }],
+  ["Rock shard", "debris", { debris: "rock" }]
 ];
 var grid = document.getElementById("grid"), R = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), antialias: true, alpha: true });
 R.setPixelRatio(Math.min(2, devicePixelRatio)); SolArt.init(R);
@@ -47,7 +52,7 @@ var items = CELLS.map(function (c) {
   var sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
   sc.add(new THREE.AmbientLight(0xffffff, 0.12));
   var sun = new THREE.DirectionalLight(0xfff1dc, 1.6); sun.position.set(2, 1.4, 1.2); sc.add(sun);
-  var obj = typeof c[2] === "string" ? SolArt.ship({ callsign: c[2].toUpperCase(), car: c[2] }) : SolArt.dock(c[2], null);
+  var obj = typeof c[2] === "string" ? SolArt.ship({ callsign: c[2].toUpperCase(), car: c[2] }) : c[2].debris ? SolArt.debris(c[2].debris, 400) : SolArt.dock(c[2], null);
   if (obj.userData.setPx) obj.userData.setPx(400);
   sc.add(obj);
   cam.position.set(1.5, 0.9, 1.9); cam.lookAt(0, 0, 0);

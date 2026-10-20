@@ -19,7 +19,7 @@ N = 1024
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 OUT = os.path.join(ROOT, "design", "assets", "models", "trim")
 # metres covered by one tile; variety.py reads this file's manifest for its UV sizes
-TILE_M = {"hull": 4, "mli": 2, "radiator": 2, "solar": 2, "truss": 1, "dark": 2, "window": 4, "rock": 16}
+TILE_M = {"hull": 4, "hull2": 4, "mli": 2, "radiator": 2, "solar": 2, "truss": 1, "dark": 2, "window": 4, "rock": 16, "worn": 4}
 
 
 def periodic_noise(rng, sigma, n=N):
@@ -120,24 +120,39 @@ def hull(rng):
     s, t = panels(rng, 4, 8)
     grime = fbm(rng, [60, 14, 3], [1, 0.5, 0.25])
     riv = rivets(N / 32, N / 64, 2.0) * (1 - s)
-    v = 0.86 + 0.06 * (t - 0.5) - 0.12 * grime ** 2 - 0.45 * s - 0.08 * riv
-    color = tint((0.93, 0.93, 0.91), v)
+    big = periodic_noise(rng, 120)
+    two = (t > 0.78).astype(float)                       # about one plate in five is a grey service panel
+    v = 0.84 + 0.16 * (t - 0.5) - 0.2 * grime ** 2 - 0.12 * big - 0.55 * s - 0.1 * riv - 0.3 * two
+    color = tint((0.93, 0.92, 0.89), v) * (1 - two)[..., None] + tint((0.82, 0.86, 0.92), v) * two[..., None]
     rough = 0.48 + 0.18 * grime + 0.08 * (t - 0.5) + 0.3 * s
     metal = 0.15 + 0.1 * t
     height = 0.6 * (1 - s) + 0.05 * t + 0.3 * riv + 0.02 * grime
     save("hull", color, rough, metal, blur(height, 0.8), 6)
 
 
+def hull2(rng):
+    # 4 m tile: the second hull finish, a darker blue-grey with larger 2 m x 1 m plates, so modules differ from afar.
+    s, t = panels(rng, 2, 4, 0.2)
+    grime = fbm(rng, [60, 14, 3], [1, 0.5, 0.25])
+    riv = rivets(N / 16, N / 32, 2.4) * (1 - s)
+    v = 0.66 + 0.12 * (t - 0.5) - 0.12 * grime ** 2 - 0.5 * s - 0.1 * riv
+    color = tint((0.78, 0.84, 0.94), v)
+    rough = 0.42 + 0.2 * grime + 0.3 * s
+    metal = 0.1 + 0.05 * t
+    height = 0.6 * (1 - s) + 0.05 * t + 0.3 * riv
+    save("hull2", color, rough, metal, blur(height, 0.8), 6)
+
+
 def mli(rng):
-    # 2 m tile: multi-layer insulation blanket, crinkled foil quilted every 0.5 m. Silver-white beta cloth outer.
+    # 2 m tile: multi-layer insulation blanket, crinkled gold Kapton foil quilted every 0.5 m.
     crinkle = fbm(rng, [2.5, 6, 18], [0.5, 0.35, 0.3])
     stretch = periodic_noise(rng, 40)
     q = grid_lines(4, 4, 3)
     stitch = q * (np.sin(np.mgrid[0:N, 0:N][1] * 0.9) > 0)
-    v = 0.78 + 0.18 * crinkle - 0.25 * q
-    color = np.dstack([v * 0.95, v * 0.94, v * 0.9])
-    rough = 0.35 + 0.4 * (1 - crinkle) + 0.2 * q
-    metal = 0.55 - 0.3 * q
+    v = 0.5 + 0.65 * crinkle - 0.25 * q
+    color = np.dstack([v * 1.0, v * 0.74, v * 0.32])
+    rough = 0.25 + 0.4 * (1 - crinkle) + 0.2 * q
+    metal = 0.75 - 0.3 * q
     height = crinkle + 0.4 * stretch - 0.8 * q - 0.2 * stitch
     save("mli", color, rough, metal, blur(height, 0.6), 4)
 
@@ -149,7 +164,7 @@ def radiator(rng):
     tube = tube ** 6
     seam = grid_lines(2, 2, 2.5)
     scuff = fbm(rng, [30, 6], [1, 0.4])
-    v = 0.84 - 0.06 * tube - 0.4 * seam - 0.1 * scuff ** 3
+    v = 0.86 - 0.22 * tube - 0.5 * seam - 0.14 * scuff ** 3
     color = tint((0.95, 0.95, 0.96), v)
     rough = 0.6 + 0.15 * scuff - 0.2 * tube
     metal = 0.05 + 0.2 * tube
@@ -219,6 +234,21 @@ def window(rng):
     Image.fromarray((np.clip(em, 0, 1) * 255 + 0.5).astype(np.uint8)).save(os.path.join(OUT, "window_emissive.jpg"), quality=85)
 
 
+def worn(rng):
+    # 4 m tile: the hull panelling after years adrift: sun-bleached and pitted, scorched in patches, plates missing.
+    s, t = panels(rng, 4, 8, 0.25)
+    soot = np.clip((fbm(rng, [50, 12, 3], [1, 0.5, 0.3]) - 0.45) * 2.0, 0, 1)
+    pits = np.clip((periodic_noise(rng, 1.5) - 0.6) * 5, 0, 1)
+    gone = (t > 0.88).astype(float)                       # bare substructure where a plate tore off
+    v = 0.8 + 0.14 * (t - 0.5) - 0.4 * soot - 0.5 * s - 0.12 * pits
+    color = tint((0.9, 0.86, 0.8), v)
+    color = color * (1 - gone)[..., None] + gone[..., None] * np.array([0.12, 0.11, 0.1])
+    rough = 0.6 + 0.3 * soot + 0.1 * pits
+    metal = 0.1 + 0.5 * gone
+    height = 0.6 * (1 - s) - 0.4 * pits - 0.7 * gone
+    save("worn", color, rough, metal, blur(height, 0.7), 6)
+
+
 def rock(rng):
     # 16 m tile: carbonaceous regolith (Ceres is dark, albedo about 0.09), boulders and fine grit.
     h = fbm(rng, [90, 30, 10, 3, 1], [1, 0.6, 0.35, 0.2, 0.12])
@@ -232,7 +262,7 @@ def rock(rng):
 
 def main():
     rng = np.random.default_rng(20261020)
-    for f in (hull, mli, radiator, solar, truss, dark, window, rock):
+    for f in (hull, hull2, mli, radiator, solar, truss, dark, window, rock, worn):
         f(rng)
         print("trim:", f.__name__, flush=True)
     with open(os.path.join(OUT, "trim.json"), "w") as fh:

@@ -20,7 +20,7 @@ page.on("response", (r) => { if (r.status() >= 400) errs.push(r.status() + " " +
 if (process.argv[4] === "preview") {
   // tools/models/variety-preview.html, served beside the page's own assets
   await page.route(/\/assets\/variety-preview\.html/, (r) => r.fulfill({ body: readFileSync(new URL("../models/variety-preview.html", import.meta.url)), contentType: "text/html" }));
-  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.setViewportSize({ width: 1440, height: 1660 });
   await page.goto(BASE + "/assets/variety-preview.html#still", { waitUntil: "load" });
   await page.waitForTimeout(15000);
   await page.screenshot({ path: join(OUT, "preview.png"), fullPage: true });
