@@ -38,6 +38,7 @@ The website (`connector/src/site.html`) and the flight page (`connector/src/flig
 - Two clocks: the simulation/replay clock comes from recorded data and is authoritative, and a separate presentation clock is used for decoration only. Decoration never moves a flight, changes a time or implies a physical event (`art/2026-10-17/motion-spec.md`).
 - GSAP 3.15 (`design/assets/vendor/`) is used for UI and camera transitions only, never for flight paths or simulation time.
 - No camera shake, star streaks or flame plumes. The one engine effect is a faint ion glow labelled "Ion glow illustrative: thrust not recorded" (Alvin, 2026-10-18; `docs/VFX-PLAN.md`).
+- Parked ships bob and sway by a few pixels, out of step per ship (Alvin, 2026-10-20). It is decoration only: it never moves the recorded position and is never used for holds.
 - `prefers-reduced-motion`: replay starts paused, the map starts paused, camera moves are instant, and parked-ship drift and surface rotation are frozen.
 
 ### Not yet on Mission Control
