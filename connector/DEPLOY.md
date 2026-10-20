@@ -92,6 +92,7 @@ Re-run `npm run build` whenever `sol/world/engine/sol-page.js` (rebuilt by `sol/
 | Name | Kind | Meaning |
 |---|---|---|
 | `RATE_PER_MIN` | var | Requests a minute per IPv4 address or IPv6 /64 on `/mcp` (and, with OAuth on, on the OAuth endpoints too, and per player on signed-in `/mcp` calls). Default `120`. |
+| `STARFARE_SEASON_KEY` | secret | Keys each season's hazard seed (HMAC-SHA-256, 32+ characters; make one with `openssl rand -hex 32`). Without it, or with a shorter one, a season's seed is its number and anyone can compute its weather from `/engine.js`. With it, the home page reads conditions from `/sky.json` (reported up to now, no end times for running storms), booking previews fly stand-in weather, and `/seasons/<n>.json` publishes a season's seed after it resets, when that season's episode files open too. Setting it mid-season changes the weather for rides taken after it. |
 | `BENCH_TEST_PER_DAY` | var | Held-out test bench sessions one player may start per UTC day (without sign-in, per address). Default `3`. Each session draws fresh hazards for its tasks (suite `world: "per_repeat"`), so replaying the test split doesn't reveal fixed worlds. |
 | `STARFARE_OAUTH` | var | `off` (default): no auth. `on`: OAuth with a one-click consent page. Only `on` exactly turns it on. |
 

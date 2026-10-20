@@ -22,7 +22,8 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
-import { SCORE_VERSION, SEASON_END, computeLeg, isoJD } from "../src/game.js";
+import { SCORE_VERSION, SEASON_END, computeLeg, isoJD, sky } from "../src/game.js";
+import { keyedSeed } from "../src/season-seed.js";
 import { stopWorkerProcess } from "./worker-process.mjs";
 
 const DIR = fileURLToPath(new URL("..", import.meta.url));
@@ -100,8 +101,10 @@ const jdOf = (s) => Date.parse(s.replace(" ", "T") + ":00Z") / 864e5 + 2440587.5
 
 /** Re-run the same hail in Node with the engine directly: same t0, season seed, car and legs (the pickup leaves when the
  *  car is free), then R.fly through the season's hazards and R.score with ctx.flown, as the connector does. */
+// A keyed server's season seeds, which this test can compute because it set the key (the on phase).
+const NODE_SEEDS = {};
 function nodeScore(hailId, riderReady, season, carId, planCalls, quote, objective = "energy", opts = {}) {
-  const t0 = jdOf(riderReady), h = R.BY[hailId], seed = String(season);
+  const t0 = jdOf(riderReady), h = R.BY[hailId], seed = NODE_SEEDS[season] ?? String(season);
   const T = R.terms(hailId, t0, SEASON_END, seed);
   const p = computeLeg(E, R.CAR[carId].at, h.from, R.pickupStart(hailId, carId, t0, seed), objective, SEASON_END, carId, 0);
   const r = computeLeg(E, h.from, h.to, p.arr_jd + R.DWELL, objective, SEASON_END, carId, h.party);
@@ -421,7 +424,7 @@ async function phaseOff() {
 
     const earlyEp = await fetch(`${w.base}/flight/${id}/episode.jsonl`);
     assert.equal(earlyEp.status, 404);
-    assert.equal(await earlyEp.text(), "Not found: no arrived flight with that run_id");
+    assert.equal(await earlyEp.text(), "Not found: no arrived flight with that run_id, or its season is keyed and its seed is published after the reset");
 
     const r = await fetch(`${w.base}/rides/${id}.json`), text = await r.text(), rec = JSON.parse(text);
     assert.equal(r.status, 200); assert.equal(r.headers.get("cache-control"), "no-store");
@@ -864,7 +867,10 @@ async function sdkSignIn(base, name) {
 async function phaseOn() {
   console.log("\n== STARFARE_OAUTH=on ==");
   const report = {};
-  const w = await startWorker({ STARFARE_OAUTH: "on", RATE_PER_MIN: "1000" });
+  // The on server also keys its seasons (STARFARE_SEASON_KEY), as the live one will once the secret is set.
+  const SEASON_KEY = "e2e-season-key-".padEnd(48, "s"), season = sky(Date.now()).season;
+  for (const n of [season, season + 1]) NODE_SEEDS[n] = await keyedSeed(n, SEASON_KEY);
+  const w = await startWorker({ STARFARE_OAUTH: "on", RATE_PER_MIN: "1000", STARFARE_SEASON_KEY: SEASON_KEY });
   const { base } = w;
   console.log(`wrangler dev up at ${base}`);
   let asMeta, a, b;
@@ -960,6 +966,24 @@ async function phaseOn() {
       const rec = await (await fetch(`${base}/rides/${good.hail.run_id}.json`)).json();
       assert.deepEqual(rec.score.parts.map((p) => p.key).sort(), ["checker", "dose", "economy", "energy", "fare", "on_time", "pickup", "promise", "recovery", "window"]);
       report.board_row = j.best["iss-crew"];
+    });
+    await check("on: a keyed season: rides name the season, the home page reads /sky.json, and the seed stays secret until the reset", async () => {
+      const html = await (await fetch(`${base}/`)).text(), site = JSON.parse(/window\.SITE = (.*?);<\/script>/.exec(html)[1]);
+      assert.equal(site.hazards, "reported");
+      assert.ok(html.includes('<script src="/assets/conditions.js"></script>'));
+      assert.equal((await fetch(`${base}/assets/conditions.js`)).status, 200);
+      const j = await (await fetch(`${base}/sky.json`)).json();
+      assert.equal(j.keyed, true); assert.equal(j.seed, undefined);
+      assert.ok(j.report.at <= j.now_jd && Array.isArray(j.report.eruptions) && Array.isArray(j.report.pads_full));
+      for (const w of [...j.report.eruptions, ...Object.values(j.report.storms).flat()]) assert.ok(w.start <= j.now_jd && (w.end === null || w.end <= j.now_jd));
+      const season = await (await fetch(`${base}/seasons/${j.season}.json`)).json();
+      assert.deepEqual([season.keyed, season.released, season.seed], [true, false, null]);
+      const rec = await (await fetch(`${base}/rides/${good.hail.run_id}.json`)).json();
+      assert.equal(rec.season, good.hail.season);
+      assert.ok(Number.isInteger(rec.season));
+      assert.equal(JSON.stringify(rec).includes("k1:"), false, "no seed in a ride record");
+      const ep = await fetch(`${base}/flight/${good.hail.run_id}/episode.jsonl`);
+      assert.equal(ep.status, 404, "a keyed season's episodes wait for the reset"); await ep.body?.cancel();
     });
     await check("on: SSE transport with the access token works (list_hails)", async () => {
       const sse = await connect(base, "sse", { requestInit: { headers: { Authorization: `Bearer ${a.auth.saved.access_token}` } } });

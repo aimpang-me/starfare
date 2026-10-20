@@ -13,7 +13,7 @@ function load() {
   const deps = {
     DurableObject: class { constructor(ctx, env) { this.ctx = ctx; this.env = env; } },
     engine, META: { sha256: "test" }, episodeText, ...game, liveIdsToDrop,
-    playersIn: distinctPlayers, freezePool: ensurePool, storedPool: poolSize, recordBest,
+    playersIn: distinctPlayers, freezePool: ensurePool, storedPool: poolSize, recordBest, seasonSeed: async (env, s) => String(s),
   };
   const source = readFileSync(new URL("../src/store.js", import.meta.url), "utf8")
     .replace(/^import\s[\s\S]*?;\r?\n/gm, "")

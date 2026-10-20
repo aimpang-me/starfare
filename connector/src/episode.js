@@ -1,4 +1,4 @@
-import { isoJD, jdOfIso, names, phaseOf, seedOf } from "./game.js";
+import { isoJD, jdOfIso, names, phaseOf, seasonOf, seedOf, sky } from "./game.js";
 import { seedFor } from "./suite.js";
 
 export const EPISODE_SCHEMA = "starfare.episode/1";
@@ -35,10 +35,11 @@ function strip(v) {
   return v;
 }
 
-async function worldClass(run, suite) {
+/** A season run exports its seed, so a keyed season's runs export only once the season has ended and its seed is public. */
+async function worldClass(run, suite, nowMs) {
   const seed = String(seedOf(run));
   const keyed = K1.test(seed);
-  if (run.tag == null) return keyed ? null : { kind: "live", seed };
+  if (run.tag == null) return keyed && !(run.season != null && run.season < sky(nowMs).season) ? null : { kind: "live", seed, season: seasonOf(run) };
   if (!suite || !keyed) return null;
   const dev = await seedFor(suite, "dev", { id: run.tag }, 0);
   if (seed !== dev) return null;
@@ -147,7 +148,7 @@ function rewardOf(score) {
 }
 
 function worldOut(world) {
-  return world.kind === "live" ? { kind: "live", season: Number(world.seed), seed: world.seed } : { kind: "dev", task_id: world.task_id, seed: world.seed };
+  return world.kind === "live" ? { kind: "live", season: world.season, seed: world.seed } : { kind: "dev", task_id: world.task_id, seed: world.seed };
 }
 
 function build(E, run, world) {
@@ -208,9 +209,9 @@ function leaked(text, run) {
   return false;
 }
 
-export async function episodeText(E, run, suite) {
+export async function episodeText(E, run, suite, nowMs = Date.now()) {
   if (!run || phaseOf(run) !== "arrived" || !run.score) return null;
-  const world = await worldClass(run, suite);
+  const world = await worldClass(run, suite, nowMs);
   if (!world) return null;
   const text = build(E, run, world).map((row) => JSON.stringify(row)).join("\n") + "\n";
   if (leaked(text, run)) throw new Error("episode refused");
