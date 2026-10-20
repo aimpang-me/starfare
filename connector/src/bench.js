@@ -13,6 +13,7 @@ let suite = null;
 const suiteOf = () => (suite ??= loadSuite(V1));
 
 const RESULT_MAX = 64 * 1024, TRACE_PAGE = 50;
+const BENCH_KEEP_MS = 7 * 24 * 3600 * 1000;
 
 export class StarfareBench extends DurableObject {
   #queue = Promise.resolve();
@@ -39,6 +40,7 @@ export class StarfareBench extends DurableObject {
       if (s.error) return s;
       this.ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS trace (seq INTEGER PRIMARY KEY, at INTEGER, task INTEGER, tool TEXT, input TEXT, result TEXT)");
       await this.ctx.storage.put("session", s);
+      await this.ctx.storage.setAlarm(Date.now() + BENCH_KEEP_MS);
       const dev = split === "dev";
       const out = {
         bench_id: id, simulated: true, practice: dev, suite: s.suite + (dev ? " (public dev split)" : " (held-out test split)"), tasks: s.tasks.length, budget: s.budget,
@@ -73,6 +75,15 @@ export class StarfareBench extends DurableObject {
       if (r.task != null) this.#log(r.task, END_TOOL, {}, r.result);
       if (r.session.done) this.#verifyLater();
       return r.result;
+    });
+  }
+
+  /** BENCH_KEEP_MS after start_bench: a session never played to the end is deleted with its trace. Finished ones stay,
+   *  so their watch pages and trace downloads keep working. */
+  alarm() {
+    return this.#serial(async () => {
+      const s = await this.#session();
+      if (!s || !s.done) await this.ctx.storage.deleteAll();
     });
   }
 

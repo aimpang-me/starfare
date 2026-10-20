@@ -40,7 +40,8 @@ test("seeds are k1 and 32 hex, the same every time, one world per task unless pe
   const perRepeat = { ...SUITE, world: "per_repeat" };
   assert.notEqual(await seedFor(perRepeat, "dev", SOLO, 0), await seedFor(perRepeat, "dev", SOLO, 1));
   await assert.rejects(seedFor(SUITE, "test", SOLO, 0), { message: "the test split needs STARFARE_BENCH_KEY" });
-  const k1 = await seedFor(SUITE, "test", SOLO, 0, "key-one"), k2 = await seedFor(SUITE, "test", SOLO, 0, "key-two");
+  await assert.rejects(seedFor(SUITE, "test", SOLO, 0, "x".repeat(31)), { message: /shorter than 32 characters/ });
+  const k1 = await seedFor(SUITE, "test", SOLO, 0, "key-one".padEnd(32, "1")), k2 = await seedFor(SUITE, "test", SOLO, 0, "key-two".padEnd(32, "2"));
   assert.match(k1, /^k1:[0-9a-f]{32}$/);
   assert.notEqual(k1, k2);
   assert.notEqual(k1, a);
@@ -133,7 +134,7 @@ test("hosted session: tasks in order, each closed on arrival or from the watch p
   ]);
 });
 
-const KEY = "fixture-bench-key";
+const KEY = "fixture-bench-key-0123456789abcdef"; // 32+ characters, as the server requires
 const HELD = { id: "iss-crew/held", hail_id: "iss-crew", clock_jd: 2461550.0 };
 const TEST_SUITE = { ...SUITE, splits: { dev: [SOLO], test: [HELD] } };
 
@@ -141,6 +142,9 @@ test("a test session needs the server's key and a test split; practice works wit
   const dev = " start_bench with split dev (practice) still works.";
   assert.deepEqual(newSession(TEST_SUITE, "b_t", null, 0, { split: "test" }), { error: "The test split needs STARFARE_BENCH_KEY on this server, and it has none." + dev });
   assert.deepEqual(newSession(SUITE, "b_t", null, 0, { split: "test", key: KEY }), { error: "Suite fixture has no test split yet." + dev });
+  // A guessable key would give away every held-out world, so a short one closes the test split.
+  assert.deepEqual(newSession(TEST_SUITE, "b_t", null, 0, { split: "test", key: "placeholder" }),
+    { error: "The test split is closed on this server: its STARFARE_BENCH_KEY is too short to keep the worlds hidden." + dev });
   assert.deepEqual(newSession(TEST_SUITE, "b_t", null, 0, { split: "train", key: KEY }), { error: "split is dev (practice) or test (held out), not train." });
   const d = newSession(TEST_SUITE, "b_t", null, 0);
   assert.deepEqual([d.split, d.tasks, benchView(d).practice], ["dev", [SOLO], true]);
@@ -242,6 +246,7 @@ test("make-suite's test cut writes only id, hail or hails and sky day to the sui
   assert.deepEqual(publicTask({ ...SHARED, stratum: "long/clear" }), SHARED);
   const cli = (args, env) => spawnSync(process.execPath, [fileURLToPath(new URL("../bench/make-suite.mjs", import.meta.url)), ...args], { encoding: "utf8", env: { ...process.env, STARFARE_BENCH_KEY: "", ...env } });
   assert.match(cli(["--test-into", "x.json", "--test-selection", join(tmpdir(), "sel.json")]).stderr, /--test-into needs STARFARE_BENCH_KEY in the environment/);
+  assert.match(cli(["--test-into", "x.json", "--test-selection", join(tmpdir(), "sel.json")], { STARFARE_BENCH_KEY: "placeholder" }).stderr, /shorter than 32 characters/);
   const inside = cli(["--test-into", "x.json", "--test-selection", fileURLToPath(new URL("../sel.json", import.meta.url))], { STARFARE_BENCH_KEY: KEY });
   assert.notEqual(inside.status, 0);
   assert.match(inside.stderr, /--test-selection must be a path outside the repo: it holds the test split's scores/);

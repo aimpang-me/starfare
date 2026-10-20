@@ -22,6 +22,13 @@ export function tasksOf(suite, split) {
   return t;
 }
 
+/** The test split is only as hidden as its key: the engine and task list are public, so a guessable key gives away every
+ *  test world. A key must be at least BENCH_KEY_MIN characters (openssl rand -hex 32 makes 64). Returns why a key is
+ *  refused, or null. */
+export const BENCH_KEY_MIN = 32;
+export const weakKey = (key) => (!key ? null : String(key).length < BENCH_KEY_MIN
+  ? "STARFARE_BENCH_KEY is shorter than " + BENCH_KEY_MIN + " characters. Make a random one with: openssl rand -hex 32" : null);
+
 const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 const utf8 = (s) => new TextEncoder().encode(s);
 /** A task's hazard seed, "k1:" and 128 bits of hex. Public splits: SHA-256 of a public string. Test: HMAC-SHA-256 under key.
@@ -30,6 +37,7 @@ export async function seedFor(suite, split, task, repeat, key) {
   const msg = utf8(["starfare-bench", suite.id, split, task.id, ...(suite.world === "per_repeat" ? [String(repeat)] : [])].join("|"));
   if (PUBLIC_SPLITS.includes(split)) return "k1:" + hex(await crypto.subtle.digest("SHA-256", msg)).slice(0, 32);
   if (!key) throw new Error("the " + split + " split needs STARFARE_BENCH_KEY");
+  if (weakKey(key)) throw new Error(weakKey(key));
   const k = await crypto.subtle.importKey("raw", utf8(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return "k1:" + hex(await crypto.subtle.sign("HMAC", k, msg)).slice(0, 32);
 }

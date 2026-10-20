@@ -50,7 +50,7 @@ Tools:
 
 Why no OAuth by default: what is known now is that grok.com **does** accept a custom connector that uses OAuth (the Wingbot connector worked: Grok ran dynamic client registration, PKCE and the consent page, then called a tool). Whether it accepts one with **no** auth is still unknown. xAI's page (docs.x.ai/grok/connectors) says only "complete any required authentication", and third-party guides show optional OAuth fields, which suggests a URL-only connector is allowed. A server that answers an unauthenticated `initialize` with 200 never asks a well-behaved client to start OAuth. If grok.com refuses the no-auth server, that is the first thing step 5 will show, and the fix is one var: `STARFARE_OAUTH` `on` (section "Turning OAuth on"), which is built and tested locally.
 
-**Rate limit:** each IP gets `RATE_PER_MIN` requests a minute on `/mcp` (default 120; fixed one-minute window; counted in the `StarfareHub` Durable Object's memory, so a restart resets it). When Grok calls the connector, the requests come from xAI's servers, not from the player. All Grok players may then share a few IPs and one budget. Watch `wrangler tail` for 429s after launch and raise `RATE_PER_MIN` if needed. A run also stops accepting plans after 40 `plan_pickup` and `plan_ride` calls, which bounds the CPU one run can spend.
+**Rate limit:** each IPv4 address, or each IPv6 /64, gets `RATE_PER_MIN` requests a minute on `/mcp` (default 120; fixed one-minute window; counted in the `StarfareHub` Durable Object's memory, so a restart resets it; `src/limit.js`). A JSON-RPC batch counts each message, and a batch over 10 messages is refused. With OAuth on, a signed-in `/mcp` call counts against its player at `RATE_PER_MIN` and against its address at 5 times that, because Grok calls from xAI's servers, so many players can share a few addresses. A client already refused this minute is answered without asking the hub again. This is in-Worker only: a Cloudflare WAF rate-limiting rule in front would stop a flood before it reaches the Worker. Watch `wrangler tail` for 429s after launch and raise `RATE_PER_MIN` if needed. A run also stops accepting plans after 40 `plan_pickup` and `plan_ride` calls, which bounds the CPU one run can spend.
 
 **"Planned by Grok bot" is a label, not a check.** Any MCP client can call `/mcp`. The board says so.
 
@@ -91,7 +91,7 @@ Re-run `npm run build` whenever `sol/world/engine/sol-page.js` (rebuilt by `sol/
 
 | Name | Kind | Meaning |
 |---|---|---|
-| `RATE_PER_MIN` | var | Requests a minute per IP on `/mcp` (and, with OAuth on, on the OAuth endpoints too). Default `120`. |
+| `RATE_PER_MIN` | var | Requests a minute per IPv4 address or IPv6 /64 on `/mcp` (and, with OAuth on, on the OAuth endpoints too, and per player on signed-in `/mcp` calls). Default `120`. |
 | `STARFARE_OAUTH` | var | `off` (default): no auth. `on`: OAuth with a one-click consent page. Only `on` exactly turns it on. |
 
 No secrets.
@@ -199,7 +199,7 @@ What it does not protect: anyone can click Allow, so anyone can get a player id.
 
 `start_bench` with split `dev` (practice) works with no setup. Split `test` draws each task's world (its weather and traffic, simulated) from `STARFARE_BENCH_KEY`, so the Worker refuses it until that secret is set. The key never goes in the repo, a tool result or a trace. Run these from `sol/connector`; none was run for this change.
 
-1. Make a key and keep it somewhere safe outside the repo (a password manager). Every test-split world and every replay of a test-split trace depends on it. A new key makes a new set of worlds, so traces played under the old key no longer verify.
+1. Make a random key with `openssl rand -hex 32` and keep it somewhere safe outside the repo (a password manager). The server, `make-suite` and `verify` refuse a key shorter than 32 characters: the engine and the task list are public, so a guessable key gives away every test world. Every test-split world and every replay of a test-split trace depends on it. A new key makes a new set of worlds, so traces played under the old key no longer verify.
 2. Cut the test split with the key in the environment. The task list (id, hail or hails, sky day) goes into the suite file, and the scores go only to the selection file, which must sit outside the repo:
 
    ```sh

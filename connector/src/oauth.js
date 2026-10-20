@@ -8,6 +8,7 @@
 // API the provider calls, so turning OAuth on needs no namespace to create, only the var.
 import { DurableObject } from "cloudflare:workers";
 import { AuthorizationError, CimdFetchError, OAuthProvider } from "@cloudflare/workers-oauth-provider";
+import { allowed, rateLimit, rpcCount, tooMany } from "./limit.js";
 import { mcpHandler } from "./mcp.js";
 import { FOLLOW_TOKEN, hub } from "./store.js";
 
@@ -141,11 +142,15 @@ async function handleAuthorize(req, env) {
 
 /** The grant's props reach /mcp as ctx.props; only a well-formed player id gets through to the tools. */
 const mcpApi = {
-  fetch(req, env, ctx) {
+  async fetch(req, env, ctx) {
     const player_id = ctx.props && ctx.props.player_id;
     if (typeof player_id !== "string" || !PLAYER_ID.test(player_id)) {
       return new Response("Grant is malformed; connect again.", { status: 401, headers: { "www-authenticate": 'Bearer error="invalid_token"' } });
     }
+    // Each player gets the per-minute budget, whatever address their agent calls from (src/limit.js).
+    const limit = rateLimit(env), n = await rpcCount(req);
+    if (n instanceof Response) return n;
+    if (!(await allowed(hub(env), "player:" + player_id, limit, n))) return tooMany(limit, "this player");
     ctx.props = { player_id, origin: new URL(req.url).origin };
     return mcpHandler.fetch(req, env, ctx);
   },
