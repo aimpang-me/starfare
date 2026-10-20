@@ -77,19 +77,20 @@ h2{margin:0;font-weight:300;font-size:26px;letter-spacing:-.01em}
 .call summary{display:grid;grid-template-columns:3.2em minmax(0,11em) minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:10px 16px;cursor:pointer;list-style:none}
 .call summary::-webkit-details-marker{display:none}
 .call summary:hover{background:rgba(255,255,255,.03)}
-.call .tool{font-family:var(--mono);font-size:13px;color:var(--ride);overflow-wrap:anywhere}
-.call .gist{color:var(--ink-2);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.call.err .gist{color:var(--bad)}
-.call.err .tool{color:var(--bad)}
-.call.page .tool{color:var(--sun)}
-.call.end .gist{color:var(--ok)}
+.call .tool{display:flex;flex-direction:column;align-items:flex-start;gap:4px;font-family:var(--mono);font-size:12px;color:#aab6c3;overflow-wrap:anywhere}
+.call .gist{color:#edf1f5;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* the agent's reason, message style B: Why: "…" (no coloured strip; colour only in the chip) */
+.call .mb-w{grid-column:3/-1;font-size:12px}
+.call .gist{white-space:normal}
 .call .body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:12px;padding:0 16px 14px}
-@media (max-width:820px){ .call summary{grid-template-columns:2.6em minmax(0,1fr) auto} .call .gist{grid-column:2/-1;white-space:normal} .call .body{grid-template-columns:1fr} }
+@media (max-width:820px){ .call summary{grid-template-columns:2.6em minmax(0,1fr) auto} .call .gist{grid-column:2/-1;white-space:normal} .call .mb-w,.call .when{grid-column:2/-1} .call .body{grid-template-columns:1fr} }
 pre{margin:4px 0 0;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;max-height:420px;overflow:auto;white-space:pre-wrap;font-size:12px;line-height:1.45}
 .empty{padding:20px 16px;color:var(--ink-3)}
 footer{border-top:1px solid var(--line);padding:24px max(28px, var(--gut)) 40px;color:var(--ink-3);font-size:12.5px;display:flex;flex-direction:column;gap:8px;max-width:1240px;margin:0 auto}
 [hidden]{display:none !important}
 </style>
+<link rel="stylesheet" href="/assets/message-b.css">
+<script src="/assets/agent-log.js"></script>
 </head>
 <body>
 <header class="nav">
@@ -150,7 +151,7 @@ footer{border-top:1px solid var(--line);padding:24px max(28px, var(--gut)) 40px;
     <span class="faint small" id="live">Live</span>
   </div>
   <div class="trace" id="trace"><p class="empty">No calls yet. Once the bot calls a tool it shows up here, newest first.</p></div>
-  <p class="small faint">Grok's own messages stay in the Grok chat. This page shows what the bot did: each tool it called, the input it sent and the result it got.</p>
+  <p class="small faint">The agent's own chat messages stay in its chat. This page shows what it did: each tool it called, in words, its note on why where it left one, and (open a row) the exact input it sent and the result it got.</p>
 </section>
 
 <section class="sec" id="missing" hidden>
@@ -175,21 +176,21 @@ document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("clic
 if (!BENCH) $("start").hidden = false;
 else watch(BENCH);
 
+// A call in words: what the agent did and the details from its result (AgentLog, shared with the flight page), plus how the task stands.
 function gist(c) {
   const r = c.result || {};
   if (r.error) return r.error;
   if (r.truncated) return r.truncated;
   const b = r.bench, bits = [];
   if (c.tool === "start_bench") bits.push(r.tasks + " tasks, a budget of " + r.budget + " calls each");
-  if (c.tool === "end task (watch page)") bits.push(r.task_id + " ended here: " + pts(r.total));
-  for (const k of ["status", "hail_id", "leg_id", "car", "kwh", "fare_usd", "arrive"]) if (r[k] != null && typeof r[k] !== "object") bits.push(k + " " + r[k]);
-  if (r.refly && r.refly.result) bits.push("re-fly " + r.refly.result);
-  if (Array.isArray(r.bookings)) bits.push(r.bookings.length + " bookings");
-  if (Array.isArray(r.hails)) bits.push(r.hails.length > 3 ? r.hails.length + " hails" : r.hails.map((h) => h.shared_flight ? "shared flight: " + h.shared_flight.join(" + ") : h.hail_id).join(", "));
+  else if (c.tool === "end task (watch page)") bits.push(r.task_id + " ended here: " + pts(r.total));
+  else if (c.tool === "list_hails" && Array.isArray(r.hails)) bits.push("Opened the task: " + r.hails.map((h) => h.shared_flight ? "shared flight " + h.shared_flight.join(" + ") : (h.title ? h.title + " (" + h.hail_id + ")" : h.hail_id)).join(", "));
+  else if (window.AgentLog) { const L = AgentLog.line(AgentLog.fromCall(c.tool, c.input, r)); bits.push(L.act + (L.text ? ": " + L.text : "")); }
   if (b && b.ended) bits.push("task " + b.task.split(" ")[0] + " ended (" + b.ended.why + "): " + pts(b.ended.total));
   return bits.join(" · ") || "ok";
 }
-const pts = (n) => (n == null ? "score sealed" : n + " points");
+const score = (n) => Math.round(n).toLocaleString("en-US");
+const pts = (n) => (n == null ? "score sealed" : score(n) + " points");
 
 function row(c) {
   const d = el("details", "call"), r = c.result || {};
@@ -197,8 +198,14 @@ function row(c) {
   if (c.tool === "end task (watch page)") d.classList.add("page");
   if (r.bench && r.bench.ended) d.classList.add("end");
   const s = el("summary");
-  s.append(el("span", "faint num small", "#" + c.seq), el("span", "tool", c.tool), el("span", "gist", gist(c)),
-    el("span", "faint num small", (c.task == null ? "" : "task " + (c.task + 1) + " · ") + new Date(c.at).toLocaleTimeString()));
+  // A worded chip says what kind of call it was (message style B); the tool's own name sits under it.
+  const tool = el("span", "tool"), L = window.AgentLog ? AgentLog.line(AgentLog.fromCall(c.tool, c.input, r)) : null;
+  const ch = r.error ? ["Refused", "refused"] : L && c.tool !== "end task (watch page)" ? AgentLog.chip(L) : ["System", "neutral"];
+  tool.append(el("span", "mb-c " + ch[1], ch[0]), el("span", null, c.tool));
+  s.append(el("span", "faint num small", "#" + c.seq), tool, el("span", "gist", gist(c)),
+    el("span", "faint num small when", (c.task == null ? "" : "task " + (c.task + 1) + " · ") + new Date(c.at).toLocaleTimeString()));
+  // The agent's own words on why, from the note it sent with dispatch or decide.
+  if (c.input && typeof c.input.note === "string" && c.input.note.trim()) { const w = el("span", "mb-w", "Why: "); w.append(el("q", null, c.input.note.trim())); s.append(w); }
   const body = el("div", "body"), inp = el("div"), out = el("div");
   inp.append(el("span", "k", "Input"), el("pre", null, JSON.stringify(c.input, null, 2)));
   out.append(el("span", "k", "Result"), el("pre", null, JSON.stringify(c.result, null, 2)));
@@ -213,8 +220,8 @@ function render(v) {
   $("title").textContent = v.done ? "Bench session finished" : "Bench session, task " + v.current.task + " of " + v.tasks.length;
   $("sub").textContent = "Started " + new Date(v.started_ms).toLocaleString() + ". Each task has a budget of " + v.budget + " tool calls. Simulated." +
     (v.sealed ? " Held-out test: every score stays sealed until all tasks are played." : "");
-  $("total").textContent = v.total == null ? "Sealed" : v.total;
-  $("outof").textContent = "of " + v.out_of;
+  $("total").textContent = v.total == null ? "Sealed" : score(v.total);
+  $("outof").textContent = "of " + score(v.out_of);
   $("check").hidden = !v.done;
   if (v.done) {
     $("check-text").textContent = v.verified == null ? "Replaying the stored trace to check these scores…"
@@ -224,7 +231,7 @@ function render(v) {
   $("tasks").replaceChildren(...v.tasks.map((t, k) => {
     const c = el("div", "task " + t.status);
     c.append(el("span", "k", "Task " + (k + 1) + " · " + (t.result ? t.result.phase : t.status)),
-      el("span", "pts num", t.result ? String(t.result.total) : t.status === "done" ? "sealed" : "–"), el("span", "id", t.task_id));
+      el("span", "pts num", t.result && t.result.total != null ? score(t.result.total) : t.status === "done" ? "sealed" : "–"), el("span", "id", t.task_id));
     if (t.hails.length > 1) c.append(el("span", "faint small", "Shared flight of " + t.hails.length + " bookings"));
     if (t.result) c.append(el("span", "faint small num", t.result.calls_used + " of " + t.result.budget + " calls · " + t.result.ended));
     return c;

@@ -9,12 +9,14 @@
 import { DurableObject } from "cloudflare:workers";
 import { AuthorizationError, CimdFetchError, OAuthProvider } from "@cloudflare/workers-oauth-provider";
 import { mcpHandler } from "./mcp.js";
+import { FOLLOW_TOKEN, hub } from "./store.js";
 
 export const SCOPES = ["play"];
 export const PLAYER_ID = /^p_[0-9a-f]{16}$/;
 const PROTECTED_RESOURCE_ROOT = "/.well-known/oauth-protected-resource";
 
 export const oauthOn = (env) => env.STARFARE_OAUTH === "on";
+const newFollowToken = () => [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
 const newPlayerId = () => "p_" + [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, "0")).join("");
 
 // ---- KV stand-in -----------------------------------------------------------------------------------------------
@@ -80,7 +82,7 @@ const escape = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)}
 const text = (status, body) => new Response(body, { status, headers: { "content-type": "text/plain; charset=utf-8" } });
 const redirect = (location, headers) => { headers.set("Location", location); return new Response(null, { status: 302, headers }); };
 
-function consentPage(d, handle) {
+function consentPage(d, handle, follow) {
   const who = d.clientDomain ? `Published by <strong>${escape(d.clientDomain)}</strong>.` : "This app registered itself; its name is not verified.";
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Connect to Starfare</title><style>
@@ -91,12 +93,15 @@ main{max-width:520px;margin:0 auto;padding:32px 16px}h1{font-size:22px;margin:0 
 .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;margin:16px 0}
 button{font:inherit;padding:10px 18px;border-radius:6px;border:1px solid var(--line);cursor:pointer;margin-right:8px}
 button[value=approve]{background:var(--btn);color:var(--btnfg);border-color:var(--btn)}
+.follow{border-color:var(--fg)}.follow a{color:inherit;font-weight:600;overflow-wrap:anywhere}
 </style></head><body><main>
 <h1>Allow ${escape(d.clientName)} to play Starfare?</h1>
 <div class="card"><p>${who} Access will be sent to <strong>${escape(d.redirectHost)}</strong>.</p>
 ${d.redirectIsLoopback ? "<p><strong>This sends access to an app on your computer.</strong> Continue only if you just started connecting from it.</p>" : ""}
 <p>Starfare has no accounts. Allow gives this connector a new anonymous player id. It can take ride hails, plan pickups and rides, and post scores to the public <a href="/board">board</a> under that id. Starfare learns nothing about you.</p></div>
-<form method="post"><input type="hidden" name="handle" value="${escape(handle)}">
+<div class="card follow"><p><strong>Follow this agent:</strong> <a href="/agent/${follow}" target="_blank" rel="noopener">${escape(d.origin)}/agent/${follow}</a></p>
+<p class="dim">Open it now or keep the link. After you allow, it shows every booking this connector takes and each step it makes, with its own reasons, as it plays. Simulated.</p></div>
+<form method="post"><input type="hidden" name="handle" value="${escape(handle)}"><input type="hidden" name="follow" value="${follow}">
 <button name="decision" value="approve">Allow</button><button name="decision" value="deny">Deny</button></form>
 </main></body></html>`;
 }
@@ -110,7 +115,7 @@ async function handleAuthorize(req, env) {
       const details = await oauth.describeConsent(request);
       const consent = await oauth.beginConsent(request);
       consent.headers.set("content-type", "text/html; charset=utf-8");
-      return new Response(consentPage(details, consent.handle), { status: 200, headers: consent.headers });
+      return new Response(consentPage({ ...details, origin: new URL(req.url).origin }, consent.handle, newFollowToken()), { status: 200, headers: consent.headers });
     }
     if (req.method !== "POST") return text(405, "Method not allowed");
     const form = await req.formData();
@@ -120,7 +125,8 @@ async function handleAuthorize(req, env) {
       return redirect(denied.redirectTo, denied.headers);
     }
     const approved = await oauth.approveConsent(req, handle, { scope: SCOPES });
-    const player_id = newPlayerId();
+    const player_id = newPlayerId(), follow = String(form.get("follow") || "");
+    if (FOLLOW_TOKEN.test(follow)) await hub(env).followClaim(follow, player_id); // the link the page showed now follows this player
     const { redirectTo } = await oauth.completeAuthorization({ request: approved.request, userId: player_id, metadata: {}, scope: SCOPES, props: { player_id } });
     return redirect(redirectTo, approved.headers);
   } catch (error) {

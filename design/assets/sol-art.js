@@ -460,10 +460,11 @@
     g.userData.engine.position.fromArray(on ? h.stern : STERN);
   }
 
-  // dock(place, fallback): the model for a place, as a group that shows fallback (a THREE.Object3D) until it loads,
+  // dock(place, [berths,] fallback): the model for a place, as a group that shows fallback (a THREE.Object3D) until it loads,
   // and keeps it when it can't. A fictional station gets its own model; every other place gets a Starfare dock parked
   // beside it, by place type (variety.json "docks"); its accent bands take a colour from the place id. setPx(px), with the drawn size on screen, picks the full model
   // over about 90 px and the light one below. The low tier keeps the light one.
+  var DOCKG = [];
   function dockId(f, P) {
     if (!P) return f.docks.default;
     if (f.stations[P.id]) return f.stations[P.id];
@@ -472,8 +473,10 @@
     if (P.kind === "small" || (P.kind === "moon" && P.radius_km < d.smallMoonKm)) return d.small;
     return d.byKind[P.kind] || d.default;
   }
-  function dock(P, fallback) {
-    var g = new THREE.Group(), cur = null, want = "lod";
+  // berths (optional): the place's engine berth count; a model's berth_N collars show up to it, as on the #22 docks.
+  function dock(P, berths, fallback) {
+    if (fallback === undefined && berths && berths.isObject3D) { fallback = berths; berths = null; }
+    var g = new THREE.Group(), cur = null, want = "lod", lastPx = 0;
     if (fallback) g.add(fallback);
     var got = {};
     function show() {
@@ -487,12 +490,18 @@
         var h = f.models[dockId(f, P)];
         if (!h) throw new Error("no dock model for " + (P && P.id));
         return loadModel(h[which]);
-      }).then(function (scene) { var m = scene.clone(); livery(m, P && P.id); m.visible = false; g.add(m); got[which] = m; show(); },
+      }).then(function (scene) {
+        var m = scene.clone(); livery(m, P && P.id); m.visible = false;
+        if (berths != null) m.traverse(function (n) { var b = /^berth_(\d+)$/.exec(n.name); if (b) n.visible = +b[1] <= berths; });
+        g.add(m); got[which] = m; show();
+      },
         function (e) { console.warn("SolArt: keeping the placeholder dock for " + (P && P.id) + ":", e && e.message || e); });
     }
     if (THREE.GLTFLoader) fetchOne("lod");
+    DOCKG.push(g);
     g.userData.setPx = function (px) {
-      want = px > 90 && quality().hulls ? "file" : "lod";
+      if (px != null) lastPx = px;
+      want = lastPx > 90 && quality().hulls ? "file" : "lod";
       if (want === "file") fetchOne("file");
       show();
     };
@@ -598,6 +607,7 @@
       Q.cur = name;
       SHIPS = SHIPS.filter(function (g) { return g.parent; }); // a ship the page removed is gone for good
       SHIPS.forEach(showHull);
+      DOCKG = DOCKG.filter(function (g) { return g.parent; }); DOCKG.forEach(function (g) { g.userData.setPx(); });
       if (!TIERS[name].hulls) dropSky();
     }
     return TIERS[name];
