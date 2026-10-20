@@ -46,6 +46,9 @@ async function check(name, fn) {
 }
 const freePort = () => new Promise((res, rej) => { const s = createServer(); s.once("error", rej); s.listen(0, "127.0.0.1", () => { const { port } = s.address(); s.close(() => res(port)); }); });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// The rate limiter counts per clock minute (Store.hit, src/store.js), so a burst that crosses the turn of a minute starts
+// counting again. Rate checks wait for a fresh minute when fewer than `need` ms are left in this one.
+const freshMinute = async (need = 20000) => { const left = 60000 - (Date.now() % 60000); if (left < need) await sleep(left + 50); };
 const running = new Set();
 process.on("exit", () => { for (const c of running) try { process.kill(-c.pid, "SIGKILL"); } catch {} });
 
@@ -725,6 +728,7 @@ async function phaseOff() {
 
   await check("per-IP rate limit answers 429 past RATE_PER_MIN", async () => {
     const w2 = await startWorker({ STARFARE_OAUTH: "off", RATE_PER_MIN: "5" });
+    await freshMinute();
     try {
       const statuses = [];
       for (let i = 0; i < 7; i++) {
@@ -1021,6 +1025,7 @@ async function phaseOn() {
 
   await check("on: the per-IP rate limit covers /mcp and the OAuth endpoints", async () => {
     const w2 = await startWorker({ STARFARE_OAUTH: "on", RATE_PER_MIN: "5" });
+    await freshMinute();
     try {
       const statuses = [];
       for (const path of ["/mcp", "/.well-known/oauth-authorization-server", "/register", "/mcp", "/token", "/authorize", "/mcp"]) {
