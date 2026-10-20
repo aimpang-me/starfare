@@ -59,12 +59,12 @@ test("on phones the readout drops its scale and speed lines and keeps the simula
 
 // bindKeys with a fake document: records what each keydown did.
 function keys() {
-  const handlers = {}, box = { on: {}, addEventListener(t, f) { this.on[t] = f; }, contains: (el) => el === ctx.focusInMap };
+  const handlers = {};
   const ctx = {
-    KEYS: {}, MOVE: { w: 1, a: 1, s: 1, d: 1, " ": 1, control: 1 }, PIL: { mul: 1 }, focusInMap: {},
+    KEYS: {}, MOVE: { w: 1, a: 1, s: 1, d: 1, q: 1, e: 1 }, PIL: { mul: 1 },
     document: { addEventListener(t, f) { handlers[t] = f; }, activeElement: null },
     addEventListener() {}, glStart() {}, mapHud() {}, toggleClean() {}, clamp: (v) => v,
-    $: (s) => s === "#mapbox" ? box : { hidden: true },
+    $: () => ({ hidden: true }),
   };
   evalSlice(html, "function bindKeys() {", "function markFocus(", "bindKeys()", ctx);
   const press = (key, mods = {}) => {
@@ -73,32 +73,26 @@ function keys() {
     return prevented;
   };
   const up = (key) => handlers.keyup({ key, shiftKey: false });
-  return { ctx, box, press, up };
+  return { ctx, press, up };
 }
 
-test("Ctrl+A, Ctrl+S and Ctrl+D keep their browser meaning while the map has neither pointer nor focus", () => {
-  const { ctx, press } = keys();
-  for (const k of ["a", "s", "d", "w", " "]) assert.equal(press(k, { ctrlKey: true }), false, `Ctrl+${k} away from the map`);
-  assert.equal(press("Control", { ctrlKey: true }), false);
-  assert.deepEqual(Object.keys(ctx.KEYS).filter((k) => ctx.MOVE[k]), [], "no flight key is held");
-  assert.equal(press("c", { ctrlKey: true }), false, "Ctrl+C is never taken");
+test("Q flies down and E flies up, and the help text says so", () => {
+  assert.match(html, /MOVE = \{ w: 1, a: 1, s: 1, d: 1, q: 1, e: 1 \}/);
+  assert.match(html, /up = \(KEYS\.e \? 1 : 0\) - \(KEYS\.q \? 1 : 0\)/);
+  assert.match(html, /W A S D fly, Q down and E up \(hold\)/);
+  assert.doesNotMatch(html, /Ctrl down|Space up/);
+  const { ctx, press, up } = keys();
+  assert.equal(press("q"), true);
+  assert.equal(press("E", { shiftKey: true }), true, "Shift+E still climbs, boosted");
+  assert.deepEqual(Object.keys(ctx.KEYS).filter((k) => ctx.MOVE[k]).sort(), ["e", "q"]);
+  up("q"); up("E");
+  assert.deepEqual(Object.keys(ctx.KEYS).filter((k) => ctx.MOVE[k]), []);
 });
 
-test("Ctrl flies down over the map, with the map focused, or while already flying", () => {
-  const over = keys();
-  over.box.on.pointerenter();
-  assert.equal(over.press("Control", { ctrlKey: true }), true);
-  assert.equal(over.press("a", { ctrlKey: true }), true, "Ctrl+A over the map flies");
-  over.box.on.pointerleave();
-  over.up("a"); over.up("Control");
-  assert.equal(over.press("a", { ctrlKey: true }), false, "after the pointer leaves, Ctrl+A is the browser's again");
-
-  const focused = keys();
-  focused.ctx.document.activeElement = focused.ctx.focusInMap;
-  assert.equal(focused.press("s", { ctrlKey: true }), true);
-
-  const flying = keys();
-  assert.equal(flying.press("w"), true, "plain W flies anywhere off form fields, as before");
-  assert.equal(flying.press("Control", { ctrlKey: true }), true, "Ctrl while W is held adds the descent");
-  assert.equal(flying.ctx.KEYS.control, 1);
+test("no Ctrl shortcut and no Space press is taken for flying", () => {
+  const { ctx, press } = keys();
+  assert.equal(press("w"), true, "plain W flies");
+  for (const k of ["w", "a", "s", "d", "q", "e", "c", "Control"]) assert.equal(press(k, { ctrlKey: true }), false, `Ctrl+${k}`);
+  assert.equal(press(" "), false, "Space keeps its browser meaning");
+  assert.deepEqual(Object.keys(ctx.KEYS).filter((k) => ctx.MOVE[k]), ["w"]);
 });
