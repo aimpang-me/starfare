@@ -51,7 +51,7 @@ export function jdOfIso(s) {
 }
 const kindOf = (h) => (h.kind === "quick" ? "quick" : "long haul");
 
-function hailView(E, h) {
+export function hailView(E, h) {
   const { placeName } = names(E);
   return {
     hail_id: h.id, title: h.title, kind: kindOf(h), party: h.party, rider: h.rider + " (simulated)", blurb: h.blurb,

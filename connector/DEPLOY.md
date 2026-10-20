@@ -212,6 +212,12 @@ What it does not protect: anyone can click Allow, so anyone can get a player id.
 3. Give the Worker the same key: `node node_modules/wrangler/bin/wrangler.js secret put STARFARE_BENCH_KEY`, and paste it at the prompt [not verified]. Then deploy: `npm run build`, then `node node_modules/wrangler/bin/wrangler.js deploy` [not verified].
 4. Check a finished session. Its watch page says whether the replay verified. To replay one yourself, download `$URL/bench/<bench_id>/trace.json` (served once every task is played) and run `node bench/verify.mjs <trace.json>` [verified locally against `wrangler dev`]. A test-split trace needs `STARFARE_BENCH_KEY` in the environment. The script exits 1 when the stored calls do not reproduce every stored result.
 
+## The sandbox world (off by default)
+
+The single-player sandbox is built in steps behind `STARFARE_SANDBOX`, which `wrangler.jsonc` ships as `"off"`. Step 2 adds the `StarfareWorld` Durable Object, one per world, so the first deploy that includes it runs migration `v4` (a new class only; nothing existing changes). With the sandbox off, `/world/*` answers 404 and no world is ever created.
+
+With `--var STARFARE_SANDBOX:on` (for `wrangler dev`), `POST /world/new` makes a world and returns its `world_id`, and `GET /world/<world_id>.json` shows it: the sky clock, the seats, the desks with their ships, and the market's size. A world's hazard seed is keyed with `STARFARE_SEASON_KEY` when that secret is set, otherwise drawn at random, and is never shown. A world nobody joins, waits in or looks at for 30 days is deleted. `WORLD_TICK_CAP_S` (default 60) sets how long a tick waits for a stalled seat.
+
 ## Scoring over MCP
 
 `dispatch` first runs `SOLE.R.check` on the car and its two legs with the run's `t0` and season seed (the pickup must leave where the car is parked, no earlier than the car is free, and end at the rider; the ride must go from the rider to the destination and leave after boarding), and refuses legs the n-body checker failed. Then it applies the cold-hail rule (above), flies the legs with `SOLE.R.fly` (the run's seed), and calls `SOLE.R.score` unchanged with the run's own inputs: `t0`, `arrive_by_jd`, par kWh and the best possible pickup wait from `SOLE.R.terms` (same seed; the terms cache key includes it), the number of plans, the quote, and `flown`. Nothing is rescaled: every part of the score is checked over MCP, including the honest quote, so the connector's total is exactly the engine's. The e2e test checks it part by part against the engine run directly in Node.

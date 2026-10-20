@@ -14,16 +14,20 @@
       // OAuth storage (clients, grants, tokens) when STARFARE_OAUTH is "on" and no OAUTH_KV namespace is bound. Unused when off.
       { "name": "STARFARE_AUTH", "class_name": "StarfareAuth" },
       // One per hosted bench session (start_bench): the session and its tool-call trace for the watch page at /bench/<bench_id>.
-      { "name": "STARFARE_BENCH", "class_name": "StarfareBench" }
+      { "name": "STARFARE_BENCH", "class_name": "StarfareBench" },
+      // One per sandbox world (/world/new, plan step 2): its clock, ships, desks and market. Only used with STARFARE_SANDBOX on.
+      { "name": "STARFARE_WORLD", "class_name": "StarfareWorld" }
     ]
   },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["StarfareMcp", "StarfareRun", "StarfareHub"] },
     { "tag": "v2", "new_sqlite_classes": ["StarfareAuth"] },
-    { "tag": "v3", "new_sqlite_classes": ["StarfareBench"] }
+    { "tag": "v3", "new_sqlite_classes": ["StarfareBench"] },
+    { "tag": "v4", "new_sqlite_classes": ["StarfareWorld"] }
   ],
   // Long-haul plan_leg calls take ~0.2-0.7 s CPU and start_mission up to ~1.3 s, so this needs the Workers
   // paid plan (default 30 s CPU per request). The free plan's 10 ms is enough for none of the tools reliably.
   // STARFARE_OAUTH: "on" (the live setting: OAuth with a one-click consent page; grok.com connects this way) or "off" (no auth). See DEPLOY.md.
-  "vars": { "RATE_PER_MIN": "120", "STARFARE_OAUTH": "on" }
+  // STARFARE_SANDBOX: "on" opens the sandbox world routes (/world/new, /world/<world_id>.json); "off" answers 404 there.
+  "vars": { "RATE_PER_MIN": "120", "STARFARE_OAUTH": "on", "STARFARE_SANDBOX": "off" }
 }
