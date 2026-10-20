@@ -720,7 +720,18 @@ async function phaseOff() {
       assert.match(start.value.bench_id, /^b_[0-9a-f]{20}$/);
     } finally { await bot.close(); }
   });
-  await check("start_bench split test opens a held-out session and the start result has no score", async () => {
+  // An engine or score change re-cuts the suite's dev split, and the held-out test split waits for Alvin's keyed cut.
+  const hasTest = !!(JSON.parse(readFileSync(new URL("../src/suites/v1.json", import.meta.url), "utf8")).splits.test || []).length;
+  if (!hasTest) await check("start_bench split test says the suite has no test split yet, and practice still opens", async () => {
+    const bot = await connect(w.base);
+    try {
+      const start = await call(bot, "start_bench", { split: "test" });
+      assert.equal(start.isError, true);
+      assert.match(start.value, /has no test split yet\. start_bench with split dev \(practice\) still works\./);
+      assert.equal((await call(bot, "start_bench", { split: "dev" })).isError, false);
+    } finally { await bot.close(); }
+  });
+  else await check("start_bench split test opens a held-out session and the start result has no score", async () => {
     const bot = await connect(w.base);
     try {
       const start = await call(bot, "start_bench", { split: "test" });

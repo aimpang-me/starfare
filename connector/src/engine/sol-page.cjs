@@ -2074,10 +2074,10 @@ function check(id, car, legs, t0, seed){
 function quotedJd(s){ var m = /^\s*(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec(String(s || "")); return m ? E.jdFromIso(m[1] + "T" + m[2]) : null; }
 function k(x){ return Math.round(x).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 function iso(jd){ return E.isoFromJd(jd, true).replace("T", " ").slice(0, 16); }
-// Score version 4. Placeholder weights, they sum to 100000, until Alvin sets them. got is not rounded.
+// Score version 5. Placeholder weights, they sum to 100000, until Alvin sets them. got is not rounded.
 // total is the sum of the part got values. legs: today's [pickup, ride] or a plan.
 // ctx: { t0, arrive_by_jd, par_kwh, best_wait_days, plan_calls, ship, window_kwh, hindsight_kwh,
-//   quote: { fare_usd, arrival }, flown: fly(...) }
+//   quote: { fare_usd, arrival, earliest?, latest? }, flown: fly(...) }
 // A shared flight adds ctx.bookings. Passenger parts are the party weighted mean. Ship parts are once per flight.
 // The weights and that mean are a placeholder (docs/SHARED-FLIGHTS.md, open number 5).
 // SCORE_STEEPNESS is a simulated assumption. At the stated reference, excess is 0 and a part earns SCORE_HEADROOM of its
@@ -2089,6 +2089,24 @@ var SCORE_HEADROOM = 1, SCORE_STEEPNESS = 6;
 var SCORE_MAX = { pickup: 22000, on_time: 16000, energy: 31000, promise: 14000, checker: 4000, fare: 4000, economy: 3000, window: 3000, recovery: 3000, dose: 0 };
 var SCORE_TOTAL = Object.keys(SCORE_MAX).reduce(function(a, key){ return a + SCORE_MAX[key]; }, 0);
 function scoreRatio(excess){ return SCORE_HEADROOM / (1 + SCORE_STEEPNESS * Math.max(0, excess)); }
+// Version 5 scores the promise as an arrival window, earliest to latest, with the interval score (Gneiting and Raftery
+// 2007, eq. 43): width + (2/alpha) x hours after latest + (2/alpha) x hours before earliest. It is proper: the best
+// window runs from the 10th to the 90th percentile of the arrival the dispatcher expects (alpha 0.2, an 80% window), so
+// padding costs its width and calibration pays. A bare arrival is a window of zero width. The part falls linearly and
+// reaches 0 at PROMISE_HOURS[kind] x (2/alpha): an arrival quoted alone that lands 6 hours late on a quick hail, or 24 on a
+// long haul. alpha and PROMISE_HOURS are simulated assumptions (placeholders until Alvin sets them).
+var PROMISE_ALPHA = 0.2, PROMISE_HOURS = { quick: 6, long: 24 };
+function quoteWindow(q){
+  var e = quotedJd(q.earliest), l = quotedJd(q.latest), a = quotedJd(q.arrival);
+  var lo = e != null ? e : a != null ? a : l, hi = l != null ? l : a != null ? a : e;
+  return lo == null || hi < lo ? null : { lo: lo, hi: hi };
+}
+function promiseScore(win, arrive_jd, kind){
+  if (!win) return { ratio: 0, hours: Infinity, slip_hours: null, width_hours: null };
+  var after = Math.max(0, arrive_jd - win.hi) * 24, before = Math.max(0, win.lo - arrive_jd) * 24, width = (win.hi - win.lo) * 24;
+  var hours = width + (2 / PROMISE_ALPHA) * (after + before), cap = (2 / PROMISE_ALPHA) * (PROMISE_HOURS[kind] || PROMISE_HOURS.quick);
+  return { ratio: Math.max(0, 1 - hours / cap), hours: hours, slip_hours: after > 0 ? after : -before, width_hours: width };
+}
 function score(id, legs, ctx){
   var plan = planOf(id, null, legs), L = plan.legs, M = manifest(plan), one = M.hails.length === 1;
   function ridden(b){ var s = M.stop[b]; return L.slice(s.board[0], s.alight[0]); }
@@ -2099,21 +2117,25 @@ function score(id, legs, ctx){
   var used = F.used_kwh, flown = F.segments || L, gated = flown.filter(function(l){ return l.gate === "PASS" || l.gate === "local"; }).length;
   var extra = Math.max(0, (ctx.plan_calls || 0) - 6);
   function dur(d){ return Math.abs(d) < 2 ? (Math.abs(d) * 24).toFixed(1) + " h" : Math.abs(d).toFixed(1) + " days"; }
+  function promiseNote(win, P){
+    if (!win) return "no arrival time or window was quoted, or its earliest is after its latest";
+    var w = win.hi > win.lo ? "the quoted window " + iso(win.lo) + " to " + iso(win.hi) : "the quoted " + iso(win.hi);
+    var where = P.slip_hours > 1 / 60 ? "arrived " + dur(P.slip_hours / 24) + " after " + w : P.slip_hours < -1 / 60 ? "arrived " + dur(-P.slip_hours / 24) + " before " + w : "arrived " + (win.hi > win.lo ? "inside " : "when promised, ") + w;
+    return where + ". Interval score " + P.hours.toFixed(1) + " h (" + P.width_hours.toFixed(1) + " h wide, 10 x each hour outside); 0 points at " + ((2 / PROMISE_ALPHA) * (PROMISE_HOURS[BY[id].kind] || PROMISE_HOURS.quick)) + " h";
+  }
   function row(key, label, got, unit, measure, note){ return { key: key, label: label, max: SCORE_MAX[key], got: got, unit: unit, measure: measure, note: note }; }
   function booking(b){
     var B = ctx.bookings && ctx.bookings[b] || ctx, Fb = F.bookings && F.bookings[b] || F, mine = ridden(b), last = mine[mine.length - 1];
     var fare = shares[b];
     var wait = Math.max(1e-6, Fb.pickup_jd - B.t0), late = Math.max(0, Fb.arrive_jd - B.arrive_by_jd);
-    var q = B.quote || {}, fareGap = isFinite(+q.fare_usd) ? Math.abs(+q.fare_usd - fare) : fare, fareOk = isFinite(+q.fare_usd) && fareGap <= 1, qj = quotedJd(q.arrival);
-    var slip = qj == null ? null : Fb.arrive_jd - qj;
-    var slipMin = slip == null ? null : slip * 1440, lateMin = late * 1440, waitMin = wait * 1440, bestMin = Math.max(B.best_wait_days, 1 / 1440) * 1440;
+    var q = B.quote || {}, fareGap = isFinite(+q.fare_usd) ? Math.abs(+q.fare_usd - fare) : fare, fareOk = isFinite(+q.fare_usd) && fareGap <= 1, win = quoteWindow(q);
+    var P = promiseScore(win, Fb.arrive_jd, BY[b].kind), lateMin = late * 1440, waitMin = wait * 1440, bestMin = Math.max(B.best_wait_days, 1 / 1440) * 1440;
     var pickupExcess = Math.max(0, waitMin - bestMin) / bestMin;
-    var promiseExcess = slipMin == null ? Infinity : Math.max(0, slipMin) / 60 + Math.max(0, -slipMin) / 240;
     var fareExcess = isFinite(+q.fare_usd) ? fareGap / Math.max(fare, 1) : Infinity;
     return { party: BY[b].party, wait_days: wait, late_days: late, pickup_jd: Fb.pickup_jd, arrive_jd: Fb.arrive_jd, planned_arrive_jd: last.arr_jd, fare_usd: fare, parts: [
       row("pickup", "Fast pickup", SCORE_MAX.pickup * scoreRatio(pickupExcess), "min", waitMin, "rider waited " + dur(wait) + " (" + waitMin.toFixed(1) + " min), quickest nearby ship " + dur(B.best_wait_days) + ". " + Math.max(0, waitMin - bestMin).toFixed(1) + " min over that ship"),
       row("on_time", "Arrived on time", SCORE_MAX.on_time * scoreRatio(lateMin / 60), "min", lateMin, late > 0 ? "arrived " + dur(late) + " late (" + lateMin.toFixed(1) + " min). The reference is 0 min late" : "arrived by " + iso(B.arrive_by_jd) + ", 0 min late"),
-      row("promise", "Kept the promise", SCORE_MAX.promise * scoreRatio(promiseExcess), "min", slipMin, qj == null ? "no arrival time was quoted" : slip > 1 / 1440 ? "arrived " + dur(slip) + " (" + slipMin.toFixed(1) + " min) after the quoted " + iso(qj) + ". The reference is 0 min late" : slip < -1 / 1440 ? "arrived " + dur(-slip) + " (" + (-slipMin).toFixed(1) + " min) before the quoted " + iso(qj) : "arrived when promised, " + iso(qj)),
+      row("promise", "Kept the promise", SCORE_MAX.promise * P.ratio, "h", win ? P.hours : null, promiseNote(win, P)),
       row("fare", "Honest fare", SCORE_MAX.fare * scoreRatio(fareExcess), "USD", fareGap, "fare " + (fareOk ? "matches" : "does not match") + (one ? " the ride leg's $" : " its seats' share of the legs it rides, $") + k(fare) + (isFinite(+q.fare_usd) ? ". $" + fareGap.toFixed(2) + " off that fare" : ""))
     ] };
   }
@@ -2143,7 +2165,7 @@ function score(id, legs, ctx){
     row("dose", "Cruise dose", 0, "mSv", msv, msv + " mSv on the cruise. This part is a placeholder and scores 0")
   ];
   var total = parts.reduce(function(a, p){ return a + p.got; }, 0);
-  var out = { total: total, out_of: SCORE_TOTAL, score_version: 4, parts: parts, used_kwh: used, extra_kwh: F.extra_kwh || 0, wait_days: lead.wait_days, late_days: lead.late_days,
+  var out = { total: total, out_of: SCORE_TOTAL, score_version: 5, parts: parts, used_kwh: used, extra_kwh: F.extra_kwh || 0, wait_days: lead.wait_days, late_days: lead.late_days,
     pickup_jd: lead.pickup_jd, arrive_jd: lead.arrive_jd, planned_arrive_jd: lead.planned_arrive_jd, rider_dose_msv: msv, fare_usd: lead.fare_usd, beat_par: used < ctx.par_kwh * 0.995, incidents: F.incidents || [] };
   if (!one){ out.bookings = {}; M.hails.forEach(function(b){ out.bookings[b] = bookings[b]; }); }
   return out;
@@ -2199,7 +2221,8 @@ return { DWELL: DWELL, WINDOW: WINDOW, LEAD: LEAD, FLEET: FLEET, CAR: CAR, HAILS
   padForecast: padForecast, flareForecast: flareForecast, flareReach: flareReach, lightDays: lightDays, weatherForecast: weatherForecast,
   C_KMS: C_KMS, AU_KM: AU_KM, CME_KMS: CME_KMS, CRUISE_MSV_DAY: CRUISE_MSV_DAY,
   start: start, step: step, regret: regret, oracle: oracle, hindsight: hindsight, ORACLE_DEPTH: ORACLE_DEPTH, EVENTS: EVENTS, MAX_CHECKPOINTS: MAX_CHECKPOINTS,
-  SCORE_MAX: SCORE_MAX, SCORE_TOTAL: SCORE_TOTAL, SCORE_HEADROOM: SCORE_HEADROOM, SCORE_STEEPNESS: SCORE_STEEPNESS };
+  SCORE_MAX: SCORE_MAX, SCORE_TOTAL: SCORE_TOTAL, SCORE_HEADROOM: SCORE_HEADROOM, SCORE_STEEPNESS: SCORE_STEEPNESS,
+  PROMISE_ALPHA: PROMISE_ALPHA, PROMISE_HOURS: PROMISE_HOURS, quoteWindow: quoteWindow, promiseScore: promiseScore };
 })(SOLE);
 
 if (typeof module !== 'undefined') module.exports = SOLE;

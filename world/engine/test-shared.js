@@ -105,7 +105,7 @@ ok("a two-leg dispatch is its stops-plan rewrite: check, fly and score agree exa
   assert.strictEqual(sc.parts.length, 10);
   assert.strictEqual(sc.total, sc.parts.reduce((a, p) => a + p.got, 0));
   assert.deepStrictEqual([two.used_kwh, two.delay_hours], [45505, 93.80377880483866]); // held 93.8 h in the storm
-  assert.strictEqual(sc.score_version, 4);
+  assert.strictEqual(sc.score_version, 5);
   assert.ok(sc.total < sc.out_of, sc.total);
   for (const p of sc.parts) assert.ok(p.got <= p.max, p.key);
   const energy = sc.parts.find((p) => p.key === "energy");

@@ -12,7 +12,7 @@ export const INSTRUCTIONS =
   "Before planning, call get_my_rides: your past rides (simulated), what you lost points on, and at each checkpoint what the best choice would have used in hindsight.\n" +
   "Call list_hails, then take_hail to get a run_id and the fleet. Some ships are busy on another job until their busy_until time; their pickup can't leave earlier. " +
   "For each ship worth trying, plan_pickup (ship to rider), then plan_ride after that pickup. Compare ships, objectives (energy = least battery, time = fastest) and wait_days, " +
-  "then dispatch with the pickup leg, the ride leg, the fare copied from the ride leg, and the arrival you promise the rider.\n" +
+  "then dispatch with the pickup leg, the ride leg, the fare copied from the ride leg, and the arrival you promise the rider (a time, or a window: earliest and latest).\n" +
   "Hazards (simulated, seeded per season, the same for every player): pads have few berths and other traffic, solar flares hold any launch with a rider aboard, " +
   "Mars dust storms and Titan haze close those pads, a leg between planets that leaves late needs a correction burn, and holding in orbit for a berth costs 250 kWh an hour. " +
   "You only get forecasts: check_pad (booked berths per hour and local weather odds; unscheduled traffic, about a quarter, is never shown) and space_weather (flare odds per day at a place; storms reach far places later and less often). " +
@@ -26,10 +26,11 @@ export const INSTRUCTIONS =
   "and lands_in_s, the real seconds until it lands there (a playback of simulated sky time; checkpoint_in_s when a checkpoint comes first). Right after dispatching, give the player the watch_url, " +
   "say the Starseeker is flying now, and say it lands in about lands_in_s seconds; after a decide, say when it lands again. The score in the result is final; the page shows it at landing. " +
   "Add a note to dispatch and decide: one or two sentences on why, which the page shows as your own words.\n" +
-  "Goal: pick the rider up fast, arrive by arrive_by, use the least battery actually flown, and keep your promise. The quoted arrival is a promise scored against the actual arrival: " +
-  "late costs the most (0 at 6 hours late on a quick hail, 1 day on a long haul), early costs a quarter as much. Each plan counts: 6 are free, then each costs a point.\n" +
+  "Goal: pick the rider up fast, arrive by arrive_by, use the least battery actually flown, and keep your promise. The promise is an arrival window (quoted_earliest to quoted_latest; quoted_arrival alone is a window of no width), " +
+  "scored by its width in hours plus 10 times each hour the ship lands outside it: the part is 0 at 60 such hours on a quick hail, 240 on a long haul. The best window runs from the 10th to the 90th percentile of the arrival you expect from the forecasts, " +
+  "so with no hazard in sight quote the ride leg's arrive alone, and widen only as far as the forecast risk. Each plan counts: 6 are free, then each costs a point.\n" +
   "Hard rules: every number you write must be copied from a tool result or the player's words, dates exactly as given; say scores in whole points (round the total and each part to the nearest point). Never estimate a number. Never dispatch a leg whose refly.result is FAIL. " +
-  "The one time you choose is the promised arrival: the ride leg's arrive, or a later time you pick as a buffer for a forecast hazard; if you add a buffer, tell the rider it is one and why.\n" +
+  "The one time you choose is the promise: the ride leg's arrive, or a window from it to a later time you pick for a forecast hazard; if you give a window, tell the rider it is one and why.\n" +
   "The sky clock runs 1 sky day per real second, so work promptly on long-haul hails. Scores go to the public board at /board on this server, labelled \"planned by Grok bot\".";
 
 const runId = z.string().regex(RUN_ID).describe("run_id from take_hail");
@@ -109,7 +110,7 @@ export const TOOLS = {
     },
   },
   dispatch: {
-    description: "Dispatch the ship: the pickup leg, the ride leg, the fare you quote (copy the ride leg's fare_usd) and the arrival you promise the rider. The season's hazards are then flown. " +
+    description: "Dispatch the ship: the pickup leg, the ride leg, the fare you quote (copy the ride leg's fare_usd) and the arrival you promise the rider, a time (quoted_arrival) or a window (quoted_earliest and quoted_latest). The season's hazards are then flown. " +
       "If a hazard stops the ride, the result is status \"checkpoint\" with the situation; answer it with decide. Otherwise the ride arrives and the result says what actually happened " +
       "(actual pickup and arrival, delay, extra kWh, incidents), the locked score and a run log. Arrived scores go on the /board page. " +
       "Shared flights are bench tasks only (take_hail takes one booking): a shared flight sends legs, stops (who boards and alights where each leg lands) and quotes per booking instead of the pickup and ride legs and the one quote. " +
@@ -119,12 +120,14 @@ export const TOOLS = {
       pickup_leg: z.string().optional(),
       ride_leg: z.string().optional(),
       quoted_fare_usd: z.number().optional().describe("the fare you tell the rider, in US dollars"),
-      quoted_arrival: z.string().optional().describe("the arrival time you promise the rider, YYYY-MM-DD HH:MM"),
+      quoted_arrival: z.string().optional().describe("the arrival time you promise the rider, YYYY-MM-DD HH:MM (a window of no width)"),
+      quoted_earliest: z.string().optional().describe("the earliest end of the arrival window you promise, YYYY-MM-DD HH:MM (default quoted_arrival)"),
+      quoted_latest: z.string().optional().describe("the latest end of the arrival window you promise, YYYY-MM-DD HH:MM (default quoted_arrival)"),
       legs: z.array(z.string()).optional().describe("shared flight: the plan_leg leg_ids in flying order"),
       stops: z.array(z.object({ board: z.array(z.string()).optional(), alight: z.array(z.string()).optional() })).optional()
         .describe("shared flight: one entry per leg, the hail ids that board and alight where that leg lands"),
-      quotes: z.record(z.object({ fare_usd: z.number(), arrival: z.string() })).optional()
-        .describe("shared flight: per hail id, the fare you quote (its seats' share of the legs it rides: fares_so_far on the last leg when your stops are the ones the chain implies) and the arrival you promise"),
+      quotes: z.record(z.object({ fare_usd: z.number(), arrival: z.string().optional(), earliest: z.string().optional(), latest: z.string().optional() })).optional()
+        .describe("shared flight: per hail id, the fare you quote (its seats' share of the legs it rides: fares_so_far on the last leg when your stops are the ones the chain implies) and the arrival you promise (arrival, or a window: earliest and latest)"),
       ask_after_hours: z.union([z.number().min(0).max(24), z.literal("never")]).optional()
         .describe("stop at a checkpoint once a hold or pad wait passes this many hours (0-24, default 1); \"never\" flies the default answers without stopping"),
       note,

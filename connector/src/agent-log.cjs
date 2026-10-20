@@ -41,8 +41,9 @@
     else if (e.tool === "dispatch") {
       if (e.problems) { out.act = "Dispatch refused"; out.text = e.problems.join("; "); out.tone = "error"; return out; }
       out.act = "Dispatched " + (e.car || "the Starseeker");
-      var q = e.quotes ? Object.keys(e.quotes).map(function (id) { return id + ": fare " + money(e.quotes[id].fare_usd) + ", promised " + e.quotes[id].arrival; }).join("; ")
-        : "fare " + money(e.fare_usd) + ", promised arrival " + e.arrival;
+      var promised = function (word, a, lo, hi) { return lo != null || hi != null ? "promised " + (lo != null ? lo : a) + " to " + (hi != null ? hi : a) : word + a; };
+      var q = e.quotes ? Object.keys(e.quotes).map(function (id) { var x = e.quotes[id]; return id + ": fare " + money(x.fare_usd) + ", " + promised("promised ", x.arrival, x.earliest, x.latest); }).join("; ")
+        : "fare " + money(e.fare_usd) + ", " + promised("promised arrival ", e.arrival, e.earliest, e.latest);
       out.text = q + (status(e.status) ? " · " + status(e.status) : "");
     } else if (e.tool === "decide") {
       out.act = "Decided at checkpoint " + e.checkpoint;
@@ -70,7 +71,7 @@
       e.place = r.place.name; e.max_flare_odds = Array.isArray(r.days) ? Math.max.apply(null, r.days.map(function (d) { return d.flare_odds; })) : null;
     } else if (tool === "dispatch") {
       if (r.problems) e.problems = r.problems;
-      else { e.car = r.car || null; e.fare_usd = i.quoted_fare_usd; e.arrival = i.quoted_arrival; e.quotes = i.quotes; e.status = r.status; }
+      else { e.car = r.car || null; e.fare_usd = i.quoted_fare_usd; e.arrival = i.quoted_arrival; e.earliest = i.quoted_earliest; e.latest = i.quoted_latest; e.quotes = i.quotes; e.status = r.status; }
     } else if (tool === "decide") {
       e.checkpoint = i.checkpoint; e.decision = { action: i.action, hours: i.hours, place: i.place, wait_hours: i.wait_hours, depart_after: i.depart_after, objective: i.objective };
       e.status = r.status;

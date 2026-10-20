@@ -1,9 +1,9 @@
-const UNIT_WORDS = { min: "minutes", kWh: "kWh", kg: "kg", USD: "USD", legs: "count", plans: "count", mSv: "mSv" };
+const UNIT_WORDS = { h: "hours", min: "minutes", kWh: "kWh", kg: "kg", USD: "USD", legs: "count", plans: "count", mSv: "mSv" };
 const MEASURE = {
   pickup: "Minutes the passengers wait beyond the quickest nearby Starseeker.",
   on_time: "Minutes late. The reference is 0 minutes late.",
   energy: "kWh flown above par. Holds and correction burns are included.",
-  promise: "Minutes off the quoted arrival. Late minutes are divided by 60. Early minutes are divided by 240. A missing arrival quote scores 0.",
+  promise: "Interval score of the quoted arrival window, earliest to latest: its width in hours, plus 10 times each hour the flight lands outside it. An arrival quoted alone is a window of no width. A missing or backwards window scores 0.",
   checker: "Count of legs that did not pass the checker and were not local hops.",
   fare: "USD off the flight fare. A missing fare quote scores 0.",
   economy: "Count of plans past the 6 free plans.",
@@ -130,6 +130,7 @@ th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;t
   <h2>The scale</h2>
   <p>Score version ${esc(catalog.version)} scores out of ${esc(R.SCORE_TOTAL)}. The weights are placeholders. They sum to ${esc(R.SCORE_TOTAL)}. The total is the sum of the part scores. Stored part scores are not rounded. Pages show them in whole points.</p>
   <p>Each part except cruise dose earns its full weight when the flight is on the stated reference (a headroom of ${esc(R.SCORE_HEADROOM)}). As the flight moves off the reference, the part falls. The falloff steepness is ${esc(R.SCORE_STEEPNESS)}, a simulated assumption. Doing better than the reference does not add points past the weight. Score version 3 paid at most 0.35 of each weight on the reference. Because no part can score above its reference, that only scaled every total down, so version 4 pays the full weight.</p>
+  <p>Kept the promise falls in a straight line instead. Version 5 scores the promise as an arrival window with the interval score (Gneiting and Raftery 2007): the window's width plus ${esc(2 / R.PROMISE_ALPHA)} times each hour outside it. That score is proper. The best window runs from the 10th to the 90th percentile of the arrival the dispatcher expects, an 80% window (alpha ${esc(R.PROMISE_ALPHA)}). So a padded window costs its width and an honest one pays. The part reaches 0 at ${esc(2 / R.PROMISE_ALPHA * R.PROMISE_HOURS.quick)} hours on a quick hail and ${esc(2 / R.PROMISE_ALPHA * R.PROMISE_HOURS.long)} hours on a long haul. Alpha and those limits are simulated assumptions. Version 4 scored only the quoted arrival, so a window could not be calibrated and zero buffer always scored best.</p>
 
   <h2>Score parts</h2>
   <p>Each row is one part. Weight is the placeholder maximum. Unit is the plain unit. Engine unit is the string <span class="mono">score()</span> puts on the part.</p>
