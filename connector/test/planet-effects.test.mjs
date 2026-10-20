@@ -46,8 +46,10 @@ async function three() {
   if (!threePromise) threePromise = (async () => {
     const html = readFileSync(new URL('../src/site.html', import.meta.url), 'utf8');
     const tag = html.match(/<script src="([^"]*three\.min\.js)"[^>]*integrity="(sha384|sha512)-([^"]+)"/);
-    const response = await fetch(tag[1], { signal: AbortSignal.timeout(20000) }); assert.equal(response.status, 200, tag[1]);
-    const bytes = Buffer.from(await response.arrayBuffer());
+    // The npm copy of r128 (a devDependency) is byte for byte the file the page loads, which the page's SRI hash proves,
+    // so CI does not depend on cdnjs being up.
+    assert.match(tag[1], /\/three\.js\/r128\/three\.min\.js$/);
+    const bytes = readFileSync(new URL('../node_modules/three/build/three.min.js', import.meta.url));
     assert.equal(createHash(tag[2]).update(bytes).digest('base64'), tag[3]);
     const module = { exports: {} }; vm.runInNewContext(bytes.toString(), { module, exports: module.exports });
     return module.exports;

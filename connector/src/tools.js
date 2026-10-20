@@ -40,7 +40,7 @@ const from = skyTime.describe("sky time YYYY-MM-DD HH:MM to start from (default:
 /** Every tool, in the order tools/list shows them. */
 export const TOOLS = {
   list_hails: {
-    description: "Simulated passengers waiting this season: hail id, party size, pickup place, destination, quick or long haul. The five catalog hails stay takeable and are not in this list. Also the fleet of Starseekers. Take one with take_hail. " +
+    description: "Simulated passengers waiting this season: hail id, party size, pickup place, destination, quick or long haul. The five catalog hails stay takeable and are not in this list: iss-crew, phobos-commute and jovian-hop (quick), titan-home and ceres-shift (long haul). Also the fleet of Starseekers. Take one with take_hail. " +
       "The pool has hundreds of hails, so this returns 25 at a time: filter with kind, from and to, and page with next_cursor.",
     inputSchema: {
       kind: z.enum(["quick", "long haul"]).optional().describe("only quick or only long-haul hails"),
@@ -112,7 +112,7 @@ export const TOOLS = {
     description: "Dispatch the ship: the pickup leg, the ride leg, the fare you quote (copy the ride leg's fare_usd) and the arrival you promise the rider. The season's hazards are then flown. " +
       "If a hazard stops the ride, the result is status \"checkpoint\" with the situation; answer it with decide. Otherwise the ride arrives and the result says what actually happened " +
       "(actual pickup and arrival, delay, extra kWh, incidents), the locked score and a run log. Arrived scores go on the /board page. " +
-      "A shared flight sends legs, stops (who boards and alights where each leg lands) and quotes per booking instead of the pickup and ride legs and the one quote. " +
+      "Shared flights are bench tasks only (take_hail takes one booking): a shared flight sends legs, stops (who boards and alights where each leg lands) and quotes per booking instead of the pickup and ride legs and the one quote. " +
       "In the live game the result also has watch_url (the page where the player watches the Starseeker fly now) and lands_in_s (real seconds until it lands there): give the player the link right away.",
     inputSchema: {
       run_id: runId,

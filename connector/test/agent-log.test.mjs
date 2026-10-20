@@ -66,6 +66,11 @@ test("list_hails says when the season is too late to take a long haul", async ()
   const META = require("../src/engine/meta.json"), { t0_ms, len_days } = META.sky;
   const early = seasonClock(E, t0_ms + 10 * 1000);
   assert.deepEqual([early.quick_open, early.long_haul_open], [true, true]);
+  assert.equal(early.note, "Every kind of hail can be taken now.");
+  // Under 2,600 sky days left, some long hauls (years of sky time) can't land before the reset, so the note says so.
+  const lateish = seasonClock(E, t0_ms + (len_days - 2000) * 1000);
+  assert.equal(lateish.long_haul_open, true);
+  assert.match(lateish.note, /\d+ sky days are left this season, so some can.t land before the reset/);
   const late = seasonClock(E, t0_ms + (len_days - 40) * 1000);
   assert.deepEqual([late.quick_open, late.long_haul_open], [true, false]);
   assert.match(late.note, /Long hauls can't be taken/);

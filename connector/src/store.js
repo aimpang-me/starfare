@@ -22,6 +22,7 @@ export const hub = (env) => env.STARFARE_HUB.get(env.STARFARE_HUB.idFromName("hu
 export const runStub = (env, runId) => env.STARFARE_RUN.get(env.STARFARE_RUN.idFromName(runId));
 
 const CACHE_MAX = 5000;
+const HITS_MAX = 20000; // rate-limit keys tracked in one minute
 const termsKey = (id, t0, end, seed) => `${id}|${t0}|${end}|s${seed}|e${META.sha256.slice(0, 16)}`;
 const RIDES_MAX = 1000; // index rows kept per player, newest first
 const EXPORT_MAX = 500; // newest arrived rides in one export file (each is one RPC to its run)
@@ -38,6 +39,9 @@ const newToken = () => [...crypto.getRandomValues(new Uint8Array(16))].map((b) =
 const rideMark = (run) => phaseOf(run) + "/" + (run.decisions ? run.decisions.length : 0);
 const LIVE_HELD_MS = 6 * 3600 * 1000; // a flight held at a checkpoint leaves the home map after this long without an answer
 const LIVE_AFTER_MS = 60 * 1000; // landed rows older than this leave, except the newest
+const RUN_KEEP_MS = 3 * 24 * 3600 * 1000; // a run that never flew is deleted this long after it was taken (StarfareRun.alarm)
+// Comms channels nobody checked in on are dropped after a day, every channel after 30; the page opens a new one on a 404.
+const COMMS_IDLE_MS = 24 * 3600 * 1000, COMMS_KEEP_MS = 30 * 24 * 3600 * 1000, COMMS_SWEEP = 200;
 
 export class StarfareRun extends DurableObject {
   #queue = Promise.resolve();
@@ -106,6 +110,7 @@ export class StarfareRun extends DurableObject {
       if (playerId) run.player_id = playerId; // STARFARE_OAUTH on only; a label, the run_id rules do not change
       logTake(E, run, now, client);
       await this.#save(run);
+      await this.ctx.storage.setAlarm(now + RUN_KEEP_MS);
       await this.#index(E, run);
       return hailInfo(E, run, Date.now());
     }));
@@ -135,6 +140,17 @@ export class StarfareRun extends DurableObject {
       if (run.live && phaseOf(run) === "arrived") flyLive(run, Date.now());
       await this.#commit(E, before, run);
       return { run_id: r.run_id, status: r.status, ...(r.status === "arrived" ? { total: r.total, note: r.note } : {}) };
+    });
+  }
+
+  /** RUN_KEEP_MS after take_hail: a run that never flew (still planning, or abandoned) is deleted, since its hail went cold
+   *  with its season. Arrived runs stay for the board, replays and history; one still flying looks again later. */
+  async alarm() {
+    return this.#serial(async () => {
+      const run = (await this.ctx.storage.get("run")) ?? null, phase = run ? phaseOf(run) : null;
+      if (phase === "arrived") return;
+      if (phase === "in_flight") { await this.ctx.storage.setAlarm(Date.now() + RUN_KEEP_MS); return; }
+      await this.ctx.storage.deleteAll();
     });
   }
 
@@ -190,12 +206,14 @@ export class StarfareHub extends DurableObject {
     // Comms channels (simulated game data only): the one-time code an agent checks in with, the player it turned out to be, its events and runs.
     this.sql.exec("CREATE TABLE IF NOT EXISTS comms (channel TEXT PRIMARY KEY, code TEXT, code_expires_ms INTEGER, player_id TEXT, created_ms INTEGER NOT NULL)");
     this.sql.exec("CREATE UNIQUE INDEX IF NOT EXISTS comms_by_code ON comms (code)");
+    this.sql.exec("CREATE INDEX IF NOT EXISTS comms_by_created ON comms (created_ms)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS comms_events (seq INTEGER PRIMARY KEY AUTOINCREMENT, channel TEXT NOT NULL, at_ms INTEGER NOT NULL, v TEXT NOT NULL)");
     this.sql.exec("CREATE INDEX IF NOT EXISTS comms_events_by_channel ON comms_events (channel, seq)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS comms_runs (channel TEXT NOT NULL, run_id TEXT NOT NULL, created_ms INTEGER NOT NULL, PRIMARY KEY (channel, run_id))");
     this.sql.exec("CREATE TABLE IF NOT EXISTS live (run_id TEXT PRIMARY KEY, v TEXT NOT NULL, land_ms INTEGER, updated_ms INTEGER NOT NULL)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS hubkv (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
-    this.hits = new Map(); // ip -> {win, n}; in memory on purpose: losing it on eviction only resets a minute's count
+    this.hits = new Map(); // key -> calls this minute; in memory on purpose: losing it on eviction only resets a minute's count
+    this.hitsWin = -1;
   }
   #get(table, k) { const row = this.sql.exec(`SELECT v FROM ${table} WHERE k = ?`, k).toArray()[0]; return row ? JSON.parse(row.v) : null; }
   #put(table, k, v) {
@@ -212,13 +230,16 @@ export class StarfareHub extends DurableObject {
   termsGet(id, t0, end, seed) { const v = this.#get("termscache", termsKey(id, t0, end, seed)); this.#bump(v ? "terms_hit" : "terms_miss"); return v; }
   termsPut(id, t0, end, seed, v) { this.#put("termscache", termsKey(id, t0, end, seed), v); }
 
-  /** Fixed one-minute window per IP. Returns { ok, n, limit }. */
-  hit(ip, limit) {
-    const win = Math.floor(Date.now() / 60000), cur = this.hits.get(ip);
-    const n = cur && cur.win === win ? cur.n + 1 : 1;
-    this.hits.set(ip, { win, n });
-    if (this.hits.size > 10000) for (const [k, v] of this.hits) if (v.win !== win) this.hits.delete(k);
-    return { ok: n <= limit, n, limit };
+  /** Fixed one-minute window per key (an address, a /64 or a player). n is how many calls this request carries (a JSON-RPC
+   *  batch counts each message). The map starts empty each minute, so nothing is ever scanned; past HITS_MAX keys in one
+   *  minute, new keys share one bucket, so a flood from many addresses cannot grow it. Returns { ok, n, limit }. */
+  hit(key, limit, n = 1) {
+    const win = Math.floor(Date.now() / 60000);
+    if (this.hitsWin !== win) { this.hits = new Map(); this.hitsWin = win; }
+    const k = this.hits.has(key) || this.hits.size < HITS_MAX ? key : "overflow";
+    const count = (this.hits.get(k) || 0) + Math.max(1, n | 0);
+    this.hits.set(k, count);
+    return { ok: count <= limit, n: count, limit };
   }
 
   record(e) {
@@ -296,6 +317,7 @@ export class StarfareHub extends DurableObject {
   /** A new Comms channel and its first check-in code. The channel stays secret in the browser; the code goes to the agent. */
   commsOpen() {
     const channel = newToken(), now = Date.now();
+    this.#commsSweep(now);
     this.sql.exec("INSERT INTO comms (channel, code, code_expires_ms, player_id, created_ms) VALUES (?, NULL, NULL, NULL, ?)", channel, now);
     return { channel, ...this.commsCode(channel) };
   }
@@ -320,6 +342,19 @@ export class StarfareHub extends DurableObject {
     this.#commsEvent(row.channel, now, { kind: "connected", client: info.client || null });
     this.#commsEvent(row.channel, now, { kind: "check_in", ...info, signed_in: !!player });
     return { channel: row.channel };
+  }
+  /** Drops up to COMMS_SWEEP expired channels with their events and runs. Runs whenever a channel opens, so the table
+   *  cannot outgrow what was opened in the last 30 days. */
+  #commsSweep(now) {
+    const old = this.sql.exec("SELECT channel FROM comms WHERE created_ms < ? AND (created_ms < ? OR (player_id IS NULL AND NOT EXISTS " +
+      "(SELECT 1 FROM comms_events e WHERE e.channel = comms.channel))) ORDER BY created_ms LIMIT ?", now - COMMS_IDLE_MS, now - COMMS_KEEP_MS, COMMS_SWEEP)
+      .toArray().map((x) => x.channel);
+    for (const c of old) {
+      this.sql.exec("DELETE FROM comms_events WHERE channel = ?", c);
+      this.sql.exec("DELETE FROM comms_runs WHERE channel = ?", c);
+      this.sql.exec("DELETE FROM comms WHERE channel = ?", c);
+    }
+    return old.length;
   }
   #commsEvent(channel, at, v) {
     this.sql.exec("INSERT INTO comms_events (channel, at_ms, v) VALUES (?, ?, ?)", channel, at, JSON.stringify(v));

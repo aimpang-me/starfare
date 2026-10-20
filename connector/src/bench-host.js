@@ -3,7 +3,7 @@
 // A hosted session (start_bench on the connector) plays a few tasks one after another; benchCall is its reducer and the
 // StarfareBench Durable Object only stores what it returns. Worker-safe: bench/backend.mjs re-exports this for Node.
 import { GameError, applyTool, hailInfo, isoJD, leaveRun, listHails, openRun, phaseOf, runFleet, spend } from "./game.js";
-import { PUBLIC_SPLITS, instanceFor, seedFor } from "./suite.js";
+import { PUBLIC_SPLITS, instanceFor, seedFor, weakKey } from "./suite.js";
 
 export const hex = (n) => [...crypto.getRandomValues(new Uint8Array(n))].map((b) => b.toString(16).padStart(2, "0")).join("");
 export const newRunId = () => "run_" + hex(10);
@@ -82,6 +82,7 @@ export function newSession(suite, benchId, player, nowMs, { split = "dev", key, 
   const dev = " start_bench with split dev (practice) still works.";
   if (!BENCH_SPLITS.includes(split)) return { error: "split is dev (practice) or test (held out), not " + split + "." };
   if (!PUBLIC_SPLITS.includes(split) && !key) return { error: "The " + split + " split needs STARFARE_BENCH_KEY on this server, and it has none." + dev };
+  if (!PUBLIC_SPLITS.includes(split) && weakKey(key)) return { error: "The " + split + " split is closed on this server: its STARFARE_BENCH_KEY is too short to keep the worlds hidden." + dev };
   const pool = [...((suite.splits && suite.splits[split]) || [])], tasks = [];
   if (!pool.length) return { error: "Suite " + suite.id + " has no " + split + " split yet." + dev };
   while (tasks.length < n && pool.length) tasks.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);

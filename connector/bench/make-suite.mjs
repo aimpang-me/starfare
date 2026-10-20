@@ -13,7 +13,7 @@ import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import META from "../src/engine/meta.json" with { type: "json" };
 import { SCORE_VERSION, SEASON_END, SKY } from "../src/game.js";
-import { SUITE_FORMAT, loadSuite, seedFor } from "../src/suite.js";
+import { SUITE_FORMAT, loadSuite, seedFor, weakKey } from "../src/suite.js";
 import { BenchBackend, flags, loadEngine, openTask } from "./backend.mjs";
 import { naive, random, reference, rngOf } from "./agents.mjs";
 
@@ -118,6 +118,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (a["test-into"]) {
     const key = process.env.STARFARE_BENCH_KEY, sel = a["test-selection"];
     if (!key) throw new Error("--test-into needs STARFARE_BENCH_KEY in the environment");
+    if (weakKey(key)) throw new Error(weakKey(key));
     if (!sel || inRepo(sel)) throw new Error("--test-selection must be a path outside the repo: it holds the test split's scores");
     const into = loadSuite(readFileSync(a["test-into"], "utf8"));
     const { suite, selection } = await cut({ id: into.id, split: "test", n, key, rule: { ...rule, budget: into.budget, margin: into.margin }, log });

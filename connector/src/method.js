@@ -108,7 +108,8 @@ p{margin:0 0 12px}
 .tag{display:inline-flex;align-items:center;font:600 10px/1 Inter, sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:4px 7px;border-radius:999px;border:1px solid rgba(127,138,153,.5);color:#b9c2ce;background:rgba(127,138,153,.12)}
 .doc{max-width:880px;margin:0 auto;padding:28px var(--gl) 64px}
 .lede{color:var(--ink-2);font-size:16px}
-table{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:13.5px}
+.tbl{overflow-x:auto;margin:8px 0 16px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
 th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;text-transform:uppercase}
 .num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
@@ -132,10 +133,10 @@ th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;t
 
   <h2>Score parts</h2>
   <p>Each row is one part. Weight is the placeholder maximum. Unit is the plain unit. Engine unit is the string <span class="mono">score()</span> puts on the part.</p>
-  <table>
+  <div class="tbl"><table>
     <thead><tr><th>Part</th><th>Weight</th><th>Unit</th><th>Engine unit</th><th>What it measures</th></tr></thead>
     <tbody>${rows}</tbody>
-  </table>
+  </table></div>
   <p class="note">Reported cruise dose uses ${esc(R.CRUISE_MSV_DAY)} mSv per day. The engine comment cites Curiosity RAD, cruise to Mars, Zeitlin et al. 2013. The dose part scores 0.</p>
 
   <h2>Stranded flights</h2>
@@ -145,17 +146,17 @@ th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;t
   <p>The parked fleet is Starseeker Taxis, Shuttles and Liners. They are fictional classes on a declared fictional drive. The exhaust speed and thrust are fictional. The rocket equation, mass flow, burn time, jet power and energy are computed from them, with a jet efficiency of ${esc(E.SHIP_CLASSES["star-taxi"].eta)}.</p>
   <p>Each leg is costed on the hull plus ${esc(E.DRIVE.PAX_KG)} kg per person aboard (with luggage) plus ${esc(E.DRIVE.SUPPLY_KG_DAY)} kg of supplies per person per day aboard. Those two figures are assumptions, not sourced. Burns throttle so nobody aboard feels more than ${esc(E.DRIVE.COMFORT_G)} g; the leg is still planned as impulsive burns. A Starseeker refuels at every stop, so its tank holds one leg. A leg is refused when it carries more people than seats or needs more propellant than the tank.</p>
   <p>Each class flies its own bookings. A ship of the wrong class is refused. Par and the quickest nearby ship only look at ships of the right class near the passengers or near their destination. The ship assignment is simulated.</p>
-  <table>
+  <div class="tbl"><table>
     <thead><tr><th>Class</th><th>Seats</th><th>Dry kg</th><th>Propellant kg per leg</th><th>Exhaust km/s</th><th>Thrust kN</th><th>Flies</th><th>Parked</th></tr></thead>
     <tbody>${stars}</tbody>
-  </table>
+  </table></div>
 
   <h2>Reference hulls</h2>
   <p>The catalog also keeps Dawn class, Deep Space 1 class, RTG class, and Shuttle class from real spacecraft. None is parked. Seat counts on Dawn class and Deep Space 1 class are a simulated cabin. Those probes flew with no passengers.</p>
-  <table>
+  <div class="tbl"><table>
     <thead><tr><th>Class</th><th>Dry kg</th><th>Xenon kg</th><th>Power W at 1 AU</th><th>Housekeeping W</th><th>Seats</th><th>Power</th><th>Parked</th></tr></thead>
     <tbody>${ships}</tbody>
-  </table>
+  </table></div>
   <p class="source">Dawn class stores dry mass ${esc(dawn.dry_kg)} kg, a xenon tank of ${esc(dawn.xenon_kg)} kg, and ${esc(dawn.power_w_1au)} W at 1 AU. The engine comment calls that power a published lower bound, over 10000 W at 1 AU. The repository does not give a URL for Dawn.</p>
   <p class="source">Deep Space 1 class stores dry mass ${esc(ds1.dry_kg)} kg, a xenon tank of ${esc(ds1.xenon_kg)} kg, ${esc(ds1.power_w_1au)} W at 1 AU, and housekeeping ${esc(ds1.housekeeping_w)} W. The assumptions line says housekeeping near 400 W. The repository does not give a URL for Deep Space 1.</p>
   <p class="source">RTG class is a simulated hull, not a flown ship. Dry mass ${esc(rtg.dry_kg)} kg is the Dawn figure. The xenon tank is ${esc(rtg.xenon_kg)} kg, Psyche's published load of up to 1085 kg (NASA JPL Psyche quick facts). Power is ${esc(rtg.power_w_1au)} W held constant, from Cassini at the end of the mission (NASA Cassini quick facts). The ${esc(rtg.power_w_1au)} W is treated as spare for the thruster. Housekeeping is not charged. The dry mass does not add tank structure for the larger xenon load. The repository does not give a URL for those quick facts.</p>
@@ -174,10 +175,10 @@ th{color:var(--ink-3);font:600 10px/1.3 Inter, sans-serif;letter-spacing:.12em;t
   <h2>Passengers and seasons</h2>
   <p>A season is ${esc(sky.len_days)} sky days. One real second is one sky day. Hazards are seeded by the season number, so every player in that season meets the same simulated hazards. A season's passengers are a seeded pool of simulated passengers. The tier sizes are placeholders.</p>
   <p>The pool size is frozen from the previous season's distinct signed-in players. The first season counts 0 players, so it uses the first tier. A later season keeps the size written for it.</p>
-  <table>
+  <div class="tbl"><table>
     <thead><tr><th>Distinct signed-in players</th><th>Hails</th></tr></thead>
     <tbody>${tierRows}</tbody>
-  </table>
+  </table></div>
 
   <h2>Held out seeds</h2>
   <p>The suite file stores no seeds. Practice tasks use the dev split. A dev seed is the prefix k1: and 128 bits from SHA-256 of a public string. The test split is held out. Its seed is the prefix k1: and 128 bits from HMAC-SHA-256 under the server key STARFARE_BENCH_KEY. That key is not in the repository. A split named train is refused. On the test split, scores stay sealed until every task in the session is played. The task list can name the booking and the sky day. The hazard world drawn from the keyed seed stays out of the suite file. Hidden test seeds stay out of training data. An episode export refuses a hidden test seed.</p>

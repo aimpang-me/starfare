@@ -31,7 +31,7 @@ if (!["off", "on", "both"].includes(MODE)) throw new Error("--mode must be off, 
 const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
 const META = JSON.parse(readFileSync(new URL("../src/engine/meta.json", import.meta.url), "utf8"));
-const BENCH_KEY = "e2e-bench-key"; // a throwaway key for wrangler dev; the live one is a Wrangler secret
+const BENCH_KEY = "e2e-bench-key-0123456789abcdef01"; // a throwaway key for wrangler dev; the live one is a Wrangler secret
 const TOOLS = ["check_in", "check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_leg", "plan_pickup", "plan_ride", "space_weather", "start_bench", "take_hail"];
 
 const results = [];
@@ -163,7 +163,7 @@ async function takeBookableQuick(client, hails) {
   for (const booking of hails.filter((h) => h.kind === "quick")) {
     const result = await call(client, "take_hail", { hail_id: booking.hail_id });
     if (!result.isError) return { booking, hail: result.value };
-    assert.match(String(result.value), /tank holds.*this (leg|plan) needs|season ends too soon/i,
+    assert.match(String(result.value), /tank holds.*this (leg|plan) needs|season ends too soon|land after the season ends/i,
       "Unexpected take_hail error must fail the check");
   }
   assert.fail("This season has no bookable quick hail for the integration check");
@@ -199,6 +199,11 @@ async function phaseOff() {
     const r = await fetch(`${w.base}/`);
     assert.equal(r.status, 200);
     assert.match(r.headers.get("content-type"), /^text\/html/);
+    // Hardening headers on every page (src/index.js harden).
+    assert.equal(r.headers.get("x-content-type-options"), "nosniff");
+    assert.equal(r.headers.get("referrer-policy"), "no-referrer");
+    assert.equal(r.headers.get("x-frame-options"), "DENY");
+    assert.match(r.headers.get("content-security-policy"), /frame-ancestors 'none'/);
     const html = await r.text();
     for (const s of ["Starfare", "Works with Grok", `${w.base}/mcp`, "grok.com/connectors", "/board.json", "/rides/&lt;run_id&gt;.json"]) assert.ok(html.includes(s), s);
     assert.doesNotMatch(html, /__(SITE|ORIGIN|ENGINE_URL)__/);
@@ -622,7 +627,7 @@ async function phaseOff() {
     for (const hailId of ["ceres-shift", "jovian-hop", "titan-home"]) {
       const h = await call(client, "take_hail", { hail_id: hailId });
       if (h.isError) {
-        assert.match(h.value, /season ends too soon/, hailId + " " + h.value);
+        assert.match(h.value, /season ends too soon|land after the season ends/, hailId + " " + h.value);
         held.push(hailId);
       } else {
         assert.equal(h.value.hail_id, hailId);

@@ -2,7 +2,7 @@
   "name": "starfare-connector",
   "private": true,
   "type": "module",
-  "//": "Only packages the Wingbot connector already uses (wingbot/app/web/package.json and its root devDependencies), same versions. Scripts call wrangler by path because the shared mount has no symlinks (install with --no-bin-links).",
+  "//": "Only packages the Wingbot connector already uses (wingbot/app/web/package.json and its root devDependencies), same versions, plus three 0.128.0 (r128, the copy the pages load from cdnjs) so page tests run without the CDN. Scripts call wrangler by path because the shared mount has no symlinks (install with --no-bin-links).",
   "scripts": {
     "build": "node build.mjs",
     "sim": "node sim.mjs",
@@ -17,12 +17,13 @@
     "dry-run": "node build.mjs && node node_modules/wrangler/bin/wrangler.js deploy --dry-run --outdir /tmp/starfare-dry"
   },
   "dependencies": {
-    "agents": "0.28.1",
+    "@cloudflare/workers-oauth-provider": "1.2.3",
     "@modelcontextprotocol/sdk": "1.32.1",
-    "zod": "4.6.7",
-    "@cloudflare/workers-oauth-provider": "1.2.3"
+    "agents": "0.28.1",
+    "zod": "4.6.7"
   },
   "devDependencies": {
+    "three": "0.128.0",
     "wrangler": "4.151.0"
   }
 }

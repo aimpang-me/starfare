@@ -125,7 +125,7 @@ test("a hidden test seed exports nothing and a public dev seed does", async () =
   const run = await dustArrived();
   const suite = { id: "episode", world: "per_task" };
   const task = { id: "t-hidden" };
-  const hidden = await seedFor(suite, "test", task, 0, "hidden-split-key");
+  const hidden = await seedFor(suite, "test", task, 0, "hidden-split-key-0123456789abcdef");
   const dev = await seedFor(suite, "dev", task, 0);
   assert.notEqual(hidden, dev);
   assert.equal(await episodeText(E, { ...run, tag: task.id, seed: hidden }, suite), null);

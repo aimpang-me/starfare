@@ -68,9 +68,9 @@ test("t0: quick hails 1 sky day ahead, long-haul hails LEAD days ahead; the haza
   assert.equal(info.fleet.length, R.FLEET.length); assert.equal(info.season, sky(NOW).season);
 });
 
-test("titan-home late in the season says the season ends too soon", async () => {
+test("titan-home late in the season says the trip would land after the season ends", async () => {
   const late = skyAt(SKY.jd0 + 6300); // the Liner still fits a hail at 6200
-  await assert.rejects(() => seasonRun(E, "titan-home", late, "run_late_titan"), /The season ends too soon/);
+  await assert.rejects(() => seasonRun(E, "titan-home", late, "run_late_titan"), /This trip would land after the season ends/);
 });
 
 test("get_hail: each car is free or busy_until the engine's fleetState; the rules explain the hazards and the promise", async () => {
@@ -362,10 +362,10 @@ test("long haul: a Shuttle flies the 2029-07-03 Ceres leg, and the Taxis are ref
   assert.deepEqual([run.par_car, r.from, r.to, r.refly.result, r.aboard], ["sf-09", "ceres-port", "mars-base", "PASS", 1]);
 });
 
-test("a long haul hailed after the last flight of the season can leave is refused with the season-end message", async () => {
+test("a long haul hailed after the last flight of the season can leave is refused: the trip would land after the season ends", async () => {
   for (const jd of [2468134, 2468148])
     await assert.rejects(seasonRun(E, "ceres-shift", atClock(jd), "run_late"),
-      (e) => e instanceof GameError && e.message === "The season ends too soon for a new hail. Wait for the reset.");
+      (e) => e instanceof GameError && /^This trip would land after the season ends, so it can't be taken this late\./.test(e.message));
 });
 
 test("wrong legs are refused; validation failures are not counted; the plan cap holds", async () => {
