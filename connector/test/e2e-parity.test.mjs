@@ -12,7 +12,7 @@ test("the checkpoint parity oracle includes the simulated reply delay in its flo
   const fixtures = JSON.parse(readFileSync(new URL("../../world/engine/fixtures/fly-baseline.json", import.meta.url), "utf8"));
   const fixture = fixtures.rides.find((r) => r.hail === "ceres-shift" && r.seed === "17" && r.kind === "par");
   const nodeScore = evalSlice(source, "function nodeScore(", "/** take_hail,", "nodeScore", {
-    E, R: E.R, SEASON_END, isoJD,
+    E, R: E.R, SEASON_END, isoJD, NODE_SEEDS: {},
     jdOf: (s) => Date.parse(s.replace(" ", "T") + ":00Z") / 864e5 + 2440587.5,
     computeLeg: (_E, from, to) => fixture.legs.find((L) => L.from === from && L.to === to),
   });

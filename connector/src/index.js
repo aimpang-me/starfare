@@ -8,7 +8,9 @@ import { engine } from "./engine.js";
 import META from "./engine/meta.json" with { type: "json" };
 import engineSrc from "./engine/sol-page.txt";
 import { EPISODE_PATH } from "./episode.js";
-import { SCORE_VERSION, listHails, poolView, sky } from "./game.js";
+import { SCORE_VERSION, SKY, listHails, poolView, sky } from "./game.js";
+import conditions from "./conditions.cjs";
+import { seasonKey, seasonRelease, seasonSeed } from "./season-seed.js";
 import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
 import agentHtml from "./agent.html";
@@ -28,8 +30,29 @@ const isMcpPath = (p) => p === "/mcp" || p.startsWith("/mcp/");
 // The landing page runs the engine in the browser. ?v= changes with every engine build, so that URL can be cached for good.
 const ENGINE_PATH = "/engine.js", ENGINE_V = META.sha256.slice(0, 16);
 const isBenchPath = (p) => p === "/bench" || p.startsWith("/bench/");
-const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p.startsWith("/rides/") || p.startsWith("/flight/") || p.startsWith("/agent/") || p.startsWith("/comms/") || isBenchPath(p);
+const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p === "/sky.json" || p.startsWith("/seasons/") || p.startsWith("/rides/") || p.startsWith("/flight/") || p.startsWith("/agent/") || p.startsWith("/comms/") || isBenchPath(p);
 const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), FLIGHT_PATH = new RegExp("^/flight/(" + RUN_ID.source.slice(1, -1) + ")(\\.json)?$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
+
+const SEASON_PATH = /^\/seasons\/(\d{1,9})\.json$/;
+// /sky.json: the season's hazards as the public pages may show them. With a keyed season seed the pages can't compute them,
+// so this reports conditions up to the sky time now and no further (src/conditions.cjs); without one it says so and gives
+// the seed, and the pages compute everything themselves as before. ?at=<sky JD> asks for an earlier moment of this season
+// (a paused or slowed map). Reports are kept per isolate by sky hour, with each seed's past eruption days.
+const reports = new Map(), eruptionDays = new Map();
+async function skyReport(env, url) {
+  const now = sky(Date.now()), seed = await seasonSeed(env, now.season), keyed = !!seasonKey(env);
+  if (!keyed) return { simulated: true, season: now.season, keyed, seed, now_jd: now.jd };
+  const start = SKY.jd0, q = url.searchParams.get("at"), asked = q ? Number(q) : NaN, at = Number.isFinite(asked) ? Math.max(start, Math.min(asked, now.jd)) : now.jd;
+  const hour = Math.floor(at * 24), k = seed + "|" + hour + "|" + Math.floor(now.jd * 24);
+  if (!reports.has(k)) {
+    if (reports.size > 64) reports.clear();
+    if (!eruptionDays.has(seed)) { if (eruptionDays.size > 4) eruptionDays.clear(); eruptionDays.set(seed, {}); }
+    const E = await engine();
+    reports.set(k, conditions.reportOf(E.R.hazards(seed), at, now.jd, eruptionDays.get(seed)));
+  }
+  return { simulated: true, season: now.season, keyed, now_jd: now.jd, report: reports.get(k),
+    note: "Simulated hazards reported up to the sky time now. A storm or haze still going has no end time: nobody is told when it ends." };
+}
 
 // A season's pool size is frozen the first time the hub is asked (hub-pool.js ensurePool), so each isolate keeps the answer
 // and the home page and /hails.json stop costing a call to the one hub Durable Object.
@@ -195,19 +218,27 @@ async function route(req, env, ctx) {
     const E = await engine(), season = sky(Date.now()).season, cap = await poolCap(env, season);
     const pool = poolView(E, season, cap);
     if (url.pathname === "/hails.json") return Response.json(pool, { headers: { "cache-control": "no-store" } });
-    const site = { sky: META.sky, look: META.look, ...pool };
+    // Seasons keyed with STARFARE_SEASON_KEY: the page can't compute hazards, so it reads /sky.json (src/conditions.cjs).
+    const site = { sky: META.sky, look: META.look, ...pool, hazards: seasonKey(env) ? "reported" : "computed" };
     const html = siteHtml.replaceAll("__ORIGIN__", url.origin).replace("__ENGINE_URL__", `${ENGINE_PATH}?v=${ENGINE_V}`)
       .replace("__SITE__", () => JSON.stringify(site).replace(/</g, "\\u003c"));
     return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
   }
   if (url.pathname.startsWith("/agent/")) return agentPage(req, url, env);
+  if (url.pathname === "/sky.json") return Response.json(await skyReport(env, url), { headers: { "cache-control": "no-store" } });
+  const season = SEASON_PATH.exec(url.pathname);
+  if (season) {
+    const r = await seasonRelease(env, season[1], sky(Date.now()).season);
+    return r ? Response.json({ simulated: true, ...r }, { headers: { "cache-control": r.released ? "public, max-age=3600" : "no-store" } })
+      : new Response("Not found: no season with that number yet", { status: 404 });
+  }
   // Home map flights (simulated), including the newest landed one.
   if (url.pathname === "/live.json") return Response.json({ simulated: true, ...(await hub(env).live()) }, { headers: { "cache-control": "no-store" } });
   const episode = EPISODE_PATH.exec(url.pathname);
   if (episode) {
     if (!(await allowed(hub(env), "rides:" + clientKey(req), rateLimit(env)))) return busy();
     const body = await runStub(env, episode[1]).episode();
-    if (!body) return new Response("Not found: no arrived flight with that run_id", { status: 404 });
+    if (!body) return new Response("Not found: no arrived flight with that run_id, or its season is keyed and its seed is published after the reset", { status: 404 });
     return new Response(body, { headers: { "content-type": "application/x-ndjson; charset=utf-8", "content-disposition": `attachment; filename="${episode[1]}.episode.jsonl"`, "cache-control": "public, max-age=60" } });
   }
   // The flight page: live playback of a season flight in the air, then its replay and receipt. The page polls

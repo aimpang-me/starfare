@@ -53,6 +53,7 @@ cpSync(ART, join(PUB, "assets"), { recursive: true });
 cpSync(join(HERE, "src", "flight-view.cjs"), join(PUB, "assets", "flight-view.js"));
 cpSync(join(HERE, "src", "agent-log.cjs"), join(PUB, "assets", "agent-log.js"));
 cpSync(join(HERE, "src", "comms.cjs"), join(PUB, "assets", "comms.js"));
+cpSync(join(HERE, "src", "conditions.cjs"), join(PUB, "assets", "conditions.js"));
 const lore = readFileSync(join(WORLD, "lore", "sol-lore.js"));
 if (!lore.includes("root.SOL_LORE = factory()")) throw new Error("world/lore/sol-lore.js no longer defines SOL_LORE");
 writeFileSync(join(PUB, "assets", "sol-lore.js"), lore);

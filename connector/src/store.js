@@ -16,6 +16,7 @@ import {
   rideStats, rideSummary, resolveHail, restoreRunBookings, seasonInstance, seasonSpan, seasonStandings, sky,
 } from "./game.js";
 import { liveIdsToDrop } from "./live.js";
+import { seasonSeed } from "./season-seed.js";
 import { distinctPlayers as playersIn, ensurePool as freezePool, poolSize as storedPool, recordBest } from "./hub-pool.js";
 
 export const hub = (env) => env.STARFARE_HUB.get(env.STARFARE_HUB.idFromName("hub"));
@@ -107,7 +108,7 @@ export class StarfareRun extends DurableObject {
       };
       const now = Date.now(), season = sky(now).season, cap = await h.ensurePool(season);
       resolveHail(E, hailId, season, cap);
-      const run = await openRun(E, seasonInstance(E, hailId, now), runId, now, termsFn);
+      const run = await openRun(E, seasonInstance(E, hailId, now, await seasonSeed(this.env, season)), runId, now, termsFn);
       if (playerId) run.player_id = playerId; // STARFARE_OAUTH on only; a label, the run_id rules do not change
       logTake(E, run, now, client);
       await this.#save(run);

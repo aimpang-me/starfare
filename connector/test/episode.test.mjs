@@ -129,7 +129,10 @@ test("a hidden test seed exports nothing and a public dev seed does", async () =
   const dev = await seedFor(suite, "dev", task, 0);
   assert.notEqual(hidden, dev);
   assert.equal(await episodeText(E, { ...run, tag: task.id, seed: hidden }, suite), null);
-  assert.equal(await episodeText(E, { ...run, tag: null, seed: hidden }, suite), null);
+  // A keyed season seed stays hidden while its season runs, and exports once the season has reset and the seed is public.
+  assert.equal(await episodeText(E, { ...run, tag: null, seed: hidden }, suite, DUST_NOW), null);
+  const later = DUST_NOW + SKY.len_days * 1000;
+  assert.match(await episodeText(E, { ...run, tag: null, seed: hidden }, suite, later), new RegExp('"world":\\{"kind":"live","season":' + run.season + ',"seed":"' + hidden + '"\\}'));
   const text = await episodeText(E, { ...run, tag: task.id, seed: dev, player_id: PLAYER }, suite);
   assert.equal(typeof text, "string");
   assert.equal(text.includes(dev), true);

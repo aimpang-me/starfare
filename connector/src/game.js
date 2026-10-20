@@ -180,11 +180,11 @@ export function seasonClock(E, nowMs) {
       "take_hail refuses those and says so." : "Every kind of hail can be taken now.") : quick ? "Long hauls can't be taken this late in the season (take_hail refuses them); quick hails can. The season resets in about " + left + " real seconds."
       : "No hail can be taken until the season resets, in about " + left + " real seconds." };
 }
-/** Page takeHail(): t0 and the hazard seed (the season number) from the sky clock. */
-export function seasonInstance(E, hailId, nowMs) {
+/** Page takeHail(): t0 from the sky clock, and the season's hazard seed: its number, or a keyed seed (season-seed.js). */
+export function seasonInstance(E, hailId, nowMs, seed = null) {
   const s = sky(nowMs), t0 = takeAt(E, hailId, s.jd);
   if (t0 + 30 > SEASON_END) fail(SEASON_TOO_SHORT);
-  return { hail_id: hailId, t0, end_jd: SEASON_END, seed: String(s.season), clock: { kind: "wall" }, tag: null, budget: null };
+  return { hail_id: hailId, t0, end_jd: SEASON_END, seed: seed ?? String(s.season), season: s.season, clock: { kind: "wall" }, tag: null, budget: null };
 }
 /** A bench task: sky time frozen at clockJd, where a live take would have read it, so t0 is after the clock.
  *  task is { hail_id } or a shared flight { hails: [ids] }, whose first booking is the lead: it sets t0 and is the run's hail. */
@@ -210,7 +210,7 @@ export async function openRun(E, inst, runId, nowMs, termsFn) {
     terms = { arrive_by_jd: T.arrive_by_jd, par_kwh: T.par.kwh, par_car: T.par.car, best_wait_days: T.par.best_wait_days };
   }
   return {
-    run_id: runId, id: hailId, title: R.BY[hailId].title, t0, seed, ...terms, calls: 0, lseq: 0, legs: {}, forecasts: [], phase: "planning", score: null, created_ms: nowMs,
+    run_id: runId, id: hailId, title: R.BY[hailId].title, t0, seed, ...(inst.season != null ? { season: inst.season } : {}), ...terms, calls: 0, lseq: 0, legs: {}, forecasts: [], phase: "planning", score: null, created_ms: nowMs,
     end_jd, clock: inst.clock, tag: inst.tag, budget: inst.budget, ...(inst.budget == null ? {} : { tool_calls: 0 }),
     ...((inst.hails || [hailId]).some((id) => SEASON_HAIL.test(id))
       ? { booking_rows: (inst.hails || [hailId]).map((id) => structuredClone(R.BY[id])) } : {}),
@@ -220,7 +220,9 @@ export async function openRun(E, inst, runId, nowMs, termsFn) {
 /** Sky time for a run: the only reader of the clock. Runs stored before clocks existed read the wall. */
 export const skyNow = (run, nowMs) => (run.clock && run.clock.kind === "frozen" ? run.clock.jd : sky(nowMs).jd);
 /** The world a run names in its output: its season, or a bench run's task_id. Never the seed: bench seeds are secret. */
-export const worldOf = (run) => (run.tag == null ? { season: +seedOf(run) } : { task_id: run.tag });
+export const worldOf = (run) => (run.tag == null ? { season: seasonOf(run) } : { task_id: run.tag });
+/** A season run's season. Runs from before keyed seeds kept the season only as their seed. */
+export const seasonOf = (run) => (run.season != null ? run.season : +seedOf(run));
 
 // The fields each view may print. Anything else on a run, its seed above all, never reaches a tool result.
 const VIEWS = Object.fromEntries(Object.entries({

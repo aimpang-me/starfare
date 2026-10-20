@@ -742,6 +742,7 @@ body.cm-open .mc-activity{display:none}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js" integrity="sha384-nhO9toQuMo5osCuA0l+YFpSqscZWxDu251Bnho2gD3kSPv1neEwHg0LyEmrA+mPj" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js" integrity="sha384-mY+ii969jnDCI2HjRHftH2NZVkIO5ZGUkcnGCg3oVJ3kVstWQXwerYWBg+nbUG4R" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js" integrity="sha384-GkidzTYmQg24v13sa3xhBBbvOLbVLO1QxfyKLdOWweQqNqS/iWwUst2T1fER2Xrg" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js" integrity="sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js" integrity="sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js" integrity="sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js" integrity="sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js" integrity="sha384-Ua4+miEfAhtQpWvzgEohUG5UfbDPgyuYVVT+sgb2QvRC3fjACMsy7LV3Zoxnv2xf" crossorigin="anonymous"></script><script src="/assets/sol-art.js"></script>
 <script src="/assets/planet-effects.js"></script>
 <script src="/assets/sky-effects.js"></script>
+<script src="/assets/conditions.js"></script>
 <script src="/assets/flight-view.js"></script>
 <script src="/assets/agent-log.js"></script>
 <script src="/assets/comms.js"></script>
@@ -850,7 +851,8 @@ body.cm-open .mc-activity{display:none}
     var key = hailId + "@" + d.ready_jd + "@" + d.season;
     if (PLANS[key]) return PLANS[key];
     if (!d.open) return (PLANS[key] = { hail: d, closed: "The season ends before this ride could finish. It opens again after the reset (season " + (d.season + 1) + ")." });
-    var seed = String(d.season), T, fs = {};
+    // A keyed season's hazards are secret until it resets, so the preview flies stand-in weather and says so (standIn).
+    var standIn = SITE.hazards === "reported", seed = standIn ? "preview|" + d.season : String(d.season), T, fs = {};
     try { T = R.terms(hailId, d.ready_jd, SEASON_END, seed); } catch (e) { return (PLANS[key] = { hail: d, closed: "No car can serve this hail before the season ends." }); }
     R.fleetState(hailId, d.ready_jd, seed).forEach(function (c) { fs[c.car] = c.busy_until_jd; });
     var legs = T.par.legs.map(function (L) {
@@ -862,7 +864,7 @@ body.cm-open .mc-activity{display:none}
       try { var p = R.planLeg(c.at, R.BY[hailId].from, free, "energy", SEASON_END, c.id); leg = { dep_jd: p.dep_jd, arr_jd: p.arr_jd, kwh: p.battery.energy_kwh, fare: p.fare.total_usd, local: !!p.local }; } catch (e) { leg = null; }
       return { car: c.id, name: c.name, at: c.at, busy_until_jd: fs[c.id] || null, pickup: leg, par: c.id === T.par.car };
     });
-    return (PLANS[key] = { hail: d, arrive_by_jd: T.arrive_by_jd, par: { car: T.par.car, kwh: T.par.kwh, arr_jd: T.par.arr_jd, legs: legs }, cars: cars });
+    return (PLANS[key] = { hail: d, stand_in: standIn, arrive_by_jd: T.arrive_by_jd, par: { car: T.par.car, kwh: T.par.kwh, arr_jd: T.par.arr_jd, legs: legs }, cars: cars });
   }
 
   // Ride replay from a stored ride: where the car is at any sky time. Each flown leg follows its planned arc
@@ -1187,6 +1189,9 @@ function passengerList(rec) {
 var LIVE = [], LIVE_T = 0;
 function liveFleet(ms) {
   var s = SF.sky(ms), by = {};
+  // A keyed season's busy times come from its secret seed, so the map shows every Starseeker parked and free.
+  if (SF.SITE.hazards === "reported") return SF.R.FLEET.map(function (c) { return { car: c.id, name: c.name, at: c.at, seats: SF.R.CAR[c.id].seats, busy: null }; })
+    .filter(function (c) { return !FL.some(function (F) { return F.f.ship.toLowerCase() === String(c.car).toLowerCase(); }); });
   SF.desk(ms).filter(function (h, i) { return SEL.t === "b" ? h.id === SEL.id : i === 0; }).forEach(function (h) {
     try {
       SF.R.fleetState(h.id, h.ready_jd, String(s.season)).forEach(function (c) {
@@ -1199,13 +1204,32 @@ function liveFleet(ms) {
 }
 var PADS = ["iss", "lunar-data-center", "phobos", "mars-base", "io", "ganymede", "europa", "titan", "earth", "ceres-port", "orbital-depot", "ceres", "callisto", "titan-dock"];
 var HZ = {};
-function hz(season) { return HZ[season] || (HZ[season] = SF.R.hazards(String(season))); }
+// Hazards: computed here from the season's public seed, or, when the season is keyed (SITE.hazards "reported"), rebuilt from
+// /sky.json, which reports conditions up to the sky time now and never says when a running storm ends (end Infinity).
+var REPORT = null, REPORT_T = 0, CLEAR = { flareAt: function () { return null; }, weatherAt: function () { return null; }, berths: function () { return 2; }, docked: function () { return 0; } };
+function hz(season) {
+  if (SF.SITE.hazards === "reported") return REPORT && REPORT.season === season ? REPORT.view : CLEAR;
+  return HZ[season] || (HZ[season] = SF.R.hazards(String(season)));
+}
+function pollSky() {
+  if (SF.SITE.hazards !== "reported" || document.hidden || Date.now() - REPORT_T < 2000) return;
+  REPORT_T = Date.now();
+  // A paused or slowed map draws an earlier moment; ask for that one while the map is being drawn.
+  var behind = raf && MAPJD && LIVEJD - MAPJD > 1 ? "?at=" + MAPJD.toFixed(4) : "";
+  fetch("/sky.json" + behind, { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+    if (!j || !j.report || !window.StarfareConditions) return;
+    REPORT = { season: j.season, view: StarfareConditions.reportedHazards(j.report) };
+    FX.cache = {}; HZ_NOW.hour = null; // eruptions and full pads are read again from the new report
+  }).catch(function () { /* the last report stands */ });
+}
+function until(w) { return w.end === Infinity ? "it passes (no end time is given)" : iso(w.end); }
 function alertsNow(jd, season) {
+  pollSky();
   var H = hz(season), out = [], f = H.flareAt(jd), hr = Math.floor(jd * 24);
-  if (f) out.push({ key: "flare", k: "flare", t: "Solar flare (simulated)", d: "No launches with a passenger aboard until " + iso(f.end) });
+  if (f) out.push({ key: "flare", k: "flare", t: "Solar flare (simulated)", d: "No launches with a passenger aboard until " + until(f) });
   ["mars-base", "titan-dock"].forEach(function (p) {
     var w = H.weatherAt(p, jd);
-    if (w) out.push({ key: "wx-" + p, k: "wx", p: p, t: (w.kind === "dust_storm" ? "Dust storm at " : "Haze at ") + SF.name(p) + " (simulated)", d: "Until " + iso(w.end) });
+    if (w) out.push({ key: "wx-" + p, k: "wx", p: p, t: (w.kind === "dust_storm" ? "Dust storm at " : "Haze at ") + SF.name(p) + " (simulated)", d: "Until " + until(w) });
   });
   PADS.forEach(function (p) {
     try { var b = H.berths(p), n = H.docked(p, hr); if (n >= b) out.push({ key: "pad-" + p, k: "pad", p: p, t: "Pad full at " + SF.name(p) + " (simulated)", d: n + " of " + b + " berths taken this sky hour" }); } catch (e) { /* not a pad */ }
@@ -2237,6 +2261,7 @@ function draw(dt, t) {
   SUN.scale.setScalar(Math.max(695700 / AU, pxAt(V0) * 6));
   // Surface animation is illustrative and independent of ephemerides and recorded flights.
   var effectSeconds = PLANET_CLOCK ? PLANET_CLOCK.sample(t, !MAP_PAUSED && !reduced && !document.hidden) : 0;
+  pollSky();
   var Z = hazardsNow(MAPJD, SF.sky(now).season);
   if (window.SolArt && SolArt.updateSun) SolArt.updateSun(SUN, { elapsedSeconds: effectSeconds, camera: cam, radiusPx: SUN.scale.x / pxAt(V0), quality: SolArt.quality().maps, flare: Z.flare });
   // bodies: true size, or a few pixels when that is smaller. A moon or station shows once it stands clear of its planet.
@@ -2487,7 +2512,7 @@ function renderInfo() {
     if (B.busy) body = '<div class="planning" style="margin-top:10px"><i></i>Planning with the engine</div>';
     else if (B.err) body = '<p class="note">' + W(B.err) + "</p>";
     else if (B.rp) {
-      body = '<dl class="kv"><dt>Planned at</dt><dd>' + iso(SF.sky(B.ms).jd) + "</dd><dt>Par " + esc(SF.SHIP) + "</dt><dd>" + esc(parName(P.par.car)) + "</dd><dt>Arrives</dt><dd>" + iso(P.par.arr_jd) + "</dd><dt>Arrive by</dt><dd>" + iso(P.arrive_by_jd) + "</dd><dt>Energy, par</dt><dd>" + kwh(P.par.kwh) + "</dd></dl>" +
+      body = (P.stand_in ? '<p class="note">Preview with stand-in weather (simulated): this season\'s hazards stay secret until it resets, so your agent\'s par from take_hail can differ.</p>' : "") + '<dl class="kv"><dt>Planned at</dt><dd>' + iso(SF.sky(B.ms).jd) + "</dd><dt>Par " + esc(SF.SHIP) + "</dt><dd>" + esc(parName(P.par.car)) + "</dd><dt>Arrives</dt><dd>" + iso(P.par.arr_jd) + "</dd><dt>Arrive by</dt><dd>" + iso(P.arrive_by_jd) + "</dd><dt>Energy, par</dt><dd>" + kwh(P.par.kwh) + "</dd></dl>" +
         '<div class="caps" style="margin-top:8px">Legs</div>' + P.par.legs.map(function (L, k) {
           return '<div style="font-size:11.5px;margin-top:4px;border-top:1px solid var(--line);padding-top:4px">' + esc(SF.name(L.from)) + " &rarr; " + esc(SF.name(L.to)) + (L.local ? ' <span class="dim">local hop</span>' : "") + '<div class="mono dim" style="font-size:10.5px">' + iso(L.dep_jd) + " &rarr; " + iso(L.arr_jd) + " &middot; " + kwh(L.kwh) + " &middot; " + money(L.fare) + "</div></div>";
         }).join("");
