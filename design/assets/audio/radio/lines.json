@@ -1,0 +1,126 @@
+{
+  "voice": "Marilyn - Warm, Clear British (ElevenLabs library voice CH8NA3Iu30hBBcNIzv9I)",
+  "model": "eleven_v4",
+  "generated": "2026-10-20",
+  "note": "Stock ship-radio callouts, number-free and place-free. Generated with ElevenLabs; AI voice, simulated. Stored clean; sol-radio.js applies the radio filter in the browser.",
+  "lines": {
+    "take-1": {
+      "src": "ship",
+      "level": "routine",
+      "text": "HQ, Starseeker. Booking accepted. Spinning up for the pickup."
+    },
+    "take-2": {
+      "src": "ship",
+      "level": "routine",
+      "text": "HQ, Starseeker. We have the booking. Heading out now."
+    },
+    "depart-1": {
+      "src": "ship",
+      "level": "routine",
+      "text": "Dispatch, Starseeker. Flight plan filed. Departing now."
+    },
+    "depart-2": {
+      "src": "ship",
+      "level": "routine",
+      "text": "Starseeker is clear of the pad. On our way."
+    },
+    "pickup": {
+      "src": "ship",
+      "level": "routine",
+      "text": "Dispatch, Starseeker. Passengers aboard, hatch sealed. Departing for the destination."
+    },
+    "arrive-1": {
+      "src": "ship",
+      "level": "routine",
+      "text": "Dispatch, Starseeker. Docked and secure. Passengers disembarking."
+    },
+    "arrive-2": {
+      "src": "ship",
+      "level": "routine",
+      "text": "Starseeker is down safe. Thanks for the help, HQ."
+    },
+    "hold": {
+      "src": "ship",
+      "level": "reroute",
+      "text": "Dispatch, Starseeker. Holding in orbit until the pad clears."
+    },
+    "divert": {
+      "src": "ship",
+      "level": "reroute",
+      "text": "Dispatch, Starseeker. Diverting to the alternate pad. Passengers informed."
+    },
+    "replan": {
+      "src": "ship",
+      "level": "reroute",
+      "text": "Dispatch, Starseeker. Replanning the leg. New plan to follow."
+    },
+    "wait": {
+      "src": "ship",
+      "level": "reroute",
+      "text": "Dispatch, Starseeker. Waiting out the launch hold on the pad."
+    },
+    "cp-launch-hold": {
+      "src": "ship",
+      "level": "emergency",
+      "text": "Pan-pan, pan-pan. Dispatch, Starseeker. Launch hold on our pad. Standing by for your call."
+    },
+    "cp-pad-closed": {
+      "src": "ship",
+      "level": "emergency",
+      "text": "Pan-pan, pan-pan. Dispatch, Starseeker. Destination pad is closed. Requesting instructions."
+    },
+    "dust-storm": {
+      "src": "ship",
+      "level": "emergency",
+      "text": "Dispatch, Starseeker. Dust storm over the pad. Passengers are secure. Riding it out."
+    },
+    "titan-haze": {
+      "src": "ship",
+      "level": "emergency",
+      "text": "Dispatch, Starseeker. Thick haze over the pad. Passengers are secure. Holding until it lifts."
+    },
+    "flare": {
+      "src": "ship",
+      "level": "emergency",
+      "text": "Dispatch, Starseeker. Solar storm warning. Passengers to the shelter. Holding on the ground."
+    },
+    "correction": {
+      "src": "ship",
+      "level": "routine",
+      "text": "Dispatch, Starseeker. Small course correction. Burning now, all normal."
+    },
+    "late": {
+      "src": "ship",
+      "level": "reroute",
+      "text": "Dispatch, Starseeker. Running behind the plan. Passengers informed."
+    },
+    "pad-full": {
+      "src": "ship",
+      "level": "reroute",
+      "text": "Dispatch, Starseeker. Every berth is taken. Holding for a slot."
+    }
+  },
+  "pending": {
+    "hq-link": {
+      "src": "hq",
+      "level": "routine",
+      "text": "Starseeker, HQ. Link confirmed. You are cleared to take bookings."
+    },
+    "hq-copy": {
+      "src": "hq",
+      "level": "routine",
+      "text": "HQ copies. Standing by."
+    },
+    "hq-out": {
+      "src": "hq",
+      "level": "routine",
+      "text": "HQ copies. Good flying. HQ out."
+    },
+    "refused": {
+      "src": "hq",
+      "level": "routine",
+      "text": "Starseeker, HQ. Unable. Check the request and try again."
+    }
+  },
+  "pending_note": "HQ lines for the comms panel, in a second voice. Not generated yet: ElevenLabs rate-limited the account on 2026-10-20."
+}

@@ -69,6 +69,14 @@ There are no audio files. Every map sound is synthesized in the browser with the
 
 All of it is labelled on the map as stylized and simulated. Distances and positions come from the engine and the true-scale map camera.
 
+## Audio: ship radio (`audio/radio/`, `sol-radio.js`)
+
+| File | Source | Licence | Changes |
+|---|---|---|---|
+| `audio/radio/*.mp3` (19 ship callouts, listed in `audio/radio/lines.json`) | Generated with ElevenLabs text to speech (model `eleven_v4`, library voice "Marilyn - Warm, Clear British"), 2026-10-20. AI voice; the lines are simulated. | ElevenLabs terms for the plan in use; confirm commercial use before launch (the account showed free-tier limits on 2026-10-20) | Cut from one take into one clip per line, trimmed, mono 48 kHz MP3 64 kbps. Stored clean. |
+
+The radio sound (a gentle band-limit, light compression, the open-channel blip, roger beep and two-tone alert) is original work, synthesized live in `sol-radio.js` with the Web Audio API. Lines speak no numbers, so the "never invent numbers" rule holds.
+
 ## Original work
 
 The procedural Starseeker ship model, its engine plume, nav lights and callsign decal, the Fresnel atmosphere rims, the bloom, vignette and grain settings, and the SVG icon sprite are all original. They were drawn in code in `sol-art.js` for Starfare. They are not modelled on any real vehicle, and Starfare is not affiliated with any real company. The home map draws ships with this model; the flight page draws the generated hulls below when the quality tier allows, and this model otherwise.
