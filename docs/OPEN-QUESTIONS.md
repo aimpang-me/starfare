@@ -5,7 +5,7 @@
 Decisions only Alvin can make. Ask them one at a time, with the options below and the recommendation marked; carry on with the recommended option where the work allows, and record each answer here (move it to "Answered" with the date).
 
 ## Waiting
-- Ship capacity (asked 2026-10-19): why 4 seats, and could a ship carry 100? 4 is a placeholder from 2026-10-16, and the planner ignores passenger mass today. Recommended: a ladder of taxis (about 4 to 6 seats), shuttles (about 20) and liners (about 100) on fixed long-haul routes, with passenger and supply mass counted. Not decided.
+- Ship capacity (asked 2026-10-19): why 4 seats, and could a ship carry 100? 4 is a placeholder from 2026-10-16, and the planner ignores passenger mass today. Decided 2026-10-20: see the drive decisions below.
 
 ## Answered
 - Name: Starfare (2026-10-16).
@@ -29,4 +29,9 @@ Decisions only Alvin can make. Ask them one at a time, with the options below an
 - Old scores (2026-10-16): let them go with the `sol-connector` Worker; no copy and no "old rules" table.
 - Orbit rings (2026-10-19): fade them and feather their edges. Each orbit and moon ring is full brightness just behind its body and 40% just ahead, with soft edges and a gap around the body. Chosen over uniform rings with only the gap.
 - Station markers (2026-10-19): (a), a screen-space dot with a thin ring, white for real places and amber for fictional ones, on both maps. Route stops keep their diamond. Chosen over a small filled diamond. In the same answer he gave the go for lines step 3 (routes on `sol-lines.js`).
-- Drive (2026-10-19): a declared fictional Starseeker drive, labelled Fictional, computed with real physics (rocket equation, finite burns, jet power). Chosen over the real ion-plus-chemical hybrid and over real ion only, because every real-hardware option in `docs/FLEET-OPTIONS.md` cuts most of the route map and no chemical design closes with passengers. The real-hardware studies stay as the reference. Sizing proposal for taxis, shuttles and liners: `docs/DRIVE-SPEC.md`, with four decisions still open (liner speed, comfort acceleration, fare model, seat ladder). The engine change is still to do.
+- Drive (2026-10-19): a declared fictional Starseeker drive, labelled Fictional, computed with real physics (rocket equation, finite burns, jet power). Chosen over the real ion-plus-chemical hybrid and over real ion only, because every real-hardware option in `docs/FLEET-OPTIONS.md` cuts most of the route map and no chemical design closes with passengers. The real-hardware studies stay as the reference. Sizing: `docs/DRIVE-SPEC.md`. The engine change is still to do.
+- Drive decisions (2026-10-20, on the four cards in the Game Design thread, all as recommended):
+  - Seats are 6 per taxi, 20 per shuttle and 100 per liner. Shuttles and liners fly scheduled routes with one pickup and one drop-off. Chosen over keeping 4-seat taxis and over one 6-seat size everywhere.
+  - Fares are charged per seat. Each booking pays its seats' share of the flight's energy and time, at today's $0.16/kWh and $0.35/min. Chosen over one booking paying the whole flight, and over a flat fare table.
+  - Comfort limit is 1 g. Burns are throttled so passengers never feel more than 1 g. Jovian taxis get triple thrust. Chosen over 0.5 g and over no limit.
+  - Liners fly a plan capped at Δv 45 km/s. Chosen over Δv 60 and over selling both an economy and an express fare.

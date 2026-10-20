@@ -1,8 +1,8 @@
 # Starseeker drive: sizing spec for taxis, shuttles and liners
 
-Draft for Alvin, 2026-10-19. Game Design thread. Nothing in the engine changes until the decisions at the end are made.
+Game Design thread, 2026-10-19. Alvin decided the four open questions on 2026-10-20 (see "Decisions"). The engine change itself is not made yet.
 
-The drive is **Fictional**: Alvin chose a declared fictional drive on 2026-10-19 (`docs/OPEN-QUESTIONS.md`). The physics is real. Every figure below comes from the engine's own planner run over every bookable route, then the rocket equation. The scripts and route data are in `world/drive/` (see "Reproduce"). Seat counts are placeholders until Alvin sets the capacity ladder.
+The drive is **Fictional**: Alvin chose a declared fictional drive on 2026-10-19 (`docs/OPEN-QUESTIONS.md`). The physics is real. Every figure below comes from the engine's own planner run over every bookable route, then the rocket equation. The scripts and route data are in `world/drive/` (see "Reproduce"). The seat counts (6, 20, 100) are the ladder Alvin chose.
 
 ## The short version
 
@@ -45,7 +45,7 @@ Approximations: burns are impulsive, as in the engine, with burn times checked a
 
 ## Proposed classes (Fictional)
 
-| Class | Seats (placeholder) | Dry mass | vₑ (Isp) | Thrust | η | Jet power | Input power | Waste heat | Flies |
+| Class | Seats | Dry mass | vₑ (Isp) | Thrust | η | Jet power | Input power | Waste heat | Flies |
 |---|---|---|---|---|---|---|---|---|---|
 | Taxi | 6 | 6 t | 30 km/s (3,059 s) | 33 kN | 0.64 | 495 MW | 773 MW | 278 MW | 64 quick hops |
 | Shuttle | 20 | 25 t | 30 km/s (3,059 s) | 60 kN | 0.64 | 900 MW | 1,406 MW | 506 MW | 72 inner long hauls |
@@ -114,9 +114,9 @@ None of these are made. Together they move the engine sha, so the suite is re-cu
 5. **Fare.** Whatever Alvin picks in decision 4 (`sol-engine.js:567`). Score terms that weigh kWh shift scale too.
 6. **Carried over from the capacity review, unchanged:** boarding time (`DWELL`) scales with the number of people boarding, liners stay off 1-berth pads (`BERTHS`, `sol-rides.js:81`), and liners fly fixed routes so the par search stays small.
 
-## Decisions for Alvin
+## Decisions
 
-Each one was put to Alvin on 2026-10-20 with the options below. The recommendation is marked.
+Alvin decided all four on 2026-10-20 and took each recommendation: Δv ≤ 45 for liners, a 1 g limit, fares per seat, and 6 / 20 / 100 seats (recorded in `docs/OPEN-QUESTIONS.md`). The options he had are kept below, with the chosen one in bold.
 
 1. **Liner speed**, meaning how much delta-v a liner may spend on one outer trip. The cheapest-energy plan is ruled out: it is the slowest plan (up to 5,548 sky days) and still uses 37% more energy than Δv ≤ 45.
    - **Δv ≤ 45 (recommended).** The longest trip is 928 sky days, about 15 minutes on the live map at 1 s per sky day, and the typical trip is 467. It has the lowest energy of any plan.
