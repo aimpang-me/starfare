@@ -71,6 +71,10 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .start{max-width:720px;display:flex;flex-direction:column;gap:14px;padding:24px 0}
 .start h1{font:600 26px/1.2 Inter,sans-serif;letter-spacing:-.02em}
 .start ol{margin:0;padding-left:20px;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.map{position:relative;height:460px}
+.map canvas{display:block;width:100%;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:10px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-2)}
+@media (max-width:560px){.map{height:340px}}
 .err{color:var(--bad)}
 .foot{color:var(--ink-3);font-size:12px}
 @media (max-width:560px){.top{padding:0 16px;gap:12px}.top .sub{display:none}main{padding:16px 16px 32px}.clock b{font-size:18px}}
@@ -267,6 +271,110 @@ function commsPanel(v) {
       : h("p", { class: "empty" }, "Nothing yet. Messages between seats, dispatchers' reports and clock ticks show here."));
 }
 
+// ---- the map: the world's places at its sky time, and the fleet coloured by desk ----
+// Distances from the Sun are on a log scale so Mercury and Neptune both fit; moons and stations are spread around their
+// planet, not drawn to scale. A ship in flight is drawn on a straight line between the stops of its leg, by sky time.
+const jdOf = (iso) => Date.parse(iso.replace(" ", "T") + ":00Z") / 864e5 + 2440587.5;
+const COL = { D1: "#9cc3df", D2: "#e7c48c" };
+function mapPanel(v) {
+  const box = h("div", { class: "map" }), canvas = h("canvas", { role: "img", "aria-label": "Map of the solar system at " + v.clock.sky_now + " with your ships coloured by desk. The Desks and ships table lists the same ships." });
+  box.append(canvas);
+  requestAnimationFrame(() => drawMap(canvas, v));
+  return h("section", { class: "panel" },
+    h("div", { class: "ph" }, h("h2", {}, "Map"), h("div", { class: "r" }, h("span", { class: "faint num" }, v.map.sky), h("span", { class: "tag" }, "Simulated"))),
+    box,
+    h("div", { class: "legend" },
+      h("span", {}, h("span", { class: "dot D1", "aria-hidden": "true" }), " Inner desk"),
+      h("span", {}, h("span", { class: "dot D2", "aria-hidden": "true" }), " Outer desk"),
+      h("span", {}, "A ring: held at a checkpoint."),
+      h("span", { class: "faint" }, "Distance from the Sun on a log scale; moons and stations spread around their planet; ships in flight drawn on a straight line between stops (illustrative).")));
+}
+function drawMap(canvas, v) {
+  const W = canvas.clientWidth, H = canvas.clientHeight, dpr = window.devicePixelRatio || 1;
+  if (!W || !H) return;
+  canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+  const g = canvas.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+  const P = Object.fromEntries(v.map.places.map((p) => [p.id, p])), kids = {};
+  for (const p of v.map.places) if (p.parent !== "sun") (kids[p.parent] ||= []).push(p.id);
+  const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 22, K = 0.3;
+  // The map reaches Saturn (Titan Dock is the farthest berth); Uranus and Neptune show only when a flight goes there.
+  const dist = (p) => Math.hypot(p.xy[0], p.xy[1]), far = new Set(), served = new Set();
+  for (const d of v.desks) for (const sh of d.ships) served.add(sh.at.id);
+  for (const j of v.jobs) for (const L of j.legs || []) { served.add(L.from); served.add(L.to); }
+  const top = (id) => (P[id] && P[id].parent !== "sun" ? top(P[id].parent) : id);
+  const rmax = Math.max(...v.map.places.filter((p) => p.xy && (p.kind !== "planet" || ["mercury", "venus", "earth", "mars", "jupiter", "saturn"].includes(p.id) || [...served].some((id) => top(id) === p.id))).map(dist));
+  for (const p of v.map.places) if (p.xy && dist(p) > rmax * 1.001) far.add(p.id);
+  const rad = (r) => (R * Math.log(1 + r / K)) / Math.log(1 + rmax / K);
+  const pt = {};
+  // Top of the map is +y of the ecliptic frame; screen y runs down.
+  for (const p of v.map.places) if (p.xy && !far.has(p.id)) {
+    const r = Math.hypot(p.xy[0], p.xy[1]), s = rad(r) / (r || 1);
+    pt[p.id] = [cx + p.xy[0] * s, cy - p.xy[1] * s];
+  }
+  const place = (id) => {
+    if (pt[id]) return pt[id];
+    const p = P[id]; if (!p) return [cx, cy];
+    const at = place(p.parent), sib = kids[p.parent], i = sib.indexOf(id), ring = P[p.parent].parent === "sun" ? 24 : 11;
+    const a = -Math.PI / 2 + (2 * Math.PI * i) / sib.length;
+    return (pt[id] = [at[0] + ring * Math.cos(a), at[1] + ring * Math.sin(a)]);
+  };
+  // Orbits (circles at each body's distance now), the Sun, the planets.
+  g.lineWidth = 1;
+  for (const p of v.map.places) if (p.xy && !far.has(p.id)) {
+    g.strokeStyle = p.kind === "planet" ? "#1c2731" : "#151e27";
+    g.beginPath(); g.arc(cx, cy, rad(Math.hypot(p.xy[0], p.xy[1])), 0, 2 * Math.PI); g.stroke();
+  }
+  g.fillStyle = "#f3d9a4"; g.beginPath(); g.arc(cx, cy, 4, 0, 2 * Math.PI); g.fill();
+  // Ships: where each one is at the world's sky time, and the rest of the route of one in flight.
+  const now = jdOf(v.clock.sky_now), jobs = Object.fromEntries(v.jobs.map((j) => [j.job_id, j])), stack = {}, used = new Set(), ships = [];
+  for (const d of v.desks) for (const sh of d.ships) {
+    const j = sh.job && jobs[sh.job];
+    let xy = null, route = null;
+    if (j && j.held_at) { xy = place(j.held_at); used.add(j.held_at); }
+    else if (j && j.legs && j.legs.length) {
+      const legs = j.legs.map((L) => [L.from, L.to, jdOf(L.depart), jdOf(L.arrive)]), k = legs.findIndex((L) => now < L[3]);
+      if (k >= 0) {
+        const [from, to, dep, arr] = legs[k], f = now <= dep ? 0 : Math.min(1, (now - dep) / Math.max(arr - dep, 1e-9)), a = place(from), b = place(to);
+        xy = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+        route = [xy, ...legs.slice(k).map((L) => place(L[1]))];
+        legs.slice(k).forEach((L) => { used.add(L[0]); used.add(L[1]); });
+      }
+    }
+    if (!xy) { const n = (stack[sh.at.id] = (stack[sh.at.id] || 0) + 1) - 1, at = place(sh.at.id), a = -Math.PI / 4 + n * 0.75; xy = [at[0] + 9 * Math.cos(a), at[1] + 9 * Math.sin(a)]; used.add(sh.at.id); }
+    ships.push({ xy, route, desk: d.desk, held: !!(j && j.held_at), name: sh.name });
+  }
+  g.setLineDash([3, 4]);
+  for (const s of ships) if (s.route) {
+    g.strokeStyle = COL[s.desk] + "99"; g.beginPath(); g.moveTo(...s.route[0]); for (const p of s.route.slice(1)) g.lineTo(...p); g.stroke();
+  }
+  g.setLineDash([]);
+  // Places: the bodies that orbit the Sun always, moons and stations where a ship is or is going. A label goes where it
+  // overlaps no other label or ship (right, left, above, below), or is left out; the table names every place.
+  g.font = "500 11px Inter, sans-serif"; g.textBaseline = "middle";
+  const boxes = ships.map((s) => [s.xy[0] - 5, s.xy[1] - 5, 10, 10]), hit = (a) => boxes.some((b) => a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3]);
+  const shown = v.map.places.filter((p) => !far.has(p.id) && (p.parent === "sun" || used.has(p.id)));
+  for (const p of shown) {
+    const [x, y] = place(p.id), isBody = p.parent === "sun";
+    g.fillStyle = isBody ? "#8796a6" : "#5d6c7c"; g.beginPath(); g.arc(x, y, isBody ? 3 : 2, 0, 2 * Math.PI); g.fill();
+    boxes.push([x - 3, y - 3, 6, 6]);
+  }
+  const rank = (p) => (p.kind === "planet" ? 0 : used.has(p.id) ? 1 : 2); // planets first, then places in use
+  for (const p of shown.sort((a, b) => rank(a) - rank(b))) {
+    const [x, y] = place(p.id), w = g.measureText(p.name).width, at = [[x + 7, y - 7], [x - 7 - w, y - 7], [x - w / 2, y - 16], [x - w / 2, y + 12]]
+      .map(([lx, ly]) => [lx, ly - 7, w, 14]).find((b) => !hit(b) && b[0] > 2 && b[0] + b[2] < W - 2 && b[1] > 2 && b[1] + b[3] < H - 2);
+    if (!at) continue;
+    boxes.push(at);
+    g.fillStyle = used.has(p.id) ? "#c9d3dd" : "#7d8b99"; g.fillText(p.name, at[0], at[1] + 7);
+  }
+  for (const s of ships) {
+    g.fillStyle = COL[s.desk]; g.strokeStyle = "#06090d"; g.lineWidth = 1.5;
+    g.beginPath(); g.arc(s.xy[0], s.xy[1], 3.5, 0, 2 * Math.PI); g.fill(); g.stroke();
+    if (s.held) { g.strokeStyle = COL[s.desk]; g.lineWidth = 1; g.beginPath(); g.arc(s.xy[0], s.xy[1], 7, 0, 2 * Math.PI); g.stroke(); }
+  }
+}
+
 function render() {
   if (!view) return;
   const v = view, keep = document.querySelector(".comms")?.scrollTop || 0;
@@ -276,13 +384,16 @@ function render() {
       h("div", { class: "ph", style: "border:0;padding:0 0 10px" }, h("h2", {}, "Seats"),
         h("div", { class: "r" }, h("button", { class: "btn small", onclick: newCodes }, "New codes"))),
       h("div", { class: "grid" }, v.seats.map((s) => seatCard(v, s)))),
-    h("div", { class: "two" }, jobsPanel(v), scoresPanel(v)),
-    h("div", { class: "two" }, commsPanel(v), desksPanel(v)),
+    h("div", { class: "two" }, mapPanel(v), scoresPanel(v)),
+    h("div", { class: "two" }, jobsPanel(v), commsPanel(v)),
+    desksPanel(v),
     h("p", { class: "foot" }, v.note, " Scores are points only. World ", v.world_id, "."));
   const c = document.querySelector(".comms");
   if (c) c.scrollTop = keep;
 }
 
+let resized = null;
+addEventListener("resize", () => { clearTimeout(resized); resized = setTimeout(render, 150); });
 if (!WORLD) startPage();
 else {
   (async () => {

@@ -871,6 +871,8 @@ async function phaseOff() {
     const view = await (await fetch(v.view)).json();
     assert.equal(view.codes, undefined);
     assert.ok(Array.isArray(view.messages) && Array.isArray(view.reports));
+    assert.equal(view.map.sky, view.clock.sky_now);
+    assert.ok(view.map.places.some((p) => p.id === "saturn" && p.xy.length === 2) && view.map.places.some((p) => p.id === "titan-dock" && !p.xy));
     const get = await fetch(`${w.base}/world/${v.world_id}/codes`); assert.equal(get.status, 405); assert.equal(get.headers.get("allow"), "POST"); await get.body?.cancel();
     const miss = await fetch(`${w.base}/world/w_00000000000000000000/codes`, { method: "POST" }); assert.equal(miss.status, 404); await miss.body?.cancel();
   });
