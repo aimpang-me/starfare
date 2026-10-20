@@ -193,6 +193,8 @@ button.lbl:hover{color:var(--ink)}
 .tl .tm{font:500 11px var(--mono);color:var(--ink-3);grid-row:span 2}
 .tl b{font-size:12.5px;font-weight:600}
 .tl .tx{font-size:12px;color:var(--ink-2)}
+/* lore moments (docs/LORE.md): flavour beside a recorded event, tagged Fictional */
+.tl .lore,.co .lore{display:block;margin-top:3px;font-size:11.5px;font-style:italic;color:var(--ink-3)}.tl .lore .tag,.co .lore .tag{margin-left:4px;font-style:normal}
 .tl .k-checkpoint b{color:var(--me)}.tl .k-incident b{color:var(--bad)}.tl .k-note b{color:var(--ok)}
 /* dispatcher log: the Grok bot's tool calls on this run, newest last */
 .dlog{list-style:none;margin:0;padding:0;display:grid;gap:6px}
@@ -350,6 +352,7 @@ footer p{margin:0;max-width:100ch}
 <script>window.SITE = __SITE__; window.FLIGHT = __RUN__;</script>
 <script src="__ENGINE_URL__" defer></script>
 <script src="/assets/flight-view.js"></script>
+<script src="/assets/sol-lore.js"></script>
 <script src="/assets/sol-lines.js"></script>
 <script src="/assets/sol-layers.js"></script>
 <script>
@@ -456,18 +459,18 @@ var SF = (function () {
       return { p: pos(last.to, jd), leg: last, i: legs.length - 1, f: 1, phase: hold != null ? "holding" : "arrived" };
     }
     var ev = [];
-    legs.forEach(function (L) {
+    legs.forEach(function (L, i) {
       if (L.idle) return;
-      ev.push({ jd: L.dep, kind: "depart", title: (L.kind === "pickup" ? "Pickup leg departs " : "Ride departs ") + name(L.from), text: name(L.from) + " to " + name(L.to) });
-      if (!L.open) ev.push({ jd: L.arr, kind: "arrive", title: (L.kind === "pickup" ? "Rider aboard at " : "Arrived at ") + name(L.to), text: L.gate === "PASS" ? "Re-fly check: PASS" : "Local hop (not re-flown)" });
+      ev.push({ jd: L.dep, kind: "depart", leg: i, title: (L.kind === "pickup" ? "Pickup leg departs " : "Ride departs ") + name(L.from), text: name(L.from) + " to " + name(L.to) });
+      if (!L.open) ev.push({ jd: L.arr, kind: "arrive", leg: i, title: (L.kind === "pickup" ? "Rider aboard at " : "Arrived at ") + name(L.to), text: L.gate === "PASS" ? "Re-fly check: PASS" : "Local hop (not re-flown)" });
     });
     (live ? live.checkpoints : log.checkpoints || []).forEach(function (c) {
       var d = c.decision;
-      ev.push({ jd: jdOf(c.at), kind: "checkpoint", title: "Checkpoint " + c.n + ": " + c.kind.replace("_", " ") + " at " + name(c.place),
+      ev.push({ jd: jdOf(c.at), kind: "checkpoint", cause: c.kind, where: c.place, title: "Checkpoint " + c.n + ": " + c.kind.replace("_", " ") + " at " + name(c.place),
         text: "Cause: " + c.cause.replace("_", " ") + ". " + (live ? (d ? "The Grok bot chose: " + decText(d) + "." : "Waiting for the Grok bot's decision.") : "Agent chose: " + (d ? d.action : "") + "."), cp: c });
     });
     (live ? live.incidents : ride.record.score.incidents).forEach(function (x) {
-      ev.push({ jd: jdOf(x.at), kind: "incident", title: x.kind.replace("_", " ") + " at " + name(x.place), text: x.note + (x.hours ? " (" + fmt(x.hours, 1) + " h" : "") + (x.kwh ? (x.hours ? ", " : " (") + fmt(x.kwh) + " kWh)" : x.hours ? ")" : "") });
+      ev.push({ jd: jdOf(x.at), kind: "incident", cause: x.kind, where: x.place, title: x.kind.replace("_", " ") + " at " + name(x.place), text: x.note + (x.hours ? " (" + fmt(x.hours, 1) + " h" : "") + (x.kwh ? (x.hours ? ", " : " (") + fmt(x.kwh) + " kWh)" : x.hours ? ")" : "") });
     });
     // The bot's own words: the dispatch note at the first departure, each decide note at its checkpoint.
     (ride.trail || []).forEach(function (t) {
@@ -546,7 +549,17 @@ function iso(jd) { return SF.iso(jd); }
 function dist(km) { return km >= 0.05 * AU ? fmt(km / AU, 2) + " AU" : km >= 1e6 ? fmt(km / 1e6, 2) + " million km" : fmt(km) + " km"; }
 function W(t) { return esc(shipWords(t)); }
 // A note is the bot's quote, shown as written.
-function evText(e) { return e.kind === "note" ? esc(e.text) : W(e.text); }
+function evText(e) {
+  return (e.kind === "note" ? esc(e.text) : W(e.text)) + (e.lore ? '<span class="lore">' + esc(e.lore.text) + '<span class="tag fict">Fictional</span></span>' : "");
+}
+// Lore moments (world/lore/sol-lore.js) beside the events the run log recorded: Fictional flavour, never part of the score.
+function addLore(rp, pl, rec) {
+  if (!window.SOL_LORE) return;
+  try {
+    var m = SOL_LORE.flight({ key: rec.run_id || rec.hail_id, late: !!(rec.score && (rec.score.promise_slip_hours ?? rec.score.delay_hours) > 0.05), legs: rp.legs, stops: pl.stops, events: rp.events });
+    rp.events.forEach(function (e, i) { e.lore = m[i]; });
+  } catch (e) { /* flavour only: a flight shows without it */ }
+}
 
 function initGL() {
   function fail() { GL = null; $("#rnogl").hidden = false; }
@@ -982,6 +995,7 @@ function loadRide(keep) {
   }
   if (RS.live && (!keep || RS.follow)) RS.cur = Math.max(rp.start, liveJd());
   RS.pl = passengerList();
+  addLore(rp, RS.pl, rec);
   $("#timingWarning").hidden = !window.StarfareView.timingConflicts(RIDE.record, RIDE.lg).length;
   $("#cammode").setAttribute("aria-pressed", String(RS.over));
   $("#golive").setAttribute("aria-pressed", String(RS.follow));
@@ -991,7 +1005,7 @@ function loadRide(keep) {
   $("#rwho").className = "tag " + (rec.player_tag ? "me" : "sim");
   $("#rtitle").textContent = (RIDE.record.manifest ? RIDE.record.manifest.bookings.map(function (b) { return b.title; }).join(" + ") : shipWords(h.title || rec.hail_id));
   $("#rnote").textContent = local ? "Centred on " + SF.name(rp.focus) + ", distances in km. Not to scale: the " + SF.SHIP + " and small moons are enlarged. Orbit lines are two-body orbits at the sky date. The flight is simulated."
-    : "Distances compressed; sizes exaggerated. Positions from JPL ephemerides at simulated sky dates. Orbit lines are two-body orbits at the sky date; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet, straight guides between the planned places." : "");
+    : "Not to scale, unlike the true-scale sky map: distances are compressed and sizes exaggerated so the whole route fits. Positions from JPL ephemerides at simulated sky dates. Orbit lines are two-body orbits at the sky date; the flight is simulated." + (rp.plan.length ? " Dashed: legs not flown yet, straight guides between the planned places." : "");
   if (GL && window.SolArt) $("#rnote").insertAdjacentHTML("beforeend", '<span class="cred cred-l">' + esc(SolArt.CREDIT) + ' <a href="/assets/CREDITS.md">Credits</a></span><span class="cred cred-s">Maps: NASA, JPL, USGS; Solar System Scope (CC BY 4.0). <a href="/assets/CREDITS.md">Credits</a></span>');
   $("#sticks").innerHTML = rp.events.map(function (e) { return '<span class="tick ' + e.kind + '" style="left:' + ((e.jd - rp.start) / span * 100).toFixed(2) + '%" title="' + W(e.title) + '"></span>'; }).join("");
   $("#callouts").innerHTML = ""; RS.ckey = null; RS.lvst = null;
