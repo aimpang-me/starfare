@@ -74,6 +74,21 @@ export function seasonHails(E, season, cap) {
 export function poolView(E, season, cap) {
   return { simulated: true, season, pool_size: cap, hails: seasonHails(E, season, cap), fleet: fleet(E), board: "/board" };
 }
+export const HAIL_PAGE = 25, HAIL_PAGE_MAX = 200;
+/** list_hails for an agent: the pool filtered by kind and place, one page at a time. The whole pool (200+ rows, about 70 kB)
+ *  is more than an agent's tool-result limit, so a page of 25 is the default and next_cursor gives the rest. */
+export function hailPage(view, q = {}) {
+  const place = (p, s) => !s || p.id === s.toLowerCase() || p.name.toLowerCase() === s.toLowerCase();
+  const all = view.hails.filter((h) => (!q.kind || h.kind === q.kind) && place(h.from, q.from) && place(h.to, q.to));
+  const at = q.cursor == null ? 0 : Number(q.cursor), limit = q.limit || HAIL_PAGE;
+  if (!Number.isInteger(at) || at < 0 || at > all.length) return { error: "cursor must be a next_cursor from list_hails" };
+  const page = all.slice(at, at + limit), next = at + page.length < all.length ? String(at + page.length) : null;
+  return {
+    ...view, matching: all.length, hails: page, ...(next ? { next_cursor: next } : {}),
+    page_note: "Hails " + (all.length ? at + 1 : 0) + "-" + (at + page.length) + " of " + all.length + " matching (" + view.pool_size + " in the pool). " +
+      (next ? "Pass cursor " + next + " for more, or filter with kind, from and to." : "That is every match."),
+  };
+}
 export const POOL_TIERS = Object.freeze({
   placeholder: true,
   rows: Object.freeze([
@@ -142,6 +157,15 @@ function takeAt(E, hailId, jd) {
   return Math.floor(jd + (h.kind === "quick" ? 1 : R.LEAD)) + 0.5;
 }
 const SEASON_TOO_SHORT = "The season ends too soon for a new hail. Wait for the reset.";
+/** Where the season stands for list_hails: a take needs its t0 plus 30 sky days before the season ends, so long hauls close
+ *  first (about LEAD + 30 real seconds before the reset) and quick hails about 31 s before it. 1 sky day is 1 real second. */
+export function seasonClock(E, nowMs) {
+  const s = sky(nowMs), open = (kind) => Math.floor(s.jd + (kind === "quick" ? 1 : E.R.LEAD)) + 0.5 + 30 <= SEASON_END;
+  const quick = open("quick"), long = open("long haul"), left = Math.max(0, Math.round(SEASON_END - s.jd));
+  return { sky_now: isoJD(s.jd), season_ends: isoJD(SEASON_END), real_seconds_left: left, quick_open: quick, long_haul_open: long,
+    note: long ? "Every kind of hail can be taken now." : quick ? "Long hauls can't be taken this late in the season (take_hail refuses them); quick hails can. The season resets in about " + left + " real seconds."
+      : "No hail can be taken until the season resets, in about " + left + " real seconds." };
+}
 /** Page takeHail(): t0 and the hazard seed (the season number) from the sky clock. */
 export function seasonInstance(E, hailId, nowMs) {
   const s = sky(nowMs), t0 = takeAt(E, hailId, s.jd);
@@ -727,7 +751,20 @@ function logTrail(E, run, tool, inp, result, nowMs) {
   const e = { at_ms: nowMs, sky: isoJD(skyNow(run, nowMs)), tool, ...(result.error ? { error: String(result.error).slice(0, 160) } : trailOf(E, run, tool, inp, result)) };
   const note = (tool === "dispatch" || tool === "decide") && typeof inp.note === "string" ? inp.note.trim().slice(0, 300) : "";
   if (note) e.note = note;
-  run.trail = [...(run.trail || []), e].slice(-TRAIL_MAX);
+  const all = [...(run.trail || []), e], head = all[0].tool === "take_hail" ? 1 : 0; // the take_hail entry names the agent: keep it
+  run.trail = all.length > TRAIL_MAX ? [...all.slice(0, head), ...all.slice(all.length - (TRAIL_MAX - head))] : all;
+}
+/** The agent's MCP client name and version as it reported them at initialize (self-reported), kept short and plain. */
+export function agentOf(client) {
+  const clean = (s, n) => (typeof s === "string" ? s.replace(/[^\w .@/+-]/g, "").trim().slice(0, n) : "");
+  const name = clean(client && client.name, 48);
+  return name ? { name, ...(clean(client.version, 24) ? { version: clean(client.version, 24) } : {}) } : null;
+}
+/** The dispatcher log's first entry on a season run: which booking the agent took, and which agent it said it was. */
+export function logTake(E, run, nowMs, client) {
+  if (run.tag != null) return;
+  const agent = agentOf(client);
+  run.trail = [{ at_ms: nowMs, sky: isoJD(skyNow(run, nowMs)), tool: "take_hail", hail_id: run.id, title: run.title, ...(agent ? { agent } : {}) }];
 }
 const maxOf = (xs) => (xs.length ? Math.max(...xs) : null);
 function trailOf(E, run, tool, inp, r) {
@@ -815,6 +852,18 @@ export function rideRecord(E, run) {
     ...(phase === "abandoned" ? { reason: run.abandoned_reason || null } : {}), ...(phase === "in_flight" ? { open_checkpoint: run.ride.pending } : {}),
     score, log,
   });
+}
+/** One run as the agent page (/agent/<token>) shows it: the booking, where it stands and the agent's log from take_hail on.
+ *  watch is set once the flight page has something to fly (dispatched and in the air, or arrived). Season runs only. */
+export function followView(run) {
+  const phase = phaseOf(run), cp = phase === "in_flight" && run.ride ? openCheckpoint(run) : null;
+  return {
+    run_id: run.run_id, hail_id: run.id, title: run.title, phase, created_ms: run.created_ms,
+    watch: phase === "arrived" || (phase === "in_flight" && !!run.live),
+    waiting: cp ? { n: cp.n, kind: cp.kind, place_name: cp.place_name || null, at: isoJD(cp.sky_at) } : null,
+    total: phase === "arrived" && run.score ? run.score.total : null,
+    trail: run.trail || [],
+  };
 }
 /** The public record of a season flight with live playback, arrived or still flying: rideRecord plus live (the track and the
  *  ride flown so far, no hindsight) and trail (the dispatcher log). Dispatched runs also carry a public manifest.
