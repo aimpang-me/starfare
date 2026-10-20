@@ -50,7 +50,7 @@ export const TOOLS = {
     },
   },
   take_hail: {
-    description: "Take a ride hail. Returns a run_id and the terms: where and when the rider is ready, the destination, the arrive_by time, the fleet and the scoring rules. One run per bot: taking a new hail abandons this session's undispatched run, or flies a ride waiting at a checkpoint on to arrive with the default answers (scored). The result's previous_run says which.",
+    description: "Take a ride hail. Returns a run_id and the terms: where and when the rider is ready, the destination, the arrive_by time, the fleet and the scoring rules. One run per bot: taking a new hail abandons this session's undispatched run, or flies a ride waiting at a checkpoint on to arrive with the default answers (scored). The result's previous_run says which. When the player signed in, the result also has follow_url, a page where they follow every booking you take and each call you make on it, live: give it to them right away.",
     inputSchema: { hail_id: z.string().describe("hail id from list_hails, e.g. iss-crew") },
   },
   get_hail: {

@@ -767,9 +767,11 @@ async function consent(authUrl, decision = "approve") {
   assert.match(html, /<button name="decision" value="approve">Allow<\/button>/);
   assert.match(html, /<button name="decision" value="deny">Deny<\/button>/);
   assert.doesNotMatch(html, /type="password"|name="code"/, "consent page must not ask for a code");
-  const posted = await fetch(authUrl, { ...noFollow, method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", cookie: jar.header() }, body: new URLSearchParams({ handle, decision }) });
+  const follow = /name="follow" value="([0-9a-f]{32})"/.exec(html)?.[1]; // a hidden field, sent as a browser would
+  assert.ok(follow && html.includes(`/agent/${follow}`), "consent page shows no follow link");
+  const posted = await fetch(authUrl, { ...noFollow, method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", cookie: jar.header() }, body: new URLSearchParams({ handle, follow, decision }) });
   assert.equal(posted.status, 302, await posted.clone().text());
-  return { html, location: new URL(posted.headers.get("location")) };
+  return { html, follow, location: new URL(posted.headers.get("location")) };
 }
 
 /** The SDK's OAuthClientProvider, as an MCP client app implements it. redirectToAuthorization only records the URL. */
@@ -801,14 +803,14 @@ async function sdkSignIn(base, name) {
     return true;
   });
   assert.ok(auth.authUrl, "SDK did not ask to open the authorization page");
-  const { html, location } = await consent(auth.authUrl);
+  const { html, follow, location } = await consent(auth.authUrl);
   assert.equal(location.origin + location.pathname, REDIRECT_URI);
   assert.equal(location.searchParams.get("state"), auth.authUrl.searchParams.get("state"));
   await first.finishAuth(location.searchParams.get("code"));
   trace.push("-- reconnect with the access token --");
   const client = new Client({ name, version: "1" });
   await client.connect(new StreamableHTTPClientTransport(url, { authProvider: auth, fetch: tracingFetch(trace) }));
-  return { auth, trace, client, html };
+  return { auth, trace, client, html, follow };
 }
 
 async function phaseOn() {
@@ -877,6 +879,21 @@ async function phaseOn() {
       const u = await call(b.client, "get_hail", { run_id: "run_" + "0".repeat(20) });
       assert.equal(u.isError, true); assert.match(u.value, /unknown run_id/);
       report.second_player = m.player_id;
+    });
+    await check("on: the follow link on the consent page lists the agent's booking with its log in words; take_hail returns the same link", async () => {
+      assert.equal(good.hail.follow_url, `${base}/agent/${a.follow}`);
+      const j = await (await fetch(`${base}/agent/${a.follow}.json`)).json();
+      assert.equal(j.simulated, true);
+      const run = j.runs.find((r) => r.run_id === good.hail.run_id);
+      assert.ok(run, JSON.stringify(j.runs.map((r) => r.run_id)));
+      assert.equal(run.phase, "arrived"); assert.equal(run.watch, true); assert.equal(run.total, good.score.total);
+      assert.deepEqual(run.trail.map((e) => e.tool), ["take_hail", "plan_pickup", "plan_ride", "dispatch"]);
+      assert.equal(run.trail[0].agent.name, "sol e2e player A");
+      assert.equal(Object.hasOwn(run, "player_id"), false);
+      const page = await fetch(`${base}/agent/${a.follow}`);
+      assert.equal(page.status, 200); assert.match(await page.text(), /<script src="\/assets\/agent-log.js">/);
+      assert.equal((await fetch(`${base}/agent/${"0".repeat(32)}.json`)).status, 404);
+      assert.notEqual(b.follow, a.follow);
     });
     await check("on: /board shows the best run with its player tag", async () => {
       const j = await (await fetch(`${base}/board.json`)).json();

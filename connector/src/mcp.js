@@ -33,7 +33,10 @@ const SESSION_TOOLS = {
     if (r.error) return r;
     const left = prev ? await runStub(agent.env, prev).leave() : null;
     agent.setState({ run_id: id });
-    return left ? { ...r, previous_run: left } : r;
+    // Signed in: the player's follow page lists this booking and every call on it from now on.
+    const player = playerOf(agent), origin = agent.props && agent.props.origin;
+    const out = player && origin ? { follow_url: origin + "/agent/" + (await hub(agent.env).followFor(player)), ...r } : r;
+    return left ? { ...out, previous_run: left } : out;
   },
 
   async start_bench(agent, input) {

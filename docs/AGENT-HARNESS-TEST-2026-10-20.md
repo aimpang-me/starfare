@@ -31,6 +31,8 @@ The agent was Claude Code in headless mode (`claude -p`), restricted to the `sta
 11. **Phone flight page: the caption sat on the controls.** The control bar wraps to two or three rows on a phone and the caption was placed for one. Fixed: the caption follows the bar's real height.
 12. **The bench's end-of-task line gave raw floats to the agent** ("scoring 26281.63516970564"). Fixed: rounded in the message; the structured `total` fields keep full precision.
 
+13. **A signed-in player had no way to follow their agent.** Alvin connected a Grok bot to the live connector and had nowhere to watch it plan or decide: the flight page only exists after dispatch, and only if the bot passes its link on. Fixed: the sign-in page now shows a follow link (`/agent/<token>`) before Allow, and `take_hail` returns the same link as `follow_url`. The page lists the agent's newest ten bookings live, from `take_hail` on, each step in words with the agent's own reasons, a waiting banner at checkpoints, the score once it lands and a link to the flight. The token is random and only shown to the person who pressed Allow; the page shows only what the flight pages already make public.
+
 ## Found, not fixed here
 
 - **A ship parked at the pickup cannot serve it.** `plan_pickup` fails with "SF-05 is already at the pickup", and `plan_ride` needs a pickup leg, so the closest ship is unusable. This is a game-rule change in `planPickup` and is left for Engineering.

@@ -853,6 +853,18 @@ export function rideRecord(E, run) {
     score, log,
   });
 }
+/** One run as the agent page (/agent/<token>) shows it: the booking, where it stands and the agent's log from take_hail on.
+ *  watch is set once the flight page has something to fly (dispatched and in the air, or arrived). Season runs only. */
+export function followView(run) {
+  const phase = phaseOf(run), cp = phase === "in_flight" && run.ride ? openCheckpoint(run) : null;
+  return {
+    run_id: run.run_id, hail_id: run.id, title: run.title, phase, created_ms: run.created_ms,
+    watch: phase === "arrived" || (phase === "in_flight" && !!run.live),
+    waiting: cp ? { n: cp.n, kind: cp.kind, place_name: cp.place_name || null, at: isoJD(cp.sky_at) } : null,
+    total: phase === "arrived" && run.score ? run.score.total : null,
+    trail: run.trail || [],
+  };
+}
 /** The public record of a season flight with live playback, arrived or still flying: rideRecord plus live (the track and the
  *  ride flown so far, no hindsight) and trail (the dispatcher log). Dispatched runs also carry a public manifest.
  *  Bench runs have no live track or dispatcher trail. */
