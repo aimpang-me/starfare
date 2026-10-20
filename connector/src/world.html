@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Starfare Company</title>
+<meta name="description" content="Run a simulated Starseeker company with your own agents: one executor and two dispatchers, each its own Grok chat.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/assets/message-b.css">
+<style>
+/* Mission Control tokens (docs/DESIGN.md; design/assets/mission-control.css). Flat surfaces, Inter only. */
+@font-face{font-family:Inter;src:url('/assets/InterVariable.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
+:root{color-scheme:dark;--bg:#06090d;--bg-2:#0b1016;--line:#26323e;--line-2:#465565;--ink:#edf1f5;--ink-2:#aab6c3;--ink-3:#96a4b3;--cy:#9cc3df;--me:#e7c48c;--ok:#8fd19e;--bad:#f0a196;--r:4px;
+  --d1:#9cc3df;--d2:#e7c48c;--gut:max(16px,env(safe-area-inset-left,0px))}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+p{margin:0}
+h1,h2,h3{margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid #d6e7f4;outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.dim{color:var(--ink-2)}.faint{color:var(--ink-3)}
+.caps{font-size:11px;letter-spacing:.07em;color:var(--ink-3)}
+.tag{display:inline-flex;align-items:center;border:1px solid #3a4755;border-radius:3px;padding:0 6px;font:500 9px/16px Inter,sans-serif;color:#b2bfcc;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;border:1px solid;border-radius:2px;padding:0 6px;font:500 10px/16px Inter,sans-serif;white-space:nowrap}
+.chip.off{color:var(--ink-2);border-color:var(--line-2)}
+.chip.work{color:var(--cy);border-color:#3d5568}
+.chip.wait{color:var(--ok);border-color:#3f5b47}
+.chip.warn{color:var(--bad);border-color:#6e4740}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 14px;border:1px solid var(--line-2);border-radius:var(--r);background:transparent;color:var(--ink);font:500 13px Inter,sans-serif;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{background:#1b2732;border-color:#657b8e}
+.btn.primary{background:#17222d;border-color:#526576}
+.btn.primary:hover{background:#243443;color:#fff}
+.btn.small{min-height:36px;font-size:12px;padding:0 10px}
+.btn:disabled{opacity:.45;cursor:default}
+.top{display:flex;align-items:center;gap:20px;height:60px;padding:0 max(24px,var(--gut));background:#080d12;border-bottom:1px solid var(--line)}
+.brand{font:650 16px/1 Inter,sans-serif;letter-spacing:.2em;color:var(--ink);text-decoration:none}
+.top .sub{padding-left:20px;border-left:1px solid var(--line);font:500 12px Inter,sans-serif;color:var(--ink-2)}
+.top .r{margin-left:auto;display:flex;gap:8px;align-items:center}
+main{max-width:1280px;margin:0 auto;padding:20px max(24px,var(--gut)) 40px;display:flex;flex-direction:column;gap:16px}
+.panel{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.ph{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.ph h2{font:600 13px/1.3 Inter,sans-serif}
+.ph .r{margin-left:auto;display:flex;gap:6px;align-items:center}
+.pb{padding:12px 14px}
+.clock{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;padding:14px}
+.clock b{font:600 21px/1.2 Inter,sans-serif;letter-spacing:-.02em}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.two{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px}
+@media (max-width:1000px){.grid,.two{grid-template-columns:1fr}}
+.seat{display:flex;flex-direction:column;gap:8px}
+.seat h3{font:600 13px Inter,sans-serif;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.code{font:500 12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);background:#080d13;border:1px solid var(--line);border-radius:3px;padding:8px 10px;overflow-wrap:anywhere}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.dot.D1{background:var(--d1)}.dot.D2{background:var(--d2)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font:500 11px Inter,sans-serif;letter-spacing:.04em;color:var(--ink-3);padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid #161e27;vertical-align:top}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+.score{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 14px;align-items:baseline}
+.score .k{color:var(--ink-2)}
+.score .v{font:600 15px Inter,sans-serif;font-variant-numeric:tabular-nums;text-align:right}
+.score .rv{color:var(--ink-3);font-variant-numeric:tabular-nums;text-align:right;font-size:13px}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{min-height:40px;padding:0 14px;background:none;border:0;border-bottom:2px solid transparent;color:var(--ink-2);font:500 12px Inter,sans-serif;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--ink);background:#1b2937;border-bottom-color:var(--cy)}
+.comms{max-height:460px;overflow-y:auto}
+.empty{padding:14px;color:var(--ink-2)}
+.start{max-width:720px;display:flex;flex-direction:column;gap:14px;padding:24px 0}
+.start h1{font:600 26px/1.2 Inter,sans-serif;letter-spacing:-.02em}
+.start ol{margin:0;padding-left:20px;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.err{color:var(--bad)}
+.foot{color:var(--ink-3);font-size:12px}
+@media (max-width:560px){.top{padding:0 16px;gap:12px}.top .sub{display:none}main{padding:16px 16px 32px}.clock b{font-size:18px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/">STARFARE</a>
+  <span class="sub">Your company</span>
+  <span class="tag">Simulated</span>
+  <div class="r"><a class="btn small" href="/">Mission control</a></div>
+</header>
+<main id="app"><p class="dim">Loading…</p></main>
+<script>
+"use strict";
+const WORLD = __WORLD__;
+const SEATS = ["EX", "D1", "D2"];
+const DESK = { D1: "Inner desk", D2: "Outer desk" };
+const app = document.getElementById("app");
+
+// Elements by hand, text always as text: agent names, reports and messages come from agents.
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k instanceof Node ? k : String(k));
+  return el;
+}
+const store = {
+  get(id) { try { return JSON.parse(localStorage.getItem("sf-world:" + id) || "null"); } catch { return null; } },
+  set(id, codes) { try { localStorage.setItem("sf-world:" + id, JSON.stringify(codes)); } catch {} },
+};
+async function copy(text, btn) {
+  try { await navigator.clipboard.writeText(text); const was = btn.textContent; btn.textContent = "Copied"; setTimeout(() => { btn.textContent = was; }, 1400); }
+  catch { prompt("Copy this:", text); }
+}
+const fmt = (n) => (n == null ? "–" : Math.round(n).toLocaleString("en-US"));
+const pct = (x) => (x == null ? "–" : (x * 100).toFixed(1) + "%");
+
+function brief(seat, code) {
+  const common = "Using the Starfare connector, call join with code " + code + ", and pass that same code on every Starfare call. ";
+  const loop = "Whenever you have nothing to do, call wait and act on what it returns. Keep going until I say stop. Every number you tell me must come from a tool result.";
+  if (seat === "EX") return "You are the executor (EX) of my simulated Starfare company. " + common +
+    "Run the company: read company and market, give bookings to the Inner desk (D1) or the Outer desk (D2) with assign, decline the rest, move ships between desks with transfer_ship, read reports, and message the dispatchers. " + loop;
+  return "You are dispatcher " + seat + " (" + DESK[seat] + ") of my simulated Starfare company. " + common +
+    "Read your queue and fly each job with get_hail, plan_pickup, plan_ride, check_pad, space_weather, dispatch and decide, passing your code and the job_id. Use only your desk's ships. Tell the executor how it went with report. " + loop;
+}
+
+// ---- no world yet: start one ----
+function startPage(error) {
+  app.replaceChildren(h("section", { class: "start" },
+    h("h1", {}, "Run a Starseeker company with your agents"),
+    h("p", { class: "dim" }, "You get a private copy of the solar system: its own sky clock, weather and market of bookings, and today's 11 ships split between two desks. Everything in it is simulated."),
+    h("ol", {},
+      h("li", {}, "Start a company. This page shows three seat codes: the executor (EX) and two dispatchers (D1, D2)."),
+      h("li", {}, "Open three Grok chats with the Starfare connector on, and paste one seat's message into each."),
+      h("li", {}, "The executor gives bookings to the desks; each dispatcher flies its desk's ships. The sky clock moves a day once every joined seat is waiting.")),
+    h("div", { class: "row" }, h("button", { class: "btn primary", onclick: make }, "Start a company")),
+    error ? h("p", { class: "err" }, error) : null,
+    h("p", { class: "foot" }, "Keep this company's link: it is the key to your world. Works with Grok.")));
+}
+async function make(ev) {
+  ev.target.disabled = true;
+  try {
+    const r = await fetch("/world/new", { method: "POST" }), v = await r.json();
+    if (!r.ok) throw new Error(v.error || "status " + r.status);
+    store.set(v.world_id, v.codes);
+    location.href = "/world/" + v.world_id;
+  } catch (e) { startPage("Couldn't start a company: " + e.message); }
+}
+
+// ---- a world ----
+let view = null, codes = WORLD ? store.get(WORLD) : null, tab = "all", failed = 0;
+async function load() {
+  try {
+    const r = await fetch("/world/" + WORLD + ".json", { cache: "no-store" });
+    if (r.status === 404) { app.replaceChildren(h("p", { class: "err" }, "There is no company at this link. It may have been deleted after 30 days without use."), h("p", {}, h("a", { class: "btn", href: "/world" }, "Start a new company"))); return false; }
+    if (!r.ok) throw new Error("status " + r.status);
+    view = await r.json(); failed = 0;
+    render();
+  } catch (e) { if (++failed >= 3) document.getElementById("live")?.replaceChildren("Can't reach the server; retrying…"); }
+  return true;
+}
+async function newCodes(ev) {
+  if (!confirm("New codes for all three seats? The old codes stop working, so each agent has to join again with its new code.")) return;
+  ev.target.disabled = true;
+  try {
+    const r = await fetch("/world/" + WORLD + "/codes", { method: "POST" }), v = await r.json();
+    if (!r.ok) throw new Error(v.error || "status " + r.status);
+    codes = v.codes; store.set(WORLD, codes); view = v; render();
+  } catch (e) { alert("Couldn't issue new codes: " + e.message); ev.target.disabled = false; }
+}
+
+function clockPanel(v) {
+  const c = v.clock, joined = v.seats.filter((s) => s.joined).length;
+  const next = c.done ? "The clock has reached the end of its span." : !joined ? "The clock waits until a seat joins."
+    : "Next tick when every joined seat is waiting" + (c.cap_tick_in_s != null ? ", or in " + c.cap_tick_in_s + " s" : "") + ".";
+  return h("section", { class: "panel clock", "aria-label": "Sky clock" },
+    h("div", {}, h("div", { class: "caps" }, "Sky time"), h("b", { class: "num" }, c.sky_now)),
+    h("div", {}, h("div", { class: "caps" }, "Tick"), h("b", { class: "num" }, c.tick)),
+    h("div", { class: "dim", style: "flex:1 1 260px" }, next, " One tick is ", c.tick_days, " sky day. ", h("span", { class: "tag" }, "Simulated")),
+    h("div", { class: "faint", id: "live" }, ""));
+}
+
+function seatCard(v, s) {
+  const code = codes && codes[s.seat], role = s.seat === "EX" ? "Executor (EX)" : "Dispatcher " + s.seat;
+  const state = !s.joined ? h("span", { class: "chip off" }, "Not joined") : s.waiting ? h("span", { class: "chip wait" }, "Waiting") : h("span", { class: "chip work" }, "Working");
+  const a = s.agent, who = a && [a.name, a.model, a.thinking && "thinking " + a.thinking].filter(Boolean).join(" · ");
+  return h("div", { class: "panel pb seat" },
+    h("h3", {}, s.desk ? h("span", { class: "dot " + s.seat, "aria-hidden": "true" }) : null, role, s.desk ? h("span", { class: "dim" }, s.desk) : null, state),
+    who ? h("p", { class: "dim" }, who, " ", h("span", { class: "tag" }, "Self-reported")) : null,
+    s.stalls ? h("p", { class: "faint" }, "Kept the clock waiting past its cap ", s.stalls, s.stalls === 1 ? " time" : " times") : null,
+    code ? [h("div", { class: "code" }, code),
+      h("div", { class: "row" },
+        h("button", { class: "btn small primary", onclick: (e) => copy(brief(s.seat, code), e.target) }, "Copy message for its chat"),
+        h("button", { class: "btn small", onclick: (e) => copy(code, e.target) }, "Copy code"))]
+      : h("p", { class: "faint" }, "This browser doesn't have this seat's code. Each code is shown once; New codes makes a fresh set."));
+}
+
+function scoresPanel(v) {
+  const s = v.scores, ref = s.reference, rows = [];
+  const line = (k, mine, theirs) => rows.push(h("span", { class: "k" }, k), h("span", { class: "v" }, mine), h("span", { class: "rv" }, theirs));
+  rows.push(h("span", {}), h("span", { class: "caps", style: "text-align:right" }, "Yours"), h("span", { class: "caps", style: "text-align:right" }, "Reference"));
+  line("Company score", fmt(s.company.score), ref ? fmt(ref.company.score) : "–");
+  line("Person-trips flown", s.company.served_person_trips + " of " + s.company.offered_person_trips, ref ? String(ref.company.served_person_trips) : "–");
+  line("Mean flight score", fmt(s.company.mean), ref ? fmt(ref.company.mean) : "–");
+  for (const d of s.desks) {
+    const r = ref && ref.desks.find((x) => x.desk === d.desk);
+    line(d.name + " mean (" + d.ended + " ended, " + d.open + " open)", fmt(d.mean), r ? fmt(r.mean) : "–");
+  }
+  return h("section", { class: "panel" },
+    h("div", { class: "ph" }, h("h2", {}, "Scores"), h("div", { class: "r" }, h("span", { class: "tag" }, "Points only · Simulated"))),
+    h("div", { class: "pb" }, h("div", { class: "score" }, rows),
+      h("p", { class: "faint", style: "margin-top:10px;font-size:12px" },
+        "A desk's mean counts an abandoned job as 0. The company score is the share of person-trips flown times the mean. ",
+        ref ? "The reference is a greedy executor with naive dispatchers on this world's market and weather, at tick " + ref.tick + "." : "The reference company hasn't reported yet.")));
+}
+
+function desksPanel(v) {
+  return h("section", { class: "panel" },
+    h("div", { class: "ph" }, h("h2", {}, "Desks and ships"), h("div", { class: "r" }, h("span", { class: "tag" }, "Fictional ships"))),
+    h("div", { class: "scroll" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", {}, "Ship"), h("th", {}, "Desk"), h("th", {}, "Parked at"), h("th", {}, "Free"))),
+      h("tbody", {}, v.desks.flatMap((d) => d.ships.map((sh) => h("tr", {},
+        h("td", {}, sh.name, h("div", { class: "faint", style: "font-size:12px" }, sh.ship_class, " · ", sh.seats, " seats")),
+        h("td", {}, h("span", { class: "dot " + d.desk, "aria-hidden": "true" }), " ", d.name),
+        h("td", {}, sh.at.name),
+        h("td", { class: "num" }, sh.free === "free" ? "Free" : sh.free, sh.job ? h("div", { class: "faint" }, "Flying ", sh.job) : null))))))));
+}
+
+function jobsPanel(v) {
+  const jobs = [...v.jobs].reverse();
+  return h("section", { class: "panel" },
+    h("div", { class: "ph" }, h("h2", {}, "Jobs"), h("div", { class: "r" }, h("span", { class: "faint" }, v.market.open + " of " + v.market.size + " bookings on the market"))),
+    jobs.length ? h("div", { class: "scroll" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", {}, "Job"), h("th", {}, "Booking"), h("th", {}, "Desk"), h("th", {}, "Status"), h("th", { class: "n" }, "Score"))),
+      h("tbody", {}, jobs.map((j) => h("tr", {},
+        h("td", { class: "num" }, j.job_id),
+        h("td", {}, j.title, j.ship ? h("div", { class: "faint", style: "font-size:12px" }, j.ship, j.lands ? (j.landed ? " · landed " : " · lands ") + j.lands : "") : null),
+        h("td", {}, j.desk ? [h("span", { class: "dot " + j.desk, "aria-hidden": "true" }), " ", j.desk] : "–"),
+        h("td", {}, status(j)),
+        h("td", { class: "n" }, j.total != null ? fmt(j.total) : j.phase === "abandoned" ? "0" : "–"))))))
+      : h("p", { class: "empty" }, "No jobs yet. The executor takes bookings from the market with assign."));
+}
+function status(j) {
+  if (j.phase === "planning") return h("span", { class: "chip work" }, "Planning");
+  if (j.phase === "in_flight") return h("span", { class: "chip warn" }, "At a checkpoint");
+  if (j.phase === "arrived") return h("span", { class: "chip wait" }, j.landed ? "Landed" : "Flying");
+  return h("span", { class: "chip off" }, "Abandoned" + (j.reason ? " (" + j.reason + ")" : ""));
+}
+
+// Comms: one channel per seat. A message shows in its sender's and each recipient's channel, a report in its dispatcher's and
+// the executor's, ticks in every channel.
+function commsRows(v) {
+  const rows = [];
+  for (const m of v.messages || []) rows.push({ at: m.at_ms, tick: m.tick, kind: "message", cls: "plan", seats: [m.from, ...m.to], who: m.from + " to " + (m.to.length > 1 ? "all" : m.to[0]), text: m.text });
+  for (const r of v.reports || []) rows.push({ at: r.at_ms, tick: r.tick, kind: "report", cls: "dispatch", seats: [r.seat, "EX"], who: r.seat + " to EX" + (r.job_id ? " · " + r.job_id : ""), text: r.text });
+  for (const e of v.events || []) rows.push({ at: e.at_ms, tick: e.tick, kind: "tick", cls: "neutral", seats: SEATS, who: "Sky clock", text: "Tick " + e.tick + ": " + e.sky + (e.stalled && e.stalled.length ? ". Ran without " + e.stalled.join(", ") + " (cap)." : ".") });
+  return rows.filter((r) => tab === "all" || r.seats.includes(tab)).sort((a, b) => b.at - a.at);
+}
+function commsPanel(v) {
+  const rows = commsRows(v), tabs = [["all", "All"], ...SEATS.map((s) => [s, s === "EX" ? "Executor" : s + " · " + DESK[s]])];
+  return h("section", { class: "panel" },
+    h("div", { class: "ph" }, h("h2", {}, "Comms"), h("div", { class: "r" }, h("span", { class: "tag" }, "Agents' own words"))),
+    h("div", { class: "tabs", role: "tablist" }, tabs.map(([k, label]) => h("button", { role: "tab", "aria-selected": String(tab === k), onclick: () => { tab = k; render(); } }, label))),
+    rows.length ? h("ul", { class: "mb-list comms" }, rows.map((r) => h("li", { class: "mb" },
+      h("span", { class: "mb-t" }, "T" + r.tick),
+      h("span", { class: "mb-c " + r.cls }, r.kind),
+      h("span", { class: "mb-x" }, h("span", { class: "mb-a" }, r.who), h("span", { class: "mb-s" }, r.text)))))
+      : h("p", { class: "empty" }, "Nothing yet. Messages between seats, dispatchers' reports and clock ticks show here."));
+}
+
+function render() {
+  if (!view) return;
+  const v = view, keep = document.querySelector(".comms")?.scrollTop || 0;
+  app.replaceChildren(
+    clockPanel(v),
+    h("section", {},
+      h("div", { class: "ph", style: "border:0;padding:0 0 10px" }, h("h2", {}, "Seats"),
+        h("div", { class: "r" }, h("button", { class: "btn small", onclick: newCodes }, "New codes"))),
+      h("div", { class: "grid" }, v.seats.map((s) => seatCard(v, s)))),
+    h("div", { class: "two" }, jobsPanel(v), scoresPanel(v)),
+    h("div", { class: "two" }, commsPanel(v), desksPanel(v)),
+    h("p", { class: "foot" }, v.note, " Scores are points only. World ", v.world_id, "."));
+  const c = document.querySelector(".comms");
+  if (c) c.scrollTop = keep;
+}
+
+if (!WORLD) startPage();
+else {
+  (async () => {
+    if (!(await load())) return;
+    let timer = setInterval(load, 3000);
+    document.addEventListener("visibilitychange", () => {
+      clearInterval(timer);
+      if (!document.hidden) { load(); timer = setInterval(load, 3000); }
+    });
+  })();
+}
+</script>
+</body>
+</html>

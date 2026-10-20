@@ -15,6 +15,7 @@ import { seasonKey, seasonRelease, seasonSeed } from "./season-seed.js";
 import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
 import agentHtml from "./agent.html";
+import worldHtml from "./world.html";
 import flightHtml from "./flight.html";
 import { methodPage } from "./method.js";
 import siteHtml from "./site.html";
@@ -33,7 +34,7 @@ const isMcpPath = (p) => p === "/mcp" || p.startsWith("/mcp/");
 // The landing page runs the engine in the browser. ?v= changes with every engine build, so that URL can be cached for good.
 const ENGINE_PATH = "/engine.js", ENGINE_V = META.sha256.slice(0, 16);
 const isBenchPath = (p) => p === "/bench" || p.startsWith("/bench/");
-const isWorldPath = (p) => p.startsWith("/world/");
+const isWorldPath = (p) => p === "/world" || p.startsWith("/world/");
 const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p === "/sky.json" || p.startsWith("/seasons/") || p.startsWith("/rides/") || p.startsWith("/flight/") || p.startsWith("/agent/") || p.startsWith("/comms/") || isBenchPath(p) || isWorldPath(p);
 const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), FLIGHT_PATH = new RegExp("^/flight/(" + RUN_ID.source.slice(1, -1) + ")(\\.json)?$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
 
@@ -157,23 +158,27 @@ async function bench(req, url, env) {
   return v ? Response.json(v, { headers: { "cache-control": "no-store" } }) : new Response("Not found: no bench session with that id", { status: 404 });
 }
 
-/** The sandbox world (simulated; plan steps 2 to 4), only while STARFARE_SANDBOX is "on" and linked from nowhere yet.
- *  POST /world/new makes a world and returns its world_id and, this once, its three seat codes (the player gives one to each
- *  agent, which calls join with it); GET /world/<world_id>.json is its view, which never shows a code. The world_id is the
- *  capability, as the bench_id is for /bench. The page comes in a later step. */
-const WORLD_PATH = new RegExp("^/world/(" + WORLD_ID.source.slice(1, -1) + ")\\.json$");
+/** The sandbox world (simulated), only while STARFARE_SANDBOX is "on" and linked from nowhere yet.
+ *  GET /world is the page that starts a company; POST /world/new makes a world and returns its world_id and, this once, its
+ *  three seat codes (the player gives one to each agent, which calls join with it). GET /world/<world_id> is the world's
+ *  page and GET /world/<world_id>.json its view, which never shows a code. POST /world/<world_id>/codes issues new codes
+ *  (returned once), and the old ones stop working. The world_id is the capability, as the bench_id is for /bench. */
+const WORLD_RE = WORLD_ID.source.slice(1, -1);
+const WORLD_PATH = new RegExp("^/world/(" + WORLD_RE + ")(\\.json|/codes)?$");
 async function world(req, url, env) {
   if (!sandboxOn(env)) return new Response("Not found", { status: 404 });
   const json = (v, status = 200) => Response.json(v, { status, headers: { "cache-control": "no-store" } });
-  const m = WORLD_PATH.exec(url.pathname), method = url.pathname === "/world/new" ? "POST" : "GET";
-  if (url.pathname !== "/world/new" && !m) return new Response("Not found", { status: 404 });
+  const m = WORLD_PATH.exec(url.pathname), make = url.pathname === "/world/new", page = url.pathname === "/world" || (m && !m[2]);
+  if (!make && !m && !page) return new Response("Not found", { status: 404 });
+  const method = make || (m && m[2] === "/codes") ? "POST" : "GET";
   if (req.method !== method) return new Response("Method not allowed", { status: 405, headers: { allow: method } });
+  if (page) return new Response(worldHtml.replace("__WORLD__", () => JSON.stringify(m ? m[1] : null)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
   if (!(await allowed(hub(env), "world:" + clientKey(req), rateLimit(env)))) return busy();
-  if (!m) {
+  if (make) {
     const id = "w_" + hex(10), v = await worldStub(env, id).create(id);
-    return v.error ? json(v, 409) : json({ ...v, view: url.origin + "/world/" + id + ".json" }, 201);
+    return v.error ? json(v, 409) : json({ ...v, view: url.origin + "/world/" + id + ".json", page: url.origin + "/world/" + id }, 201);
   }
-  const v = await worldStub(env, m[1]).view();
+  const v = m[2] === "/codes" ? await worldStub(env, m[1]).reissue() : await worldStub(env, m[1]).view();
   return v ? json(v) : json({ error: "no world with that world_id" }, 404);
 }
 
