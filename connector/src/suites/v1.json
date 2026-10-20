@@ -74,6 +74,105 @@
         "clock_jd": 2462671.5,
         "stratum": "quick/hazard"
       }
+    ],
+    "test": [
+      {
+        "id": "ceres-shift/0048",
+        "hail_id": "ceres-shift",
+        "clock_jd": 2461377.5
+      },
+      {
+        "id": "titan-home/0157",
+        "hail_id": "titan-home",
+        "clock_jd": 2461486.5
+      },
+      {
+        "id": "iss-crew/3870",
+        "hail_id": "iss-crew",
+        "clock_jd": 2465199.5
+      },
+      {
+        "id": "iss-crew/0041",
+        "hail_id": "iss-crew",
+        "clock_jd": 2461370.5
+      },
+      {
+        "id": "titan-home/4856",
+        "hail_id": "titan-home",
+        "clock_jd": 2466185.5
+      },
+      {
+        "id": "titan-home/3694",
+        "hail_id": "titan-home",
+        "clock_jd": 2465023.5
+      },
+      {
+        "id": "phobos-commute+jovian-hop/3944",
+        "hails": [
+          "phobos-commute",
+          "jovian-hop"
+        ],
+        "clock_jd": 2465273.5
+      },
+      {
+        "id": "jovian-hop+iss-crew/4881",
+        "hails": [
+          "jovian-hop",
+          "iss-crew"
+        ],
+        "clock_jd": 2466210.5
+      },
+      {
+        "id": "iss-crew/6172",
+        "hail_id": "iss-crew",
+        "clock_jd": 2467501.5
+      },
+      {
+        "id": "iss-crew/4955",
+        "hail_id": "iss-crew",
+        "clock_jd": 2466284.5
+      },
+      {
+        "id": "titan-home/5871",
+        "hail_id": "titan-home",
+        "clock_jd": 2467200.5
+      },
+      {
+        "id": "phobos-commute+jovian-hop/5211",
+        "hails": [
+          "phobos-commute",
+          "jovian-hop"
+        ],
+        "clock_jd": 2466540.5
+      },
+      {
+        "id": "jovian-hop/1754",
+        "hail_id": "jovian-hop",
+        "clock_jd": 2463083.5
+      },
+      {
+        "id": "phobos-commute+jovian-hop/3933",
+        "hails": [
+          "phobos-commute",
+          "jovian-hop"
+        ],
+        "clock_jd": 2465262.5
+      },
+      {
+        "id": "titan-home/2902",
+        "hail_id": "titan-home",
+        "clock_jd": 2464231.5
+      },
+      {
+        "id": "phobos-commute/0063",
+        "hail_id": "phobos-commute",
+        "clock_jd": 2461392.5
+      },
+      {
+        "id": "titan-home/2740",
+        "hail_id": "titan-home",
+        "clock_jd": 2464069.5
+      }
     ]
   }
 }
