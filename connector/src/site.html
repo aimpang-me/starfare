@@ -523,7 +523,7 @@ p{text-wrap:pretty}
         </ul>
         <p class="lgn">JPL positions at simulated sky dates. Orbit lines are two-body orbits at the sky date, simulated. Stored paths where available; straight route guides otherwise. True scale: real distances and sizes; bodies too small to see are drawn at a few pixels. Surface rotation and clouds are slowed for viewing.</p>
         <p class="lgn cred" id="artCred" hidden></p>
-        <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Ctrl down and Space up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Docks are placeholder art. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to ride along, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
+        <p class="lgn">Drag, or hold the right mouse button, to look. W A S D fly, Q down and E up (hold), Shift boosts. With the right button held the wheel sets the throttle; a right click without dragging opens the menu. Docks are placeholder art. Scroll up zooms in, scroll down zooms out. [ and ] set the throttle. Click a body to jump; click a ship to ride along, C swaps chase and cockpit. Arrow keys look; + / − move closer or farther; Home shows the whole system. <a href="/method">Models &amp; assumptions</a>.</p>
       </div>
       <div class="mc-map-controls" role="group" aria-label="Map controls">
         <button type="button" id="zoomIn" aria-label="Move closer">+</button><button type="button" id="zoomOut" aria-label="Move farther">−</button><button type="button" id="resetMap" aria-label="Whole system view">⊙</button><button type="button" id="mapHelp" class="mc-map-note" aria-expanded="false" aria-controls="legend">Map info</button>
@@ -1490,7 +1490,7 @@ function tbox(el, p, minPx) {
 }
 /* ---------- the pilot camera. True scale with a floating origin: the camera stays at the scene origin and WORLD
    moves by -EYE, so nearby geometry keeps float precision at any distance from the Sun. ---------- */
-var FRAME = 8, PIL_FOV = 60, SHIP_D = 2e-8, UP = V(0, 1, 0), V0 = V(), KEYS = {}, MOVE = { w: 1, a: 1, s: 1, d: 1, " ": 1, control: 1 }, DRAG = false;
+var FRAME = 8, PIL_FOV = 60, SHIP_D = 2e-8, UP = V(0, 1, 0), V0 = V(), KEYS = {}, MOVE = { w: 1, a: 1, s: 1, d: 1, q: 1, e: 1 }, DRAG = false;
 var WORLD, EYE = V();
 var PIL = { pos: V(), off: V(), anchor: null, yaw: 0, pitch: -0.2, mul: 1, vel: V(), lock: null, view: "chase", cyaw: 0, cpitch: 0, cd: 1, fly: null, dolly: 0, speed: 0, near: null, nearD: 0 };
 var PD = V(), PF = V(), PRT = V(), PT = V();
@@ -1671,7 +1671,7 @@ function shipView(F) {
   setLook(PT.copy(sp).addScaledVector(h, SHIP_D * 0.6).sub(PIL.pos));
 }
 function freeStep(dt) {
-  var fw = (KEYS.w ? 1 : 0) - (KEYS.s ? 1 : 0), rt = (KEYS.d ? 1 : 0) - (KEYS.a ? 1 : 0), up = (KEYS[" "] ? 1 : 0) - (KEYS.control ? 1 : 0);
+  var fw = (KEYS.w ? 1 : 0) - (KEYS.s ? 1 : 0), rt = (KEYS.d ? 1 : 0) - (KEYS.a ? 1 : 0), up = (KEYS.e ? 1 : 0) - (KEYS.q ? 1 : 0);
   rightOf(pilotDir(PF), PRT);
   PT.copy(PF).multiplyScalar(fw).addScaledVector(PRT, rt).addScaledVector(UP, up);
   if (PT.lengthSq() > 1) PT.normalize();
@@ -1798,16 +1798,10 @@ function openCtx(cx, cy, lbl) {
 function bindKeys() {
   function typing(t) { return t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable); }
   function blocked() { return !$("#intro").hidden || !$("#logM").hidden; }
-  // Ctrl flies down only while the map has the pointer or focus, or a flight key is already held, so Ctrl+A, Ctrl+S
-  // and Ctrl+D keep their browser meaning everywhere else on the page.
-  var overMap = false, box = $("#mapbox");
-  box.addEventListener("pointerenter", function () { overMap = true; });
-  box.addEventListener("pointerleave", function () { overMap = false; });
-  function mapActive() { return overMap || box.contains(document.activeElement) || Object.keys(KEYS).some(function (k) { return MOVE[k]; }); }
+  // Q and E fly down and up. No Ctrl combination is taken: Chrome closes the tab on Ctrl+W before a page can stop it.
   document.addEventListener("keydown", function (e) {
     var k = e.key.toLowerCase();
-    if (e.metaKey || e.altKey || typing(e.target) || blocked() || (e.ctrlKey && (!MOVE[k] || !mapActive()))) return;
-    if (k === " " && e.target.closest && e.target.closest("button,a,summary,[role=button]")) return;
+    if (e.metaKey || e.altKey || e.ctrlKey || typing(e.target) || blocked()) return;
     KEYS.shift = e.shiftKey ? 1 : 0;
     if (MOVE[k]) { e.preventDefault(); KEYS[k] = 1; glStart(); }
     else if (k === "[" || k === "]") { PIL.mul = clamp(PIL.mul * (k === "]" ? 1.4 : 1 / 1.4), 0.02, 50); mapHud(); glStart(); }
