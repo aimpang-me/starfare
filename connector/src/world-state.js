@@ -108,6 +108,9 @@ export function capTick(w, nowMs) {
   return due != null && nowMs >= due ? advance(w, nowMs, "cap") : null;
 }
 
+/** Runs the open tick now, whoever is waiting (the reference company's world, which has no seats). Returns the event. */
+export const tickNow = (w, nowMs, why) => advance(w, nowMs, why);
+
 function advance(w, nowMs, why) {
   const c = w.clock, stalled = joined(w).filter((s) => !w.seats[s].waiting);
   for (const s of stalled) w.seats[s].stalls++;
