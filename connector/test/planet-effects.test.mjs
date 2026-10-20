@@ -210,7 +210,7 @@ test('same-flight rebuild preserves the paused cosmetic clock; a new flight star
   const el={value:'1',setAttribute(){}};
   const ctx={RS:null,RIDE:{record:{},lg:{}},SF:{replay:()=>rp,name:x=>x,SHIP:'Ship'},
     window:{StarfarePlanetEffects:Effects,StarfareView:{timingConflicts:()=>[]}},StarfarePlanetEffects:Effects,
-    $:()=>el,GL:null,reduced:false,hailOf:()=>({}),passengerList:()=>[],shipWords:x=>x,playIcon(){},renderPlist(){},renderDebrief(){},renderDlog(){}};
+    $:()=>el,GL:null,reduced:false,hailOf:()=>({}),passengerList:()=>[],shipWords:x=>x,playIcon(){},renderPlist(){},addLore(){},renderDebrief(){},renderDlog(){}};
   vm.createContext(ctx); vm.runInContext(source,ctx); ctx.loadRide(false);
   const clock=ctx.RS.planetClock; clock.sample(0,true); clock.sample(100,true); clock.sample(150,false); ctx.RS.playing=false;
   ctx.loadRide(true); assert.equal(ctx.RS.planetClock,clock); assert.equal(ctx.RS.playing,false); assert.equal(clock.sample(10000,false),.1);

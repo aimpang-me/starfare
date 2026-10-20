@@ -122,6 +122,10 @@ h1,h2,h3{margin:0;font-weight:600}
 .fc .tg{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}
 .fc .rdy,.fc .pl{font:500 11px var(--mono);color:var(--ink-3);margin-top:5px}
 .fc .pl b{color:var(--me);font-weight:500}
+/* lore (docs/LORE.md): flavour text, always tagged Fictional beside it */
+.fc .lore{font-size:12px;font-style:italic;color:var(--ink-2);margin-top:4px}
+.lore-box{margin-top:8px;padding:8px 10px;border-left:2px solid rgba(255,182,92,.45);background:rgba(255,182,92,.04);border-radius:0 4px 4px 0}
+.lore-box b{font-size:12.5px}.lore-box p{margin:4px 0 0;font-size:12px;color:var(--ink-2)}.lore-box .ov{font-style:italic}.lore-box .tag{margin-left:4px}
 .st{display:inline-flex;align-items:center;gap:5px;font:700 10px/1 Inter;letter-spacing:.12em;text-transform:uppercase;padding:4px 7px;border-radius:3px;border:1px solid;white-space:nowrap}
 .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .st.ico::before{display:none}
@@ -669,9 +673,10 @@ p{text-wrap:pretty}
 </div>
 
 <script>window.SITE = __SITE__;</script><script src="__ENGINE_URL__" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js" integrity="sha384-nhO9toQuMo5osCuA0l+YFpSqscZWxDu251Bnho2gD3kSPv1neEwHg0LyEmrA+mPj" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js" integrity="sha384-mY+ii969jnDCI2HjRHftH2NZVkIO5ZGUkcnGCg3oVJ3kVstWQXwerYWBg+nbUG4R" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js" integrity="sha384-GkidzTYmQg24v13sa3xhBBbvOLbVLO1QxfyKLdOWweQqNqS/iWwUst2T1fER2Xrg" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js" integrity="sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js" integrity="sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js" integrity="sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa" crossorigin="anonymous"></script><script src="/assets/sol-art.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js" integrity="sha384-nhO9toQuMo5osCuA0l+YFpSqscZWxDu251Bnho2gD3kSPv1neEwHg0LyEmrA+mPj" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js" integrity="sha384-mY+ii969jnDCI2HjRHftH2NZVkIO5ZGUkcnGCg3oVJ3kVstWQXwerYWBg+nbUG4R" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js" integrity="sha384-GkidzTYmQg24v13sa3xhBBbvOLbVLO1QxfyKLdOWweQqNqS/iWwUst2T1fER2Xrg" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js" integrity="sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js" integrity="sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js" integrity="sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js" integrity="sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js" integrity="sha384-Ua4+miEfAhtQpWvzgEohUG5UfbDPgyuYVVT+sgb2QvRC3fjACMsy7LV3Zoxnv2xf" crossorigin="anonymous"></script><script src="/assets/sol-art.js"></script>
 <script src="/assets/planet-effects.js"></script>
 <script src="/assets/flight-view.js"></script>
+<script src="/assets/sol-lore.js"></script>
 <script src="/assets/sol-lines.js"></script>
 <script src="/assets/sol-layers.js"></script>
 <script src="/assets/vendor/gsap-3.15.0.min.js"></script>
@@ -914,6 +919,20 @@ function money(n) { return "$" + SF.fmt(n, 2); }
 function kwh(n) { return SF.fmt(n) + " kWh"; }
 function fmt(n, d) { return SF.fmt(n, d); }
 function iso(jd) { return SF.iso(jd); }
+// A booking's lore (world/lore/sol-lore.js): Fictional flavour keyed on the booking's public fields only, or null.
+// d: a desk row { id, rider, party, from, to, kind }. Never part of the plan, the score or what the agent sees.
+function loreOf(d) {
+  if (!window.SOL_LORE || !d) return null;
+  try { return SOL_LORE.booking({ id: d.id, rider: d.rider, party: d.party, from: d.from, to: d.to, kind: d.kind }); } catch (e) { return null; }
+}
+var FICT = '<span class="tag fict">Fictional</span>';
+function loreBox(o) {
+  if (!o) return "";
+  var pn = o.place_note;
+  return '<div class="lore-box"><b>' + esc(o.headline) + "</b>" + FICT + "<p>" + esc(o.story) + "</p>" +
+    (o.overheard ? '<p class="ov">' + esc(o.overheard) + "</p>" : "") +
+    (pn ? "<p>" + esc(pn.text) + ' <span class="tag ' + (pn.tag === "Real" ? "real" : "fict") + '">' + esc(pn.tag) + "</span></p>" : "") + "</div>";
+}
 function hailOf(id) {
   var h = SF.SITE.hails.filter(function (x) { return x.hail_id === id; })[0];
   if (h || !SF.R.hailRow) return h;
@@ -1507,8 +1526,13 @@ function shipPx(v, base) {
   return cap;
 }
 var CR = V(), CU = V(), PO = V(), SLOT = {}, DP = {}, DOCKS = {}, DOCKNEED = {}, DOCK_PX = 15;
-// Placeholder dock for a place: a ring on a hub. The Blender models replace this one function. Map art only; no engine place is added.
+// A dock for a place: SolArt's Blender model (a station model at a fictional station, the generic dock elsewhere), with
+// the place's engine berth count, over the placeholder ring on a hub until it loads. Map art only; no engine place is added.
 function makeDock(P) {
+  var ph = placeholderDock(P);
+  return window.SolArt && SolArt.dock ? SolArt.dock(P, P && SF.R && SF.R.BERTHS ? SF.R.BERTHS[P.kind] || 2 : null, ph) : ph;
+}
+function placeholderDock(P) {
   var g = new THREE.Group(), lit = new THREE.MeshBasicMaterial({ color: P && P.real ? 0xdfe6ee : 0xffb65c }), dim = new THREE.MeshBasicMaterial({ color: 0x5b6672 });
   var hub = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.7, 12), dim); hub.rotation.x = Math.PI / 2; g.add(hub);
   g.add(new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.09, 6, 28), lit));
@@ -2179,7 +2203,7 @@ function renderBookings() {
   $("#bkPage").textContent = !matches.length ? (DESK.length ? "No matching bookings" : "Refreshing seasonal bookings…") : (first + 1) + "–" + Math.min(first + BOOKING_PAGE_SIZE, matches.length) + " of " + matches.length;
   $("#bkPrev").disabled = BOOKING_PAGE === 0; $("#bkNext").disabled = first + BOOKING_PAGE_SIZE >= matches.length;
   var html = matches.slice(first, first + BOOKING_PAGE_SIZE).map(function (d) {
-    var B = BK[d.id] || {}, P = B.plan, st;
+    var B = BK[d.id] || {}, P = B.plan, st, lore = loreOf(d);
     if (B.busy) st = '<div class="planning" style="margin-top:6px"><i></i>Planning with the engine</div>';
     else if (B.err) st = '<div class="pl">' + W(B.err) + "</div>";
     else if (B.rp) st = '<div class="pl">Planned at sky time ' + iso(SF.sky(B.ms).jd) + " &middot; par <b>" + esc(parName(P.par.car)) + "</b></div>";
@@ -2188,6 +2212,7 @@ function renderBookings() {
       '<div class="r1"><span style="font-weight:600;font-size:13.5px">' + esc(d.title) + '</span><span class="tag sim" style="margin-left:auto">' + ic("booking") + esc(d.kind) + "</span></div>" +
       '<div class="rt">' + placeH(d.from) + ' <span class="ar">&rarr;</span> ' + placeH(d.to) + "</div>" +
       '<div class="lb">' + W(d.rider) + " · party " + esc(d.party) + ' · <span class="mono">' + esc(d.id) + "</span></div>" +
+      (lore ? '<div class="lore">' + esc(lore.headline) + " " + FICT + "</div>" : "") +
       '<div class="rdy" data-ready="' + esc(d.id) + '"></div>' + st + "</button></li>";
   }).join("");
   if (html !== renderBookings.last) { renderBookings.last = html; $("#bkList").innerHTML = html; }
@@ -2231,7 +2256,7 @@ function renderInfo() {
     el.innerHTML = '<div class="caps" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">Open booking <span class="tag sim">Simulated</span></div>' +
       '<div style="font-weight:600;font-size:14px;margin-top:6px">' + esc(h.title) + "</div>" +
       '<div class="irt">' + placeH(h.from.id) + ' <span class="dim">&rarr;</span> ' + placeH(h.to.id) + "</div>" +
-      '<div class="note" style="margin-top:4px">' + W(h.rider) + "</div>" + body +
+      '<div class="note" style="margin-top:4px">' + W(h.rider) + "</div>" + loreBox(loreOf({ id: h.hail_id, rider: h.rider, party: h.party, from: h.from.id, to: h.to.id, kind: h.kind })) + body +
       '<div class="irow">' + (B.busy ? "" : '<button class="btn small" type="button" data-act="replan">' + (B.rp || B.err ? "Replan now" : "Plan now") + "</button>") + '<button class="btn small primary" type="button" data-act="take">Ask your agent to take it</button></div>';
   }
   if (SEL.t === "f") {

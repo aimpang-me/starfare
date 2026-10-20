@@ -3,6 +3,7 @@
 // sol-page.cjs is what the Worker runs; sol-page.txt (gitignored) is the same bytes as text, served to browsers at /engine.js.
 // It also copies the art pass (design/assets: sol-art.js, the star catalogue, planet maps, credits) into public/assets/,
 // which Workers static assets serves at /assets/*. design/assets stays the single source; public/ is gitignored.
+// The lore library (world/lore/sol-lore.js, flavour text only, never part of the engine bundle) goes to /assets/sol-lore.js.
 // Never edits anything under sol/world/ or design/. Run: node build.mjs
 import { createHash } from "node:crypto";
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -50,4 +51,7 @@ if (!readFileSync(join(ART, "sol-art.js"), "utf8").includes("root.SolArt = {")) 
 rmSync(join(PUB, "assets"), { recursive: true, force: true });
 cpSync(ART, join(PUB, "assets"), { recursive: true });
 cpSync(join(HERE, "src", "flight-view.cjs"), join(PUB, "assets", "flight-view.js"));
-console.log("art copied: design/assets -> public/assets");
+const lore = readFileSync(join(WORLD, "lore", "sol-lore.js"));
+if (!lore.includes("root.SOL_LORE = factory()")) throw new Error("world/lore/sol-lore.js no longer defines SOL_LORE");
+writeFileSync(join(PUB, "assets", "sol-lore.js"), lore);
+console.log("art copied: design/assets -> public/assets; lore: world/lore/sol-lore.js -> public/assets/sol-lore.js");
