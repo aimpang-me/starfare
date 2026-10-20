@@ -145,6 +145,7 @@ class Part:
                 # face out of the profile: the outward normal of edge i of an anticlockwise polygon is (dy, -dx)
                 (ax_, ay_), (bx_, by_) = profile[i], profile[j]
                 o_ = (frames[k][1] * (by_ - ay_) - frames[k][2] * (bx_ - ax_)) * orient
+                f.normal_update()  # a new face's normal is zero until updated
                 if f.normal.dot(o_) < 0:
                     f.normal_flip()
                 f.material_index, f.smooth = self.mi(mats[i]), True
@@ -154,6 +155,7 @@ class Part:
         if caps if caps is not None else not closed:
             for ring, nxt in ((rings[0], centres[1] - centres[0]), (rings[-1], centres[-2] - centres[-1])):
                 f = self.bm.faces.new(ring)
+                f.normal_update()
                 if f.normal.dot(nxt) > 0:
                     f.normal_flip()
                 self._finish_faces([f], cap_mat or mats[0], recalc=False)

@@ -4,47 +4,47 @@
   "models": {
     "cabin-4": {
       "abreast": 2,
-      "bytes": 16524,
+      "bytes": 153680,
       "file": "cabin-4.glb",
       "seats": 4,
-      "sha256": "326133a8a6154bbf221880085f956da2ec0dcb14231276d9570fcc3b9b2d645a",
-      "triangles": 528
+      "sha256": "c888d0cd3eeee5968b85c52be99695c53a8656901fccdc4d498fc1ce41dabe97",
+      "triangles": 1684
     },
     "dock-orbital": {
-      "bytes": 46368,
+      "bytes": 384696,
       "file": "dock-orbital.glb",
-      "sha256": "dfb6487c11c8d8f55a171bfc4f9f6ca7f8f77fabe4749d491ce84ec2b2298646",
-      "triangles": 1452
+      "sha256": "5ff0ceab49774f29cf90236ab030f5b2b0ec6b2b4afc729fff5585ede97f63fd",
+      "triangles": 12524
     },
     "station-ceres-port": {
-      "bytes": 112564,
+      "bytes": 594384,
       "file": "station-ceres-port.glb",
-      "sha256": "0bb3eb9e88bdba07996dbbcd1e5643b850b1e4f06f4b26997e86465be65355ea",
-      "triangles": 4396
+      "sha256": "48ce10f77039ea734cbfbe97ab308d406bc2843480c7712963cce8965ef39a18",
+      "triangles": 25776
     },
     "station-lunar-data-center": {
-      "bytes": 125964,
+      "bytes": 612032,
       "file": "station-lunar-data-center.glb",
-      "sha256": "838e8c8ece4d1292cbe99c3d305503745debd02c9fac8281d57efef7a59ada24",
-      "triangles": 4868
+      "sha256": "dcb61378130b0f269fbff3159987bcf4d7865f47bd3db7d29b4711f62cb8025d",
+      "triangles": 26368
     },
     "station-mars-base": {
-      "bytes": 1405456,
+      "bytes": 598120,
       "file": "station-mars-base.glb",
-      "sha256": "1e3bdc632611a964d00f6339f5b1e8d966253799b11b807148cfd437d4cd7fd4",
+      "sha256": "a0cbfe9298df9776c99371b46dd013fc0d44751f5f4d514d23026e69ddb3c174",
       "triangles": 25484
     },
     "station-orbital-depot": {
-      "bytes": 161100,
+      "bytes": 710504,
       "file": "station-orbital-depot.glb",
-      "sha256": "a5ca143a5074da44baff48dc6596cb19e72aa96ac81e77c90e732240c30cefa1",
-      "triangles": 7396
+      "sha256": "428db28d91e4101fd9fe688c31982d3cc34431665f0257b0d260c22c5666f4bc",
+      "triangles": 34436
     },
     "station-titan-dock": {
-      "bytes": 135892,
+      "bytes": 624872,
       "file": "station-titan-dock.glb",
-      "sha256": "2b43fc4dfe31b9b246ab03925c8545dda65f13c6efb52123563e5ee64d12021c",
-      "triangles": 5308
+      "sha256": "1fb4e8fff73260ebe6e84aadd5633db8aa50fe4bcb044d4eab3662c13d2ce001",
+      "triangles": 26664
     }
   },
   "note": "Fictional, original models built and surfaced in code. berth_N and seat_N are named nodes; up +Y, longest side 1.",
@@ -55,5 +55,6 @@
     "orbital-depot": "station-orbital-depot",
     "titan-dock": "station-titan-dock"
   },
-  "productionApproved": false
+  "productionApproved": false,
+  "packed": "tools/models/pack-docks.mjs (weld, dedup, meshopt medium)"
 }

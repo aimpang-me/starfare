@@ -52,6 +52,10 @@ CABIN_SEATS = 4  # world/engine ship classes give every Starseeker 4 seats today
 def new_scene():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     surfacing.materials(*surfacing.MATS)
+    # AO rays stop after about 9 m (0.35 units), so contact shadow in seams, not whole panels shaded by the far ring
+    world = bpy.data.worlds.new("space")
+    world.light_settings.distance = 0.35
+    bpy.context.scene.world = world
     root = bpy.data.objects.new("root", None)
     bpy.context.scene.collection.objects.link(root)
     return root
@@ -349,9 +353,9 @@ def build_station(key, tmp, quick=False):
     body.parent = root
     c = collar_part().finish()
     add_berths(root, c, spots, 1.3)
-    sz = (1024, 512) if quick else (2048, 1024)
+    sz = (512, 256) if quick else (1024, 512)
     surfacing.bake(body, tmp, *sz)
-    surfacing.bake(c, tmp, 1024, 512)
+    surfacing.bake(c, tmp, 512, 256)
     return root
 
 
@@ -392,8 +396,8 @@ def build_dock(tmp, quick=False):
     body.parent = root
     c = collar_part().finish()
     add_berths(root, c, spots)
-    surfacing.bake(body, tmp, *((1024, 512) if quick else (2048, 1024)))
-    surfacing.bake(c, tmp, 1024, 512)
+    surfacing.bake(body, tmp, *((512, 256) if quick else (1024, 512)))
+    surfacing.bake(c, tmp, 512, 256)
     return root
 
 
@@ -465,8 +469,8 @@ def build_cabin(seats, abreast, tmp, quick=False):
             ob.name = "seat_%d" % n
             ob.parent = root
             ob.location = (x, y, 0)
-    surfacing.bake(cab, tmp, *((1024, 512) if quick else (2048, 1024)))
-    surfacing.bake(proto, tmp, 1024, 512)
+    surfacing.bake(cab, tmp, *((512, 256) if quick else (1024, 512)), cull=False)
+    surfacing.bake(proto, tmp, 512, 256, cull=False)
     return root
 
 
@@ -580,7 +584,7 @@ def main(argv):
         if a.render:
             os.makedirs(a.render, exist_ok=True)
             out = os.path.join(os.path.abspath(a.render), name)
-            render(root, out + ".png", view=(55, -60) if name.startswith("cabin") else (35, -50))
+            render(root, out + ".png", view=(55, -60) if name.startswith("cabin") else (35, -50), dist=1.7)
             if name.startswith("station"):
                 render(root, out + "-close.png", view=(22, -75), dist=0.55, target=(0.05, -0.28, 0))
         print("%-28s %8d bytes %6d triangles" % (name, info["bytes"], info["triangles"]), flush=True)

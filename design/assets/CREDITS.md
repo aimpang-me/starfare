@@ -62,7 +62,7 @@ The procedural Starseeker ship model, its engine plume, nav lights and callsign 
 
 ## Docks, stations and cabin (`models/dock-*.glb`, `models/station-*.glb`, `models/cabin-*.glb`, October 19, 2026)
 
-Original Starfare models, built in Blender 5.2 by `tools/models/blender/build_models.py` (no hand edits, no textures) and packed by `tools/models/pack-docks.mjs`. `models/docks.json` lists each file with its size, hash and triangle count. The five stations follow the Wayfarer concept in `art/2026-10-17/`; the generic dock stands beside planets, moons, small bodies and the real stations ISS and Tiangong, and is a fictional Starfare dock, not a model of either station. The cabin's seat count is a build parameter. All are fictional and marked `productionApproved: false` until Alvin approves them.
+Original Starfare models, built in Blender 5.2 by `tools/models/blender/build_models.py` (no hand edits) and packed by `tools/models/pack-docks.mjs`. Their textures are baked in the same script from Starfare's own procedural materials (panel lines, brushed alloy, grime, lit window cells, ambient occlusion), with no photo or third-party texture. `models/docks.json` lists each file with its size, hash and triangle count. The five stations follow the Wayfarer concept in `art/2026-10-17/`; the generic dock stands beside planets, moons, small bodies and the real stations ISS and Tiangong, and is a fictional Starfare dock, not a model of either station. The cabin's seat count is a build parameter. All are fictional and marked `productionApproved: false` until Alvin approves them.
 
 ## Generated ship hulls (`models/kestrel.glb`, `models/tandem.glb`, `models/lantern.glb`, October 18, 2026)
 

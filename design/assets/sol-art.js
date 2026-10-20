@@ -441,7 +441,19 @@
       var key = (m.places && m.places[id]) || m.default, info = m.models[key];
       if (!info) throw new Error("no dock model for " + id);
       return DOCKM[key] || (DOCKM[key] = new Promise(function (ok, bad) {
-        new THREE.GLTFLoader().load(BASE + "models/" + info.file, function (gl) { ok(gl.scene); }, undefined, bad);
+        // The dock files are meshopt-compressed (tools/models/pack-docks.mjs): no decoder on the page, no model.
+        if (!root.MeshoptDecoder) return bad(new Error("no MeshoptDecoder on the page"));
+        new THREE.GLTFLoader().setMeshoptDecoder(root.MeshoptDecoder).load(BASE + "models/" + info.file, function (gl) {
+          gl.scene.traverse(function (o) {
+            if (!o.material) return;
+            // As for the hulls: the baked colour and window light are stored as they should look on this page.
+            if (o.material.map) o.material.map.encoding = THREE.LinearEncoding;
+            if (o.material.emissiveMap) o.material.emissiveMap.encoding = THREE.LinearEncoding;
+            if (ENV.rt) o.material.envMap = ENV.rt.texture;
+            o.material.needsUpdate = true; ENV.mats.push(o.material);
+          });
+          ok(gl.scene);
+        }, undefined, bad);
       }));
     });
   }

@@ -29,6 +29,7 @@
 <div class="grid" id="grid"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js"></script>
 <script>
 (function () {
   var BASE = "../../../design/assets/models/";
@@ -48,9 +49,12 @@
     var sun = new THREE.PointLight(0xfff1dc, 1.45, 0); sun.position.set(-4, 3, 5); scene.add(sun);
     var cam = new THREE.PerspectiveCamera(32, 4 / 3, 0.01, 50);
     var g = new THREE.Group(); g.rotation.x = 0.5; scene.add(g);
-    new THREE.GLTFLoader().load(BASE + info.file, function (gl) {
+    new THREE.GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load(BASE + info.file, function (gl) {
       gl.scene.traverse(function (o) {
         var m = /^berth_(\d)$/.exec(o.name); if (m && +m[1] > berths) o.visible = false;
+        // the map's encoding: no output encoding, maps read as stored (SolArt.dock does the same)
+        if (o.material && o.material.map) o.material.map.encoding = THREE.LinearEncoding;
+        if (o.material && o.material.emissiveMap) o.material.emissiveMap.encoding = THREE.LinearEncoding;
       });
       g.add(gl.scene);
     });

@@ -9,6 +9,7 @@ material over those maps and drops the detail UVs. Palette after art/2026-10-17/
 import math
 import os
 
+import bmesh
 import bpy
 import numpy as np
 
@@ -21,12 +22,12 @@ def lin(hexstr):
 
 # name: base, metallic, roughness, extras. panel = (brick width, row height, line width) in model units.
 MATS = {
-    "paint": dict(base="#24344f", metal=0.15, rough=0.5, panel=(0.62, 0.31, 0.012), grime=0.25),
-    "paint_dark": dict(base="#18233a", metal=0.15, rough=0.55, panel=(0.4, 0.2, 0.01), grime=0.3),
-    "alloy": dict(base="#b4c0cf", metal=0.5, rough=0.36, panel=(0.9, 0.45, 0.008), brushed=True, grime=0.15),
-    "alloy_dark": dict(base="#6a7586", metal=0.45, rough=0.42, panel=(0.5, 0.25, 0.008), brushed=True, grime=0.2),
-    "graphite": dict(base="#2a3340", metal=0.3, rough=0.6, panel=(0.3, 0.15, 0.008), grime=0.3),
-    "window": dict(base="#0d0f12", metal=0.0, rough=0.15, cells=("#ffc874", "#5c3a17", 0.16, 0.13)),
+    "paint": dict(base="#24344f", metal=0.15, rough=0.5, panel=(1.1, 0.55, 0.03), grime=0.25),
+    "paint_dark": dict(base="#18233a", metal=0.15, rough=0.55, panel=(0.4, 0.2, 0.026), grime=0.3),
+    "alloy": dict(base="#b4c0cf", metal=0.5, rough=0.36, panel=(0.9, 0.45, 0.022), brushed=True, grime=0.15),
+    "alloy_dark": dict(base="#6a7586", metal=0.45, rough=0.42, panel=(0.5, 0.25, 0.02), brushed=True, grime=0.2),
+    "graphite": dict(base="#2a3340", metal=0.3, rough=0.6, panel=(0.3, 0.15, 0.02), grime=0.3),
+    "window": dict(base="#0d0f12", metal=0.0, rough=0.15, cells=("#ffc874", "#5c3a17", 0.24, 0.17)),
     "glass": dict(base="#0b1018", metal=0.2, rough=0.06),
     "rubber": dict(base="#0c0e11", metal=0.0, rough=0.85),
     "light_cyan": dict(base="#0e2630", metal=0.0, rough=0.4, emit="#56cefa"),
@@ -85,8 +86,8 @@ def material(name):
     if spec.get("grime"):
         tc = N.new("ShaderNodeTexCoord")
         nz = N.new("ShaderNodeTexNoise")
-        nz.inputs["Scale"].default_value = 1.6
-        nz.inputs["Detail"].default_value = 8.0
+        nz.inputs["Scale"].default_value = 0.9
+        nz.inputs["Detail"].default_value = 3.0
         nz.inputs["Roughness"].default_value = 0.6
         L.new(tc.outputs["Object"], nz.inputs["Vector"])
         ramp = N.new("ShaderNodeValToRGB")
@@ -134,8 +135,8 @@ def material(name):
         br.inputs["Scale"].default_value = 1.0
         br.inputs["Brick Width"].default_value = w
         br.inputs["Row Height"].default_value = h
-        br.inputs["Mortar Size"].default_value = 0.012
-        br.inputs["Bias"].default_value = -0.2
+        br.inputs["Mortar Size"].default_value = 0.03
+        br.inputs["Bias"].default_value = 0.1
         br.inputs["Color1"].default_value = lin(hi) + (1,)
         br.inputs["Color2"].default_value = lin(lo) + (1,)
         br.inputs["Mortar"].default_value = (0.004, 0.004, 0.005, 1)
@@ -174,8 +175,45 @@ def unwrap(ob, margin=0.003):
     bpy.ops.mesh.select_all(action="SELECT")
     bpy.ops.uv.smart_project(angle_limit=math.radians(50), island_margin=margin, area_weight=0.0, correct_aspect=True,
                              scale_to_bounds=False)
-    bpy.ops.uv.pack_islands(rotate=True, margin=margin)
+    bpy.ops.uv.average_islands_scale()
     bpy.ops.object.mode_set(mode="OBJECT")
+    _shrink_small_parts(me)
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.uv.pack_islands(rotate=True, scale=True, margin=margin)
+    bpy.ops.object.mode_set(mode="OBJECT")
+
+
+def _shrink_small_parts(me, small=0.08, k=0.3):
+    """Struts, bolts and lights are hundreds of loose parts. At even texel density they take most of the atlas, so
+    each loose part under `small` square units gets its UVs scaled by k, leaving the hull panels the pixels."""
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    uv = bm.loops.layers.uv["bake"]
+    seen = set()
+    for f0 in bm.faces:
+        if f0.index in seen:
+            continue
+        part, stack = [], [f0]
+        seen.add(f0.index)
+        while stack:
+            f = stack.pop()
+            part.append(f)
+            for e in f.edges:
+                for g in e.link_faces:
+                    if g.index not in seen:
+                        seen.add(g.index)
+                        stack.append(g)
+        lit = any(me.materials[f.material_index].name.startswith(("light_", "window", "screen")) for f in part)
+        if not lit and sum(f.calc_area() for f in part) < small:
+            loops = [l for f in part for l in f.loops]
+            cx = sum(l[uv].uv[0] for l in loops) / len(loops)
+            cy = sum(l[uv].uv[1] for l in loops) / len(loops)
+            for l in loops:
+                u, v = l[uv].uv
+                l[uv].uv = (cx + (u - cx) * k, cy + (v - cy) * k)
+    bm.to_mesh(me)
+    bm.free()
 
 
 def _image(name, size, data=False):
@@ -236,8 +274,9 @@ def _px(img):
     return a.reshape(img.size[1], img.size[0], 4)
 
 
-def bake(ob, tmp, size=2048, aux=1024, ao_samples=24, ao_strength=0.8):
-    """Bakes ob's procedural materials to textures and gives it one glTF material over them."""
+def bake(ob, tmp, size=1024, aux=512, ao_samples=24, ao_strength=0.8, cull=True):
+    """Bakes ob's procedural materials to textures and gives it one glTF material over them. The base colour (which
+    carries the panel lines) is `size`; normal, roughness/metal and emission are `aux`, to keep the files small."""
     sc = bpy.context.scene
     sc.render.engine = "CYCLES"
     sc.cycles.device = "CPU"
@@ -248,7 +287,7 @@ def bake(ob, tmp, size=2048, aux=1024, ao_samples=24, ao_strength=0.8):
     _bake(ob, "DIFFUSE", albedo, pass_filter={"COLOR"})
     ao = _image(name + "_ao", size, True)
     _bake(ob, "AO", ao, samples=ao_samples)
-    normal = _image(name + "_normal", size, True)
+    normal = _image(name + "_normal", aux, True)
     _bake(ob, "NORMAL", normal, normal_space="TANGENT")
     rough = _image(name + "_rough", aux, True)
     _bake(ob, "ROUGHNESS", rough)
@@ -279,6 +318,7 @@ def bake(ob, tmp, size=2048, aux=1024, ao_samples=24, ao_strength=0.8):
 
     m = bpy.data.materials.new(name + "_baked")
     m.use_nodes = True
+    m.use_backface_culling = cull  # exports as doubleSided false: closed hulls need no back faces
     nt, N, L = m.node_tree, m.node_tree.nodes, m.node_tree.links
     bsdf = N["Principled BSDF"]
 
