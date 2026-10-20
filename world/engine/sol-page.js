@@ -1810,7 +1810,11 @@ function par(id, t0, endJd, seed){
       try {
         var p = planned(c.at, h.from, st + w[0] * HOUR, "energy", endJd, c.id), P = slim(p, c.at, h.from);
         var pk = fly(id, c.id, [P, { from: h.from, to: h.from, dep_jd: p.arr_jd + DWELL, arr_jd: p.arr_jd + DWELL, kwh: 0 }], t0, seed).pickup_jd;
-        var r = planned(h.from, h.to, Math.max(p.arr_jd, pk) + DWELL + w[1] * HOUR, "energy", endJd, c.id), Rr = slim(r, h.from, h.to), legs = [P, Rr], F = fly(id, c.id, legs, t0, seed);
+        var r = planned(h.from, h.to, Math.max(p.arr_jd, pk) + DWELL + w[1] * HOUR, "energy", endJd, c.id), Rr = slim(r, h.from, h.to), legs = [P, Rr];
+        // Each leg can fit the tank while the pair does not; check() refuses that dispatch, so par must not pick it.
+        var xe = (+P.xenon_kg || 0) + (+Rr.xenon_kg || 0);
+        if (xe > c.xenon_kg + 1e-6) throw new Error(c.name + " xenon tank holds " + c.xenon_kg + " kg and this plan needs " + Math.round(xe * 10) / 10 + " kg");
+        var F = fly(id, c.id, legs, t0, seed);
         if (!best || F.used_kwh < best.kwh - 1e-9) best = { car: c.id, kwh: F.used_kwh, planned_kwh: F.planned_kwh, arr_jd: F.arrive_jd, planned_arr_jd: r.arr_jd, legs: legs, wait_h: w, path: [] };
         // Holds and corrections only add energy, so a local ride planned above the best can't win; a replan or divert might.
         if (legs.some(function(L){ return system(L.from) !== system(L.to); }) || F.planned_kwh < best.kwh - 1e-9){
@@ -1835,8 +1839,8 @@ function par(id, t0, endJd, seed){
       if (later) return;
       try {
         var stL = H.pickupStart(id, c.id, t0), pL = planned(c.at, h.from, stL, "energy", ephEnd, c.id);
-        planned(h.from, h.to, pL.arr_jd + DWELL, "energy", ephEnd, c.id);
-        later = true;
+        var rL = planned(h.from, h.to, pL.arr_jd + DWELL, "energy", ephEnd, c.id);
+        if ((+pL.battery.propellant_kg || 0) + (+rL.battery.propellant_kg || 0) <= c.xenon_kg + 1e-6) later = true;
       } catch (e) {}
     });
     if (later) throw new Error("no ship can serve " + h.title);
