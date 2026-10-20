@@ -33,6 +33,7 @@ const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
 const META = JSON.parse(readFileSync(new URL("../src/engine/meta.json", import.meta.url), "utf8"));
 const BENCH_KEY = "e2e-bench-key-0123456789abcdef01"; // a throwaway key for wrangler dev; the live one is a Wrangler secret
+const SANDBOX_SEAT_TOOLS = ["join", "company", "market", "assign", "decline", "transfer_ship", "reports", "queue", "report"];
 const TOOLS = ["check_in", "check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_leg", "plan_pickup", "plan_ride", "space_weather", "start_bench", "take_hail"];
 
 const results = [];
@@ -229,9 +230,9 @@ async function phaseOff() {
     assert.match(js.headers.get("cache-control"), /immutable/);
     assert.ok((await js.text()).includes("module.exports = SOLE"));
   });
-  await check("tools/list is exactly the eleven ride-hail tools, start_bench, check_in and (this phase runs the sandbox) join", async () => {
+  await check("tools/list is exactly the eleven ride-hail tools, start_bench, check_in and (this phase runs the sandbox) the sandbox's seat tools", async () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
-    assert.deepEqual(names, [...TOOLS, "join"].sort());
+    assert.deepEqual(names, [...TOOLS, ...SANDBOX_SEAT_TOOLS].sort());
   });
   await check("Comms: an agent checks in with the page's one-time code, and its bookings show on that channel", async () => {
     const opened = await fetch(`${w.base}/comms/new`, { method: "POST" });
@@ -788,6 +789,28 @@ async function phaseOff() {
     assert.equal(after.seats[1].agent.name, "e2e bot");
     for (const seat of ["EX", "D1", "D2"]) assert.ok(!text.includes(v.codes[seat].slice(-12)), "the view never shows a code");
     assert.doesNotMatch(text, /code_hash/);
+  });
+
+  await check("sandbox tools: the executor assigns a market hail to a desk, and that desk's dispatcher plans it with its code and job_id", async () => {
+    const v = await (await fetch(`${w.base}/world/new`, { method: "POST" })).json(), { EX, D1, D2 } = v.codes;
+    const m = await ok(client, "market", { code: EX, kind: "quick", limit: 50 });
+    const inner = m.hails.find((h) => h.region === "inner");
+    const a = await ok(client, "assign", { code: EX, hail_id: inner.hail_id, desk: "D1" });
+    assert.equal(a.assigned, "j1");
+    const q = await ok(client, "queue", { code: D1 });
+    assert.deepEqual(q.jobs.map((j) => j.job_id), ["j1"]);
+    const h = await ok(client, "get_hail", { code: D1, job_id: "j1" });
+    assert.equal(h.job_id, "j1");
+    assert.ok(h.fleet.every((c) => q.ships.some((s) => s.car === c.car)), "get_hail lists the desk's ships only");
+    const other = await call(client, "get_hail", { code: D2, job_id: "j1" });
+    assert.equal(other.isError, true); assert.match(other.value, /not yours/);
+    const wrongRole = await call(client, "assign", { code: D1, hail_id: inner.hail_id, desk: "D1" });
+    assert.equal(wrongRole.isError, true); assert.match(wrongRole.value, /executor's tool/);
+    const bare = await call(client, "get_hail", {});
+    assert.equal(bare.isError, true); assert.match(bare.value, /run_id/);
+    const r = await ok(client, "report", { code: D1, text: "j1 is planned next tick.", job_id: "j1" });
+    assert.equal(r.ok, true);
+    assert.deepEqual((await ok(client, "reports", { code: EX })).reports.map((x) => x.text), ["j1 is planned next tick."]);
   });
 
   await check("sandbox world: an unknown world_id is 404, a malformed path is 404, and the wrong method is 405", async () => {

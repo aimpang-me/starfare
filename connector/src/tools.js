@@ -212,9 +212,63 @@ export const SANDBOX_TOOLS = {
     },
   },
 };
+const deskArg = z.enum(["D1", "D2"]).describe("a desk: D1 (Inner desk) or D2 (Outer desk)");
+const jobIdArg = z.string().regex(/^j[1-9]\d{0,5}$/).describe("the job's job_id, e.g. j3");
+Object.assign(SANDBOX_TOOLS, {
+  company: {
+    description: "Executor: the whole simulated company at a glance: the clock, the seats and who joined, each desk's ships (where each is parked, free or busy on a job until when), the market's size and the jobs so far.",
+    inputSchema: { code: seatCodeArg },
+  },
+  market: {
+    description: "Executor: the world's open market of hails (simulated), 25 at a time: hail id, kind, party, pickup, destination and the region it picks up in (inner or outer, as the desks split). " +
+      "Filter with kind, from and to, page with next_cursor. Give one to a desk with assign, or take it off the market with decline.",
+    inputSchema: {
+      code: seatCodeArg,
+      kind: z.enum(["quick", "long haul"]).optional(),
+      from: z.string().min(1).max(64).optional().describe("only hails picking up at this place id or name"),
+      to: z.string().min(1).max(64).optional().describe("only hails going to this place id or name"),
+      limit: z.number().int().min(1).max(200).optional(),
+      cursor: z.string().max(12).optional(),
+    },
+  },
+  assign: {
+    description: "Executor: take a market hail as a job and put it on a desk's queue. The rider is ready 1 sky day later on a quick hail, 150 on a long haul. " +
+      "Returns the job's job_id and terms; the desk's dispatcher flies it with its own ships.",
+    inputSchema: { code: seatCodeArg, hail_id: z.string().max(40).describe("a hail_id from market"), desk: deskArg },
+  },
+  decline: {
+    description: "Executor: take a hail off the market without flying it.",
+    inputSchema: { code: seatCodeArg, hail_id: z.string().max(40) },
+  },
+  transfer_ship: {
+    description: "Executor: move a ship to the other desk. It stays where it is parked and keeps any job it is flying; from now on only its new desk can dispatch it.",
+    inputSchema: { code: seatCodeArg, car: z.string().max(20).describe("the ship's call sign, e.g. sf-05"), desk: deskArg },
+  },
+  reports: {
+    description: "Executor: the dispatchers' reports, newest last, and every job so far with its desk, phase, ship and score (arrived jobs).",
+    inputSchema: { code: seatCodeArg },
+  },
+  queue: {
+    description: "Dispatcher: your desk: its ships (where each is parked, free or busy until when) and the jobs the executor gave it, open ones first. " +
+      "Fly an open job with get_hail, plan_pickup, plan_ride (or plan_leg), check_pad, space_weather, dispatch and decide, passing your code and its job_id in place of run_id.",
+    inputSchema: { code: seatCodeArg },
+  },
+  report: {
+    description: "Dispatcher: a few lines to the executor (up to 600 characters): what you flew, what went wrong, what your desk needs. Every number in it must come from a tool result.",
+    inputSchema: { code: seatCodeArg, text: z.string().min(1).max(600), job_id: jobIdArg.optional() },
+  },
+});
+/** The run tools as the sandbox lists them: a dispatcher passes code and job_id in place of run_id. */
+export const SANDBOX_RUN_TOOLS = Object.fromEntries(["get_hail", "plan_pickup", "plan_ride", "plan_leg", "check_pad", "space_weather", "dispatch", "decide"].map((name) => {
+  const def = TOOLS[name];
+  return [name, { ...def, description: def.description + " Sandbox: pass code and job_id in place of run_id.",
+    inputSchema: { ...def.inputSchema, run_id: def.inputSchema.run_id.optional(), code: seatCodeArg.optional(), job_id: jobIdArg.optional() } }];
+}));
 export const SANDBOX_INSTRUCTIONS = "\nSandbox (simulated): when the player gives you a seat code (it starts EX-, D1- or D2-), call join with it. " +
   "That code names your seat in the player's private world, and every sandbox tool takes it: pass it on every call. Your seat's tools are listed in join's result; " +
-  "a call outside them is refused with the reason.";
+  "a call outside them is refused with the reason. The executor (EX) reads the market and company, gives hails to desks with assign, declines the rest, moves ships with transfer_ship " +
+  "and reads reports; it flies nothing. A dispatcher (D1, D2) reads its queue and flies each job with the planning tools, passing code and job_id in place of run_id, " +
+  "with its own desk's ships only, then sends the executor a report. A dispatched ship is busy until it lands and then parked where it landed. The world's sky clock stands still between ticks.";
 
 export const HOSTED_INSTRUCTIONS = INSTRUCTIONS + "\n" +
   "Comms: when the player gives you a Starfare HQ code, call check_in with it and say who you are (name, model, thinking setting, skills) as you know it; leave out what you don't know.\n" +

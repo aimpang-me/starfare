@@ -6,7 +6,7 @@
 // different ships, and a dispatched job parks its ship where the flight lands, busy until it lands. Seats' codes, the tools
 // and the inbox come in later steps; StarfareWorld (world.js) only stores what these functions return. No Worker imports,
 // so the tests load it in plain Node.
-import { POOL_TIERS, SEASON_END, SKY, hailView, isoJD, leaveRun, names, openRun, phaseOf, worldInstance } from "./game.js";
+import { POOL_TIERS, SEASON_END, SKY, hailPage, hailView, isoJD, leaveRun, names, openRun, phaseOf, worldInstance } from "./game.js";
 
 export const WORLD_FORMAT = "starfare.world/1";
 export const WORLD_ID = /^w_[0-9a-f]{20}$/;
@@ -39,6 +39,7 @@ export function newWorld(E, { worldId, seed, owner = null, nowMs, capMs = TICK_C
     seats: Object.fromEntries(SEATS.map((s) => [s, { joined_ms: null, waiting: false, stalls: 0, code_hash: null, agent: null }])),
     market: { size: MARKET_SIZE, closed: {} },
     jobs: {}, job_seq: 0,
+    reports: [],
     events: [],
   };
 }
@@ -155,7 +156,7 @@ const jobRow = (run, w) => ({ job_id: run.world.job_id, run_id: run.run_id, hail
 
 /** Takes market hail hailId as a new job: { run, job }. The hail leaves the market. Fails (WorldError) on a closed world,
  *  a hail that is not open, or a trip that can't land before the world's clock ends (GameError from openRun). */
-export async function takeJob(E, w, hailId, nowMs, runId) {
+export async function takeJob(E, w, hailId, nowMs, runId, desk = null) {
   if (w.clock.done) fail("this world's clock has reached the end of its span");
   E.R.admit(openRow(E, w, hailId));
   const jobId = "j" + (w.job_seq + 1);
@@ -163,7 +164,7 @@ export async function takeJob(E, w, hailId, nowMs, runId) {
   const run = await openRun(E, inst, runId, nowMs);
   w.job_seq++;
   w.market.closed[hailId] = jobId;
-  w.jobs[jobId] = jobRow(run, w);
+  w.jobs[jobId] = { ...jobRow(run, w), desk };
   w.active_ms = nowMs;
   return { run, job: w.jobs[jobId] };
 }
@@ -181,7 +182,7 @@ export function syncJob(w, run) {
  *  world's span until the ride lands. Changes w. */
 export function jobMoved(w, run) {
   const id = run.world.job_id, was = w.jobs[id], phase = phaseOf(run);
-  w.jobs[id] = { ...jobRow(run, w), taken_tick: was ? was.taken_tick : w.clock.tick };
+  w.jobs[id] = { ...jobRow(run, w), taken_tick: was ? was.taken_tick : w.clock.tick, desk: was ? was.desk : null };
   if ((phase === "in_flight" || phase === "arrived") && run.ride) {
     const at = run.ride.stops[run.ride.stops.length - 1].at;
     w.ships[run.car] = { at, free_jd: phase === "arrived" ? run.ride.arrive_jd : w.clock.end_jd };
@@ -262,4 +263,96 @@ export function seatBrief(E, w, seat, nowMs) {
       : "You are a dispatcher of a simulated Starseeker company: you fly the jobs the executor gives your desk, with your desk's ships, using the planning tools.",
     codes: "Pass this same code to every sandbox tool: each call is checked against it.",
   };
+}
+
+// ---- the executor's and dispatchers' tools (plan step 5) ----
+const REPORTS_KEPT = 50, REPORT_MAX = 600;
+const deskOf = (w, d) => (Object.hasOwn(w.desks, d) ? w.desks[d] : fail("unknown desk " + d + "; this world's desks are " + Object.keys(w.desks).map((k) => k + " (" + w.desks[k].name + ")").join(", ")));
+/** The desk a ship is on. */
+export const shipDesk = (w, car) => Object.keys(w.desks).find((d) => w.desks[d].ships.includes(car)) || null;
+
+/** market: the open market a page at a time, filtered by kind and place like list_hails, each hail marked with the region
+ *  (inner or outer, as the desks split) it picks up in. */
+export function marketPage(E, w, q = {}) {
+  const hails = marketHails(E, w).map((h) => ({ ...h, region: OUTER.has(E.R.system(h.from.id)) ? "outer" : "inner" }));
+  const page = hailPage({ simulated: true, pool_size: w.market.size, hails }, q);
+  if (page.error) return page;
+  return { ...page, sky_now: isoJD(w.clock.jd), note: "The world's market (simulated). assign gives a hail to a desk as a job; decline takes it off the market. " +
+    "region says where it picks up: the inner desk's ships fly inside Jupiter's orbit, the outer desk's at Jupiter and Saturn." };
+}
+
+/** decline: a market hail leaves the market without becoming a job. */
+export function declineHail(E, w, hailId, nowMs) {
+  openRow(E, w, hailId);
+  w.market.closed[hailId] = "declined";
+  w.active_ms = nowMs;
+  return { ok: true, hail_id: hailId, status: "declined", market_open: w.market.size - Object.keys(w.market.closed).length };
+}
+
+/** transfer_ship: a ship moves to another desk. Where it is parked and when it is free don't change; a job the old desk
+ *  is still planning on it can't dispatch it any more. */
+export function transferShip(E, w, car, desk, nowMs) {
+  const id = String(car || "").toLowerCase().trim(), to = deskOf(w, desk);
+  if (!Object.hasOwn(w.ships, id)) fail("unknown ship " + car + "; the fleet is in company");
+  const from = shipDesk(w, id);
+  if (from === desk) fail(E.R.CAR[id].name + " is already on the " + to.name);
+  w.desks[from].ships = w.desks[from].ships.filter((x) => x !== id);
+  to.ships.push(id);
+  w.active_ms = nowMs;
+  return { ok: true, car: id, name: E.R.CAR[id].name, from: from + " (" + w.desks[from].name + ")", to: desk + " (" + to.name + ")" };
+}
+
+/** report: a dispatcher's few lines to the executor, kept with the sky time and tick it was written at. */
+export function addReport(w, seat, text, jobId, nowMs) {
+  const t = String(text ?? "").trim();
+  if (!t) fail("a report needs text");
+  if (jobId != null && !Object.hasOwn(w.jobs, jobId)) fail("unknown job_id " + jobId);
+  const r = { tick: w.clock.tick, sky: isoJD(w.clock.jd), at_ms: nowMs, seat, ...(jobId != null ? { job_id: jobId } : {}), text: t.slice(0, REPORT_MAX) };
+  w.reports = [...(w.reports || []), r].slice(-REPORTS_KEPT);
+  w.active_ms = nowMs;
+  return { ok: true, reported: r };
+}
+
+/** reports: the dispatchers' reports, newest last, and every job's outcome so far. */
+export function reportsView(E, w) {
+  const jobs = Object.values(w.jobs || {});
+  const scored = jobs.filter((j) => j.phase === "arrived");
+  return {
+    simulated: true, sky_now: isoJD(w.clock.jd), tick: w.clock.tick, reports: w.reports || [],
+    jobs: jobs.map((j) => ({ ...j, ...(j.car ? { ship: E.R.CAR[j.car].name } : {}) })),
+    counts: { taken: jobs.length, arrived: scored.length, live: jobs.filter((j) => LIVE.has(j.phase)).length, abandoned: jobs.filter((j) => j.phase === "abandoned").length,
+      declined: Object.values(w.market.closed).filter((x) => x === "declined").length },
+    note: "Totals are each arrived job's own score (out of 100000), copied from its ride.",
+  };
+}
+
+/** queue: a dispatcher's desk: its ships and the jobs the executor gave it, open ones first. */
+export function queueView(E, w, desk, nowMs) {
+  const v = worldView(E, w, nowMs), d = v.desks.find((x) => x.desk === desk), mine = Object.values(w.jobs || {}).filter((j) => j.desk === desk);
+  const order = (j) => (LIVE.has(j.phase) ? 0 : 1);
+  return {
+    simulated: true, desk, name: d.name, sky_now: v.clock.sky_now, tick: v.clock.tick, ships: d.ships,
+    jobs: mine.sort((a, b) => order(a) - order(b)).map((j) => ({ ...j, ...(j.car ? { ship: E.R.CAR[j.car].name } : {}) })),
+    note: "Plan and fly each open job with get_hail, plan_pickup, plan_ride (or plan_leg), check_pad, space_weather, dispatch and decide, passing your code and its job_id. " +
+      "Only your desk's ships can fly your jobs.",
+  };
+}
+
+/** Why dispatcher seat may not make this call on a job, or null. The job must be on the seat's desk, and a ship it names (or
+ *  the ship of the legs it dispatches) must be on the desk now. */
+export function jobRefusal(E, w, seat, run, tool, input) {
+  const job = w.jobs[run.world.job_id], desk = w.desks[seat];
+  if (job.desk !== seat) return "job " + job.job_id + " is " + (job.desk ? "on the " + w.desks[job.desk].name + "'s queue" : "not on a desk") + ", not yours (" + desk.name + ")";
+  let car = null;
+  if ((tool === "plan_pickup" || tool === "plan_leg") && input.car) car = String(input.car).toLowerCase().trim();
+  if (tool === "dispatch") {
+    const first = input.pickup_leg != null ? input.pickup_leg : Array.isArray(input.legs) ? input.legs[0] : null;
+    const L = first != null && Object.hasOwn(run.legs, first) ? run.legs[first] : null;
+    car = L ? L.car : null;
+  }
+  const byName = car && E.R.FLEET.find((c) => c.name.toLowerCase() === car);
+  if (byName) car = byName.id;
+  if (car && Object.hasOwn(w.ships, car) && !desk.ships.includes(car))
+    return E.R.CAR[car].name + " is on the " + w.desks[shipDesk(w, car)].name + ", not yours; your desk's ships are " + desk.ships.map((c) => E.R.CAR[c].name).join(", ");
+  return null;
 }

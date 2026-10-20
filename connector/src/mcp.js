@@ -10,7 +10,7 @@ import { hex } from "./bench-host.js";
 import { engine } from "./engine.js";
 import { checkInInfo, hailPage, poolView, seasonClock, sky } from "./game.js";
 import { hub, runStub } from "./store.js";
-import { HOSTED_INSTRUCTIONS, HOSTED_TOOLS, SANDBOX_INSTRUCTIONS, SANDBOX_TOOLS, registerTools } from "./tools.js";
+import { HOSTED_INSTRUCTIONS, HOSTED_TOOLS, SANDBOX_INSTRUCTIONS, SANDBOX_RUN_TOOLS, SANDBOX_TOOLS, registerTools } from "./tools.js";
 import { parseCode, sandboxOn, worldStub } from "./world.js";
 
 // With STARFARE_OAUTH on, the grant's anonymous player id. Off: null.
@@ -97,7 +97,9 @@ export class StarfareMcp extends McpAgent {
   }
 
   async #call(tool, input) {
-    if (Object.hasOwn(SANDBOX_TOOLS, tool)) return sandboxCall(this, tool, input);
+    // A sandbox tool, or a run tool called with a seat code (a dispatcher flying a job), goes to the code's world.
+    if (Object.hasOwn(SANDBOX_TOOLS, tool) || (Object.hasOwn(SANDBOX_RUN_TOOLS, tool) && input && input.code != null)) return sandboxCall(this, tool, input);
+    if (Object.hasOwn(SANDBOX_RUN_TOOLS, tool) && !(input && input.run_id)) return { error: "Pass run_id from take_hail (or, in the sandbox, your seat code and the job_id)." };
     const bench = this.state && this.state.bench_id;
     if (bench && tool !== "start_bench" && tool !== "check_in") return this.#bench(bench, tool, input);
     if (Object.hasOwn(SESSION_TOOLS, tool)) return SESSION_TOOLS[tool](this, input);
@@ -107,7 +109,7 @@ export class StarfareMcp extends McpAgent {
   }
 
   async init() {
-    registerTools(this.server, { call: (tool, input) => this.#call(tool, input) }, sandboxOn(this.env) ? { ...HOSTED_TOOLS, ...SANDBOX_TOOLS } : HOSTED_TOOLS);
+    registerTools(this.server, { call: (tool, input) => this.#call(tool, input) }, sandboxOn(this.env) ? { ...HOSTED_TOOLS, ...SANDBOX_RUN_TOOLS, ...SANDBOX_TOOLS } : HOSTED_TOOLS);
   }
 }
 
