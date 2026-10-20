@@ -183,20 +183,29 @@ test("the quoted arrival is a promise scored against the actual arrival; a wrong
   const slipH = hit.out.promise_slip_hours;
   assert.ok(slipH > 0);
   const prom = hit.out.parts.find((x) => x.key === "promise");
-  const curve = (max, excess) => max * R.SCORE_HEADROOM / (1 + R.SCORE_STEEPNESS * excess);
-  assert.ok(Math.abs(prom.got - curve(prom.max, prom.measure / 60)) <= 1e-6, `${prom.got} for ${slipH} h late`);
+  // score version 5: a bare arrival is a window of no width, so the interval score is 10 x the hours late, and the part falls
+  // in a straight line to 0 at 60 h on a quick hail
+  const line = (max, hours) => max * Math.max(0, 1 - hours / 60);
+  assert.ok(Math.abs(prom.measure - 10 * Math.abs(slipH)) <= 10 * 0.05 + 1e-9, String(prom.measure));
+  assert.ok(Math.abs(prom.got - line(prom.max, prom.measure)) <= 1e-6, `${prom.got} for ${slipH} h late`);
   assert.ok(prom.got < prom.max);
   assert.match(prom.note, /after the quoted/);
-  // the same hail and car, quoting what actually happened, sits on the reference and earns the full weight (score version 4)
+  // the same hail and car, quoting what actually happened, earns the full weight
   const kept = await play("iss-crew", undefined, "energy", hit.nowMs, (r) => ({ quoted_fare_usd: r.fare, quoted_arrival: hit.out.arrive }), "run_kept");
   const keptPromise = part(kept.out, "promise");
-  assert.ok(Math.abs(keptPromise - curve(R.SCORE_MAX.promise, 0)) <= 1e-6, String(keptPromise));
   assert.ok(Math.abs(keptPromise - R.SCORE_MAX.promise) <= 1e-6, String(keptPromise));
   assert.equal(kept.out.arrive, hit.out.arrive);
-  // 4 h early costs a quarter as much as 4 h late: the early scale is 240 min, the late scale is 60 min
+  // 4 h early costs as much as 4 h late: 40 of the 60 h
   const early = await play("iss-crew", undefined, "energy", hit.nowMs, (r) => ({ quoted_fare_usd: r.fare, quoted_arrival: isoJD(jdOfIso(hit.out.arrive) + 4 / 24) }), "run_early");
-  assert.ok(Math.abs(part(early.out, "promise") - curve(R.SCORE_MAX.promise, 240 / 240)) <= 1e-4, String(part(early.out, "promise")));
-  assert.ok(part(early.out, "promise") > curve(R.SCORE_MAX.promise, 240 / 60));
+  assert.ok(Math.abs(part(early.out, "promise") - line(R.SCORE_MAX.promise, 40)) <= 1e-4, String(part(early.out, "promise")));
+  assert.equal(early.out.promise_slip_hours, -4);
+  // a window from the plan's arrival to the actual one holds the arrival: it costs only its width, and the score names both ends
+  const planned = jdOfIso(hit.out.planned_arrive), actual = jdOfIso(hit.out.arrive);
+  const win = await play("iss-crew", undefined, "energy", hit.nowMs, (r) => ({ quoted_fare_usd: r.fare, quoted_earliest: isoJD(planned), quoted_latest: hit.out.arrive }), "run_window");
+  assert.ok(Math.abs(part(win.out, "promise") - line(R.SCORE_MAX.promise, (actual - planned) * 24)) <= 1e-3, String(part(win.out, "promise")));
+  assert.ok(part(win.out, "promise") > prom.got);
+  assert.deepEqual([win.out.promised_earliest, win.out.promised_arrival, win.out.promise_slip_hours], [isoJD(planned), hit.out.arrive, 0]);
+  assert.match(win.out.parts.find((x) => x.key === "promise").note, /inside the quoted window/);
   // a $1 fare and an arrival years off lose almost all of those parts. The other parts stay put.
   const wrong = await play("iss-crew", undefined, "energy", hit.nowMs, { quoted_fare_usd: 1, quoted_arrival: "2020-01-01 00:00" }, "run_wrong");
   assert.ok(part(wrong.out, "fare") < part(kept.out, "fare") * 0.2);
@@ -663,7 +672,12 @@ test("shared flight: dispatch refuses the two-leg form, a booking left off the p
   assert.deepEqual(await probs({ legs: ids, stops: [{}, {}], quotes: q }), ["stops has 2 entries; it needs one for each of the 3 legs"]);
   assert.deepEqual(await probs({ legs: ids, stops: [{ board: ["ceres-shift"] }, {}, { alight: ["ceres-shift"] }], quotes: q }), [PARTY + " is not on the plan: every booking boards and alights"]);
   assert.deepEqual(await probs({ legs: ids, stops: [{ board: SHARED }, { alight: [PARTY] }, { alight: ["ceres-shift", "iss-crew"] }], quotes: { "ceres-shift": q["ceres-shift"] } }),
-    ["iss-crew is not a booking on this flight; its bookings are ceres-shift, " + PARTY, "quotes needs a fare_usd and an arrival for " + PARTY]);
+    ["iss-crew is not a booking on this flight; its bookings are ceres-shift, " + PARTY, "quotes needs a fare_usd and an arrival (or a window, earliest and latest) for " + PARTY]);
+  const backwards = { ...q, [PARTY]: { fare_usd: 1, earliest: "2030-07-23 12:30", latest: "2030-07-23 06:50" } };
+  assert.deepEqual(await probs({ legs: ids, stops: [{ board: SHARED }, { alight: [PARTY] }, { alight: ["ceres-shift"] }], quotes: backwards }),
+    [PARTY + ": the window runs backwards: earliest (or arrival) is after latest"]);
+  assert.deepEqual(await probs({ legs: ids, stops: [{ board: SHARED }, { alight: [PARTY] }, { alight: ["ceres-shift"] }], quotes: { ...q, [PARTY]: { fare_usd: 1, latest: "soon" } } }),
+    [PARTY + ": latest must be a sky time YYYY-MM-DD HH:MM"]);
   assert.equal(phaseOf(s.run), "planning");
 });
 

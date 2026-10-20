@@ -61,18 +61,36 @@ ok("busy cars: check() refuses a pickup that leaves before the car is free", () 
   assert.strictEqual(R.check("iss-crew", "sf-01", [P, Rr]).length, 0); // no t0: old callers unchanged
   assert.strictEqual(R.pickupStart("iss-crew", "sf-01", t0, s), st.busy_until_jd);
 });
-ok("score: a kept promise earns its full weight, minutes late cost more than the same minutes early, and the part does not hit zero at 6 h", () => {
+ok("score v5: the promise is an interval score, so a window costs its width, time outside costs 10 times, and calibration pays", () => {
   const legs = [{ arr_jd: t0 + 0.03, kwh: 400, gate: "PASS" }, { arr_jd: t0 + 5, kwh: 37000, fare: 8000, gate: "PASS" }];
-  const ctx = (slipH, q) => ({ t0, arrive_by_jd: t0 + 9, par_kwh: 37400, best_wait_days: 0.03, plan_calls: 2, quote: { fare_usd: 8000, arrival: R.iso(t0 + 5 + (q || 0)) },
+  const at = (h) => R.iso(t0 + 5 + h / 24);
+  const ctx = (slipH, quote) => ({ t0, arrive_by_jd: t0 + 9, par_kwh: 37400, best_wait_days: 0.03, plan_calls: 2, quote: Object.assign({ fare_usd: 8000 }, quote || { arrival: at(0) }),
     flown: { pickup_jd: t0 + 0.03, arrive_jd: t0 + 5 + slipH / 24, used_kwh: 37400, extra_kwh: 0, incidents: [] } });
-  const part = (slipH) => R.score("iss-crew", legs, ctx(slipH)).parts.find((p) => p.key === "promise");
+  const part = (slipH, quote) => R.score("iss-crew", legs, ctx(slipH, quote)).parts.find((p) => p.key === "promise");
   const perfect = R.score("iss-crew", legs, ctx(0));
+  assert.strictEqual(perfect.score_version, 5);
   assert.strictEqual(perfect.total, perfect.parts.reduce((a, p) => a + p.got, 0));
   assert.strictEqual(perfect.parts.reduce((a, p) => a + p.max, 0), 100000);
-  assert.strictEqual(part(0).got, part(0).max); // score version 4: the reference earns the full weight
-  assert.ok(part(6).got > 0);
-  assert.ok(part(6).got < part(0).got * 0.5);
-  assert.ok(part(3).got < part(0).got && part(3).got > part(6).got);
-  assert.ok(part(-6).got > part(6).got);
+  const max = part(0).max, near = (a, b) => Math.abs(a - b) < 1e-6 * max;
+  assert.strictEqual(part(0).got, max);
+  assert(near(part(3).got, max / 2) && near(part(-3).got, max / 2)); // quick hail: a bare arrival 3 h off scores half
+  assert.strictEqual(part(6).got, 0);
+  assert(near(part(2, { earliest: at(0), latest: at(6) }).got, max * (1 - 6 / 60))); // inside a 6 h window: its width only
+  assert(near(part(7, { earliest: at(0), latest: at(6) }).got, max * (1 - 16 / 60)));
+  assert(near(part(0, { earliest: at(1), latest: at(1) }).got, part(0, { arrival: at(1) }).got));
+  assert(near(part(0, { arrival: at(3), latest: at(2) }).got, part(0, { earliest: at(3), latest: at(2) }).got)); // earliest after latest
+  assert.strictEqual(part(0, { earliest: at(3), latest: at(2) }).got, 0);
+  assert.match(part(0, { earliest: at(3), latest: at(2) }).note, /earliest is after its latest/);
+  assert.strictEqual(part(0, {}).got, 0);
+  // Proper: arrivals on time 85% of the time and 4 h late 15% of the time. The 10th to 90th percentile window
+  // (on time to 4 h late) beats the bare planned arrival and a padded quote.
+  const mean = (q) => 0.85 * part(0, q).got + 0.15 * part(4, q).got;
+  assert(mean({ earliest: at(0), latest: at(4) }) > mean({ arrival: at(0) }));
+  assert(mean({ earliest: at(0), latest: at(4) }) > mean({ arrival: at(4) }));
+  assert(mean({ earliest: at(0), latest: at(4) }) > mean({ earliest: at(0), latest: at(6) }));
+  // A long haul's part reaches 0 at 24 h off, not 6.
+  const longLegs = [{ arr_jd: t0 + 1, kwh: 400, gate: "PASS" }, { arr_jd: t0 + 5, kwh: 37000, fare: 8000, gate: "PASS" }];
+  const lp = R.score("titan-home", longLegs, ctx(12)).parts.find((p) => p.key === "promise");
+  assert(near(lp.got, max / 2), lp.got);
 });
 console.log(n, "passed");

@@ -1,6 +1,8 @@
 // Baselines. naive and random play through the tools (call(tool, input)), so they pay the same costs as any agent: every
 // plan counts, and a leg the checker rejects is never dispatched. reference is offline and engine-only: the best total any
-// plan can reach with hindsight, the ceiling make-suite measures headroom against.
+// plan can reach with hindsight checkpoint choices, the ceiling make-suite measures headroom against. Its promise is the
+// one exception: it quotes a window from public stand-in worlds (climateWindows), never from the world it flies, because
+// no dispatcher can know when a hidden storm ends or an unscheduled ship docks (score v5).
 import { computeLeg, isoJD, legKey } from "../src/game.js";
 
 const out = (x) => x && x.error && /used its/.test(x.error); // the task's budget or the run's plan cap is spent
@@ -150,9 +152,29 @@ export async function random(call, E, rng) {
   }
 }
 
+// Stand-in worlds for the reference's quoted window: public seeds, so the window uses nothing a dispatcher can't compute
+// from the public engine. 20 worlds, so the 10th and 90th percentiles fall between the 2nd and 3rd and the 18th and 19th.
+export const CLIMATE_WORLDS = 20;
+const climateSeed = (i) => "climate|" + i;
+const quantile = (xs, p) => { const a = [...xs].sort((x, y) => x - y), i = p * (a.length - 1), lo = Math.floor(i); return a[lo] + (a[Math.min(lo + 1, a.length - 1)] - a[lo]) * (i - lo); };
+/** Each booking's quote window for a plan, from flying it on the default answers in CLIMATE_WORLDS stand-in worlds: the
+ *  planned arrival plus the 10th and the 90th percentile of the slip, widened to whole minutes. { [hail_id]: { earliest, latest } } */
+export function climateWindows(E, run, car, plan, ids, planned) {
+  const R = E.R, slips = Object.fromEntries(ids.map((id) => [id, []]));
+  for (let i = 0; i < CLIMATE_WORLDS; i++) {
+    const F = R.start(run.id, car, plan, run.t0, climateSeed(i), { ask_after_hours: null, end_jd: run.end_jd }).done;
+    for (const id of ids) slips[id].push((F.bookings && F.bookings[id] ? F.bookings[id].arrive_jd : F.arrive_jd) - planned[id]);
+  }
+  const minute = 1 / 1440;
+  return Object.fromEntries(ids.map((id) => {
+    const lo = Math.floor((planned[id] + quantile(slips[id], 0.1)) / minute + 1e-6) * minute, hi = Math.ceil((planned[id] + quantile(slips[id], 0.9)) / minute - 1e-6) * minute;
+    return [id, { earliest: isoJD(lo), latest: isoJD(hi) }];
+  }));
+}
+
 /** reference: offline, engine only. Every candidate car and objective (wait 0), timed as the tools time them; candidates the
  *  checker gate or R.check reject are skipped. Each is flown on the default answers and with par's hindsight checkpoint choices
- *  (R.oracle), quoted the true arrival and the honest fare, and scored with the run's own terms. Returns the best { total, ... }. */
+ *  (R.oracle), quoted the honest fare and the climateWindows window, and scored with the run's own terms. Returns the best { total, ... }. */
 export function reference(E, run) {
   const R = E.R, seed = run.seed, t0 = run.t0, end = run.end_jd, memo = new Map();
   const leg = (from, to, t, obj, ship, aboard) => {
@@ -168,11 +190,13 @@ export function reference(E, run) {
     const plan = stops ? { stops, legs: legs.map(slim) } : legs.map(slim);
     if (R.check(run.id, car, stops ? { stops, legs } : legs, t0, seed).length) return;
     const O = R.oracle(run.id, car, plan, t0, seed, end);
+    const ids = stops ? run.hails : [run.id], M = R.manifest(R.planOf(run.id, car, stops ? { stops, legs } : legs));
+    const win = climateWindows(E, run, car, plan, ids, Object.fromEntries(ids.map((id) => [id, legs[M.stop[id].alight[0] - 1].arr_jd])));
     const flown = [{ F: R.start(run.id, car, plan, t0, seed, { ask_after_hours: null, end_jd: end }).done, replans: 0, path: [] },
       { F: O.outcome, replans: O.decisions.filter((d) => d.action === "replan").length, path: O.path }];
     for (const { F, replans, path } of flown) {
       const fareOf = (id) => (stops ? R.seatFares({ stops, legs })[id] : legs[1].fare);
-      const quoteOf = (id) => ({ fare_usd: fareOf(id), arrival: isoJD(stops ? F.bookings[id].arrive_jd : F.arrive_jd) });
+      const quoteOf = (id) => ({ fare_usd: fareOf(id), ...win[id] });
       const sc = R.score(run.id, stops ? { stops, legs } : legs, {
         ...ctx, ship: car, window_kwh: legs.reduce((a, L) => a + (L && L.window_kwh != null ? L.window_kwh : L ? L.kwh : 0), 0),
         plan_calls: legs.length + replans, quote: quoteOf(run.id), flown: F,
