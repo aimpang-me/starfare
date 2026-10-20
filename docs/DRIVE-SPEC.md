@@ -94,7 +94,7 @@ I also ran a liner at 90 km/s. It used less propellant but more energy on every 
 2. **On long trips, consumables are the cargo.** A liner's 100 passengers weigh 10 t. Their consumables on the cheapest plan weigh 1,387 t, seven times the dry hull. Going faster costs more delta-v but carries less food, so energy falls until about Δv 45 for liners and Δv 15 for shuttles, then rises again. The engine's energy objective doesn't see this today, because passengers weigh nothing in the planner.
 3. **Trips fit a season.** A season is 7,000 sky days. On Δv ≤ 45, the liner's longest trip is 928 days. On the cheapest plan it is 5,548 days, so a liner could make one trip a season on its worst route.
 4. **Long-haul burns are short next to the trip.** On the liner's proposed plan, the longest total burn is 33 hours against a median transit of 467 days, so the impulsive approximation the engine uses holds well there.
-5. **Jupiter taxi hops strain the impulsive approximation.** Eight hops between Jupiter's parking orbit and its moons burn for 51 to 81 minutes in one go. The parking orbit (5,000 km up, `sol-engine.js:344`) takes 3.3 hours, so the burn sweeps up to 41% of an orbit. The engine's delta-v understates those hops by an amount it doesn't compute yet. Saturn's worst is 39 minutes from a 4.7-hour orbit, which is borderline. Three ways to fix it: triple taxi thrust for the Jovian hops (peak about 1.5 g), raise the Jupiter parking orbit, or add a finite-burn loss to long single burns.
+5. **Jupiter taxi hops strain the impulsive approximation.** Eight hops between Jupiter's parking orbit and its moons burn for 51 to 81 minutes in one go. The parking orbit (5,000 km up, `sol-engine.js:344`) takes 3.3 hours, so the burn sweeps up to 41% of an orbit. The engine's delta-v understates those hops by an amount it doesn't compute yet. Saturn's worst is 39 minutes from a 4.7-hour orbit, which is borderline. Three ways to fix it: triple taxi thrust for the Jovian hops, raise the Jupiter parking orbit, or add a finite-burn loss to long single burns. Triple thrust (99 kN) cuts the worst burn to 27 minutes (14% of an orbit), peaking at 1.3 g. Throttled to stay at or under 1 g, it takes 28.6 minutes.
 6. **Fares jump by orders of magnitude.** The fare is $0.16 per kWh plus $0.35 a minute (`sol-engine.js:567`), written for kW-class probes. On the worst route, the energy part alone comes to:
 
    | Ship | Plan | Energy fare per trip | Per seat, full |
@@ -116,10 +116,26 @@ None of these are made. Together they move the engine sha, so the suite is re-cu
 
 ## Decisions for Alvin
 
-1. **Liner speed.** Δv ≤ 45 (recommended: lowest energy, longest trip 928 days), Δv ≤ 60 (longest trip 628 days, 28% more energy), or the cheapest plan (trips up to 5,548 days).
-2. **Seat ladder.** Still open. These tables use 6, 20 and 100 as placeholders. Mass scales roughly with seats on long hauls, where consumables dominate, so the conclusions hold for any ladder in that range. The tables don't.
-3. **Comfort acceleration.** Taxis peak at 0.51 g at the end of a burn, and the Jupiter fix could take them to about 1.5 g. Is there a comfort ceiling ("comfort max-g" is on the later-ideas list)? Recommended: 1 g for taxis, and nothing to decide for shuttles and liners, which stay under 0.2 g.
-4. **Fare.** Keep $/kWh and let fares be large (simple, and it makes energy a visible cost), or charge each occupied seat its share of the flight's energy at a lower in-game rate (recommended: it keeps pooling worth something to the player).
+Each one was put to Alvin on 2026-10-20 with the options below. The recommendation is marked.
+
+1. **Liner speed**, meaning how much delta-v a liner may spend on one outer trip. The cheapest-energy plan is ruled out: it is the slowest plan (up to 5,548 sky days) and still uses 37% more energy than Δv ≤ 45.
+   - **Δv ≤ 45 (recommended).** The longest trip is 928 sky days, about 15 minutes on the live map at 1 s per sky day, and the typical trip is 467. It has the lowest energy of any plan.
+   - Δv ≤ 60. The longest trip is 628 sky days and the typical trip is 371, with 28% more energy.
+   - Both. Liners sell an economy fare (45) and an express fare (60), and the dispatcher picks per booking. That is a real time-versus-cost choice, but it means more engine and suite work.
+2. **Comfort limit**, meaning the most acceleration passengers feel in a burn. As sized, taxis peak at 0.51 g, and shuttles and liners stay under 0.2 g ("comfort max-g" is on the later-ideas list).
+   - **1 g (recommended).** Jovian taxis get triple thrust, throttled at 1 g. Burns stay near 29 minutes, and passengers never feel more than Earth gravity.
+   - 0.5 g. Taxis stay as sized, so the Jupiter fix has to come from a higher parking orbit or a charge for long burns.
+   - No limit.
+3. **Fare.** Today's fare is $0.16 per kWh plus $0.35 a minute (`sol-engine.js:567`). The score uses energy, not dollars.
+   - **Per seat (recommended).** Each booking pays its seats' share of the flight's energy and time at today's rates. The median taxi seat is about $5,200 when the taxi is full and $29,000 flying alone. A full shuttle seat is about $73,000 and a full liner seat about $455,000 (median routes, plans as recommended). Pooling shows up in the price.
+   - Per flight. Today's formula, where a liner booking costs tens of millions and sharing lowers nobody's fare.
+   - Flat table. A fixed fare by ship and route, so fares stop coming from the physics.
+4. **Seat ladder.** Today every ship has 4 seats, a pooled flight takes at most 3 bookings (`MAX_BOOKINGS`, `sol-rides.js:627`), and parties are 1 to 3 people (`sol-rides.js:837`). So seats only matter when a pool doesn't fit.
+   - **6 / 20 / 100 (recommended).** Taxis fit some 3-booking pools but not others (3+3+1 is too many), so capacity is a real choice. Shuttles and liners run scheduled routes with one pickup and one drop-off, so par stays one stop order however many board. They are filled by group bookings, such as the crews and families the lore writes for parties of 8 or more.
+   - 4 / 20 / 100. Taxis stay as today, where 3 bookings fit only as 1+1+1 or 1+1+2.
+   - 6 only. One ship size everywhere. It is the smallest engine change, but long hauls become private taxi trips lasting years.
+
+   The tables above use 6, 20 and 100. Mass scales roughly with seats on long hauls, where consumables dominate, so the conclusions hold across this range, but the tables would need re-running.
 
 ## Reproduce
 
