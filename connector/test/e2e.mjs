@@ -434,7 +434,10 @@ async function phaseOff() {
     assert.equal(rec.live.simulated, true); assert.equal(rec.live.lands_at_ms, null);
     assert.deepEqual([rec.live.hold.n, rec.live.hold.at], [s.checkpoint, s.sky_at]);
     assert.deepEqual(rec.live.checkpoints.map((c) => c.decision), [null]);
-    assert.ok(rec.live.track.length >= 2 && rec.live.track.every((p, k) => k === 0 || (p[0] >= rec.live.track[k - 1][0] && p[1] >= rec.live.track[k - 1][1])), "the track runs forward in wall and sky time");
+    // A ride held at launch before its first leg flies has a one-point track: the ship waits where it is parked.
+    const tr = rec.live.track;
+    assert.ok(tr.length >= 2 || (tr.length === 1 && rec.live.hold.kind === "launch_hold"), JSON.stringify({ hold: rec.live.hold, track: tr }));
+    assert.ok(tr.every((p, k) => k === 0 || (p[0] >= tr[k - 1][0] && p[1] >= tr[k - 1][1])), "the track runs forward in wall and sky time: " + JSON.stringify(tr));
     assert.deepEqual(rec.trail.slice(-3).map((t) => t.tool), ["plan_pickup", "plan_ride", "dispatch"]);
     assert.equal(rec.trail.at(-1).note, NOTE);
     assert.doesNotMatch(text, /player_id|seed|hindsight/);

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { liveIdsToDrop } from "../src/live.js";
+import { extendTrack, liveIdsToDrop, pieces, startTrack } from "../src/live.js";
 
 const AFTER = 60 * 1000;
 const HELD = 6 * 3600 * 1000;
@@ -48,4 +48,13 @@ test("a second pass drops nothing once the older landed flight is gone", () => {
   const drop = new Set(liveIdsToDrop(rows, now, AFTER, HELD));
   const left = rows.filter((r) => !drop.has(r.run_id));
   assert.deepEqual(liveIdsToDrop(left, now, AFTER, HELD), []);
+});
+
+test("a ride held at launch before any leg flew has a one-point track, and the answer extends it forward", () => {
+  const ride = { segs: [{ role: "pickup", dep_jd: 100, arr_jd: 101 }] }, mpu = 1000;
+  const tr = startTrack(ride, 100.5, mpu, now);
+  assert.deepEqual(tr, [[now, 100.5]]);
+  ride.segs[0].flew = { dep_jd: 100.6, orbit_jd: 101.6, land_jd: 101.6 };
+  const next = extendTrack(tr, pieces(ride, 101.6), mpu, now + 5000);
+  assert.deepEqual(next, [[now, 100.5], [now + 5000, 100.5], [now + 6000, 101.6]]);
 });
