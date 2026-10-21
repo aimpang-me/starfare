@@ -263,3 +263,7 @@ Get-Content -Raw C:\Users\PC-AIMPANG\starfare-private\owner-key.txt | node node_
 ```
 
 Then open `https://starfare-private.<subdomain>.workers.dev/world` and sign in with the key in `owner-key.txt`. The held-out bench split also needs `STARFARE_BENCH_KEY` on this Worker (same command with `bench-key.txt`); the sandbox does not.
+
+## Automatic deploy on merge
+
+Every merge to `main` deploys the public Workers (`.github/workflows/deploy.yml`, Alvin's rule of 2026-10-21). It runs once `sol-regression` has passed on that push, skips a commit that is no longer main's newest, deploys `starfare-ref` and then `starfare` with `--var STARFARE_SANDBOX:on`, and checks that `/` and `/world` answer 200. A failed deploy leaves the previous version serving and turns the run red; a failed site check rolls `starfare` back to the version before and turns it red. It needs the repo secret `CLOUDFLARE_API_TOKEN` (Cloudflare template "Edit Cloudflare Workers"; `CLOUDFLARE_ACCOUNT_ID` optional). Worker secrets (`STARFARE_BENCH_KEY`, `STARFARE_SEASON_KEY`) are never set or read by it. Run it by hand from Actions > deploy > Run workflow; tick `bootstrap` only for a first deploy on a fresh account. Manual rollback from `connector/`: `node node_modules/wrangler/bin/wrangler.js rollback -y` (a rollback across a new Durable Object migration is refused).
