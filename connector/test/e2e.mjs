@@ -925,8 +925,10 @@ async function phaseOff() {
     assert.equal(view.clock.tick, TICKS);
     for (const seat of ["EX", "D1", "D2"]) {
       const seen = inbox[seat].filter((e) => e.kind === "tick").map((e) => e.tick), pending = (await ok(client, seat === "EX" ? "company" : "queue", { code: C[seat] })).inbox;
-      assert.deepEqual(seen, Array.from({ length: seen.length }, (_, i) => i + 1), seat + " saw the ticks in order");
-      assert.ok(seen.length === TICKS || (seen.length === TICKS - 1 && pending > 0), seat + " saw every tick or has the last one waiting: " + JSON.stringify(seen) + " inbox " + pending);
+      // A new tick replaces an unread one, so a seat whose wait comes back at once (its inbox held reports) and then runs
+      // the next tick itself skips a number. What it sees still runs forward, ending at the last tick or with it waiting.
+      assert.ok(seen.length >= 1 && seen.every((t, i) => t >= 1 && t <= TICKS && (i === 0 || t > seen[i - 1])), seat + " saw the ticks in order: " + JSON.stringify(seen));
+      assert.ok(seen.at(-1) === TICKS || pending > 0, seat + " saw the last tick or has it waiting: " + JSON.stringify(seen) + " inbox " + pending);
     }
     const ids = Object.keys(flown);
     assert.ok(ids.length >= 3, "the scripted company flew at least 3 jobs: " + JSON.stringify(flown));
