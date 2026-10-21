@@ -7,7 +7,6 @@ import { engine } from "../src/engine.js";
 import { episodeText } from "../src/episode.js";
 import { liveIdsToDrop } from "../src/live.js";
 import { distinctPlayers, ensurePool, poolSize, recordBest } from "../src/hub-pool.js";
-import { standingsHtml } from "../src/board.js";
 
 const { seasonSpan, seasonStandings } = game;
 
@@ -50,8 +49,6 @@ test("the season rank is the mean over every attempt: a dropped or open booking 
     { rank: 1, player_tag: "111111", attempts: 3, arrived: 3, mean: 80, best: 90 },
     { rank: 2, player_tag: "222222", attempts: 4, arrived: 2, mean: 50, best: 100 },
   ]);
-  assert.match(standingsHtml(st), /player 111111[\s\S]*<b>80<\/b>[\s\S]*player 222222/);
-  assert.match(standingsHtml(st), /1 more player has fewer than 3 attempts/);
 });
 
 test("the hub ranks the season's history rows only, and a summary from before forecasts_used counts plans", () => {

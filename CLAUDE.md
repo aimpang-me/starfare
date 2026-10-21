@@ -24,7 +24,7 @@ Read first: `docs/HANDOFF.md` (state, decisions, next steps), `docs/OPEN-QUESTIO
 ## Tests
 - Engine hazards: `node world/engine/test-hazards.js` (8 checks).
 - Engine checkpoints: `node world/engine/test-reroute.js` (8 checks, about a minute; one replays 100 fixture hails). `node world/engine/find-reroute-cases.js` finds the dust-storm rides it pins.
-- Connector: `cd connector && npm ci && node build.mjs && node --test test/*.test.mjs` (69) and `node test/e2e.mjs` (41, runs wrangler dev; take_hail refuses long hauls for about the last 7 real minutes of a 7000-sky-day season (about 1.9 h real time), so e2e can fail then; rerun).
+- Connector: `cd connector && npm ci && node build.mjs && node --test test/*.test.mjs` and `node test/e2e.mjs` (22 checks; it runs wrangler dev for the game and the reference company's Worker side by side).
 
 ## Rules from Alvin
 - Never deploy, delete a Worker, or change Cloudflare without Alvin's go in this session.

@@ -6,10 +6,10 @@ import { OWNER_COOKIE, ownerGate } from "../src/owner.js";
 // jsonc to JSON: drop // comments outside strings (none of these configs has "//" inside a string except in comments).
 const load = (f) => JSON.parse(readFileSync(new URL("../" + f, import.meta.url), "utf8").replace(/^\s*\/\/.*$/gm, "").replace(/,\s*\/\/.*$/gm, ","));
 
-test("the private configs are the public ones with only the private names, the sandbox and the gate changed", () => {
+test("the private configs are the public ones with only the private names and the gate changed", () => {
   const pub = load("wrangler.jsonc"), priv = load("wrangler.private.jsonc");
   assert.equal(priv.name, "starfare-private");
-  assert.deepEqual(priv.vars, { ...pub.vars, STARFARE_SANDBOX: "on", STARFARE_OWNER_GATE: "on" });
+  assert.deepEqual(priv.vars, { ...pub.vars, STARFARE_OWNER_GATE: "on" });
   const ref = (c) => c.durable_objects.bindings.find((b) => b.name === "STARFARE_REF");
   assert.equal(ref(priv).script_name, "starfare-private-ref");
   const strip = (c) => ({ ...c, name: 0, vars: 0, durable_objects: { bindings: c.durable_objects.bindings.map((b) => ({ ...b, script_name: b.script_name && 1 })) } });
