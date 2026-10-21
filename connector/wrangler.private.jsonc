@@ -1,0 +1,40 @@
+// starfare-private: Alvin's private copy of the sandbox (owner only). Same code as wrangler.jsonc, with its own name, so its
+// own Durable Objects and storage; the sandbox on; and the owner gate on (src/owner.js), so every page needs the owner cookie
+// that /owner sets from the STARFARE_OWNER_KEY secret. Deploy wrangler.private-ref.jsonc first. Kept in step with
+// wrangler.jsonc by test/private-config.test.mjs. Steps in DEPLOY.md ("Private deployment").
+{
+  "name": "starfare-private",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // The art pass (design/assets, copied in by build.mjs) at /assets/*. Every other path runs the Worker first, so it keeps
+  // its routes (/, /mcp, /board, /bench, /flight/*, /live.json, /engine.js) and the OAuth gate.
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/*", "!/assets/*"] },
+  "durable_objects": {
+    "bindings": [
+      { "name": "MCP_OBJECT", "class_name": "StarfareMcp" },
+      { "name": "STARFARE_RUN", "class_name": "StarfareRun" },
+      { "name": "STARFARE_HUB", "class_name": "StarfareHub" },
+      // OAuth storage (clients, grants, tokens) when STARFARE_OAUTH is "on" and no OAUTH_KV namespace is bound. Unused when off.
+      { "name": "STARFARE_AUTH", "class_name": "StarfareAuth" },
+      // One per hosted bench session (start_bench): the session and its tool-call trace for the watch page at /bench/<bench_id>.
+      { "name": "STARFARE_BENCH", "class_name": "StarfareBench" },
+      // One per sandbox world (/world/new, plan step 2): its clock, ships, desks and market. Only used with STARFARE_SANDBOX on.
+      { "name": "STARFARE_WORLD", "class_name": "StarfareWorld" },
+      // Each world's reference company (StarfareRef), in its own Worker so its planning CPU never stalls the world's calls.
+      // Deploy that Worker (wrangler.ref.jsonc) before this one. Only used with STARFARE_SANDBOX on.
+      { "name": "STARFARE_REF", "class_name": "StarfareRef", "script_name": "starfare-private-ref" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["StarfareMcp", "StarfareRun", "StarfareHub"] },
+    { "tag": "v2", "new_sqlite_classes": ["StarfareAuth"] },
+    { "tag": "v3", "new_sqlite_classes": ["StarfareBench"] },
+    { "tag": "v4", "new_sqlite_classes": ["StarfareWorld"] }
+  ],
+  // Long-haul plan_leg calls take ~0.2-0.7 s CPU and start_mission up to ~1.3 s, so this needs the Workers
+  // paid plan (default 30 s CPU per request). The free plan's 10 ms is enough for none of the tools reliably.
+  // STARFARE_OAUTH: "on" (the live setting: OAuth with a one-click consent page; grok.com connects this way) or "off" (no auth). See DEPLOY.md.
+  // STARFARE_SANDBOX: "on" opens the sandbox world routes (/world/new, /world/<world_id>.json); "off" answers 404 there.
+  "vars": { "RATE_PER_MIN": "120", "STARFARE_OAUTH": "on", "STARFARE_SANDBOX": "on", "STARFARE_OWNER_GATE": "on" }
+}

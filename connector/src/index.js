@@ -14,6 +14,7 @@ import conditions from "./conditions.cjs";
 import { seasonKey, seasonRelease, seasonSeed } from "./season-seed.js";
 import { mcpHandler } from "./mcp.js";
 import { oauthFetch, oauthOn } from "./oauth.js";
+import { ownerGate, ownerGateOn } from "./owner.js";
 import agentHtml from "./agent.html";
 import worldHtml from "./world.html";
 import flightHtml from "./flight.html";
@@ -199,7 +200,14 @@ function harden(res) {
 
 export default {
   async fetch(req, env, ctx) {
-    return harden(await route(req, env, ctx));
+    if (!ownerGateOn(env)) return harden(await route(req, env, ctx));
+    // A private deployment (wrangler.private.jsonc): only the owner's browser sees the pages, and nothing is indexed.
+    const url = new URL(req.url);
+    const res = harden((await ownerGate(req, url, env, (r) => allowed(hub(env), "owner:" + clientKey(r), 10))) || (await route(req, env, ctx)));
+    if (res.status === 101 || res.webSocket) return res;
+    const headers = new Headers(res.headers);
+    headers.set("x-robots-tag", "noindex, nofollow");
+    return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
   },
 };
 

@@ -241,3 +241,25 @@ The in-page dispatcher in `sol/world/template.html` still plays the old delivery
 ## What was verified locally, and how
 
 All against `wrangler dev` with real workerd and the MCP SDK v1 client, no mocks, plus plain-Node tests (exact commands and output in TEST.md). `node test/e2e.mjs` runs both modes: OAuth off (20 checks: the nine ride tools, hails and fleet, iss-crew with the par car matching `SOLE.R.fly` + `SOLE.R.score` in Node including the incidents, a ride stopped at a checkpoint and answered with `decide` landing where `R.fly` does, a farther car scoring lower, a wrong quote losing the fare and promise points, the fleet's `busy_until`, a busy car's pickup, `check_pad` and `space_weather` (the engine's forecasts, booked berths and odds only, free, in the log), bad leg ids refused, bad run and hail ids, the long-haul ceres-shift end to end, the cache, one run per session, SSE, the board, no OAuth paths, the rate limit) and OAuth on (11 checks: the SDK's own OAuth client doing discovery, registration, PKCE, one-click Allow and token exchange, then a scored hail with a player id; Deny; a wrong PKCE verifier; refresh; SSE; the rate limit). Not covered anywhere: a Cloudflare deployment, the workers.dev hostname, real CPU limits on Cloudflare (the numbers above are Node timings), grok.com, the `StarfareAuth` storage on Cloudflare (only local workerd), and any MCP client other than the SDK.
+
+## Private deployment (owner only)
+
+`wrangler.private.jsonc` and `wrangler.private-ref.jsonc` deploy a second copy of the same code as the Workers `starfare-private` and `starfare-private-ref`: their own Durable Objects and storage, the sandbox on, and nothing shared with the public `starfare` Worker, which these steps never touch. `test/private-config.test.mjs` keeps the private configs in step with the public ones.
+
+The copy is kept private by the owner gate (`src/owner.js`, `STARFARE_OWNER_GATE` "on"): every page and JSON view needs a cookie that `/owner` sets once the owner types the `STARFARE_OWNER_KEY` secret (32+ characters; the cookie holds a hash of it, never the key). Only the paths an agent calls without a browser stay open: `/mcp` (behind OAuth, and a grant needs the consent page, which is gated, so only the owner can connect a Grok bot), `/token`, `/register` and `/.well-known/*`. Sign-in attempts are rate limited, `/robots.txt` disallows everything and every response says `noindex`. Without the secret every path answers 503. Cloudflare Access was the other choice, but it would also stop grok.com reaching `/mcp` and `/token`.
+
+From `connector/` in PowerShell. The two Workers bind each other's Durable Objects, so on the first deploy neither can go up while the other is missing (Cloudflare error 10061). The first three lines put the reference Worker up once without its two bindings back to `starfare-private`; then both deploy with their real configs. Later deploys need only the two real `deploy` lines (ref first).
+
+```powershell
+npm run build
+(Get-Content wrangler.private-ref.jsonc) | Where-Object { $_ -notmatch '"script_name": "starfare-private"' } | Set-Content wrangler.private-ref.boot.jsonc
+node node_modules/wrangler/bin/wrangler.js deploy -c wrangler.private-ref.boot.jsonc
+Remove-Item wrangler.private-ref.boot.jsonc
+node node_modules/wrangler/bin/wrangler.js deploy -c wrangler.private.jsonc
+node node_modules/wrangler/bin/wrangler.js deploy -c wrangler.private-ref.jsonc
+New-Item -ItemType Directory -Force C:\Users\PC-AIMPANG\starfare-private | Out-Null
+$b = New-Object byte[] 24; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); $k = -join ($b | % { $_.ToString('x2') }); Set-Content -NoNewline C:\Users\PC-AIMPANG\starfare-private\owner-key.txt $k
+Get-Content -Raw C:\Users\PC-AIMPANG\starfare-private\owner-key.txt | node node_modules/wrangler/bin/wrangler.js secret put STARFARE_OWNER_KEY -c wrangler.private.jsonc
+```
+
+Then open `https://starfare-private.<subdomain>.workers.dev/world` and sign in with the key in `owner-key.txt`. The held-out bench split also needs `STARFARE_BENCH_KEY` on this Worker (same command with `bench-key.txt`); the sandbox does not.
