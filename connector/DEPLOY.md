@@ -1,5 +1,7 @@
 # Deploying the Starfare connector ("bring your own Grok bot")
 
+> **Since 2026-10-21 the game is the three-seat company only** (Alvin: "THERE SHOULD ONLY BE ONE WAY TO PLAY THE GAME!"). `/` and `/world` start a company, `/mcp` lists only the seat tools and the run tools (each takes a seat code and a job_id), and the older single-agent game is gone: `take_hail`, `list_hails`, `start_bench`, `check_in`, `get_my_rides`, `/board`, `/bench`, `/agent`, `/comms`, `/rides`, `/flight`, `/live.json`, `/sky.json`, `/seasons`, `/hails.json` and `/method`. Sections below that describe those are history. The Durable Object classes StarfareRun and StarfareBench stay bound for their storage (removing a class needs a wrangler migration).
+
 This puts the `starfare` Worker on `https://starfare.<your-subdomain>.workers.dev` so a player can add it to Grok as a custom connector. Their Grok bot then works as Starfare's robotaxi dispatcher through nine MCP tools: simulated riders hail a ride, the bot picks a car from the simulated fleet, checks the forecasts for the simulated hazards, plans the pickup and the ride, quotes the rider a fare and promises an arrival, dispatches, and decides at the checkpoints where a hazard stops the ride. Starfare scores the dispatch with the engine's own ride-hail rules (`SOLE.R`). It is not the xAI API: nobody needs an xAI key, and Starfare never calls Grok. Grok calls Starfare.
 
 Legend: **[verified]** means I ran it in the build sandbox against `wrangler dev` (local workerd) or plain Node. **[not verified]** means it needs a Cloudflare account or grok.com, neither of which the sandbox can reach. Nothing here has been deployed.
@@ -214,7 +216,7 @@ What it does not protect: anyone can click Allow, so anyone can get a player id.
 
 ## The sandbox world (the game, on by default)
 
-The single-player sandbox is the game. `wrangler.jsonc` ships `STARFARE_SANDBOX` as `"on"` (since 2026-10-21), so a plain deploy keeps it on; passing `--var STARFARE_SANDBOX:on` as well does no harm. With it on, `/` is the page that starts a company, MCP clients see only the seat tools and the run tools (each takes a seat code and a job_id), and the older single-agent game's pages (`/board`, `/hails.json`, `/live.json`, `/sky.json`, `/seasons/`, `/rides/`, `/flight/`, `/agent/`, `/comms/`, `/bench`) answer 404. `"off"` serves that older game for its tests only; never deploy it. Step 2 adds the `StarfareWorld` Durable Object, one per world, so the first deploy that includes it runs migration `v4` (a new class only; nothing existing changes). With the sandbox off, `/world/*` answers 404 and no world is ever created.
+The single-player sandbox is the game, with no switch: `STARFARE_SANDBOX` is gone (passing it as a `--var` does nothing).
 
 `POST /world/new` makes a world and returns its `world_id`, and `GET /world/<world_id>.json` shows it: the sky clock, the seats, the desks with their ships, and the market's size. A world's hazard seed is keyed with `STARFARE_SEASON_KEY` when that secret is set, otherwise drawn at random, and is never shown. A world nobody joins, waits in or looks at for 30 days is deleted. `WORLD_TICK_CAP_S` (default 60) sets how long a tick waits for a stalled seat.
 

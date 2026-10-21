@@ -5,7 +5,7 @@
 // The world's reference company (world-ref.js) plays in StarfareRef (ref.js), a Durable Object in its own Worker
 // (starfare-ref), so its planning (seconds of CPU a job) never runs in the isolate that answers the player's agents: the
 // world tells it each new tick, and it plays up to that tick a job per alarm and sends its scores back to refReport.
-// Behind STARFARE_SANDBOX ("on" opens /world/new and /world/<world_id>.json; anything else answers 404). Nothing links it yet.
+// The game: "/" and /world start a world (src/index.js), and every MCP tool reaches one through a seat code (src/mcp.js).
 import { DurableObject } from "cloudflare:workers";
 import { newRunId } from "./bench-host.js";
 import { engine } from "./engine.js";
@@ -19,7 +19,6 @@ import {
 } from "./world-state.js";
 
 export { WORLD_ID, parseCode } from "./world-state.js";
-export const sandboxOn = (env) => env.STARFARE_SANDBOX === "on";
 export const worldStub = (env, id) => env.STARFARE_WORLD.get(env.STARFARE_WORLD.idFromName(id));
 /** The real-time cap on a tick: WORLD_TICK_CAP_S when set (tests shorten it), else TICK_CAP_MS. */
 /** Fresh codes for every seat of w: their hashes go in w, the codes are returned. */

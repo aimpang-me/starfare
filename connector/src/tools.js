@@ -170,33 +170,8 @@ const answer = (r) => (r && r.error
   ? { content: [{ type: "text", text: tidyText(String(r.error)) }], isError: true }
   : { content: [{ type: "text", text: JSON.stringify(r) }] });
 
-/** The hosted connector also runs the bench: start_bench, and the paragraph that tells a bot when to call it. */
-export const HOSTED_TOOLS = {
-  ...TOOLS,
-  check_in: {
-    description: "Check in with Starfare HQ on the player's Comms panel. Call it when the player gives you an HQ code (like K7-4QM). Say who you are as you know it: " +
-      "your name, model, thinking or reasoning setting, and the skills you have equipped. Leave out anything you don't know; never guess. The panel shows these as " +
-      "self-reported and unverified, then shows every booking you take from now on with your notes. A code works once and lasts 10 minutes.",
-    inputSchema: {
-      code: z.string().min(4).max(12).describe("the HQ code the player gave you, e.g. K7-4QM"),
-      agent_name: z.string().max(60).optional().describe("your name as the player knows you"),
-      model: z.string().max(60).optional().describe("the model you run on, as you know it"),
-      thinking: z.string().max(40).optional().describe("your thinking or reasoning setting, e.g. off, low, high"),
-      skills: z.array(z.string().max(40)).max(12).optional().describe("skills or tools you have equipped"),
-    },
-  },
-  start_bench: {
-    description: "Start a Starfare bench session (simulated): a few tasks from the bench suite, played one after another with these same tools. " +
-      "Returns a watch link that shows the player every tool call live. Call it when the player asks to play the bench.",
-    inputSchema: {
-      split: z.enum(["dev", "test"]).describe("dev (default): practice tasks from the public split, each score shown when its ride arrives. " +
-        "test: the held-out split; every score stays sealed until all its tasks are played, and a player may start 3 test sessions a day. Use test only when the player asks for it.").optional(),
-    },
-  },
-};
-
-/** The sandbox's tools (simulated; plan step 4 on), listed only while the server's STARFARE_SANDBOX is "on". Every one takes
- *  the seat code the player gives the agent, since each call may arrive in a new MCP session. */
+/** The seat tools (simulated). Every one takes the seat code the player gives the agent, since each call may arrive in a new
+ *  MCP session. */
 const seatCodeArg = z.string().min(20).max(48).describe("the seat code the player gave you, e.g. D1-0123456789abcdef0123-K7QMXP4R2ZHT; pass it to every sandbox tool");
 export const SANDBOX_TOOLS = {
   join: {
@@ -276,22 +251,8 @@ Object.assign(SANDBOX_TOOLS, {
     inputSchema: { code: seatCodeArg, job_id: jobIdArg, text: z.string().min(1).max(600) },
   },
 });
-/** The run tools as the sandbox lists them: a dispatcher passes code and job_id in place of run_id. */
-export const SANDBOX_RUN_TOOLS = Object.fromEntries(["get_hail", "plan_pickup", "plan_ride", "plan_leg", "check_pad", "space_weather", "dispatch", "decide"].map((name) => {
-  const def = TOOLS[name];
-  return [name, { ...def, description: def.description + " Sandbox: pass code and job_id in place of run_id.",
-    inputSchema: { ...def.inputSchema, run_id: def.inputSchema.run_id.optional(), code: seatCodeArg.optional(), job_id: jobIdArg.optional() } }];
-}));
-export const SANDBOX_INSTRUCTIONS = "\nSandbox (simulated): when the player gives you a seat code (it starts EX-, D1- or D2-), call join with it. " +
-  "That code names your seat in the player's private world, and every sandbox tool takes it: pass it on every call. Your seat's tools are listed in join's result; " +
-  "a call outside them is refused with the reason. The executor (EX) reads the market and company, gives hails to desks with assign, declines the rest, moves ships with transfer_ship " +
-  "and reads reports; it flies nothing. A dispatcher (D1, D2) reads its queue and flies each job with the planning tools, passing code and job_id in place of run_id, " +
-  "with its own desk's ships only, then sends the executor a report; a job it can't fly it gives back with hand_back, early, with a report. A dispatched ship is busy until it lands and then parked where it landed. The world's sky clock stands still between ticks. " +
-  "When your seat has nothing to do, call wait with your code: it returns what happened for you (new jobs, landings, reports, messages, ticks), and the clock only ticks once every joined seat is waiting. " +
-  "Seats talk with message; every result's inbox field counts what your next wait will return.";
-
-/** The game (STARFARE_SANDBOX on): the seat tools and the run tools, which take the seat code and the job_id and no run_id.
- *  This is the only way to play: no take_hail, bench or Comms check-in. */
+/** The game: the seat tools and the run tools, which take the seat code and the job_id and no run_id. This is the only way to
+ *  play. TOOLS and INSTRUCTIONS above stay for the offline bench tools (bench/serve.mjs, sim.mjs), which play one ride at a time. */
 const GAME_RUN_TEXT = {
   dispatch: "Dispatch one of your desk's ships on the job: the pickup leg, the ride leg, the fare you quote (copy the ride leg's fare_usd) and the arrival you promise the rider, " +
     "a time (quoted_arrival) or a window (quoted_earliest and quoted_latest). The world's hazards are then flown. If a hazard stops the ride, it waits at a checkpoint with the situation; " +
@@ -300,7 +261,7 @@ const GAME_RUN_TEXT = {
     "in the n-body checker; counts as a plan). At a pad_closed (no berth, dust or haze): action hold, with hours to ask again after that long or none to hold until it opens, or divert " +
     "with place (one of the situation's alternates) and wait_hours on the ground there. Returns the next checkpoint or the arrived result. Sending the same answer again returns where the ride stands.",
 };
-export const GAME_RUN_TOOLS = Object.fromEntries(Object.keys(SANDBOX_RUN_TOOLS).map((name) => {
+export const GAME_RUN_TOOLS = Object.fromEntries(["get_hail", "plan_pickup", "plan_ride", "plan_leg", "check_pad", "space_weather", "dispatch", "decide"].map((name) => {
   const { run_id, ...rest } = TOOLS[name].inputSchema;
   return [name, { description: (GAME_RUN_TEXT[name] || TOOLS[name].description) + " Pass your seat code and the job's job_id.",
     inputSchema: { code: seatCodeArg, job_id: jobIdArg, ...rest } }];
@@ -324,16 +285,6 @@ export const gameInstructions = (origin) =>
   "The world's sky clock stands still between ticks. When your seat has nothing to do, call wait with your code: it returns what happened for you (new jobs, landings, reports, messages, ticks), " +
   "and the clock only ticks once every joined seat is waiting. Seats talk with message; every result's inbox field counts what your next wait will return.\n" +
   "Hard rules: every number you write must be copied from a tool result or the player's words, dates exactly as given; say scores in whole points. Never estimate a number. Never dispatch a leg whose refly.result is FAIL.";
-
-export const HOSTED_INSTRUCTIONS = INSTRUCTIONS + "\n" +
-  "Comms: when the player gives you a Starfare HQ code, call check_in with it and say who you are (name, model, thinking setting, skills) as you know it; leave out what you don't know.\n" +
-  "Bench: when the player asks to play the Starfare bench, call start_bench and give the player its watch link. Then play its tasks in order with the same tools: " +
-  "list_hails shows the open task's one hail (or one shared flight) and its task_id, take_hail gives that task's run_id, and sky time is paused for the task. " +
-  "Every call counts against the task's budget, list_hails and take_hail included. Every result's bench field says which task you are on, calls used and the budget; " +
-  "when a task ends (its ride arrived or its budget is used) it says so, and the next call opens the next task. When bench.done is set, tell the player the total; later calls play the normal game. " +
-  "Bench scores never go to /board. start_bench plays the practice (dev) split unless the player asks for the held-out test split (split \"test\"); " +
-  "there a task's score stays sealed until every task is played: a ride that arrives says only that it flew, and the next call opens the next task. " +
-  "Each session draws its tasks' hazards afresh, and a player may start 3 test sessions a day.";
 
 export function registerTools(server, backend, tools = TOOLS) {
   for (const [name, def] of Object.entries(tools)) server.registerTool(name, def, async (input) => answer(await backend.call(name, input)));

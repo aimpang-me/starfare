@@ -13,12 +13,12 @@
       { "name": "STARFARE_HUB", "class_name": "StarfareHub" },
       // OAuth storage (clients, grants, tokens) when STARFARE_OAUTH is "on" and no OAUTH_KV namespace is bound. Unused when off.
       { "name": "STARFARE_AUTH", "class_name": "StarfareAuth" },
-      // One per hosted bench session (start_bench): the session and its tool-call trace for the watch page at /bench/<bench_id>.
+      // The older single-agent game's bench sessions and rides (StarfareBench, StarfareRun): no route reaches them since 2026-10-21; kept for their storage.
       { "name": "STARFARE_BENCH", "class_name": "StarfareBench" },
-      // One per sandbox world (/world/new, plan step 2): its clock, ships, desks and market. Only used with STARFARE_SANDBOX on.
+      // One per sandbox world (/world/new, plan step 2): its clock, ships, desks and market.
       { "name": "STARFARE_WORLD", "class_name": "StarfareWorld" },
       // Each world's reference company (StarfareRef), in its own Worker so its planning CPU never stalls the world's calls.
-      // Deploy that Worker (wrangler.ref.jsonc) before this one. Only used with STARFARE_SANDBOX on.
+      // Deploy that Worker (wrangler.ref.jsonc) before this one.
       { "name": "STARFARE_REF", "class_name": "StarfareRef", "script_name": "starfare-ref" }
     ]
   },
@@ -31,7 +31,5 @@
   // Long-haul plan_leg calls take ~0.2-0.7 s CPU and start_mission up to ~1.3 s, so this needs the Workers
   // paid plan (default 30 s CPU per request). The free plan's 10 ms is enough for none of the tools reliably.
   // STARFARE_OAUTH: "on" (the live setting: OAuth with a one-click consent page; grok.com connects this way) or "off" (no auth). See DEPLOY.md.
-  // STARFARE_SANDBOX: "on" (the live setting) is the game: "/" starts a company, MCP lists only the seat tools, and the older
-  // single-agent game's tools and pages are gone. "off" serves that older game instead, for its tests; never deploy it.
-  "vars": { "RATE_PER_MIN": "120", "STARFARE_OAUTH": "on", "STARFARE_SANDBOX": "on" }
+  "vars": { "RATE_PER_MIN": "120", "STARFARE_OAUTH": "on" }
 }

@@ -1,7 +1,7 @@
 name: deploy
 # Every merge to main goes to the public Worker (Alvin, 2026-10-21: "every PR goes STRAIGHT to prod").
 # Runs only after sol-regression has passed on that push to main. Steps match connector/DEPLOY.md:
-# starfare-ref first (it plays each world's reference company), then starfare with the sandbox on.
+# starfare-ref first (it plays each world's reference company), then starfare.
 # A failed wrangler deploy changes nothing: the previous version keeps serving. If the site check after
 # the deploy fails, the job rolls starfare back to the version before and goes red.
 # Manual rollback from Alvin's PC (connector/): node node_modules/wrangler/bin/wrangler.js rollback -y
@@ -84,7 +84,7 @@ jobs:
         run: node node_modules/wrangler/bin/wrangler.js deploy -c wrangler.ref.jsonc
       - name: Deploy starfare (sandbox on)
         if: steps.latest.outputs.go == 'yes'
-        # wrangler.jsonc ships STARFARE_SANDBOX "off"; the public Worker runs with it on, so every deploy passes the --var.
+        # The --var is left over from when the game sat behind STARFARE_SANDBOX; the Worker no longer reads it.
         run: node node_modules/wrangler/bin/wrangler.js deploy --var STARFARE_SANDBOX:on
       - name: Check the live site
         id: check
