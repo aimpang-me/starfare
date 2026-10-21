@@ -290,6 +290,41 @@ export const SANDBOX_INSTRUCTIONS = "\nSandbox (simulated): when the player give
   "When your seat has nothing to do, call wait with your code: it returns what happened for you (new jobs, landings, reports, messages, ticks), and the clock only ticks once every joined seat is waiting. " +
   "Seats talk with message; every result's inbox field counts what your next wait will return.";
 
+/** The game (STARFARE_SANDBOX on): the seat tools and the run tools, which take the seat code and the job_id and no run_id.
+ *  This is the only way to play: no take_hail, bench or Comms check-in. */
+const GAME_RUN_TEXT = {
+  dispatch: "Dispatch one of your desk's ships on the job: the pickup leg, the ride leg, the fare you quote (copy the ride leg's fare_usd) and the arrival you promise the rider, " +
+    "a time (quoted_arrival) or a window (quoted_earliest and quoted_latest). The world's hazards are then flown. If a hazard stops the ride, it waits at a checkpoint with the situation; " +
+    "answer it with decide. Otherwise the result says what actually happened (actual pickup and arrival, delay, extra kWh, incidents) and the locked score.",
+  decide: "Answer the open checkpoint of a dispatched ride. At a launch_hold (a flare grounds the launch): action wait, or replan with depart_after and objective (re-planned and re-flown " +
+    "in the n-body checker; counts as a plan). At a pad_closed (no berth, dust or haze): action hold, with hours to ask again after that long or none to hold until it opens, or divert " +
+    "with place (one of the situation's alternates) and wait_hours on the ground there. Returns the next checkpoint or the arrived result. Sending the same answer again returns where the ride stands.",
+};
+export const GAME_RUN_TOOLS = Object.fromEntries(Object.keys(SANDBOX_RUN_TOOLS).map((name) => {
+  const { run_id, ...rest } = TOOLS[name].inputSchema;
+  return [name, { description: (GAME_RUN_TEXT[name] || TOOLS[name].description) + " Pass your seat code and the job's job_id.",
+    inputSchema: { code: seatCodeArg, job_id: jobIdArg, ...rest } }];
+}));
+export const GAME_TOOLS = { ...SANDBOX_TOOLS, ...GAME_RUN_TOOLS };
+
+/** What a bot reads on connecting to the game. origin is the site's address, for the page that starts a company. */
+export const gameInstructions = (origin) =>
+  "Starfare (simulated) is a passenger company of Starseeker ships across the solar system, run by three AI agents in seats: one executor (EX) and two dispatchers (D1, D2). " +
+  "The only way to play is in a seat. The player starts a company at " + (origin || "") + "/world and gets three seat codes there, one per agent (they start EX-, D1- or D2-). " +
+  "If the player has not given you a seat code, call nothing: tell them to open " + (origin || "") + "/world, press Start a company, and paste one seat code to you.\n" +
+  "With a code, call join with it, and pass the same code on every call after that. Your seat's tools are listed in join's result; a call outside them is refused with the reason. " +
+  "The executor (EX) reads the market and company, gives hails to desks with assign, declines the rest, moves ships with transfer_ship and reads reports; it flies nothing. " +
+  "A dispatcher (D1, D2) reads its queue and flies each job with its own desk's ships: get_hail, plan_pickup (ship to rider), plan_ride after that pickup, check_pad and space_weather, " +
+  "then dispatch with the pickup leg, the ride leg, the fare copied from the ride leg and the arrival you promise; answer checkpoints with decide; then send the executor a report. " +
+  "A job it can't fly it gives back with hand_back, early, with a report. Every planning tool takes the code and the job_id. A dispatched ship is busy until it lands and then parked where it landed.\n" +
+  "Hazards (simulated, seeded per world): pads have few berths and other traffic, solar flares hold any launch with a rider aboard, Mars dust storms and Titan haze close those pads, " +
+  "a leg between planets that leaves late needs a correction burn, and holding in orbit for a berth costs 250 kWh an hour. You only get forecasts: check_pad and space_weather, both free and not counted as plans. " +
+  "Goal: pick the rider up fast, arrive by arrive_by, use the least battery actually flown, and keep your promise (an arrival window, scored by its width plus 10 times each hour the ship lands outside it). " +
+  "Each plan counts: 6 are free per job, then each costs a point.\n" +
+  "The world's sky clock stands still between ticks. When your seat has nothing to do, call wait with your code: it returns what happened for you (new jobs, landings, reports, messages, ticks), " +
+  "and the clock only ticks once every joined seat is waiting. Seats talk with message; every result's inbox field counts what your next wait will return.\n" +
+  "Hard rules: every number you write must be copied from a tool result or the player's words, dates exactly as given; say scores in whole points. Never estimate a number. Never dispatch a leg whose refly.result is FAIL.";
+
 export const HOSTED_INSTRUCTIONS = INSTRUCTIONS + "\n" +
   "Comms: when the player gives you a Starfare HQ code, call check_in with it and say who you are (name, model, thinking setting, skills) as you know it; leave out what you don't know.\n" +
   "Bench: when the player asks to play the Starfare bench, call start_bench and give the player its watch link. Then play its tasks in order with the same tools: " +

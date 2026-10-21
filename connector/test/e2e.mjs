@@ -34,6 +34,7 @@ const R = E.R;
 const META = JSON.parse(readFileSync(new URL("../src/engine/meta.json", import.meta.url), "utf8"));
 const BENCH_KEY = "e2e-bench-key-0123456789abcdef01"; // a throwaway key for wrangler dev; the live one is a Wrangler secret
 const SANDBOX_SEAT_TOOLS = ["join", "company", "market", "assign", "decline", "transfer_ship", "reports", "queue", "report", "hand_back", "wait", "message"];
+const GAME_RUN_TOOL_NAMES = ["check_pad", "decide", "dispatch", "get_hail", "plan_leg", "plan_pickup", "plan_ride", "space_weather"];
 const TOOLS = ["check_in", "check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_leg", "plan_pickup", "plan_ride", "space_weather", "start_bench", "take_hail"];
 
 const results = [];
@@ -234,10 +235,11 @@ function assertSeasonPool(hails) {
 async function phaseOff() {
   console.log("\n== STARFARE_OAUTH=off (default) ==");
   const report = {};
-  // wrangler.jsonc ships OAuth "on" (the live setting) and the sandbox "off"; this server turns the sandbox's world routes on.
-  const w = await startWorker({ STARFARE_OAUTH: "off", STARFARE_BENCH_KEY: BENCH_KEY, RATE_PER_MIN: "1000", STARFARE_SANDBOX: "on" });
+  // wrangler.jsonc ships OAuth "on" and the sandbox "on" (the live settings). This server runs the older single-agent game
+  // (sandbox off), which the public Worker no longer serves; the sandbox checks below get a server of their own.
+  let w = await startWorker({ STARFARE_OAUTH: "off", STARFARE_BENCH_KEY: BENCH_KEY, RATE_PER_MIN: "1000", STARFARE_SANDBOX: "off" });
   console.log(`wrangler dev up at ${w.base}`);
-  const client = await connect(w.base);
+  let client = await connect(w.base);
 
   await check("GET / is the landing page: the connector URL, the hails and fleet as data, and a cacheable engine script", async () => {
     const r = await fetch(`${w.base}/`);
@@ -269,9 +271,9 @@ async function phaseOff() {
     assert.match(js.headers.get("cache-control"), /immutable/);
     assert.ok((await js.text()).includes("module.exports = SOLE"));
   });
-  await check("tools/list is exactly the eleven ride-hail tools, start_bench, check_in and (this phase runs the sandbox) the sandbox's seat tools", async () => {
+  await check("tools/list is exactly the eleven ride-hail tools, start_bench and check_in while the sandbox is off", async () => {
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
-    assert.deepEqual(names, [...TOOLS, ...SANDBOX_SEAT_TOOLS].sort());
+    assert.deepEqual(names, [...TOOLS].sort());
   });
   await check("Comms: an agent checks in with the page's one-time code, and its bookings show on that channel", async () => {
     const opened = await fetch(`${w.base}/comms/new`, { method: "POST" });
@@ -793,6 +795,43 @@ async function phaseOff() {
       assert.equal((await call(bot, "start_bench", { split: "dev" })).isError, false, "practice is not limited");
     } finally { await bot.close(); }
   });
+  await client.close();
+  await w.stop();
+  // The game as the public Worker serves it: the sandbox on, so the company with three seats is the only way to play.
+  w = await startWorker({ STARFARE_OAUTH: "off", RATE_PER_MIN: "1000", STARFARE_SANDBOX: "on" });
+  console.log(`sandbox wrangler dev up at ${w.base}`);
+  client = await connect(w.base);
+
+  await check("game: tools/list is the seat tools and the run tools only, and each run tool takes code and job_id, not run_id", async () => {
+    const tools = (await client.listTools()).tools, names = tools.map((t) => t.name).sort();
+    assert.deepEqual(names, [...SANDBOX_SEAT_TOOLS, ...GAME_RUN_TOOL_NAMES].sort());
+    for (const t of tools.filter((x) => GAME_RUN_TOOL_NAMES.includes(x.name))) {
+      assert.ok(t.inputSchema.required.includes("code") && t.inputSchema.required.includes("job_id"), t.name);
+      assert.ok(!("run_id" in t.inputSchema.properties), t.name);
+    }
+    const info = client.getInstructions();
+    assert.match(info, new RegExp(`${w.base.replace(/[.]/g, "\\.")}/world`));
+    assert.doesNotMatch(info, /take_hail|list_hails|start_bench|check_in|\/board/);
+  });
+
+  await check("game: GET / is the page that starts a company, and the older game's pages and data are 404", async () => {
+    const r = await fetch(`${w.base}/`), html = await r.text();
+    assert.equal(r.status, 200);
+    assert.ok(html.includes("const WORLD = null;") && html.includes("Start a company"));
+    assert.equal(r.headers.get("x-frame-options"), "DENY");
+    for (const path of ["/board", "/board.json", "/hails.json", "/live.json", "/sky.json", "/bench", "/comms/new", `/agent/${"0".repeat(32)}`, `/flight/run_${"0".repeat(20)}`, `/rides/run_${"0".repeat(20)}.json`, "/seasons/1.json"]) {
+      const x = await fetch(`${w.base}${path}`); assert.equal(x.status, 404, path); await x.body?.cancel();
+    }
+    for (const path of ["/world", "/method", "/assets/flight-view.js"]) { const x = await fetch(`${w.base}${path}`); assert.equal(x.status, 200, path); await x.body?.cancel(); }
+  });
+
+  await check("game: a call without a valid seat code is told to get one from /world", async () => {
+    for (const [tool, args] of [["join", { code: "not-a-seat-code-at-all-0000" }], ["get_hail", { code: "not-a-seat-code-at-all-0000", job_id: "j1" }]]) {
+      const r = await call(client, tool, args);
+      assert.equal(r.isError, true, tool); assert.match(r.value, /seat code is not valid/); assert.ok(r.value.includes(`${w.base}/world`), r.value);
+    }
+  });
+
   await check("sandbox world: POST /world/new makes a private world (ships at home, desks by region, clock stopped) and its view never shows the seed", async () => {
     const made = await fetch(`${w.base}/world/new`, { method: "POST" });
     assert.equal(made.status, 201);
@@ -848,8 +887,6 @@ async function phaseOff() {
     assert.equal(other.isError, true); assert.match(other.value, /not yours/);
     const wrongRole = await call(client, "assign", { code: D1, hail_id: inner.hail_id, desk: "D1" });
     assert.equal(wrongRole.isError, true); assert.match(wrongRole.value, /executor's tool/);
-    const bare = await call(client, "get_hail", {});
-    assert.equal(bare.isError, true); assert.match(bare.value, /run_id/);
     const r = await ok(client, "report", { code: D1, text: "j1 is planned next tick.", job_id: "j1" });
     assert.equal(r.ok, true);
     const rep = await ok(client, "reports", { code: EX });
@@ -1022,7 +1059,7 @@ async function phaseOff() {
 
   await check("a stored seasonal booking survives a complete local Worker restart", async () => {
     const persist = mkdtempSync(join(tmpdir(), "starfare-restart-"));
-    const vars = { STARFARE_OAUTH: "off", RATE_PER_MIN: "1000" };
+    const vars = { STARFARE_OAUTH: "off", RATE_PER_MIN: "1000", STARFARE_SANDBOX: "off" };
     let worker, bot;
     try {
       worker = await startWorker(vars, persist);
@@ -1053,7 +1090,7 @@ async function phaseOff() {
   });
 
   await check("per-IP rate limit answers 429 past RATE_PER_MIN", async () => {
-    const w2 = await startWorker({ STARFARE_OAUTH: "off", RATE_PER_MIN: "5" });
+    const w2 = await startWorker({ STARFARE_OAUTH: "off", RATE_PER_MIN: "5", STARFARE_SANDBOX: "off" });
     await freshMinute();
     try {
       const statuses = [];
@@ -1085,7 +1122,7 @@ class CookieJar {
 }
 
 /** GET the consent page the way a browser would, check it is one click (no code or password field), press a button. */
-async function consent(authUrl, decision = "approve") {
+async function consent(authUrl, decision = "approve", game = false) {
   const jar = new CookieJar();
   const page = await fetch(authUrl, noFollow);
   const html = await page.text();
@@ -1098,7 +1135,8 @@ async function consent(authUrl, decision = "approve") {
   assert.match(html, /<button name="decision" value="deny">Deny<\/button>/);
   assert.doesNotMatch(html, /type="password"|name="code"/, "consent page must not ask for a code");
   const follow = /name="follow" value="([0-9a-f]{32})"/.exec(html)?.[1]; // a hidden field, sent as a browser would
-  assert.ok(follow && html.includes(`/agent/${follow}`), "consent page shows no follow link");
+  if (game) assert.ok(!html.includes("/agent/") && !html.includes("/board") && html.includes("seat code"), "the game's consent page names seats, not bookings");
+  else assert.ok(follow && html.includes(`/agent/${follow}`), "consent page shows no follow link");
   const posted = await fetch(authUrl, { ...noFollow, method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", cookie: jar.header() }, body: new URLSearchParams({ handle, follow, decision }) });
   assert.equal(posted.status, 302, await posted.clone().text());
   return { html, follow, location: new URL(posted.headers.get("location")) };
@@ -1125,7 +1163,7 @@ function tracingFetch(trace) {
 }
 
 /** The whole SDK OAuth flow: connect (401), discovery, DCR, authorize with PKCE, Allow, finishAuth (token), reconnect. */
-async function sdkSignIn(base, name) {
+async function sdkSignIn(base, name, game = false) {
   const auth = new SdkAuth(name), trace = [], url = new URL(`${base}/mcp`);
   const first = new StreamableHTTPClientTransport(url, { authProvider: auth, fetch: tracingFetch(trace) });
   await assert.rejects(new Client({ name, version: "1" }).connect(first), (e) => {
@@ -1133,7 +1171,7 @@ async function sdkSignIn(base, name) {
     return true;
   });
   assert.ok(auth.authUrl, "SDK did not ask to open the authorization page");
-  const { html, follow, location } = await consent(auth.authUrl);
+  const { html, follow, location } = await consent(auth.authUrl, "approve", game);
   assert.equal(location.origin + location.pathname, REDIRECT_URI);
   assert.equal(location.searchParams.get("state"), auth.authUrl.searchParams.get("state"));
   await first.finishAuth(location.searchParams.get("code"));
@@ -1149,12 +1187,12 @@ async function phaseOn() {
   // The on server also keys its seasons (STARFARE_SEASON_KEY), as the live one will once the secret is set.
   const SEASON_KEY = "e2e-season-key-".padEnd(48, "s"), season = sky(Date.now()).season;
   for (const n of [season, season + 1]) NODE_SEEDS[n] = await keyedSeed(n, SEASON_KEY);
-  const w = await startWorker({ STARFARE_OAUTH: "on", RATE_PER_MIN: "1000", STARFARE_SEASON_KEY: SEASON_KEY });
+  const w = await startWorker({ STARFARE_OAUTH: "on", RATE_PER_MIN: "1000", STARFARE_SEASON_KEY: SEASON_KEY, STARFARE_SANDBOX: "off" });
   const { base } = w;
   console.log(`wrangler dev up at ${base}`);
   let asMeta, a, b;
   try {
-    await check("on: the sandbox's world routes answer 404 while STARFARE_SANDBOX is off, as wrangler.jsonc ships it", async () => {
+    await check("on: the sandbox's world routes answer 404 while STARFARE_SANDBOX is off", async () => {
       const made = await fetch(`${base}/world/new`, { method: "POST" }); assert.equal(made.status, 404); await made.body?.cancel();
       const view = await fetch(`${base}/world/w_00000000000000000000.json`); assert.equal(view.status, 404); await view.body?.cancel();
       const page = await fetch(`${base}/world`); assert.equal(page.status, 404); await page.body?.cancel();
@@ -1398,7 +1436,7 @@ async function phaseOn() {
   } finally { await w.stop(); }
 
   await check("on: the per-IP rate limit covers /mcp and the OAuth endpoints", async () => {
-    const w2 = await startWorker({ STARFARE_OAUTH: "on", RATE_PER_MIN: "5" });
+    const w2 = await startWorker({ STARFARE_OAUTH: "on", RATE_PER_MIN: "5", STARFARE_SANDBOX: "off" });
     await freshMinute();
     try {
       const statuses = [];
@@ -1411,6 +1449,19 @@ async function phaseOn() {
       const board = await fetch(`${w2.base}/board`); assert.equal(board.status, 200); await board.body?.cancel();
       report.rate = statuses;
     } finally { await w2.stop(); }
+  });
+
+  await check("on, the live settings (OAuth and the sandbox on): sign-in names seats, and tools/list is the game's tools only", async () => {
+    const g = await startWorker({ STARFARE_OAUTH: "on", RATE_PER_MIN: "1000", STARFARE_SANDBOX: "on" });
+    try {
+      const { client } = await sdkSignIn(g.base, "e2e game", true);
+      try {
+        assert.deepEqual((await client.listTools()).tools.map((t) => t.name).sort(), [...SANDBOX_SEAT_TOOLS, ...GAME_RUN_TOOL_NAMES].sort());
+        assert.ok(client.getInstructions().includes(`${g.base}/world`));
+        const v = await (await fetch(`${g.base}/world/new`, { method: "POST" })).json();
+        assert.equal((await ok(client, "join", { code: v.codes.EX })).role, "executor");
+      } finally { await client.close(); }
+    } finally { await g.stop(); }
   });
   console.log("\n--- details (on) ---\n" + JSON.stringify(report, null, 1));
 }
