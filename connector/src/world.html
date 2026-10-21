@@ -76,6 +76,17 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .map canvas{display:block;width:100%;height:100%}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:10px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-2)}
 @media (max-width:560px){.map{height:340px}}
+/* The 3D map (public/assets/company-map.js): labels are text over the canvas, placed where they overlap nothing. */
+.map.m3{height:min(72vh,600px);overflow:hidden;background:#05090c}
+.m3 .m3-gl{display:block;width:100%;height:100%;cursor:grab}
+.m3 .m3-gl:active{cursor:grabbing}
+.m3-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.m3-l{position:absolute;left:0;top:0;pointer-events:auto;background:none;border:0;padding:1px 3px;font:500 11px/14px Inter,sans-serif;color:#7d8b99;white-space:nowrap;cursor:pointer;text-shadow:0 0 3px #000,0 0 6px #000}
+.m3-l.m3-planet{color:#aab6c3}
+.m3-l.m3-place{color:#c9d3dd}
+.m3-l.m3-ship{font-weight:600}
+.m3-reset{position:absolute;right:10px;top:10px;min-height:32px;background:rgba(6,9,13,.72)}
+@media (max-width:560px){.map.m3{height:420px}}
 .err{color:var(--bad)}
 .foot{color:var(--ink-3);font-size:12px}
 @media (max-width:560px){.top{padding:0 16px;gap:12px}.top .sub{display:none}main{padding:16px 16px 32px}.clock b{font-size:18px}}
@@ -91,6 +102,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 <script>
 "use strict";
 const WORLD = __WORLD__;
+const ENGINE_URL = __ENGINE_URL__;
 const SEATS = ["EX", "D1", "D2"];
 const DESK = { D1: "Inner desk", D2: "Outer desk" };
 const app = document.getElementById("app");
@@ -281,10 +293,54 @@ function commsPanel(v) {
 // planet, not drawn to scale. A ship in flight is drawn on a straight line between the stops of its leg, by sky time.
 const jdOf = (iso) => Date.parse(iso.replace(" ", "T") + ":00Z") / 864e5 + 2440587.5;
 const COL = { D1: "#9cc3df", D2: "#e7c48c" };
+// The 3D map's scripts load only on a company's page, in order: three.js r128 and its bloom and model loaders (pinned,
+// with SRI), the engine, the shared art and the map. Until they load, or when WebGL or a script fails, the 2D map shows.
+const CDN = "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/";
+const LIBS = [
+  ["https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js", "sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ=="],
+  [CDN + "shaders/CopyShader.js", "sha384-nhO9toQuMo5osCuA0l+YFpSqscZWxDu251Bnho2gD3kSPv1neEwHg0LyEmrA+mPj"],
+  [CDN + "shaders/LuminosityHighPassShader.js", "sha384-mY+ii969jnDCI2HjRHftH2NZVkIO5ZGUkcnGCg3oVJ3kVstWQXwerYWBg+nbUG4R"],
+  [CDN + "postprocessing/EffectComposer.js", "sha384-GkidzTYmQg24v13sa3xhBBbvOLbVLO1QxfyKLdOWweQqNqS/iWwUst2T1fER2Xrg"],
+  [CDN + "postprocessing/RenderPass.js", "sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs"],
+  [CDN + "postprocessing/ShaderPass.js", "sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3"],
+  [CDN + "postprocessing/UnrealBloomPass.js", "sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa"],
+  [CDN + "loaders/GLTFLoader.js", "sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E"],
+  [CDN + "libs/meshopt_decoder.js", "sha384-Ua4+miEfAhtQpWvzgEohUG5UfbDPgyuYVVT+sgb2QvRC3fjACMsy7LV3Zoxnv2xf"],
+  [ENGINE_URL], ["/assets/sol-art.js"], ["/assets/planet-effects.js"], ["/assets/company-map.js"],
+];
+const M3 = { libs: false, map: null, box: null, failed: false };
+function load3d() {
+  let n = 0;
+  for (const [src, sri] of LIBS) {
+    const s = document.createElement("script");
+    s.src = src; s.async = false;
+    if (sri) { s.integrity = sri; s.crossOrigin = "anonymous"; }
+    s.onload = s.onerror = (e) => {
+      if (e.type === "error") M3.failed = true;
+      if (++n === LIBS.length && !M3.failed) { M3.libs = true; render(); }
+    };
+    document.head.append(s);
+  }
+}
+function map3d(v) {
+  if (!M3.libs || M3.failed) return null;
+  if (!M3.map) {
+    M3.box = h("div", { class: "map m3" });
+    M3.map = window.StarfareCompanyMap && StarfareCompanyMap.create(M3.box, { colors: COL });
+    if (!M3.map) { M3.failed = true; return null; }
+  }
+  M3.map.update(v);
+  return M3.box;
+}
 function mapPanel(v) {
-  const box = h("div", { class: "map" }), canvas = h("canvas", { role: "img", "aria-label": "Map of the solar system at " + v.clock.sky_now + " with your ships coloured by desk. The Desks and ships table lists the same ships." });
-  box.append(canvas);
-  requestAnimationFrame(() => drawMap(canvas, v));
+  // The same element every render, so the 3D view keeps its camera and WebGL context across the 3 s refresh.
+  let box = map3d(v);
+  const gl = !!box;
+  if (!box) {
+    const canvas = h("canvas", { role: "img", "aria-label": "Map of the solar system at " + v.clock.sky_now + " with your ships coloured by desk. The Desks and ships table lists the same ships." });
+    box = h("div", { class: "map" }, canvas);
+    requestAnimationFrame(() => drawMap(canvas, v));
+  }
   return h("section", { class: "panel" },
     h("div", { class: "ph" }, h("h2", {}, "Map"), h("div", { class: "r" }, h("span", { class: "faint num" }, v.map.sky), h("span", { class: "tag" }, "Simulated"))),
     box,
@@ -292,7 +348,9 @@ function mapPanel(v) {
       h("span", {}, h("span", { class: "dot D1", "aria-hidden": "true" }), " Inner desk"),
       h("span", {}, h("span", { class: "dot D2", "aria-hidden": "true" }), " Outer desk"),
       h("span", {}, "A ring: held at a checkpoint."),
-      h("span", { class: "faint" }, "Distance from the Sun on a log scale; moons and stations spread around their planet; ships in flight drawn on a straight line between stops (illustrative).")));
+      gl ? [h("span", { class: "faint" }, "Places where the engine puts them at the world's sky time; bodies drawn at least a few pixels wide; ships in flight drawn on a straight line between stops (illustrative). Drag to turn, scroll or pinch to zoom, tap a name to go there."),
+        window.SolArt ? h("span", { class: "faint" }, SolArt.CREDIT) : null]
+        : h("span", { class: "faint" }, "Distance from the Sun on a log scale; moons and stations spread around their planet; ships in flight drawn on a straight line between stops (illustrative).")));
 }
 function drawMap(canvas, v) {
   const W = canvas.clientWidth, H = canvas.clientHeight, dpr = window.devicePixelRatio || 1;
@@ -389,8 +447,9 @@ function render() {
       h("div", { class: "ph", style: "border:0;padding:0 0 10px" }, h("h2", {}, "Seats"),
         h("div", { class: "r" }, h("button", { class: "btn small", onclick: newCodes }, "New codes"))),
       h("div", { class: "grid" }, v.seats.map((s) => seatCard(v, s)))),
-    h("div", { class: "two" }, mapPanel(v), scoresPanel(v)),
-    h("div", { class: "two" }, jobsPanel(v), commsPanel(v)),
+    mapPanel(v),
+    h("div", { class: "two" }, scoresPanel(v), commsPanel(v)),
+    jobsPanel(v),
     desksPanel(v),
     h("p", { class: "foot" }, v.note, " Scores are points only. World ", v.world_id, "."));
   const c = document.querySelector(".comms");
@@ -401,6 +460,7 @@ let resized = null;
 addEventListener("resize", () => { clearTimeout(resized); resized = setTimeout(render, 150); });
 if (!WORLD) startPage();
 else {
+  load3d();
   (async () => {
     if (!(await load())) return;
     let timer = setInterval(load, 3000);

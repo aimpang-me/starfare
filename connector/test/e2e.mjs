@@ -277,15 +277,20 @@ async function phaseOff() {
     assert.ok(ref.company.ended > 0, "the reference flew jobs in its first tick");
   });
 
-  await check("sandbox page: GET /world and GET /world/<id> serve the page; POST /world/<id>/codes gives new codes once and the old ones stop working", async () => {
+  await check("sandbox page: GET /world and GET /world/<id> serve the page and its 3D map scripts; POST /world/<id>/codes gives new codes once and the old ones stop working", async () => {
     for (const path of ["/world", "/world/w_00000000000000000000"]) {
       const r = await fetch(`${w.base}${path}`), html = await r.text();
       assert.equal(r.status, 200, path);
       assert.match(r.headers.get("content-type"), /text\/html/);
       assert.match(html, /simulated/i);
-      assert.doesNotMatch(html, /__WORLD__/);
+      assert.doesNotMatch(html, /__WORLD__|__ENGINE_URL__/);
     }
-    assert.match(await (await fetch(`${w.base}/world/w_00000000000000000000`)).text(), /"w_00000000000000000000"/);
+    const page = await (await fetch(`${w.base}/world/w_00000000000000000000`)).text();
+    assert.match(page, /"w_00000000000000000000"/);
+    // The 3D map's scripts: the engine at its cacheable URL, and the map itself.
+    const eng = /const ENGINE_URL = "([^"]+)"/.exec(page);
+    assert.ok(eng && /^\/engine\.js\?v=[0-9a-f]{16}$/.test(eng[1]), "engine URL");
+    for (const path of [eng[1], "/assets/company-map.js"]) assert.equal((await fetch(`${w.base}${path}`)).status, 200, path);
     const v = await (await fetch(`${w.base}/world/new`, { method: "POST" })).json();
     assert.equal(v.page, `${w.base}/world/${v.world_id}`);
     await ok(client, "join", { code: v.codes.EX });

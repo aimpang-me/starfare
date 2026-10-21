@@ -33,7 +33,7 @@ const isPublicPage = (p) => p === "/" || p === ENGINE_PATH || isWorldPath(p);
  *  POST /world/<world_id>/codes issues new codes (returned once), and the old ones stop working. The world_id is the capability. */
 const WORLD_RE = WORLD_ID.source.slice(1, -1);
 const WORLD_PATH = new RegExp("^/world/(" + WORLD_RE + ")(\\.json|/codes)?$");
-const worldPage = (id) => new Response(worldHtml.replace("__WORLD__", () => JSON.stringify(id)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
+const worldPage = (id) => new Response(worldHtml.replace("__WORLD__", () => JSON.stringify(id)).replace("__ENGINE_URL__", () => JSON.stringify(ENGINE_PATH + "?v=" + ENGINE_V)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 async function world(req, url, env) {
   const json = (v, status = 200) => Response.json(v, { status, headers: { "cache-control": "no-store" } });
   const m = WORLD_PATH.exec(url.pathname), make = url.pathname === "/world/new", page = url.pathname === "/" || url.pathname === "/world" || (m && !m[2]);
