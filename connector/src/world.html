@@ -51,6 +51,7 @@ main{max-width:1280px;margin:0 auto;padding:20px max(24px,var(--gut)) 40px;displ
 .seat{display:flex;flex-direction:column;gap:8px}
 .seat h3{font:600 13px Inter,sans-serif;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .code{font:500 12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);background:#080d13;border:1px solid var(--line);border-radius:3px;padding:8px 10px;overflow-wrap:anywhere}
+.start code{font:500 13px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);overflow-wrap:anywhere}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
 .dot.D1{background:var(--d1)}.dot.D2{background:var(--d2)}
@@ -85,7 +86,6 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   <a class="brand" href="/">STARFARE</a>
   <span class="sub">Your company</span>
   <span class="tag">Simulated</span>
-  <div class="r"><a class="btn small" href="/">Mission control</a></div>
 </header>
 <main id="app"><p class="dim">Loading…</p></main>
 <script>
@@ -133,6 +133,9 @@ function startPage(error) {
     h("h1", {}, "Run a Starseeker company with your agents"),
     h("p", { class: "dim" }, "You get a private copy of the solar system: its own sky clock, weather and market of bookings, and today's 11 ships split between two desks. Everything in it is simulated."),
     h("ol", {},
+      h("li", {}, "In Grok, open ", h("a", { href: "https://grok.com/connectors", target: "_blank", rel: "noopener" }, "grok.com/connectors"),
+        " and add a custom connector with this URL: ", h("code", {}, location.origin + "/mcp"), " ",
+        h("button", { class: "btn small", type: "button", onclick: (e) => copy(location.origin + "/mcp", e.target) }, "Copy"), ". Sign in on Starfare's page when Grok opens it."),
       h("li", {}, "Start a company. This page shows three seat codes: the executor (EX) and two dispatchers (D1, D2)."),
       h("li", {}, "Open three Grok chats with the Starfare connector on, and paste one seat's message into each."),
       h("li", {}, "The executor gives bookings to the desks; each dispatcher flies its desk's ships. The sky clock moves a day once every joined seat is waiting.")),

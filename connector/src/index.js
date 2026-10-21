@@ -37,6 +37,9 @@ const ENGINE_PATH = "/engine.js", ENGINE_V = META.sha256.slice(0, 16);
 const isBenchPath = (p) => p === "/bench" || p.startsWith("/bench/");
 const isWorldPath = (p) => p === "/world" || p.startsWith("/world/");
 const isPublicPage = (p) => p === "/" || p === "/method" || p === ENGINE_PATH || p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p === "/sky.json" || p.startsWith("/seasons/") || p.startsWith("/rides/") || p.startsWith("/flight/") || p.startsWith("/agent/") || p.startsWith("/comms/") || isBenchPath(p) || isWorldPath(p);
+// The older single-agent game's pages and data (bookings, flights, the board, the bench, Comms, seasons). With the sandbox on
+// they answer 404: the company with three seats is the only way to play, and "/" is the page that starts one.
+const isOldGamePath = (p) => p === "/hails.json" || p === "/board" || p === "/board.json" || p === "/live.json" || p === "/sky.json" || p.startsWith("/seasons/") || p.startsWith("/rides/") || p.startsWith("/flight/") || p.startsWith("/agent/") || p.startsWith("/comms/") || isBenchPath(p);
 const RIDE_PATH = new RegExp("^/rides/(" + RUN_ID.source.slice(1, -1) + ")\\.json$"), FLIGHT_PATH = new RegExp("^/flight/(" + RUN_ID.source.slice(1, -1) + ")(\\.json)?$"), EXPORT_PATH = /^\/rides\/export\/([0-9a-f]{32})\.jsonl$/;
 
 const SEASON_PATH = /^\/seasons\/(\d{1,9})\.json$/;
@@ -159,13 +162,14 @@ async function bench(req, url, env) {
   return v ? Response.json(v, { headers: { "cache-control": "no-store" } }) : new Response("Not found: no bench session with that id", { status: 404 });
 }
 
-/** The sandbox world (simulated), only while STARFARE_SANDBOX is "on" and linked from nowhere yet.
+/** The sandbox world (simulated): the game, only while STARFARE_SANDBOX is "on", and "/" serves its start page.
  *  GET /world is the page that starts a company; POST /world/new makes a world and returns its world_id and, this once, its
  *  three seat codes (the player gives one to each agent, which calls join with it). GET /world/<world_id> is the world's
  *  page and GET /world/<world_id>.json its view, which never shows a code. POST /world/<world_id>/codes issues new codes
  *  (returned once), and the old ones stop working. The world_id is the capability, as the bench_id is for /bench. */
 const WORLD_RE = WORLD_ID.source.slice(1, -1);
 const WORLD_PATH = new RegExp("^/world/(" + WORLD_RE + ")(\\.json|/codes)?$");
+const worldPage = (id) => new Response(worldHtml.replace("__WORLD__", () => JSON.stringify(id)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 async function world(req, url, env) {
   if (!sandboxOn(env)) return new Response("Not found", { status: 404 });
   const json = (v, status = 200) => Response.json(v, { status, headers: { "cache-control": "no-store" } });
@@ -173,7 +177,7 @@ async function world(req, url, env) {
   if (!make && !m && !page) return new Response("Not found", { status: 404 });
   const method = make || (m && m[2] === "/codes") ? "POST" : "GET";
   if (req.method !== method) return new Response("Method not allowed", { status: 405, headers: { allow: method } });
-  if (page) return new Response(worldHtml.replace("__WORLD__", () => JSON.stringify(m ? m[1] : null)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
+  if (page) return worldPage(m ? m[1] : null);
   if (!(await allowed(hub(env), "world:" + clientKey(req), rateLimit(env)))) return busy();
   if (make) {
     const id = "w_" + hex(10), v = await worldStub(env, id).create(id);
@@ -213,6 +217,8 @@ export default {
 
 async function route(req, env, ctx) {
   const url = new URL(req.url);
+  if (sandboxOn(env) && isOldGamePath(url.pathname)) return new Response("Not found", { status: 404 });
+  if (sandboxOn(env) && url.pathname === "/") return req.method === "GET" ? worldPage(null) : new Response("Method not allowed", { status: 405 });
   if (oauthOn(env) && !isPublicPage(url.pathname)) {
     // /mcp, OAuth metadata, /register, /authorize, /token share one per-address budget. A signed-in /mcp call also counts
     // against its player (src/oauth.js), so its address gets SHARED_IP times the budget: a hosted agent such as grok.com

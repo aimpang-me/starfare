@@ -10,7 +10,7 @@ import { hex } from "./bench-host.js";
 import { engine } from "./engine.js";
 import { checkInInfo, hailPage, poolView, seasonClock, sky } from "./game.js";
 import { hub, runStub } from "./store.js";
-import { HOSTED_INSTRUCTIONS, HOSTED_TOOLS, SANDBOX_INSTRUCTIONS, SANDBOX_RUN_TOOLS, SANDBOX_TOOLS, registerTools } from "./tools.js";
+import { GAME_TOOLS, HOSTED_INSTRUCTIONS, HOSTED_TOOLS, SANDBOX_INSTRUCTIONS, SANDBOX_RUN_TOOLS, SANDBOX_TOOLS, gameInstructions, registerTools } from "./tools.js";
 import { parseCode, sandboxOn, worldStub } from "./world.js";
 
 // With STARFARE_OAUTH on, the grant's anonymous player id. Off: null.
@@ -80,13 +80,14 @@ const SESSION_TOOLS = {
 /** A sandbox tool goes to the world its seat code names, which checks the code and the seat's scope (world.js). */
 async function sandboxCall(agent, tool, { code, ...input }) {
   const c = parseCode(code);
-  if (!c) return { error: "That seat code is not valid. Ask the player for the code their world's page shows for your seat." };
+  if (!c) return { error: "That seat code is not valid. Ask the player for a seat code: they start a company at " + ((agent.props && agent.props.origin) || "") + "/world, and its page shows one code per seat." };
   const inp = tool === "join" ? { agent: checkInInfo(input, agent.server.server.getClientVersion()) } : input;
   return worldStub(agent.env, c.world_id).seat(code, tool, inp);
 }
 
 export class StarfareMcp extends McpAgent {
-  // The sandbox's tools and paragraph only while STARFARE_SANDBOX is on (this.env is set before field initializers run).
+  // STARFARE_SANDBOX on (the live game): init() swaps in the game's server, whose only tools are the seat tools. Off: the older
+  // single-agent game (take_hail, bench, Comms), kept for its tests. this.env is set before field initializers run.
   server = new McpServer({ name: "starfare", version: "0.1.0" }, { instructions: HOSTED_INSTRUCTIONS + (sandboxOn(this.env) ? SANDBOX_INSTRUCTIONS : "") });
   initialState = { run_id: null, bench_id: null };
 
@@ -97,6 +98,7 @@ export class StarfareMcp extends McpAgent {
   }
 
   async #call(tool, input) {
+    if (sandboxOn(this.env)) return Object.hasOwn(GAME_TOOLS, tool) ? sandboxCall(this, tool, input || {}) : { error: "Unknown tool " + tool };
     // A sandbox tool, or a run tool called with a seat code (a dispatcher flying a job), goes to the code's world.
     if (Object.hasOwn(SANDBOX_TOOLS, tool) || (Object.hasOwn(SANDBOX_RUN_TOOLS, tool) && input && input.code != null)) return sandboxCall(this, tool, input);
     if (Object.hasOwn(SANDBOX_RUN_TOOLS, tool) && !(input && input.run_id)) return { error: "Pass run_id from take_hail (or, in the sandbox, your seat code and the job_id)." };
@@ -109,6 +111,12 @@ export class StarfareMcp extends McpAgent {
   }
 
   async init() {
+    if (sandboxOn(this.env)) {
+      // Built here, where this.props (the site's origin) is set, so the instructions can name the page that starts a company.
+      this.server = new McpServer({ name: "starfare", version: "0.1.0" }, { instructions: gameInstructions(this.props && this.props.origin) });
+      registerTools(this.server, { call: (tool, input) => this.#call(tool, input) }, GAME_TOOLS);
+      return;
+    }
     registerTools(this.server, { call: (tool, input) => this.#call(tool, input) }, sandboxOn(this.env) ? { ...HOSTED_TOOLS, ...SANDBOX_RUN_TOOLS, ...SANDBOX_TOOLS } : HOSTED_TOOLS);
   }
 }

@@ -11,6 +11,7 @@ import { AuthorizationError, CimdFetchError, OAuthProvider } from "@cloudflare/w
 import { allowed, rateLimit, rpcCount, tooMany } from "./limit.js";
 import { mcpHandler } from "./mcp.js";
 import { FOLLOW_TOKEN, hub } from "./store.js";
+import { sandboxOn } from "./world.js";
 
 export const SCOPES = ["play"];
 export const PLAYER_ID = /^p_[0-9a-f]{16}$/;
@@ -99,9 +100,10 @@ button[value=approve]{background:var(--btn);color:var(--btnfg);border-color:var(
 <h1>Allow ${escape(d.clientName)} to play Starfare?</h1>
 <div class="card"><p>${who} Access will be sent to <strong>${escape(d.redirectHost)}</strong>.</p>
 ${d.redirectIsLoopback ? "<p><strong>This sends access to an app on your computer.</strong> Continue only if you just started connecting from it.</p>" : ""}
-<p>Starfare has no accounts. Allow gives this connector a new anonymous player id. It can take ride hails, plan pickups and rides, and post scores to the public <a href="/board">board</a> under that id. Starfare learns nothing about you.</p></div>
+${d.game ? "<p>Starfare has no accounts. Allow gives this connector a new anonymous player id. With a seat code from your company's page it can take that seat: run the company or fly a desk's ships. Starfare learns nothing about you.</p></div>"
+  : `<p>Starfare has no accounts. Allow gives this connector a new anonymous player id. It can take ride hails, plan pickups and rides, and post scores to the public <a href="/board">board</a> under that id. Starfare learns nothing about you.</p></div>
 <div class="card follow"><p><strong>Follow this agent:</strong> <a href="/agent/${follow}" target="_blank" rel="noopener">${escape(d.origin)}/agent/${follow}</a></p>
-<p class="dim">Open it now or keep the link. After you allow, it shows every booking this connector takes and each step it makes, with its own reasons, as it plays. Simulated.</p></div>
+<p class="dim">Open it now or keep the link. After you allow, it shows every booking this connector takes and each step it makes, with its own reasons, as it plays. Simulated.</p></div>`}
 <form method="post"><input type="hidden" name="handle" value="${escape(handle)}"><input type="hidden" name="follow" value="${follow}">
 <button name="decision" value="approve">Allow</button><button name="decision" value="deny">Deny</button></form>
 </main></body></html>`;
@@ -116,7 +118,7 @@ async function handleAuthorize(req, env) {
       const details = await oauth.describeConsent(request);
       const consent = await oauth.beginConsent(request);
       consent.headers.set("content-type", "text/html; charset=utf-8");
-      return new Response(consentPage({ ...details, origin: new URL(req.url).origin }, consent.handle, newFollowToken()), { status: 200, headers: consent.headers });
+      return new Response(consentPage({ ...details, origin: new URL(req.url).origin, game: sandboxOn(env) }, consent.handle, newFollowToken()), { status: 200, headers: consent.headers });
     }
     if (req.method !== "POST") return text(405, "Method not allowed");
     const form = await req.formData();
