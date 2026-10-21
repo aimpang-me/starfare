@@ -507,6 +507,13 @@ test("StarfareWorld: the executor assigns a job to a desk and its dispatcher fli
   assert.equal(all.jobs[0].total, d.total);
   assert.equal((await obj.seat(EX, "decline", { hail_id: "w0123456789ab-2" })).status, "declined");
   assert.equal((await obj.seat(EX, "reports")).counts.declined, 1);
+  // The inner desk hands j2 back before its rider is ready: it leaves the queue's open jobs and its hail is on the market again.
+  assert.match((await obj.seat(D2, "hand_back", { job_id: "j2", text: "x" })).error, /job j2 is on the Inner desk's queue, not yours/);
+  assert.match((await obj.seat(EX, "hand_back", { job_id: "j2", text: "x" })).error, /hand_back is a dispatcher's tool/);
+  const back = await obj.seat(D1, "hand_back", { job_id: "j2", text: "Our ships are all busy until after the rider is ready." });
+  assert.deepEqual([back.job_id, back.reason, back.counts], ["j2", "handed_back", "neither"]);
+  assert.match((await obj.seat(D1, "hand_back", { job_id: "j2", text: "x" })).error, /job j2 is abandoned/);
+  assert.equal((await obj.seat(EX, "assign", { hail_id: "w0123456789ab-5", desk: "D2" })).assigned, "j3");
   assert.match((await obj.seat(EX, "wait")).error, /join first/);
 });
 
@@ -584,15 +591,42 @@ test("StarfareWorld: wait returns the inbox at once, holds until a message or ti
 });
 
 // ---- layer scores (plan step 7) ----
+test("hand_back: early, the job counts neither way and its hail is back on the market; late it counts 0; a flying job can't", async () => {
+  const { w, take, fly } = jobs(), id = "w0123456789ab-0";
+  const run = await take(id);
+  w.jobs.j1.desk = "D1";
+  assert.throws(() => W.handBack(E, w, "D1", run, " ", T0), /needs a report/);
+  const early = W.handBack(E, w, "D1", run, "No ship of ours reaches the pickup in time.", T0);
+  assert.deepEqual([early.result.reason, early.result.counts, early.run.phase], ["handed_back", "neither", "abandoned"]);
+  assert.deepEqual([w.jobs.j1.phase, w.jobs.j1.reason], ["abandoned", "handed_back"]);
+  assert.equal(w.market.closed[id], undefined, "the hail is back on the market");
+  assert.ok(W.marketHails(E, w).some((h) => h.hail_id === id));
+  assert.deepEqual(W.takeInbox(E, w, "EX").map((e) => [e.kind, e.job_id, e.from]), [["report", "j1", "D1"], ["handed_back", "j1", "D1"]]);
+  assert.deepEqual(W.scoresView(E, w).desks[0], { desk: "D1", name: "Inner desk", mean: null, ended: 0, arrived: 0, abandoned: 0, handed_back: 1, open: 0 });
+  // Taken again, then handed back once the clock has passed the rider's ready time: it counts 0.
+  const again = await take(id);
+  w.jobs.j2.desk = "D1";
+  w.clock.jd = again.t0 + 0.5;
+  const late = W.handBack(E, w, "D1", again, "Too late now.", T0);
+  assert.deepEqual([late.result.reason, late.result.counts, w.market.closed[id]], ["handed_back_late", 0, "j2"]);
+  assert.deepEqual(W.scoresView(E, w).desks[0].mean, 0);
+  w.clock.jd = again.clock.jd;
+  const flying = await fly(await take("w0123456789ab-1"), undefined, 0);
+  if (flying.result.status === "checkpoint") assert.throws(() => W.handBack(E, w, "D1", flying.run, "x", T0), /flying, so answer its checkpoint with decide/);
+  else assert.throws(() => W.handBack(E, w, "D1", flying.run, "x", T0), /is arrived; only a job not yet dispatched/);
+});
+
 test("scores: a desk's mean over its ended jobs with abandoned ones as 0, and the company's served share times its mean", () => {
   const w = fresh();
   assert.deepEqual(W.scoresView(E, w).desks.map((d) => [d.desk, d.mean, d.ended]), [["D1", null, 0], ["D2", null, 0]]);
   const offered = W.marketHails(E, w).reduce((a, h) => a + h.party, 0);
   assert.equal(W.scoresView(E, w).company.offered_person_trips, offered);
   const row = (n, desk, phase, total) => ({ job_id: "j" + n, hail_id: "w0123456789ab-" + n, desk, phase, ...(total != null ? { total } : {}) });
-  w.jobs = { j1: row(1, "D1", "arrived", 80000), j2: row(2, "D1", "abandoned"), j3: row(3, "D1", "planning"), j4: row(4, "D2", "arrived", 60000), j5: row(5, "D2", "in_flight") };
+  w.jobs = { j1: row(1, "D1", "arrived", 80000), j2: row(2, "D1", "abandoned"), j3: row(3, "D1", "planning"), j4: row(4, "D2", "arrived", 60000), j5: row(5, "D2", "in_flight"),
+    j6: { ...row(6, "D1", "abandoned"), reason: "handed_back" } };
   const s = W.scoresView(E, w);
-  assert.deepEqual(s.desks[0], { desk: "D1", name: "Inner desk", mean: 40000, ended: 2, arrived: 1, abandoned: 1, open: 1 }, "the abandoned job counts 0; the open one is not counted yet");
+  assert.deepEqual(s.desks[0], { desk: "D1", name: "Inner desk", mean: 40000, ended: 2, arrived: 1, abandoned: 1, handed_back: 1, open: 1 },
+    "the abandoned job counts 0, the one handed back early counts neither way, and the open one is not counted yet");
   assert.deepEqual([s.desks[1].mean, s.desks[1].open], [60000, 1]);
   const served = W.marketRow(E, w, 1).party + W.marketRow(E, w, 4).party, mean = (80000 + 0 + 60000) / 3;
   assert.equal(s.company.served_person_trips, served);

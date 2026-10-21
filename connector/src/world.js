@@ -15,7 +15,7 @@ import { newRef, refCatchUp, refScores } from "./world-ref.js";
 import { worldSeed } from "./season-seed.js";
 import { hub } from "./store.js";
 import {
-  JOB_ID, SEATS, TICK_CAP_MS, WAIT_MAX_S, WorldError, addReport, busySeat, capDueMs, capTick, codeHash, declineHail, dropJob, inboxCount, jobMoved, jobRefusal, joinSeat,
+  JOB_ID, SEATS, TICK_CAP_MS, WAIT_MAX_S, WorldError, addReport, busySeat, capDueMs, capTick, codeHash, declineHail, dropJob, handBack, inboxCount, jobMoved, jobRefusal, joinSeat,
   marketPage, newSecret, newWorld, parseCode, post, queueView, reportsView, scopeRefusal, seatBrief, seatCode, sendMessage, syncJob, takeInbox, takeJob, transferShip,
   unseat, waitSeat, waitView, worldView,
 } from "./world-state.js";
@@ -170,6 +170,15 @@ export class StarfareWorld extends DurableObject {
       case "reports": return withRef(w, reportsView(E, w));
       case "queue": return queueView(E, w, seat, now);
       case "report": return addReport(w, seat, input.text, input.job_id ?? null, now);
+      case "hand_back": {
+        const before = await this.#job(E, input.job_id);
+        if (!before) return { error: "unknown job_id " + input.job_id + "; queue lists your desk's jobs" };
+        const no = jobRefusal(E, w, seat, before, tool, input);
+        if (no) return { error: no };
+        const { run, result } = handBack(E, w, seat, before, input.text, now);
+        await this.ctx.storage.put("job:" + input.job_id, run);
+        return result;
+      }
       case "message": return sendMessage(w, seat, input.to, input.text, now);
       default:
         if (RUN_TOOL_NAMES.includes(tool)) return this.#act(E, w, input.job_id, tool, input, now, seat);

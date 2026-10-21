@@ -33,7 +33,7 @@ const E = createRequire(import.meta.url)("../src/engine/sol-page.cjs");
 const R = E.R;
 const META = JSON.parse(readFileSync(new URL("../src/engine/meta.json", import.meta.url), "utf8"));
 const BENCH_KEY = "e2e-bench-key-0123456789abcdef01"; // a throwaway key for wrangler dev; the live one is a Wrangler secret
-const SANDBOX_SEAT_TOOLS = ["join", "company", "market", "assign", "decline", "transfer_ship", "reports", "queue", "report", "wait", "message"];
+const SANDBOX_SEAT_TOOLS = ["join", "company", "market", "assign", "decline", "transfer_ship", "reports", "queue", "report", "hand_back", "wait", "message"];
 const TOOLS = ["check_in", "check_pad", "decide", "dispatch", "get_hail", "get_my_rides", "list_hails", "plan_leg", "plan_pickup", "plan_ride", "space_weather", "start_bench", "take_hail"];
 
 const results = [];
@@ -818,6 +818,12 @@ async function phaseOff() {
     assert.deepEqual(rep.scores.desks.map((d) => [d.desk, d.mean, d.open]), [["D1", null, 1], ["D2", null, 0]], "an open job is not scored yet");
     assert.ok(rep.scores.company.offered_person_trips > 0);
     assert.equal((await ok(client, "queue", { code: D1 })).score.desk, "D1");
+    // Handed back in the tick it was given (before its rider is ready): it counts neither way and its hail is on the market again.
+    const back = await ok(client, "hand_back", { code: D1, job_id: "j1", text: "Handing j1 back to try the hand-back tool." });
+    assert.deepEqual([back.reason, back.counts], ["handed_back", "neither"]);
+    const after = await ok(client, "reports", { code: EX });
+    assert.deepEqual(after.scores.desks.map((d) => [d.desk, d.mean, d.open, d.handed_back]), [["D1", null, 0, 1], ["D2", null, 0, 0]]);
+    assert.ok((await ok(client, "market", { code: EX, limit: 200 })).hails.some((x) => x.hail_id === inner.hail_id), "the hail is back on the market");
   });
 
   await check("sandbox inbox: wait returns a message or a new job at once, a held wait wakes on a message, and the last seat's wait runs the tick", async () => {
