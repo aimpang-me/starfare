@@ -96,13 +96,35 @@ for (const page of ["site", "flight"]) test(`${page}: interpolation stays in the
   const blend = (a, z, frac) => a.map((n, axis) => n + (z[axis] - n) * frac);
   const last = arc.arc_au.length - 1, k = f * last, i = Math.floor(k), t = k - i, dt = (arc.arr_jd - arc.dep_jd) / last;
   const [a, p, c, d] = [Math.max(0, i - 1), i, i + 1, Math.min(last, i + 2)].map((n) => relative(arc.arc_au[n], arc.dep_jd + dt * n));
-  const local = p.map((v, x) =>0.5 * (2 * v + (c[x] - a[x]) * t + (2 * a[x] - 5 * v + 4 * c[x] - d[x]) * t * t + (3 * v - a[x] - 3 * c[x] + d[x]) * t * t * t));
+  const cr = (a, v, c, d) => 0.5 * (2 * v + (c - a) * t + (2 * a - 5 * v + 4 * c - d) * t * t + (3 * v - a - 3 * c + d) * t * t * t);
+  let local = p.map((v, x) => cr(a[x], v, c[x], d[x]));
+  if (page === "flight") { // the flight page turns about the planet: slerped direction, spline distance never below the nearer sample's
+    const len = (q) => Math.hypot(...q), [ra, rp, rc, rd] = [a, p, c, d].map(len), w = Math.acos(p.reduce((s, v, x) => s + (v / rp) * (c[x] / rc), 0));
+    const r = Math.max(Math.min(rp, rc), cr(ra, rp, rc, rd)), s0 = Math.sin((1 - t) * w) / Math.sin(w), s1 = Math.sin(t * w) / Math.sin(w);
+    local = p.map((v, x) => r * ((v / rp) * s0 + (c[x] / rc) * s1));
+  }
   const corrections = [[arc.from, L.dep, 0, arc.dep_jd], [arc.to, L.orb, arc.arc_au.length - 1, arc.arr_jd]].map(([id, t, n, tPlan]) => {
     const target = relative(SF.pos(id, t), t), stored = relative(arc.arc_au[n], tPlan);
     return target.map((v, axis) => v - stored[axis]);
   });
   const fix = blend(...corrections, f), expected = local.map((v, axis) => v + fix[axis]);
   assert.ok(distanceKm(relative(rp.at(j).p, j), expected) < 0.001, "the parent's curved solar orbit must not distort the local transfer chord");
+});
+
+test("flight: a local hop is never drawn under its planet's surface", async () => {
+  // The ISS crew change as flown live: a pickup hop to the ISS, then out to the Moon. Its samples are hours apart while
+  // the ship circles Earth every 90 minutes, and a spline through them, with the stations' slowed orbits blended in at
+  // the ends, went thousands of km under the surface.
+  const SF = await api("flight"), iso = (jd) => new Date((jd - 2440587.5) * 864e5).toISOString().slice(0, 16).replace("T", " ");
+  const a = E.R.planLeg("orbital-depot", "iss", dep, "energy", SEASON_END, "sf-01"), b = E.R.planLeg("iss", "lunar-data-center", a.arr_jd + 0.05, "energy", SEASON_END, "sf-01");
+  const arcs = {}, flown = [[a, "orbital-depot", "iss", "pickup"], [b, "iss", "lunar-data-center", "ride"]].map(([L, from, to, leg], i) => {
+    arcs["leg" + i] = { from, to, dep_jd: L.dep_jd, arr_jd: L.arr_jd, arc_au: L.arc_au };
+    return { leg, leg_id: "leg" + i, from, to, depart: iso(L.dep_jd), arrive: iso(L.arr_jd) };
+  });
+  const rp = SF.replay({ arcs, legs: [{ car: "sf-01" }], record: { score: { car: "SF-01", incidents: [] }, log: { flown } } });
+  let low = Infinity;
+  for (const L of rp.legs) for (let i = 0; i <= 2000; i++) { const j = L.dep + (L.orb - L.dep) * i / 2000; low = Math.min(low, distanceKm(rp.at(j).p, SF.pos("earth", j))); }
+  assert.ok(low >= 6378.137 * 1.02 - 1, "lowest drawn point " + Math.round(low) + " km from Earth's centre");
 });
 
 test("route geometry never connects separate legs or a holding ship", () => {
