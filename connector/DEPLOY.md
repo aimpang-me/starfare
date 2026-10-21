@@ -248,12 +248,16 @@ All against `wrangler dev` with real workerd and the MCP SDK v1 client, no mocks
 
 The copy is kept private by the owner gate (`src/owner.js`, `STARFARE_OWNER_GATE` "on"): every page and JSON view needs a cookie that `/owner` sets once the owner types the `STARFARE_OWNER_KEY` secret (32+ characters; the cookie holds a hash of it, never the key). Only the paths an agent calls without a browser stay open: `/mcp` (behind OAuth, and a grant needs the consent page, which is gated, so only the owner can connect a Grok bot), `/token`, `/register` and `/.well-known/*`. Sign-in attempts are rate limited, `/robots.txt` disallows everything and every response says `noindex`. Without the secret every path answers 503. Cloudflare Access was the other choice, but it would also stop grok.com reaching `/mcp` and `/token`.
 
-From `connector/` in PowerShell, deploy the reference Worker first (it binds `starfare-private`, which the second command creates):
+From `connector/` in PowerShell. The two Workers bind each other's Durable Objects, so on the first deploy neither can go up while the other is missing (Cloudflare error 10061). The first three lines put the reference Worker up once without its two bindings back to `starfare-private`; then both deploy with their real configs. Later deploys need only the two real `deploy` lines (ref first).
 
 ```powershell
 npm run build
-node node_modules/wrangler/bin/wrangler.js deploy -c wrangler.private-ref.jsonc
+(Get-Content wrangler.private-ref.jsonc) | Where-Object { $_ -notmatch '"script_name": "starfare-private"' } | Set-Content wrangler.private-ref.boot.jsonc
+node node_modules/wrangler/bin/wrangler.js deploy -c wrangler.private-ref.boot.jsonc
+Remove-Item wrangler.private-ref.boot.jsonc
 node node_modules/wrangler/bin/wrangler.js deploy -c wrangler.private.jsonc
+node node_modules/wrangler/bin/wrangler.js deploy -c wrangler.private-ref.jsonc
+New-Item -ItemType Directory -Force C:\Users\PC-AIMPANG\starfare-private | Out-Null
 $b = New-Object byte[] 24; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); $k = -join ($b | % { $_.ToString('x2') }); Set-Content -NoNewline C:\Users\PC-AIMPANG\starfare-private\owner-key.txt $k
 Get-Content -Raw C:\Users\PC-AIMPANG\starfare-private\owner-key.txt | node node_modules/wrangler/bin/wrangler.js secret put STARFARE_OWNER_KEY -c wrangler.private.jsonc
 ```
