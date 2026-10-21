@@ -434,7 +434,10 @@ async function phaseOff() {
     assert.equal(rec.live.simulated, true); assert.equal(rec.live.lands_at_ms, null);
     assert.deepEqual([rec.live.hold.n, rec.live.hold.at], [s.checkpoint, s.sky_at]);
     assert.deepEqual(rec.live.checkpoints.map((c) => c.decision), [null]);
-    assert.ok(rec.live.track.length >= 2 && rec.live.track.every((p, k) => k === 0 || (p[0] >= rec.live.track[k - 1][0] && p[1] >= rec.live.track[k - 1][1])), "the track runs forward in wall and sky time");
+    // A ride held at launch before its first leg flies has a one-point track: the ship waits where it is parked.
+    const tr = rec.live.track;
+    assert.ok(tr.length >= 2 || (tr.length === 1 && rec.live.hold.kind === "launch_hold"), JSON.stringify({ hold: rec.live.hold, track: tr }));
+    assert.ok(tr.every((p, k) => k === 0 || (p[0] >= tr[k - 1][0] && p[1] >= tr[k - 1][1])), "the track runs forward in wall and sky time: " + JSON.stringify(tr));
     assert.deepEqual(rec.trail.slice(-3).map((t) => t.tool), ["plan_pickup", "plan_ride", "dispatch"]);
     assert.equal(rec.trail.at(-1).note, NOTE);
     assert.doesNotMatch(text, /player_id|seed|hindsight/);
@@ -875,6 +878,91 @@ async function phaseOff() {
     assert.ok(view.map.places.some((p) => p.id === "saturn" && p.xy.length === 2) && view.map.places.some((p) => p.id === "titan-dock" && !p.xy));
     const get = await fetch(`${w.base}/world/${v.world_id}/codes`); assert.equal(get.status, 405); assert.equal(get.headers.get("allow"), "POST"); await get.body?.cancel();
     const miss = await fetch(`${w.base}/world/w_00000000000000000000/codes`, { method: "POST" }); assert.equal(miss.status, 404); await miss.body?.cancel();
+  });
+
+  await check("sandbox play: a scripted executor and two scripted dispatchers run a company for 8 ticks; jobs land, the inbox, scores, comms and map agree", async () => {
+    const v = await (await fetch(`${w.base}/world/new`, { method: "POST" })).json(), C = v.codes, TICKS = 8;
+    for (const seat of ["EX", "D1", "D2"]) await ok(client, "join", { code: C[seat], agent_name: "e2e " + seat, model: "scripted" });
+    const flown = {}, reports = [], inbox = { EX: [], D1: [], D2: [] };
+    // A dispatcher flies each planning job on the nearest of its desk's free ships that plans (parked at the pickup, then in
+    // its planet's system): least energy, the planned fare and arrival, never asked at a checkpoint. It reports each job it flies.
+    const dispatcher = async (seat) => {
+      const q = await ok(client, "queue", { code: C[seat] });
+      for (const j of q.jobs.filter((x) => x.phase === "planning")) {
+        const h = await ok(client, "get_hail", { code: C[seat], job_id: j.job_id });
+        const near = (f) => (f.parked_at.id === h.pickup_at.id ? 0 : R.system(f.parked_at.id) === R.system(h.pickup_at.id) ? 1 : 2);
+        for (const c of h.fleet.filter((f) => f.busy_until === "free").sort((a, b) => near(a) - near(b)).slice(0, 3)) {
+          const p = await call(client, "plan_pickup", { code: C[seat], job_id: j.job_id, car: c.car, objective: "energy" });
+          if (p.isError || !p.value.leg_id || p.value.gate === "FAIL") continue;
+          const r = await call(client, "plan_ride", { code: C[seat], job_id: j.job_id, after_leg: p.value.leg_id, objective: "energy" });
+          if (r.isError || !r.value.leg_id || r.value.gate === "FAIL") continue;
+          const d = await call(client, "dispatch", { code: C[seat], job_id: j.job_id, pickup_leg: p.value.leg_id, ride_leg: r.value.leg_id, quoted_fare_usd: r.value.fare_usd, quoted_arrival: r.value.arrive, ask_after_hours: "never" });
+          if (d.isError || d.value.ok === false) continue;
+          flown[j.job_id] = { seat, car: c.car, status: d.value.status };
+          const text = "Flew " + j.job_id + " on " + c.car + ".";
+          await ok(client, "report", { code: C[seat], job_id: j.job_id, text }); reports.push([seat, j.job_id, text]);
+          break;
+        }
+      }
+    };
+    for (let t = 0; t < TICKS; t++) {
+      // The executor gives each desk up to two quick hops in its region a tick, while the desk has a free ship.
+      const co = await ok(client, "company", { code: C.EX }), free = Object.fromEntries(co.desks.map((d) => [d.desk, d.ships.filter((s) => s.free === "free").length]));
+      const m = await ok(client, "market", { code: C.EX, kind: "quick", limit: 80 }), given = { D1: 0, D2: 0 };
+      for (const hl of m.hails) {
+        const desk = hl.region === "inner" ? "D1" : "D2";
+        if (given[desk] >= Math.min(2, free[desk])) continue;
+        const a = await call(client, "assign", { code: C.EX, hail_id: hl.hail_id, desk });
+        if (!a.isError) given[desk]++;
+      }
+      await dispatcher("D1"); await dispatcher("D2");
+      // Every seat waits; the last wait runs the tick. A seat whose inbox already held events comes back with those at once
+      // (still counted as waiting), and gets the tick on its next wait.
+      const waits = await Promise.all(["EX", "D1", "D2"].map((seat) => ok(client, "wait", { code: C[seat], seconds: 30 }).then((r) => [seat, r])));
+      for (const [seat, r] of waits) inbox[seat].push(...r.events);
+    }
+    const view = await (await fetch(v.view)).json(), jobs = Object.fromEntries(view.jobs.map((j) => [j.job_id, j]));
+    assert.equal(view.clock.tick, TICKS);
+    for (const seat of ["EX", "D1", "D2"]) {
+      const seen = inbox[seat].filter((e) => e.kind === "tick").map((e) => e.tick), pending = (await ok(client, seat === "EX" ? "company" : "queue", { code: C[seat] })).inbox;
+      // A new tick replaces an unread one, so a seat whose wait comes back at once (its inbox held reports) and then runs
+      // the next tick itself skips a number. What it sees still runs forward, ending at the last tick or with it waiting.
+      assert.ok(seen.length >= 1 && seen.every((t, i) => t >= 1 && t <= TICKS && (i === 0 || t > seen[i - 1])), seat + " saw the ticks in order: " + JSON.stringify(seen));
+      assert.ok(seen.at(-1) === TICKS || pending > 0, seat + " saw the last tick or has it waiting: " + JSON.stringify(seen) + " inbox " + pending);
+    }
+    const ids = Object.keys(flown);
+    assert.ok(ids.length >= 3, "the scripted company flew at least 3 jobs: " + JSON.stringify(flown));
+    for (const id of ids) {
+      const j = jobs[id], desk = view.desks.find((d) => d.desk === flown[id].seat);
+      assert.equal(j.desk, flown[id].seat); assert.equal(j.car, flown[id].car);
+      assert.ok(desk.ships.some((s) => s.car === j.car), id + " flew on its own desk's ship");
+      assert.ok(j.legs && j.legs.length >= 1 && j.legs.at(-1).arrive === j.lands, id + " has its legs, ending when it lands");
+    }
+    // Jobs whose landing the clock has passed have landed, and their desk and the executor heard.
+    const landed = view.jobs.filter((j) => j.landed).map((j) => j.job_id).sort();
+    for (const j of view.jobs) if (j.lands) assert.equal(j.landed, j.lands <= view.clock.sky_now, j.job_id + " lands " + j.lands);
+    assert.ok(landed.length >= 1, "jobs landed: " + JSON.stringify(view.jobs.map((j) => [j.job_id, j.phase, j.lands, j.landed])));
+    // A landing on the last tick is still in its seats' inboxes: one more wait each brings it (and may run another tick).
+    for (const seat of ["EX", "D1", "D2"]) inbox[seat].push(...(await ok(client, "wait", { code: C[seat], seconds: 0 })).events);
+    const heard = (seat) => inbox[seat].filter((e) => e.kind === "landed").map((e) => e.job_id);
+    for (const id of landed) { assert.ok(heard("EX").includes(id), "EX heard " + id + " land"); assert.ok(heard(jobs[id].desk).includes(id), jobs[id].desk + " heard " + id + " land"); }
+    for (const id of ids) assert.ok(!heard(flown[id].seat === "D1" ? "D2" : "D1").includes(id), "the other desk never hears " + id);
+    // Scores: each desk's mean is the mean of its ended jobs' totals; the company serves those person-trips.
+    for (const d of view.scores.desks) {
+      const ended = view.jobs.filter((j) => j.desk === d.desk && (j.phase === "arrived" || j.phase === "abandoned"));
+      assert.equal(d.ended, ended.length, d.desk);
+      if (ended.length) assert.ok(Math.abs(d.mean - ended.reduce((a, j) => a + (j.total ?? 0), 0) / ended.length) <= 0.05, d.desk + " mean (rounded to 0.1)");
+    }
+    assert.ok(view.scores.company.served_person_trips > 0 && view.scores.company.score > 0);
+    // Comms: every report reached the executor's inbox and the view, in the dispatcher's own words.
+    assert.deepEqual(view.reports.map((r) => [r.seat, r.job_id, r.text]), reports);
+    assert.deepEqual(inbox.EX.filter((e) => e.kind === "report").map((e) => [e.from, e.job_id, e.text]), reports);
+    assert.ok(inbox.D1.some((e) => e.kind === "assigned") && inbox.D2.some((e) => e.kind === "assigned"));
+    // The map has every ship's place, and the page serves for this world.
+    const at = new Set(view.map.places.map((p) => p.id));
+    for (const d of view.desks) for (const s of d.ships) assert.ok(at.has(s.at.id), s.car + " at " + s.at.id);
+    assert.equal((await fetch(v.page)).status, 200);
+    report.sandbox_play = { flown, landed, scores: view.scores, reports: reports.length };
   });
 
   await check("sandbox world: an unknown world_id is 404, a malformed path is 404, and the wrong method is 405", async () => {
