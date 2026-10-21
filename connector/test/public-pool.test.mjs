@@ -14,6 +14,7 @@ function worker() {
     engine: async () => E, META: { sky: game.SKY, look: {}, sha256: "a".repeat(64) },
     Date: class extends Date { static now() { return NOW; } },
     WORLD_ID: /^w_[0-9a-f]{20}$/, sandboxOn: () => false, worldStub() { throw new Error("the sandbox world is off"); }, hex: () => "0",
+    ownerGateOn: () => false, ownerGate() { throw new Error("the owner gate is off"); },
     oauthOn: (env) => env.STARFARE_OAUTH === "on", oauthFetch() { throw new Error("public route incorrectly requires OAuth"); },
     siteHtml: "<script>window.SITE = __SITE__;</script>", boardHtml,
     hub: () => ({ ensurePool: async () => 3, board: async () => ({ best: {
