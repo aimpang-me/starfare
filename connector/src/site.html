@@ -1664,13 +1664,20 @@ function drawHoles() {
   Object.keys(DOCKS).forEach(function (id) { var o = DOCKS[id]; if (o.visible) holeAt(o.position, o.scale.x, 0.5); });
   SolLines.setHoles(cam, HOLES);
 }
+// A station's own model grows from the 15 px glyph as the camera closes in, to about 160 px at the distance a jump to it
+// stops (3e-7 AU, about 45 km), so its model reads instead of staying a speck. Illustrative size, like the ships.
+var STN_DOCK_K = 160 * 3e-7, STN_DOCK_MAX = 180;
+function dockPx(id, c) {
+  var P = SF.place(id);
+  return P && P.kind === "station" ? clamp(STN_DOCK_K / Math.max(c.distanceTo(EYE), 1e-12), DOCK_PX, STN_DOCK_MAX) : DOCK_PX;
+}
 function drawDocks() {
   Object.keys(DOCKS).forEach(function (id) { DOCKS[id].visible = false; });
   PLACES.forEach(function (p) { if (p.kind === "station" && LAY.plc && sepPx(p.id) > 10) DOCKNEED[p.id] = 1; });
   Object.keys(DOCKNEED).forEach(function (id) {
     var v = marker(id, MAPJD), c = dockCentre(id, v); if (!c) return;
     var D = DOCKS[id]; if (!D) { D = DOCKS[id] = makeDock(SF.place(id)); scene.add(D); }
-    D.visible = true; D.position.copy(c).sub(EYE); D.scale.setScalar(Math.max(SHIP_D / 6, pxAt(v) * DOCK_PX));
+    D.visible = true; D.position.copy(c).sub(EYE); D.scale.setScalar(Math.max(SHIP_D / 6, pxAt(v) * dockPx(id, c)));
     if (D.userData.setPx) D.userData.setPx(D.scale.x / pxAt(v));
     D.rotation.set(0.5, reduced ? 0.6 : IDLE_T * 0.15 + idlePhase(id), 0);
   });

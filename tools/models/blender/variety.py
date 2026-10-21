@@ -483,7 +483,8 @@ def debris_rock():
 # like a taxi, Dawn is the mid hull, RTG ships fly the outer system like liners. Seats are not drawn, so this is
 # only a look. display_scale sizes a hull against the others on the map (the true lengths would hide a taxi).
 PLACEMENT = {
-    "classes": {"ds1": "ship-taxi", "dawn": "ship-shuttle", "shuttle": "ship-shuttle", "rtg": "ship-liner"},
+    "classes": {"ds1": "ship-taxi", "dawn": "ship-shuttle", "shuttle": "ship-shuttle", "rtg": "ship-liner",
+                "star-taxi": "ship-taxi", "star-shuttle": "ship-shuttle", "star-liner": "ship-liner"},
     "display_scale": {"ship-taxi": 0.7, "ship-shuttle": 0.9, "ship-liner": 1.35},
     "stations": {"orbital-depot": "station-orbital-depot", "lunar-data-center": "station-lunar-data-center",
                  "mars-base": "station-mars-base", "ceres-port": "station-ceres-port", "titan-dock": "station-titan-dock"},

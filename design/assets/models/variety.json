@@ -3,7 +3,10 @@
   "dawn": "ship-shuttle",
   "ds1": "ship-taxi",
   "rtg": "ship-liner",
-  "shuttle": "ship-shuttle"
+  "shuttle": "ship-shuttle",
+  "star-liner": "ship-liner",
+  "star-shuttle": "ship-shuttle",
+  "star-taxi": "ship-taxi"
  },
  "debris": [
   "debris-stage",
