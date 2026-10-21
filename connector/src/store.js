@@ -20,6 +20,18 @@ import { seasonSeed } from "./season-seed.js";
 import { distinctPlayers as playersIn, ensurePool as freezePool, poolSize as storedPool, recordBest } from "./hub-pool.js";
 
 export const hub = (env) => env.STARFARE_HUB.get(env.STARFARE_HUB.idFromName("hub"));
+/** A legFn (game.js) that plans through the hub's leg cache, or null without a hub (tests plan each leg themselves). */
+export const hubLegFn = (env, E) => {
+  if (!env.STARFARE_HUB) return null;
+  const h = hub(env);
+  return async (from, to, t, obj, end, ship, aboard) => {
+    const key = META.sha256 + "|" + legKey(from, to, t, obj, end, ship, aboard), hit = await h.legGet(key);
+    if (hit && hit.arc_au) return { leg: hit, cached: true };
+    const leg = computeLeg(E, from, to, t, obj, end, ship, aboard);
+    await h.legPut(key, leg);
+    return { leg, cached: false };
+  };
+};
 export const runStub = (env, runId) => env.STARFARE_RUN.get(env.STARFARE_RUN.idFromName(runId));
 
 const CACHE_MAX = 5000;

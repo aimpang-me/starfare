@@ -55,27 +55,45 @@ const freshMinute = async (need = 20000) => { const left = 60000 - (Date.now() %
 const running = new Set();
 process.on("exit", () => { for (const c of running) try { process.kill(-c.pid, "SIGKILL"); } catch {} });
 
+// With the sandbox on, the reference company's Worker (wrangler.ref.jsonc) runs as a second wrangler dev beside the main one,
+// in its own process as it has its own isolate in production, so its planning CPU can't stall the world's calls. The two
+// find each other through a dev registry of their own.
 async function startWorker(vars = {}, persistTo = null) {
   const port = await freePort(), persist = persistTo || mkdtempSync(join(tmpdir(), "sol-e2e-")), log = workerLog = [];
-  const args = [join(DIR, "node_modules", "wrangler", "bin", "wrangler.js"), "dev", "--port", String(port), "--ip", "127.0.0.1", "--persist-to", persist];
-  for (const [k, v] of Object.entries(vars)) args.push("--var", `${k}:${v}`);
-  const child = spawn(process.execPath, args, { cwd: DIR, detached: true, windowsHide: true, env: { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "1" } });
-  running.add(child);
-  child.stdout.on("data", (c) => log.push(String(c))); child.stderr.on("data", (c) => log.push(String(c)));
-  let exited = false; child.on("exit", () => { exited = true; });
-  const base = `http://127.0.0.1:${port}`, deadline = Date.now() + 180_000;
-  for (;;) {
-    if (exited) throw new Error(`wrangler dev exited early:\n${log.join("").slice(-2000)}`);
-    if (Date.now() > deadline) throw new Error(`wrangler dev not ready:\n${log.join("").slice(-2000)}`);
-    try { await fetch(`${base}/`); break; } catch { await sleep(250); }
+  const registry = mkdtempSync(join(tmpdir(), "sol-e2e-registry-")), env = { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "1", WRANGLER_REGISTRY_PATH: registry };
+  const spawnDev = async (args, tag) => {
+    const child = spawn(process.execPath, [join(DIR, "node_modules", "wrangler", "bin", "wrangler.js"), "dev", ...args, "--ip", "127.0.0.1", "--persist-to", persist], { cwd: DIR, detached: true, windowsHide: true, env });
+    running.add(child);
+    child.stdout.on("data", (c) => log.push(tag + String(c))); child.stderr.on("data", (c) => log.push(tag + String(c)));
+    child.exited = false; child.on("exit", () => { child.exited = true; });
+    return child;
+  };
+  const ready = async (child, base) => {
+    const deadline = Date.now() + 180_000;
+    for (;;) {
+      if (child.exited) throw new Error(`wrangler dev exited early:\n${log.join("").slice(-2000)}`);
+      if (Date.now() > deadline) throw new Error(`wrangler dev not ready:\n${log.join("").slice(-2000)}`);
+      try { await (await fetch(`${base}/`)).body?.cancel(); break; } catch { await sleep(250); }
+    }
+  };
+  const children = [];
+  if (vars.STARFARE_SANDBOX === "on") {
+    const refPort = await freePort(), ref = await spawnDev(["-c", "wrangler.ref.jsonc", "--port", String(refPort), "--inspector-port", String(await freePort())], "[ref] ");
+    children.push(ref);
+    await ready(ref, `http://127.0.0.1:${refPort}`);
   }
+  const args = ["--port", String(port), "--inspector-port", String(await freePort())];
+  for (const [k, v] of Object.entries(vars)) args.push("--var", `${k}:${v}`);
+  const child = await spawnDev(args, "");
+  children.unshift(child);
+  const base = `http://127.0.0.1:${port}`;
+  await ready(child, base);
   return { base, log, stop: async ({ keepStorage = false } = {}) => {
-    await stopWorkerProcess(child);
-    running.delete(child);
+    for (const c of children) { await stopWorkerProcess(c); running.delete(c); }
+    try { await rm(registry, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch {}
     if (!keepStorage) try { await rm(persist, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch {}
   } };
 }
-
 async function connect(base, kind = "streamable-http", opts) {
   const client = new Client({ name: "sol-e2e", version: "1" });
   const url = new URL(`${base}/mcp`);

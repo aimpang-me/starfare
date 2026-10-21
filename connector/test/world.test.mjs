@@ -129,19 +129,27 @@ let runSeq = 0;
 function worldDO(env = {}) {
   return worldOf(worldClass(), env);
 }
-/** Several StarfareWorld instances by name, as env.STARFARE_WORLD gives them: a world and its reference ("ref:<world_id>"). */
+/** The bindings of a world and its reference company, as the two Workers give them: StarfareWorld instances by world_id
+ *  (env.STARFARE_WORLD) and StarfareRef instances by world_id (env.STARFARE_REF), each instance created on first use. */
 function worldNS(env = {}) {
-  const Cls = worldClass(), objs = new Map(), ns = { idFromName: (n) => n, get: (n) => (objs.has(n) ? objs : objs.set(n, worldOf(Cls, full))).get(n).obj };
-  const full = { ...env, STARFARE_WORLD: ns };
-  return { get: (n) => (ns.get(n), objs.get(n)) };
+  const ns = (Cls) => { const objs = new Map(); return { objs, idFromName: (n) => n, get: (n) => (objs.has(n) ? objs : objs.set(n, worldOf(Cls, full))).get(n).obj }; };
+  const worlds = ns(worldClass()), refs = ns(refClass()), full = { ...env, STARFARE_WORLD: worlds, STARFARE_REF: refs };
+  return { world: (n) => (worlds.get(n), worlds.objs.get(n)), ref: (n) => (refs.get(n), refs.objs.get(n)) };
 }
-function worldClass() {
-  const deps = { DurableObject: class { constructor(ctx, env) { this.ctx = ctx; this.env = env; } }, engine, worldSeed, ...W, ...G, ...Ref,
-    META: { sha256: "a".repeat(64) }, newRunId: () => "run_" + String(++runSeq).padStart(20, "0"), hub: () => { throw new Error("no hub in tests"); } };
-  const source = readFileSync(new URL("../src/world.js", import.meta.url), "utf8")
+/** A Durable Object class from src/<file>, its imports replaced by deps (Workers APIs stubbed). */
+function loadClass(file, name, deps) {
+  const source = readFileSync(new URL("../src/" + file, import.meta.url), "utf8")
     .replace(/^import\s[\s\S]*?;\r?\n/gm, "").replace(/^export \{[^}]*\} from [^;]*;\r?\n/gm, "")
     .replace(/\bexport (?=const |class )/g, "");
-  return new Function(...Object.keys(deps), source + "\nreturn { StarfareWorld };")(...Object.values(deps)).StarfareWorld;
+  return new Function(...Object.keys(deps), source + "\nreturn { " + name + " };")(...Object.values(deps))[name];
+}
+const DOBase = class { constructor(ctx, env) { this.ctx = ctx; this.env = env; } };
+function worldClass() {
+  return loadClass("world.js", "StarfareWorld", { DurableObject: DOBase, engine, worldSeed, ...W, ...G, ...Ref,
+    newRunId: () => "run_" + String(++runSeq).padStart(20, "0"), hubLegFn: () => null });
+}
+function refClass() {
+  return loadClass("ref.js", "StarfareRef", { DurableObject: DOBase, engine, ...Ref, hubLegFn: () => null });
 }
 function worldOf(StarfareWorld, env) {
   const saved = new Map(), clock = { alarm: null };
@@ -669,13 +677,13 @@ test("the reference company: each tick it gives hails to the desk of the nearest
   assert.ok(s.company.ended > 0 && s.company.score > 0);
 });
 
-test("StarfareWorld: the reference company plays in its own instance, a job per alarm, and sends its scores back", async () => {
-  const ns = worldNS({ WORLD_TICK_CAP_S: "60" }), main = ns.get(ID), { obj, saved } = main;
+test("StarfareRef: the reference company plays beside its world, a job per alarm, and sends its scores back", async () => {
+  const ns = worldNS({ WORLD_TICK_CAP_S: "60" }), main = ns.world(ID), { obj, saved } = main;
   const { codes } = await obj.create(ID);
   await new Promise((r) => setImmediate(r));
-  const ref = ns.get("ref:" + ID);
+  const ref = ns.ref(ID);
   assert.equal(ref.saved.get("ref").to_tick, 0, "creating the world starts its reference at tick 0");
-  assert.equal(ref.saved.get("world"), undefined, "the reference's instance holds no world, so no seat code works there");
+  assert.equal(ref.saved.get("world"), undefined, "the reference holds no world, so no seat code works there");
   await obj.seat(codes.EX, "join");
   await obj.seat(codes.EX, "wait", { seconds: 0 });
   await new Promise((r) => setImmediate(r));
@@ -692,5 +700,5 @@ test("StarfareWorld: the reference company plays in its own instance, a job per 
   assert.equal(saved.get("world").ref_scores.tick, 1);
   assert.equal((await obj.view()).scores.reference.tick, 1);
   assert.doesNotMatch(JSON.stringify(c.scores.reference), /job_id|hail_id/, "only the reference's scores are shown, not its jobs");
-  assert.match((await ref.obj.seat(codes.EX, "company")).error, /seat code is not valid/);
+  assert.equal(ref.obj.seat, undefined, "the reference answers no seat calls");
 });

@@ -7,6 +7,7 @@
     "build": "node build.mjs",
     "sim": "node sim.mjs",
     "dev": "node build.mjs && node node_modules/wrangler/bin/wrangler.js dev",
+    "dev:ref": "node build.mjs && node node_modules/wrangler/bin/wrangler.js dev -c wrangler.ref.jsonc --port 8788",
     "test": "npm run test:engine && npm run test:unit && npm run test:e2e",
     "test:engine": "node ../world/engine/test-hazards.js && node ../world/engine/test-keyed-hash.js && node ../world/engine/test-local-gm.js && node ../world/engine/test-score-v2.js && node ../world/engine/test-seeded-hails.js && node ../world/engine/test-shared.js && node ../world/engine/test-catalog-flyable.js && node ../world/engine/test-no-roadster.mjs && node ../world/engine/test-reroute.js && node ../world/engine/test-drive.js && node ../world/engine/test-ship-state.js && node ../world/lore/test-lore.js",
     "test:unit": "node build.mjs && node --test test/*.test.mjs",
@@ -14,7 +15,7 @@
     "e2e:off": "node build.mjs && node test/e2e.mjs --mode=off",
     "e2e:on": "node build.mjs && node test/e2e.mjs --mode=on",
     "bench": "node build.mjs && node test/bench.mjs",
-    "dry-run": "node build.mjs && node node_modules/wrangler/bin/wrangler.js deploy --dry-run --outdir /tmp/starfare-dry"
+    "dry-run": "node build.mjs && node node_modules/wrangler/bin/wrangler.js deploy --dry-run --outdir /tmp/starfare-dry && node node_modules/wrangler/bin/wrangler.js deploy --dry-run -c wrangler.ref.jsonc --outdir /tmp/starfare-ref-dry"
   },
   "dependencies": {
     "@cloudflare/workers-oauth-provider": "1.2.3",
