@@ -213,7 +213,7 @@ function scoresPanel(v) {
     h("div", { class: "ph" }, h("h2", {}, "Scores"), h("div", { class: "r" }, h("span", { class: "tag" }, "Points only · Simulated"))),
     h("div", { class: "pb" }, h("div", { class: "score" }, rows),
       h("p", { class: "faint", style: "margin-top:10px;font-size:12px" },
-        "A desk's mean counts an abandoned job as 0. The company score is the share of person-trips flown times the mean. ",
+        "A desk's mean counts an abandoned job as 0, and a job handed back before its rider was ready not at all. The company score is the share of person-trips flown times the mean. ",
         ref ? "The reference is a greedy executor with naive dispatchers on this world's market and weather, at tick " + ref.tick + "." : "The reference company hasn't reported yet.")));
 }
 
@@ -240,13 +240,15 @@ function jobsPanel(v) {
         h("td", {}, j.title, j.ship ? h("div", { class: "faint", style: "font-size:12px" }, j.ship, j.lands ? (j.landed ? " · landed " : " · lands ") + j.lands : "") : null),
         h("td", {}, j.desk ? [h("span", { class: "dot " + j.desk, "aria-hidden": "true" }), " ", j.desk] : "–"),
         h("td", {}, status(j)),
-        h("td", { class: "n" }, j.total != null ? fmt(j.total) : j.phase === "abandoned" ? "0" : "–"))))))
+        h("td", { class: "n" }, j.total != null ? fmt(j.total) : j.phase === "abandoned" && j.reason !== "handed_back" ? "0" : "–"))))))
       : h("p", { class: "empty" }, "No jobs yet. The executor takes bookings from the market with assign."));
 }
 function status(j) {
   if (j.phase === "planning") return h("span", { class: "chip work" }, "Planning");
   if (j.phase === "in_flight") return h("span", { class: "chip warn" }, "At a checkpoint");
   if (j.phase === "arrived") return h("span", { class: "chip wait" }, j.landed ? "Landed" : "Flying");
+  if (j.reason === "handed_back") return h("span", { class: "chip off" }, "Handed back early");
+  if (j.reason === "handed_back_late") return h("span", { class: "chip off" }, "Handed back late");
   return h("span", { class: "chip off" }, "Abandoned" + (j.reason ? " (" + j.reason + ")" : ""));
 }
 

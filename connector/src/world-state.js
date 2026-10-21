@@ -251,6 +251,26 @@ export function dropJob(E, w, run) {
   return { run: next, result: { ok: true, job_id: run.world.job_id, status: "arrived", total: next.score.total, note: next.score.note } };
 }
 
+/** hand_back: a dispatcher gives a job it has not dispatched back to the executor, with a report saying why. Handed back
+ *  before its rider is ready (early), the job counts neither way and its hail goes back on the market for the executor to
+ *  assign again; after that (late) it ends abandoned and counts 0, as a drop does. Returns { run, result }. */
+export function handBack(E, w, seat, run, text, nowMs) {
+  const id = run.world.job_id, phase = phaseOf(run);
+  if (phase !== "planning") fail("job " + id + " is " + phase + (phase === "in_flight" ? ": it is flying, so answer its checkpoint with decide" : "") + "; only a job not yet dispatched can be handed back");
+  if (!String(text ?? "").trim()) fail("hand_back needs a report: say why your desk can't fly this job");
+  const early = w.clock.jd < run.t0 - 1e-9, next = structuredClone(run);
+  next.phase = "abandoned";
+  next.abandoned_reason = early ? "handed_back" : "handed_back_late";
+  jobMoved(w, next);
+  if (early) delete w.market.closed[run.id];
+  addReport(w, seat, text, id, nowMs);
+  post(w, ["EX"], { kind: "handed_back", from: seat, at_ms: nowMs, job_id: id, hail_id: run.id, early });
+  return { run: next, result: { ok: true, job_id: id, hail_id: run.id, status: "abandoned", reason: next.abandoned_reason, counts: early ? "neither" : 0,
+    note: early
+      ? "Handed back before the rider was ready (" + isoJD(run.t0) + "), so this job counts neither way and its hail is back on the market for the executor."
+      : "Handed back after the rider was ready (" + isoJD(run.t0) + "), so this job counts 0 in your desk's mean." } };
+}
+
 /** The jobs still open (planning, or held at a checkpoint), oldest first. */
 export const liveJobs = (w) => Object.values(w.jobs || {}).filter((j) => LIVE.has(j.phase));
 
@@ -279,7 +299,7 @@ export async function codeHash(secret) {
 const BOTH = ["join", "wait", "message"];
 export const SCOPES = {
   executor: [...BOTH, "company", "market", "assign", "decline", "transfer_ship", "reports"],
-  dispatcher: [...BOTH, "queue", "get_hail", "plan_pickup", "plan_ride", "plan_leg", "check_pad", "space_weather", "dispatch", "decide", "report"],
+  dispatcher: [...BOTH, "queue", "get_hail", "plan_pickup", "plan_ride", "plan_leg", "check_pad", "space_weather", "dispatch", "decide", "report", "hand_back"],
 };
 export const roleOf = (seat) => (seat === "EX" ? "executor" : "dispatcher");
 /** Why seat may not call tool, or null when it may. */
@@ -492,7 +512,9 @@ export function waitView(E, w, seat, events, waitedMs, nowMs) {
 // given that has ended, an abandoned one (dropped, or gone cold) counting 0: the season board's rule (seasonStandings), so
 // keeping only the easy jobs does not pay. The company (the executor) is judged by the share of the market's person-trips it
 // flew times the mean over every ended job. Jobs still open are counted beside the means, not in them.
-const ended = (j) => j.phase === "arrived" || j.phase === "abandoned";
+// A job handed back early (before its rider was ready) counts neither way: it is not ended, open or served.
+const returned = (j) => j.phase === "abandoned" && j.reason === "handed_back";
+const ended = (j) => j.phase === "arrived" || (j.phase === "abandoned" && !returned(j));
 const meanOf = (jobs) => {
   const st = seasonStandings(jobs.filter(ended).map((j) => ({ player_id: "j:all", phase: j.phase, total: j.total, plans_used: 1, forecasts_used: 0 })), 1);
   return st.ranked.length ? st.ranked[0].mean : null;
@@ -503,7 +525,7 @@ export function scoresView(E, w) {
   const desks = Object.keys(w.desks).map((d) => {
     const mine = jobs.filter((j) => j.desk === d);
     return { desk: d, name: w.desks[d].name, mean: meanOf(mine), ended: mine.filter(ended).length, arrived: mine.filter((j) => j.phase === "arrived").length,
-      abandoned: mine.filter((j) => j.phase === "abandoned").length, open: mine.filter((j) => LIVE.has(j.phase)).length };
+      abandoned: mine.filter((j) => j.phase === "abandoned" && !returned(j)).length, handed_back: mine.filter(returned).length, open: mine.filter((j) => LIVE.has(j.phase)).length };
   });
   let offered = 0;
   for (let i = 0; i < w.market.size; i++) offered += marketRow(E, w, i).party;
@@ -513,7 +535,7 @@ export function scoresView(E, w) {
     simulated: true, desks,
     company: { offered_person_trips: offered, served_person_trips: served, served_share: Math.round(share * 10000) / 10000, mean, ended: jobs.filter(ended).length,
       score: mean == null ? null : Math.round(share * mean * 10) / 10 },
-    note: "Points only (simulated). A desk's mean is over every job it was given that has ended, an abandoned job counting 0, out of 100000. " +
+    note: "Points only (simulated). A desk's mean is over every job it was given that has ended, an abandoned job counting 0, out of 100000; a job handed back before its rider was ready counts neither way. " +
       "The company's score is the share of the market's person-trips flown times the mean over every ended job. Open jobs are not counted yet.",
   };
 }

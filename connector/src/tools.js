@@ -269,6 +269,12 @@ Object.assign(SANDBOX_TOOLS, {
     description: "Dispatcher: a few lines to the executor (up to 600 characters): what you flew, what went wrong, what your desk needs. Every number in it must come from a tool result.",
     inputSchema: { code: seatCodeArg, text: z.string().min(1).max(600), job_id: jobIdArg.optional() },
   },
+  hand_back: {
+    description: "Dispatcher: give a job you have not dispatched back to the executor, with a report (up to 600 characters) saying why your desk can't fly it. " +
+      "Handed back before its rider is ready, it counts neither way in your desk's mean and its hail goes back on the market; after that it counts 0. " +
+      "A job already flying can't be handed back. Every number in the report must come from a tool result.",
+    inputSchema: { code: seatCodeArg, job_id: jobIdArg, text: z.string().min(1).max(600) },
+  },
 });
 /** The run tools as the sandbox lists them: a dispatcher passes code and job_id in place of run_id. */
 export const SANDBOX_RUN_TOOLS = Object.fromEntries(["get_hail", "plan_pickup", "plan_ride", "plan_leg", "check_pad", "space_weather", "dispatch", "decide"].map((name) => {
@@ -280,7 +286,7 @@ export const SANDBOX_INSTRUCTIONS = "\nSandbox (simulated): when the player give
   "That code names your seat in the player's private world, and every sandbox tool takes it: pass it on every call. Your seat's tools are listed in join's result; " +
   "a call outside them is refused with the reason. The executor (EX) reads the market and company, gives hails to desks with assign, declines the rest, moves ships with transfer_ship " +
   "and reads reports; it flies nothing. A dispatcher (D1, D2) reads its queue and flies each job with the planning tools, passing code and job_id in place of run_id, " +
-  "with its own desk's ships only, then sends the executor a report. A dispatched ship is busy until it lands and then parked where it landed. The world's sky clock stands still between ticks. " +
+  "with its own desk's ships only, then sends the executor a report; a job it can't fly it gives back with hand_back, early, with a report. A dispatched ship is busy until it lands and then parked where it landed. The world's sky clock stands still between ticks. " +
   "When your seat has nothing to do, call wait with your code: it returns what happened for you (new jobs, landings, reports, messages, ticks), and the clock only ticks once every joined seat is waiting. " +
   "Seats talk with message; every result's inbox field counts what your next wait will return.";
 
