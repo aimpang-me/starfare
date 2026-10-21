@@ -1,0 +1,107 @@
+name: deploy
+# Every merge to main goes to the public Worker (Alvin, 2026-10-21: "every PR goes STRAIGHT to prod").
+# Runs only after sol-regression has passed on that push to main. Steps match connector/DEPLOY.md:
+# starfare-ref first (it plays each world's reference company), then starfare with the sandbox on.
+# A failed wrangler deploy changes nothing: the previous version keeps serving. If the site check after
+# the deploy fails, the job rolls starfare back to the version before and goes red.
+# Manual rollback from Alvin's PC (connector/): node node_modules/wrangler/bin/wrangler.js rollback -y
+# Needs the repo secret CLOUDFLARE_API_TOKEN (Cloudflare template "Edit Cloudflare Workers").
+# CLOUDFLARE_ACCOUNT_ID is optional. Worker secrets (STARFARE_BENCH_KEY etc.) stay on the Worker; nothing here touches them.
+on:
+  workflow_run:
+    workflows: [sol-regression]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bootstrap:
+        description: "First deploy only: put starfare-ref up once without its bindings back to starfare"
+        type: boolean
+        default: false
+permissions:
+  contents: read
+# One deploy at a time, never cancelled halfway.
+concurrency:
+  group: deploy-public
+  cancel-in-progress: false
+jobs:
+  deploy:
+    # Only a green CI run for a push to main in this repo (never a pull request or a fork).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: connector
+    env:
+      WRANGLER_SEND_METRICS: "false"
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      SITE: https://starfare.aimpang.workers.dev
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+      - name: Skip if main has moved on (the newer push deploys itself)
+        id: latest
+        working-directory: .
+        run: |
+          git fetch -q origin main
+          if [ "${{ github.event_name }}" = "workflow_run" ] && [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "Not main's newest commit; skipping."; echo "go=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=yes" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Check the Cloudflare token is set
+        if: steps.latest.outputs.go == 'yes'
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::Repo secret CLOUDFLARE_API_TOKEN is missing (Settings > Secrets and variables > Actions)."; exit 1
+          fi
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        if: steps.latest.outputs.go == 'yes'
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: connector/package-lock.json
+      - if: steps.latest.outputs.go == 'yes'
+        run: npm ci --no-audit --no-fund
+      - if: steps.latest.outputs.go == 'yes'
+        run: npm run build
+      - name: Bootstrap starfare-ref (manual first deploy only)
+        if: steps.latest.outputs.go == 'yes' && inputs.bootstrap
+        run: |
+          grep -v '"script_name": "starfare"' wrangler.ref.jsonc > wrangler.ref.boot.jsonc
+          node node_modules/wrangler/bin/wrangler.js deploy -c wrangler.ref.boot.jsonc
+          rm wrangler.ref.boot.jsonc
+      - name: Deploy starfare-ref
+        if: steps.latest.outputs.go == 'yes'
+        run: node node_modules/wrangler/bin/wrangler.js deploy -c wrangler.ref.jsonc
+      - name: Deploy starfare (sandbox on)
+        if: steps.latest.outputs.go == 'yes'
+        # wrangler.jsonc ships STARFARE_SANDBOX "off"; the public Worker runs with it on, so every deploy passes the --var.
+        run: node node_modules/wrangler/bin/wrangler.js deploy --var STARFARE_SANDBOX:on
+      - name: Check the live site
+        id: check
+        if: steps.latest.outputs.go == 'yes'
+        run: |
+          for path in / /world; do
+            ok=no
+            for i in 1 2 3 4 5; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' "$SITE$path") || code=000
+              [ "$code" = "200" ] && { ok=yes; break; }
+              sleep 5
+            done
+            echo "$path -> $code"
+            [ "$ok" = "yes" ] || { echo "::error::$SITE$path answered $code after the deploy"; exit 1; }
+          done
+      - name: Roll starfare back if the site check failed
+        if: failure() && steps.check.outcome == 'failure'
+        run: |
+          node node_modules/wrangler/bin/wrangler.js rollback -y -m "deploy check failed for ${{ github.event.workflow_run.head_sha || github.sha }}"
+          echo "::error::Deploy rolled back: the site check failed. See the step above."
