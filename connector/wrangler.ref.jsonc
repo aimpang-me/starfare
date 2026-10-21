@@ -1,0 +1,19 @@
+{
+  // starfare-ref: the sandbox's reference company (src/ref.js), one Durable Object per world, in a Worker of its own so its
+  // planning (seconds of CPU for an interplanetary job) never runs in the isolate that answers the player's agents.
+  // It has no public routes. Deploy it before the starfare Worker (wrangler.jsonc), which binds it as STARFARE_REF. See DEPLOY.md.
+  "name": "starfare-ref",
+  "main": "src/ref-worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "durable_objects": {
+    "bindings": [
+      { "name": "STARFARE_REF", "class_name": "StarfareRef" },
+      // Back to the starfare Worker: each world's refReport, and the hub's leg cache that the season's plans share.
+      { "name": "STARFARE_WORLD", "class_name": "StarfareWorld", "script_name": "starfare" },
+      { "name": "STARFARE_HUB", "class_name": "StarfareHub", "script_name": "starfare" }
+    ]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["StarfareRef"] }]
+}

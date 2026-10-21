@@ -16,7 +16,10 @@
       // One per hosted bench session (start_bench): the session and its tool-call trace for the watch page at /bench/<bench_id>.
       { "name": "STARFARE_BENCH", "class_name": "StarfareBench" },
       // One per sandbox world (/world/new, plan step 2): its clock, ships, desks and market. Only used with STARFARE_SANDBOX on.
-      { "name": "STARFARE_WORLD", "class_name": "StarfareWorld" }
+      { "name": "STARFARE_WORLD", "class_name": "StarfareWorld" },
+      // Each world's reference company (StarfareRef), in its own Worker so its planning CPU never stalls the world's calls.
+      // Deploy that Worker (wrangler.ref.jsonc) before this one. Only used with STARFARE_SANDBOX on.
+      { "name": "STARFARE_REF", "class_name": "StarfareRef", "script_name": "starfare-ref" }
     ]
   },
   "migrations": [

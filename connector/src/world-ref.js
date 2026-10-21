@@ -5,7 +5,7 @@
 // it (the engine's nearCars over the world's ships). That desk's dispatcher plans each of its free near ships for least energy,
 // pickup then ride, and dispatches the least kWh with the planned fare and arrival, never asking at a checkpoint. A job none
 // of them can fly is dropped (it counts 0). Then the clock ticks.
-// StarfareWorld keeps a reference world beside each player's world, on the same id, seed and market, and lets it catch up
+// StarfareRef (ref.js, its own Worker) keeps a reference world beside each player's world, on the same id, seed and market, and lets it catch up
 // to the player's tick on its alarm, so both are compared at the same sky time. Only its scores are shown: its jobs fly the
 // world's hidden weather.
 import { GameError, applyTool, phaseOf } from "./game.js";

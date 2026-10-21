@@ -10,7 +10,7 @@
 // The hazard seed is the season, so a run that straddles a season reset (the last ~minute of a 7000 s season) can fail; rerun.
 import { spawn } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { appendFileSync, mkdtempSync, readFileSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -42,11 +42,28 @@ async function check(name, fn) {
   const from = workerLog.length;
   try { await fn(); results.push({ name, ok: true }); console.log(`PASS  ${name}`); }
   catch (error) {
-    results.push({ name, ok: false }); console.log(`FAIL  ${name}\n      ${String(error?.stack ?? error).split("\n").slice(0, 6).join("\n      ")}`);
+    results.push({ name, ok: false }); console.log(`FAIL  ${name}\n      ${String(error?.stack ?? error).split("\n").slice(0, 6).join("\n      ")}${error?.cause ? `\n      cause: ${error.cause?.code ?? ""} ${error.cause?.message ?? error.cause}` : ""}`);
     const errs = workerLog.slice(from).join("").split("\n").filter((l) => /error|exception|uncaught/i.test(l)).slice(0, 12);
     if (errs.length) console.log(`      wrangler dev said:\n      ${errs.join("\n      ")}`);
   }
 }
+// wrangler dev's ProxyWorker keeps pooled connections to the local Worker. When the Worker's isolate has been busy for
+// seconds (a long plan on a slow or shared runner) while a streaming response is open, as an MCP session's is, a pooled
+// connection can be dead, and the next request fails with "Network connection lost" before it reaches the Worker: it never
+// runs. wrangler retries GET and HEAD for this; a deployed Worker has no ProxyWorker. So a request that comes back as that
+// 500, with the ProxyWorker saying so in wrangler's log, is sent once more. Each one is counted in the summary.
+const devFetch = globalThis.fetch;
+let proxyRetries = 0;
+const proxyDropped = (from) => /Error inside ProxyWorker[^\n]*Network connection lost/.test(workerLog.slice(from).join(""));
+globalThis.fetch = async (input, init) => {
+  const from = workerLog.length, r = await devFetch(input, init);
+  if (r.status !== 500 || !(typeof input === "string" || input instanceof URL) || (init?.body != null && typeof init.body !== "string")) return r;
+  if (!/^Error: Network connection lost\./.test(await r.clone().text())) return r;
+  for (let i = 0; i < 20 && !proxyDropped(from); i++) await sleep(100);
+  if (!proxyDropped(from)) return r;
+  proxyRetries++;
+  return devFetch(input, init);
+};
 const freePort = () => new Promise((res, rej) => { const s = createServer(); s.once("error", rej); s.listen(0, "127.0.0.1", () => { const { port } = s.address(); s.close(() => res(port)); }); });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // The rate limiter counts per clock minute (Store.hit, src/store.js), so a burst that crosses the turn of a minute starts
@@ -55,27 +72,49 @@ const freshMinute = async (need = 20000) => { const left = 60000 - (Date.now() %
 const running = new Set();
 process.on("exit", () => { for (const c of running) try { process.kill(-c.pid, "SIGKILL"); } catch {} });
 
+// With the sandbox on, the reference company's Worker (wrangler.ref.jsonc) runs as a second wrangler dev beside the main one,
+// in its own process as it has its own isolate in production, so its planning CPU can't stall the world's calls. The two
+// find each other through a dev registry of their own.
 async function startWorker(vars = {}, persistTo = null) {
   const port = await freePort(), persist = persistTo || mkdtempSync(join(tmpdir(), "sol-e2e-")), log = workerLog = [];
-  const args = [join(DIR, "node_modules", "wrangler", "bin", "wrangler.js"), "dev", "--port", String(port), "--ip", "127.0.0.1", "--persist-to", persist];
-  for (const [k, v] of Object.entries(vars)) args.push("--var", `${k}:${v}`);
-  const child = spawn(process.execPath, args, { cwd: DIR, detached: true, windowsHide: true, env: { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "1" } });
-  running.add(child);
-  child.stdout.on("data", (c) => log.push(String(c))); child.stderr.on("data", (c) => log.push(String(c)));
-  let exited = false; child.on("exit", () => { exited = true; });
-  const base = `http://127.0.0.1:${port}`, deadline = Date.now() + 180_000;
-  for (;;) {
-    if (exited) throw new Error(`wrangler dev exited early:\n${log.join("").slice(-2000)}`);
-    if (Date.now() > deadline) throw new Error(`wrangler dev not ready:\n${log.join("").slice(-2000)}`);
-    try { await fetch(`${base}/`); break; } catch { await sleep(250); }
+  // The reference keeps its own storage: two wrangler dev processes on one --persist-to share miniflare's trace database,
+  // which then answers SQLITE_BUSY.
+  const refPersist = mkdtempSync(join(tmpdir(), "sol-e2e-ref-"));
+  const registry = mkdtempSync(join(tmpdir(), "sol-e2e-registry-")), env = { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "1", WRANGLER_REGISTRY_PATH: registry };
+  const spawnDev = async (args, tag, to = persist) => {
+    const child = spawn(process.execPath, [join(DIR, "node_modules", "wrangler", "bin", "wrangler.js"), "dev", ...args, "--ip", "127.0.0.1", "--persist-to", to], { cwd: DIR, detached: true, windowsHide: true, env });
+    running.add(child);
+    const keep = (c) => { log.push(tag + String(c)); if (process.env.E2E_WRANGLER_LOG) appendFileSync(process.env.E2E_WRANGLER_LOG, `${new Date().toISOString()} ${tag}${c}`); };
+    child.stdout.on("data", keep); child.stderr.on("data", keep);
+    child.exited = false; child.on("exit", () => { child.exited = true; });
+    return child;
+  };
+  const ready = async (child, base) => {
+    const deadline = Date.now() + 180_000;
+    for (;;) {
+      if (child.exited) throw new Error(`wrangler dev exited early:\n${log.join("").slice(-2000)}`);
+      if (Date.now() > deadline) throw new Error(`wrangler dev not ready:\n${log.join("").slice(-2000)}`);
+      try { await (await fetch(`${base}/`)).body?.cancel(); break; } catch { await sleep(250); }
+    }
+  };
+  const children = [];
+  if (vars.STARFARE_SANDBOX === "on") {
+    const refPort = await freePort(), ref = await spawnDev(["-c", "wrangler.ref.jsonc", "--port", String(refPort), "--inspector-port", String(await freePort())], "[ref] ", refPersist);
+    children.push(ref);
+    await ready(ref, `http://127.0.0.1:${refPort}`);
   }
+  const args = ["--port", String(port), "--inspector-port", String(await freePort())];
+  for (const [k, v] of Object.entries(vars)) args.push("--var", `${k}:${v}`);
+  const child = await spawnDev(args, "");
+  children.unshift(child);
+  const base = `http://127.0.0.1:${port}`;
+  await ready(child, base);
   return { base, log, stop: async ({ keepStorage = false } = {}) => {
-    await stopWorkerProcess(child);
-    running.delete(child);
+    for (const c of children) { await stopWorkerProcess(c); running.delete(c); }
+    for (const dir of [registry, refPersist]) try { await rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch {}
     if (!keepStorage) try { await rm(persist, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch {}
   } };
 }
-
 async function connect(base, kind = "streamable-http", opts) {
   const client = new Client({ name: "sol-e2e", version: "1" });
   const url = new URL(`${base}/mcp`);
@@ -851,7 +890,7 @@ async function phaseOff() {
     assert.equal((await ok(client, "queue", { code: D1 })).inbox, 1, "D1's next wait has the tick");
     // The reference company, in its own instance, plays up to tick 1 and sends its scores back; company shows them.
     let ref = null;
-    for (let i = 0; i < 60 && ref?.tick !== 1; i++) { ref = (await ok(client, "company", { code: EX })).scores.reference; if (ref?.tick !== 1) await new Promise((r) => setTimeout(r, 500)); }
+    for (let i = 0; i < 120 && ref?.tick !== 1; i++) { ref = (await ok(client, "company", { code: EX })).scores.reference; if (ref?.tick !== 1) await new Promise((r) => setTimeout(r, 500)); }
     assert.equal(ref?.tick, 1, "the reference reached the world's tick");
     assert.ok(ref.company.ended > 0, "the reference flew jobs in its first tick");
   });
@@ -1388,5 +1427,6 @@ for (const mode of ["off", "on"]) {
   if (rs.length) console.log(`${mode}: ${rs.filter((r) => r.ok).length} of ${rs.length} checks passed`);
 }
 const failed = results.filter((r) => !r.ok).length;
+if (proxyRetries) console.log(`resent ${proxyRetries} request(s) that wrangler dev's ProxyWorker dropped before they reached the Worker`);
 console.log(`\n${results.length - failed} of ${results.length} checks passed`);
 process.exit(failed ? 1 : 0);

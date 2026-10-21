@@ -2,18 +2,16 @@
 // the Durable Object's alarm. Calls run one at a time, so a seat's wait, a capped tick and two jobs dispatching the same
 // ship never interleave. Each job's run is stored under its own key ("job:<job_id>"), beside the world's index of jobs.
 // A wait with an empty inbox holds outside that queue, for up to its seconds, until a save puts something in its inbox.
-// The world's reference company (world-ref.js) plays in another StarfareWorld, named "ref:<world_id>", so its planning never
-// holds up the world's own calls: the world tells it each new tick, and it plays up to that tick a job per alarm and sends
-// its scores back.
+// The world's reference company (world-ref.js) plays in StarfareRef (ref.js), a Durable Object in its own Worker
+// (starfare-ref), so its planning (seconds of CPU a job) never runs in the isolate that answers the player's agents: the
+// world tells it each new tick, and it plays up to that tick a job per alarm and sends its scores back to refReport.
 // Behind STARFARE_SANDBOX ("on" opens /world/new and /world/<world_id>.json; anything else answers 404). Nothing links it yet.
 import { DurableObject } from "cloudflare:workers";
-import META from "./engine/meta.json" with { type: "json" };
 import { newRunId } from "./bench-host.js";
 import { engine } from "./engine.js";
-import { GameError, RUN_TOOL_NAMES, applyTool, computeLeg, hailInfo, legKey, restoreRunBookings } from "./game.js";
-import { newRef, refCatchUp, refScores } from "./world-ref.js";
+import { GameError, RUN_TOOL_NAMES, applyTool, hailInfo, restoreRunBookings } from "./game.js";
 import { worldSeed } from "./season-seed.js";
-import { hub } from "./store.js";
+import { hubLegFn } from "./store.js";
 import {
   JOB_ID, SEATS, TICK_CAP_MS, WAIT_MAX_S, WorldError, addReport, busySeat, capDueMs, capTick, codeHash, declineHail, dropJob, handBack, inboxCount, jobMoved, jobRefusal, joinSeat,
   marketPage, newSecret, newWorld, parseCode, post, queueView, reportsView, scopeRefusal, seatBrief, seatCode, sendMessage, syncJob, takeInbox, takeJob, transferShip,
@@ -38,9 +36,8 @@ async function issueCodes(w) {
 const withRef = (w, v) => (w.ref_scores && v.scores ? { ...v, scores: { ...v.scores, reference: w.ref_scores } } : v);
 export const capMsOf = (env) => (Number(env.WORLD_TICK_CAP_S) > 0 ? Number(env.WORLD_TICK_CAP_S) * 1000 : TICK_CAP_MS);
 const KEEP_MS = 30 * 24 * 3600 * 1000; // a world nobody joined, waited in or looked at for this long is deleted
-// One reference alarm plays at most this many jobs (an interplanetary one plans for a few seconds); the next, set for now, goes on.
-const REF_JOBS_PER_ALARM = 1;
-const refName = (worldId) => "ref:" + worldId;
+/** The world's reference company (ref.js), in the starfare-ref Worker, or null where none is bound. */
+const refStub = (env, worldId) => (env.STARFARE_REF ? env.STARFARE_REF.get(env.STARFARE_REF.idFromName(worldId)) : null);
 
 export class StarfareWorld extends DurableObject {
   #queue = Promise.resolve();
@@ -62,8 +59,8 @@ export class StarfareWorld extends DurableObject {
     await this.ctx.storage.put("world", w);
     const due = capDueMs(w), gone = w.active_ms + KEEP_MS;
     await this.ctx.storage.setAlarm(due == null ? gone : Math.min(due, gone));
-    if (follow && this.env.STARFARE_WORLD)
-      worldStub(this.env, refName(w.world_id)).refFollow(w.world_id, w.seed, w.clock.cap_ms, w.clock.tick).catch((e) => console.log("reference follow failed", w.world_id, String(e)));
+    const ref = follow ? refStub(this.env, w.world_id) : null;
+    if (ref) ref.follow(w.world_id, w.seed, w.clock.cap_ms, w.clock.tick).catch((e) => console.log("reference follow failed", w.world_id, String(e)));
     for (const seat of SEATS) if (inboxCount(w, seat) > 0) for (const wake of [...(this.#waiters.get(seat) || [])]) wake();
   }
 
@@ -96,17 +93,7 @@ export class StarfareWorld extends DurableObject {
   }
 
   /** Plans go through the hub's leg cache, as a season run's do (StarfareRun); without a hub (tests) they are planned here. */
-  #legFn(E) {
-    if (!this.env.STARFARE_HUB) return null;
-    const h = hub(this.env);
-    return async (from, to, t, obj, end, ship, aboard) => {
-      const key = META.sha256 + "|" + legKey(from, to, t, obj, end, ship, aboard), hit = await h.legGet(key);
-      if (hit && hit.arc_au) return { leg: hit, cached: true };
-      const leg = computeLeg(E, from, to, t, obj, end, ship, aboard);
-      await h.legPut(key, leg);
-      return { leg, cached: false };
-    };
-  }
+  #legFn(E) { return hubLegFn(this.env, E); }
 
   /** A new world, and its seat codes: returned here once (for the owner's page) and kept only as hashes. */
   create(worldId, owner = null) {
@@ -312,15 +299,16 @@ export class StarfareWorld extends DurableObject {
   }
 
   /** The open tick's cap has passed (it runs, and the seats that had not waited count a stall), or the world sat idle for
-   *  KEEP_MS and is deleted with its reference. On a reference's instance, it plays the reference on (#refAlarm).
+   *  KEEP_MS and is deleted with its reference.
    *  A capped tick is not activity, so a world whose agents went away still expires. */
   alarm() {
     return this.#serial(async () => {
       const w = await this.#world(), now = Date.now();
-      if (!w) return this.#refAlarm();
+      if (!w) return;
       if (now >= w.active_ms + KEEP_MS) {
         await this.ctx.storage.deleteAll();
-        if (this.env.STARFARE_WORLD) await worldStub(this.env, refName(w.world_id)).refDrop().catch(() => {});
+        const ref = refStub(this.env, w.world_id);
+        if (ref) await ref.drop().catch(() => {});
         return;
       }
       capTick(w, now);
@@ -328,26 +316,9 @@ export class StarfareWorld extends DurableObject {
     });
   }
 
-  // ---- the reference company's side (an instance named "ref:<world_id>"; its storage holds "ref", never "world") ----
+  // ---- the reference company (ref.js) reports here ----
 
-  /** The world has reached tick toTick: play up to it. Creates the reference on the world's id, seed and market at first. */
-  refFollow(worldId, seed, capMs, toTick) {
-    return this.#serial(async () => {
-      const E = await engine(), now = Date.now();
-      const st = (await this.ctx.storage.get("ref")) || { world_id: worldId, ref: newRef(E, { world_id: worldId, seed, clock: { cap_ms: capMs } }, now), to_tick: 0 };
-      st.to_tick = Math.max(st.to_tick, toTick);
-      st.active_ms = now;
-      await this.ctx.storage.put("ref", st);
-      await this.ctx.storage.setAlarm(now);
-    });
-  }
-
-  /** The world was deleted: so is its reference. */
-  refDrop() {
-    return this.#serial(() => this.ctx.storage.deleteAll());
-  }
-
-  /** The reference's scores, sent by its instance after each job or tick it plays. Stored beside the world. */
+  /** The reference's scores, sent by StarfareRef after each job or tick it plays. Stored beside the world. */
   refReport(scores) {
     return this.#serial(async () => {
       const w = await this.#world();
@@ -355,19 +326,5 @@ export class StarfareWorld extends DurableObject {
       w.ref_scores = scores;
       await this.ctx.storage.put("world", w);
     });
-  }
-
-  /** One slice of the reference's catching up (REF_JOBS_PER_ALARM jobs, or the ticks between), then its scores go to the
-   *  world, and the next alarm is now while it is still behind. A reference nobody follows for KEEP_MS is deleted. */
-  async #refAlarm() {
-    const st = await this.ctx.storage.get("ref");
-    if (!st) return;
-    const now = Date.now();
-    if (now >= st.active_ms + KEEP_MS) { await this.ctx.storage.deleteAll(); return; }
-    const E = await engine();
-    const caught = await refCatchUp(E, st.ref, st.to_tick, { nowMs: now, legFn: this.#legFn(E), newRunId, maxJobs: REF_JOBS_PER_ALARM });
-    await this.ctx.storage.put("ref", st);
-    await this.ctx.storage.setAlarm(caught ? st.active_ms + KEEP_MS : Date.now());
-    if (this.env.STARFARE_WORLD) await worldStub(this.env, st.world_id).refReport(refScores(E, st.ref)).catch((e) => console.log("reference report failed", st.world_id, String(e)));
   }
 }
