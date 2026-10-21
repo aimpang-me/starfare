@@ -456,11 +456,12 @@ var SF = (function () {
           if (!L.sys) p = spline(function (j) { return A[j]; }, A.length, k);
           else {
             var step = (L.arc.arr_jd - L.arc.dep_jd) / (A.length - 1);
-            p = add(spline(function (j) { return sub(A[j], pos(L.sys, L.arc.dep_jd + j * step)); }, A.length, k), pos(L.sys, jd));
+            p = add(around(function (j) { return sub(A[j], pos(L.sys, L.arc.dep_jd + j * step)); }, A.length, k), pos(L.sys, jd));
           }
           // Blend out the end errors so the car leaves exactly from, and lands exactly on, the place at the flown times.
           var e0 = ends(L), w0 = 1 - f;
           p = [p[0] + w0 * e0[0][0] + f * e0[1][0], p[1] + w0 * e0[0][1] + f * e0[1][1], p[2] + w0 * e0[0][2] + f * e0[1][2]];
+          if (L.sys) p = above(p, jd, L.sys, seen);
           return { p: p, leg: L, i: i, f: f, phase: "flight" };
         }
       }
@@ -502,6 +503,29 @@ var SF = (function () {
   function sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
   function add(a, b) { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
   function lerp(a, b, f) { return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]; }
+  // A local hop's samples can be hours apart while it circles its planet every hour or two, so a straight or spline
+  // fill between them cuts through the planet. Around a planet the fill turns about its centre instead: the direction
+  // slerps between neighbouring samples and the distance follows a spline of theirs, never below the lower of the two.
+  function around(Q, n, k) {
+    var j = Math.min(n - 2, Math.floor(k)), t = k - j, a = Q(j), b = Q(j + 1), ra = Math.hypot(a[0], a[1], a[2]), rb = Math.hypot(b[0], b[1], b[2]);
+    if (!ra || !rb) return lerp(a, b, t);
+    var r = Math.max(Math.min(ra, rb), spline(function (i) { var q = Q(i); return [Math.hypot(q[0], q[1], q[2])]; }, n, k)[0]);
+    var ua = a.map(function (x) { return x / ra; }), ub = b.map(function (x) { return x / rb; });
+    var c = Math.max(-1, Math.min(1, ua[0] * ub[0] + ua[1] * ub[1] + ua[2] * ub[2])), w = Math.acos(c), sw = Math.sin(w), u;
+    if (sw < 1e-6) { u = lerp(ua, ub, t); var m = Math.hypot(u[0], u[1], u[2]) || 1; u = u.map(function (x) { return x / m; }); }
+    else { var s0 = Math.sin((1 - t) * w) / sw, s1 = Math.sin(t * w) / sw; u = [ua[0] * s0 + ub[0] * s1, ua[1] * s0 + ub[1] * s1, ua[2] * s0 + ub[2] * s1]; }
+    return [u[0] * r, u[1] * r, u[2] * r];
+  }
+  // A drawn point near a planet or moon of system sys (moons where the replay draws them, seen), moved out to just above its surface (2% of its radius) if it
+  // was under it. The planner's own arc stays above every surface; this keeps the drawn fill and its end blends there too.
+  function above(p, jd, sys, seen) {
+    E.PLACES.forEach(function (b) {
+      if (b.id !== sys && b.parent !== sys || (b.kind !== "planet" && b.kind !== "moon") || !b.radius_km) return;
+      var c = b.id === sys ? pos(sys, jd) : seen(b.id, jd), d = sub(p, c), r = Math.hypot(d[0], d[1], d[2]), min = b.radius_km * 1.02 / AU;
+      if (r < min && r > 0) p = add(c, d.map(function (x) { return x * min / r; }));
+    });
+    return p;
+  }
   // Catmull-Rom through n points P(0)..P(n-1) at k in [0, n-1]: the path and the nose turn smoothly at each stored
   // sample instead of kinking there. It still passes through every sample.
   function spline(P, n, k) {
@@ -1163,9 +1187,15 @@ function buildRideScene() {
   RS.trail = seg.length ? trailOf(seg) : null;
   if (RS.trail) { RS.paths.push(RS.trail); sc.add(RS.trail); }
   // Legs still to fly in a live flight: dashed, straight between the places at the planned times. They can change at a checkpoint.
+  // Around a planet a straight line would cross it, so there the guide bends over the planet, just above its surface.
   rp.plan.forEach(function (Q) {
-    var a = local ? placeK(Q.from, Q.dep) : marker(Q.from, Q.dep), b = local ? placeK(Q.to, Q.arr) : marker(Q.to, Q.arr);
-    var planned = SolLines.leg([{ v: a, f: 0, s: 0 }, { v: b, f: 1, s: 1 }], SolLines.STYLE.plan); RS.paths.push(planned); sc.add(planned);
+    var a = local ? placeK(Q.from, Q.dep) : marker(Q.from, Q.dep), b = local ? placeK(Q.to, Q.arr) : marker(Q.to, Q.arr), n = local ? 48 : 1, pts = [];
+    for (var k = 0; k <= n; k++) {
+      var v = a.clone().lerp(b, k / n);
+      if (local) { var Rq = SF.place(rp.focus).radius_km / 1000 * 1.02; if (v.length() < Rq) v.setLength(Rq); }
+      pts.push({ v: v, f: k / n, s: k / n });
+    }
+    var planned = SolLines.leg(pts, SolLines.STYLE.plan); RS.paths.push(planned); sc.add(planned);
   });
   RS.ship = makeShip(rp.car); sc.add(RS.ship);
   var cls = SF.E.SHIP_CLASSES[(SF.E.R.CAR[String(rp.car).toLowerCase()] || {}).ship_class];
@@ -1272,10 +1302,11 @@ function rideFrame(dt, t) {
     heading = window.StarfareView.orbitDirection(jd, function (time) { return (RS.local ? placeK(stop, time) : marker(stop, time)).toArray(); });
   }
   var d = heading ? V(heading[0], heading[1], heading[2]) : V();
-  // Near a planet a parked Starseeker rides its station's orbit. The camera rides with it, locked to the orbit
-  // (ahead along the motion, up away from the planet), instead of chasing.
-  var snap = reduced || jump || (RS.local && !fl);
-  if (d.lengthSq() > 1e-12 && (fl || RS.local)) RS.fwd.lerp(d.normalize(), snap ? 1 : 1 - Math.exp(-dt * 6)).normalize();
+  // Near a planet a parked Starseeker rides its station's orbit, and the camera eases along with it. Only a scrub or
+  // reduced motion snaps the camera: snapping it to the orbit every frame spun the planet and every line on screen, and
+  // a slow turn (about 1.5 s) keeps a bend in the path from whipping the view round.
+  var snap = reduced || jump;
+  if (d.lengthSq() > 1e-12 && (fl || RS.local)) RS.fwd.lerp(d.normalize(), snap ? 1 : 1 - Math.exp(-dt * 1.5)).normalize();
   RS.ship.position.copy(p);
   window.StarfareView.orientShip(RS.ship, window.StarfareView.headingFrame(heading, RS.local ? p.toArray() : [0, 1, 0], RS.ship.userData.headingSet ? RS.ship.up.toArray() : null));
   var thrust = fl && RS.ion ? 1 : 0;
@@ -1300,15 +1331,17 @@ function rideFrame(dt, t) {
     look = p.clone().add(RS.fwd.clone().multiplyScalar(D * 0.6));
     if (RS.local) {
       var Rp = SF.place(rp.focus).radius_km / 1000 * 1.06; if (want.length() < Rp) want.setLength(Rp); // never inside the planet
-      RS.up = RS.up && !snap ? RS.up.lerp(up, 1 - Math.exp(-dt * 3)).normalize() : up.clone();
+      RS.up = RS.up && !snap ? RS.up.lerp(up, 1 - Math.exp(-dt * 1.5)).normalize() : up.clone();
     }
   } else {
     var Hgt = (RS.local ? SF.place(rp.focus).radius_km / 1000 * 7 : 70) * RS.zf;
     want = p.clone().add(V(Math.sin(RS.yaw) * Hgt * 0.15, Hgt, Math.cos(RS.yaw) * Hgt * 0.15)); look = p.clone();
   }
-  if (!RS.camp || snap) RS.camp = want.clone(); else RS.camp.lerp(want, 1 - Math.exp(-dt * 5));
-  if (!RS.look || snap) RS.look = look.clone(); else RS.look.lerp(look, 1 - Math.exp(-dt * 5));
+  if (!RS.camp || snap) RS.camp = want.clone(); else RS.camp.lerp(want, 1 - Math.exp(-dt * 3));
+  if (!RS.look || snap) RS.look = look.clone(); else RS.look.lerp(look, 1 - Math.exp(-dt * 3));
   if (RS.camp.distanceTo(p) > D * 30 && !RS.over && !hold) { RS.camp.copy(want); RS.look.copy(look); }
+  // The eased camera cuts corners, so keep it outside the planet too, not only where it is heading.
+  if (RS.local) { var Rc = SF.place(rp.focus).radius_km / 1000 * 1.06; if (RS.camp.length() < Rc) RS.camp.setLength(Rc); }
   cam.up.copy(RS.local && !RS.over && !hold && RS.up ? RS.up : V(0, 1, 0));
   cam.position.copy(RS.camp); cam.lookAt(RS.look);
   RS.rings.forEach(function (o) {
